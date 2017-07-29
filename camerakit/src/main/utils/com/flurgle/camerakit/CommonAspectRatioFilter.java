@@ -18,9 +18,7 @@ public class CommonAspectRatioFilter {
     public TreeSet<AspectRatio> filter() {
         Set<AspectRatio> previewAspectRatios = new HashSet<>();
         for (Size size : mPreviewSizes) {
-            if (size.getWidth() >= CameraKit.Internal.screenHeight && size.getHeight() >= CameraKit.Internal.screenWidth) {
-                previewAspectRatios.add(AspectRatio.of(size.getWidth(), size.getHeight()));
-            }
+            previewAspectRatios.add(AspectRatio.of(size.getWidth(), size.getHeight()));
         }
 
         Set<AspectRatio> captureAspectRatios = new HashSet<>();

@@ -5,7 +5,6 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.support.annotation.Nullable;
@@ -16,11 +15,8 @@ import android.view.View;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import static com.flurgle.camerakit.CameraKit.Constants.FLASH_OFF;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_CONTINUOUS;
@@ -30,7 +26,7 @@ import static com.flurgle.camerakit.CameraKit.Constants.METHOD_STANDARD;
 import static com.flurgle.camerakit.CameraKit.Constants.METHOD_STILL;
 
 @SuppressWarnings("deprecation")
-public class Camera1 extends CameraImpl {
+class Camera1 extends CameraImpl {
 
     private static final String TAG = Camera1.class.getSimpleName();
 
@@ -50,35 +46,26 @@ public class Camera1 extends CameraImpl {
     private Camera.AutoFocusCallback mAutofocusCallback;
     private boolean capturingImage = false;
 
-    private int mDisplayOrientation;
+    private int mDisplayOffset;
+    private int mDeviceOrientation;
 
-    @Facing
-    private int mFacing;
-
-    @Flash
-    private int mFlash;
-
-    @Focus
-    private int mFocus;
-
-    @Method
-    private int mMethod;
-
-    @Zoom
-    private int mZoom;
-
-    @VideoQuality
-    private int mVideoQuality;
+    @Facing private int mFacing;
+    @Flash private int mFlash;
+    @Focus private int mFocus;
+    @Method private int mMethod;
+    @Zoom private int mZoom;
+    @VideoQuality private int mVideoQuality;
 
     private Handler mHandler = new Handler();
 
     Camera1(CameraListener callback, PreviewImpl preview) {
         super(callback, preview);
-        preview.setCallback(new PreviewImpl.Callback() {
+        preview.setCallback(new PreviewImpl.OnSurfaceChangedCallback() {
             @Override
             public void onSurfaceChanged() {
                 if (mCamera != null) {
                     setupPreview();
+                    collectCameraSizes();
                     adjustCameraParameters();
                 }
             }
@@ -105,9 +92,32 @@ public class Camera1 extends CameraImpl {
         releaseCamera();
     }
 
+    /**
+     * Sets the output stream for our preview.
+     * To be called when preview is ready.
+     */
+    private void setupPreview() {
+        try {
+            if (mPreview.getOutputClass() == SurfaceHolder.class) {
+                mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
+            } else {
+                mCamera.setPreviewTexture(mPreview.getSurfaceTexture());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
     @Override
-    void setDisplayOrientation(int displayOrientation) {
-        this.mDisplayOrientation = displayOrientation;
+    void onDisplayOffset(int displayOrientation) {
+        // I doubt this will ever change.
+        this.mDisplayOffset = displayOrientation;
+    }
+
+    @Override
+    void onDeviceOrientation(int deviceOrientation) {
+        this.mDeviceOrientation = deviceOrientation;
     }
 
     @Override
@@ -217,19 +227,18 @@ public class Camera1 extends CameraImpl {
             case METHOD_STANDARD:
                 // Null check required for camera here as is briefly null when View is detached
                 if (!capturingImage && mCamera != null) {
-
                     // Set boolean to wait for image callback
                     capturingImage = true;
-
+                    Camera.Parameters parameters = mCamera.getParameters();
+                    parameters.setRotation(computeExifOrientation());
+                    mCamera.setParameters(parameters);
                     mCamera.takePicture(null, null, null,
                         new Camera.PictureCallback() {
                             @Override
                             public void onPictureTaken(byte[] data, Camera camera) {
                                 mCameraListener.onPictureTaken(data);
-
                                 // Reset capturing state to allow photos to be taken
                                 capturingImage = false;
-
                                 camera.startPreview();
                             }
                         });
@@ -240,6 +249,7 @@ public class Camera1 extends CameraImpl {
                 break;
 
             case METHOD_STILL:
+                // TODO: will calculateCaptureRotation work here? It's the only usage. Test...
                 mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
                     @Override
                     public void onPreviewFrame(byte[] data, Camera camera) {
@@ -270,79 +280,14 @@ public class Camera1 extends CameraImpl {
         mCameraListener.onVideoTaken(mVideoFile);
     }
 
-    // Code from SandriosCamera library
-    // https://github.com/sandrios/sandriosCamera/blob/master/sandriosCamera/src/main/java/com/sandrios/sandriosCamera/internal/utils/CameraHelper.java#L218
-    public static Size getSizeWithClosestRatio(List<Size> sizes, int width, int height)
-    {
-        if (sizes == null) return null;
-
-        double MIN_TOLERANCE = 100;
-        double targetRatio = (double) height / width;
-        Size optimalSize = null;
-        double minDiff = Double.MAX_VALUE;
-
-        int targetHeight = height;
-
-        for (Size size : sizes) {
-            if (size.getWidth() == width && size.getHeight() == height)
-                return size;
-
-            double ratio = (double) size.getHeight() / size.getWidth();
-
-            if (Math.abs(ratio - targetRatio) < MIN_TOLERANCE) MIN_TOLERANCE = ratio;
-            else continue;
-
-            if (Math.abs(size.getHeight() - targetHeight) < minDiff) {
-                optimalSize = size;
-                minDiff = Math.abs(size.getHeight() - targetHeight);
-            }
-        }
-
-        if (optimalSize == null) {
-            minDiff = Double.MAX_VALUE;
-            for (Size size : sizes) {
-                if (Math.abs(size.getHeight() - targetHeight) < minDiff) {
-                    optimalSize = size;
-                    minDiff = Math.abs(size.getHeight() - targetHeight);
-                }
-            }
-        }
-        return optimalSize;
-    }
-
-    List<Size> sizesFromList(List<Camera.Size> sizes) {
-        if (sizes == null) return null;
-        List<Size> result = new ArrayList<>(sizes.size());
-
-        for (Camera.Size size : sizes) {
-            result.add(new Size(size.width, size.height));
-        }
-
-        return result;
-    }
-
-    // Code from SandriosCamera library
-    // https://github.com/sandrios/sandriosCamera/blob/master/sandriosCamera/src/main/java/com/sandrios/sandriosCamera/internal/manager/impl/Camera1Manager.java#L212
-    void initResolutions() {
-        List<Size> previewSizes = sizesFromList(mCameraParameters.getSupportedPreviewSizes());
-        List<Size> videoSizes = (Build.VERSION.SDK_INT > 10) ? sizesFromList(mCameraParameters.getSupportedVideoSizes()) : previewSizes;
-
-        CamcorderProfile camcorderProfile = getCamcorderProfile(mVideoQuality);
-
-        mCaptureSize = getSizeWithClosestRatio(
-                (videoSizes == null || videoSizes.isEmpty()) ? previewSizes : videoSizes,
-                camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
-
-        mPreviewSize = getSizeWithClosestRatio(previewSizes, mCaptureSize.getWidth(), mCaptureSize.getHeight());
-    }
 
     @Override
-    Size getCaptureResolution() {
+    Size getCaptureSize() {
         return mCaptureSize;
     }
 
     @Override
-    Size getPreviewResolution() {
+    Size getPreviewSize() {
         return mPreviewSize;
     }
 
@@ -368,22 +313,10 @@ public class Camera1 extends CameraImpl {
         mCameraParameters = mCamera.getParameters();
 
         collectCameraProperties();
+        collectCameraSizes();
         adjustCameraParameters();
-        mCamera.setDisplayOrientation(calculatePreviewRotation());
-
+        mCamera.setDisplayOrientation(computeCameraToDisplayOffset());
         mCameraListener.onCameraOpened();
-    }
-
-    private void setupPreview() {
-        try {
-            if (mPreview.getOutputClass() == SurfaceHolder.class) {
-                mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
-            } else {
-                mCamera.setPreviewTexture(mPreview.getSurfaceTexture());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private void releaseCamera() {
@@ -397,48 +330,75 @@ public class Camera1 extends CameraImpl {
         }
     }
 
-    private int calculatePreviewRotation() {
+    /**
+     * Returns how much should the sensor image be rotated before being shown.
+     * It is meant to be fed to Camera.setDisplayOrientation().
+     */
+    private int computeCameraToDisplayOffset() {
         if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            return ((mCameraInfo.orientation - mDisplayOrientation) + 360 + 180) % 360;
+            // or: (360 - ((info.orientation + displayOrientation) % 360)) % 360;
+            return ((mCameraInfo.orientation - mDisplayOffset) + 360 + 180) % 360;
         } else {
-            return (mCameraInfo.orientation - mDisplayOrientation + 360) % 360;
+            return (mCameraInfo.orientation - mDisplayOffset + 360) % 360;
         }
     }
 
+    /**
+     * Returns the orientation to be set as a exif tag. This is already managed by
+     * the camera APIs as long as you call {@link Camera.Parameters#setRotation(int)}.
+     */
+    private int computeExifOrientation() {
+        return (mDeviceOrientation + mCameraInfo.orientation) % 360;
+    }
+
     private int calculateCaptureRotation() {
-        int previewRotation = calculatePreviewRotation();
+        int previewRotation = computeCameraToDisplayOffset();
         if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
             //Front is flipped
-            return (previewRotation + 180 + 2*mDisplayOrientation + 720) %360;
+            return (previewRotation + 180 + 2* mDisplayOffset + 720) % 360;
         } else {
             return previewRotation;
         }
     }
 
+
+    /**
+     * This is called either on cameraView.start(), or when the underlying surface changes.
+     * It is possible that in the first call the preview surface has not already computed its
+     * dimensions.
+     * But when it does, the {@link PreviewImpl.OnSurfaceChangedCallback} should be called,
+     * and this should be refreshed.
+     *
+     *
+     * TODO: either camera or video.
+     */
+    private void collectCameraSizes() {
+        List<Size> previewSizes = sizesFromList(mCameraParameters.getSupportedPreviewSizes());
+        List<Size> captureSizes = sizesFromList(mCameraParameters.getSupportedPictureSizes());
+
+        /* video stuff: CamcorderProfile camcorderProfile = getCamcorderProfile(mVideoQuality);
+        mCaptureSize = getSizeWithClosestRatio(
+                (videoSizes == null || videoSizes.isEmpty()) ? previewSizes : videoSizes,
+                camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight); */
+
+        Size surfaceSize = mPreview.getSurfaceSize();
+        mCaptureSize = Collections.max(captureSizes);
+        mPreviewSize = computePreviewSize(previewSizes, mCaptureSize, surfaceSize);
+    }
+
+
     private void adjustCameraParameters() {
-        initResolutions();
-
-        boolean invertPreviewSizes = mDisplayOrientation%180 != 0;
-        mPreview.setTruePreviewSize(
-                invertPreviewSizes? getPreviewResolution().getHeight() : getPreviewResolution().getWidth(),
-                invertPreviewSizes? getPreviewResolution().getWidth() : getPreviewResolution().getHeight()
+        boolean invertPreviewSizes = mDisplayOffset % 180 != 0;
+        mPreview.setDesiredSize(
+                invertPreviewSizes? getPreviewSize().getHeight() : getPreviewSize().getWidth(),
+                invertPreviewSizes? getPreviewSize().getWidth() : getPreviewSize().getHeight()
         );
-
-        mCameraParameters.setPreviewSize(
-                getPreviewResolution().getWidth(),
-                getPreviewResolution().getHeight()
-        );
-
-        mCameraParameters.setPictureSize(
-                getCaptureResolution().getWidth(),
-                getCaptureResolution().getHeight()
-        );
-        int rotation = calculateCaptureRotation();
-        mCameraParameters.setRotation(rotation);
-
+        mCameraParameters.setPreviewSize(getPreviewSize().getWidth(), getPreviewSize().getHeight());
+        mCameraParameters.setPictureSize(getCaptureSize().getWidth(), getCaptureSize().getHeight());
+        // int rotation = calculateCaptureRotation();
+        // mCameraParameters.setRotation(rotation);
         setFocus(mFocus);
         setFlash(mFlash);
-
         mCamera.setParameters(mCameraParameters);
     }
 
@@ -447,28 +407,6 @@ public class Camera1 extends CameraImpl {
                 mCameraParameters.getHorizontalViewAngle());
     }
 
-    private TreeSet<AspectRatio> findCommonAspectRatios(List<Camera.Size> previewSizes, List<Camera.Size> captureSizes) {
-        Set<AspectRatio> previewAspectRatios = new HashSet<>();
-        for (Camera.Size size : previewSizes) {
-            if (size.width >= CameraKit.Internal.screenHeight && size.height >= CameraKit.Internal.screenWidth) {
-                previewAspectRatios.add(AspectRatio.of(size.width, size.height));
-            }
-        }
-
-        Set<AspectRatio> captureAspectRatios = new HashSet<>();
-        for (Camera.Size size : captureSizes) {
-            captureAspectRatios.add(AspectRatio.of(size.width, size.height));
-        }
-
-        TreeSet<AspectRatio> output = new TreeSet<>();
-        for (AspectRatio aspectRatio : previewAspectRatios) {
-            if (captureAspectRatios.contains(aspectRatio)) {
-                output.add(aspectRatio);
-            }
-        }
-
-        return output;
-    }
 
     private void initMediaRecorder() {
         mMediaRecorder = new MediaRecorder();
@@ -483,7 +421,7 @@ public class Camera1 extends CameraImpl {
 
         mVideoFile = new File(mPreview.getView().getContext().getExternalFilesDir(null), "video.mp4");
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
-        mMediaRecorder.setOrientationHint(calculatePreviewRotation());
+        mMediaRecorder.setOrientationHint(computeCameraToDisplayOffset());
         mMediaRecorder.setVideoSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
     }
 
@@ -644,7 +582,7 @@ public class Camera1 extends CameraImpl {
                 if (camera != null) {
                     camera.cancelAutoFocus();
                     Camera.Parameters params = camera.getParameters();
-                    if (params.getFocusMode() != Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) {
+                    if (!params.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
                         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
                         params.setFocusAreas(null);
                         params.setMeteringAreas(null);
@@ -683,5 +621,54 @@ public class Camera1 extends CameraImpl {
             return normalized;
         }
     }
+
+
+
+    // Size static stuff.
+
+    /**
+     * Returns a list of {@link Size} out of Camera.Sizes.
+     */
+    private static List<Size> sizesFromList(List<Camera.Size> sizes) {
+        if (sizes == null) return null;
+        List<Size> result = new ArrayList<>(sizes.size());
+        for (Camera.Size size : sizes) {
+            result.add(new Size(size.width, size.height));
+        }
+        return result;
+    }
+
+
+    /**
+     * Policy here is to return a size that is big enough to fit the surface size,
+     * and possibly consistent with the capture size.
+     * @param sizes list of possible sizes
+     * @param captureSize size representing desired aspect ratio
+     * @param surfaceSize size representing the current surface size. We'd like the returned value to be bigger.
+     * @return chosen size
+     */
+    private static Size computePreviewSize(List<Size> sizes, Size captureSize, Size surfaceSize) {
+        if (sizes == null) return null;
+
+        List<Size> consistent = new ArrayList<>(5);
+        List<Size> bigEnoughAndConsistent = new ArrayList<>(5);
+
+        final AspectRatio targetRatio = AspectRatio.of(captureSize.getWidth(), captureSize.getHeight());
+        final Size targetSize = captureSize;
+        for (Size size : sizes) {
+            AspectRatio ratio = AspectRatio.of(size.getWidth(), size.getHeight());
+            if (ratio.equals(targetRatio)) {
+                consistent.add(size);
+                if (size.getHeight() >= targetSize.getHeight() && size.getWidth() >= targetSize.getWidth()) {
+                    bigEnoughAndConsistent.add(size);
+                }
+            }
+        }
+
+        if (bigEnoughAndConsistent.size() > 0) return Collections.min(bigEnoughAndConsistent);
+        if (consistent.size() > 0) return Collections.max(consistent);
+        return Collections.max(sizes);
+    }
+
 
 }

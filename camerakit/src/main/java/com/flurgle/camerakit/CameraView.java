@@ -8,6 +8,7 @@ import android.arch.lifecycle.LifecycleOwner;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
@@ -18,12 +19,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.hardware.display.DisplayManagerCompat;
-import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import java.io.ByteArrayOutputStream;
@@ -38,9 +39,8 @@ import static com.flurgle.camerakit.CameraKit.Constants.FLASH_OFF;
 import static com.flurgle.camerakit.CameraKit.Constants.FLASH_ON;
 import static com.flurgle.camerakit.CameraKit.Constants.FLASH_TORCH;
 import static com.flurgle.camerakit.CameraKit.Constants.METHOD_STANDARD;
-import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_LAZY;
 import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_PICTURE;
-import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_STRICT;
+import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_VIDEO;
 
 /**
  * The CameraView implements the LifecycleObserver interface for ease of use. To take advantage of
@@ -58,46 +58,37 @@ import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_STRICT;
  */
 public class CameraView extends FrameLayout implements LifecycleObserver {
 
+    private final static String TAG = CameraView.class.getSimpleName();
+
     private static Handler sWorkerHandler;
 
-    static {
-        // Initialize a single worker thread. This can be static since only a single camera
-        // reference can exist at a time.
-        HandlerThread workerThread = new HandlerThread("CameraViewWorker");
-        workerThread.setDaemon(true);
-        workerThread.start();
-        sWorkerHandler = new Handler(workerThread.getLooper());
+    private static Handler getWorkerHandler() {
+        if (sWorkerHandler == null) {
+            HandlerThread workerThread = new HandlerThread("CameraViewWorker");
+            workerThread.setDaemon(true);
+            workerThread.start();
+            sWorkerHandler = new Handler(workerThread.getLooper());
+        }
+        return sWorkerHandler;
     }
 
-    @Facing
-    private int mFacing;
+    private void run(Runnable runnable) {
+        getWorkerHandler().post(runnable);
+    }
 
-    @Flash
-    private int mFlash;
-
-    @Focus
-    private int mFocus;
-
-    @Method
-    private int mMethod;
-
-    @Zoom
-    private int mZoom;
-
-    @Permissions
-    private int mPermissions;
-
-    @VideoQuality
-    private int mVideoQuality;
+    @Facing private int mFacing;
+    @Flash private int mFlash;
+    @Focus private int mFocus;
+    @Method private int mMethod;
+    @Zoom private int mZoom;
+    @Permissions private int mPermissions;
+    @VideoQuality private int mVideoQuality;
     private int mJpegQuality;
     private boolean mCropOutput;
-
     private boolean mAdjustViewBounds;
     private CameraListenerMiddleWare mCameraListener;
-
-    private DisplayOrientationDetector mDisplayOrientationDetector;
+    private OrientationHelper mOrientationHelper;
     private CameraImpl mCameraImpl;
-
     private PreviewImpl mPreviewImpl;
 
     private Lifecycle mLifecycle;
@@ -108,7 +99,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         init(context, null);
     }
 
-    @SuppressWarnings("all")
     public CameraView(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
@@ -117,11 +107,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         if (attrs != null) {
-            TypedArray a = context.getTheme().obtainStyledAttributes(
-                    attrs,
-                    R.styleable.CameraView,
-                    0, 0);
-
+            TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
             try {
                 mFacing = a.getInteger(R.styleable.CameraView_ckFacing, CameraKit.Defaults.DEFAULT_FACING);
                 mFlash = a.getInteger(R.styleable.CameraView_ckFlash, CameraKit.Defaults.DEFAULT_FLASH);
@@ -149,15 +135,21 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFocus(mFocus);
         setMethod(mMethod);
         setZoom(mZoom);
-        setPermissions(mPermissions);
+        setPermissionPolicy(mPermissions);
         setVideoQuality(mVideoQuality);
 
         if (!isInEditMode()) {
-            mDisplayOrientationDetector = new DisplayOrientationDetector(context) {
+            mOrientationHelper = new OrientationHelper(context) {
                 @Override
-                public void onDisplayOrientationChanged(int displayOrientation) {
-                    mCameraImpl.setDisplayOrientation(displayOrientation);
-                    mPreviewImpl.setDisplayOrientation(displayOrientation);
+                public void onDisplayOffsetChanged(int displayOffset) {
+                    mCameraImpl.onDisplayOffset(displayOffset);
+                    mPreviewImpl.onDisplayOffset(displayOffset);
+                }
+
+                @Override
+                protected void onDeviceOrientationChanged(int deviceOrientation) {
+                    mCameraImpl.onDeviceOrientation(deviceOrientation);
+                    mPreviewImpl.onDeviceOrientation(deviceOrientation);
                 }
             };
 
@@ -167,7 +159,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 @Override
                 public boolean onTouch(View v, MotionEvent motionEvent) {
                     int action = motionEvent.getAction();
-                    if (motionEvent.getAction() == MotionEvent.ACTION_UP && mFocus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER) {
+                    if (action == MotionEvent.ACTION_UP && mFocus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER) {
                         focusMarkerLayout.focus(motionEvent.getX(), motionEvent.getY());
                     }
 
@@ -182,55 +174,69 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        Log.e(TAG, "onAttachedToWindow");
         if (!isInEditMode()) {
-            mDisplayOrientationDetector.enable(
-                ViewCompat.isAttachedToWindow(this)
-                    ? DisplayManagerCompat.getInstance(getContext())
-                    .getDisplay(Display.DEFAULT_DISPLAY)
-                    : null
-            );
+            Log.e(TAG, "onAttachedToWindow: enabling orientation detector.");
+            WindowManager manager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+            Display display = manager.getDefaultDisplay();
+            mOrientationHelper.enable(display);
         }
     }
 
     @Override
     protected void onDetachedFromWindow() {
+        Log.e(TAG, "onDetachedFromWindow");
         if (!isInEditMode()) {
-            mDisplayOrientationDetector.disable();
+            Log.e(TAG, "onDetachedFromWindow: disabling orientation detector.");
+            mOrientationHelper.disable();
         }
         super.onDetachedFromWindow();
     }
 
+
+    /**
+     * If {@link CameraView#mAdjustViewBounds} was set AND one of the dimensions is set to WRAP_CONTENT,
+     * CameraView will adjust that dimensions to fit the preview aspect ratio as returned by
+     * {@link #getPreviewSize()}.
+     *
+     * If this is not true, the surface will adapt to the dimension specified in the layout file.
+     * Having fixed dimensions means that, very likely, what the user sees is different from what
+     * the final picture will be. This is also due to what happens in {@link PreviewImpl#refreshScale()}.
+     */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (mAdjustViewBounds) {
-            Size previewSize = getPreviewSize();
-            if (previewSize != null) {
-                if (getLayoutParams().width == LayoutParams.WRAP_CONTENT) {
-                    int height = MeasureSpec.getSize(heightMeasureSpec);
-                    float ratio = (float) height / (float) previewSize.getWidth();
-                    int width = (int) (previewSize.getHeight() * ratio);
-                    super.onMeasure(
-                            MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                            heightMeasureSpec
-                    );
-                    return;
-                } else if (getLayoutParams().height == LayoutParams.WRAP_CONTENT) {
-                    int width = MeasureSpec.getSize(widthMeasureSpec);
-                    float ratio = (float) width / (float) previewSize.getHeight();
-                    int height = (int) (previewSize.getWidth() * ratio);
-                    super.onMeasure(
-                            widthMeasureSpec,
-                            MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
-                    );
-                    return;
-                }
-            } else {
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-                return;
-            }
+        if (!mAdjustViewBounds) {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            return;
         }
 
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        Size previewSize = getPreviewSize();
+        if (previewSize == null) {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            return;
+        }
+
+        if (getLayoutParams().width == LayoutParams.WRAP_CONTENT) {
+            int height = MeasureSpec.getSize(heightMeasureSpec);
+            float ratio = (float) height / (float) previewSize.getWidth();
+            int width = (int) (previewSize.getHeight() * ratio);
+            super.onMeasure(
+                    MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+                    heightMeasureSpec
+            );
+
+        } else if (getLayoutParams().height == LayoutParams.WRAP_CONTENT) {
+            int width = MeasureSpec.getSize(widthMeasureSpec);
+            float ratio = (float) width / (float) previewSize.getHeight();
+            int height = (int) (previewSize.getWidth() * ratio);
+            super.onMeasure(
+                    widthMeasureSpec,
+                    MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
+            );
+
+        } else {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        }
     }
 
     public boolean isStarted() {
@@ -263,25 +269,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         stop();
     }
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    public void onDestroy(LifecycleOwner owner) {
+        mLifecycle = owner.getLifecycle();
+        // This might be useless, but no time to think about it now.
+        sWorkerHandler = null;
+    }
+
     public void start() {
         if (mIsStarted || !isEnabled()) {
             // Already started, do nothing.
             return;
         }
-        mIsStarted = true;
+        checkPermissionPolicyOrThrow();
         int cameraCheck = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA);
         int audioCheck = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.RECORD_AUDIO);
-
         switch (mPermissions) {
-            case PERMISSIONS_STRICT:
+            case PERMISSIONS_VIDEO:
                 if (cameraCheck != PackageManager.PERMISSION_GRANTED || audioCheck != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(true, true);
-                    return;
-                }
-                break;
-
-            case PERMISSIONS_LAZY:
-                if (cameraCheck != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(true, true);
                     return;
                 }
@@ -295,7 +300,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 break;
         }
 
-        sWorkerHandler.post(new Runnable() {
+        mIsStarted = true;
+        run(new Runnable() {
             @Override
             public void run() {
                 mCameraImpl.start();
@@ -325,7 +331,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void setFacing(@Facing final int facing) {
         this.mFacing = facing;
 
-        sWorkerHandler.post(new Runnable() {
+        run(new Runnable() {
             @Override
             public void run() {
                 mCameraImpl.setFacing(facing);
@@ -363,8 +369,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl.setZoom(mZoom);
     }
 
-    public void setPermissions(@Permissions int permissions) {
+    /**
+     * Sets permission policy.
+     * @param permissions desired policy, either picture or video.
+     */
+    public void setPermissionPolicy(@Permissions int permissions) {
         this.mPermissions = permissions;
+        checkPermissionPolicyOrThrow();
     }
 
     public void setVideoQuality(@VideoQuality int videoQuality) {
@@ -431,12 +442,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl.endVideo();
     }
 
+    /**
+     * Returns the size used for the preview,
+     * or null if it hasn't been computed (for example if the surface is not ready).
+     */
+    @Nullable
     public Size getPreviewSize() {
-        return mCameraImpl != null ? mCameraImpl.getPreviewResolution() : null;
+        return mCameraImpl != null ? mCameraImpl.getPreviewSize() : null;
     }
 
+    @Nullable
     public Size getCaptureSize() {
-        return mCameraImpl != null ? mCameraImpl.getCaptureResolution() : null;
+        return mCameraImpl != null ? mCameraImpl.getCaptureSize() : null;
     }
 
     private void requestPermissions(boolean requestCamera, boolean requestAudio) {
@@ -452,12 +469,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         List<String> permissions = new ArrayList<>();
         if (requestCamera) permissions.add(Manifest.permission.CAMERA);
         if (requestAudio) permissions.add(Manifest.permission.RECORD_AUDIO);
-
         if (activity != null) {
-            ActivityCompat.requestPermissions(
-                    activity,
+            ActivityCompat.requestPermissions(activity,
                     permissions.toArray(new String[permissions.size()]),
-                    CameraKit.Constants.PERMISSION_REQUEST_CAMERA);
+                    CameraKit.Constants.PERMISSION_REQUEST_CODE);
         }
     }
 
@@ -481,8 +496,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         public void onPictureTaken(byte[] jpeg) {
             super.onPictureTaken(jpeg);
             if (mCropOutput) {
-                int width = mMethod == METHOD_STANDARD ? mCameraImpl.getCaptureResolution().getWidth() : mCameraImpl.getPreviewResolution().getWidth();
-                int height = mMethod == METHOD_STANDARD ? mCameraImpl.getCaptureResolution().getHeight() : mCameraImpl.getPreviewResolution().getHeight();
+                int width = mMethod == METHOD_STANDARD ? mCameraImpl.getCaptureSize().getWidth() : mCameraImpl.getPreviewSize().getWidth();
+                int height = mMethod == METHOD_STANDARD ? mCameraImpl.getCaptureSize().getHeight() : mCameraImpl.getPreviewSize().getHeight();
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
                 getCameraListener().onPictureTaken(new CenterCrop(jpeg, outputRatio, mJpegQuality).getJpeg());
             } else {
@@ -519,6 +534,31 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             };
         }
 
+    }
+
+    /**
+     * If mPermissions == PERMISSIONS_VIDEO we will ask for RECORD_AUDIO permission.
+     * If the developer did not add this to its manifest, throw and fire warnings.
+     * (Hoping this is not cought elsewhere... we should test).
+     */
+    private void checkPermissionPolicyOrThrow() {
+        if (mPermissions == PERMISSIONS_VIDEO) {
+            try {
+                PackageManager manager = getContext().getPackageManager();
+                PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
+                for (String requestedPermission : info.requestedPermissions) {
+                    if (requestedPermission.equals(Manifest.permission.RECORD_AUDIO)) {
+                        return;
+                    }
+                }
+                String message = "When the permission policy is PERMISSION_VIDEO, the RECORD_AUDIO permission " +
+                        "should be added to the application manifest file.";
+                Log.w(TAG, message);
+                throw new IllegalStateException(message);
+            } catch (PackageManager.NameNotFoundException e) {
+                // Not possible.
+            }
+        }
     }
 
 }

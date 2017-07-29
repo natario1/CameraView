@@ -4,16 +4,9 @@ import android.content.res.Resources;
 
 public class CameraKit {
 
-    static class Internal {
-
-        static final int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-        static final int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
-
-    }
-
     public static class Constants {
 
-        public static final int PERMISSION_REQUEST_CAMERA = 16;
+        public static final int PERMISSION_REQUEST_CODE = 16;
 
         public static final int FACING_BACK = 0;
         public static final int FACING_FRONT = 1;
@@ -35,9 +28,21 @@ public class CameraKit {
         public static final int METHOD_STILL = 1;
         public static final int METHOD_SPEED = 2;
 
-        public static final int PERMISSIONS_STRICT = 0;
-        public static final int PERMISSIONS_LAZY = 1;
-        public static final int PERMISSIONS_PICTURE = 2;
+
+        /**
+         * This means the app will be requesting Camera and Audio permissions on Marshmallow+.
+         * With this configuration, it is mandatory that the developer adds
+         *     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+         * to its manifest, or the app will crash.
+         */
+        public static final int PERMISSIONS_VIDEO = 0;
+
+        /**
+         * This means the app will be requesting the Camera permissions on Marshmallow+.
+         * On older APIs, this is not important, since the Camera permission is already
+         * declared in the manifest by the library.
+         */
+        public static final int PERMISSIONS_PICTURE = 1;
 
         public static final int VIDEO_QUALITY_480P = 0;
         public static final int VIDEO_QUALITY_720P = 1;
@@ -56,7 +61,7 @@ public class CameraKit {
         static final int DEFAULT_FOCUS = Constants.FOCUS_CONTINUOUS;
         static final int DEFAULT_ZOOM = Constants.ZOOM_OFF;
         static final int DEFAULT_METHOD = Constants.METHOD_STANDARD;
-        static final int DEFAULT_PERMISSIONS = Constants.PERMISSIONS_STRICT;
+        static final int DEFAULT_PERMISSIONS = Constants.PERMISSIONS_PICTURE;
         static final int DEFAULT_VIDEO_QUALITY = Constants.VIDEO_QUALITY_480P;
 
         static final int DEFAULT_JPEG_QUALITY = 100;

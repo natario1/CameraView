@@ -3,7 +3,6 @@ package com.flurgle.camerakit;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.ImageFormat;
-import android.graphics.PointF;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -36,7 +35,7 @@ class Camera2 extends CameraImpl {
 
     Camera2(CameraListener callback, PreviewImpl preview, Context context) {
         super(callback, preview);
-        preview.setCallback(new PreviewImpl.Callback() {
+        preview.setCallback(new PreviewImpl.OnSurfaceChangedCallback() {
             @Override
             public void onSurfaceChanged() {
 
@@ -89,7 +88,12 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    void setDisplayOrientation(int displayOrientation) {
+    void onDisplayOffset(int displayOrientation) {
+
+    }
+
+    @Override
+    void onDeviceOrientation(int deviceOrientation) {
 
     }
 
@@ -176,7 +180,7 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    Size getCaptureResolution() {
+    Size getCaptureSize() {
         if (mCaptureSize == null && mCameraCharacteristics != null) {
             TreeSet<Size> sizes = new TreeSet<>();
             sizes.addAll(getAvailableCaptureResolutions());
@@ -202,7 +206,7 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    Size getPreviewResolution() {
+    Size getPreviewSize() {
         if (mPreviewSize == null && mCameraCharacteristics != null) {
             TreeSet<Size> sizes = new TreeSet<>();
             sizes.addAll(getAvailablePreviewResolutions());

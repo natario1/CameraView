@@ -2,19 +2,24 @@
     package="com.flurgle.camerakit">
 
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
-    <uses-feature android:name="android.hardware.camera" />
+    <!-- Have developers add this. We don't want AUDIO permission to be auto-added to
+         apps that just want to take pictures. -->
+    <!-- uses-permission android:name="android.permission.RECORD_AUDIO" /-->
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true"/>
     <uses-feature
         android:name="android.hardware.camera.autofocus"
-        android:required="false" />
+        android:required="false"/>
     <uses-feature
         android:name="android.hardware.camera.front"
-        android:required="false" />
+        android:required="false"/>
     <uses-feature
         android:name="android.hardware.microphone"
-        android:required="false" />
+        android:required="false"/>
 
-    <application />
+    <application/>
 
 </manifest>

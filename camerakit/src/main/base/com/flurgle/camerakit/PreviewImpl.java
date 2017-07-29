@@ -7,20 +7,22 @@ import android.view.View;
 
 abstract class PreviewImpl {
 
-    interface Callback {
+    interface OnSurfaceChangedCallback {
         void onSurfaceChanged();
     }
 
-    private Callback mCallback;
+    private OnSurfaceChangedCallback mOnSurfaceChangedCallback;
 
-    private int mWidth;
-    private int mHeight;
+    // As far as I can see, these are the view/surface dimensions.
+    private int mSurfaceWidth;
+    private int mSurfaceHeight;
 
-    protected int mTrueWidth;
-    protected int mTrueHeight;
+    // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
+    private int mDesiredWidth;
+    private int mDesiredHeight;
 
-    void setCallback(Callback callback) {
-        mCallback = callback;
+    void setCallback(OnSurfaceChangedCallback callback) {
+        mOnSurfaceChangedCallback = callback;
     }
 
     abstract Surface getSurface();
@@ -29,12 +31,13 @@ abstract class PreviewImpl {
 
     abstract Class getOutputClass();
 
-    abstract void setDisplayOrientation(int displayOrientation);
+    protected void onDisplayOffset(int displayOrientation) {}
+    protected void onDeviceOrientation(int deviceOrientation) {}
 
     abstract boolean isReady();
 
     protected void dispatchSurfaceChanged() {
-        mCallback.onSurfaceChanged();
+        mOnSurfaceChangedCallback.onSurfaceChanged();
     }
 
     SurfaceHolder getSurfaceHolder() {
@@ -45,30 +48,37 @@ abstract class PreviewImpl {
         return null;
     }
 
-    void setSize(int width, int height) {
-        mWidth = width;
-        mHeight = height;
-
-        // Refresh true preview size to adjust scaling
-        setTruePreviewSize(mTrueWidth, mTrueHeight);
+    // As far as I can see, these are the view/surface dimensions.
+    // This is called by subclasses.
+    protected void setSurfaceSize(int width, int height) {
+        this.mSurfaceWidth = width;
+        this.mSurfaceHeight = height;
+        refreshScale(); // Refresh true preview size to adjust scaling
     }
 
-    int getWidth() {
-        return mWidth;
+    // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
+    // This is called by the CameraImpl.
+    void setDesiredSize(int width, int height) {
+        this.mDesiredWidth = width;
+        this.mDesiredHeight = height;
+        refreshScale();
     }
 
-    int getHeight() {
-        return mHeight;
+    Size getSurfaceSize() {
+        return new Size(mSurfaceWidth, mSurfaceHeight);
     }
 
-    void setTruePreviewSize(final int width, final int height) {
-        this.mTrueWidth = width;
-        this.mTrueHeight = height;
+    /**
+     * As far as I can see, this extends either width or height of the surface,
+     * to match the desired aspect ratio.
+     * This means that the external part of the surface will be cropped by the outer view.
+     */
+    protected void refreshScale() {
         getView().post(new Runnable() {
             @Override
             public void run() {
-                if (width != 0 && height != 0) {
-                    AspectRatio aspectRatio = AspectRatio.of(width, height);
+                if (mDesiredWidth != 0 && mDesiredHeight != 0) {
+                    AspectRatio aspectRatio = AspectRatio.of(mDesiredWidth, mDesiredHeight);
                     int targetHeight = (int) (getView().getWidth() * aspectRatio.toFloat());
                     float scaleY;
                     if (getView().getHeight() > 0) {
@@ -88,13 +98,4 @@ abstract class PreviewImpl {
             }
         });
     }
-
-    int getTrueWidth() {
-        return mTrueWidth;
-    }
-
-    int getTrueHeight() {
-        return mTrueHeight;
-    }
-
 }
