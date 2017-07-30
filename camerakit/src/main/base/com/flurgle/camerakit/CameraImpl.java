@@ -24,6 +24,7 @@ abstract class CameraImpl {
     abstract void setMethod(@Method int method);
     abstract void setZoom(@ZoomMode int zoom);
     abstract void setVideoQuality(@VideoQuality int videoQuality);
+    abstract void setWhiteBalance(@WhiteBalance int whiteBalance);
     abstract void setLocation(double latitude, double longitude);
 
     abstract void captureImage();
@@ -36,6 +37,6 @@ abstract class CameraImpl {
     abstract boolean isCameraOpened();
 
     @Nullable
-    abstract CameraProperties getCameraProperties();
+    abstract ExtraProperties getExtraProperties();
 
 }

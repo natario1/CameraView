@@ -80,10 +80,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Flash private int mFlash;
     @Focus private int mFocus;
     @Method private int mMethod;
-    @ZoomMode
-    private int mZoom;
+    @ZoomMode private int mZoom;
     @Permissions private int mPermissions;
     @VideoQuality private int mVideoQuality;
+    @WhiteBalance private int mWhiteBalance;
     private int mJpegQuality;
     private boolean mCropOutput;
     private boolean mAdjustViewBounds;
@@ -116,6 +116,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 mMethod = a.getInteger(R.styleable.CameraView_cameraCaptureMethod, CameraKit.Defaults.DEFAULT_METHOD);
                 mZoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraKit.Defaults.DEFAULT_ZOOM);
                 mPermissions = a.getInteger(R.styleable.CameraView_cameraPermissionPolicy, CameraKit.Defaults.DEFAULT_PERMISSIONS);
+                mWhiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
                 mVideoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
                 mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
                 mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
@@ -138,6 +139,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setZoom(mZoom);
         setPermissionPolicy(mPermissions);
         setVideoQuality(mVideoQuality);
+        setWhiteBalance(mWhiteBalance);
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context) {
@@ -352,8 +354,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     @Nullable
-    public CameraProperties getCameraProperties() {
-        return mCameraImpl.getCameraProperties();
+    public ExtraProperties getExtraProperties() {
+        return mCameraImpl.getExtraProperties();
     }
 
 
@@ -366,6 +368,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl.setLocation(latitude, longitude);
     }
 
+    /**
+     * Sets desired white balance to current camera session.
+     * @param whiteBalance desired white balance behavior.
+     */
+    public void setWhiteBalance(@WhiteBalance int whiteBalance) {
+        mWhiteBalance = whiteBalance;
+        mCameraImpl.setWhiteBalance(whiteBalance);
+    }
+
+    /**
+     * Returns the current white balance behavior.
+     * @return white balance value.
+     */
+    @WhiteBalance
+    public int getWhiteBalance() {
+        return mWhiteBalance;
+    }
+
     @Facing
     public int getFacing() {
         return mFacing;
@@ -373,7 +393,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     public void setFacing(@Facing final int facing) {
         this.mFacing = facing;
-
         run(new Runnable() {
             @Override
             public void run() {

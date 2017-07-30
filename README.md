@@ -21,6 +21,7 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - [cameraZoomMode](#camerazoommode)
   - [cameraCropOutput](#cameracropoutput)
   - [cameraJpegQuality](#camerajpegquality)
+  - [cameraWhiteBalance](#camerawhitebalance)
 - [Permissions Behavior](#permissions-behavior)
 - [Dynamic Sizing Behavior](#dynamic-sizing-behavior)
   - [Center Crop](#center-crop)
@@ -38,6 +39,9 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - `CAPTURE_METHOD_STANDARD`: an image captured normally using the camera APIs.
   - `CAPTURE_METHOD_FRAME`: a freeze frame of the `CameraView` preview (similar to SnapChat and Instagram) for devices with slower cameras
 - Built-in tap to focus
+- EXIF support
+  - Automatically detected orientation tag
+  - Plug in location tags with `CameraView.setLocation(double, double)`
 - TODO: Built-in pinch to zoom
 
 ## Setup
@@ -157,6 +161,7 @@ camera.setCameraListener(new CameraListener() {
     app:cameraCropOutput="true"  
     app:cameraJpegQuality="100"
     app:cameraVideoQuality="480p"
+    app:cameraWhiteBalance="auto"
     android:adjustViewBounds="true" />
 ```
 
@@ -171,6 +176,7 @@ camera.setCameraListener(new CameraListener() {
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 <= n <= 100`|`100`|
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`max480p` `max720p` `max1080p` `max2160p` `highest` `lowest`|`max480p`|
+|[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 
 
 ### cameraFacing
@@ -259,6 +265,18 @@ cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_2160P);
 cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_LOWEST);
 cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_HIGHEST);
 cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_QVGA);
+```
+
+### cameraWhiteBalance
+
+Sets the desired white balance for the current session.
+
+```java
+cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_AUTO);
+cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_INCANDESCENT);
+cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_FLUORESCENT);
+cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_DAYLIGHT);
+cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_CLOUDY);
 ```
 
 ## Permissions behavior

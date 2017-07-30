@@ -22,6 +22,14 @@
             <enum name="tapWithMarker" value="3" />
         </attr>
 
+        <attr name="cameraWhiteBalance" format="enum">
+            <enum name="auto" value="0" />
+            <enum name="incandescent" value="1" />
+            <enum name="fluorescent" value="2" />
+            <enum name="daylight" value="3" />
+            <enum name="cloudy" value="4" />
+        </attr>
+
         <attr name="cameraZoomMode" format="enum">
             <enum name="off" value="0" />
 

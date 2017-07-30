@@ -18,12 +18,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.flurgle.camerakit.CameraKit.Constants.FLASH_OFF;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_CONTINUOUS;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_OFF;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_TAP;
 import static com.flurgle.camerakit.CameraKit.Constants.CAPTURE_METHOD_STANDARD;
 import static com.flurgle.camerakit.CameraKit.Constants.CAPTURE_METHOD_FRAME;
+import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_TAP_WITH_MARKER;
 
 @SuppressWarnings("deprecation")
 class Camera1 extends CameraImpl {
@@ -37,7 +37,7 @@ class Camera1 extends CameraImpl {
     private int mCameraId;
     private Camera mCamera;
     private Camera.Parameters mCameraParameters;
-    private CameraProperties mCameraProperties;
+    private ExtraProperties mExtraProperties;
     private Camera.CameraInfo mCameraInfo;
     private Size mPreviewSize;
     private Size mCaptureSize;
@@ -56,10 +56,12 @@ class Camera1 extends CameraImpl {
     @Method private int mMethod;
     @ZoomMode private int mZoom;
     @VideoQuality private int mVideoQuality;
+    @WhiteBalance private int mWhiteBalance;
     private double mLatitude;
     private double mLongitude;
 
     private Handler mHandler = new Handler();
+    private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper1();
 
     Camera1(CameraListener callback, PreviewImpl preview) {
         super(callback, preview);
@@ -136,11 +138,7 @@ class Camera1 extends CameraImpl {
 
     @Override
     void setFacing(@Facing int facing) {
-        int internalFacing = new ConstantMapper.Facing(facing).map();
-        if (internalFacing == -1) {
-            return;
-        }
-
+        int internalFacing = mMapper.mapFacing(facing);
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, mCameraInfo);
             if (mCameraInfo.facing == internalFacing) {
@@ -158,30 +156,42 @@ class Camera1 extends CameraImpl {
     }
 
     @Override
-    void setFlash(@Flash int flash) {
+    void setWhiteBalance(@WhiteBalance int whiteBalance) {
+        int old = mWhiteBalance;
+        mWhiteBalance = whiteBalance;
         if (mCameraParameters != null) {
-            List<String> flashes = mCameraParameters.getSupportedFlashModes();
-            String internalFlash = new ConstantMapper.Flash(flash).map();
-            if (flashes != null && flashes.contains(internalFlash)) {
-                mCameraParameters.setFlashMode(internalFlash);
-                mFlash = flash;
+            List<String> supported = mCameraParameters.getSupportedWhiteBalance();
+            String internal = mMapper.mapWhiteBalance(whiteBalance);
+            if (supported != null && supported.contains(internal)) {
+                mCameraParameters.setWhiteBalance(internal);
+                mCamera.setParameters(mCameraParameters);
             } else {
-                String currentFlash = new ConstantMapper.Flash(mFlash).map();
-                if (flashes == null || !flashes.contains(currentFlash)) {
-                    mCameraParameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-                    mFlash = FLASH_OFF;
-                }
+                mWhiteBalance = old;
             }
-
-            mCamera.setParameters(mCameraParameters);
-        } else {
-            mFlash = flash;
         }
     }
 
     @Override
+    void setFlash(@Flash int flash) {
+        int old = mFlash;
+        mFlash = flash;
+        if (mCameraParameters != null) {
+            List<String> flashes = mCameraParameters.getSupportedFlashModes();
+            String internalFlash = mMapper.mapFlash(flash);
+            if (flashes != null && flashes.contains(internalFlash)) {
+                mCameraParameters.setFlashMode(internalFlash);
+                mCamera.setParameters(mCameraParameters);
+            } else {
+                mFlash = old;
+            }
+        }
+    }
+
+
+    @Override
     void setFocus(@Focus int focus) {
-        this.mFocus = focus;
+        int old = mFocus;
+        mFocus = focus;
         switch (focus) {
             case FOCUS_CONTINUOUS:
                 if (mCameraParameters != null) {
@@ -190,17 +200,20 @@ class Camera1 extends CameraImpl {
                     if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
                         mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
                     } else {
-                        setFocus(FOCUS_OFF);
+                        mFocus = old;
                     }
                 }
                 break;
 
             case FOCUS_TAP:
+            case FOCUS_TAP_WITH_MARKER:
                 if (mCameraParameters != null) {
                     attachFocusTapListener();
                     final List<String> modes = mCameraParameters.getSupportedFocusModes();
                     if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
                         mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                    } else {
+                        mFocus = old;
                     }
                 }
                 break;
@@ -318,8 +331,8 @@ class Camera1 extends CameraImpl {
 
     @Nullable
     @Override
-    CameraProperties getCameraProperties() {
-        return mCameraProperties;
+    ExtraProperties getExtraProperties() {
+        return mExtraProperties;
     }
 
     // Internal:
@@ -424,7 +437,7 @@ class Camera1 extends CameraImpl {
     }
 
     private void collectCameraProperties() {
-        mCameraProperties = new CameraProperties(mCameraParameters.getVerticalViewAngle(),
+        mExtraProperties = new ExtraProperties(mCameraParameters.getVerticalViewAngle(),
                 mCameraParameters.getHorizontalViewAngle());
     }
 

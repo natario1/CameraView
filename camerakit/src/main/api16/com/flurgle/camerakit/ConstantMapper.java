@@ -6,96 +6,70 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.support.v4.util.SparseArrayCompat;
 import android.util.SparseIntArray;
 
+import java.util.Map;
+
 public class ConstantMapper {
 
-    private abstract static class BaseMapper<T> {
+    static abstract class MapperImpl {
 
-        protected int mCameraKitConstant;
+        MapperImpl() {}
 
-        protected BaseMapper(int cameraKitConstant) {
-            this.mCameraKitConstant = cameraKitConstant;
-        }
-
-        abstract T map();
-
+        abstract <T> T mapFlash(@Flash int internalConstant);
+        abstract <T> T mapFacing(@Facing int internalConstant);
+        abstract <T> T mapWhiteBalance(@WhiteBalance int internalConstant);
     }
 
-    static class Flash extends BaseMapper<String> {
-
-        private static final SparseArrayCompat<String> FLASH_MODES = new SparseArrayCompat<>();
+    static class Mapper1 extends MapperImpl {
+        private static final SparseArrayCompat<String> FLASH = new SparseArrayCompat<>();
+        private static final SparseArrayCompat<String> WB = new SparseArrayCompat<>();
+        private static final SparseArrayCompat<Integer> FACING = new SparseArrayCompat<>();
 
         static {
-            FLASH_MODES.put(CameraKit.Constants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
-            FLASH_MODES.put(CameraKit.Constants.FLASH_ON, Camera.Parameters.FLASH_MODE_ON);
-            FLASH_MODES.put(CameraKit.Constants.FLASH_AUTO, Camera.Parameters.FLASH_MODE_AUTO);
-            FLASH_MODES.put(CameraKit.Constants.FLASH_TORCH, Camera.Parameters.FLASH_MODE_TORCH);
-        }
-
-        protected Flash(int cameraKitConstant) {
-            super(cameraKitConstant);
+            FLASH.put(CameraKit.Constants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
+            FLASH.put(CameraKit.Constants.FLASH_ON, Camera.Parameters.FLASH_MODE_ON);
+            FLASH.put(CameraKit.Constants.FLASH_AUTO, Camera.Parameters.FLASH_MODE_AUTO);
+            FLASH.put(CameraKit.Constants.FLASH_TORCH, Camera.Parameters.FLASH_MODE_TORCH);
+            FACING.put(CameraKit.Constants.FACING_BACK, Camera.CameraInfo.CAMERA_FACING_BACK);
+            FACING.put(CameraKit.Constants.FACING_FRONT, Camera.CameraInfo.CAMERA_FACING_FRONT);
+            WB.put(CameraKit.Constants.WHITE_BALANCE_AUTO, Camera.Parameters.WHITE_BALANCE_AUTO);
+            WB.put(CameraKit.Constants.WHITE_BALANCE_INCANDESCENT, Camera.Parameters.WHITE_BALANCE_INCANDESCENT);
+            WB.put(CameraKit.Constants.WHITE_BALANCE_FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
+            WB.put(CameraKit.Constants.WHITE_BALANCE_DAYLIGHT, Camera.Parameters.WHITE_BALANCE_DAYLIGHT);
+            WB.put(CameraKit.Constants.WHITE_BALANCE_CLOUDY, Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT);
         }
 
         @Override
-        String map() {
-            return FLASH_MODES.get(mCameraKitConstant, FLASH_MODES.get(CameraKit.Constants.FLASH_OFF));
+        <T> T mapFlash(int internalConstant) {
+            return (T) FLASH.get(internalConstant, null);
         }
 
+        @Override
+        <T> T mapFacing(int internalConstant) {
+            return (T) FACING.get(internalConstant, null);
+        }
+
+        @Override
+        <T> T mapWhiteBalance(int internalConstant) {
+            return (T) WB.get(internalConstant, null);
+        }
     }
 
-    @TargetApi(21)
-    static class Flash2 extends BaseMapper<String> {
-
-        protected Flash2(int cameraKitConstant) {
-            super(cameraKitConstant);
-        }
+    static class Mapper2 extends MapperImpl {
 
         @Override
-        String map() {
+        <T> T mapWhiteBalance(@WhiteBalance int internalConstant) {
             return null;
         }
 
-    }
-
-    static class Facing extends BaseMapper<Integer> {
-
-        private static final SparseArrayCompat<Integer> FACING_MODES = new SparseArrayCompat<>();
-
-        static {
-            FACING_MODES.put(CameraKit.Constants.FACING_BACK, Camera.CameraInfo.CAMERA_FACING_BACK);
-            FACING_MODES.put(CameraKit.Constants.FACING_FRONT, Camera.CameraInfo.CAMERA_FACING_FRONT);
-        }
-
-        protected Facing(int cameraKitConstant) {
-            super(cameraKitConstant);
+        @Override
+        <T> T mapFacing(@Facing int internalConstant) {
+            return null;
         }
 
         @Override
-        Integer map() {
-            return FACING_MODES.get(mCameraKitConstant, FACING_MODES.get(CameraKit.Constants.FACING_BACK));
+        <T> T mapFlash(@Flash int internalConstant) {
+            return null;
         }
-
     }
-
-    @TargetApi(21)
-    static class Facing2 extends BaseMapper<Integer> {
-
-        private static final SparseIntArray FACING_MODES = new SparseIntArray();
-
-        static {
-            FACING_MODES.put(CameraKit.Constants.FACING_BACK, CameraCharacteristics.LENS_FACING_BACK);
-            FACING_MODES.put(CameraKit.Constants.FACING_FRONT, CameraCharacteristics.LENS_FACING_FRONT);
-        }
-
-        protected Facing2(int cameraKitConstant) {
-            super(cameraKitConstant);
-        }
-
-        @Override
-        Integer map() {
-            return FACING_MODES.get(mCameraKitConstant, FACING_MODES.get(CameraKit.Constants.FACING_BACK));
-        }
-
-    }
-
 
 }

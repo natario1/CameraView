@@ -59,6 +59,11 @@ public class CameraKit {
         public static final int VIDEO_QUALITY_LOWEST = 5;
         public static final int VIDEO_QUALITY_QVGA = 6;
 
+        public static final int WHITE_BALANCE_AUTO = 0;
+        public static final int WHITE_BALANCE_INCANDESCENT = 1;
+        public static final int WHITE_BALANCE_FLUORESCENT = 2;
+        public static final int WHITE_BALANCE_DAYLIGHT = 3;
+        public static final int WHITE_BALANCE_CLOUDY = 4;
     }
 
     static class Defaults {
@@ -70,7 +75,7 @@ public class CameraKit {
         static final int DEFAULT_METHOD = Constants.CAPTURE_METHOD_STANDARD;
         static final int DEFAULT_PERMISSIONS = Constants.PERMISSIONS_PICTURE;
         static final int DEFAULT_VIDEO_QUALITY = Constants.VIDEO_QUALITY_480P;
-
+        static final int DEFAULT_WHITE_BALANCE = Constants.WHITE_BALANCE_AUTO;
         static final int DEFAULT_JPEG_QUALITY = 100;
         static final boolean DEFAULT_CROP_OUTPUT = false;
         static final boolean DEFAULT_ADJUST_VIEW_BOUNDS = false;

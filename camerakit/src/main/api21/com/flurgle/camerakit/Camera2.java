@@ -31,7 +31,8 @@ class Camera2 extends CameraImpl {
     private Size mCaptureSize;
     private Size mPreviewSize;
 
-    private final HashMap<String, CameraProperties> mCameraPropertyMap = new HashMap<>();
+    private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper2();
+    private final HashMap<String, ExtraProperties> mExtraPropertiesMap = new HashMap<>();
 
     Camera2(CameraListener callback, PreviewImpl preview, Context context) {
         super(callback, preview);
@@ -64,7 +65,7 @@ class Camera2 extends CameraImpl {
                     }
                     float w = size.getWidth();
                     float h = size.getHeight();
-                    mCameraPropertyMap.put(cameraId, new CameraProperties(
+                    mExtraPropertiesMap.put(cameraId, new ExtraProperties(
                             (float) Math.toDegrees(2*Math.atan(w/(maxFocus[0]*2))),
                             (float) Math.toDegrees(2*Math.atan(h/(maxFocus[0]*2)))
                     ));
@@ -99,11 +100,7 @@ class Camera2 extends CameraImpl {
 
     @Override
     void setFacing(@Facing int facing) {
-        int internalFacing = new ConstantMapper.Facing(facing).map();
-        if (internalFacing == -1) {
-            return;
-        }
-
+        int internalFacing = mMapper.mapFacing(facing);
         final String[] ids;
         try {
             ids = mCameraManager.getCameraIdList();
@@ -161,6 +158,11 @@ class Camera2 extends CameraImpl {
 
     @Override
     void setLocation(double latitude, double longitude) {
+
+    }
+
+    @Override
+    void setWhiteBalance(@WhiteBalance int whiteBalance) {
 
     }
 
@@ -248,11 +250,11 @@ class Camera2 extends CameraImpl {
 
     @Nullable
     @Override
-    CameraProperties getCameraProperties() {
+    ExtraProperties getExtraProperties() {
         if (mCamera == null) {
             return null;
         }
-        return mCameraPropertyMap.get(mCamera.getId());
+        return mExtraPropertiesMap.get(mCamera.getId());
     }
     // Internal
 
