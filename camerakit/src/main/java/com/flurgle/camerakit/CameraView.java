@@ -195,13 +195,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * If {@link CameraView#mAdjustViewBounds} was set AND one of the dimensions is set to WRAP_CONTENT,
+     * If adjustViewBounds was set AND one of the dimensions is set to WRAP_CONTENT,
      * CameraView will adjust that dimensions to fit the preview aspect ratio as returned by
      * {@link #getPreviewSize()}.
      *
      * If this is not true, the surface will adapt to the dimension specified in the layout file.
      * Having fixed dimensions means that, very likely, what the user sees is different from what
      * the final picture will be. This is also due to what happens in {@link PreviewImpl#refreshScale()}.
+     *
+     * If this is a problem, you can use {@link #setCropOutput(boolean)} set to true.
+     * In that case, the final image will have the same aspect ratio of the preview.
      */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -220,19 +223,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             int height = MeasureSpec.getSize(heightMeasureSpec);
             float ratio = (float) height / (float) previewSize.getWidth();
             int width = (int) (previewSize.getHeight() * ratio);
-            super.onMeasure(
-                    MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                    heightMeasureSpec
-            );
+            super.onMeasure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), heightMeasureSpec);
 
         } else if (getLayoutParams().height == LayoutParams.WRAP_CONTENT) {
             int width = MeasureSpec.getSize(widthMeasureSpec);
             float ratio = (float) width / (float) previewSize.getHeight();
             int height = (int) (previewSize.getWidth() * ratio);
-            super.onMeasure(
-                    widthMeasureSpec,
-                    MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
-            );
+            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
 
         } else {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -272,8 +269,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     public void onDestroy(LifecycleOwner owner) {
         mLifecycle = owner.getLifecycle();
-        // This might be useless, but no time to think about it now.
-        sWorkerHandler = null;
+        destroy();
     }
 
     public void start() {
@@ -316,6 +312,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
         mIsStarted = false;
         mCameraImpl.stop();
+    }
+
+    public void destroy() {
+        // This might be useless, but no time to think about it now.
+        sWorkerHandler = null;
     }
 
     @Nullable
@@ -496,8 +497,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         public void onPictureTaken(byte[] jpeg) {
             super.onPictureTaken(jpeg);
             if (mCropOutput) {
-                int width = mMethod == METHOD_STANDARD ? mCameraImpl.getCaptureSize().getWidth() : mCameraImpl.getPreviewSize().getWidth();
-                int height = mMethod == METHOD_STANDARD ? mCameraImpl.getCaptureSize().getHeight() : mCameraImpl.getPreviewSize().getHeight();
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
                 getCameraListener().onPictureTaken(new CenterCrop(jpeg, outputRatio, mJpegQuality).getJpeg());
             } else {
