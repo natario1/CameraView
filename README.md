@@ -18,7 +18,7 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - [cameraFlash](#cameraflash)
   - [cameraFocus](#camerafocus)
   - [cameraCaptureMethod](#cameracapturemethod)
-  - [cameraZoom](#camerazoom)
+  - [cameraZoomMode](#camerazoommode)
   - [cameraCropOutput](#cameracropoutput)
   - [cameraJpegQuality](#camerajpegquality)
 - [Permissions Behavior](#permissions-behavior)
@@ -166,7 +166,7 @@ camera.setCameraListener(new CameraListener() {
 |[`cameraFlash`](#cameraflash)|`setFlash()`|`off` `on` `auto` `torch`|`off`|
 |[`cameraFocus`](#camerafocus)|`setFocus()`|`off` `continuous` `tap` `tapWithMarker`|`continuous`|
 |[`cameraCaptureMethod`](#cameracapturemethod)|`setCaptureMethod()`|`standard` `frame`|`standard`|
-|[`cameraZoom`](#camerazoom)|`setZoom()`|`off` `pinch`|`off`|
+|[`cameraZoomMode`](#camerazoommode)|`setZoom()`|`off` `pinch`|`off`|
 |[`cameraPermissionPolicy`](#camerapermissionpolicy)|`setPermissionPolicy()`|`picture` `video`|`picture`|
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 <= n <= 100`|`100`|
@@ -213,7 +213,7 @@ cameraView.setMethod(CameraKit.Constants.CAPTURE_METHOD_STANDARD);
 cameraView.setMethod(CameraKit.Constants.CAPTURE_METHOD_FRAME);
 ```
 
-### cameraZoom
+### cameraZoomMode
 
 TODO: work in progress. Right now 'off' is the onlly option.
 

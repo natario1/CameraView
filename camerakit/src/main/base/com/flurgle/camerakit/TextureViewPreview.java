@@ -45,7 +45,7 @@ class TextureViewPreview extends PreviewImpl {
 
     @Override
     Surface getSurface() {
-        return new Surface(mTextureView.getSurfaceTexture());
+        return new Surface(getSurfaceTexture());
     }
 
     @Override
@@ -60,7 +60,7 @@ class TextureViewPreview extends PreviewImpl {
 
     @Override
     boolean isReady() {
-        return mTextureView.getSurfaceTexture() != null;
+        return getSurfaceTexture() != null;
     }
 
     @Override

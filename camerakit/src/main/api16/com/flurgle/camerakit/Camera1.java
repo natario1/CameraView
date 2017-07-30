@@ -54,16 +54,18 @@ class Camera1 extends CameraImpl {
     @Flash private int mFlash;
     @Focus private int mFocus;
     @Method private int mMethod;
-    @Zoom private int mZoom;
+    @ZoomMode private int mZoom;
     @VideoQuality private int mVideoQuality;
+    private double mLatitude;
+    private double mLongitude;
 
     private Handler mHandler = new Handler();
 
     Camera1(CameraListener callback, PreviewImpl preview) {
         super(callback, preview);
-        preview.setCallback(new PreviewImpl.OnSurfaceChangedCallback() {
+        preview.setCallback(new PreviewImpl.OnPreviewSurfaceChangedCallback() {
             @Override
-            public void onSurfaceChanged() {
+            public void onPreviewSurfaceChanged() {
                 if (mCamera != null) {
                     setupPreview();
                     collectCameraSizes();
@@ -119,6 +121,17 @@ class Camera1 extends CameraImpl {
     @Override
     void onDeviceOrientation(int deviceOrientation) {
         this.mDeviceOrientation = deviceOrientation;
+    }
+
+    @Override
+    void setLocation(double latitude, double longitude) {
+        mLatitude = latitude;
+        mLongitude = longitude;
+        if (mCameraParameters != null) {
+            mCameraParameters.setGpsLatitude(latitude);
+            mCameraParameters.setGpsLongitude(longitude);
+            mCamera.setParameters(mCameraParameters);
+        }
     }
 
     @Override
@@ -214,7 +227,7 @@ class Camera1 extends CameraImpl {
     }
 
     @Override
-    void setZoom(@Zoom int zoom) {
+    void setZoom(@ZoomMode int zoom) {
         this.mZoom = zoom;
     }
 
@@ -373,7 +386,7 @@ class Camera1 extends CameraImpl {
      * This is called either on cameraView.start(), or when the underlying surface changes.
      * It is possible that in the first call the preview surface has not already computed its
      * dimensions.
-     * But when it does, the {@link PreviewImpl.OnSurfaceChangedCallback} should be called,
+     * But when it does, the {@link PreviewImpl.OnPreviewSurfaceChangedCallback} should be called,
      * and this should be refreshed.
      *
      *
@@ -406,6 +419,7 @@ class Camera1 extends CameraImpl {
         // mCameraParameters.setRotation(rotation);
         setFocus(mFocus);
         setFlash(mFlash);
+        setLocation(mLatitude, mLongitude);
         mCamera.setParameters(mCameraParameters);
     }
 

@@ -22,7 +22,7 @@
             <enum name="tapWithMarker" value="3" />
         </attr>
 
-        <attr name="cameraZoom" format="enum">
+        <attr name="cameraZoomMode" format="enum">
             <enum name="off" value="0" />
 
             <!-- TODO: Set to unique value when feature added -->

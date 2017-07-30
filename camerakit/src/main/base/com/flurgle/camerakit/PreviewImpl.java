@@ -1,18 +1,17 @@
 package com.flurgle.camerakit;
 
 import android.graphics.SurfaceTexture;
-import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.View;
 
 abstract class PreviewImpl {
 
-    interface OnSurfaceChangedCallback {
-        void onSurfaceChanged();
+    interface OnPreviewSurfaceChangedCallback {
+        void onPreviewSurfaceChanged();
     }
 
-    private OnSurfaceChangedCallback mOnSurfaceChangedCallback;
+    private OnPreviewSurfaceChangedCallback mOnPreviewSurfaceChangedCallback;
 
     // As far as I can see, these are the view/surface dimensions.
     // This live in the 'View' orientation.
@@ -23,8 +22,8 @@ abstract class PreviewImpl {
     private int mDesiredWidth;
     private int mDesiredHeight;
 
-    void setCallback(OnSurfaceChangedCallback callback) {
-        mOnSurfaceChangedCallback = callback;
+    void setCallback(OnPreviewSurfaceChangedCallback callback) {
+        mOnPreviewSurfaceChangedCallback = callback;
     }
 
     abstract Surface getSurface();
@@ -39,7 +38,7 @@ abstract class PreviewImpl {
     abstract boolean isReady();
 
     protected void dispatchSurfaceChanged() {
-        mOnSurfaceChangedCallback.onSurfaceChanged();
+        mOnPreviewSurfaceChangedCallback.onPreviewSurfaceChanged();
     }
 
     SurfaceHolder getSurfaceHolder() {
@@ -51,8 +50,7 @@ abstract class PreviewImpl {
     }
 
     // As far as I can see, these are the view/surface dimensions.
-    // This is called by subclasses. 1080, 1794 -- 1080, 1440
-
+    // This is called by subclasses.
     protected void setSurfaceSize(int width, int height) {
         this.mSurfaceWidth = width;
         this.mSurfaceHeight = height;
@@ -60,7 +58,8 @@ abstract class PreviewImpl {
     }
 
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
-    // This is called by the CameraImpl. 1200, 1600
+    // This is called by the CameraImpl.
+    // These must be alredy rotated, if needed, to be consistent with surface/view sizes.
     void setDesiredSize(int width, int height) {
         this.mDesiredWidth = width;
         this.mDesiredHeight = height;

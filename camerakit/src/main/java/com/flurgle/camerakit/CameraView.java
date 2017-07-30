@@ -80,7 +80,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Flash private int mFlash;
     @Focus private int mFocus;
     @Method private int mMethod;
-    @Zoom private int mZoom;
+    @ZoomMode
+    private int mZoom;
     @Permissions private int mPermissions;
     @VideoQuality private int mVideoQuality;
     private int mJpegQuality;
@@ -113,7 +114,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 mFlash = a.getInteger(R.styleable.CameraView_cameraFlash, CameraKit.Defaults.DEFAULT_FLASH);
                 mFocus = a.getInteger(R.styleable.CameraView_cameraFocus, CameraKit.Defaults.DEFAULT_FOCUS);
                 mMethod = a.getInteger(R.styleable.CameraView_cameraCaptureMethod, CameraKit.Defaults.DEFAULT_METHOD);
-                mZoom = a.getInteger(R.styleable.CameraView_cameraZoom, CameraKit.Defaults.DEFAULT_ZOOM);
+                mZoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraKit.Defaults.DEFAULT_ZOOM);
                 mPermissions = a.getInteger(R.styleable.CameraView_cameraPermissionPolicy, CameraKit.Defaults.DEFAULT_PERMISSIONS);
                 mVideoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
                 mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
@@ -355,6 +356,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return mCameraImpl.getCameraProperties();
     }
 
+
+    /**
+     * Set location coordinates to be found later in the jpeg EXIF header
+     * @param latitude current latitude
+     * @param longitude current longitude
+     */
+    public void setLocation(double latitude, double longitude) {
+        mCameraImpl.setLocation(latitude, longitude);
+    }
+
     @Facing
     public int getFacing() {
         return mFacing;
@@ -396,7 +407,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl.setMethod(mMethod);
     }
 
-    public void setZoom(@Zoom int zoom) {
+    public void setZoom(@ZoomMode int zoom) {
         this.mZoom = zoom;
         mCameraImpl.setZoom(mZoom);
     }

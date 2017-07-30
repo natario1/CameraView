@@ -35,9 +35,9 @@ class Camera2 extends CameraImpl {
 
     Camera2(CameraListener callback, PreviewImpl preview, Context context) {
         super(callback, preview);
-        preview.setCallback(new PreviewImpl.OnSurfaceChangedCallback() {
+        preview.setCallback(new PreviewImpl.OnPreviewSurfaceChangedCallback() {
             @Override
-            public void onSurfaceChanged() {
+            public void onPreviewSurfaceChanged() {
 
             }
         });
@@ -65,8 +65,8 @@ class Camera2 extends CameraImpl {
                     float w = size.getWidth();
                     float h = size.getHeight();
                     mCameraPropertyMap.put(cameraId, new CameraProperties(
-                            (float) Math.toDegrees(2*Math.atan(size.getWidth()/(maxFocus[0]*2))),
-                            (float) Math.toDegrees(2*Math.atan(size.getHeight()/(maxFocus[0]*2)))
+                            (float) Math.toDegrees(2*Math.atan(w/(maxFocus[0]*2))),
+                            (float) Math.toDegrees(2*Math.atan(h/(maxFocus[0]*2)))
                     ));
                 }
             }
@@ -155,7 +155,12 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    void setZoom(@Zoom int zoom) {
+    void setZoom(@ZoomMode int zoom) {
+
+    }
+
+    @Override
+    void setLocation(double latitude, double longitude) {
 
     }
 
