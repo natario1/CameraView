@@ -31,6 +31,7 @@ abstract class CameraImpl {
 
     abstract Size getCaptureSize();
     abstract Size getPreviewSize();
+    abstract boolean shouldFlipSizes(); // Wheter the Sizes should be flipped to match the view orientation.
     abstract boolean isCameraOpened();
 
     @Nullable

@@ -11,8 +11,10 @@ import android.content.ContextWrapper;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -24,6 +26,7 @@ import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
@@ -174,9 +177,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        Log.e(TAG, "onAttachedToWindow");
         if (!isInEditMode()) {
-            Log.e(TAG, "onAttachedToWindow: enabling orientation detector.");
             WindowManager manager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
             Display display = manager.getDefaultDisplay();
             mOrientationHelper.enable(display);
@@ -185,9 +186,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @Override
     protected void onDetachedFromWindow() {
-        Log.e(TAG, "onDetachedFromWindow");
         if (!isInEditMode()) {
-            Log.e(TAG, "onDetachedFromWindow: disabling orientation detector.");
             mOrientationHelper.disable();
         }
         super.onDetachedFromWindow();
@@ -215,20 +214,55 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         Size previewSize = getPreviewSize();
         if (previewSize == null) {
+            // Early measure.
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
 
-        if (getLayoutParams().width == LayoutParams.WRAP_CONTENT) {
-            int height = MeasureSpec.getSize(heightMeasureSpec);
-            float ratio = (float) height / (float) previewSize.getWidth();
-            int width = (int) (previewSize.getHeight() * ratio);
+        boolean wwc = getLayoutParams().width == ViewGroup.LayoutParams.WRAP_CONTENT;
+        boolean hwc = getLayoutParams().height == ViewGroup.LayoutParams.WRAP_CONTENT;
+        boolean flip = mCameraImpl.shouldFlipSizes();
+        float previewWidth = flip ? previewSize.getHeight() : previewSize.getWidth();
+        float previewHeight = flip ? previewSize.getWidth() : previewSize.getHeight();
+
+        if (wwc && hwc) {
+            // If both dimensions are WRAP_CONTENT, let's try to fit the preview size perfectly
+            // without cropping.
+            // TODO: This should actually be a flag, like scaleMode, that replaces cropOutput and adjustViewBounds.
+            // This is like a fitCenter.
+
+            // preview: 1600x1200
+            // parent:  1080x1794
+            float parentHeight = MeasureSpec.getSize(heightMeasureSpec); // 1794.
+            float parentWidth = MeasureSpec.getSize(widthMeasureSpec); //   1080. mode = AT_MOST
+            float targetRatio = previewHeight / previewWidth;
+            float currentRatio = parentHeight / parentWidth;
+            Log.e(TAG, "parentHeight="+parentHeight+", parentWidth="+parentWidth);
+            Log.e(TAG, "previewHeight="+previewHeight+", previewWidth="+previewWidth);
+            if (currentRatio > targetRatio) {
+                // View is too tall. Must reduce height.
+                int newHeight = (int) (parentWidth * targetRatio);
+                super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(newHeight, MeasureSpec.EXACTLY));
+            } else {
+                // View is too wide. Must reduce width.
+                int newWidth = (int) (parentHeight / targetRatio);
+                super.onMeasure(MeasureSpec.makeMeasureSpec(newWidth, MeasureSpec.EXACTLY), heightMeasureSpec);
+            }
+
+        } else if (wwc) {
+            // Legacy behavior, with just a WC dimension. This is dangerous because the final size
+            // might be bigger than the available size, resulting in part of the surface getting cropped.
+            // Think for example of a 4:3 preview in a 16:9 screen, with width=MP and height=WC.
+            // This is like a cropCenter.
+            float height = MeasureSpec.getSize(heightMeasureSpec);
+            float ratio = height / previewWidth;
+            int width = (int) (previewHeight * ratio);
             super.onMeasure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), heightMeasureSpec);
 
-        } else if (getLayoutParams().height == LayoutParams.WRAP_CONTENT) {
-            int width = MeasureSpec.getSize(widthMeasureSpec);
-            float ratio = (float) width / (float) previewSize.getHeight();
-            int height = (int) (previewSize.getWidth() * ratio);
+        } else if (hwc) {
+            float width = MeasureSpec.getSize(widthMeasureSpec);
+            float ratio = width / previewHeight;
+            int height = (int) (previewWidth * ratio);
             super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
 
         } else {
@@ -446,12 +480,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     /**
      * Returns the size used for the preview,
      * or null if it hasn't been computed (for example if the surface is not ready).
+     * @return a Size
      */
     @Nullable
     public Size getPreviewSize() {
         return mCameraImpl != null ? mCameraImpl.getPreviewSize() : null;
     }
 
+    /**
+     * Returns the size used for the capture,
+     * or null if it hasn't been computed yet (for example if the surface is not ready).
+     * @return a Size
+     */
     @Nullable
     public Size getCaptureSize() {
         return mCameraImpl != null ? mCameraImpl.getCaptureSize() : null;

@@ -48,6 +48,7 @@ class Camera1 extends CameraImpl {
 
     private int mDisplayOffset;
     private int mDeviceOrientation;
+    private int mSensorOffset;
 
     @Facing private int mFacing;
     @Flash private int mFlash;
@@ -130,6 +131,7 @@ class Camera1 extends CameraImpl {
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, mCameraInfo);
             if (mCameraInfo.facing == internalFacing) {
+                mSensorOffset = mCameraInfo.orientation;
                 mCameraId = i;
                 mFacing = facing;
                 break;
@@ -292,6 +294,11 @@ class Camera1 extends CameraImpl {
     }
 
     @Override
+    boolean shouldFlipSizes() {
+        return mSensorOffset % 180 != 0;
+    }
+
+    @Override
     boolean isCameraOpened() {
         return mCamera != null;
     }
@@ -337,9 +344,9 @@ class Camera1 extends CameraImpl {
     private int computeCameraToDisplayOffset() {
         if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
             // or: (360 - ((info.orientation + displayOrientation) % 360)) % 360;
-            return ((mCameraInfo.orientation - mDisplayOffset) + 360 + 180) % 360;
+            return ((mSensorOffset - mDisplayOffset) + 360 + 180) % 360;
         } else {
-            return (mCameraInfo.orientation - mDisplayOffset + 360) % 360;
+            return (mSensorOffset - mDisplayOffset + 360) % 360;
         }
     }
 
@@ -348,7 +355,7 @@ class Camera1 extends CameraImpl {
      * the camera APIs as long as you call {@link Camera.Parameters#setRotation(int)}.
      */
     private int computeExifOrientation() {
-        return (mDeviceOrientation + mCameraInfo.orientation) % 360;
+        return (mDeviceOrientation + mSensorOffset) % 360;
     }
 
     private int calculateCaptureRotation() {
@@ -388,10 +395,10 @@ class Camera1 extends CameraImpl {
 
 
     private void adjustCameraParameters() {
-        boolean invertPreviewSizes = mDisplayOffset % 180 != 0;
+        boolean invertPreviewSizes = shouldFlipSizes(); // mDisplayOffset % 180 != 0;
         mPreview.setDesiredSize(
-                invertPreviewSizes? getPreviewSize().getHeight() : getPreviewSize().getWidth(),
-                invertPreviewSizes? getPreviewSize().getWidth() : getPreviewSize().getHeight()
+                invertPreviewSizes ? getPreviewSize().getHeight() : getPreviewSize().getWidth(),
+                invertPreviewSizes ? getPreviewSize().getWidth() : getPreviewSize().getHeight()
         );
         mCameraParameters.setPreviewSize(getPreviewSize().getWidth(), getPreviewSize().getHeight());
         mCameraParameters.setPictureSize(getCaptureSize().getWidth(), getCaptureSize().getHeight());

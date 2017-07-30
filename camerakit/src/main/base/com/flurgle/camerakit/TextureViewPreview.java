@@ -14,7 +14,7 @@ class TextureViewPreview extends PreviewImpl {
     private final TextureView mTextureView;
 
     TextureViewPreview(Context context, ViewGroup parent) {
-        final View view = View.inflate(context, R.layout.texture_view, parent);
+        final View view = View.inflate(context, R.layout.texture_view, parent); // MATCH_PARENT
         mTextureView = (TextureView) view.findViewById(R.id.texture_view);
         mTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
 
@@ -28,7 +28,7 @@ class TextureViewPreview extends PreviewImpl {
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
                 setSurfaceSize(width, height);
                 dispatchSurfaceChanged();
-                refreshScale();
+                // refreshScale();
             }
 
             @Override

@@ -232,6 +232,11 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
+    boolean shouldFlipSizes() {
+        return false;
+    }
+
+    @Override
     boolean isCameraOpened() {
         return mCamera != null;
     }

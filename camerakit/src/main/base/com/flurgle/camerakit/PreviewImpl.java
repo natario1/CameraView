@@ -1,6 +1,7 @@
 package com.flurgle.camerakit;
 
 import android.graphics.SurfaceTexture;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.View;
@@ -14,6 +15,7 @@ abstract class PreviewImpl {
     private OnSurfaceChangedCallback mOnSurfaceChangedCallback;
 
     // As far as I can see, these are the view/surface dimensions.
+    // This live in the 'View' orientation.
     private int mSurfaceWidth;
     private int mSurfaceHeight;
 
@@ -49,7 +51,8 @@ abstract class PreviewImpl {
     }
 
     // As far as I can see, these are the view/surface dimensions.
-    // This is called by subclasses.
+    // This is called by subclasses. 1080, 1794 -- 1080, 1440
+
     protected void setSurfaceSize(int width, int height) {
         this.mSurfaceWidth = width;
         this.mSurfaceHeight = height;
@@ -57,7 +60,7 @@ abstract class PreviewImpl {
     }
 
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
-    // This is called by the CameraImpl.
+    // This is called by the CameraImpl. 1200, 1600
     void setDesiredSize(int width, int height) {
         this.mDesiredWidth = width;
         this.mDesiredHeight = height;
@@ -73,26 +76,24 @@ abstract class PreviewImpl {
      * to match the desired aspect ratio.
      * This means that the external part of the surface will be cropped by the outer view.
      */
-    protected void refreshScale() {
+    private void refreshScale() {
         getView().post(new Runnable() {
             @Override
             public void run() {
                 if (mDesiredWidth != 0 && mDesiredHeight != 0) {
                     AspectRatio aspectRatio = AspectRatio.of(mDesiredWidth, mDesiredHeight);
-                    int targetHeight = (int) (getView().getWidth() * aspectRatio.toFloat());
-                    float scaleY;
-                    if (getView().getHeight() > 0) {
-                        scaleY = (float) targetHeight / (float) getView().getHeight();
-                    } else {
-                        scaleY = 1;
+                    float targetHeight = (float) mSurfaceWidth / aspectRatio.toFloat();
+                    float scale = 1;
+                    if (mSurfaceHeight > 0) {
+                        scale = targetHeight / (float) mSurfaceHeight;
                     }
 
-                    if (scaleY > 1) {
-                        getView().setScaleX(1);
-                        getView().setScaleY(scaleY);
+                    if (scale > 1) {
+                        getView().setScaleX(1f);
+                        getView().setScaleY(scale);
                     } else {
-                        getView().setScaleX(1 / scaleY);
-                        getView().setScaleY(1);
+                        getView().setScaleX(1f / scale);
+                        getView().setScaleY(1f);
                     }
                 }
             }
