@@ -22,8 +22,8 @@ import static com.flurgle.camerakit.CameraKit.Constants.FLASH_OFF;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_CONTINUOUS;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_OFF;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_TAP;
-import static com.flurgle.camerakit.CameraKit.Constants.METHOD_STANDARD;
-import static com.flurgle.camerakit.CameraKit.Constants.METHOD_STILL;
+import static com.flurgle.camerakit.CameraKit.Constants.CAPTURE_METHOD_STANDARD;
+import static com.flurgle.camerakit.CameraKit.Constants.CAPTURE_METHOD_FRAME;
 
 @SuppressWarnings("deprecation")
 class Camera1 extends CameraImpl {
@@ -226,7 +226,7 @@ class Camera1 extends CameraImpl {
     @Override
     void captureImage() {
         switch (mMethod) {
-            case METHOD_STANDARD:
+            case CAPTURE_METHOD_STANDARD:
                 // Null check required for camera here as is briefly null when View is detached
                 if (!capturingImage && mCamera != null) {
                     // Set boolean to wait for image callback
@@ -250,7 +250,7 @@ class Camera1 extends CameraImpl {
                 }
                 break;
 
-            case METHOD_STILL:
+            case CAPTURE_METHOD_FRAME:
                 // TODO: will calculateCaptureRotation work here? It's the only usage. Test...
                 mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
                     @Override

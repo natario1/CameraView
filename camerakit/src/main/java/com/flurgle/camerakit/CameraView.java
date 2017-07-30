@@ -11,10 +11,8 @@ import android.content.ContextWrapper;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -41,7 +39,6 @@ import static com.flurgle.camerakit.CameraKit.Constants.FLASH_AUTO;
 import static com.flurgle.camerakit.CameraKit.Constants.FLASH_OFF;
 import static com.flurgle.camerakit.CameraKit.Constants.FLASH_ON;
 import static com.flurgle.camerakit.CameraKit.Constants.FLASH_TORCH;
-import static com.flurgle.camerakit.CameraKit.Constants.METHOD_STANDARD;
 import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_PICTURE;
 import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_VIDEO;
 
@@ -112,15 +109,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (attrs != null) {
             TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
             try {
-                mFacing = a.getInteger(R.styleable.CameraView_ckFacing, CameraKit.Defaults.DEFAULT_FACING);
-                mFlash = a.getInteger(R.styleable.CameraView_ckFlash, CameraKit.Defaults.DEFAULT_FLASH);
-                mFocus = a.getInteger(R.styleable.CameraView_ckFocus, CameraKit.Defaults.DEFAULT_FOCUS);
-                mMethod = a.getInteger(R.styleable.CameraView_ckMethod, CameraKit.Defaults.DEFAULT_METHOD);
-                mZoom = a.getInteger(R.styleable.CameraView_ckZoom, CameraKit.Defaults.DEFAULT_ZOOM);
-                mPermissions = a.getInteger(R.styleable.CameraView_ckPermissions, CameraKit.Defaults.DEFAULT_PERMISSIONS);
-                mVideoQuality = a.getInteger(R.styleable.CameraView_ckVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
-                mJpegQuality = a.getInteger(R.styleable.CameraView_ckJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
-                mCropOutput = a.getBoolean(R.styleable.CameraView_ckCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
+                mFacing = a.getInteger(R.styleable.CameraView_cameraFacing, CameraKit.Defaults.DEFAULT_FACING);
+                mFlash = a.getInteger(R.styleable.CameraView_cameraFlash, CameraKit.Defaults.DEFAULT_FLASH);
+                mFocus = a.getInteger(R.styleable.CameraView_cameraFocus, CameraKit.Defaults.DEFAULT_FOCUS);
+                mMethod = a.getInteger(R.styleable.CameraView_cameraCaptureMethod, CameraKit.Defaults.DEFAULT_METHOD);
+                mZoom = a.getInteger(R.styleable.CameraView_cameraZoom, CameraKit.Defaults.DEFAULT_ZOOM);
+                mPermissions = a.getInteger(R.styleable.CameraView_cameraPermissionPolicy, CameraKit.Defaults.DEFAULT_PERMISSIONS);
+                mVideoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
+                mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
+                mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
                 mAdjustViewBounds = a.getBoolean(R.styleable.CameraView_android_adjustViewBounds, CameraKit.Defaults.DEFAULT_ADJUST_VIEW_BOUNDS);
             } finally {
                 a.recycle();
@@ -136,7 +133,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFacing(mFacing);
         setFlash(mFlash);
         setFocus(mFocus);
-        setMethod(mMethod);
+        setCaptureMethod(mMethod);
         setZoom(mZoom);
         setPermissionPolicy(mPermissions);
         setVideoQuality(mVideoQuality);
@@ -394,7 +391,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl.setFocus(mFocus);
     }
 
-    public void setMethod(@Method int method) {
+    public void setCaptureMethod(@Method int method) {
         this.mMethod = method;
         mCameraImpl.setMethod(mMethod);
     }

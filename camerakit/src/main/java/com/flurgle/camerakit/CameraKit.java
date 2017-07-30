@@ -1,8 +1,16 @@
 package com.flurgle.camerakit;
 
-import android.content.res.Resources;
+import android.content.Context;
+import android.content.pm.PackageManager;
 
 public class CameraKit {
+
+    public static boolean hasCameras(Context context) {
+        PackageManager manager = context.getPackageManager();
+        // There's also FEATURE_CAMERA_EXTERNAL , should we support it?
+        return manager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
+                || manager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
+    }
 
     public static class Constants {
 
@@ -24,9 +32,8 @@ public class CameraKit {
         public static final int ZOOM_OFF = 0;
         public static final int ZOOM_PINCH = 1;
 
-        public static final int METHOD_STANDARD = 0;
-        public static final int METHOD_STILL = 1;
-        public static final int METHOD_SPEED = 2;
+        public static final int CAPTURE_METHOD_STANDARD = 0;
+        public static final int CAPTURE_METHOD_FRAME = 1;
 
 
         /**
@@ -60,7 +67,7 @@ public class CameraKit {
         static final int DEFAULT_FLASH = Constants.FLASH_OFF;
         static final int DEFAULT_FOCUS = Constants.FOCUS_CONTINUOUS;
         static final int DEFAULT_ZOOM = Constants.ZOOM_OFF;
-        static final int DEFAULT_METHOD = Constants.METHOD_STANDARD;
+        static final int DEFAULT_METHOD = Constants.CAPTURE_METHOD_STANDARD;
         static final int DEFAULT_PERMISSIONS = Constants.PERMISSIONS_PICTURE;
         static final int DEFAULT_VIDEO_QUALITY = Constants.VIDEO_QUALITY_480P;
 

@@ -3,26 +3,26 @@
 
     <declare-styleable name="CameraView">
 
-        <attr name="ckFacing" format="enum">
+        <attr name="cameraFacing" format="enum">
             <enum name="back" value="0" />
             <enum name="front" value="1" />
         </attr>
 
-        <attr name="ckFlash" format="enum">
+        <attr name="cameraFlash" format="enum">
             <enum name="off" value="0" />
             <enum name="on" value="1" />
             <enum name="auto" value="2" />
             <enum name="torch" value="3" />
         </attr>
 
-        <attr name="ckFocus" format="enum">
+        <attr name="cameraFocus" format="enum">
             <enum name="off" value="0" />
             <enum name="continuous" value="1" />
             <enum name="tap" value="2" />
             <enum name="tapWithMarker" value="3" />
         </attr>
 
-        <attr name="ckZoom" format="enum">
+        <attr name="cameraZoom" format="enum">
             <enum name="off" value="0" />
 
             <!-- TODO: Set to unique value when feature added -->
@@ -30,23 +30,19 @@
         </attr>
 
 
-        <attr name="ckMethod" format="enum">
+        <attr name="cameraCaptureMethod" format="enum">
             <enum name="standard" value="0" />
-            <enum name="still" value="1" />
-
-            <!-- TODO: Set to unique value when feature added -->
-            <enum name="speed" value="0" />
+            <enum name="frame" value="1" />
         </attr>
 
-        <attr name="ckPermissions" format="enum">
-            <enum name="strict" value="0" />
-            <enum name="lazy" value="1" />
-            <enum name="picture" value="2" />
+        <attr name="cameraPermissionPolicy" format="enum">
+            <enum name="video" value="0" />
+            <enum name="picture" value="1" />
         </attr>
 
-        <attr name="ckJpegQuality" format="integer" />
+        <attr name="cameraJpegQuality" format="integer" />
 
-        <attr name="ckVideoQuality" format="enum">
+        <attr name="cameraVideoQuality" format="enum">
             <enum name="max480p" value="0" />
             <enum name="max720p" value="1" />
             <enum name="max1080p" value="2" />
@@ -56,7 +52,7 @@
             <enum name="qvga" value="6" />
         </attr>
 
-        <attr name="ckCropOutput" format="boolean" />
+        <attr name="cameraCropOutput" format="boolean" />
 
         <attr name="android:adjustViewBounds" />
 

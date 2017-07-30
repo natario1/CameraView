@@ -5,10 +5,10 @@ import android.support.annotation.IntDef;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import static com.flurgle.camerakit.CameraKit.Constants.METHOD_STANDARD;
-import static com.flurgle.camerakit.CameraKit.Constants.METHOD_STILL;
+import static com.flurgle.camerakit.CameraKit.Constants.CAPTURE_METHOD_STANDARD;
+import static com.flurgle.camerakit.CameraKit.Constants.CAPTURE_METHOD_FRAME;
 
 @Retention(RetentionPolicy.SOURCE)
-@IntDef({METHOD_STANDARD, METHOD_STILL})
+@IntDef({CAPTURE_METHOD_STANDARD, CAPTURE_METHOD_FRAME})
 public @interface Method {
 }
