@@ -4,10 +4,10 @@ import android.support.annotation.Nullable;
 
 abstract class CameraImpl {
 
-    protected final CameraListener mCameraListener;
+    protected final CameraView.CameraListenerWrapper mCameraListener;
     protected final PreviewImpl mPreview;
 
-    CameraImpl(CameraListener callback, PreviewImpl preview) {
+    CameraImpl(CameraView.CameraListenerWrapper callback, PreviewImpl preview) {
         mCameraListener = callback;
         mPreview = preview;
     }

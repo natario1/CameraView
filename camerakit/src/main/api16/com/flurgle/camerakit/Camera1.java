@@ -46,7 +46,7 @@ class Camera1 extends CameraImpl {
     private MediaRecorder mMediaRecorder;
     private File mVideoFile;
     private Camera.AutoFocusCallback mAutofocusCallback;
-    private boolean capturingImage = false;
+    private boolean isCapturingImage = false;
 
     private int mDisplayOffset;
     private int mDeviceOrientation;
@@ -65,7 +65,7 @@ class Camera1 extends CameraImpl {
     private Handler mHandler = new Handler();
     private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper1();
 
-    Camera1(CameraListener callback, PreviewImpl preview) {
+    Camera1(CameraView.CameraListenerWrapper callback, PreviewImpl preview) {
         super(callback, preview);
         preview.setCallback(new PreviewImpl.OnPreviewSurfaceChangedCallback() {
             @Override
@@ -144,9 +144,20 @@ class Camera1 extends CameraImpl {
         mLatitude = latitude;
         mLongitude = longitude;
         if (mCameraParameters != null) {
-            mCameraParameters.setGpsLatitude(latitude);
-            mCameraParameters.setGpsLongitude(longitude);
-            mCamera.setParameters(mCameraParameters);
+            // Sometimes this will fail... I have no idea why.
+            // Since native_setParameters is quite a black box, there's nothing we can do about it.
+            try {
+                mCameraParameters.setGpsLatitude(latitude);
+                mCameraParameters.setGpsLongitude(longitude);
+                // mCameraParameters.setGpsAltitude(0);
+                // mCameraParameters.setGpsTimestamp(System.currentTimeMillis());
+                // mCameraParameters.setGpsProcessingMethod("GPS");
+                mCamera.setParameters(mCameraParameters);
+            } catch (Exception e) {
+                // Reset or everything after will throw as well.
+                e.printStackTrace();
+                mCameraParameters = mCamera.getParameters();
+            }
         }
     }
 
@@ -260,43 +271,52 @@ class Camera1 extends CameraImpl {
 
     @Override
     void captureImage() {
+        if (isCapturingImage) return;
+        if (mCamera == null) return;
         switch (mSessionType) {
             case SESSION_TYPE_PICTURE:
-                // Null check required for camera here as is briefly null when View is detached
-                if (!capturingImage && mCamera != null) {
-                    // Set boolean to wait for image callback
-                    capturingImage = true;
-                    Camera.Parameters parameters = mCamera.getParameters();
-                    parameters.setRotation(computeExifOrientation());
-                    mCamera.setParameters(parameters);
-                    mCamera.takePicture(null, null, null,
-                        new Camera.PictureCallback() {
-                            @Override
-                            public void onPictureTaken(byte[] data, Camera camera) {
-                                mCameraListener.onPictureTaken(data);
-                                // Reset capturing state to allow photos to be taken
-                                capturingImage = false;
-                                camera.startPreview();
-                            }
-                        });
-                } else {
-                    Log.w(TAG, "Unable, waiting for picture to be taken");
-                }
+                // Set boolean to wait for image callback
+                isCapturingImage = true;
+                Camera.Parameters parameters = mCamera.getParameters();
+                parameters.setRotation(computeExifOrientation());
+                mCamera.setParameters(parameters);
+                mCamera.takePicture(null, null, null,
+                    new Camera.PictureCallback() {
+                        @Override
+                        public void onPictureTaken(byte[] data, Camera camera) {
+                            mCameraListener.onPictureTaken(data);
+                            isCapturingImage = false;
+                            camera.startPreview(); // TODO: is this needed? why?
+                        }
+                    });
                 break;
 
             case SESSION_TYPE_VIDEO:
                 // If we are in a video session, camera captures are fast captures coming
                 // from the preview stream.
-                // TODO: will calculateCaptureRotation work here? It's the only usage. Test...
+                // TODO: will this work while recording a video? test...
+                isCapturingImage = true;
                 mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
                     @Override
-                    public void onPreviewFrame(byte[] data, Camera camera) {
-                        new Thread(new ProcessStillTask(data, camera, calculateCaptureRotation(), new ProcessStillTask.OnStillProcessedListener() {
+                    public void onPreviewFrame(final byte[] data, Camera camera) {
+                        // Got to rotate the preview frame, since byte[] data here does not include
+                        // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
+                        final int rotation = computeExifOrientation();
+                        final boolean flip = rotation % 180 != 0;
+                        final int preWidth = mPreviewSize.getWidth();
+                        final int preHeight = mPreviewSize.getHeight();
+                        final int postWidth = flip ? preHeight : preWidth;
+                        final int postHeight = flip ? preWidth : preHeight;
+                        final int format = mCameraParameters.getPreviewFormat();
+                        new Thread(new Runnable() {
                             @Override
-                            public void onStillProcessed(final YuvImage yuv) {
-                                mCameraListener.onPictureTaken(yuv);
+                            public void run() {
+                                byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, rotation);
+                                YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
+                                mCameraListener.processYuvImage(yuv);
+                                isCapturingImage = false;
                             }
-                        })).start();
+                        }).start();
                     }
                 });
                 break;
@@ -378,16 +398,6 @@ class Camera1 extends CameraImpl {
         return (mDeviceOrientation + mSensorOffset) % 360;
     }
 
-    private int calculateCaptureRotation() {
-        int previewRotation = computeCameraToDisplayOffset();
-        if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            //Front is flipped
-            return (previewRotation + 180 + 2* mDisplayOffset + 720) % 360;
-        } else {
-            return previewRotation;
-        }
-    }
-
 
     /**
      * This is called either on cameraView.start(), or when the underlying surface changes.
@@ -411,8 +421,9 @@ class Camera1 extends CameraImpl {
             mCaptureSize = new Size(camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
         }
         mPreviewSize = computePreviewSize(previewSizes, mCaptureSize, mPreview.getSurfaceSize());
+        Log.e("Camera1", "CaptureSize is "+mCaptureSize.toString());
+        Log.e("Camera1", "PreviewSize is "+mPreviewSize.toString());
     }
-
 
     private void adjustCameraParameters() {
         boolean invertPreviewSizes = shouldFlipSizes(); // mDisplayOffset % 180 != 0;

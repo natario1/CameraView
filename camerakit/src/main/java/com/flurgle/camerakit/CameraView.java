@@ -129,7 +129,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         mCameraListener = new CameraListenerWrapper();
-
         mPreviewImpl = new TextureViewPreview(context, this);
         mCameraImpl = new Camera1(mCameraListener, mPreviewImpl);
 
@@ -138,8 +137,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFlash(mFlash);
         setFocus(mFocus);
         setSessionType(mSessionType);
-        // setCaptureMethod(mMethod);
-        // setPermissionPolicy(mPermissions);
         setZoom(mZoom);
         setVideoQuality(mVideoQuality);
         setWhiteBalance(mWhiteBalance);
@@ -182,8 +179,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         super.onAttachedToWindow();
         if (!isInEditMode()) {
             WindowManager manager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-            Display display = manager.getDefaultDisplay();
-            mOrientationHelper.enable(display);
+            mOrientationHelper.enable(manager.getDefaultDisplay());
         }
     }
 
@@ -216,8 +212,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         Size previewSize = getPreviewSize();
-        if (previewSize == null) {
-            // Early measure.
+        if (previewSize == null) { // Early measure.
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
@@ -236,8 +231,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
             // preview: 1600x1200
             // parent:  1080x1794
-            float parentHeight = MeasureSpec.getSize(heightMeasureSpec); // 1794.
-            float parentWidth = MeasureSpec.getSize(widthMeasureSpec); //   1080. mode = AT_MOST
+            float parentHeight = MeasureSpec.getSize(heightMeasureSpec);
+            float parentWidth = MeasureSpec.getSize(widthMeasureSpec); // mode = AT_MOST
             float targetRatio = previewHeight / previewWidth;
             float currentRatio = parentHeight / parentWidth;
             Log.e(TAG, "parentHeight="+parentHeight+", parentWidth="+parentWidth);
@@ -273,9 +268,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
+
+    /**
+     * Returns whether the camera has started showing its preview.
+     * @return whether the camera has started
+     */
     public boolean isStarted() {
         return mIsStarted;
     }
+
 
     @Override
     public void setEnabled(boolean enabled) {
@@ -315,7 +316,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             return;
         }
 
-        if (checkPermissions()) {
+        if (checkPermissions(mSessionType)) {
             mIsStarted = true;
             run(new Runnable() {
                 @Override
@@ -332,11 +333,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Throws if session = audio and manifest did not add the microphone permissions.
      * @return true if we can go on, false otherwise.
      */
-    private boolean checkPermissions() {
-        checkPermissionsManifestOrThrow();
+    private boolean checkPermissions(@SessionType int sessionType) {
+        checkPermissionsManifestOrThrow(sessionType);
         int cameraCheck = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA);
         int audioCheck = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.RECORD_AUDIO);
-        switch (mSessionType) {
+        switch (sessionType) {
             case SESSION_TYPE_VIDEO:
                 if (cameraCheck != PackageManager.PERMISSION_GRANTED || audioCheck != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(true, true);
@@ -360,8 +361,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * If the developer did not add this to its manifest, throw and fire warnings.
      * (Hoping this is not cought elsewhere... we should test).
      */
-    private void checkPermissionsManifestOrThrow() {
-        if (mSessionType == SESSION_TYPE_VIDEO) {
+    private void checkPermissionsManifestOrThrow(@SessionType int sessionType) {
+        if (sessionType == SESSION_TYPE_VIDEO) {
             try {
                 PackageManager manager = getContext().getPackageManager();
                 PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
@@ -465,6 +466,28 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
+     * Toggles the facing value between {@link CameraKit.Constants#FACING_BACK}
+     * and {@link CameraKit.Constants#FACING_FRONT}.
+     *
+     * @return the new facing value
+     */
+    @Facing
+    public int toggleFacing() {
+        switch (mFacing) {
+            case FACING_BACK:
+                setFacing(FACING_FRONT);
+                break;
+
+            case FACING_FRONT:
+                setFacing(FACING_BACK);
+                break;
+        }
+
+        return mFacing;
+    }
+
+
+    /**
      * Sets the flash mode.
      *
      * @see CameraKit.Constants#FLASH_OFF
@@ -491,6 +514,34 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
+     * Toggles the flash mode between {@link CameraKit.Constants#FLASH_OFF},
+     * {@link CameraKit.Constants#FLASH_ON}, {@link CameraKit.Constants#FLASH_AUTO} and
+     * {@link CameraKit.Constants#FOCUS_OFF}, in this order.
+     *
+     * @return the new flash value
+     */
+    @Flash
+    public int toggleFlash() {
+        switch (mFlash) {
+            case FLASH_OFF:
+                setFlash(FLASH_ON);
+                break;
+
+            case FLASH_ON:
+                setFlash(FLASH_AUTO);
+                break;
+
+            case FLASH_AUTO:
+            case FLASH_TORCH:
+                setFlash(FLASH_OFF);
+                break;
+        }
+
+        return mFlash;
+    }
+
+
+    /**
      * Sets the current focus behavior.
      *
      * @see CameraKit.Constants#FOCUS_CONTINUOUS
@@ -512,23 +563,29 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * This does nothing.
-     * @param method no-op
-     * @deprecated
+     * Gets the current focus behavior.
+     * @return a focus behavior
      */
-    @Deprecated
-    public void setCaptureMethod(@Method int method) {
+    @Focus
+    public int getFocus() {
+        return mFocus;
     }
 
 
     /**
      * This does nothing.
-     * @param permissions no-op
      * @deprecated
      */
     @Deprecated
-    public void setPermissionPolicy(@Permissions int permissions) {
-    }
+    public void setCaptureMethod(@Method int method) {}
+
+
+    /**
+     * This does nothing.
+     * @deprecated
+     */
+    @Deprecated
+    public void setPermissionPolicy(@Permissions int permissions) {}
 
 
     /**
@@ -546,7 +603,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mSessionType = sessionType;
             mCameraImpl.setSessionType(sessionType);
 
-        } else if (checkPermissions()) {
+        } else if (checkPermissions(sessionType)) {
             // Camera is running. CameraImpl setSessionType will do the trick.
             mSessionType = sessionType;
             mCameraImpl.setSessionType(sessionType);
@@ -559,6 +616,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             stop();
         }
     }
+
+
+    /**
+     * Gets the current session type.
+     * @return the current session type
+     */
+    @SessionType
+    public int getSessionType() {
+        return mSessionType;
+    }
+
+
 
     public void setVideoQuality(@VideoQuality int videoQuality) {
         this.mVideoQuality = videoQuality;
@@ -581,46 +650,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
-    /**
-     * Toggles the facing value between {@link CameraKit.Constants#FACING_BACK}
-     * and {@link CameraKit.Constants#FACING_FRONT}.
-     *
-     * @return the new facing value
-     */
-    @Facing
-    public int toggleFacing() {
-        switch (mFacing) {
-            case FACING_BACK:
-                setFacing(FACING_FRONT);
-                break;
 
-            case FACING_FRONT:
-                setFacing(FACING_BACK);
-                break;
-        }
 
-        return mFacing;
-    }
 
-    @Flash
-    public int toggleFlash() {
-        switch (mFlash) {
-            case FLASH_OFF:
-                setFlash(FLASH_ON);
-                break;
-
-            case FLASH_ON:
-                setFlash(FLASH_AUTO);
-                break;
-
-            case FLASH_AUTO:
-            case FLASH_TORCH:
-                setFlash(FLASH_OFF);
-                break;
-        }
-
-        return mFlash;
-    }
 
 
     /**
@@ -685,7 +717,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
-    private class CameraListenerWrapper extends CameraListener {
+    class CameraListenerWrapper extends CameraListener {
 
         private CameraListener mWrappedListener;
 
@@ -715,9 +747,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
         }
 
-        @Override
-        public void onPictureTaken(YuvImage yuv) {
-            super.onPictureTaken(yuv);
+        void processYuvImage(YuvImage yuv) {
             if (mWrappedListener == null) return;
             if (mCropOutput) {
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());

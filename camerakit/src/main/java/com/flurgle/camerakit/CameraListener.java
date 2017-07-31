@@ -18,10 +18,6 @@ public abstract class CameraListener {
 
     }
 
-    public void onPictureTaken(YuvImage yuv) {
-
-    }
-
     public void onVideoTaken(File video) {
 
     }
