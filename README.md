@@ -1,15 +1,19 @@
 
-*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). Right now this is like CameraKit-Android, but with a lot of serious bugs fixed, new sizing behavior, better orientation and EXIF support, new `setLocation` and `setWhiteBalance` APIs. Feel free to open issues with suggestions or contribute. Roadmap:*
+*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). Right now this is like CameraKit-Android, but with *a lot* of serious bugs fixed, new sizing behavior, better orientation and EXIF support, new `setLocation` and `setWhiteBalance` APIs. Feel free to open issues with suggestions or contribute. Roadmap:*
 
-- [ ] *delete `captureMethod` and `permissionPolicy`, replace with `sessionType` (either picture or video) such that when `sessionType=video`, pictures are captured with the 'frame' method*
+- [x] *delete `captureMethod` and `permissionPolicy`, replace with `sessionType` (either picture or video) such that when `sessionType=video`, pictures are captured with the fast 'frame' method*
 - [ ] *test video and 'frame' capture behavior, I expect some bugs there*
+- [ ] *pass a nullable File to startVideo, so user can choose where to save the file*
+- [ ] *simple APIs to draw grid lines*
 - [ ] *rethink `adjustViewBounds`, maybe replace with a `scaleType` flag (center crop or center inside)*
 - [ ] *add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`*
-- [ ] *simple APIs to draw grid lines*
-- [ ] *pinch to zoom*
+- [ ] *pinch to zoom support*
 - [ ] *exposure correction APIs*
 - [ ] *revisit demo app*
 - [ ] *`Camera2` integration*
+- [ ] *EXIF support for 'frame' captured pictures, using ExifInterface library, so we can stop rotating it in Java*
+- [ ] *add onRequestPermissionResults for easy permission callback*
+- [ ] *better error handling, maybe with a onError(e) method in the public listener*
 
 # CameraKit
 
@@ -24,14 +28,16 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - [Capturing Video](#capturing-video)
   - [Other camera events](#other-camera-events)
 - [Extra Attributes](#extra-attributes)
+  - [cameraSessionType](#camerasessiontype)
   - [cameraFacing](#camerafacing)
   - [cameraFlash](#cameraflash)
   - [cameraFocus](#camerafocus)
-  - [cameraCaptureMethod](#cameracapturemethod)
   - [cameraZoomMode](#camerazoommode)
   - [cameraCropOutput](#cameracropoutput)
   - [cameraJpegQuality](#camerajpegquality)
   - [cameraWhiteBalance](#camerawhitebalance)
+  - [Deprecated: cameraCaptureMethod](#cameracapturemethod)
+  - [Deprecated: cameraPermissionsPolicy](#camerapermissionpolicy)
 - [Permissions Behavior](#permissions-behavior)
 - [Dynamic Sizing Behavior](#dynamic-sizing-behavior)
   - [Center Crop](#center-crop)
@@ -42,12 +48,12 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
 - Image and video capture seamlessly working with the same preview session. (TODO: remove this, use different sessions)
 - System permission handling
 - Dynamic sizing behavior
-  - Create a `CameraView` of any size (not just presets!)...
+  - Create a `CameraView` of any size (not just presets!)
   - Or let it adapt to the sensor preview size
   - Automatic output cropping to match your `CameraView` bounds
 - Multiple capture methods
-  - `CAPTURE_METHOD_STANDARD`: an image captured normally using the camera APIs.
-  - `CAPTURE_METHOD_FRAME`: a freeze frame of the `CameraView` preview (similar to SnapChat and Instagram) for devices with slower cameras
+  - While taking pictures, image is captured normally using the camera APIs.
+  - While shooting videos, image is captured as a freeze frame of the `CameraView` preview (similar to SnapChat and Instagram)
 - Built-in tap to focus
 - EXIF support
   - Automatically detected orientation tag
@@ -165,9 +171,8 @@ camera.setCameraListener(new CameraListener() {
     app:cameraFacing="back"
     app:cameraFlash="off"
     app:cameraFocus="continuous"
-    app:cameraCaptureMethod="standard"
     app:cameraZoom="pinch"
-    app:cameraPermissionPolicy="strict"
+    app:cameraSessionType="picture"
     app:cameraCropOutput="true"  
     app:cameraJpegQuality="100"
     app:cameraVideoQuality="480p"
@@ -177,17 +182,30 @@ camera.setCameraListener(new CameraListener() {
 
 |XML Attribute|Method|Values|Default Value|
 |-------------|------|------|-------------|
+|[`cameraSessionType`](#camerasessiontype)|`setSessionType()`|`picture` `video`|`picture`|
 |[`cameraFacing`](#camerafacing)|`setFacing()`|`back` `front`|`back`|
 |[`cameraFlash`](#cameraflash)|`setFlash()`|`off` `on` `auto` `torch`|`off`|
 |[`cameraFocus`](#camerafocus)|`setFocus()`|`off` `continuous` `tap` `tapWithMarker`|`continuous`|
-|[`cameraCaptureMethod`](#cameracapturemethod)|`setCaptureMethod()`|`standard` `frame`|`standard`|
 |[`cameraZoomMode`](#camerazoommode)|`setZoom()`|`off` `pinch`|`off`|
-|[`cameraPermissionPolicy`](#camerapermissionpolicy)|`setPermissionPolicy()`|`picture` `video`|`picture`|
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 <= n <= 100`|`100`|
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`max480p` `max720p` `max1080p` `max2160p` `highest` `lowest`|`max480p`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
+|[`cameraCaptureMethod`](#cameracapturemethod) (Deprecated)|`setCaptureMethod()`|`standard` `frame`|`standard`|
+|[`cameraPermissionPolicy`](#camerapermissionpolicy) (Deprecated)|`setPermissionPolicy()`|`picture` `video`|`picture`|
 
+### cameraSessionType
+
+What to capture - either picture or video. This has a couple of consequences:
+
+- Sizing: capture and preview size are chosen among the available picture or video sizes, depending on the flag
+- Picture capturing: **you can capture pictures during a `video` session**, though they will be captured as 'screenshots' of preview frames. This is fast and thus works well with slower camera sensors, but the captured image can be blurry or noisy.
+- Permission behavior: when requesting a `video` session, the record audio permission will be requested. If this is needed, the audio permission should be added to your manifest or the app will crash.
+
+```java
+cameraView.setSessionType(CameraKit.Constants.SESSION_TYPE_PICTURE);
+cameraView.setSessionType(CameraKit.Constants.SESSION_TYPE_VIDEO);
+```
 
 ### cameraFacing
 
@@ -220,15 +238,6 @@ cameraView.setFocus(CameraKit.Constants.FOCUS_TAP);
 cameraView.setFocus(CameraKit.Constants.FOCUS_TAP_WITH_MARKER);
 ```
 
-### cameraCaptureMethod
-
-How to capture pictures, either standard or frame. The frame option lets you capture and save a preview frame, which can be better with slower camera sensors, though the captured image can be blurry or noisy.
-
-```java
-cameraView.setMethod(CameraKit.Constants.CAPTURE_METHOD_STANDARD);
-cameraView.setMethod(CameraKit.Constants.CAPTURE_METHOD_FRAME);
-```
-
 ### cameraZoomMode
 
 TODO: work in progress. Right now 'off' is the onlly option.
@@ -238,21 +247,11 @@ cameraView.setZoom(CameraKit.Constants.ZOOM_OFF);
 cameraView.setZoom(CameraKit.Constants.ZOOM_PINCH);
 ```
 
-### cameraPermissionPolicy
-
-Either picture or video. This tells the library which permissions should be asked before starting the camera session. In the case of 'picture', we require the camera permissions. In the case of 'video', the record audio permission is asked as well.
-
-Please note that, if needed, the latter should be added to your manifest file or the app will crash.
-
-```java
-cameraView.setPermissions(CameraKit.Constants.PERMISSIONS_PICTURE);
-cameraView.setPermissions(CameraKit.Constants.PERMISSIONS_VIDEO);
-```
 
 ### cameraCropOutput
 
-Wheter the output file should be cropped to fit the aspect ratio of the preview surface.
-This can guarantee consistency between what the user sees and the final output, if you fixed the camera view dimensions.
+Wheter the output picture should be cropped to fit the aspect ratio of the preview surface.
+This can guarantee consistency between what the user sees and the final output, if you fixed the camera view dimensions. This does not support videos.
 
 ### cameraJpegQuality
 
@@ -289,14 +288,36 @@ cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_DAYLIGHT);
 cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_CLOUDY);
 ```
 
+### cameraCaptureMethod
+*Deprecated. Use cameraSessionType instead*
+
+How to capture pictures, either standard or frame. The frame option lets you capture and save a preview frame, which can be better with slower camera sensors, though the captured image can be blurry or noisy.
+
+```java
+cameraView.setMethod(CameraKit.Constants.CAPTURE_METHOD_STANDARD);
+cameraView.setMethod(CameraKit.Constants.CAPTURE_METHOD_FRAME);
+```
+
+### cameraPermissionPolicy
+*Deprecated. Use cameraSessionType instead*
+
+Either picture or video. This tells the library which permissions should be asked before starting the camera session. In the case of 'picture', we require the camera permissions. In the case of 'video', the record audio permission is asked as well.
+
+Please note that, if needed, the latter should be added to your manifest file or the app will crash.
+
+```java
+cameraView.setPermissionPolicy(CameraKit.Constants.PERMISSIONS_PICTURE);
+cameraView.setPermissionPolicy(CameraKit.Constants.PERMISSIONS_VIDEO);
+```
+
 ## Permissions behavior
 
 `CameraView` needs two permissions:
 
-- `android.permission.CAMERA` : required 
+- `android.permission.CAMERA` : required for capturing pictures and videos
 - `android.permission.RECORD_AUDIO` : required for capturing videos
 
-You can handle permissions yourself and then call `CameraView.start()` once they are acquired. If they are not, `CameraView` will request permissions to the user based on the `permissionPolicy` that was set. In that case, you can restart the camera if you have a successful response from `onRequestPermissionResults()`.
+You can handle permissions yourself and then call `CameraView.start()` once they are acquired. If they are not, `CameraView` will request permissions to the user based on the `sessionType` that was set. In that case, you can restart the camera if you have a successful response from `onRequestPermissionResults()`.
 
 ## Manifest file
 
