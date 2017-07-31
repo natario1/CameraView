@@ -39,8 +39,8 @@ import static com.flurgle.camerakit.CameraKit.Constants.FLASH_AUTO;
 import static com.flurgle.camerakit.CameraKit.Constants.FLASH_OFF;
 import static com.flurgle.camerakit.CameraKit.Constants.FLASH_ON;
 import static com.flurgle.camerakit.CameraKit.Constants.FLASH_TORCH;
-import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_PICTURE;
-import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_VIDEO;
+import static com.flurgle.camerakit.CameraKit.Constants.SESSION_TYPE_PICTURE;
+import static com.flurgle.camerakit.CameraKit.Constants.SESSION_TYPE_VIDEO;
 
 /**
  * The CameraView implements the LifecycleObserver interface for ease of use. To take advantage of
@@ -79,15 +79,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Facing private int mFacing;
     @Flash private int mFlash;
     @Focus private int mFocus;
-    @Method private int mMethod;
+    // @Method private int mMethod;
     @ZoomMode private int mZoom;
-    @Permissions private int mPermissions;
+    // @Permissions private int mPermissions;
+    @SessionType private int mSessionType;
     @VideoQuality private int mVideoQuality;
     @WhiteBalance private int mWhiteBalance;
     private int mJpegQuality;
     private boolean mCropOutput;
     private boolean mAdjustViewBounds;
-    private CameraListenerMiddleWare mCameraListener;
+    private CameraListenerWrapper mCameraListener;
     private OrientationHelper mOrientationHelper;
     private CameraImpl mCameraImpl;
     private PreviewImpl mPreviewImpl;
@@ -113,9 +114,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 mFacing = a.getInteger(R.styleable.CameraView_cameraFacing, CameraKit.Defaults.DEFAULT_FACING);
                 mFlash = a.getInteger(R.styleable.CameraView_cameraFlash, CameraKit.Defaults.DEFAULT_FLASH);
                 mFocus = a.getInteger(R.styleable.CameraView_cameraFocus, CameraKit.Defaults.DEFAULT_FOCUS);
-                mMethod = a.getInteger(R.styleable.CameraView_cameraCaptureMethod, CameraKit.Defaults.DEFAULT_METHOD);
+                // mMethod = a.getInteger(R.styleable.CameraView_cameraCaptureMethod, CameraKit.Defaults.DEFAULT_METHOD);
+                // mPermissions = a.getInteger(R.styleable.CameraView_cameraPermissionPolicy, CameraKit.Defaults.DEFAULT_PERMISSIONS);
+                mSessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, CameraKit.Defaults.DEFAULT_SESSION_TYPE);
                 mZoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraKit.Defaults.DEFAULT_ZOOM);
-                mPermissions = a.getInteger(R.styleable.CameraView_cameraPermissionPolicy, CameraKit.Defaults.DEFAULT_PERMISSIONS);
                 mWhiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
                 mVideoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
                 mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
@@ -126,7 +128,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
         }
 
-        mCameraListener = new CameraListenerMiddleWare();
+        mCameraListener = new CameraListenerWrapper();
 
         mPreviewImpl = new TextureViewPreview(context, this);
         mCameraImpl = new Camera1(mCameraListener, mPreviewImpl);
@@ -135,9 +137,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFacing(mFacing);
         setFlash(mFlash);
         setFocus(mFocus);
-        setCaptureMethod(mMethod);
+        setSessionType(mSessionType);
+        // setCaptureMethod(mMethod);
+        // setPermissionPolicy(mPermissions);
         setZoom(mZoom);
-        setPermissionPolicy(mPermissions);
         setVideoQuality(mVideoQuality);
         setWhiteBalance(mWhiteBalance);
 
@@ -311,32 +314,70 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // Already started, do nothing.
             return;
         }
-        checkPermissionPolicyOrThrow();
+
+        if (checkPermissions()) {
+            mIsStarted = true;
+            run(new Runnable() {
+                @Override
+                public void run() {
+                    mCameraImpl.start();
+                }
+            });
+        }
+    }
+
+
+    /**
+     * Checks that we have appropriate permissions for this session type.
+     * Throws if session = audio and manifest did not add the microphone permissions.
+     * @return true if we can go on, false otherwise.
+     */
+    private boolean checkPermissions() {
+        checkPermissionsManifestOrThrow();
         int cameraCheck = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA);
         int audioCheck = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.RECORD_AUDIO);
-        switch (mPermissions) {
-            case PERMISSIONS_VIDEO:
+        switch (mSessionType) {
+            case SESSION_TYPE_VIDEO:
                 if (cameraCheck != PackageManager.PERMISSION_GRANTED || audioCheck != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(true, true);
-                    return;
+                    return false;
                 }
                 break;
 
-            case PERMISSIONS_PICTURE:
+            case SESSION_TYPE_PICTURE:
                 if (cameraCheck != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(true, false);
-                    return;
+                    return false;
                 }
                 break;
         }
+        return true;
+    }
 
-        mIsStarted = true;
-        run(new Runnable() {
-            @Override
-            public void run() {
-                mCameraImpl.start();
+
+    /**
+     * If mSessionType == SESSION_TYPE_VIDEO we will ask for RECORD_AUDIO permission.
+     * If the developer did not add this to its manifest, throw and fire warnings.
+     * (Hoping this is not cought elsewhere... we should test).
+     */
+    private void checkPermissionsManifestOrThrow() {
+        if (mSessionType == SESSION_TYPE_VIDEO) {
+            try {
+                PackageManager manager = getContext().getPackageManager();
+                PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
+                for (String requestedPermission : info.requestedPermissions) {
+                    if (requestedPermission.equals(Manifest.permission.RECORD_AUDIO)) {
+                        return;
+                    }
+                }
+                String message = "When the session type is set to video, the RECORD_AUDIO permission " +
+                        "should be added to the application manifest file.";
+                Log.w(TAG, message);
+                throw new IllegalStateException(message);
+            } catch (PackageManager.NameNotFoundException e) {
+                // Not possible.
             }
-        });
+        }
     }
 
     public void stop() {
@@ -349,10 +390,17 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     public void destroy() {
+        mCameraListener = new CameraListenerWrapper(); // Release inner listener.
         // This might be useless, but no time to think about it now.
         sWorkerHandler = null;
     }
 
+
+    /**
+     * If present, returns a collection of extra properties from the current camera
+     * session.
+     * @return an ExtraProperties object.
+     */
     @Nullable
     public ExtraProperties getExtraProperties() {
         return mCameraImpl.getExtraProperties();
@@ -386,11 +434,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return mWhiteBalance;
     }
 
-    @Facing
-    public int getFacing() {
-        return mFacing;
-    }
 
+    /**
+     * Sets which camera sensor should be used.
+     *
+     * @see CameraKit.Constants#FACING_FRONT
+     * @see CameraKit.Constants#FACING_BACK
+     *
+     * @param facing a facing value.
+     */
     public void setFacing(@Facing final int facing) {
         this.mFacing = facing;
         run(new Runnable() {
@@ -401,16 +453,53 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         });
     }
 
+
+    /**
+     * Gets the facing camera currently being used.
+     * @return a facing value.
+     */
+    @Facing
+    public int getFacing() {
+        return mFacing;
+    }
+
+
+    /**
+     * Sets the flash mode.
+     *
+     * @see CameraKit.Constants#FLASH_OFF
+     * @see CameraKit.Constants#FLASH_ON
+     * @see CameraKit.Constants#FLASH_AUTO
+     * @see CameraKit.Constants#FLASH_TORCH
+
+     * @param flash desired flash mode.
+     */
     public void setFlash(@Flash int flash) {
         this.mFlash = flash;
         mCameraImpl.setFlash(flash);
     }
 
+
+    /**
+     * Gets the current flash mode.
+     * @return a flash mode
+     */
     @Flash
     public int getFlash() {
         return mFlash;
     }
 
+
+    /**
+     * Sets the current focus behavior.
+     *
+     * @see CameraKit.Constants#FOCUS_CONTINUOUS
+     * @see CameraKit.Constants#FOCUS_OFF
+     * @see CameraKit.Constants#FOCUS_TAP
+     * @see CameraKit.Constants#FOCUS_TAP_WITH_MARKER
+
+     * @param focus a Focus value.
+     */
     public void setFocus(@Focus int focus) {
         this.mFocus = focus;
         if (this.mFocus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER) {
@@ -421,9 +510,59 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl.setFocus(mFocus);
     }
 
+
+    /**
+     * This does nothing.
+     * @param method no-op
+     * @deprecated
+     */
+    @Deprecated
     public void setCaptureMethod(@Method int method) {
-        this.mMethod = method;
-        mCameraImpl.setMethod(mMethod);
+    }
+
+
+    /**
+     * This does nothing.
+     * @param permissions no-op
+     * @deprecated
+     */
+    @Deprecated
+    public void setPermissionPolicy(@Permissions int permissions) {
+    }
+
+
+    /**
+     * Set the current session type to either picture or video.
+     *
+     * @see CameraKit.Constants#SESSION_TYPE_PICTURE
+     * @see CameraKit.Constants#SESSION_TYPE_VIDEO
+     *
+     * @param sessionType desired session type.
+     */
+    public void setSessionType(@SessionType int sessionType) {
+
+        if (sessionType == mSessionType || !mIsStarted) {
+            // Check did took place, or will happen on start().
+            mSessionType = sessionType;
+            mCameraImpl.setSessionType(sessionType);
+
+        } else if (checkPermissions()) {
+            // Camera is running. CameraImpl setSessionType will do the trick.
+            mSessionType = sessionType;
+            mCameraImpl.setSessionType(sessionType);
+
+        } else {
+            // This means that the audio permission is being asked.
+            // Stop the camera so it can be restarted by the developer onPermissionResult.
+            // Developer must also set the session type again...
+            // Not ideal but good for now.
+            stop();
+        }
+    }
+
+    public void setVideoQuality(@VideoQuality int videoQuality) {
+        this.mVideoQuality = videoQuality;
+        mCameraImpl.setVideoQuality(mVideoQuality);
     }
 
     public void setZoom(@ZoomMode int zoom) {
@@ -431,19 +570,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl.setZoom(mZoom);
     }
 
-    /**
-     * Sets permission policy.
-     * @param permissions desired policy, either picture or video.
-     */
-    public void setPermissionPolicy(@Permissions int permissions) {
-        this.mPermissions = permissions;
-        checkPermissionPolicyOrThrow();
-    }
 
-    public void setVideoQuality(@VideoQuality int videoQuality) {
-        this.mVideoQuality = videoQuality;
-        mCameraImpl.setVideoQuality(mVideoQuality);
-    }
 
     public void setJpegQuality(int jpegQuality) {
         this.mJpegQuality = jpegQuality;
@@ -453,6 +580,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         this.mCropOutput = cropOutput;
     }
 
+
+    /**
+     * Toggles the facing value between {@link CameraKit.Constants#FACING_BACK}
+     * and {@link CameraKit.Constants#FACING_FRONT}.
+     *
+     * @return the new facing value
+     */
     @Facing
     public int toggleFacing() {
         switch (mFacing) {
@@ -488,8 +622,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return mFlash;
     }
 
+
+    /**
+     * Sets a {@link CameraListener} instance to be notified of all
+     * interesting events that will happen during the camera lifecycle.
+     *
+     * @param cameraListener a listener for events.
+     */
     public void setCameraListener(CameraListener cameraListener) {
-        this.mCameraListener.setCameraListener(cameraListener);
+        this.mCameraListener.wrapListener(cameraListener);
     }
 
     public void captureImage() {
@@ -544,87 +685,60 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
-    private class CameraListenerMiddleWare extends CameraListener {
+    private class CameraListenerWrapper extends CameraListener {
 
-        private CameraListener mCameraListener;
+        private CameraListener mWrappedListener;
 
         @Override
         public void onCameraOpened() {
             super.onCameraOpened();
-            getCameraListener().onCameraOpened();
+            if (mWrappedListener == null) return;
+            mWrappedListener.onCameraOpened();
         }
 
         @Override
         public void onCameraClosed() {
             super.onCameraClosed();
-            getCameraListener().onCameraClosed();
+            if (mWrappedListener == null) return;
+            mWrappedListener.onCameraClosed();
         }
 
         @Override
         public void onPictureTaken(byte[] jpeg) {
             super.onPictureTaken(jpeg);
+            if (mWrappedListener == null) return;
             if (mCropOutput) {
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
-                getCameraListener().onPictureTaken(new CenterCrop(jpeg, outputRatio, mJpegQuality).getJpeg());
+                mWrappedListener.onPictureTaken(new CenterCrop(jpeg, outputRatio, mJpegQuality).getJpeg());
             } else {
-                getCameraListener().onPictureTaken(jpeg);
+                mWrappedListener.onPictureTaken(jpeg);
             }
         }
 
         @Override
         public void onPictureTaken(YuvImage yuv) {
             super.onPictureTaken(yuv);
+            if (mWrappedListener == null) return;
             if (mCropOutput) {
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
-                getCameraListener().onPictureTaken(new CenterCrop(yuv, outputRatio, mJpegQuality).getJpeg());
+                mWrappedListener.onPictureTaken(new CenterCrop(yuv, outputRatio, mJpegQuality).getJpeg());
             } else {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 yuv.compressToJpeg(new Rect(0, 0, yuv.getWidth(), yuv.getHeight()), mJpegQuality, out);
-                getCameraListener().onPictureTaken(out.toByteArray());
+                mWrappedListener.onPictureTaken(out.toByteArray());
             }
         }
 
         @Override
         public void onVideoTaken(File video) {
             super.onVideoTaken(video);
-            getCameraListener().onVideoTaken(video);
+            mWrappedListener.onVideoTaken(video);
         }
 
-        public void setCameraListener(@Nullable CameraListener cameraListener) {
-            this.mCameraListener = cameraListener;
-        }
-
-        @NonNull
-        public CameraListener getCameraListener() {
-            return mCameraListener != null ? mCameraListener : new CameraListener() {
-            };
-        }
-
-    }
-
-    /**
-     * If mPermissions == PERMISSIONS_VIDEO we will ask for RECORD_AUDIO permission.
-     * If the developer did not add this to its manifest, throw and fire warnings.
-     * (Hoping this is not cought elsewhere... we should test).
-     */
-    private void checkPermissionPolicyOrThrow() {
-        if (mPermissions == PERMISSIONS_VIDEO) {
-            try {
-                PackageManager manager = getContext().getPackageManager();
-                PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
-                for (String requestedPermission : info.requestedPermissions) {
-                    if (requestedPermission.equals(Manifest.permission.RECORD_AUDIO)) {
-                        return;
-                    }
-                }
-                String message = "When the permission policy is PERMISSION_VIDEO, the RECORD_AUDIO permission " +
-                        "should be added to the application manifest file.";
-                Log.w(TAG, message);
-                throw new IllegalStateException(message);
-            } catch (PackageManager.NameNotFoundException e) {
-                // Not possible.
-            }
+        private void wrapListener(@Nullable CameraListener cameraListener) {
+            mWrappedListener = cameraListener;
         }
     }
+
 
 }

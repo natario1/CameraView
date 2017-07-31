@@ -147,7 +147,7 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    void setMethod(@Method int method) {
+    void setSessionType(@SessionType int sessionType) {
 
     }
 

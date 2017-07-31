@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 class TextureViewPreview extends PreviewImpl {
 
     private final TextureView mTextureView;
+    private Surface mSurface;
 
     TextureViewPreview(Context context, ViewGroup parent) {
         final View view = View.inflate(context, R.layout.texture_view, parent); // MATCH_PARENT
@@ -45,7 +46,10 @@ class TextureViewPreview extends PreviewImpl {
 
     @Override
     Surface getSurface() {
-        return new Surface(getSurfaceTexture());
+        if (mSurface == null) { // Check if valid?
+            mSurface = new Surface(getSurfaceTexture());
+        }
+        return mSurface;
     }
 
     @Override

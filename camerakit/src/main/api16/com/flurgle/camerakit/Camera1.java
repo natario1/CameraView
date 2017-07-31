@@ -5,7 +5,9 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.support.annotation.Nullable;
 import android.view.MotionEvent;
@@ -21,9 +23,9 @@ import java.util.List;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_CONTINUOUS;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_OFF;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_TAP;
-import static com.flurgle.camerakit.CameraKit.Constants.CAPTURE_METHOD_STANDARD;
-import static com.flurgle.camerakit.CameraKit.Constants.CAPTURE_METHOD_FRAME;
 import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_TAP_WITH_MARKER;
+import static com.flurgle.camerakit.CameraKit.Constants.SESSION_TYPE_PICTURE;
+import static com.flurgle.camerakit.CameraKit.Constants.SESSION_TYPE_VIDEO;
 
 @SuppressWarnings("deprecation")
 class Camera1 extends CameraImpl {
@@ -53,10 +55,10 @@ class Camera1 extends CameraImpl {
     @Facing private int mFacing;
     @Flash private int mFlash;
     @Focus private int mFocus;
-    @Method private int mMethod;
     @ZoomMode private int mZoom;
     @VideoQuality private int mVideoQuality;
     @WhiteBalance private int mWhiteBalance;
+    @SessionType private int mSessionType;
     private double mLatitude;
     private double mLongitude;
 
@@ -70,7 +72,7 @@ class Camera1 extends CameraImpl {
             public void onPreviewSurfaceChanged() {
                 if (mCamera != null) {
                     setupPreview();
-                    collectCameraSizes();
+                    computeCameraSizes();
                     adjustCameraParameters();
                 }
             }
@@ -123,6 +125,18 @@ class Camera1 extends CameraImpl {
     @Override
     void onDeviceOrientation(int deviceOrientation) {
         this.mDeviceOrientation = deviceOrientation;
+    }
+
+
+    @Override
+    void setSessionType(@SessionType int sessionType) {
+        if (sessionType != mSessionType) {
+            mSessionType = sessionType;
+            if (isCameraOpened()) {
+                stop();
+                start();
+            }
+        }
     }
 
     @Override
@@ -235,11 +249,6 @@ class Camera1 extends CameraImpl {
     }
 
     @Override
-    void setMethod(@Method int method) {
-        this.mMethod = method;
-    }
-
-    @Override
     void setZoom(@ZoomMode int zoom) {
         this.mZoom = zoom;
     }
@@ -251,8 +260,8 @@ class Camera1 extends CameraImpl {
 
     @Override
     void captureImage() {
-        switch (mMethod) {
-            case CAPTURE_METHOD_STANDARD:
+        switch (mSessionType) {
+            case SESSION_TYPE_PICTURE:
                 // Null check required for camera here as is briefly null when View is detached
                 if (!capturingImage && mCamera != null) {
                     // Set boolean to wait for image callback
@@ -270,13 +279,14 @@ class Camera1 extends CameraImpl {
                                 camera.startPreview();
                             }
                         });
-                }
-                else {
+                } else {
                     Log.w(TAG, "Unable, waiting for picture to be taken");
                 }
                 break;
 
-            case CAPTURE_METHOD_FRAME:
+            case SESSION_TYPE_VIDEO:
+                // If we are in a video session, camera captures are fast captures coming
+                // from the preview stream.
                 // TODO: will calculateCaptureRotation work here? It's the only usage. Test...
                 mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
                     @Override
@@ -292,22 +302,6 @@ class Camera1 extends CameraImpl {
                 break;
         }
     }
-
-    @Override
-    void startVideo() {
-        initMediaRecorder();
-        prepareMediaRecorder();
-        mMediaRecorder.start();
-    }
-
-    @Override
-    void endVideo() {
-        mMediaRecorder.stop();
-        mMediaRecorder.release();
-        mMediaRecorder = null;
-        mCameraListener.onVideoTaken(mVideoFile);
-    }
-
 
     @Override
     Size getCaptureSize() {
@@ -346,7 +340,7 @@ class Camera1 extends CameraImpl {
         mCameraParameters = mCamera.getParameters();
 
         collectCameraProperties();
-        collectCameraSizes();
+        computeCameraSizes();
         adjustCameraParameters();
         mCamera.setDisplayOrientation(computeCameraToDisplayOffset());
         mCameraListener.onCameraOpened();
@@ -401,22 +395,22 @@ class Camera1 extends CameraImpl {
      * dimensions.
      * But when it does, the {@link PreviewImpl.OnPreviewSurfaceChangedCallback} should be called,
      * and this should be refreshed.
-     *
-     *
-     * TODO: either camera or video.
      */
-    private void collectCameraSizes() {
+    private void computeCameraSizes() {
+        mCameraParameters.setRecordingHint(mSessionType == SESSION_TYPE_VIDEO);
         List<Size> previewSizes = sizesFromList(mCameraParameters.getSupportedPreviewSizes());
-        List<Size> captureSizes = sizesFromList(mCameraParameters.getSupportedPictureSizes());
-
-        /* video stuff: CamcorderProfile camcorderProfile = getCamcorderProfile(mVideoQuality);
-        mCaptureSize = getSizeWithClosestRatio(
-                (videoSizes == null || videoSizes.isEmpty()) ? previewSizes : videoSizes,
-                camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight); */
-
-        Size surfaceSize = mPreview.getSurfaceSize();
-        mCaptureSize = Collections.max(captureSizes);
-        mPreviewSize = computePreviewSize(previewSizes, mCaptureSize, surfaceSize);
+        if (mSessionType == SESSION_TYPE_PICTURE) {
+            // Choose the max size.
+            List<Size> captureSizes = sizesFromList(mCameraParameters.getSupportedPictureSizes());
+            mCaptureSize = Collections.max(captureSizes);
+        } else {
+            // Choose according to developer choice in setVideoQuality.
+            // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.
+            // So its output is our output.
+            CamcorderProfile camcorderProfile = getCamcorderProfile(mVideoQuality);
+            mCaptureSize = new Size(camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
+        }
+        mPreviewSize = computePreviewSize(previewSizes, mCaptureSize, mPreview.getSurfaceSize());
     }
 
 
@@ -442,6 +436,37 @@ class Camera1 extends CameraImpl {
     }
 
 
+
+    @Override
+    void startVideo() {
+        if (mSessionType == SESSION_TYPE_VIDEO) {
+            initMediaRecorder();
+            try {
+                mMediaRecorder.prepare();
+            } catch (Exception e) {
+                e.printStackTrace();
+                mVideoFile = null;
+                endVideo();
+                return;
+            }
+            mMediaRecorder.start();
+        } else {
+            throw new IllegalStateException("Can't record video while session type is picture");
+        }
+    }
+
+    @Override
+    void endVideo() {
+        mMediaRecorder.stop();
+        mMediaRecorder.release();
+        mMediaRecorder = null;
+        if (mVideoFile != null) {
+            mCameraListener.onVideoTaken(mVideoFile);
+            mVideoFile = null;
+        }
+    }
+
+
     private void initMediaRecorder() {
         mMediaRecorder = new MediaRecorder();
         mCamera.unlock();
@@ -455,74 +480,56 @@ class Camera1 extends CameraImpl {
 
         mVideoFile = new File(mPreview.getView().getContext().getExternalFilesDir(null), "video.mp4");
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
-        mMediaRecorder.setOrientationHint(computeCameraToDisplayOffset());
-        mMediaRecorder.setVideoSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+        mMediaRecorder.setOrientationHint(computeCameraToDisplayOffset()); // TODO is this correct? Should we use exif orientation? Maybe not.
+        // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
     }
 
-    private void prepareMediaRecorder() {
-        try {
-            mMediaRecorder.prepare();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
+
+    @NonNull
     private CamcorderProfile getCamcorderProfile(@VideoQuality int videoQuality) {
-        CamcorderProfile camcorderProfile = null;
         switch (videoQuality) {
-            case CameraKit.Constants.VIDEO_QUALITY_QVGA:
-                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
-                    camcorderProfile = CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_QVGA);
-                } else {
-                    return getCamcorderProfile(CameraKit.Constants.VIDEO_QUALITY_LOWEST);
-                }
-                break;
+            case CameraKit.Constants.VIDEO_QUALITY_HIGHEST:
+                return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
 
-            case CameraKit.Constants.VIDEO_QUALITY_480P:
-                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_480P)) {
-                    camcorderProfile = CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_480P);
-                } else {
-                    return getCamcorderProfile(CameraKit.Constants.VIDEO_QUALITY_QVGA);
+            case CameraKit.Constants.VIDEO_QUALITY_2160P:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                        CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2160P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_2160P);
                 }
-                break;
-
-            case CameraKit.Constants.VIDEO_QUALITY_720P:
-                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_720P)) {
-                    camcorderProfile = CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_720P);
-                } else {
-                    return getCamcorderProfile(CameraKit.Constants.VIDEO_QUALITY_480P);
-                }
-                break;
+                // Don't break.
 
             case CameraKit.Constants.VIDEO_QUALITY_1080P:
                 if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_1080P)) {
-                    camcorderProfile = CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_1080P);
-                } else {
-                    return getCamcorderProfile(CameraKit.Constants.VIDEO_QUALITY_720P);
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_1080P);
                 }
-                break;
+                // Don't break.
 
-            case CameraKit.Constants.VIDEO_QUALITY_2160P:
-                try {
-                    camcorderProfile = CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_2160P);
-                } catch (Exception e) {
-                    return getCamcorderProfile(CameraKit.Constants.VIDEO_QUALITY_HIGHEST);
+            case CameraKit.Constants.VIDEO_QUALITY_720P:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_720P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_720P);
                 }
-                break;
+                // Don't break.
 
-            case CameraKit.Constants.VIDEO_QUALITY_HIGHEST:
-                camcorderProfile = CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
-                break;
+            case CameraKit.Constants.VIDEO_QUALITY_480P:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_480P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_480P);
+                }
+                // Don't break.
+
+            case CameraKit.Constants.VIDEO_QUALITY_QVGA:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_QVGA);
+                }
+                // Don't break.
 
             case CameraKit.Constants.VIDEO_QUALITY_LOWEST:
-                camcorderProfile = CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_LOW);
-                break;
+            default:
+                // Fallback to lowest.
+                return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_LOW);
         }
-
-        return camcorderProfile;
     }
+
 
     void setTapToAutofocusListener(Camera.AutoFocusCallback callback) {
         if (this.mFocus != FOCUS_TAP) {
@@ -663,6 +670,7 @@ class Camera1 extends CameraImpl {
     /**
      * Returns a list of {@link Size} out of Camera.Sizes.
      */
+    @Nullable
     private static List<Size> sizesFromList(List<Camera.Size> sizes) {
         if (sizes == null) return null;
         List<Size> result = new ArrayList<>(sizes.size());
@@ -688,7 +696,7 @@ class Camera1 extends CameraImpl {
         List<Size> bigEnoughAndConsistent = new ArrayList<>(5);
 
         final AspectRatio targetRatio = AspectRatio.of(captureSize.getWidth(), captureSize.getHeight());
-        final Size targetSize = captureSize;
+        final Size targetSize = surfaceSize;
         for (Size size : sizes) {
             AspectRatio ratio = AspectRatio.of(size.getWidth(), size.getHeight());
             if (ratio.equals(targetRatio)) {

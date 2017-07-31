@@ -43,6 +43,11 @@
             <enum name="frame" value="1" />
         </attr>
 
+        <attr name="cameraSessionType" format="enum">
+            <enum name="picture" value="0" />
+            <enum name="video" value="1" />
+        </attr>
+
         <attr name="cameraPermissionPolicy" format="enum">
             <enum name="video" value="0" />
             <enum name="picture" value="1" />
