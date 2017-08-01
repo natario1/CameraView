@@ -547,32 +547,22 @@ class Camera1 extends CameraImpl {
         if (mCamera == null) return;
         if (event.getAction() != MotionEvent.ACTION_UP) return;
         Camera.Parameters parameters = mCamera.getParameters();
-        String focusMode = parameters.getFocusMode();
         Rect rect = calculateFocusArea(event.getX(), event.getY());
         List<Camera.Area> meteringAreas = new ArrayList<>();
         meteringAreas.add(new Camera.Area(rect, getFocusMeteringAreaWeight()));
 
-        boolean focusSupported = parameters.getMaxNumFocusAreas() > 0 && focusMode != null;
-        focusSupported = focusSupported && (focusMode.equals(Camera.Parameters.FOCUS_MODE_AUTO) ||
-                focusMode.equals(Camera.Parameters.FOCUS_MODE_MACRO) ||
-                focusMode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) ||
-                focusMode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO));
         boolean autofocusSupported = parameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
-        boolean meteringAreaSupported = parameters.getMaxNumMeteringAreas() > 0;
-
-        if (focusSupported) {
-            parameters.setFocusAreas(meteringAreas);
-            if (meteringAreaSupported) parameters.setMeteringAreas(meteringAreas);
-            if (autofocusSupported) {
-                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-                mCamera.setParameters(parameters);
-                mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                    @Override
-                    public void onAutoFocus(boolean success, Camera camera) {
-                        resetFocus(success, camera);
-                    }
-                });
-            }
+        if (autofocusSupported) {
+            if (parameters.getMaxNumFocusAreas() > 0) parameters.setFocusAreas(meteringAreas);
+            if (parameters.getMaxNumMeteringAreas() > 0) parameters.setMeteringAreas(meteringAreas);
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+            mCamera.setParameters(parameters);
+            mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean success, Camera camera) {
+                    resetFocus(success, camera);
+                }
+            });
         }
     }
 
