@@ -32,7 +32,7 @@ class Camera1 extends CameraImpl {
 
     private static final String TAG = Camera1.class.getSimpleName();
 
-    private static final int FOCUS_AREA_SIZE_DEFAULT = 300;
+    private static final int FOCUS_AREA_SIZE_DEFAULT = 200;
     private static final int FOCUS_METERING_AREA_WEIGHT_DEFAULT = 1000;
     private static final int DELAY_MILLIS_BEFORE_RESETTING_FOCUS = 3000;
 
@@ -61,6 +61,7 @@ class Camera1 extends CameraImpl {
     @SessionType private int mSessionType;
     private double mLatitude;
     private double mLongitude;
+    private boolean mFocusOnTap;
 
     private Handler mHandler = new Handler();
     private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper1();
@@ -217,43 +218,38 @@ class Camera1 extends CameraImpl {
     void setFocus(@Focus int focus) {
         int old = mFocus;
         mFocus = focus;
+        if (mCameraParameters == null) return;
         switch (focus) {
             case FOCUS_CONTINUOUS:
-                if (mCameraParameters != null) {
-                    detachFocusTapListener();
-                    final List<String> modes = mCameraParameters.getSupportedFocusModes();
-                    if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                        mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                    } else {
-                        mFocus = old;
-                    }
+                mFocusOnTap = false;
+                final List<String> modes = mCameraParameters.getSupportedFocusModes();
+                if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                } else {
+                    mFocus = old;
                 }
                 break;
 
             case FOCUS_TAP:
             case FOCUS_TAP_WITH_MARKER:
-                if (mCameraParameters != null) {
-                    attachFocusTapListener();
-                    final List<String> modes = mCameraParameters.getSupportedFocusModes();
-                    if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                        mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                    } else {
-                        mFocus = old;
-                    }
+                mFocusOnTap = true;
+                final List<String> modes1 = mCameraParameters.getSupportedFocusModes();
+                if (modes1.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                } else {
+                    mFocus = old;
                 }
                 break;
 
             case FOCUS_OFF:
-                if (mCameraParameters != null) {
-                    detachFocusTapListener();
-                    final List<String> modes = mCameraParameters.getSupportedFocusModes();
-                    if (modes.contains(Camera.Parameters.FOCUS_MODE_FIXED)) {
-                        mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
-                    } else if (modes.contains(Camera.Parameters.FOCUS_MODE_INFINITY)) {
-                        mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
-                    } else {
-                        mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-                    }
+                mFocusOnTap = false;
+                final List<String> modes2 = mCameraParameters.getSupportedFocusModes();
+                if (modes2.contains(Camera.Parameters.FOCUS_MODE_FIXED)) {
+                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
+                } else if (modes2.contains(Camera.Parameters.FOCUS_MODE_INFINITY)) {
+                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+                } else {
+                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
                 }
                 break;
         }
@@ -421,8 +417,8 @@ class Camera1 extends CameraImpl {
             mCaptureSize = new Size(camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
         }
         mPreviewSize = computePreviewSize(previewSizes, mCaptureSize, mPreview.getSurfaceSize());
-        Log.e("Camera1", "CaptureSize is "+mCaptureSize.toString());
-        Log.e("Camera1", "PreviewSize is "+mPreviewSize.toString());
+        // Log.e("Camera1", "CaptureSize is "+mCaptureSize.toString());
+        // Log.e("Camera1", "PreviewSize is "+mPreviewSize.toString());
     }
 
     private void adjustCameraParameters() {
@@ -433,8 +429,6 @@ class Camera1 extends CameraImpl {
         );
         mCameraParameters.setPreviewSize(getPreviewSize().getWidth(), getPreviewSize().getHeight());
         mCameraParameters.setPictureSize(getCaptureSize().getWidth(), getCaptureSize().getHeight());
-        // int rotation = calculateCaptureRotation();
-        // mCameraParameters.setRotation(rotation);
         setFocus(mFocus);
         setFlash(mFlash);
         setLocation(mLatitude, mLongitude);
@@ -547,11 +541,39 @@ class Camera1 extends CameraImpl {
     // Tap to focus stuff.
 
 
-    void setTapToAutofocusListener(Camera.AutoFocusCallback callback) {
-        if (this.mFocus != FOCUS_TAP) {
-            throw new IllegalArgumentException("Please set the camera to FOCUS_TAP.");
+    @Override
+    void onTouchEvent(MotionEvent event) {
+        if (!mFocusOnTap) return;
+        if (mCamera == null) return;
+        if (event.getAction() != MotionEvent.ACTION_UP) return;
+        Camera.Parameters parameters = mCamera.getParameters();
+        String focusMode = parameters.getFocusMode();
+        Rect rect = calculateFocusArea(event.getX(), event.getY());
+        List<Camera.Area> meteringAreas = new ArrayList<>();
+        meteringAreas.add(new Camera.Area(rect, getFocusMeteringAreaWeight()));
+
+        boolean focusSupported = parameters.getMaxNumFocusAreas() > 0 && focusMode != null;
+        focusSupported = focusSupported && (focusMode.equals(Camera.Parameters.FOCUS_MODE_AUTO) ||
+                focusMode.equals(Camera.Parameters.FOCUS_MODE_MACRO) ||
+                focusMode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) ||
+                focusMode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO));
+        boolean autofocusSupported = parameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
+        boolean meteringAreaSupported = parameters.getMaxNumMeteringAreas() > 0;
+
+        if (focusSupported) {
+            parameters.setFocusAreas(meteringAreas);
+            if (meteringAreaSupported) parameters.setMeteringAreas(meteringAreas);
+            if (autofocusSupported) {
+                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                mCamera.setParameters(parameters);
+                mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean success, Camera camera) {
+                        resetFocus(success, camera);
+                    }
+                });
+            }
         }
-        this.mAutofocusCallback = callback;
     }
 
 
@@ -562,74 +584,6 @@ class Camera1 extends CameraImpl {
 
     private int getFocusMeteringAreaWeight() {
         return FOCUS_METERING_AREA_WEIGHT_DEFAULT;
-    }
-
-
-    private void detachFocusTapListener() {
-        mPreview.getView().setOnTouchListener(null);
-    }
-
-
-    private void attachFocusTapListener() {
-        mPreview.getView().setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() != MotionEvent.ACTION_UP) return false;
-                if (mCamera == null) return false;
-                Camera.Parameters parameters = mCamera.getParameters();
-                String focusMode = parameters.getFocusMode();
-                Rect rect = calculateFocusArea(event.getX(), event.getY());
-                List<Camera.Area> meteringAreas = new ArrayList<>();
-                meteringAreas.add(new Camera.Area(rect, getFocusMeteringAreaWeight()));
-                if (parameters.getMaxNumFocusAreas() != 0 && focusMode != null &&
-                    (focusMode.equals(Camera.Parameters.FOCUS_MODE_AUTO) ||
-                    focusMode.equals(Camera.Parameters.FOCUS_MODE_MACRO) ||
-                    focusMode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) ||
-                    focusMode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO))
-                ) {
-                    parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-                    parameters.setFocusAreas(meteringAreas);
-                    if (parameters.getMaxNumMeteringAreas() > 0) {
-                        parameters.setMeteringAreas(meteringAreas);
-                    }
-                    if(!parameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
-                        return false; //cannot autoFocus
-                    }
-                    mCamera.setParameters(parameters);
-                    mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                        @Override
-                        public void onAutoFocus(boolean success, Camera camera) {
-                            resetFocus(success, camera);
-                        }
-                    });
-                } else if (parameters.getMaxNumMeteringAreas() > 0) {
-                    if(!parameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
-                        return false; //cannot autoFocus
-                    }
-                    parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-                    parameters.setFocusAreas(meteringAreas);
-                    parameters.setMeteringAreas(meteringAreas);
-
-                    mCamera.setParameters(parameters);
-                    mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                        @Override
-                        public void onAutoFocus(boolean success, Camera camera) {
-                            resetFocus(success, camera);
-                        }
-                    });
-                } else {
-                    mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                        @Override
-                        public void onAutoFocus(boolean success, Camera camera) {
-                            if (mAutofocusCallback != null) {
-                                mAutofocusCallback.onAutoFocus(success, camera);
-                            }
-                        }
-                    });
-                }
-                return true;
-            }
-        });
     }
 
 
@@ -648,9 +602,7 @@ class Camera1 extends CameraImpl {
                         camera.setParameters(params);
                     }
 
-                    if (mAutofocusCallback != null) {
-                        mAutofocusCallback.onAutoFocus(success, camera);
-                    }
+                    if (mAutofocusCallback != null) mAutofocusCallback.onAutoFocus(success, camera);
                 }
             }
         }, DELAY_MILLIS_BEFORE_RESETTING_FOCUS);

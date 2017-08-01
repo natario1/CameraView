@@ -2,6 +2,7 @@ package com.flurgle.camerakit;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.view.MotionEvent;
 
 import java.io.File;
 
@@ -38,6 +39,8 @@ abstract class CameraImpl {
     abstract Size getPreviewSize();
     abstract boolean shouldFlipSizes(); // Wheter the Sizes should be flipped to match the view orientation.
     abstract boolean isCameraOpened();
+
+    abstract void onTouchEvent(MotionEvent event);
 
     @Nullable
     abstract ExtraProperties getExtraProperties();

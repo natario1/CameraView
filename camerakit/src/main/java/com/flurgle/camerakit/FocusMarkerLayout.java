@@ -36,7 +36,7 @@ public class FocusMarkerLayout extends FrameLayout {
         if (action == MotionEvent.ACTION_UP && isEnabled()) {
             focus(event.getX(), event.getY());
         }
-        return false; // We didn't consume, pass to parent
+        return false; // We didn't consume, pass
     }
 
     public void focus(float mx, float my) {

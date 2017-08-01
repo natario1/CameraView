@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.SizeF;
+import android.view.MotionEvent;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -248,6 +249,11 @@ class Camera2 extends CameraImpl {
     @Override
     boolean isCameraOpened() {
         return mCamera != null;
+    }
+
+    @Override
+    void onTouchEvent(MotionEvent event) {
+
     }
 
     @Nullable

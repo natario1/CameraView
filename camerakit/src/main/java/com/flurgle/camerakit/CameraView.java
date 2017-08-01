@@ -265,6 +265,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        return true; // Steal our own events.
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        // And dispatch to everyone.
+        mFocusMarkerLayout.onTouchEvent(event); // For drawing focus marker.
+        mCameraImpl.onTouchEvent(event); // For focus behavior.
+        return true;
+    }
+
     /**
      * Returns whether the camera has started showing its preview.
      * @return whether the camera has started
