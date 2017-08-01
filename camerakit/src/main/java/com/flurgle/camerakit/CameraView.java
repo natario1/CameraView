@@ -60,14 +60,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     private final static String TAG = CameraView.class.getSimpleName();
 
-    private static Handler sWorkerHandler;
+    private Handler sWorkerHandler;
 
-    private static Handler getWorkerHandler() {
-        if (sWorkerHandler == null) {
-            HandlerThread workerThread = new HandlerThread("CameraViewWorker");
-            workerThread.setDaemon(true);
-            workerThread.start();
-            sWorkerHandler = new Handler(workerThread.getLooper());
+    private Handler getWorkerHandler() {
+        synchronized (this) {
+            if (sWorkerHandler == null) {
+                HandlerThread workerThread = new HandlerThread("CameraViewWorker");
+                workerThread.setDaemon(true);
+                workerThread.start();
+                sWorkerHandler = new Handler(workerThread.getLooper());
+            }
         }
         return sWorkerHandler;
     }
@@ -94,6 +96,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private PreviewImpl mPreviewImpl;
 
     private Lifecycle mLifecycle;
+    private FocusMarkerLayout mFocusMarkerLayout;
     private boolean mIsStarted;
 
     public CameraView(@NonNull Context context) {
@@ -108,29 +111,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
-        if (attrs != null) {
-            TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
-            try {
-                mFacing = a.getInteger(R.styleable.CameraView_cameraFacing, CameraKit.Defaults.DEFAULT_FACING);
-                mFlash = a.getInteger(R.styleable.CameraView_cameraFlash, CameraKit.Defaults.DEFAULT_FLASH);
-                mFocus = a.getInteger(R.styleable.CameraView_cameraFocus, CameraKit.Defaults.DEFAULT_FOCUS);
-                // mMethod = a.getInteger(R.styleable.CameraView_cameraCaptureMethod, CameraKit.Defaults.DEFAULT_METHOD);
-                // mPermissions = a.getInteger(R.styleable.CameraView_cameraPermissionPolicy, CameraKit.Defaults.DEFAULT_PERMISSIONS);
-                mSessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, CameraKit.Defaults.DEFAULT_SESSION_TYPE);
-                mZoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraKit.Defaults.DEFAULT_ZOOM);
-                mWhiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
-                mVideoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
-                mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
-                mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
-                mAdjustViewBounds = a.getBoolean(R.styleable.CameraView_android_adjustViewBounds, CameraKit.Defaults.DEFAULT_ADJUST_VIEW_BOUNDS);
-            } finally {
-                a.recycle();
-            }
-        }
+        TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
+        mFacing = a.getInteger(R.styleable.CameraView_cameraFacing, CameraKit.Defaults.DEFAULT_FACING);
+        mFlash = a.getInteger(R.styleable.CameraView_cameraFlash, CameraKit.Defaults.DEFAULT_FLASH);
+        mFocus = a.getInteger(R.styleable.CameraView_cameraFocus, CameraKit.Defaults.DEFAULT_FOCUS);
+        mSessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, CameraKit.Defaults.DEFAULT_SESSION_TYPE);
+        mZoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraKit.Defaults.DEFAULT_ZOOM);
+        mWhiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
+        mVideoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
+        mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
+        mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
+        mAdjustViewBounds = a.getBoolean(R.styleable.CameraView_android_adjustViewBounds, CameraKit.Defaults.DEFAULT_ADJUST_VIEW_BOUNDS);
+        a.recycle();
 
         mCameraListener = new CameraListenerWrapper();
         mPreviewImpl = new TextureViewPreview(context, this);
         mCameraImpl = new Camera1(mCameraListener, mPreviewImpl);
+        mFocusMarkerLayout = new FocusMarkerLayout(context);
+        addView(mFocusMarkerLayout);
 
         mIsStarted = false;
         setFacing(mFacing);
@@ -156,9 +154,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 }
             };
 
-            final FocusMarkerLayout focusMarkerLayout = new FocusMarkerLayout(getContext());
-            addView(focusMarkerLayout);
-            focusMarkerLayout.setOnTouchListener(new OnTouchListener() {
+            /* focusMarkerLayout.setOnTouchListener(new OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent motionEvent) {
                     int action = motionEvent.getAction();
@@ -169,7 +165,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     mPreviewImpl.getView().dispatchTouchEvent(motionEvent);
                     return true;
                 }
-            });
+            }); */
         }
         mLifecycle = null;
     }
@@ -552,13 +548,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param focus a Focus value.
      */
     public void setFocus(@Focus int focus) {
-        this.mFocus = focus;
-        if (this.mFocus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER) {
-            mCameraImpl.setFocus(CameraKit.Constants.FOCUS_TAP);
-            return;
+        mFocus = focus;
+        mFocusMarkerLayout.setEnabled(focus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER);
+        if (focus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER) {
+            focus = CameraKit.Constants.FOCUS_TAP;
         }
-
-        mCameraImpl.setFocus(mFocus);
+        mCameraImpl.setFocus(focus);
     }
 
 
@@ -669,13 +664,42 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl.captureImage();
     }
 
-    public void startRecordingVideo() {
-        mCameraImpl.startVideo();
+
+    /**
+     * Starts recording a video with selected options, in a file called
+     * "video.mp4" in the default folder.
+     * This is discouraged, please use {@link #startCapturingVideo(File)} instead.
+     *
+     * @deprecated see {@link #startCapturingVideo(File)}
+     */
+    @Deprecated
+    public void startCapturingVideo() {
+        startCapturingVideo(null);
     }
 
-    public void stopRecordingVideo() {
+
+    /**
+     * Starts recording a video with selected options. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     *
+     * @param file a file where the video will be saved
+     */
+    public void startCapturingVideo(File file) {
+        if (file == null) {
+            file = new File(getContext().getExternalFilesDir(null), "video.mp4");
+        }
+        mCameraImpl.startVideo(file);
+    }
+
+
+    /**
+     * Stops capturing video, if there was a video record going on.
+     * This will fire {@link CameraListener#onVideoTaken(File)}.
+     */
+    public void stopCapturingVideo() {
         mCameraImpl.endVideo();
     }
+
 
     /**
      * Returns the size used for the preview,

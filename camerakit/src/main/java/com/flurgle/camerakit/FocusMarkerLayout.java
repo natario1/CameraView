@@ -7,6 +7,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -25,8 +27,16 @@ public class FocusMarkerLayout extends FrameLayout {
 
         mFocusMarkerContainer = (FrameLayout) findViewById(R.id.focusMarkerContainer);
         mFill = (ImageView) findViewById(R.id.fill);
-
         mFocusMarkerContainer.setAlpha(0);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        int action = event.getAction();
+        if (action == MotionEvent.ACTION_UP && isEnabled()) {
+            focus(event.getX(), event.getY());
+        }
+        return false; // We didn't consume, pass to parent
     }
 
     public void focus(float mx, float my) {

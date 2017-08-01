@@ -2,8 +2,8 @@
 *A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). Right now this is like CameraKit-Android, but with *a lot* of serious bugs fixed, new sizing behavior, better orientation and EXIF support, new `setLocation` and `setWhiteBalance` APIs. Feel free to open issues with suggestions or contribute. Roadmap:*
 
 - [x] *delete `captureMethod` and `permissionPolicy`, replace with `sessionType` (either picture or video) such that when `sessionType=video`, pictures are captured with the fast 'frame' method*
+- [x] *pass a nullable File to startVideo, so user can choose where to save the file*
 - [ ] *test video and 'frame' capture behavior, I expect some bugs there*
-- [ ] *pass a nullable File to startVideo, so user can choose where to save the file*
 - [ ] *simple APIs to draw grid lines*
 - [ ] *rethink `adjustViewBounds`, maybe replace with a `scaleType` flag (center crop or center inside)*
 - [ ] *add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`*

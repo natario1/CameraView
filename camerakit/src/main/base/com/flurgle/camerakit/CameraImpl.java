@@ -1,6 +1,9 @@
 package com.flurgle.camerakit;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+
+import java.io.File;
 
 abstract class CameraImpl {
 
@@ -28,7 +31,7 @@ abstract class CameraImpl {
     abstract void setLocation(double latitude, double longitude);
 
     abstract void captureImage();
-    abstract void startVideo();
+    abstract void startVideo(@NonNull File file);
     abstract void endVideo();
 
     abstract Size getCaptureSize();

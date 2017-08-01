@@ -8,10 +8,12 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.SizeF;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -34,7 +36,7 @@ class Camera2 extends CameraImpl {
     private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper2();
     private final HashMap<String, ExtraProperties> mExtraPropertiesMap = new HashMap<>();
 
-    Camera2(CameraListener callback, PreviewImpl preview, Context context) {
+    Camera2(CameraView.CameraListenerWrapper callback, PreviewImpl preview, Context context) {
         super(callback, preview);
         preview.setCallback(new PreviewImpl.OnPreviewSurfaceChangedCallback() {
             @Override
@@ -177,7 +179,7 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    void startVideo() {
+    void startVideo(@NonNull File videoFile) {
 
     }
 
