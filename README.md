@@ -1,19 +1,32 @@
 
-*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). Right now this is like CameraKit-Android, but with *a lot* of serious bugs fixed, new sizing behavior, better orientation and EXIF support, new `setLocation` and `setWhiteBalance` APIs. Feel free to open issues with suggestions or contribute. Roadmap:*
+*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The CameraKit-Android at this point has been fairly rewritten and refactored:*
 
-- [x] *delete `captureMethod` and `permissionPolicy`, replace with `sessionType` (either picture or video) such that when `sessionType=video`, pictures are captured with the fast 'frame' method*
-- [x] *pass a nullable File to startVideo, so user can choose where to save the file*
+- lots *of serious bugs fixed, I have lost the count*
+- *decent orientation support*
+- *EXIF support*
+- *simpler APIs*
+- *docs and comments in code*
+- *introduced sessionType (picture or video), replacing Method and Permissions stuff* 
+- *new `setLocation` and `setWhiteBalance` APIs*
+- *option to pass a `File` when recording a video*
+- *introduced a smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
+- *measure `CameraView` as center crop or center inside*
+
+Feel free to open issues with suggestions or contribute. The roadmap off the top of my head:*
+
+- [ ] *fix CropOutput class presumably not working on rotated pictures*
 - [ ] *test video and 'frame' capture behavior, I expect some bugs there*
 - [ ] *simple APIs to draw grid lines*
-- [ ] *rethink `adjustViewBounds`, maybe replace with a `scaleType` flag (center crop or center inside)*
+- [ ] *replace setCameraListener() with addCameraListener()*
 - [ ] *add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`*
 - [ ] *pinch to zoom support*
 - [ ] *exposure correction APIs*
-- [ ] *revisit demo app*
+- [ ] *revisit demo app (added video support)*
 - [ ] *`Camera2` integration*
 - [ ] *EXIF support for 'frame' captured pictures, using ExifInterface library, so we can stop rotating it in Java*
 - [ ] *add onRequestPermissionResults for easy permission callback*
 - [ ] *better error handling, maybe with a onError(e) method in the public listener*
+- [ ] *better threading, for example ensure callbacks are called in the ui thread*
 
 # CameraKit
 
@@ -27,6 +40,9 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - [Capturing Images](#capturing-images)
   - [Capturing Video](#capturing-video)
   - [Other camera events](#other-camera-events)
+- [Dynamic Sizing Behavior](#dynamic-sizing-behavior)
+  - [Center Inside](#center-inside)
+  - [Center Crop](#center-crop)
 - [Extra Attributes](#extra-attributes)
   - [cameraSessionType](#camerasessiontype)
   - [cameraFacing](#camerafacing)
@@ -39,9 +55,7 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - [Deprecated: cameraCaptureMethod](#cameracapturemethod)
   - [Deprecated: cameraPermissionsPolicy](#camerapermissionpolicy)
 - [Permissions Behavior](#permissions-behavior)
-- [Dynamic Sizing Behavior](#dynamic-sizing-behavior)
-  - [Center Crop](#center-crop)
-  - [Center Inside](#center-inside)
+- [Manifest file](#manifest-file)
 
 # Features
 
@@ -73,8 +87,7 @@ To use CameraKit, simply add a `CameraView` to your layout:
 <com.flurgle.camerakit.CameraView
     android:id="@+id/camera"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:adjustViewBounds="true" />
+    android:layout_height="wrap_content" />
 ```
 
 Make sure you override `onResume`, `onPause` and  `onDestroy` in your activity, and call `CameraView.start()`, `stop()` and `destroy()`.
@@ -163,6 +176,41 @@ camera.setCameraListener(new CameraListener() {
 });
 ```
 
+## Dynamic Sizing Behavior
+
+`CameraView` has a smart measuring behavior that will let you do what you want with a few flags.
+Measuring is controlled simply by `layout_width` and `layout_height` attributes, with this meaning:
+
+- `WRAP_CONTENT` : try to stretch this dimension to respect the preview aspect ratio.
+- `MATCH_PARENT` : fill this dimension, even if this means ignoring the aspect ratio.
+- Fixed values (e.g. `500dp`) : respect this dimension.
+
+You can have previews of all sizes, not just the supported presets. Whaterever you do, the preview will never be distorted. 
+
+### Center inside
+
+You can emulate a **center inside** behavior (like the `ImageView` scaletype) by setting both dimensions to `wrap_content`. The camera will get the biggest possible size that fits into your bounds, just like what happens with image views.
+
+
+```xml
+<com.flurgle.camerakit.CameraView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" />
+```
+
+This means that the whole preview is visible, and the image output matches what was visible during the capture.
+
+### Center crop
+
+You can emulate a **center crop** behavior by setting both dimensions to fixed values or to `MATCH_PARENT`. The camera view will fill the rect. If your dimensions don't match the aspect ratio of the internal preview surface, the surface will be cropped to fill the view, just like `android:scaleType="centerCrop"` on an `ImageView`.
+
+```xml
+<com.flurgle.camerakit.CameraView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+```
+
+This means that part of the preview is hidden, and the image output will contain parts of the scene that were not visible during the capture. If this is a problem, see [cameraCropOutput](#cameracropoutput).
 
 ## Extra Attributes
 
@@ -341,14 +389,4 @@ The library manifest file is not strict and only asks for camera permissions. Th
 ```
 
 If you don't request this feature, you can use `CameraKit.hasCameras()` to detect if current device has cameras, and then start the camera view.
-
-## Dynamic Sizing Behavior
-
-### Center crop
-
-You can setup the `CameraView` dimensions as you wish. Default behavior is that if your dimensions don't match the aspect ratio of the internal preview surface, the surface will be cropped to fill the view, just like `android:scaleType="centerCrop"` on an `ImageView`.
-
-### Center inside
-
-If `android:adjustViewBounds` is set to true the library will try to adapt the view dimension to the chosen preview size. How? All dimensions set to `wrap_content` are streched out to ensure the view holds the whole preview. If both dimensions are `wrap_content`, this is exactly like `android:scaleType="centerInside"` on an `ImageView`.
 

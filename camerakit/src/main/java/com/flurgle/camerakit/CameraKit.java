@@ -86,7 +86,6 @@ public class CameraKit {
         static final int DEFAULT_SESSION_TYPE = Constants.SESSION_TYPE_PICTURE;
         static final int DEFAULT_JPEG_QUALITY = 100;
         static final boolean DEFAULT_CROP_OUTPUT = false;
-        static final boolean DEFAULT_ADJUST_VIEW_BOUNDS = false;
 
     }
 

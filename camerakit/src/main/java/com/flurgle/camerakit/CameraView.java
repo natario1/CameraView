@@ -95,7 +95,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @WhiteBalance private int mWhiteBalance;
     private int mJpegQuality;
     private boolean mCropOutput;
-    private boolean mAdjustViewBounds;
     private CameraListenerWrapper mCameraListener;
     private OrientationHelper mOrientationHelper;
     private CameraImpl mCameraImpl;
@@ -127,7 +126,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mVideoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
-        mAdjustViewBounds = a.getBoolean(R.styleable.CameraView_android_adjustViewBounds, CameraKit.Defaults.DEFAULT_ADJUST_VIEW_BOUNDS);
         a.recycle();
 
         mCameraListener = new CameraListenerWrapper();
