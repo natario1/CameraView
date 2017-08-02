@@ -42,6 +42,12 @@ import static com.flurgle.camerakit.CameraKit.Constants.FLASH_TORCH;
 import static com.flurgle.camerakit.CameraKit.Constants.SESSION_TYPE_PICTURE;
 import static com.flurgle.camerakit.CameraKit.Constants.SESSION_TYPE_VIDEO;
 
+import static android.view.View.MeasureSpec.AT_MOST;
+import static android.view.View.MeasureSpec.EXACTLY;
+import static android.view.View.MeasureSpec.UNSPECIFIED;
+
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+
 /**
  * The CameraView implements the LifecycleObserver interface for ease of use. To take advantage of
  * this, simply call the following from any LifecycleOwner:
@@ -188,79 +194,139 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
+    private String ms(int mode) {
+        switch (mode) {
+            case AT_MOST: return "AT_MOST";
+            case EXACTLY: return "EXACTLY";
+            case UNSPECIFIED: return "UNSPECIFIED";
+        }
+        return null;
+    }
+
     /**
-     * If adjustViewBounds was set AND one of the dimensions is set to WRAP_CONTENT,
-     * CameraView will adjust that dimensions to fit the preview aspect ratio as returned by
-     * {@link #getPreviewSize()}.
+     * Measuring is basically controlled by layout params width and height.
+     * The basic semantics are:
      *
-     * If this is not true, the surface will adapt to the dimension specified in the layout file.
-     * Having fixed dimensions means that, very likely, what the user sees is different from what
-     * the final picture will be. This is also due to what happens in {@link PreviewImpl#refreshScale()}.
+     * - MATCH_PARENT: CameraView should completely fill this dimension, even if this might mean
+     *                 not respecting the preview aspect ratio.
+     * - WRAP_CONTENT: CameraView should try to adapt this dimension to respect the preview
+     *                 aspect ratio.
      *
-     * If this is a problem, you can use {@link #setCropOutput(boolean)} set to true.
-     * In that case, the final image will have the same aspect ratio of the preview.
+     * When both dimensions are MATCH_PARENT, CameraView will fill its
+     * parent no matter the preview. Thanks to what happens in {@link PreviewImpl}, this acts like
+     * a CENTER CROP scale type.
+     *
+     * When both dimensions are WRAP_CONTENT, CameraView will take the biggest dimensions that
+     * fit the preview aspect ratio. This acts like a CENTER INSIDE scale type.
      */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (!mAdjustViewBounds) {
-            Log.e(TAG, "onMeasure, adjustViewBounds=false");
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            return;
-        }
-
         Size previewSize = getPreviewSize();
-        if (previewSize == null) { // Early measure.
-            Log.e(TAG, "onMeasure, early measure");
+        if (previewSize == null) {
+            Log.e(TAG, "onMeasure, surface is not ready. Calling default behavior.");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
 
-        boolean wwc = getLayoutParams().width == ViewGroup.LayoutParams.WRAP_CONTENT;
-        boolean hwc = getLayoutParams().height == ViewGroup.LayoutParams.WRAP_CONTENT;
-        boolean flip = mCameraImpl.shouldFlipSizes();
-        float previewWidth = flip ? previewSize.getHeight() : previewSize.getWidth();
-        float previewHeight = flip ? previewSize.getWidth() : previewSize.getHeight();
-        float parentHeight = MeasureSpec.getSize(heightMeasureSpec);
-        float parentWidth = MeasureSpec.getSize(widthMeasureSpec); // mode = AT_MOST
-        Log.e(TAG, "onMeasure, parent size is "+new Size((int)parentWidth, (int)parentHeight)); // 1080x1794
-        Log.e(TAG, "onMeasure, surface size is "+new Size((int)previewWidth, (int)previewHeight)); // 1600x1200
+        // Let's which dimensions need to be adapted.
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        final int widthValue = MeasureSpec.getSize(widthMeasureSpec);
+        final int heightValue = MeasureSpec.getSize(heightMeasureSpec);
+        final boolean flip = mCameraImpl.shouldFlipSizes();
+        final float previewWidth = flip ? previewSize.getHeight() : previewSize.getWidth();
+        final float previewHeight = flip ? previewSize.getWidth() : previewSize.getHeight();
 
-        if (wwc && hwc) {
-            // If both dimensions are WRAP_CONTENT, let's try to fit the preview size perfectly
-            // without cropping.
-            // TODO: This should actually be a flag, like scaleMode, that replaces cropOutput and adjustViewBounds.
-            // This is like a fitCenter.
-            float targetRatio = previewHeight / previewWidth;
-            float currentRatio = parentHeight / parentWidth;
-            if (currentRatio > targetRatio) {
-                // View is too tall. Must reduce height.
-                int newHeight = (int) (parentWidth * targetRatio);
-                super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(newHeight, MeasureSpec.EXACTLY));
-            } else {
-                // View is too wide. Must reduce width.
-                int newWidth = (int) (parentHeight / targetRatio);
-                super.onMeasure(MeasureSpec.makeMeasureSpec(newWidth, MeasureSpec.EXACTLY), heightMeasureSpec);
-            }
+        // If MATCH_PARENT is interpreted as AT_MOST, transform to EXACTLY
+        // to be consistent with our semantics.
+        final ViewGroup.LayoutParams lp = getLayoutParams();
+        if (widthMode == AT_MOST && lp.width == MATCH_PARENT) widthMode = EXACTLY;
+        if (heightMode == AT_MOST && lp.height == MATCH_PARENT) heightMode = EXACTLY;
+        Log.e(TAG, "onMeasure, requested dimensions are (" +
+                widthValue + "[" + ms(widthMode) + "]x" +
+                heightValue + "[" + ms(heightMode) + "])");
+        Log.e(TAG, "onMeasure, previewSize is (" + previewWidth + "x" + previewHeight + ")");
 
-        } else if (wwc) {
-            // Legacy behavior, with just a WC dimension. This is dangerous because the final size
-            // might be bigger than the available size, resulting in part of the surface getting cropped.
-            // Think for example of a 4:3 preview in a 16:9 screen, with width=MP and height=WC.
-            // This is like a cropCenter.
-            float height = MeasureSpec.getSize(heightMeasureSpec);
-            float ratio = height / previewWidth;
-            int width = (int) (previewHeight * ratio);
-            super.onMeasure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), heightMeasureSpec);
 
-        } else if (hwc) {
-            float width = MeasureSpec.getSize(widthMeasureSpec);
-            float ratio = width / previewHeight;
-            int height = (int) (previewWidth * ratio);
-            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
-
-        } else {
+        // If we have fixed dimensions (either 300dp or MATCH_PARENT), there's nothing we should do,
+        // other than respect it. The preview will eventually be cropped at the sides (by PreviewImpl scaling)
+        // except the case in which these fixed dimensions somehow fit exactly the preview aspect ratio.
+        if (widthMode == EXACTLY && heightMode == EXACTLY) {
+            Log.e(TAG, "onMeasure, both are MATCH_PARENT or fixed value. We adapt. This means CROP_INSIDE. " +
+                    "(" + widthValue + "x" + heightValue + ")");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            return;
         }
+
+        // If both dimensions are free, with no limits, then our size will be exactly the
+        // preview size. This can happen rarely, for example in scrollable containers.
+        if (widthMode == UNSPECIFIED && heightMode == UNSPECIFIED) {
+            Log.e(TAG, "onMeasure, both are completely free. We respect that and extend to the whole preview size. " +
+                    "(" + previewWidth + "x" + previewHeight + ")");
+            super.onMeasure(MeasureSpec.makeMeasureSpec((int) previewWidth, EXACTLY),
+                    MeasureSpec.makeMeasureSpec((int) previewHeight, EXACTLY));
+            return;
+        }
+
+        // It sure now that at least one dimension can be determined (either because EXACTLY or AT_MOST).
+        // This starts to seem a pleasant situation.
+
+        // If one of the dimension is completely free, take the other and fit the ratio.
+        // One of the two might be AT_MOST, but we use the value anyway.
+        float ratio = previewHeight / previewWidth;
+        if (widthMode == UNSPECIFIED || heightMode == UNSPECIFIED) {
+            boolean freeWidth = widthMode == UNSPECIFIED;
+            int height, width;
+            if (freeWidth) {
+                height = heightValue;
+                width = (int) (height / ratio);
+            } else {
+                width = widthValue;
+                height = (int) (width * ratio);
+            }
+            Log.e(TAG, "onMeasure, one dimension was free, we adapted it to fit the aspect ratio. " +
+                    "(" + width + "x" + height + ")");
+            super.onMeasure(MeasureSpec.makeMeasureSpec(width, EXACTLY),
+                    MeasureSpec.makeMeasureSpec(height, EXACTLY));
+            return;
+        }
+
+        // At this point both dimensions are either AT_MOST-AT_MOST, EXACTLY-AT_MOST or AT_MOST-EXACTLY.
+        // Let's manage this sanely. If only one is EXACTLY, we can TRY to fit the aspect ratio,
+        // but it is not guaranteed to succeed. It depends on the AT_MOST value of the other dimensions.
+        if (widthMode == EXACTLY || heightMode == EXACTLY) {
+            boolean freeWidth = widthMode == AT_MOST;
+            int height, width;
+            if (freeWidth) {
+                height = heightValue;
+                width = Math.min((int) (height / ratio), widthValue);
+            } else {
+                width = widthValue;
+                height = Math.min((int) (width * ratio), heightValue);
+            }
+            Log.e(TAG, "onMeasure, one dimension was EXACTLY, another AT_MOST. We have TRIED to fit " +
+                    "the aspect ratio, but it's not guaranteed. (" + width + "x" + height + ")");
+            super.onMeasure(MeasureSpec.makeMeasureSpec(width, EXACTLY),
+                    MeasureSpec.makeMeasureSpec(height, EXACTLY));
+            return;
+        }
+
+        // Last case, AT_MOST and AT_MOST. Here we can SURELY fit the aspect ratio by filling one
+        // dimension and adapting the other.
+        int height, width;
+        float atMostRatio = heightValue / widthValue;
+        if (atMostRatio >= ratio) {
+            // We must reduce height.
+            width = widthValue;
+            height = (int) (width * ratio);
+        } else {
+            height = heightValue;
+            width = (int) (height / ratio);
+        }
+        Log.e(TAG, "onMeasure, both dimension were AT_MOST. We fit the preview aspect ratio. " +
+                "(" + width + "x" + height + ")");
+        super.onMeasure(MeasureSpec.makeMeasureSpec(width, EXACTLY),
+                MeasureSpec.makeMeasureSpec(height, EXACTLY));
     }
 
 
@@ -759,23 +825,29 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void onCameraOpened() {
-            super.onCameraOpened();
             if (mWrappedListener == null) return;
             mWrappedListener.onCameraOpened();
         }
 
         @Override
         public void onCameraClosed() {
-            super.onCameraClosed();
             if (mWrappedListener == null) return;
             mWrappedListener.onCameraClosed();
         }
 
+        public void onCameraPreviewSizeChanged() {
+            // Camera preview size, as returned by getPreviewSize(), has changed.
+            // Request a layout pass for onMeasure() to do its stuff.
+            // Potentially this will change CameraView size, which changes Surface size,
+            // which triggers a new Preview size. But hopefully it will converge.
+            requestLayout();
+        }
+
         @Override
         public void onPictureTaken(byte[] jpeg) {
-            super.onPictureTaken(jpeg);
             if (mWrappedListener == null) return;
             if (mCropOutput) {
+                // TODO cropOutput won't work if image is rotated (e.g. byte[] contains exif orientation).
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
                 mWrappedListener.onPictureTaken(new CenterCrop(jpeg, outputRatio, mJpegQuality).getJpeg());
             } else {
@@ -783,7 +855,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
         }
 
-        void processYuvImage(YuvImage yuv) {
+        public void processYuvImage(YuvImage yuv) {
             if (mWrappedListener == null) return;
             if (mCropOutput) {
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
@@ -797,7 +869,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void onVideoTaken(File video) {
-            super.onVideoTaken(video);
             mWrappedListener.onVideoTaken(video);
         }
 

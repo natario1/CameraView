@@ -15,6 +15,7 @@ class TextureViewPreview extends PreviewImpl {
     private Surface mSurface;
 
     TextureViewPreview(Context context, ViewGroup parent) {
+        super(context, parent);
         final View view = View.inflate(context, R.layout.texture_view, parent); // MATCH_PARENT
         mTextureView = (TextureView) view.findViewById(R.id.texture_view);
         mTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {

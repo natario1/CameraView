@@ -13,6 +13,7 @@ class SurfaceViewPreview extends PreviewImpl {
     private final SurfaceView mSurfaceView;
 
     SurfaceViewPreview(Context context, ViewGroup parent) {
+        super(context, parent);
         final View view = View.inflate(context, R.layout.surface_view, parent); // MATCH_PARENT
         mSurfaceView = (SurfaceView) view.findViewById(R.id.surface_view);
         final SurfaceHolder holder = mSurfaceView.getHolder();

@@ -121,10 +121,9 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 mCapturing = false;
                 long callbackTime = System.currentTimeMillis();
                 Bitmap bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.length);
-                ResultHolder.dispose();
-                ResultHolder.setImage(bitmap);
-                ResultHolder.setTimeToCallback(callbackTime - startTime);
+                PicturePreviewActivity.setImage(bitmap);
                 Intent intent = new Intent(MainActivity.this, PicturePreviewActivity.class);
+                intent.putExtra("delay", callbackTime-startTime);
                 startActivity(intent);
             }
         });
@@ -144,9 +143,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
             public void onVideoTaken(File video) {
                 super.onVideoTaken(video);
                 mCapturing = false;
-                ResultHolder.dispose();
-                ResultHolder.setVideo(Uri.fromFile(video));
                 Intent intent = new Intent(MainActivity.this, VideoPreviewActivity.class);
+                intent.putExtra("video", Uri.fromFile(video));
                 startActivity(intent);
             }
         });
@@ -169,7 +167,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 break;
 
             case CameraKit.Constants.FACING_FRONT:
-
                 Toast.makeText(this, "Switched to front camera!", Toast.LENGTH_SHORT).show();
                 break;
         }
@@ -307,6 +304,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                     break;
 
                 case R.id.heightMatchParent:
+                    // We are in a vertically scrolling container, match parent would not work at all.
                     height = parent.getHeight();
                     break;
             }

@@ -33,12 +33,7 @@ public class VideoPreviewActivity extends Activity {
         setContentView(R.layout.activity_video_preview);
         ButterKnife.bind(this);
 
-        Uri videoUri = ResultHolder.getVideo();
-        if (videoUri == null) {
-            finish();
-            return;
-        }
-
+        Uri videoUri = getIntent().getParcelableExtra("video");
         MediaController controller = new MediaController(this);
         controller.setAnchorView(videoView);
         controller.setMediaPlayer(videoView);

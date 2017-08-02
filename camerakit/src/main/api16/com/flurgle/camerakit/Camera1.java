@@ -43,7 +43,6 @@ class Camera1 extends CameraImpl {
     private MediaRecorder mMediaRecorder;
     private File mVideoFile;
     private Camera.AutoFocusCallback mAutofocusCallback;
-    private boolean isCapturingImage = false;
 
     private int mDisplayOffset;
     private int mDeviceOrientation;
@@ -63,6 +62,7 @@ class Camera1 extends CameraImpl {
     private Handler mFocusHandler = new Handler();
     private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper1();
     private boolean mIsSetup = false;
+    private boolean mIsCapturingImage = false;
     private final Object mLock = new Object();
 
 
@@ -91,6 +91,7 @@ class Camera1 extends CameraImpl {
             Size newSize = computePreviewSize();
             if (!newSize.equals(mPreviewSize)) {
                 mPreviewSize = newSize;
+                mCameraListener.onCameraPreviewSizeChanged();
                 synchronized (mLock) {
                     mCamera.stopPreview();
                     Camera.Parameters params = mCamera.getParameters();
@@ -127,6 +128,7 @@ class Camera1 extends CameraImpl {
         boolean invertPreviewSizes = shouldFlipSizes(); // mDisplayOffset % 180 != 0;
         mCaptureSize = computeCaptureSize();
         mPreviewSize = computePreviewSize();
+        mCameraListener.onCameraPreviewSizeChanged();
         mPreview.setDesiredSize(
                 invertPreviewSizes ? mPreviewSize.getHeight() : mPreviewSize.getWidth(),
                 invertPreviewSizes ? mPreviewSize.getWidth() : mPreviewSize.getHeight()
@@ -356,12 +358,12 @@ class Camera1 extends CameraImpl {
 
     @Override
     void captureImage() {
-        if (isCapturingImage) return;
+        if (mIsCapturingImage) return;
         if (!isCameraOpened()) return;
         switch (mSessionType) {
             case SESSION_TYPE_PICTURE:
                 // Set boolean to wait for image callback
-                isCapturingImage = true;
+                mIsCapturingImage = true;
                 synchronized (mLock) {
                     Camera.Parameters parameters = mCamera.getParameters();
                     parameters.setRotation(computeExifOrientation());
@@ -372,7 +374,7 @@ class Camera1 extends CameraImpl {
                         @Override
                         public void onPictureTaken(byte[] data, Camera camera) {
                             mCameraListener.onPictureTaken(data);
-                            isCapturingImage = false;
+                            mIsCapturingImage = false;
                             camera.startPreview(); // This is needed, read somewhere in the docs.
                         }
                     });
@@ -382,7 +384,7 @@ class Camera1 extends CameraImpl {
                 // If we are in a video session, camera captures are fast captures coming
                 // from the preview stream.
                 // TODO: will this work while recording a video? test...
-                isCapturingImage = true;
+                mIsCapturingImage = true;
                 mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
                     @Override
                     public void onPreviewFrame(final byte[] data, Camera camera) {
@@ -402,7 +404,7 @@ class Camera1 extends CameraImpl {
                                 byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, rotation);
                                 YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
                                 mCameraListener.processYuvImage(yuv);
-                                isCapturingImage = false;
+                                mIsCapturingImage = false;
                             }
                         }).start();
                     }

@@ -10,6 +10,8 @@ import android.widget.TextView;
 import com.flurgle.camerakit.AspectRatio;
 import com.flurgle.camerakit.Size;
 
+import java.lang.ref.WeakReference;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -30,13 +32,20 @@ public class PicturePreviewActivity extends Activity {
     @BindView(R.id.captureLatency)
     TextView captureLatency;
 
+    private static WeakReference<Bitmap> image;
+
+    public static void setImage(@Nullable Bitmap im) {
+        image = im != null ? new WeakReference<>(im) : null;
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_picture_preview);
         ButterKnife.bind(this);
 
-        Bitmap bitmap = ResultHolder.getImage();
+        long delay = getIntent().getLongExtra("delay", 0);
+        Bitmap bitmap = image == null ? null : image.get();
         if (bitmap == null) {
             finish();
             return;
@@ -51,7 +60,7 @@ public class PicturePreviewActivity extends Activity {
 
         actualResolution.setText(bitmap.getWidth() + " x " + bitmap.getHeight());
         approxUncompressedSize.setText(getApproximateFileMegabytes(bitmap) + "MB");
-        captureLatency.setText(ResultHolder.getTimeToCallback() + " milliseconds");
+        captureLatency.setText(delay + " milliseconds");
     }
 
     private static float getApproximateFileMegabytes(Bitmap bitmap) {
