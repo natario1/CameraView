@@ -12,21 +12,7 @@
 - *introduced a smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
 - *measure `CameraView` as center crop or center inside*
 
-Feel free to open issues with suggestions or contribute. The roadmap off the top of my head:*
-
-- [ ] *fix CropOutput class presumably not working on rotated pictures*
-- [ ] *test video and 'frame' capture behavior, I expect some bugs there*
-- [ ] *simple APIs to draw grid lines*
-- [ ] *replace setCameraListener() with addCameraListener()*
-- [ ] *add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`*
-- [ ] *pinch to zoom support*
-- [ ] *exposure correction APIs*
-- [ ] *revisit demo app (added video support)*
-- [ ] *`Camera2` integration*
-- [ ] *EXIF support for 'frame' captured pictures, using ExifInterface library, so we can stop rotating it in Java*
-- [ ] *add onRequestPermissionResults for easy permission callback*
-- [ ] *better error handling, maybe with a onError(e) method in the public listener*
-- [ ] *better threading, for example ensure callbacks are called in the ui thread*
+*Feel free to open issues with suggestions or contribute.*
 
 # CameraKit
 
@@ -56,6 +42,7 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - [Deprecated: cameraPermissionsPolicy](#camerapermissionpolicy)
 - [Permissions Behavior](#permissions-behavior)
 - [Manifest file](#manifest-file)
+- [Roadmap](#roadmap)
 
 # Features
 
@@ -389,4 +376,22 @@ The library manifest file is not strict and only asks for camera permissions. Th
 ```
 
 If you don't request this feature, you can use `CameraKit.hasCameras()` to detect if current device has cameras, and then start the camera view.
+
+## Roadmap
+
+This are things that need to be done, off the top of my head:
+
+- [ ] fix CropOutput class presumably not working on rotated pictures
+- [ ] test video and 'frame' capture behavior, I expect some bugs there
+- [ ] simple APIs to draw grid lines
+- [ ] replace setCameraListener() with addCameraListener()
+- [ ] add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`
+- [ ] pinch to zoom support
+- [ ] exposure correction APIs
+- [ ] revisit demo app (added video support)
+- [ ] `Camera2` integration
+- [ ] EXIF support for 'frame' captured pictures, using ExifInterface library, so we can stop rotating it in Java
+- [ ] add onRequestPermissionResults for easy permission callback
+- [ ] better error handling, maybe with a onError(e) method in the public listener
+- [ ] better threading, for example ensure callbacks are called in the ui thread
 
