@@ -43,7 +43,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:weightSum="3">
+                android:weightSum="4">
 
                 <ImageButton
                     android:id="@+id/capturePhoto"
@@ -113,31 +113,31 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="3dp"
-                        android:text="CAPTURE METHOD"
+                        android:text="SESSION TYPE"
                         android:textColor="@android:color/black"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <RadioGroup
-                        android:id="@+id/captureModeRadioGroup"
+                        android:id="@+id/sessionTypeRadioGroup"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:checkedButton="@+id/modeCaptureStandard"
+                        android:checkedButton="@+id/sessionTypePicture"
                         android:orientation="horizontal">
 
                         <RadioButton
-                            android:id="@+id/modeCaptureStandard"
+                            android:id="@+id/sessionTypePicture"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Standard" />
+                            android:text="Picture" />
 
                         <RadioButton
-                            android:id="@+id/modeCaptureStill"
+                            android:id="@+id/sessionTypeVideo"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginLeft="10dp"
-                            android:text="Still" />
+                            android:text="Video" />
 
                     </RadioGroup>
 

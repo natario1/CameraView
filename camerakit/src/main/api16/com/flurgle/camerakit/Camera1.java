@@ -8,11 +8,10 @@ import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-import android.view.View;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,9 +37,7 @@ class Camera1 extends CameraImpl {
 
     private int mCameraId;
     private Camera mCamera;
-    private Camera.Parameters mCameraParameters;
     private ExtraProperties mExtraProperties;
-    private Camera.CameraInfo mCameraInfo;
     private Size mPreviewSize;
     private Size mCaptureSize;
     private MediaRecorder mMediaRecorder;
@@ -63,48 +60,60 @@ class Camera1 extends CameraImpl {
     private double mLongitude;
     private boolean mFocusOnTap;
 
-    private Handler mHandler = new Handler();
+    private Handler mFocusHandler = new Handler();
     private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper1();
+    private boolean mIsSetup = false;
+    private final Object mLock = new Object();
 
-    Camera1(CameraView.CameraListenerWrapper callback, PreviewImpl preview) {
+
+    Camera1(CameraView.CameraListenerWrapper callback, final PreviewImpl preview) {
         super(callback, preview);
-        preview.setCallback(new PreviewImpl.OnPreviewSurfaceChangedCallback() {
-            @Override
-            public void onPreviewSurfaceChanged() {
-                if (mCamera != null) {
-                    setupPreview();
-                    computeCameraSizes();
-                    adjustCameraParameters();
-                }
-            }
-        });
-
-        mCameraInfo = new Camera.CameraInfo();
-
-    }
-
-    // CameraImpl:
-
-    @Override
-    void start() {
-        setFacing(mFacing);
-        openCamera();
-        if (mPreview.isReady()) setupPreview();
-        mCamera.startPreview();
-    }
-
-    @Override
-    void stop() {
-        if (mCamera != null) mCamera.stopPreview();
-        mHandler.removeCallbacksAndMessages(null);
-        releaseCamera();
     }
 
     /**
-     * Sets the output stream for our preview.
-     * To be called when preview is ready.
+     * Preview surface is now available. If camera is open, set up.
      */
-    private void setupPreview() {
+    @Override
+    public void onSurfaceAvailable() {
+        Log.e(TAG, "onSurfaceAvailable, size is "+mPreview.getSurfaceSize());
+        if (shouldSetup()) setup();
+    }
+
+    /**
+     * Preview surface did change its size. Compute a new preview size.
+     * This requires stopping and restarting the preview.
+     */
+    @Override
+    public void onSurfaceChanged() {
+        Log.e(TAG, "onSurfaceChanged, size is "+mPreview.getSurfaceSize());
+        if (mIsSetup) {
+            // Compute a new camera preview size.
+            Size newSize = computePreviewSize();
+            if (!newSize.equals(mPreviewSize)) {
+                mPreviewSize = newSize;
+                synchronized (mLock) {
+                    mCamera.stopPreview();
+                    Camera.Parameters params = mCamera.getParameters();
+                    params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+                    mCamera.setParameters(params);
+                }
+                boolean invertPreviewSizes = shouldFlipSizes();
+                mPreview.setDesiredSize(
+                        invertPreviewSizes ? mPreviewSize.getHeight() : mPreviewSize.getWidth(),
+                        invertPreviewSizes ? mPreviewSize.getWidth() : mPreviewSize.getHeight()
+                );
+                mCamera.startPreview();
+            }
+        }
+    }
+
+    private boolean shouldSetup() {
+        return isCameraOpened() && mPreview.isReady() && !mIsSetup;
+    }
+
+    // The act of binding an "open" camera to a "ready" preview.
+    // These can happen at different times but we want to end up here.
+    private void setup() {
         try {
             if (mPreview.getOutputClass() == SurfaceHolder.class) {
                 mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
@@ -114,8 +123,78 @@ class Camera1 extends CameraImpl {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        boolean invertPreviewSizes = shouldFlipSizes(); // mDisplayOffset % 180 != 0;
+        mCaptureSize = computeCaptureSize();
+        mPreviewSize = computePreviewSize();
+        mPreview.setDesiredSize(
+                invertPreviewSizes ? mPreviewSize.getHeight() : mPreviewSize.getWidth(),
+                invertPreviewSizes ? mPreviewSize.getWidth() : mPreviewSize.getHeight()
+        );
+        synchronized (mLock) {
+            Camera.Parameters params = mCamera.getParameters();
+            params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- not allowed during preview
+            mCamera.setParameters(params);
+        }
+        mCamera.startPreview();
+        mIsSetup = true;
     }
 
+
+    @Override
+    void start() {
+        if (isCameraOpened()) stop();
+        if (collectCameraId()) {
+            mCamera = Camera.open(mCameraId);
+            mCameraListener.onCameraOpened();
+
+            // Set parameters that might have been set before the camera was opened.
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                mergeFocus(params, mFocus);
+                mergeFlash(params, mFlash);
+                mergeLocation(params, mLatitude, mLongitude);
+                mergeWhiteBalance(params, mWhiteBalance);
+                params.setRecordingHint(mSessionType == SESSION_TYPE_VIDEO);
+                mCamera.setParameters(params);
+            }
+
+            // Try starting preview.
+            mCamera.setDisplayOrientation(computeCameraToDisplayOffset()); // <- not allowed during preview
+            if (shouldSetup()) setup();
+            collectExtraProperties();
+        }
+    }
+
+
+    @Override
+    void stop() {
+        mFocusHandler.removeCallbacksAndMessages(null);
+        if (isCameraOpened()) {
+            mCamera.stopPreview();
+            mCamera.release();
+            mCameraListener.onCameraClosed();
+        }
+        mCamera = null;
+        mPreviewSize = null;
+        mCaptureSize = null;
+        mIsSetup = false;
+    }
+
+    private boolean collectCameraId() {
+        int internalFacing = mMapper.mapFacing(mFacing);
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
+            Camera.getCameraInfo(i, cameraInfo);
+            if (cameraInfo.facing == internalFacing) {
+                mSensorOffset = cameraInfo.orientation;
+                mCameraId = i;
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Override
     void onDisplayOffset(int displayOrientation) {
@@ -134,7 +213,6 @@ class Camera1 extends CameraImpl {
         if (sessionType != mSessionType) {
             mSessionType = sessionType;
             if (isCameraOpened()) {
-                stop();
                 start();
             }
         }
@@ -142,42 +220,35 @@ class Camera1 extends CameraImpl {
 
     @Override
     void setLocation(double latitude, double longitude) {
+        double oldLat = mLatitude;
+        double oldLong = mLongitude;
         mLatitude = latitude;
         mLongitude = longitude;
-        if (mCameraParameters != null) {
-            // Sometimes this will fail... I have no idea why.
-            // Since native_setParameters is quite a black box, there's nothing we can do about it.
-            try {
-                mCameraParameters.setGpsLatitude(latitude);
-                mCameraParameters.setGpsLongitude(longitude);
-                // mCameraParameters.setGpsAltitude(0);
-                // mCameraParameters.setGpsTimestamp(System.currentTimeMillis());
-                // mCameraParameters.setGpsProcessingMethod("GPS");
-                mCamera.setParameters(mCameraParameters);
-            } catch (Exception e) {
-                // Reset or everything after will throw as well.
-                e.printStackTrace();
-                mCameraParameters = mCamera.getParameters();
+        if (isCameraOpened()) {
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                if (mergeLocation(params, oldLat, oldLong)) mCamera.setParameters(params);
             }
         }
     }
 
+    private boolean mergeLocation(Camera.Parameters params, double oldLatitude, double oldLongitude) {
+        if (mLatitude != 0 && mLongitude != 0) {
+            params.setGpsLatitude(mLatitude);
+            params.setGpsLongitude(mLongitude);
+            params.setGpsTimestamp(System.currentTimeMillis());
+            params.setGpsProcessingMethod("Unknown");
+        }
+        return true;
+    }
+
     @Override
     void setFacing(@Facing int facing) {
-        int internalFacing = mMapper.mapFacing(facing);
-        for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
-            Camera.getCameraInfo(i, mCameraInfo);
-            if (mCameraInfo.facing == internalFacing) {
-                mSensorOffset = mCameraInfo.orientation;
-                mCameraId = i;
-                mFacing = facing;
-                break;
+        if (facing != mFacing) {
+            mFacing = facing;
+            if (collectCameraId() && isCameraOpened()) {
+                start();
             }
-        }
-
-        if (mFacing == facing && isCameraOpened()) {
-            stop();
-            start();
         }
     }
 
@@ -185,32 +256,47 @@ class Camera1 extends CameraImpl {
     void setWhiteBalance(@WhiteBalance int whiteBalance) {
         int old = mWhiteBalance;
         mWhiteBalance = whiteBalance;
-        if (mCameraParameters != null) {
-            List<String> supported = mCameraParameters.getSupportedWhiteBalance();
-            String internal = mMapper.mapWhiteBalance(whiteBalance);
-            if (supported != null && supported.contains(internal)) {
-                mCameraParameters.setWhiteBalance(internal);
-                mCamera.setParameters(mCameraParameters);
-            } else {
-                mWhiteBalance = old;
+        if (isCameraOpened()) {
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                if (mergeWhiteBalance(params, old)) mCamera.setParameters(params);
             }
         }
+    }
+
+    private boolean mergeWhiteBalance(Camera.Parameters params, @WhiteBalance int oldWhiteBalance) {
+        List<String> supported = params.getSupportedWhiteBalance();
+        String internal = mMapper.mapWhiteBalance(mWhiteBalance);
+        if (supported != null && supported.contains(internal)) {
+            params.setWhiteBalance(internal);
+            return true;
+        }
+        mWhiteBalance = oldWhiteBalance;
+        return false;
     }
 
     @Override
     void setFlash(@Flash int flash) {
         int old = mFlash;
         mFlash = flash;
-        if (mCameraParameters != null) {
-            List<String> flashes = mCameraParameters.getSupportedFlashModes();
-            String internalFlash = mMapper.mapFlash(flash);
-            if (flashes != null && flashes.contains(internalFlash)) {
-                mCameraParameters.setFlashMode(internalFlash);
-                mCamera.setParameters(mCameraParameters);
-            } else {
-                mFlash = old;
+        if (isCameraOpened()) {
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                if (mergeFlash(params, old)) mCamera.setParameters(params);
             }
         }
+    }
+
+
+    private boolean mergeFlash(Camera.Parameters params, @Flash int oldFlash) {
+        List<String> flashes = params.getSupportedFlashModes();
+        String internalFlash = mMapper.mapFlash(mFlash);
+        if (flashes != null && flashes.contains(internalFlash)) {
+            params.setFlashMode(internalFlash);
+            return true;
+        }
+        mFlash = oldFlash;
+        return false;
     }
 
 
@@ -218,42 +304,44 @@ class Camera1 extends CameraImpl {
     void setFocus(@Focus int focus) {
         int old = mFocus;
         mFocus = focus;
-        if (mCameraParameters == null) return;
-        switch (focus) {
-            case FOCUS_CONTINUOUS:
-                mFocusOnTap = false;
-                final List<String> modes = mCameraParameters.getSupportedFocusModes();
-                if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                } else {
-                    mFocus = old;
-                }
-                break;
+        if (isCameraOpened()) {
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                if (mergeFocus(params, old)) mCamera.setParameters(params);
+            }
+        }
+        mFocusOnTap = mFocus == FOCUS_TAP || mFocus == FOCUS_TAP_WITH_MARKER;
+    }
 
+
+    private boolean mergeFocus(Camera.Parameters params, @Focus int oldFocus) {
+        final List<String> modes = params.getSupportedFocusModes();
+        switch (mFocus) {
+            case FOCUS_CONTINUOUS:
             case FOCUS_TAP:
             case FOCUS_TAP_WITH_MARKER:
-                mFocusOnTap = true;
-                final List<String> modes1 = mCameraParameters.getSupportedFocusModes();
-                if (modes1.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                } else {
-                    mFocus = old;
+                if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                    return true;
                 }
-                break;
+                mFocus = oldFocus;
+                return false;
 
             case FOCUS_OFF:
-                mFocusOnTap = false;
-                final List<String> modes2 = mCameraParameters.getSupportedFocusModes();
-                if (modes2.contains(Camera.Parameters.FOCUS_MODE_FIXED)) {
-                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
-                } else if (modes2.contains(Camera.Parameters.FOCUS_MODE_INFINITY)) {
-                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
-                } else {
-                    mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                if (modes.contains(Camera.Parameters.FOCUS_MODE_FIXED)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
+                    return true;
+                } else if (modes.contains(Camera.Parameters.FOCUS_MODE_INFINITY)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+                    return true;
+                } else if (modes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                    return true;
                 }
-                break;
         }
+        return false;
     }
+
 
     @Override
     void setZoom(@ZoomMode int zoom) {
@@ -263,26 +351,29 @@ class Camera1 extends CameraImpl {
     @Override
     void setVideoQuality(int videoQuality) {
         this.mVideoQuality = videoQuality;
+        // TODO: restore preview size if needed.
     }
 
     @Override
     void captureImage() {
         if (isCapturingImage) return;
-        if (mCamera == null) return;
+        if (!isCameraOpened()) return;
         switch (mSessionType) {
             case SESSION_TYPE_PICTURE:
                 // Set boolean to wait for image callback
                 isCapturingImage = true;
-                Camera.Parameters parameters = mCamera.getParameters();
-                parameters.setRotation(computeExifOrientation());
-                mCamera.setParameters(parameters);
+                synchronized (mLock) {
+                    Camera.Parameters parameters = mCamera.getParameters();
+                    parameters.setRotation(computeExifOrientation());
+                    mCamera.setParameters(parameters);
+                }
                 mCamera.takePicture(null, null, null,
                     new Camera.PictureCallback() {
                         @Override
                         public void onPictureTaken(byte[] data, Camera camera) {
                             mCameraListener.onPictureTaken(data);
                             isCapturingImage = false;
-                            camera.startPreview(); // TODO: is this needed? why?
+                            camera.startPreview(); // This is needed, read somewhere in the docs.
                         }
                     });
                 break;
@@ -297,13 +388,14 @@ class Camera1 extends CameraImpl {
                     public void onPreviewFrame(final byte[] data, Camera camera) {
                         // Got to rotate the preview frame, since byte[] data here does not include
                         // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
+                        Camera.Parameters params = mCamera.getParameters();
                         final int rotation = computeExifOrientation();
                         final boolean flip = rotation % 180 != 0;
                         final int preWidth = mPreviewSize.getWidth();
                         final int preHeight = mPreviewSize.getHeight();
                         final int postWidth = flip ? preHeight : preWidth;
                         final int postHeight = flip ? preWidth : preHeight;
-                        final int format = mCameraParameters.getPreviewFormat();
+                        final int format = params.getPreviewFormat();
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -347,38 +439,13 @@ class Camera1 extends CameraImpl {
 
     // Internal:
 
-    private void openCamera() {
-        if (mCamera != null) {
-            releaseCamera();
-        }
-
-        mCamera = Camera.open(mCameraId);
-        mCameraParameters = mCamera.getParameters();
-
-        collectCameraProperties();
-        computeCameraSizes();
-        adjustCameraParameters();
-        mCamera.setDisplayOrientation(computeCameraToDisplayOffset());
-        mCameraListener.onCameraOpened();
-    }
-
-    private void releaseCamera() {
-        if (mCamera != null) {
-            mCamera.release();
-            mCamera = null;
-            mCameraParameters = null;
-            mPreviewSize = null;
-            mCaptureSize = null;
-            mCameraListener.onCameraClosed();
-        }
-    }
 
     /**
      * Returns how much should the sensor image be rotated before being shown.
      * It is meant to be fed to Camera.setDisplayOrientation().
      */
     private int computeCameraToDisplayOffset() {
-        if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+        if (mFacing == CameraKit.Constants.FACING_FRONT) {
             // or: (360 - ((info.orientation + displayOrientation) % 360)) % 360;
             return ((mSensorOffset - mDisplayOffset) + 360 + 180) % 360;
         } else {
@@ -399,45 +466,35 @@ class Camera1 extends CameraImpl {
      * This is called either on cameraView.start(), or when the underlying surface changes.
      * It is possible that in the first call the preview surface has not already computed its
      * dimensions.
-     * But when it does, the {@link PreviewImpl.OnPreviewSurfaceChangedCallback} should be called,
+     * But when it does, the {@link PreviewImpl.SurfaceCallback} should be called,
      * and this should be refreshed.
      */
-    private void computeCameraSizes() {
-        mCameraParameters.setRecordingHint(mSessionType == SESSION_TYPE_VIDEO);
-        List<Size> previewSizes = sizesFromList(mCameraParameters.getSupportedPreviewSizes());
+    private Size computeCaptureSize() {
+        Camera.Parameters params = mCamera.getParameters();
         if (mSessionType == SESSION_TYPE_PICTURE) {
             // Choose the max size.
-            List<Size> captureSizes = sizesFromList(mCameraParameters.getSupportedPictureSizes());
-            mCaptureSize = Collections.max(captureSizes);
+            List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
+            return Collections.max(captureSizes);
         } else {
             // Choose according to developer choice in setVideoQuality.
             // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.
             // So its output is our output.
             CamcorderProfile camcorderProfile = getCamcorderProfile(mVideoQuality);
-            mCaptureSize = new Size(camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
+            return new Size(camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
         }
-        mPreviewSize = computePreviewSize(previewSizes, mCaptureSize, mPreview.getSurfaceSize());
-        // Log.e("Camera1", "CaptureSize is "+mCaptureSize.toString());
-        // Log.e("Camera1", "PreviewSize is "+mPreviewSize.toString());
     }
 
-    private void adjustCameraParameters() {
-        boolean invertPreviewSizes = shouldFlipSizes(); // mDisplayOffset % 180 != 0;
-        mPreview.setDesiredSize(
-                invertPreviewSizes ? getPreviewSize().getHeight() : getPreviewSize().getWidth(),
-                invertPreviewSizes ? getPreviewSize().getWidth() : getPreviewSize().getHeight()
-        );
-        mCameraParameters.setPreviewSize(getPreviewSize().getWidth(), getPreviewSize().getHeight());
-        mCameraParameters.setPictureSize(getCaptureSize().getWidth(), getCaptureSize().getHeight());
-        setFocus(mFocus);
-        setFlash(mFlash);
-        setLocation(mLatitude, mLongitude);
-        mCamera.setParameters(mCameraParameters);
+    private Size computePreviewSize() {
+        Camera.Parameters params = mCamera.getParameters();
+        List<Size> previewSizes = sizesFromList(params.getSupportedPreviewSizes());
+        return computePreviewSize(previewSizes, mCaptureSize, mPreview.getSurfaceSize());
     }
 
-    private void collectCameraProperties() {
-        mExtraProperties = new ExtraProperties(mCameraParameters.getVerticalViewAngle(),
-                mCameraParameters.getHorizontalViewAngle());
+
+    private void collectExtraProperties() {
+        Camera.Parameters params = mCamera.getParameters();
+        mExtraProperties = new ExtraProperties(params.getVerticalViewAngle(),
+                params.getHorizontalViewAngle());
     }
 
 
@@ -546,23 +603,26 @@ class Camera1 extends CameraImpl {
         if (!mFocusOnTap) return;
         if (mCamera == null) return;
         if (event.getAction() != MotionEvent.ACTION_UP) return;
-        Camera.Parameters parameters = mCamera.getParameters();
         Rect rect = calculateFocusArea(event.getX(), event.getY());
         List<Camera.Area> meteringAreas = new ArrayList<>();
         meteringAreas.add(new Camera.Area(rect, getFocusMeteringAreaWeight()));
 
-        boolean autofocusSupported = parameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
-        if (autofocusSupported) {
-            if (parameters.getMaxNumFocusAreas() > 0) parameters.setFocusAreas(meteringAreas);
-            if (parameters.getMaxNumMeteringAreas() > 0) parameters.setMeteringAreas(meteringAreas);
-            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-            mCamera.setParameters(parameters);
-            mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                @Override
-                public void onAutoFocus(boolean success, Camera camera) {
-                    resetFocus(success, camera);
-                }
-            });
+        synchronized (mLock) {
+            Camera.Parameters parameters = mCamera.getParameters();
+            boolean autofocusSupported = parameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
+            if (autofocusSupported) {
+                if (parameters.getMaxNumFocusAreas() > 0) parameters.setFocusAreas(meteringAreas);
+                if (parameters.getMaxNumMeteringAreas() > 0)
+                    parameters.setMeteringAreas(meteringAreas);
+                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                mCamera.setParameters(parameters);
+                mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean success, Camera camera) {
+                        resetFocus(success, camera);
+                    }
+                });
+            }
         }
     }
 
@@ -578,18 +638,20 @@ class Camera1 extends CameraImpl {
 
 
     private void resetFocus(final boolean success, final Camera camera) {
-        mHandler.removeCallbacksAndMessages(null);
-        mHandler.postDelayed(new Runnable() {
+        mFocusHandler.removeCallbacksAndMessages(null);
+        mFocusHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if (camera != null) {
                     camera.cancelAutoFocus();
-                    Camera.Parameters params = camera.getParameters();
-                    if (!params.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                        params.setFocusAreas(null);
-                        params.setMeteringAreas(null);
-                        camera.setParameters(params);
+                    synchronized (mLock) {
+                        Camera.Parameters params = camera.getParameters();
+                        if (!params.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                            params.setFocusAreas(null);
+                            params.setMeteringAreas(null);
+                            mCamera.setParameters(params);
+                        }
                     }
 
                     if (mAutofocusCallback != null) mAutofocusCallback.onAutoFocus(success, camera);

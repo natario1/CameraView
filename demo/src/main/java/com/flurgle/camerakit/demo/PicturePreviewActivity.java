@@ -13,7 +13,7 @@ import com.flurgle.camerakit.Size;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class PreviewActivity extends Activity {
+public class PicturePreviewActivity extends Activity {
 
     @BindView(R.id.image)
     ImageView imageView;
@@ -33,7 +33,7 @@ public class PreviewActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_preview);
+        setContentView(R.layout.activity_picture_preview);
         ButterKnife.bind(this);
 
         Bitmap bitmap = ResultHolder.getImage();
@@ -44,12 +44,10 @@ public class PreviewActivity extends Activity {
 
         imageView.setImageBitmap(bitmap);
 
-        Size captureSize = ResultHolder.getNativeCaptureSize();
-        if (captureSize != null) {
-            // Native sizes are landscape, hardcode flip because demo app forced to portrait.
-            AspectRatio aspectRatio = AspectRatio.of(captureSize.getHeight(), captureSize.getWidth());
-            nativeCaptureResolution.setText(captureSize.getHeight() + " x " + captureSize.getWidth() + " (" + aspectRatio.toString() + ")");
-        }
+        // Native sizes are landscape, activity might now. <- not clear what this means but OK
+        // TODO: ncr and ar might be different when cropOutput is true.
+        AspectRatio aspectRatio = AspectRatio.of(bitmap.getHeight(), bitmap.getWidth());
+        nativeCaptureResolution.setText(bitmap.getHeight() + " x " + bitmap.getWidth() + " (" + aspectRatio.toString() + ")");
 
         actualResolution.setText(bitmap.getWidth() + " x " + bitmap.getHeight());
         approxUncompressedSize.setText(getApproximateFileMegabytes(bitmap) + "MB");

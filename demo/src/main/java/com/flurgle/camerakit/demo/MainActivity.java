@@ -3,6 +3,7 @@ package com.flurgle.camerakit.demo;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -34,8 +35,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
     // Capture Mode:
 
-    @BindView(R.id.captureModeRadioGroup)
-    RadioGroup captureModeRadioGroup;
+    @BindView(R.id.sessionTypeRadioGroup)
+    RadioGroup sessionTypeRadioGroup;
 
     // Crop Mode:
 
@@ -84,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
         camera.addOnLayoutChangeListener(this);
 
-        captureModeRadioGroup.setOnCheckedChangeListener(captureModeChangedListener);
+        sessionTypeRadioGroup.setOnCheckedChangeListener(sessionTypeChangedListener);
         cropModeRadioGroup.setOnCheckedChangeListener(cropModeChangedListener);
         widthModeRadioGroup.setOnCheckedChangeListener(widthModeChangedListener);
         heightModeRadioGroup.setOnCheckedChangeListener(heightModeChangedListener);
@@ -122,12 +123,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 Bitmap bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.length);
                 ResultHolder.dispose();
                 ResultHolder.setImage(bitmap);
-                ResultHolder.setNativeCaptureSize(
-                        captureModeRadioGroup.getCheckedRadioButtonId() == R.id.modeCaptureStandard ?
-                                camera.getCaptureSize() : camera.getPreviewSize()
-                );
                 ResultHolder.setTimeToCallback(callbackTime - startTime);
-                Intent intent = new Intent(MainActivity.this, PreviewActivity.class);
+                Intent intent = new Intent(MainActivity.this, PicturePreviewActivity.class);
                 startActivity(intent);
             }
         });
@@ -136,6 +133,10 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
     @OnClick(R.id.captureVideo)
     void captureVideo() {
+        if (camera.getSessionType() != CameraKit.Constants.SESSION_TYPE_VIDEO) {
+            Toast.makeText(this, "Can't record video while session type is 'picture'.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (mCapturing) return;
         mCapturing = true;
         camera.setCameraListener(new CameraListener() {
@@ -143,16 +144,20 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
             public void onVideoTaken(File video) {
                 super.onVideoTaken(video);
                 mCapturing = false;
+                ResultHolder.dispose();
+                ResultHolder.setVideo(Uri.fromFile(video));
+                Intent intent = new Intent(MainActivity.this, VideoPreviewActivity.class);
+                startActivity(intent);
             }
         });
-        Toast.makeText(this, "Recording for 3 seconds...", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Recording for 8 seconds...", Toast.LENGTH_LONG).show();
         camera.startCapturingVideo(null);
         camera.postDelayed(new Runnable() {
             @Override
             public void run() {
                 camera.stopCapturingVideo();
             }
-        }, 3000);
+        }, 8000);
     }
 
     @OnClick(R.id.toggleCamera)
@@ -188,16 +193,16 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         }
     }
 
-    RadioGroup.OnCheckedChangeListener captureModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
+    RadioGroup.OnCheckedChangeListener sessionTypeChangedListener = new RadioGroup.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
             if (mCapturing) return;
             camera.setSessionType(
-                    checkedId == R.id.modeCaptureStandard ?
+                    checkedId == R.id.sessionTypePicture ?
                             CameraKit.Constants.SESSION_TYPE_PICTURE :
                             CameraKit.Constants.SESSION_TYPE_VIDEO
             );
-            Toast.makeText(MainActivity.this, "Session type set to" + (checkedId == R.id.modeCaptureStandard ? " picture!" : " video!"), Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "Session type set to" + (checkedId == R.id.sessionTypePicture ? " picture!" : " video!"), Toast.LENGTH_SHORT).show();
         }
     };
 

@@ -6,7 +6,7 @@ import android.view.MotionEvent;
 
 import java.io.File;
 
-abstract class CameraImpl {
+abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
 
     protected final CameraView.CameraListenerWrapper mCameraListener;
     protected final PreviewImpl mPreview;
@@ -14,6 +14,7 @@ abstract class CameraImpl {
     CameraImpl(CameraView.CameraListenerWrapper callback, PreviewImpl preview) {
         mCameraListener = callback;
         mPreview = preview;
+        mPreview.setSurfaceCallback(this);
     }
 
     abstract void start();

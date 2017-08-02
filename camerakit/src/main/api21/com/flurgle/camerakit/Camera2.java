@@ -37,15 +37,18 @@ class Camera2 extends CameraImpl {
     private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper2();
     private final HashMap<String, ExtraProperties> mExtraPropertiesMap = new HashMap<>();
 
+    @Override
+    public void onSurfaceChanged() {
+
+    }
+
+    @Override
+    public void onSurfaceAvailable() {
+
+    }
+
     Camera2(CameraView.CameraListenerWrapper callback, PreviewImpl preview, Context context) {
         super(callback, preview);
-        preview.setCallback(new PreviewImpl.OnPreviewSurfaceChangedCallback() {
-            @Override
-            public void onPreviewSurfaceChanged() {
-
-            }
-        });
-
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
 
         // Get all view angles

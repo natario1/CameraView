@@ -203,12 +203,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         if (!mAdjustViewBounds) {
+            Log.e(TAG, "onMeasure, adjustViewBounds=false");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
 
         Size previewSize = getPreviewSize();
         if (previewSize == null) { // Early measure.
+            Log.e(TAG, "onMeasure, early measure");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
@@ -218,21 +220,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         boolean flip = mCameraImpl.shouldFlipSizes();
         float previewWidth = flip ? previewSize.getHeight() : previewSize.getWidth();
         float previewHeight = flip ? previewSize.getWidth() : previewSize.getHeight();
+        float parentHeight = MeasureSpec.getSize(heightMeasureSpec);
+        float parentWidth = MeasureSpec.getSize(widthMeasureSpec); // mode = AT_MOST
+        Log.e(TAG, "onMeasure, parent size is "+new Size((int)parentWidth, (int)parentHeight)); // 1080x1794
+        Log.e(TAG, "onMeasure, surface size is "+new Size((int)previewWidth, (int)previewHeight)); // 1600x1200
 
         if (wwc && hwc) {
             // If both dimensions are WRAP_CONTENT, let's try to fit the preview size perfectly
             // without cropping.
             // TODO: This should actually be a flag, like scaleMode, that replaces cropOutput and adjustViewBounds.
             // This is like a fitCenter.
-
-            // preview: 1600x1200
-            // parent:  1080x1794
-            float parentHeight = MeasureSpec.getSize(heightMeasureSpec);
-            float parentWidth = MeasureSpec.getSize(widthMeasureSpec); // mode = AT_MOST
             float targetRatio = previewHeight / previewWidth;
             float currentRatio = parentHeight / parentWidth;
-            Log.e(TAG, "parentHeight="+parentHeight+", parentWidth="+parentWidth);
-            Log.e(TAG, "previewHeight="+previewHeight+", previewWidth="+previewWidth);
             if (currentRatio > targetRatio) {
                 // View is too tall. Must reduce height.
                 int newHeight = (int) (parentWidth * targetRatio);

@@ -22,8 +22,9 @@
         </activity>
 
         <activity
-            android:name=".PreviewActivity"
-            android:screenOrientation="portrait" />
+            android:name=".PicturePreviewActivity" />
+
+        <activity android:name=".VideoPreviewActivity"/>
 
     </application>
 

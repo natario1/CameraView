@@ -1,12 +1,9 @@
 package com.flurgle.camerakit;
 
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.SurfaceTexture;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -23,19 +20,17 @@ class SurfaceViewPreview extends PreviewImpl {
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                setSurfaceSize(mSurfaceView.getWidth(), mSurfaceView.getHeight());
-                dispatchSurfaceChanged();
+                onSurfaceAvailable(mSurfaceView.getWidth(), mSurfaceView.getHeight());
             }
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                setSurfaceSize(width, height);
-                dispatchSurfaceChanged();
+                onSurfaceSizeChanged(width, height);
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                setSurfaceSize(0, 0);
+                onSurfaceDestroyed();
             }
         });
     }

@@ -1,6 +1,7 @@
 package com.flurgle.camerakit.demo;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.support.annotation.Nullable;
 
 import com.flurgle.camerakit.Size;
@@ -12,7 +13,16 @@ public class ResultHolder {
     private static WeakReference<Bitmap> image;
     private static Size nativeCaptureSize;
     private static long timeToCallback;
+    private static Uri video;
 
+
+    public static Uri getVideo() {
+        return video;
+    }
+
+    public static void setVideo(Uri video) {
+        ResultHolder.video = video;
+    }
 
     public static void setImage(@Nullable Bitmap image) {
         ResultHolder.image = image != null ? new WeakReference<>(image) : null;
@@ -21,15 +31,6 @@ public class ResultHolder {
     @Nullable
     public static Bitmap getImage() {
         return image != null ? image.get() : null;
-    }
-
-    public static void setNativeCaptureSize(@Nullable Size nativeCaptureSize) {
-        ResultHolder.nativeCaptureSize = nativeCaptureSize;
-    }
-
-    @Nullable
-    public static Size getNativeCaptureSize() {
-        return nativeCaptureSize;
     }
 
     public static void setTimeToCallback(long timeToCallback) {
@@ -42,7 +43,7 @@ public class ResultHolder {
 
     public static void dispose() {
         setImage(null);
-        setNativeCaptureSize(null);
+        setVideo(null);
         setTimeToCallback(0);
     }
 

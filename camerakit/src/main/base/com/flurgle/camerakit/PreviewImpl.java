@@ -7,11 +7,12 @@ import android.view.View;
 
 abstract class PreviewImpl {
 
-    interface OnPreviewSurfaceChangedCallback {
-        void onPreviewSurfaceChanged();
+    interface SurfaceCallback {
+        void onSurfaceAvailable();
+        void onSurfaceChanged();
     }
 
-    private OnPreviewSurfaceChangedCallback mOnPreviewSurfaceChangedCallback;
+    private SurfaceCallback mSurfaceCallback;
 
     // As far as I can see, these are the view/surface dimensions.
     // This live in the 'View' orientation.
@@ -22,8 +23,8 @@ abstract class PreviewImpl {
     private int mDesiredWidth;
     private int mDesiredHeight;
 
-    void setCallback(OnPreviewSurfaceChangedCallback callback) {
-        mOnPreviewSurfaceChangedCallback = callback;
+    void setSurfaceCallback(SurfaceCallback callback) {
+        mSurfaceCallback = callback;
     }
 
     abstract Surface getSurface();
@@ -37,10 +38,6 @@ abstract class PreviewImpl {
 
     abstract boolean isReady();
 
-    protected void dispatchSurfaceChanged() {
-        mOnPreviewSurfaceChangedCallback.onPreviewSurfaceChanged();
-    }
-
     SurfaceHolder getSurfaceHolder() {
         return null;
     }
@@ -49,12 +46,27 @@ abstract class PreviewImpl {
         return null;
     }
 
+    protected final void onSurfaceAvailable(int width, int height) {
+        mSurfaceWidth = width;
+        mSurfaceHeight = height;
+        refreshScale();
+        mSurfaceCallback.onSurfaceAvailable();
+    }
     // As far as I can see, these are the view/surface dimensions.
     // This is called by subclasses.
-    protected void setSurfaceSize(int width, int height) {
-        this.mSurfaceWidth = width;
-        this.mSurfaceHeight = height;
-        refreshScale(); // Refresh true preview size to adjust scaling
+    protected final void onSurfaceSizeChanged(int width, int height) {
+        if (width != mSurfaceWidth || height != mSurfaceHeight) {
+            mSurfaceWidth = width;
+            mSurfaceHeight = height;
+            refreshScale();
+            mSurfaceCallback.onSurfaceChanged();
+        }
+    }
+
+    protected final void onSurfaceDestroyed() {
+        mSurfaceWidth = 0;
+        mSurfaceHeight = 0;
+        refreshScale();
     }
 
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
