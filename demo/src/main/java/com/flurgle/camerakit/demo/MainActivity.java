@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
     private int mCameraWidth;
     private int mCameraHeight;
+    private boolean mCapturing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,17 +98,26 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
     @Override
     protected void onPause() {
-        camera.stop();
         super.onPause();
+        camera.stop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        camera.destroy();
     }
 
     @OnClick(R.id.capturePhoto)
     void capturePhoto() {
+        if (mCapturing) return;
+        mCapturing = true;
         final long startTime = System.currentTimeMillis();
         camera.setCameraListener(new CameraListener() {
             @Override
             public void onPictureTaken(byte[] jpeg) {
                 super.onPictureTaken(jpeg);
+                mCapturing = false;
                 long callbackTime = System.currentTimeMillis();
                 Bitmap bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.length);
                 ResultHolder.dispose();
@@ -126,30 +136,35 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
     @OnClick(R.id.captureVideo)
     void captureVideo() {
+        if (mCapturing) return;
+        mCapturing = true;
         camera.setCameraListener(new CameraListener() {
             @Override
             public void onVideoTaken(File video) {
                 super.onVideoTaken(video);
+                mCapturing = false;
             }
         });
-
-        camera.startRecordingVideo();
+        Toast.makeText(this, "Recording for 3 seconds...", Toast.LENGTH_LONG).show();
+        camera.startCapturingVideo(null);
         camera.postDelayed(new Runnable() {
             @Override
             public void run() {
-                camera.stopRecordingVideo();
+                camera.stopCapturingVideo();
             }
         }, 3000);
     }
 
     @OnClick(R.id.toggleCamera)
     void toggleCamera() {
+        if (mCapturing) return;
         switch (camera.toggleFacing()) {
             case CameraKit.Constants.FACING_BACK:
                 Toast.makeText(this, "Switched to back camera!", Toast.LENGTH_SHORT).show();
                 break;
 
             case CameraKit.Constants.FACING_FRONT:
+
                 Toast.makeText(this, "Switched to front camera!", Toast.LENGTH_SHORT).show();
                 break;
         }
@@ -157,6 +172,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
     @OnClick(R.id.toggleFlash)
     void toggleFlash() {
+        if (mCapturing) return;
         switch (camera.toggleFlash()) {
             case CameraKit.Constants.FLASH_ON:
                 Toast.makeText(this, "Flash on!", Toast.LENGTH_SHORT).show();
@@ -175,29 +191,28 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     RadioGroup.OnCheckedChangeListener captureModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
-            camera.setMethod(
+            if (mCapturing) return;
+            camera.setSessionType(
                     checkedId == R.id.modeCaptureStandard ?
-                            CameraKit.Constants.METHOD_STANDARD :
-                            CameraKit.Constants.METHOD_STILL
+                            CameraKit.Constants.SESSION_TYPE_PICTURE :
+                            CameraKit.Constants.SESSION_TYPE_VIDEO
             );
-
-            Toast.makeText(MainActivity.this, "Picture capture set to" + (checkedId == R.id.modeCaptureStandard ? " quality!" : " speed!"), Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "Session type set to" + (checkedId == R.id.modeCaptureStandard ? " picture!" : " video!"), Toast.LENGTH_SHORT).show();
         }
     };
 
     RadioGroup.OnCheckedChangeListener cropModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
-            camera.setCropOutput(
-                    checkedId == R.id.modeCropVisible
-            );
-
+            if (mCapturing) return;
+            camera.setCropOutput(checkedId == R.id.modeCropVisible);
             Toast.makeText(MainActivity.this, "Picture cropping is" + (checkedId == R.id.modeCropVisible ? " on!" : " off!"), Toast.LENGTH_SHORT).show();
         }
     };
 
     @OnClick(R.id.widthUpdate)
     void widthUpdateClicked() {
+        if (mCapturing) return;
         if (widthUpdate.getAlpha() >= 1) {
             updateCamera(true, false);
         }
@@ -206,6 +221,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     RadioGroup.OnCheckedChangeListener widthModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
+            if (mCapturing) return;
             widthUpdate.setEnabled(checkedId == R.id.widthCustom);
             widthUpdate.setAlpha(checkedId == R.id.widthCustom ? 1f : 0.3f);
             width.clearFocus();
@@ -218,6 +234,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
     @OnClick(R.id.heightUpdate)
     void heightUpdateClicked() {
+        if (mCapturing) return;
         if (heightUpdate.getAlpha() >= 1) {
             updateCamera(false, true);
         }
@@ -226,6 +243,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     RadioGroup.OnCheckedChangeListener heightModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
+            if (mCapturing) return;
             heightUpdate.setEnabled(checkedId == R.id.heightCustom);
             heightUpdate.setAlpha(checkedId == R.id.heightCustom ? 1f : 0.3f);
             height.clearFocus();
@@ -237,6 +255,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     };
 
     private void updateCamera(boolean updateWidth, boolean updateHeight) {
+        if (mCapturing) return;
         ViewGroup.LayoutParams cameraLayoutParams = camera.getLayoutParams();
         int width = cameraLayoutParams.width;
         int height = cameraLayoutParams.height;
@@ -290,7 +309,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
         cameraLayoutParams.width = width;
         cameraLayoutParams.height = height;
-
         camera.addOnLayoutChangeListener(this);
         camera.setLayoutParams(cameraLayoutParams);
 
@@ -301,10 +319,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
         mCameraWidth = right - left;
         mCameraHeight = bottom - top;
-
         width.setText(String.valueOf(mCameraWidth));
         height.setText(String.valueOf(mCameraHeight));
-
         camera.removeOnLayoutChangeListener(this);
     }
 

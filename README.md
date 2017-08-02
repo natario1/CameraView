@@ -119,20 +119,23 @@ camera.captureImage();
 
 TODO: test size and orientation stuff.
 
-To capture video just call `CameraView.startRecordingVideo()` to start, and `CameraView.stopRecordingVideo()` to finish. Make sure you setup a `CameraListener` to handle the video callback.
+To capture video just call `CameraView.startRecordingVideo(file)` to start, and `CameraView.stopRecordingVideo()` to finish. Make sure you setup a `CameraListener` to handle the video callback.
 
 ```java
 camera.setCameraListener(new CameraListener() {
     @Override
     public void onVideoTaken(File video) {
-        // The File parameter is an MP4 file.
+        // The File is the same you passed before.
+        // Now it holds a MP4 video.
     }
 });
 
-camera.startRecordingVideo();
+File file = ...; // Make sure you have permissions to write here.
+camera.startRecordingVideo(file);
 camera.postDelayed(new Runnable() {
     @Override
     public void run() {
+        // This will trigger onVideoTaken().
         camera.stopRecordingVideo();
     }
 }, 2500);
