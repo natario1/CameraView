@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.TextView;
@@ -44,6 +45,12 @@ public class VideoPreviewActivity extends Activity {
             @Override
             public void onPrepared(MediaPlayer mp) {
                 actualResolution.setText(mp.getVideoWidth() + " x " + mp.getVideoHeight());
+                ViewGroup.LayoutParams lp = videoView.getLayoutParams();
+                float videoWidth = mp.getVideoWidth();
+                float videoHeight = mp.getVideoHeight();
+                float viewWidth = videoView.getWidth();
+                lp.height = (int) (viewWidth * (videoHeight / videoWidth));
+                videoView.setLayoutParams(lp);
             }
         });
         playVideo();
