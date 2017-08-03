@@ -32,9 +32,8 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:25.2.0'
-
-
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:exifinterface:25.3.1'
     compile 'android.arch.lifecycle:runtime:1.0.0-alpha1'
     compile 'android.arch.lifecycle:extensions:1.0.0-alpha1'
     annotationProcessor 'android.arch.lifecycle:compiler:1.0.0-alpha1'

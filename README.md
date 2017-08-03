@@ -57,11 +57,11 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - While taking pictures, image is captured normally using the camera APIs.
   - While shooting videos, image is captured as a freeze frame of the `CameraView` preview (similar to SnapChat and Instagram)
 - Built-in tap to focus
+- `CameraUtils` to help with Bitmaps and orientations
 - EXIF support
   - Automatically detected orientation tag
   - Plug in location tags with `CameraView.setLocation(double, double)`
-- Control the camera parameters via XML or programmatically  
-- TODO: Built-in pinch to zoom
+- Control the camera parameters via XML or programmatically
 
 ## Setup
 
@@ -109,7 +109,8 @@ camera.setCameraListener(new CameraListener() {
     @Override
     public void onPictureTaken(byte[] picture) {
         // Create a bitmap or a file...
-        Bitmap result = BitmapFactory.decodeByteArray(picture, 0, picture.length);
+        // CameraUtils will read EXIF orientation for you.
+        CameraUtils.decodeBitmap(picture, ...);
     }
 });
 
@@ -376,7 +377,7 @@ The library manifest file is not strict and only asks for camera permissions. Th
     android:required="true"/>
 ```
 
-If you don't request this feature, you can use `CameraKit.hasCameras()` to detect if current device has cameras, and then start the camera view.
+If you don't request this feature, you can use `CameraUtils.hasCameras()` to detect if current device has cameras, and then start the camera view.
 
 ## Roadmap
 

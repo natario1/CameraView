@@ -5,12 +5,6 @@ import android.content.pm.PackageManager;
 
 public class CameraKit {
 
-    public static boolean hasCameras(Context context) {
-        PackageManager manager = context.getPackageManager();
-        // There's also FEATURE_CAMERA_EXTERNAL , should we support it?
-        return manager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
-                || manager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
-    }
 
     public static class Constants {
 
