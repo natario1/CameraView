@@ -121,8 +121,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 super.onPictureTaken(jpeg);
                 mCapturing = false;
                 long callbackTime = System.currentTimeMillis();
-                Bitmap bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.length);
-                PicturePreviewActivity.setImage(bitmap);
+                PicturePreviewActivity.setImage(jpeg);
                 Intent intent = new Intent(MainActivity.this, PicturePreviewActivity.class);
                 intent.putExtra("delay", callbackTime-startTime);
                 startActivity(intent);

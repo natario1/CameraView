@@ -67,8 +67,6 @@
 
         <attr name="cameraCropOutput" format="boolean" />
 
-        <attr name="android:adjustViewBounds" />
-
     </declare-styleable>
 
 </resources>

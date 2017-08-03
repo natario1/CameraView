@@ -51,9 +51,9 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="10dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/colorPrimary"
-                    android:src="@drawable/ic_photo"
-                    android:tint="@android:color/white" />
+                    android:padding="8dp"
+                    android:background="@drawable/background"
+                    app:srcCompat="@drawable/ic_photo" />
 
                 <ImageButton
                     android:id="@+id/captureVideo"
@@ -61,9 +61,9 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="10dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/colorPrimary"
-                    android:src="@drawable/ic_video"
-                    android:tint="@android:color/white" />
+                    android:padding="8dp"
+                    android:background="@drawable/background"
+                    app:srcCompat="@drawable/ic_video" />
 
                 <ImageButton
                     android:id="@+id/toggleFlash"
@@ -71,9 +71,9 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="10dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/colorPrimary"
-                    android:src="@drawable/ic_flash"
-                    android:tint="@android:color/white" />
+                    android:padding="8dp"
+                    android:background="@drawable/background"
+                    app:srcCompat="@drawable/ic_flash" />
 
                 <ImageButton
                     android:id="@+id/toggleCamera"
@@ -81,17 +81,11 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="10dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/colorPrimary"
-                    android:src="@drawable/ic_switch"
-                    android:tint="@android:color/white" />
+                    android:padding="8dp"
+                    android:background="@drawable/background"
+                    app:srcCompat="@drawable/ic_switch" />
 
             </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="10dp"
-                android:background="#cccccc" />
 
             <FrameLayout
                 android:layout_width="match_parent"
@@ -249,12 +243,13 @@
                         <Button
                             android:id="@+id/widthUpdate"
                             android:layout_width="90dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="40dp"
                             android:layout_gravity="center_vertical|right"
                             android:layout_marginRight="15dp"
-                            android:backgroundTint="@color/colorPrimary"
+                            android:background="@drawable/background"
                             android:gravity="center"
                             android:text="UPDATE"
+                            android:stateListAnimator="@null"
                             android:textColor="@android:color/white"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -347,12 +342,13 @@
                         <Button
                             android:id="@+id/heightUpdate"
                             android:layout_width="90dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="40dp"
                             android:layout_gravity="center_vertical|right"
                             android:layout_marginRight="15dp"
-                            android:backgroundTint="@color/colorPrimary"
+                            android:background="@drawable/background"
                             android:gravity="center"
                             android:text="UPDATE"
+                            android:stateListAnimator="@null"
                             android:textColor="@android:color/white"
                             android:textSize="14sp"
                             android:textStyle="bold" />

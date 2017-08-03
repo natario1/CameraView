@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.flurgle.camerakit.AspectRatio;
+import com.flurgle.camerakit.CameraUtils;
 import com.flurgle.camerakit.Size;
 
 import java.lang.ref.WeakReference;
@@ -32,9 +33,9 @@ public class PicturePreviewActivity extends Activity {
     @BindView(R.id.captureLatency)
     TextView captureLatency;
 
-    private static WeakReference<Bitmap> image;
+    private static WeakReference<byte[]> image;
 
-    public static void setImage(@Nullable Bitmap im) {
+    public static void setImage(@Nullable byte[] im) {
         image = im != null ? new WeakReference<>(im) : null;
     }
 
@@ -44,23 +45,29 @@ public class PicturePreviewActivity extends Activity {
         setContentView(R.layout.activity_picture_preview);
         ButterKnife.bind(this);
 
-        long delay = getIntent().getLongExtra("delay", 0);
-        Bitmap bitmap = image == null ? null : image.get();
-        if (bitmap == null) {
+        final long delay = getIntent().getLongExtra("delay", 0);
+        byte[] b = image == null ? null : image.get();
+        if (b == null) {
             finish();
             return;
         }
 
-        imageView.setImageBitmap(bitmap);
+        CameraUtils.decodeBitmap(b, new CameraUtils.BitmapCallback() {
+            @Override
+            public void onBitmapReady(Bitmap bitmap) {
+                imageView.setImageBitmap(bitmap);
 
-        // Native sizes are landscape, activity might now. <- not clear what this means but OK
-        // TODO: ncr and ar might be different when cropOutput is true.
-        AspectRatio aspectRatio = AspectRatio.of(bitmap.getHeight(), bitmap.getWidth());
-        nativeCaptureResolution.setText(bitmap.getHeight() + " x " + bitmap.getWidth() + " (" + aspectRatio.toString() + ")");
+                // Native sizes are landscape, activity might now. <- not clear what this means but OK
+                // TODO: ncr and ar might be different when cropOutput is true.
+                AspectRatio aspectRatio = AspectRatio.of(bitmap.getHeight(), bitmap.getWidth());
+                nativeCaptureResolution.setText(bitmap.getHeight() + " x " + bitmap.getWidth() + " (" + aspectRatio.toString() + ")");
 
-        actualResolution.setText(bitmap.getWidth() + " x " + bitmap.getHeight());
-        approxUncompressedSize.setText(getApproximateFileMegabytes(bitmap) + "MB");
-        captureLatency.setText(delay + " milliseconds");
+                actualResolution.setText(bitmap.getWidth() + " x " + bitmap.getHeight());
+                approxUncompressedSize.setText(getApproximateFileMegabytes(bitmap) + "MB");
+                captureLatency.setText(delay + " milliseconds");
+            }
+        });
+
     }
 
     private static float getApproximateFileMegabytes(Bitmap bitmap) {

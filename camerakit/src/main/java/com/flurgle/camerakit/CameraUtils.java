@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.os.Handler;
+import android.support.annotation.UiThread;
 import android.support.media.ExifInterface;
 
 import java.io.ByteArrayInputStream;
@@ -111,6 +112,6 @@ public class CameraUtils {
 
 
     public interface BitmapCallback {
-        void onBitmapReady(Bitmap bitmap);
+        @UiThread void onBitmapReady(Bitmap bitmap);
     }
 }
