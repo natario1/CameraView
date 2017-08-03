@@ -11,6 +11,7 @@
 - *option to pass a `File` when recording a video*
 - *introduced a smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
 - *measure `CameraView` as center crop or center inside*
+- *add multiple `CameraListener`s for events*
 
 *Feel free to open issues with suggestions or contribute.*
 
@@ -46,7 +47,7 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
 
 # Features
 
-- Image and video capture seamlessly working with the same preview session. (TODO: remove this, use different sessions)
+- Seamless image and video capturing, even within the same session
 - System permission handling
 - Dynamic sizing behavior
   - Create a `CameraView` of any size (not just presets!)
@@ -59,12 +60,12 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
 - EXIF support
   - Automatically detected orientation tag
   - Plug in location tags with `CameraView.setLocation(double, double)`
+- Control the camera parameters via XML or programmatically  
 - TODO: Built-in pinch to zoom
 
 ## Setup
 
-For now, clone the repo and add it to your project.
-TODO: publish to bintray.
+For now, you must clone the repo and add it to your project.
 
 ## Usage
 
@@ -379,12 +380,12 @@ If you don't request this feature, you can use `CameraKit.hasCameras()` to detec
 
 ## Roadmap
 
-This are things that need to be done, off the top of my head:
+These are things that need to be done, off the top of my head:
 
 - [ ] fix CropOutput class presumably not working on rotated pictures
 - [ ] test video and 'frame' capture behavior, I expect some bugs there
 - [ ] simple APIs to draw grid lines
-- [ ] replace setCameraListener() with addCameraListener()
+- [x] replace setCameraListener() with addCameraListener()
 - [ ] add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`
 - [ ] pinch to zoom support
 - [ ] exposure correction APIs
@@ -393,5 +394,5 @@ This are things that need to be done, off the top of my head:
 - [ ] EXIF support for 'frame' captured pictures, using ExifInterface library, so we can stop rotating it in Java
 - [ ] add onRequestPermissionResults for easy permission callback
 - [ ] better error handling, maybe with a onError(e) method in the public listener
-- [ ] better threading, for example ensure callbacks are called in the ui thread
+- [x] better threading, for example ensure callbacks are called in the ui thread
 

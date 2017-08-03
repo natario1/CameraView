@@ -114,7 +114,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         if (mCapturing) return;
         mCapturing = true;
         final long startTime = System.currentTimeMillis();
-        camera.setCameraListener(new CameraListener() {
+        camera.clearCameraListeners();
+        camera.addCameraListener(new CameraListener() {
             @Override
             public void onPictureTaken(byte[] jpeg) {
                 super.onPictureTaken(jpeg);
@@ -138,7 +139,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         }
         if (mCapturing) return;
         mCapturing = true;
-        camera.setCameraListener(new CameraListener() {
+        camera.clearCameraListeners();
+        camera.addCameraListener(new CameraListener() {
             @Override
             public void onVideoTaken(File video) {
                 super.onVideoTaken(video);

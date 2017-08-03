@@ -15,15 +15,14 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Display;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -95,7 +94,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @WhiteBalance private int mWhiteBalance;
     private int mJpegQuality;
     private boolean mCropOutput;
-    private CameraListenerWrapper mCameraListener;
+    private CameraCallbacks mCameraCallbacks;
     private OrientationHelper mOrientationHelper;
     private CameraImpl mCameraImpl;
     private PreviewImpl mPreviewImpl;
@@ -128,9 +127,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
         a.recycle();
 
-        mCameraListener = new CameraListenerWrapper();
+        mCameraCallbacks = new CameraCallbacks();
         mPreviewImpl = new TextureViewPreview(context, this);
-        mCameraImpl = new Camera1(mCameraListener, mPreviewImpl);
+        mCameraImpl = new Camera1(mCameraCallbacks, mPreviewImpl);
         mFocusMarkerLayout = new FocusMarkerLayout(context);
         addView(mFocusMarkerLayout);
 
@@ -463,7 +462,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     public void destroy() {
-        mCameraListener = new CameraListenerWrapper(); // Release inner listener.
+        mCameraCallbacks.clearListeners(); // Release inner listener.
         // This might be useless, but no time to think about it now.
         sWorkerHandler = null;
     }
@@ -724,17 +723,55 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
 
-
-
     /**
      * Sets a {@link CameraListener} instance to be notified of all
      * interesting events that will happen during the camera lifecycle.
      *
      * @param cameraListener a listener for events.
+     * @deprecated use {@link #addCameraListener(CameraListener)} instead.
      */
+    @Deprecated
     public void setCameraListener(CameraListener cameraListener) {
-        this.mCameraListener.wrapListener(cameraListener);
+        mCameraCallbacks.clearListeners();
+        if (cameraListener != null) {
+            mCameraCallbacks.addListener(cameraListener);
+        }
     }
+
+
+    /**
+     * Adds a {@link CameraListener} instance to be notified of all
+     * interesting events that happen during the camera lifecycle.
+     *
+     * @param cameraListener a listener for events.
+     */
+    public void addCameraListener(CameraListener cameraListener) {
+        if (cameraListener != null) {
+            mCameraCallbacks.addListener(cameraListener);
+        }
+    }
+
+
+    /**
+     * Remove a {@link CameraListener} that was previously registered.
+     *
+     * @param cameraListener a listener for events.
+     */
+    public void removeCameraListener(CameraListener cameraListener) {
+        if (cameraListener != null) {
+            mCameraCallbacks.removeListener(cameraListener);
+        }
+    }
+
+
+    /**
+     * Clears the list of {@link CameraListener} that are registered
+     * to camera events.
+     */
+    public void clearCameraListeners() {
+        mCameraCallbacks.clearListeners();
+    }
+
 
     public void captureImage() {
         mCameraImpl.captureImage();
@@ -817,20 +854,38 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
-    class CameraListenerWrapper extends CameraListener {
+    class CameraCallbacks extends CameraListener {
 
-        private CameraListener mWrappedListener;
+        private ArrayList<CameraListener> mListeners;
+        private Handler uiHandler;
+
+        public CameraCallbacks() {
+            mListeners = new ArrayList<>(2);
+            uiHandler = new Handler(Looper.getMainLooper());
+        }
 
         @Override
         public void onCameraOpened() {
-            if (mWrappedListener == null) return;
-            mWrappedListener.onCameraOpened();
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onCameraOpened();
+                    }
+                }
+            });
         }
 
         @Override
         public void onCameraClosed() {
-            if (mWrappedListener == null) return;
-            mWrappedListener.onCameraClosed();
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onCameraClosed();
+                    }
+                }
+            });
         }
 
         public void onCameraPreviewSizeChanged() {
@@ -843,35 +898,67 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void onPictureTaken(byte[] jpeg) {
-            if (mWrappedListener == null) return;
             if (mCropOutput) {
                 // TODO cropOutput won't work if image is rotated (e.g. byte[] contains exif orientation).
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
-                mWrappedListener.onPictureTaken(new CenterCrop(jpeg, outputRatio, mJpegQuality).getJpeg());
-            } else {
-                mWrappedListener.onPictureTaken(jpeg);
+                jpeg = new CenterCrop(jpeg, outputRatio, mJpegQuality).getJpeg();
             }
+
+            final byte[] data = jpeg;
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onPictureTaken(data);
+                    }
+                }
+            });
         }
 
         public void processYuvImage(YuvImage yuv) {
-            if (mWrappedListener == null) return;
+            byte[] jpeg;
             if (mCropOutput) {
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
-                mWrappedListener.onPictureTaken(new CenterCrop(yuv, outputRatio, mJpegQuality).getJpeg());
+                jpeg = new CenterCrop(yuv, outputRatio, mJpegQuality).getJpeg();
             } else {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 yuv.compressToJpeg(new Rect(0, 0, yuv.getWidth(), yuv.getHeight()), mJpegQuality, out);
-                mWrappedListener.onPictureTaken(out.toByteArray());
+                jpeg = out.toByteArray();
             }
+
+            final byte[] data = jpeg;
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onPictureTaken(data);
+                    }
+                }
+            });
         }
 
         @Override
-        public void onVideoTaken(File video) {
-            mWrappedListener.onVideoTaken(video);
+        public void onVideoTaken(final File video) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onVideoTaken(video);
+                    }
+                }
+            });
         }
 
-        private void wrapListener(@Nullable CameraListener cameraListener) {
-            mWrappedListener = cameraListener;
+        private void addListener(@NonNull CameraListener cameraListener) {
+            mListeners.add(cameraListener);
+        }
+
+        private void removeListener(@NonNull CameraListener cameraListener) {
+            mListeners.remove(cameraListener);
+        }
+
+        private void clearListeners() {
+            mListeners.clear();
         }
     }
 

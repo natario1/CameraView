@@ -47,7 +47,7 @@ class Camera2 extends CameraImpl {
 
     }
 
-    Camera2(CameraView.CameraListenerWrapper callback, PreviewImpl preview, Context context) {
+    Camera2(CameraView.CameraCallbacks callback, PreviewImpl preview, Context context) {
         super(callback, preview);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
 

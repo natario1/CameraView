@@ -1,6 +1,5 @@
 package com.flurgle.camerakit;
 
-import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.MotionEvent;
@@ -9,10 +8,10 @@ import java.io.File;
 
 abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
 
-    protected final CameraView.CameraListenerWrapper mCameraListener;
+    protected final CameraView.CameraCallbacks mCameraListener;
     protected final PreviewImpl mPreview;
 
-    CameraImpl(CameraView.CameraListenerWrapper callback, PreviewImpl preview) {
+    CameraImpl(CameraView.CameraCallbacks callback, PreviewImpl preview) {
         mCameraListener = callback;
         mPreview = preview;
         mPreview.setSurfaceCallback(this);

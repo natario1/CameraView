@@ -66,7 +66,7 @@ class Camera1 extends CameraImpl {
     private final Object mLock = new Object();
 
 
-    Camera1(CameraView.CameraListenerWrapper callback, final PreviewImpl preview) {
+    Camera1(CameraView.CameraCallbacks callback, final PreviewImpl preview) {
         super(callback, preview);
     }
 
