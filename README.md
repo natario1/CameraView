@@ -7,6 +7,7 @@
 - *simpler APIs*
 - *docs and comments in code*
 - *introduced sessionType (picture or video), replacing Method and Permissions stuff* 
+- *new `captureSnapshot` API*
 - *new `setLocation` and `setWhiteBalance` APIs*
 - *option to pass a `File` when recording a video*
 - *introduced a smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
@@ -51,11 +52,11 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
 - System permission handling
 - Dynamic sizing behavior
   - Create a `CameraView` of any size (not just presets!)
-  - Or let it adapt to the sensor preview size
+  - Center inside or center crop behaviors
   - Automatic output cropping to match your `CameraView` bounds
 - Multiple capture methods
-  - While taking pictures, image is captured normally using the camera APIs.
-  - While shooting videos, image is captured as a freeze frame of the `CameraView` preview (similar to SnapChat and Instagram)
+  - Take high-resolution pictures with `capturePicture`
+  - Take quick snapshots as a freeze frame of the preview with `captureSnapshot`, even while recording videos (similar to SnapChat and Instagram)
 - Built-in tap to focus
 - `CameraUtils` to help with Bitmaps and orientations
 - EXIF support
@@ -109,13 +110,15 @@ camera.setCameraListener(new CameraListener() {
     @Override
     public void onPictureTaken(byte[] picture) {
         // Create a bitmap or a file...
-        // CameraUtils will read EXIF orientation for you.
+        // CameraUtils will read EXIF orientation for you, in a worker thread.
         CameraUtils.decodeBitmap(picture, ...);
     }
 });
 
 camera.captureImage();
 ```
+
+You can also use `camera.captureSnapshot()` to capture a preview frame. This is faster, though has lower quality, and can be used while recording videos.
 
 ### Capturing Video
 

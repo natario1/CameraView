@@ -660,6 +660,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     /**
      * Set the current session type to either picture or video.
+     * When sessionType is video,
+     * - {@link #startCapturingVideo(File)} will not throw any exception
+     * - {@link #captureImage()} will fallback to {@link #captureSnapshot()}
      *
      * @see CameraKit.Constants#SESSION_TYPE_PICTURE
      * @see CameraKit.Constants#SESSION_TYPE_VIDEO
@@ -773,8 +776,35 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
+    /**
+     * Asks the camera to capture an image of the current scene.
+     * This will trigger {@link CameraListener#onPictureTaken(byte[])} if a listener
+     * was registered.
+     *
+     * Note that if sessionType is {@link CameraKit.Constants#SESSION_TYPE_VIDEO}, this
+     * falls back to {@link #captureSnapshot()} (that is, we will capture a preview frame).
+     *
+     * @see #captureSnapshot()
+     */
     public void captureImage() {
         mCameraImpl.captureImage();
+    }
+
+
+    /**
+     * Asks the camera to capture a snapshot of the current preview.
+     * This eventually triggers {@link CameraListener#onPictureTaken(byte[])} if a listener
+     * was registered.
+     *
+     * The difference with {@link #captureImage()} is that:
+     * - this capture is faster, so it might be better on slower cameras, though the result can be
+     *   generally blurry or low quality
+     * - this can be called even if sessionType is {@link CameraKit.Constants#SESSION_TYPE_VIDEO}
+     *
+     * @see #captureImage()
+     */
+    public void captureSnapshot() {
+        mCameraImpl.captureSnapshot();
     }
 
 
@@ -824,6 +854,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return mCameraImpl != null ? mCameraImpl.getPreviewSize() : null;
     }
 
+
     /**
      * Returns the size used for the capture,
      * or null if it hasn't been computed yet (for example if the surface is not ready).
@@ -833,6 +864,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public Size getCaptureSize() {
         return mCameraImpl != null ? mCameraImpl.getCaptureSize() : null;
     }
+
+
+    /**
+     * Returns the size used for capturing snapshots.
+     * This is equal to {@link #getPreviewSize()}.
+     *
+     * @return a Size
+     */
+    @Nullable
+    public Size getSnapshotSize() {
+        return getPreviewSize();
+    }
+
 
     private void requestPermissions(boolean requestCamera, boolean requestAudio) {
         Activity activity = null;

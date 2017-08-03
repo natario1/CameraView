@@ -52,6 +52,7 @@ public class CameraUtils {
             public void run() {
 
                 int orientation = 0;
+                boolean flip = false;
                 try {
                     // http://sylvana.net/jpegcrop/exif_orientation.html
                     ExifInterface exif = new ExifInterface(new ByteArrayInputStream(source));
@@ -75,16 +76,24 @@ public class CameraUtils {
 
                         default: orientation = 0;
                     }
+
+                    flip = exifOrientation == ExifInterface.ORIENTATION_FLIP_HORIZONTAL ||
+                            exifOrientation == ExifInterface.ORIENTATION_FLIP_VERTICAL ||
+                            exifOrientation == ExifInterface.ORIENTATION_TRANSPOSE ||
+                            exifOrientation == ExifInterface.ORIENTATION_TRANSVERSE;
+
                 } catch (IOException e) {
                     e.printStackTrace();
                     orientation = 0;
+                    flip = false;
                 }
 
 
                 Bitmap bitmap = BitmapFactory.decodeByteArray(source, 0, source.length);
-                if (orientation != 0) {
+                if (orientation != 0 || flip) {
                     Matrix matrix = new Matrix();
                     matrix.setRotate(orientation);
+                    // matrix.postScale(1, -1) Flip... needs testing.
                     Bitmap temp = bitmap;
                     bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                     temp.recycle();

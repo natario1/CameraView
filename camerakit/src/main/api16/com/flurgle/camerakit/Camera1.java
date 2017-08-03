@@ -63,6 +63,7 @@ class Camera1 extends CameraImpl {
     private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper1();
     private boolean mIsSetup = false;
     private boolean mIsCapturingImage = false;
+    private boolean mIsCapturingVideo = false;
     private final Object mLock = new Object();
 
 
@@ -360,57 +361,62 @@ class Camera1 extends CameraImpl {
     void captureImage() {
         if (mIsCapturingImage) return;
         if (!isCameraOpened()) return;
-        switch (mSessionType) {
-            case SESSION_TYPE_PICTURE:
-                // Set boolean to wait for image callback
-                mIsCapturingImage = true;
-                synchronized (mLock) {
-                    Camera.Parameters parameters = mCamera.getParameters();
-                    parameters.setRotation(computeExifOrientation());
-                    mCamera.setParameters(parameters);
-                }
-                mCamera.takePicture(null, null, null,
-                    new Camera.PictureCallback() {
-                        @Override
-                        public void onPictureTaken(byte[] data, Camera camera) {
-                            mCameraListener.onPictureTaken(data);
-                            mIsCapturingImage = false;
-                            camera.startPreview(); // This is needed, read somewhere in the docs.
-                        }
-                    });
-                break;
+        if (mIsCapturingVideo || mSessionType == SESSION_TYPE_VIDEO) {
+            captureSnapshot();
+            return;
+        }
 
-            case SESSION_TYPE_VIDEO:
-                // If we are in a video session, camera captures are fast captures coming
-                // from the preview stream.
-                // TODO: will this work while recording a video? test...
-                mIsCapturingImage = true;
-                mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
+        // Set boolean to wait for image callback
+        mIsCapturingImage = true;
+        synchronized (mLock) {
+            Camera.Parameters parameters = mCamera.getParameters();
+            parameters.setRotation(computeExifRotation());
+            // TODO: add flipping
+            mCamera.setParameters(parameters);
+        }
+        mCamera.takePicture(null, null, null,
+                new Camera.PictureCallback() {
                     @Override
-                    public void onPreviewFrame(final byte[] data, Camera camera) {
-                        // Got to rotate the preview frame, since byte[] data here does not include
-                        // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
-                        Camera.Parameters params = mCamera.getParameters();
-                        final int rotation = computeExifOrientation();
-                        final boolean flip = rotation % 180 != 0;
-                        final int preWidth = mPreviewSize.getWidth();
-                        final int preHeight = mPreviewSize.getHeight();
-                        final int postWidth = flip ? preHeight : preWidth;
-                        final int postHeight = flip ? preWidth : preHeight;
-                        final int format = params.getPreviewFormat();
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, rotation);
-                                YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
-                                mCameraListener.processYuvImage(yuv);
-                                mIsCapturingImage = false;
-                            }
-                        }).start();
+                    public void onPictureTaken(byte[] data, Camera camera) {
+                        mCameraListener.onPictureTaken(data);
+                        mIsCapturingImage = false;
+                        camera.startPreview(); // This is needed, read somewhere in the docs.
                     }
                 });
-                break;
-        }
+    }
+
+
+    @Override
+    void captureSnapshot() {
+        if (mIsCapturingImage) return;
+        if (!isCameraOpened()) return;
+        // TODO: will this work while recording a video? test...
+        mIsCapturingImage = true;
+        mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
+            @Override
+            public void onPreviewFrame(final byte[] data, Camera camera) {
+                // Got to rotate the preview frame, since byte[] data here does not include
+                // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
+                // TODO: add exif, and also care about flipping.
+                Camera.Parameters params = mCamera.getParameters();
+                final int rotation = computeExifRotation();
+                final boolean flip = rotation % 180 != 0;
+                final int preWidth = mPreviewSize.getWidth();
+                final int preHeight = mPreviewSize.getHeight();
+                final int postWidth = flip ? preHeight : preWidth;
+                final int postHeight = flip ? preWidth : preHeight;
+                final int format = params.getPreviewFormat();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, rotation);
+                        YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
+                        mCameraListener.processYuvImage(yuv);
+                        mIsCapturingImage = false;
+                    }
+                }).start();
+            }
+        });
     }
 
     @Override
@@ -458,8 +464,9 @@ class Camera1 extends CameraImpl {
     /**
      * Returns the orientation to be set as a exif tag. This is already managed by
      * the camera APIs as long as you call {@link Camera.Parameters#setRotation(int)}.
+     * This ignores flipping for facing camera.
      */
-    private int computeExifOrientation() {
+    private int computeExifRotation() {
         return (mDeviceOrientation + mSensorOffset) % 360;
     }
 
@@ -507,7 +514,10 @@ class Camera1 extends CameraImpl {
     @Override
     void startVideo(@NonNull File videoFile) {
         mVideoFile = videoFile;
+        if (mIsCapturingVideo) return;
+        if (!isCameraOpened()) return;
         if (mSessionType == SESSION_TYPE_VIDEO) {
+            mIsCapturingVideo = true;
             initMediaRecorder();
             try {
                 mMediaRecorder.prepare();
@@ -525,6 +535,7 @@ class Camera1 extends CameraImpl {
 
     @Override
     void endVideo() {
+        mIsCapturingVideo = false;
         mMediaRecorder.stop();
         mMediaRecorder.release();
         mMediaRecorder = null;

@@ -183,6 +183,11 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
+    void captureSnapshot() {
+
+    }
+
+    @Override
     void startVideo(@NonNull File videoFile) {
 
     }
