@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.flurgle.camerakit.CameraKit;
 import com.flurgle.camerakit.CameraListener;
 import com.flurgle.camerakit.CameraView;
+import com.flurgle.camerakit.Size;
 
 import java.io.File;
 
@@ -114,6 +115,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         if (mCapturing) return;
         mCapturing = true;
         final long startTime = System.currentTimeMillis();
+        final Size nativeSize = camera.getSessionType() == CameraKit.Constants.SESSION_TYPE_PICTURE ?
+                camera.getCaptureSize() : camera.getSnapshotSize();
         camera.clearCameraListeners();
         camera.addCameraListener(new CameraListener() {
             @Override
@@ -124,6 +127,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 PicturePreviewActivity.setImage(jpeg);
                 Intent intent = new Intent(MainActivity.this, PicturePreviewActivity.class);
                 intent.putExtra("delay", callbackTime-startTime);
+                intent.putExtra("nativeWidth", nativeSize.getWidth());
+                intent.putExtra("nativeHeight", nativeSize.getHeight());
                 startActivity(intent);
             }
         });

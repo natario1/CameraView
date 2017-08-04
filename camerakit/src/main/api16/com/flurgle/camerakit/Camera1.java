@@ -150,7 +150,7 @@ class Camera1 extends CameraImpl {
         if (isCameraOpened()) stop();
         if (collectCameraId()) {
             mCamera = Camera.open(mCameraId);
-            mCameraListener.onCameraOpened();
+            mCameraListener.dispatchOnCameraOpened();
 
             // Set parameters that might have been set before the camera was opened.
             synchronized (mLock) {
@@ -164,7 +164,7 @@ class Camera1 extends CameraImpl {
             }
 
             // Try starting preview.
-            mCamera.setDisplayOrientation(computeCameraToDisplayOffset()); // <- not allowed during preview
+            mCamera.setDisplayOrientation(computeSensorToDisplayOffset()); // <- not allowed during preview
             if (shouldSetup()) setup();
             collectExtraProperties();
         }
@@ -177,7 +177,7 @@ class Camera1 extends CameraImpl {
         if (isCameraOpened()) {
             mCamera.stopPreview();
             mCamera.release();
-            mCameraListener.onCameraClosed();
+            mCameraListener.dispatchOnCameraClosed();
         }
         mCamera = null;
         mPreviewSize = null;
@@ -347,7 +347,7 @@ class Camera1 extends CameraImpl {
 
 
     @Override
-    void setZoom(@ZoomMode int zoom) {
+    void setZoomMode(@ZoomMode int zoom) {
         this.mZoom = zoom;
     }
 
@@ -370,17 +370,25 @@ class Camera1 extends CameraImpl {
         mIsCapturingImage = true;
         synchronized (mLock) {
             Camera.Parameters parameters = mCamera.getParameters();
-            parameters.setRotation(computeExifRotation());
-            // TODO: add flipping
+            int rotation = computeExifRotation();
+            Log.e(TAG, "Setting exif rotation to "+rotation);
+            parameters.setRotation(rotation);
             mCamera.setParameters(parameters);
         }
+        final int exifRotation = computeExifRotation();
+        final boolean exifFlip = computeExifFlip();
+        final int sensorToDisplay = computeSensorToDisplayOffset();
+        // Is the final picture (decoded respecting EXIF) consistent with CameraView orientation?
+        // We must consider exifOrientation to bring back the picture in the sensor world.
+        // Then use sensorToDisplay to move to the display world, where CameraView lives.
+        final boolean consistentWithView = (exifRotation + sensorToDisplay + 180) % 180 == 0;
         mCamera.takePicture(null, null, null,
                 new Camera.PictureCallback() {
                     @Override
                     public void onPictureTaken(byte[] data, Camera camera) {
-                        mCameraListener.onPictureTaken(data);
                         mIsCapturingImage = false;
                         camera.startPreview(); // This is needed, read somewhere in the docs.
+                        mCameraListener.processJpegPicture(data, consistentWithView, exifFlip);
                     }
                 });
     }
@@ -411,7 +419,7 @@ class Camera1 extends CameraImpl {
                     public void run() {
                         byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, rotation);
                         YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
-                        mCameraListener.processYuvImage(yuv);
+                        mCameraListener.processYuvPicture(yuv);
                         mIsCapturingImage = false;
                     }
                 }).start();
@@ -452,9 +460,9 @@ class Camera1 extends CameraImpl {
      * Returns how much should the sensor image be rotated before being shown.
      * It is meant to be fed to Camera.setDisplayOrientation().
      */
-    private int computeCameraToDisplayOffset() {
+    private int computeSensorToDisplayOffset() {
         if (mFacing == CameraKit.Constants.FACING_FRONT) {
-            // or: (360 - ((info.orientation + displayOrientation) % 360)) % 360;
+            // or: (360 - ((mSensorOffset + mDisplayOffset) % 360)) % 360;
             return ((mSensorOffset - mDisplayOffset) + 360 + 180) % 360;
         } else {
             return (mSensorOffset - mDisplayOffset + 360) % 360;
@@ -468,6 +476,14 @@ class Camera1 extends CameraImpl {
      */
     private int computeExifRotation() {
         return (mDeviceOrientation + mSensorOffset) % 360;
+    }
+
+
+    /**
+     * Whether the exif tag should include a 'flip' operation.
+     */
+    private boolean computeExifFlip() {
+        return mFacing == CameraKit.Constants.FACING_FRONT;
     }
 
 
@@ -540,7 +556,7 @@ class Camera1 extends CameraImpl {
         mMediaRecorder.release();
         mMediaRecorder = null;
         if (mVideoFile != null) {
-            mCameraListener.onVideoTaken(mVideoFile);
+            mCameraListener.dispatchOnVideoTaken(mVideoFile);
             mVideoFile = null;
         }
     }
@@ -557,7 +573,7 @@ class Camera1 extends CameraImpl {
 
         mMediaRecorder.setProfile(getCamcorderProfile(mVideoQuality));
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
-        mMediaRecorder.setOrientationHint(computeCameraToDisplayOffset()); // TODO is this correct? Should we use exif orientation? Maybe not.
+        mMediaRecorder.setOrientationHint(computeSensorToDisplayOffset()); // TODO is this correct? Should we use exif orientation? Maybe not.
         // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
     }
 

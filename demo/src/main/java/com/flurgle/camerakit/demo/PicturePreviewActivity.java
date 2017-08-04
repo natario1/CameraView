@@ -46,6 +46,8 @@ public class PicturePreviewActivity extends Activity {
         ButterKnife.bind(this);
 
         final long delay = getIntent().getLongExtra("delay", 0);
+        final int nativeWidth = getIntent().getIntExtra("nativeWidth", 0);
+        final int nativeHeight = getIntent().getIntExtra("nativeHeight", 0);
         byte[] b = image == null ? null : image.get();
         if (b == null) {
             finish();
@@ -56,15 +58,14 @@ public class PicturePreviewActivity extends Activity {
             @Override
             public void onBitmapReady(Bitmap bitmap) {
                 imageView.setImageBitmap(bitmap);
-
-                // Native sizes are landscape, activity might now. <- not clear what this means but OK
-                // TODO: ncr and ar might be different when cropOutput is true.
-                AspectRatio aspectRatio = AspectRatio.of(bitmap.getHeight(), bitmap.getWidth());
-                nativeCaptureResolution.setText(bitmap.getHeight() + " x " + bitmap.getWidth() + " (" + aspectRatio.toString() + ")");
-
-                actualResolution.setText(bitmap.getWidth() + " x " + bitmap.getHeight());
                 approxUncompressedSize.setText(getApproximateFileMegabytes(bitmap) + "MB");
                 captureLatency.setText(delay + " milliseconds");
+
+                // ncr and ar might be different when cropOutput is true.
+                AspectRatio nativeRatio = AspectRatio.of(nativeWidth, nativeHeight);
+                AspectRatio finalRatio = AspectRatio.of(bitmap.getWidth(), bitmap.getHeight());
+                nativeCaptureResolution.setText(nativeWidth + "x" + nativeHeight + " (" + nativeRatio + ")");
+                actualResolution.setText(bitmap.getWidth() + "x" + bitmap.getHeight() + " (" + finalRatio + ")");
             }
         });
 

@@ -65,18 +65,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     private final static String TAG = CameraView.class.getSimpleName();
 
-    private Handler sWorkerHandler;
+    private Handler mWorkerHandler;
 
     private Handler getWorkerHandler() {
         synchronized (this) {
-            if (sWorkerHandler == null) {
+            if (mWorkerHandler == null) {
                 HandlerThread workerThread = new HandlerThread("CameraViewWorker");
                 workerThread.setDaemon(true);
                 workerThread.start();
-                sWorkerHandler = new Handler(workerThread.getLooper());
+                mWorkerHandler = new Handler(workerThread.getLooper());
             }
         }
-        return sWorkerHandler;
+        return mWorkerHandler;
     }
 
     private void run(Runnable runnable) {
@@ -94,6 +94,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @WhiteBalance private int mWhiteBalance;
     private int mJpegQuality;
     private boolean mCropOutput;
+    private int mDisplayOffset;
     private CameraCallbacks mCameraCallbacks;
     private OrientationHelper mOrientationHelper;
     private CameraImpl mCameraImpl;
@@ -138,7 +139,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFlash(mFlash);
         setFocus(mFocus);
         setSessionType(mSessionType);
-        setZoom(mZoom);
+        setZoomMode(mZoom);
         setVideoQuality(mVideoQuality);
         setWhiteBalance(mWhiteBalance);
 
@@ -146,6 +147,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mOrientationHelper = new OrientationHelper(context) {
                 @Override
                 public void onDisplayOffsetChanged(int displayOffset) {
+                    mDisplayOffset = displayOffset;
                     mCameraImpl.onDisplayOffset(displayOffset);
                     mPreviewImpl.onDisplayOffset(displayOffset);
                 }
@@ -464,7 +466,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void destroy() {
         mCameraCallbacks.clearListeners(); // Release inner listener.
         // This might be useless, but no time to think about it now.
-        sWorkerHandler = null;
+        mWorkerHandler = null;
     }
 
 
@@ -701,16 +703,36 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
+    /**
+     * Sets the zoom mode for the current session.
+     *
+     * @see CameraKit.Constants#ZOOM_OFF
+     * @see CameraKit.Constants#ZOOM_PINCH
+     *
+     * @param zoom the zoom mode
+     */
+    public void setZoomMode(@ZoomMode int zoom) {
+        this.mZoom = zoom;
+        mCameraImpl.setZoomMode(mZoom);
+    }
+
+
+    /**
+     * Gets the current zoom mode.
+     * @return the current zoom mode
+     */
+    @ZoomMode
+    public int getZoomMode() {
+        return mZoom;
+    }
+
 
     public void setVideoQuality(@VideoQuality int videoQuality) {
         this.mVideoQuality = videoQuality;
         mCameraImpl.setVideoQuality(mVideoQuality);
     }
 
-    public void setZoom(@ZoomMode int zoom) {
-        this.mZoom = zoom;
-        mCameraImpl.setZoom(mZoom);
-    }
+
 
 
 
@@ -787,7 +809,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @see #captureSnapshot()
      */
     public void captureImage() {
-        mCameraImpl.captureImage();
+        if (mSessionType == CameraKit.Constants.SESSION_TYPE_PICTURE) {
+            mCameraImpl.captureImage();
+        } else {
+            captureSnapshot();
+        }
     }
 
 
@@ -898,18 +924,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
-    class CameraCallbacks extends CameraListener {
+    class CameraCallbacks {
 
         private ArrayList<CameraListener> mListeners;
         private Handler uiHandler;
 
-        public CameraCallbacks() {
+
+        CameraCallbacks() {
             mListeners = new ArrayList<>(2);
             uiHandler = new Handler(Looper.getMainLooper());
         }
 
-        @Override
-        public void onCameraOpened() {
+
+        public void dispatchOnCameraOpened() {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -920,8 +947,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             });
         }
 
-        @Override
-        public void onCameraClosed() {
+
+        public void dispatchOnCameraClosed() {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -932,6 +959,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             });
         }
 
+
         public void onCameraPreviewSizeChanged() {
             // Camera preview size, as returned by getPreviewSize(), has changed.
             // Request a layout pass for onMeasure() to do its stuff.
@@ -940,36 +968,63 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             requestLayout();
         }
 
-        @Override
-        public void onPictureTaken(byte[] jpeg) {
-            if (mCropOutput) {
-                // TODO cropOutput won't work if image is rotated (e.g. byte[] contains exif orientation).
-                AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
-                jpeg = new CenterCrop(jpeg, outputRatio, mJpegQuality).getJpeg();
-            }
 
-            final byte[] data = jpeg;
-            uiHandler.post(new Runnable() {
+        /**
+         * What would be great here is to ensure the EXIF tag in the jpeg is consistent with what we expect,
+         * and maybe add flipping when we have been using the front camera.
+         * Unfortunately this is not easy, because
+         * - You can't write EXIF data to a byte[] array, not with support library at least
+         * - You don't know what byte[] is, see {@link android.hardware.Camera.Parameters#setRotation(int)}.
+         *   Sometimes our rotation is encoded in the byte array, sometimes a rotated byte[] is returned.
+         *   Depends on the hardware.
+         *
+         * So for now we ignore flipping.
+         *
+         * @param consistentWithView is the final image (decoded respecting EXIF data) consistent with
+         *                           the view width and height? Or should we flip dimensions to have a
+         *                           consistent measure?
+         * @param flipPicture whether this picture should be flipped horizontally after decoding,
+         *                    because it was taken with the front camera.
+         */
+        public void processJpegPicture(final byte[] jpeg, final boolean consistentWithView, final boolean flipPicture) {
+            getWorkerHandler().post(new Runnable() {
                 @Override
                 public void run() {
-                    for (CameraListener listener : mListeners) {
-                        listener.onPictureTaken(data);
+                    byte[] jpeg2 = jpeg;
+                    if (mCropOutput) {
+                        // If consistent, dimensions of the jpeg Bitmap and dimensions of getWidth(), getHeight()
+                        // Live in the same reference system.
+                        AspectRatio targetRatio;
+                        if (consistentWithView) {
+                            targetRatio = AspectRatio.of(getWidth(), getHeight());
+                        } else {
+                            targetRatio = AspectRatio.of(getHeight(), getWidth());
+                        }
+                        Log.e(TAG, "is Consistent? " + consistentWithView);
+                        Log.e(TAG, "viewWidth? " + getWidth() + ", viewHeight? " + getHeight());
+                        jpeg2 = CropHelper.cropToJpeg(jpeg, targetRatio, mJpegQuality);
                     }
+                    dispatchOnPictureTaken(jpeg2);
                 }
             });
         }
 
-        public void processYuvImage(YuvImage yuv) {
+
+        public void processYuvPicture(YuvImage yuv) {
             byte[] jpeg;
             if (mCropOutput) {
                 AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
-                jpeg = new CenterCrop(yuv, outputRatio, mJpegQuality).getJpeg();
+                jpeg = CropHelper.cropToJpeg(yuv, outputRatio, mJpegQuality);
             } else {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 yuv.compressToJpeg(new Rect(0, 0, yuv.getWidth(), yuv.getHeight()), mJpegQuality, out);
                 jpeg = out.toByteArray();
             }
+            dispatchOnPictureTaken(jpeg);
+        }
 
+
+        private void dispatchOnPictureTaken(byte[] jpeg) {
             final byte[] data = jpeg;
             uiHandler.post(new Runnable() {
                 @Override
@@ -981,8 +1036,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             });
         }
 
-        @Override
-        public void onVideoTaken(final File video) {
+
+        public void dispatchOnVideoTaken(final File video) {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -993,13 +1048,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             });
         }
 
+
         private void addListener(@NonNull CameraListener cameraListener) {
             mListeners.add(cameraListener);
         }
 
+
         private void removeListener(@NonNull CameraListener cameraListener) {
             mListeners.remove(cameraListener);
         }
+
 
         private void clearListeners() {
             mListeners.clear();

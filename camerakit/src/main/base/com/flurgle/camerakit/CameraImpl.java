@@ -26,7 +26,7 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
     abstract void setFacing(@Facing int facing);
     abstract void setFlash(@Flash int flash);
     abstract void setFocus(@Focus int focus);
-    abstract void setZoom(@ZoomMode int zoom);
+    abstract void setZoomMode(@ZoomMode int zoom);
     abstract void setVideoQuality(@VideoQuality int videoQuality);
     abstract void setWhiteBalance(@WhiteBalance int whiteBalance);
     abstract void setSessionType(@SessionType int sessionType);

@@ -51,63 +51,73 @@ public class CameraUtils {
         new Thread(new Runnable() {
             @Override
             public void run() {
-
-                int orientation = 0;
-                boolean flip = false;
-                try {
-                    // http://sylvana.net/jpegcrop/exif_orientation.html
-                    ExifInterface exif = new ExifInterface(new ByteArrayInputStream(source));
-                    Integer exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                    switch (exifOrientation) {
-                        case ExifInterface.ORIENTATION_NORMAL:
-                        case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
-                            orientation = 0; break;
-
-                        case ExifInterface.ORIENTATION_ROTATE_180:
-                        case ExifInterface.ORIENTATION_FLIP_VERTICAL:
-                            orientation = 180; break;
-
-                        case ExifInterface.ORIENTATION_ROTATE_90:
-                        case ExifInterface.ORIENTATION_TRANSPOSE:
-                            orientation = 90; break;
-
-                        case ExifInterface.ORIENTATION_ROTATE_270:
-                        case ExifInterface.ORIENTATION_TRANSVERSE:
-                            orientation = 270; break;
-
-                        default: orientation = 0;
-                    }
-
-                    flip = exifOrientation == ExifInterface.ORIENTATION_FLIP_HORIZONTAL ||
-                            exifOrientation == ExifInterface.ORIENTATION_FLIP_VERTICAL ||
-                            exifOrientation == ExifInterface.ORIENTATION_TRANSPOSE ||
-                            exifOrientation == ExifInterface.ORIENTATION_TRANSVERSE;
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    orientation = 0;
-                    flip = false;
-                }
-
-
-                Bitmap bitmap = BitmapFactory.decodeByteArray(source, 0, source.length);
-                if (orientation != 0 || flip) {
-                    Matrix matrix = new Matrix();
-                    matrix.setRotate(orientation);
-                    // matrix.postScale(1, -1) Flip... needs testing.
-                    Bitmap temp = bitmap;
-                    bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                    temp.recycle();
-                }
-                final Bitmap result = bitmap;
+                final Bitmap bitmap = decodeBitmap(source);
                 ui.post(new Runnable() {
                     @Override
                     public void run() {
-                        callback.onBitmapReady(result);
+                        callback.onBitmapReady(bitmap);
                     }
                 });
             }
         }).start();
+    }
+
+
+    static Bitmap decodeBitmap(byte[] source) {
+        int orientation;
+        boolean flip;
+        InputStream stream = null;
+        try {
+            // http://sylvana.net/jpegcrop/exif_orientation.html
+            stream = new ByteArrayInputStream(source);
+            ExifInterface exif = new ExifInterface(stream);
+            Integer exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            switch (exifOrientation) {
+                case ExifInterface.ORIENTATION_NORMAL:
+                case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+                    orientation = 0; break;
+
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+                    orientation = 180; break;
+
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                case ExifInterface.ORIENTATION_TRANSPOSE:
+                    orientation = 90; break;
+
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                case ExifInterface.ORIENTATION_TRANSVERSE:
+                    orientation = 270; break;
+
+                default: orientation = 0;
+            }
+
+            flip = exifOrientation == ExifInterface.ORIENTATION_FLIP_HORIZONTAL ||
+                    exifOrientation == ExifInterface.ORIENTATION_FLIP_VERTICAL ||
+                    exifOrientation == ExifInterface.ORIENTATION_TRANSPOSE ||
+                    exifOrientation == ExifInterface.ORIENTATION_TRANSVERSE;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            orientation = 0;
+            flip = false;
+        } finally {
+            if (stream != null) {
+                try { stream.close(); } catch (Exception e) {}
+            }
+        }
+
+
+        Bitmap bitmap = BitmapFactory.decodeByteArray(source, 0, source.length);
+        if (orientation != 0 || flip) {
+            Matrix matrix = new Matrix();
+            matrix.setRotate(orientation);
+            // matrix.postScale(1, -1) Flip... needs testing.
+            Bitmap temp = bitmap;
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            temp.recycle();
+        }
+        return bitmap;
     }
 
 

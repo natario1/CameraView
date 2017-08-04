@@ -158,7 +158,7 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    void setZoom(@ZoomMode int zoom) {
+    void setZoomMode(@ZoomMode int zoom) {
 
     }
 
@@ -203,7 +203,7 @@ class Camera2 extends CameraImpl {
             TreeSet<Size> sizes = new TreeSet<>();
             sizes.addAll(getAvailableCaptureResolutions());
 
-            TreeSet<AspectRatio> aspectRatios = new CommonAspectRatioFilter(
+            /* TreeSet<AspectRatio> aspectRatios = new CommonAspectRatioFilter(
                     getAvailablePreviewResolutions(),
                     getAvailableCaptureResolutions()
             ).filter();
@@ -217,7 +217,7 @@ class Camera2 extends CameraImpl {
                     mCaptureSize = size;
                     break;
                 }
-            }
+            } */
         }
 
         return mCaptureSize;
@@ -229,7 +229,7 @@ class Camera2 extends CameraImpl {
             TreeSet<Size> sizes = new TreeSet<>();
             sizes.addAll(getAvailablePreviewResolutions());
 
-            TreeSet<AspectRatio> aspectRatios = new CommonAspectRatioFilter(
+            /* TreeSet<AspectRatio> aspectRatios = new CommonAspectRatioFilter(
                     getAvailablePreviewResolutions(),
                     getAvailableCaptureResolutions()
             ).filter();
@@ -243,7 +243,7 @@ class Camera2 extends CameraImpl {
                     mPreviewSize = size;
                     break;
                 }
-            }
+            } */
         }
 
         return mPreviewSize;
