@@ -860,6 +860,34 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
+     * Starts recording a video with selected options. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     * Recording will be automatically stopped after durationMillis, unless
+     * {@link #stopCapturingVideo()} is not called meanwhile.
+     *
+     * @param file a file where the video will be saved
+     * @param durationMillis video max duration
+     *
+     * @throws IllegalArgumentException if durationMillis is < 500 milliseconds
+     */
+    public void startCapturingVideo(File file, long durationMillis) {
+        if (durationMillis < 500) {
+            throw new IllegalArgumentException("Video duration can't be < 500 milliseconds");
+        }
+        startCapturingVideo(file);
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                stopCapturingVideo();
+            }
+        }, durationMillis);
+    }
+
+
+    // TODO: pauseCapturingVideo and resumeCapturingVideo. There is mediarecorder.pause(), but API 24...
+
+
+    /**
      * Stops capturing video, if there was a video record going on.
      * This will fire {@link CameraListener#onVideoTaken(File)}.
      */

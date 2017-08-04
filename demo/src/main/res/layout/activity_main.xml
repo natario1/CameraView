@@ -23,7 +23,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="400dp"
                 android:layout_gravity="center_horizontal"
-                android:adjustViewBounds="true"
+                android:keepScreenOn="true"
                 app:cameraCropOutput="false"
                 app:cameraFacing="back"
                 app:cameraFlash="off"

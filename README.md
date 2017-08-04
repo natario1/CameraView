@@ -145,6 +145,9 @@ camera.postDelayed(new Runnable() {
         camera.stopRecordingVideo();
     }
 }, 2500);
+
+// Shorthand:
+camera.startRecordingVideo(file, 2500);
 ```
 
 ### Other camera events
