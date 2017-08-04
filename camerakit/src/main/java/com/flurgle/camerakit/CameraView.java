@@ -804,16 +804,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * was registered.
      *
      * Note that if sessionType is {@link CameraKit.Constants#SESSION_TYPE_VIDEO}, this
-     * falls back to {@link #captureSnapshot()} (that is, we will capture a preview frame).
+     * might fall back to {@link #captureSnapshot()} (that is, we might capture a preview frame).
      *
      * @see #captureSnapshot()
      */
     public void captureImage() {
-        if (mSessionType == CameraKit.Constants.SESSION_TYPE_PICTURE) {
-            mCameraImpl.captureImage();
-        } else {
-            captureSnapshot();
-        }
+        mCameraImpl.captureImage();
     }
 
 
@@ -822,10 +818,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * This eventually triggers {@link CameraListener#onPictureTaken(byte[])} if a listener
      * was registered.
      *
-     * The difference with {@link #captureImage()} is that:
-     * - this capture is faster, so it might be better on slower cameras, though the result can be
-     *   generally blurry or low quality
-     * - this can be called even if sessionType is {@link CameraKit.Constants#SESSION_TYPE_VIDEO}
+     * The difference with {@link #captureImage()} is that this capture is faster, so it might be
+     * better on slower cameras, though the result can be generally blurry or low quality.
      *
      * @see #captureImage()
      */

@@ -175,6 +175,7 @@ class Camera1 extends CameraImpl {
     void stop() {
         mFocusHandler.removeCallbacksAndMessages(null);
         if (isCameraOpened()) {
+            if (mIsCapturingVideo) endVideo();
             mCamera.stopPreview();
             mCamera.release();
             mCameraListener.dispatchOnCameraClosed();
@@ -361,9 +362,9 @@ class Camera1 extends CameraImpl {
     void captureImage() {
         if (mIsCapturingImage) return;
         if (!isCameraOpened()) return;
-        if (mIsCapturingVideo || mSessionType == SESSION_TYPE_VIDEO) {
-            captureSnapshot();
-            return;
+        if (mSessionType == SESSION_TYPE_VIDEO && mIsCapturingVideo) {
+            Camera.Parameters parameters = mCamera.getParameters();
+            if (!parameters.isVideoSnapshotSupported()) return;
         }
 
         // Set boolean to wait for image callback
@@ -395,9 +396,14 @@ class Camera1 extends CameraImpl {
 
     @Override
     void captureSnapshot() {
-        if (mIsCapturingImage) return;
         if (!isCameraOpened()) return;
-        // TODO: will this work while recording a video? test...
+        if (mIsCapturingImage) return;
+        // This won't work while capturing a video.
+        // Switch to captureImage.
+        if (mIsCapturingVideo) {
+            captureImage();
+            return;
+        }
         mIsCapturingImage = true;
         mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
             @Override
@@ -539,6 +545,8 @@ class Camera1 extends CameraImpl {
         mVideoFile = videoFile;
         if (mIsCapturingVideo) return;
         if (!isCameraOpened()) return;
+        Camera.Parameters params = mCamera.getParameters();
+        params.setVideoStabilization(false);
         if (mSessionType == SESSION_TYPE_VIDEO) {
             mIsCapturingVideo = true;
             initMediaRecorder();
@@ -558,13 +566,15 @@ class Camera1 extends CameraImpl {
 
     @Override
     void endVideo() {
-        mIsCapturingVideo = false;
-        mMediaRecorder.stop();
-        mMediaRecorder.release();
-        mMediaRecorder = null;
-        if (mVideoFile != null) {
-            mCameraListener.dispatchOnVideoTaken(mVideoFile);
-            mVideoFile = null;
+        if (mIsCapturingVideo) {
+            mIsCapturingVideo = false;
+            mMediaRecorder.stop();
+            mMediaRecorder.release();
+            mMediaRecorder = null;
+            if (mVideoFile != null) {
+                mCameraListener.dispatchOnVideoTaken(mVideoFile);
+                mVideoFile = null;
+            }
         }
     }
 
@@ -572,7 +582,6 @@ class Camera1 extends CameraImpl {
     private void initMediaRecorder() {
         mMediaRecorder = new MediaRecorder();
         mCamera.unlock();
-
         mMediaRecorder.setCamera(mCamera);
 
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
