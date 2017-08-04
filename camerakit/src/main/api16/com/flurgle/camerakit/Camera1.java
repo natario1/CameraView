@@ -368,16 +368,15 @@ class Camera1 extends CameraImpl {
 
         // Set boolean to wait for image callback
         mIsCapturingImage = true;
-        synchronized (mLock) {
-            Camera.Parameters parameters = mCamera.getParameters();
-            int rotation = computeExifRotation();
-            Log.e(TAG, "Setting exif rotation to "+rotation);
-            parameters.setRotation(rotation);
-            mCamera.setParameters(parameters);
-        }
         final int exifRotation = computeExifRotation();
         final boolean exifFlip = computeExifFlip();
         final int sensorToDisplay = computeSensorToDisplayOffset();
+        synchronized (mLock) {
+            Camera.Parameters parameters = mCamera.getParameters();
+            Log.e(TAG, "Setting exif rotation to "+exifRotation);
+            parameters.setRotation(exifRotation);
+            mCamera.setParameters(parameters);
+        }
         // Is the final picture (decoded respecting EXIF) consistent with CameraView orientation?
         // We must consider exifOrientation to bring back the picture in the sensor world.
         // Then use sensorToDisplay to move to the display world, where CameraView lives.
@@ -479,7 +478,11 @@ class Camera1 extends CameraImpl {
      * This ignores flipping for facing camera.
      */
     private int computeExifRotation() {
-        return (mDeviceOrientation + mSensorOffset) % 360;
+        if (mFacing == CameraKit.Constants.FACING_FRONT) {
+            return (mSensorOffset - mDeviceOrientation + 360) % 360;
+        } else {
+            return (mSensorOffset + mDeviceOrientation) % 360;
+        }
     }
 
 
