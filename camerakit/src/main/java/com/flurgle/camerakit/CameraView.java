@@ -103,6 +103,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private Lifecycle mLifecycle;
     private FocusMarkerLayout mFocusMarkerLayout;
     private boolean mIsStarted;
+    private boolean mKeepScreenOn;
 
     public CameraView(@NonNull Context context) {
         super(context, null);
@@ -851,7 +852,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (file == null) {
             file = new File(getContext().getExternalFilesDir(null), "video.mp4");
         }
-        mCameraImpl.startVideo(file);
+        if (mCameraImpl.startVideo(file)) {
+            mKeepScreenOn = getKeepScreenOn();
+            if (!mKeepScreenOn) setKeepScreenOn(true);
+        }
     }
 
 
@@ -861,6 +865,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void stopCapturingVideo() {
         mCameraImpl.endVideo();
+        if (getKeepScreenOn() != mKeepScreenOn) setKeepScreenOn(mKeepScreenOn);
     }
 
 

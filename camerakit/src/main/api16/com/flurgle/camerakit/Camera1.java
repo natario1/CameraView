@@ -545,10 +545,10 @@ class Camera1 extends CameraImpl {
 
 
     @Override
-    void startVideo(@NonNull File videoFile) {
+    boolean startVideo(@NonNull File videoFile) {
         mVideoFile = videoFile;
-        if (mIsCapturingVideo) return;
-        if (!isCameraOpened()) return;
+        if (mIsCapturingVideo) return false;
+        if (!isCameraOpened()) return false;
         Camera.Parameters params = mCamera.getParameters();
         params.setVideoStabilization(false);
         if (mSessionType == SESSION_TYPE_VIDEO) {
@@ -560,9 +560,10 @@ class Camera1 extends CameraImpl {
                 e.printStackTrace();
                 mVideoFile = null;
                 endVideo();
-                return;
+                return false;
             }
             mMediaRecorder.start();
+            return true;
         } else {
             throw new IllegalStateException("Can't record video while session type is picture");
         }

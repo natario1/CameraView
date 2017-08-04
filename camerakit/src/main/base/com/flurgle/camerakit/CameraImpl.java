@@ -34,7 +34,7 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
 
     abstract void capturePicture();
     abstract void captureSnapshot();
-    abstract void startVideo(@NonNull File file);
+    abstract boolean startVideo(@NonNull File file);
     abstract void endVideo();
 
     abstract Size getCaptureSize();

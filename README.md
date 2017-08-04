@@ -2,7 +2,7 @@
 *A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The CameraKit-Android at this point has been fairly rewritten and refactored:*
 
 - lots *of serious bugs fixed, I have lost the count*
-- *decent orientation support*
+- *decent orientation support for both pictures and videos*
 - *EXIF support*
 - *simpler APIs*
 - *docs and comments in code*
@@ -56,7 +56,7 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - Automatic output cropping to match your `CameraView` bounds
 - Multiple capture methods
   - Take high-resolution pictures with `capturePicture`
-  - Take quick snapshots as a freeze frame of the preview with `captureSnapshot`, even while recording videos (similar to SnapChat and Instagram)
+  - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to SnapChat and Instagram)
 - Built-in tap to focus
 - `CameraUtils` to help with Bitmaps and orientations
 - EXIF support
@@ -75,6 +75,7 @@ To use CameraKit, simply add a `CameraView` to your layout:
 ```xml
 <com.flurgle.camerakit.CameraView
     android:id="@+id/camera"
+    android:keepScreenOn="true"
     android:layout_width="match_parent"
     android:layout_height="wrap_content" />
 ```
@@ -103,7 +104,7 @@ protected void onDestroy() {
 
 ### Capturing Images
 
-To capture an image just call `CameraView.captureImage()`. Make sure you setup a `CameraListener` to handle the image callback.
+To capture an image just call `CameraView.capturePicture()`. Make sure you setup a `CameraListener` to handle the image callback.
 
 ```java
 camera.setCameraListener(new CameraListener() {
@@ -115,10 +116,10 @@ camera.setCameraListener(new CameraListener() {
     }
 });
 
-camera.captureImage();
+camera.capturePicture();
 ```
 
-You can also use `camera.captureSnapshot()` to capture a preview frame. This is faster, though has lower quality, and can be used while recording videos.
+You can also use `camera.captureSnapshot()` to capture a preview frame. This is faster, though will ensure lower quality output.
 
 ### Capturing Video
 
