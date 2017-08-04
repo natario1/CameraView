@@ -24,8 +24,8 @@ public class CropHelper {
     // This reads a rotated Bitmap thanks to CameraUtils. Then crops and returns a byte array.
     // In doing so, EXIF data is deleted.
     public static byte[] cropToJpeg(byte[] jpeg, AspectRatio targetRatio, int jpegCompression) {
+
         Bitmap image = CameraUtils.decodeBitmap(jpeg);
-        Log.e("CropHelper", "decoded image has width="+image.getWidth()+", height="+image.getHeight());
         Rect cropRect = computeCrop(image.getWidth(), image.getHeight(), targetRatio);
         Bitmap crop = Bitmap.createBitmap(image, cropRect.left, cropRect.top, cropRect.width(), cropRect.height());
         image.recycle();
@@ -44,10 +44,10 @@ public class CropHelper {
             x = (currentWidth - width) / 2;
         } else {
             width = currentWidth;
-            height = (int) (width * targetRatio.inverse().toFloat());
+            height = (int) (width / targetRatio.toFloat());
             y = (currentHeight - height) / 2;
             x = 0;
         }
-        return new Rect(x, y, x+width, y+height);
+        return new Rect(x, y, x + width, y + height);
     }
 }

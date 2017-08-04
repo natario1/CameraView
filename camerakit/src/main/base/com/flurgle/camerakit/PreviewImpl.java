@@ -49,7 +49,7 @@ abstract class PreviewImpl {
     void setDesiredSize(int width, int height) {
         this.mDesiredWidth = width;
         this.mDesiredHeight = height;
-        refreshScale();
+        crop();
     }
 
     final Size getSurfaceSize() {
@@ -64,7 +64,7 @@ abstract class PreviewImpl {
     protected final void onSurfaceAvailable(int width, int height) {
         mSurfaceWidth = width;
         mSurfaceHeight = height;
-        refreshScale();
+        crop();
         mSurfaceCallback.onSurfaceAvailable();
     }
 
@@ -75,7 +75,7 @@ abstract class PreviewImpl {
         if (width != mSurfaceWidth || height != mSurfaceHeight) {
             mSurfaceWidth = width;
             mSurfaceHeight = height;
-            refreshScale();
+            crop();
             mSurfaceCallback.onSurfaceChanged();
         }
     }
@@ -84,7 +84,7 @@ abstract class PreviewImpl {
     protected final void onSurfaceDestroyed() {
         mSurfaceWidth = 0;
         mSurfaceHeight = 0;
-        refreshScale();
+        crop();
     }
 
 
@@ -93,7 +93,7 @@ abstract class PreviewImpl {
      * to match the desired aspect ratio.
      * This means that the external part of the surface will be cropped by the outer view.
      */
-    private final void refreshScale() {
+    private final void crop() {
         getView().post(new Runnable() {
             @Override
             public void run() {
@@ -115,5 +115,15 @@ abstract class PreviewImpl {
                 }
             }
         });
+    }
+
+
+    /**
+     * Whether we are cropping the output.
+     * If false, this means that the output image will match the visible bounds.
+     * @return true if cropping
+     */
+    final boolean isCropping() {
+        return getView().getScaleX() > 1 || getView().getScaleY() > 1;
     }
 }

@@ -983,23 +983,20 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
          * @param consistentWithView is the final image (decoded respecting EXIF data) consistent with
          *                           the view width and height? Or should we flip dimensions to have a
          *                           consistent measure?
-         * @param flipPicture whether this picture should be flipped horizontally after decoding,
-         *                    because it was taken with the front camera.
+         * @param flipHorizontally whether this picture should be flipped horizontally after decoding,
+         *                         because it was taken with the front camera.
          */
-        public void processJpegPicture(final byte[] jpeg, final boolean consistentWithView, final boolean flipPicture) {
+        public void processImage(final byte[] jpeg, final boolean consistentWithView, final boolean flipHorizontally) {
             getWorkerHandler().post(new Runnable() {
                 @Override
                 public void run() {
                     byte[] jpeg2 = jpeg;
-                    if (mCropOutput) {
+                    if (mCropOutput && mPreviewImpl.isCropping()) {
                         // If consistent, dimensions of the jpeg Bitmap and dimensions of getWidth(), getHeight()
                         // Live in the same reference system.
-                        AspectRatio targetRatio;
-                        if (consistentWithView) {
-                            targetRatio = AspectRatio.of(getWidth(), getHeight());
-                        } else {
-                            targetRatio = AspectRatio.of(getHeight(), getWidth());
-                        }
+                        int w = consistentWithView ? getWidth() : getHeight();
+                        int h = consistentWithView ? getHeight() : getWidth();
+                        AspectRatio targetRatio = AspectRatio.of(w, h);
                         Log.e(TAG, "is Consistent? " + consistentWithView);
                         Log.e(TAG, "viewWidth? " + getWidth() + ", viewHeight? " + getHeight());
                         jpeg2 = CropHelper.cropToJpeg(jpeg, targetRatio, mJpegQuality);
@@ -1010,11 +1007,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
 
-        public void processYuvPicture(YuvImage yuv) {
+        public void processSnapshot(YuvImage yuv, boolean consistentWithView, boolean flipHorizontally) {
             byte[] jpeg;
-            if (mCropOutput) {
-                AspectRatio outputRatio = AspectRatio.of(getWidth(), getHeight());
-                jpeg = CropHelper.cropToJpeg(yuv, outputRatio, mJpegQuality);
+            if (mCropOutput && mPreviewImpl.isCropping()) {
+                int w = consistentWithView ? getWidth() : getHeight();
+                int h = consistentWithView ? getHeight() : getWidth();
+                AspectRatio targetRatio = AspectRatio.of(w, h);
+                jpeg = CropHelper.cropToJpeg(yuv, targetRatio, mJpegQuality);
             } else {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 yuv.compressToJpeg(new Rect(0, 0, yuv.getWidth(), yuv.getHeight()), mJpegQuality, out);

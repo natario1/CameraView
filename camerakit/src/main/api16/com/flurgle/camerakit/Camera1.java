@@ -388,7 +388,7 @@ class Camera1 extends CameraImpl {
                     public void onPictureTaken(byte[] data, Camera camera) {
                         mIsCapturingImage = false;
                         camera.startPreview(); // This is needed, read somewhere in the docs.
-                        mCameraListener.processJpegPicture(data, consistentWithView, exifFlip);
+                        mCameraListener.processImage(data, consistentWithView, exifFlip);
                     }
                 });
     }
@@ -405,10 +405,12 @@ class Camera1 extends CameraImpl {
             public void onPreviewFrame(final byte[] data, Camera camera) {
                 // Got to rotate the preview frame, since byte[] data here does not include
                 // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
-                // TODO: add exif, and also care about flipping.
+                // Adding EXIF to a byte array, unfortunately, is hard.
                 Camera.Parameters params = mCamera.getParameters();
-                final int rotation = computeExifRotation();
-                final boolean flip = rotation % 180 != 0;
+                final int sensorToDevice = computeExifRotation();
+                final int sensorToDisplay = computeSensorToDisplayOffset();
+                final boolean exifFlip = computeExifFlip();
+                final boolean flip = sensorToDevice % 180 != 0;
                 final int preWidth = mPreviewSize.getWidth();
                 final int preHeight = mPreviewSize.getHeight();
                 final int postWidth = flip ? preHeight : preWidth;
@@ -417,9 +419,11 @@ class Camera1 extends CameraImpl {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, rotation);
+
+                        final boolean consistentWithView = (sensorToDevice + sensorToDisplay + 180) % 180 == 0;
+                        byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToDevice);
                         YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
-                        mCameraListener.processYuvPicture(yuv);
+                        mCameraListener.processSnapshot(yuv, consistentWithView, exifFlip);
                         mIsCapturingImage = false;
                     }
                 }).start();
