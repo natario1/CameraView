@@ -11,6 +11,13 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
     protected final CameraView.CameraCallbacks mCameraListener;
     protected final PreviewImpl mPreview;
 
+    @Facing protected int mFacing;
+    @Flash protected int mFlash;
+    @Focus protected int mFocus;
+    @VideoQuality protected int mVideoQuality;
+    @WhiteBalance protected int mWhiteBalance;
+    @SessionType protected int mSessionType;
+
     CameraImpl(CameraView.CameraCallbacks callback, PreviewImpl preview) {
         mCameraListener = callback;
         mPreview = preview;
@@ -47,4 +54,33 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
     @Nullable
     abstract ExtraProperties getExtraProperties();
 
+    @Facing
+    final int getFacing() {
+        return mFacing;
+    }
+
+    @Flash
+    final int getFlash() {
+        return mFlash;
+    }
+
+    @Focus
+    final int getFocus() {
+        return mFocus;
+    }
+
+    @WhiteBalance
+    final int getWhiteBalance() {
+        return mWhiteBalance;
+    }
+
+    @VideoQuality
+    final int getVideoQuality() {
+        return mVideoQuality;
+    }
+
+    @SessionType
+    final int getSessionType() {
+        return mSessionType;
+    }
 }

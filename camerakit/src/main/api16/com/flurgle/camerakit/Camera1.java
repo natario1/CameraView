@@ -48,13 +48,7 @@ class Camera1 extends CameraImpl {
     private int mDeviceOrientation;
     private int mSensorOffset;
 
-    @Facing private int mFacing;
-    @Flash private int mFlash;
-    @Focus private int mFocus;
     @ZoomMode private int mZoom;
-    @VideoQuality private int mVideoQuality;
-    @WhiteBalance private int mWhiteBalance;
-    @SessionType private int mSessionType;
     private double mLatitude;
     private double mLongitude;
     private boolean mFocusOnTap;
@@ -136,8 +130,8 @@ class Camera1 extends CameraImpl {
         );
         synchronized (mLock) {
             Camera.Parameters params = mCamera.getParameters();
-            params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
-            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- not allowed during preview
+            params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight()); // <- not allowed during preview
+            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
             mCamera.setParameters(params);
         }
         mCamera.startPreview();
@@ -358,8 +352,27 @@ class Camera1 extends CameraImpl {
 
     @Override
     void setVideoQuality(int videoQuality) {
-        this.mVideoQuality = videoQuality;
-        // TODO: restore preview size if needed.
+        if (mIsCapturingVideo) {
+            throw new IllegalStateException("Can't change video quality while recording a video.");
+        }
+        mVideoQuality = videoQuality;
+        if (isCameraOpened() && mSessionType == CameraKit.Constants.SESSION_TYPE_VIDEO) {
+            // Change capture size to a size that fits the video aspect ratio.
+            Size oldSize = mCaptureSize;
+            mCaptureSize = computeCaptureSize();
+            if (!mCaptureSize.equals(oldSize)) {
+                // New video quality triggers a new aspect ratio.
+                // Go on and see if preview size should change also.
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+                    mCamera.setParameters(params);
+                }
+                onSurfaceChanged();
+            }
+            Log.e(TAG, "captureSize: "+mCaptureSize);
+            Log.e(TAG, "previewSize: "+mPreviewSize);
+        }
     }
 
     @Override
@@ -520,16 +533,19 @@ class Camera1 extends CameraImpl {
         } else {
             // Choose according to developer choice in setVideoQuality.
             // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.
-            // So its output is our output.
-            CamcorderProfile camcorderProfile = getCamcorderProfile(mVideoQuality);
-            return new Size(camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
+            // We want the picture size to be the max picture consistent with the video aspect ratio.
+            List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
+            CamcorderProfile profile = getCamcorderProfile(mVideoQuality);
+            AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
+            return matchSize(captureSizes, targetRatio, new Size(0, 0), true);
         }
     }
 
     private Size computePreviewSize() {
         Camera.Parameters params = mCamera.getParameters();
         List<Size> previewSizes = sizesFromList(params.getSupportedPreviewSizes());
-        return computePreviewSize(previewSizes, mCaptureSize, mPreview.getSurfaceSize());
+        AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+        return matchSize(previewSizes, targetRatio, mPreview.getSurfaceSize(), false);
     }
 
 
@@ -761,20 +777,19 @@ class Camera1 extends CameraImpl {
 
     /**
      * Policy here is to return a size that is big enough to fit the surface size,
-     * and possibly consistent with the capture size.
+     * and possibly consistent with the target aspect ratio.
      * @param sizes list of possible sizes
-     * @param captureSize size representing desired aspect ratio
-     * @param surfaceSize size representing the current surface size. We'd like the returned value to be bigger.
+     * @param targetRatio aspect ratio
+     * @param biggerThan size representing the current surface size
      * @return chosen size
      */
-    private static Size computePreviewSize(List<Size> sizes, Size captureSize, Size surfaceSize) {
+    private static Size matchSize(List<Size> sizes, AspectRatio targetRatio, Size biggerThan, boolean biggestPossible) {
         if (sizes == null) return null;
 
         List<Size> consistent = new ArrayList<>(5);
         List<Size> bigEnoughAndConsistent = new ArrayList<>(5);
 
-        final AspectRatio targetRatio = AspectRatio.of(captureSize.getWidth(), captureSize.getHeight());
-        final Size targetSize = surfaceSize;
+        final Size targetSize = biggerThan;
         for (Size size : sizes) {
             AspectRatio ratio = AspectRatio.of(size.getWidth(), size.getHeight());
             if (ratio.equals(targetRatio)) {
@@ -785,9 +800,15 @@ class Camera1 extends CameraImpl {
             }
         }
 
-        if (bigEnoughAndConsistent.size() > 0) return Collections.min(bigEnoughAndConsistent);
-        if (consistent.size() > 0) return Collections.max(consistent);
-        return Collections.max(sizes);
+        if (biggestPossible) {
+            if (bigEnoughAndConsistent.size() > 0) return Collections.max(bigEnoughAndConsistent);
+            if (consistent.size() > 0) return Collections.max(consistent);
+            return Collections.max(sizes);
+        } else {
+            if (bigEnoughAndConsistent.size() > 0) return Collections.min(bigEnoughAndConsistent);
+            if (consistent.size() > 0) return Collections.max(consistent);
+            return Collections.max(sizes);
+        }
     }
 
 

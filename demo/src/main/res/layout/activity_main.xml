@@ -389,6 +389,85 @@
 
             </FrameLayout>
 
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <View
+                    android:layout_width="2.5dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/colorPrimary" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="3dp"
+                        android:text="VIDEO QUALITY"
+                        android:textColor="@android:color/black"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <HorizontalScrollView
+                        android:layout_marginTop="4dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                        <RadioGroup
+                            android:id="@+id/videoQualityRadioGroup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checkedButton="@+id/videoQuality480p"
+                            android:orientation="horizontal">
+                            <RadioButton
+                                android:id="@+id/videoQualityLowest"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="low" />
+                            <RadioButton
+                                android:id="@+id/videoQualityQvga"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="QVGA" />
+                            <RadioButton
+                                android:id="@+id/videoQuality480p"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="480p" />
+                            <RadioButton
+                                android:id="@+id/videoQuality720p"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="720p" />
+                            <RadioButton
+                                android:id="@+id/videoQuality1080p"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="1080p" />
+                            <RadioButton
+                                android:id="@+id/videoQuality2160p"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="2160p" />
+                            <RadioButton
+                                android:id="@+id/videoQualityHighest"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="high" />
+                        </RadioGroup>
+                    </HorizontalScrollView>
+
+
+                </LinearLayout>
+
+            </FrameLayout>
+
         </LinearLayout>
 
     </LinearLayout>

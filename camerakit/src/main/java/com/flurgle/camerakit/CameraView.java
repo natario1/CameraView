@@ -83,15 +83,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         getWorkerHandler().post(runnable);
     }
 
-    @Facing private int mFacing;
-    @Flash private int mFlash;
-    @Focus private int mFocus;
-    // @Method private int mMethod;
     @ZoomMode private int mZoom;
-    // @Permissions private int mPermissions;
-    @SessionType private int mSessionType;
-    @VideoQuality private int mVideoQuality;
-    @WhiteBalance private int mWhiteBalance;
     private int mJpegQuality;
     private boolean mCropOutput;
     private int mDisplayOffset;
@@ -118,13 +110,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
-        mFacing = a.getInteger(R.styleable.CameraView_cameraFacing, CameraKit.Defaults.DEFAULT_FACING);
-        mFlash = a.getInteger(R.styleable.CameraView_cameraFlash, CameraKit.Defaults.DEFAULT_FLASH);
-        mFocus = a.getInteger(R.styleable.CameraView_cameraFocus, CameraKit.Defaults.DEFAULT_FOCUS);
-        mSessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, CameraKit.Defaults.DEFAULT_SESSION_TYPE);
+        int facing = a.getInteger(R.styleable.CameraView_cameraFacing, CameraKit.Defaults.DEFAULT_FACING);
+        int flash = a.getInteger(R.styleable.CameraView_cameraFlash, CameraKit.Defaults.DEFAULT_FLASH);
+        int focus = a.getInteger(R.styleable.CameraView_cameraFocus, CameraKit.Defaults.DEFAULT_FOCUS);
+        int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, CameraKit.Defaults.DEFAULT_SESSION_TYPE);
+        int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
+        int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
         mZoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraKit.Defaults.DEFAULT_ZOOM);
-        mWhiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
-        mVideoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
         a.recycle();
@@ -136,13 +128,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         addView(mFocusMarkerLayout);
 
         mIsStarted = false;
-        setFacing(mFacing);
-        setFlash(mFlash);
-        setFocus(mFocus);
-        setSessionType(mSessionType);
+        setFacing(facing);
+        setFlash(flash);
+        setFocus(focus);
+        setSessionType(sessionType);
         setZoomMode(mZoom);
-        setVideoQuality(mVideoQuality);
-        setWhiteBalance(mWhiteBalance);
+        setVideoQuality(videoQuality);
+        setWhiteBalance(whiteBalance);
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context) {
@@ -159,19 +151,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     mPreviewImpl.onDeviceOrientation(deviceOrientation);
                 }
             };
-
-            /* focusMarkerLayout.setOnTouchListener(new OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent motionEvent) {
-                    int action = motionEvent.getAction();
-                    if (action == MotionEvent.ACTION_UP && mFocus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER) {
-                        focusMarkerLayout.focus(motionEvent.getX(), motionEvent.getY());
-                    }
-
-                    mPreviewImpl.getView().dispatchTouchEvent(motionEvent);
-                    return true;
-                }
-            }); */
         }
         mLifecycle = null;
     }
@@ -384,13 +363,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         destroy();
     }
 
+
+    /**
+     * Starts the camera preview, if not started already.
+     * This should be called onResume(), or when you are ready with permissions.
+     */
     public void start() {
         if (mIsStarted || !isEnabled()) {
             // Already started, do nothing.
             return;
         }
 
-        if (checkPermissions(mSessionType)) {
+        if (checkPermissions(getSessionType())) {
             mIsStarted = true;
             run(new Runnable() {
                 @Override
@@ -455,6 +439,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
+
+    /**
+     * Stops the current preview, if any was started.
+     * This should be called onPause().
+     */
     public void stop() {
         if (!mIsStarted) {
             // Already stopped, do nothing.
@@ -484,6 +473,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     /**
      * Set location coordinates to be found later in the jpeg EXIF header
+     *
      * @param latitude current latitude
      * @param longitude current longitude
      */
@@ -491,14 +481,22 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl.setLocation(latitude, longitude);
     }
 
+
     /**
      * Sets desired white balance to current camera session.
+     *
+     * @see CameraKit.Constants#WHITE_BALANCE_AUTO
+     * @see CameraKit.Constants#WHITE_BALANCE_CLOUDY
+     * @see CameraKit.Constants#WHITE_BALANCE_DAYLIGHT
+     * @see CameraKit.Constants#WHITE_BALANCE_FLUORESCENT
+     * @see CameraKit.Constants#WHITE_BALANCE_INCANDESCENT
+     *
      * @param whiteBalance desired white balance behavior.
      */
     public void setWhiteBalance(@WhiteBalance int whiteBalance) {
-        mWhiteBalance = whiteBalance;
         mCameraImpl.setWhiteBalance(whiteBalance);
     }
+
 
     /**
      * Returns the current white balance behavior.
@@ -506,7 +504,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @WhiteBalance
     public int getWhiteBalance() {
-        return mWhiteBalance;
+        return mCameraImpl.getWhiteBalance();
     }
 
 
@@ -519,7 +517,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param facing a facing value.
      */
     public void setFacing(@Facing final int facing) {
-        this.mFacing = facing;
         run(new Runnable() {
             @Override
             public void run() {
@@ -535,7 +532,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Facing
     public int getFacing() {
-        return mFacing;
+        return mCameraImpl.getFacing();
     }
 
 
@@ -547,7 +544,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Facing
     public int toggleFacing() {
-        switch (mFacing) {
+        int facing = mCameraImpl.getFacing();
+        switch (facing) {
             case FACING_BACK:
                 setFacing(FACING_FRONT);
                 break;
@@ -557,7 +555,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 break;
         }
 
-        return mFacing;
+        return mCameraImpl.getFacing();
     }
 
 
@@ -572,7 +570,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param flash desired flash mode.
      */
     public void setFlash(@Flash int flash) {
-        this.mFlash = flash;
         mCameraImpl.setFlash(flash);
     }
 
@@ -583,7 +580,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Flash
     public int getFlash() {
-        return mFlash;
+        return mCameraImpl.getFlash();
     }
 
 
@@ -596,7 +593,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Flash
     public int toggleFlash() {
-        switch (mFlash) {
+        int flash = mCameraImpl.getFlash();
+        switch (flash) {
             case FLASH_OFF:
                 setFlash(FLASH_ON);
                 break;
@@ -611,7 +609,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 break;
         }
 
-        return mFlash;
+        return mCameraImpl.getFlash();
     }
 
 
@@ -626,7 +624,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param focus a Focus value.
      */
     public void setFocus(@Focus int focus) {
-        mFocus = focus;
         mFocusMarkerLayout.setEnabled(focus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER);
         if (focus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER) {
             focus = CameraKit.Constants.FOCUS_TAP;
@@ -641,7 +638,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Focus
     public int getFocus() {
-        return mFocus;
+        return mCameraImpl.getFocus();
     }
 
 
@@ -674,14 +671,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setSessionType(@SessionType int sessionType) {
 
-        if (sessionType == mSessionType || !mIsStarted) {
+        if (sessionType == getSessionType() || !mIsStarted) {
             // Check did took place, or will happen on start().
-            mSessionType = sessionType;
             mCameraImpl.setSessionType(sessionType);
 
         } else if (checkPermissions(sessionType)) {
             // Camera is running. CameraImpl setSessionType will do the trick.
-            mSessionType = sessionType;
             mCameraImpl.setSessionType(sessionType);
 
         } else {
@@ -700,7 +695,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @SessionType
     public int getSessionType() {
-        return mSessionType;
+        return mCameraImpl.getSessionType();
     }
 
 
@@ -728,25 +723,60 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
+    /**
+     * Sets video recording quality. This is not guaranteed to be supported by current device.
+     * If it's not, a lower quality will be chosen, until a supported one is found.
+     * If sessionType is video, this might trigger a camera restart and a change in preview size.
+     *
+     * @see CameraKit.Constants#VIDEO_QUALITY_LOWEST
+     * @see CameraKit.Constants#VIDEO_QUALITY_QVGA
+     * @see CameraKit.Constants#VIDEO_QUALITY_480P
+     * @see CameraKit.Constants#VIDEO_QUALITY_720P
+     * @see CameraKit.Constants#VIDEO_QUALITY_1080P
+     * @see CameraKit.Constants#VIDEO_QUALITY_2160P
+     * @see CameraKit.Constants#VIDEO_QUALITY_HIGHEST
+     *
+     * @param videoQuality requested video quality
+     */
     public void setVideoQuality(@VideoQuality int videoQuality) {
-        this.mVideoQuality = videoQuality;
-        mCameraImpl.setVideoQuality(mVideoQuality);
+        mCameraImpl.setVideoQuality(videoQuality);
     }
 
 
+    /**
+     * Gets the current video quality.
+     * @return the current video quality
+     */
+    @VideoQuality
+    public int getVideoQuality() {
+        return mCameraImpl.getVideoQuality();
+    }
 
 
-
+    /**
+     * Sets the JPEG compression quality for image outputs.
+     * @param jpegQuality a 0-100 integer.
+     */
     public void setJpegQuality(int jpegQuality) {
-        this.mJpegQuality = jpegQuality;
+        if (jpegQuality <= 0 || jpegQuality > 100) {
+            throw new IllegalArgumentException("JPEG quality should be > 0 and <= 0");
+        }
+        mJpegQuality = jpegQuality;
     }
 
+
+    /**
+     * Whether we should crop the picture output to match CameraView aspect ratio.
+     * This is only relevant if CameraView dimensions were somehow constrained
+     * (e.g. by fixed value or MATCH_PARENT) and do not match internal aspect ratio.
+     *
+     * Please note that this requires additional computations after the picture is taken.
+     *
+     * @param cropOutput whether to crop
+     */
     public void setCropOutput(boolean cropOutput) {
         this.mCropOutput = cropOutput;
     }
-
-
-
 
 
     /**

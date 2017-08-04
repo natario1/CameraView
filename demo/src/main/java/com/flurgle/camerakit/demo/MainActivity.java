@@ -40,6 +40,10 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     @BindView(R.id.cropModeRadioGroup)
     RadioGroup cropModeRadioGroup;
 
+    // Video Quality:
+    @BindView(R.id.videoQualityRadioGroup)
+    RadioGroup videoQualityRadioGroup;
+
     // Width:
     @BindView(R.id.screenWidth)
     TextView screenWidth;
@@ -86,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         cropModeRadioGroup.setOnCheckedChangeListener(cropModeChangedListener);
         widthModeRadioGroup.setOnCheckedChangeListener(widthModeChangedListener);
         heightModeRadioGroup.setOnCheckedChangeListener(heightModeChangedListener);
+        videoQualityRadioGroup.setOnCheckedChangeListener(videoQualityChangedListener);
     }
 
     private void message(String content, boolean important) {
@@ -116,9 +121,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         if (mCapturingPicture) return;
         mCapturingPicture = true;
         final long startTime = System.currentTimeMillis();
-        final boolean snapshot = camera.getSessionType() != CameraKit.Constants.SESSION_TYPE_PICTURE;
-        final Size nativeSize = snapshot ? camera.getSnapshotSize() : camera.getCaptureSize();
-        message(snapshot ? "Capturing snapshot..." : "Capturing picture...", false);
+        final Size nativeSize = camera.getCaptureSize();
+        message("Capturing picture...", false);
         camera.removeCameraListener(mPictureListener);
         mPictureListener = new CameraListener() {
             @Override
@@ -223,6 +227,25 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
             if (mCapturingPicture) return;
             camera.setCropOutput(checkedId == R.id.modeCropVisible);
             message("Picture cropping is" + (checkedId == R.id.modeCropVisible ? " on!" : " off!"), false);
+        }
+    };
+
+    RadioGroup.OnCheckedChangeListener videoQualityChangedListener = new RadioGroup.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(RadioGroup group, int checkedId) {
+            if (mCapturingVideo) return;
+            int videoQuality = CameraKit.Constants.VIDEO_QUALITY_HIGHEST;
+            switch (checkedId) {
+                case R.id.videoQualityLowest: videoQuality = CameraKit.Constants.VIDEO_QUALITY_LOWEST; break;
+                case R.id.videoQualityQvga: videoQuality = CameraKit.Constants.VIDEO_QUALITY_QVGA; break;
+                case R.id.videoQuality480p: videoQuality = CameraKit.Constants.VIDEO_QUALITY_480P; break;
+                case R.id.videoQuality720p: videoQuality = CameraKit.Constants.VIDEO_QUALITY_720P; break;
+                case R.id.videoQuality1080p: videoQuality = CameraKit.Constants.VIDEO_QUALITY_1080P; break;
+                case R.id.videoQuality2160p: videoQuality = CameraKit.Constants.VIDEO_QUALITY_2160P; break;
+                case R.id.videoQualityHighest: videoQuality = CameraKit.Constants.VIDEO_QUALITY_HIGHEST; break;
+            }
+            camera.setVideoQuality(videoQuality);
+            message("Video quality changed!", false);
         }
     };
 

@@ -51,9 +51,9 @@ public class VideoPreviewActivity extends Activity {
                 float viewWidth = videoView.getWidth();
                 lp.height = (int) (viewWidth * (videoHeight / videoWidth));
                 videoView.setLayoutParams(lp);
+                playVideo();
             }
         });
-        playVideo();
     }
 
 
