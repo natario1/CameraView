@@ -150,15 +150,14 @@ class Camera1 extends CameraImpl {
         if (isCameraOpened()) stop();
         if (collectCameraId()) {
             mCamera = Camera.open(mCameraId);
-            mCameraListener.dispatchOnCameraOpened();
 
             // Set parameters that might have been set before the camera was opened.
             synchronized (mLock) {
                 Camera.Parameters params = mCamera.getParameters();
-                mergeFocus(params, mFocus);
-                mergeFlash(params, mFlash);
-                mergeLocation(params, mLatitude, mLongitude);
-                mergeWhiteBalance(params, mWhiteBalance);
+                mergeFocus(params, CameraKit.Defaults.DEFAULT_FOCUS);
+                mergeFlash(params, CameraKit.Defaults.DEFAULT_FLASH);
+                mergeLocation(params, 0d, 0d);
+                mergeWhiteBalance(params, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
                 params.setRecordingHint(mSessionType == SESSION_TYPE_VIDEO);
                 mCamera.setParameters(params);
             }
@@ -167,6 +166,7 @@ class Camera1 extends CameraImpl {
             mCamera.setDisplayOrientation(computeSensorToDisplayOffset()); // <- not allowed during preview
             if (shouldSetup()) setup();
             collectExtraProperties();
+            mCameraListener.dispatchOnCameraOpened();
         }
     }
 
@@ -596,7 +596,7 @@ class Camera1 extends CameraImpl {
 
         mMediaRecorder.setProfile(getCamcorderProfile(mVideoQuality));
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
-        mMediaRecorder.setOrientationHint(computeSensorToDisplayOffset()); // TODO is this correct? Should we use exif orientation? Maybe not.
+        mMediaRecorder.setOrientationHint(computeExifRotation());
         // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
     }
 
