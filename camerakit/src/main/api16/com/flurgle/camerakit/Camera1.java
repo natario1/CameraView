@@ -242,6 +242,10 @@ class Camera1 extends CameraImpl {
             params.setGpsLongitude(mLongitude);
             params.setGpsTimestamp(System.currentTimeMillis());
             params.setGpsProcessingMethod("Unknown");
+
+            if (mIsCapturingVideo && mMediaRecorder != null) {
+                mMediaRecorder.setLocation((float) mLatitude, (float) mLongitude);
+            }
         }
         return true;
     }
@@ -585,7 +589,10 @@ class Camera1 extends CameraImpl {
         mMediaRecorder.setCamera(mCamera);
 
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+        if (mLatitude != 0 && mLongitude != 0) {
+            mMediaRecorder.setLocation((float) mLatitude, (float) mLongitude);
+        }
 
         mMediaRecorder.setProfile(getCamcorderProfile(mVideoQuality));
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
