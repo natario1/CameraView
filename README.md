@@ -61,7 +61,7 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
 - `CameraUtils` to help with Bitmaps and orientations
 - EXIF support
   - Automatically detected orientation tag
-  - Plug in location tags with `CameraView.setLocation(double, double)`
+  - Plug in location tags with `CameraView.setLocation(double, double)` to pictures and videos
 - Control the camera parameters via XML or programmatically
 
 ## Setup
@@ -215,6 +215,7 @@ This means that part of the preview is hidden, and the image output will contain
     android:id="@+id/camera"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:keepScreenOn="true"
     app:cameraFacing="back"
     app:cameraFlash="off"
     app:cameraFocus="continuous"
@@ -245,8 +246,9 @@ This means that part of the preview is hidden, and the image output will contain
 
 What to capture - either picture or video. This has a couple of consequences:
 
-- Sizing: capture and preview size are chosen among the available picture or video sizes, depending on the flag
-- Picture capturing: **you can capture pictures during a `video` session**, though they will be captured as 'screenshots' of preview frames. This is fast and thus works well with slower camera sensors, but the captured image can be blurry or noisy.
+- Sizing: capture and preview size are chosen among the available picture or video sizes, depending on the flag. When `picture`, we choose the max possible picture size and adapt the preview. When `video`, we respect the `videoQuality` choice and adapt the picture and the preview size.
+- Picture capturing: due to sizing behavior, capturing pictures in `video` mode might lead to inconsistent results. In this case it is encouraged to use `captureSnapshot` instead, which will capture preview frames. This is fast and thus works well with slower camera sensors.
+- Picture capturing: while recording a video, image capturing might work, but it is not guaranteed (it's device dependent)
 - Permission behavior: when requesting a `video` session, the record audio permission will be requested. If this is needed, the audio permission should be added to your manifest or the app will crash.
 
 ```java
@@ -390,17 +392,15 @@ If you don't request this feature, you can use `CameraUtils.hasCameras()` to det
 
 These are things that need to be done, off the top of my head:
 
-- [ ] fix CropOutput class presumably not working on rotated pictures
-- [ ] test video and 'frame' capture behavior, I expect some bugs there
+- [x] fix CropOutput class presumably not working on rotated pictures
+- [x] test video and 'frame' capture behavior, I expect some bugs there
 - [ ] simple APIs to draw grid lines
 - [x] replace setCameraListener() with addCameraListener()
 - [ ] add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`
 - [ ] pinch to zoom support
 - [ ] exposure correction APIs
-- [ ] revisit demo app (added video support)
 - [ ] `Camera2` integration
-- [ ] EXIF support for 'frame' captured pictures, using ExifInterface library, so we can stop rotating it in Java
 - [ ] add onRequestPermissionResults for easy permission callback
-- [ ] better error handling, maybe with a onError(e) method in the public listener
+- [ ] better error handling, maybe with a onError(e) method in the public listener, or have each public method return a boolean
 - [x] better threading, for example ensure callbacks are called in the ui thread
 
