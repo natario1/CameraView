@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
             }
         };
         camera.addCameraListener(mPictureListener);
-        camera.captureImage();
+        camera.capturePicture();
     }
 
     @OnClick(R.id.captureVideo)

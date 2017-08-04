@@ -178,7 +178,7 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    void captureImage() {
+    void capturePicture() {
 
     }
 

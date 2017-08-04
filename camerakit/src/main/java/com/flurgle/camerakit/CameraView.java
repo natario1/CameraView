@@ -664,7 +664,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Set the current session type to either picture or video.
      * When sessionType is video,
      * - {@link #startCapturingVideo(File)} will not throw any exception
-     * - {@link #captureImage()} will fallback to {@link #captureSnapshot()}
+     * - {@link #capturePicture()} will fallback to {@link #captureSnapshot()}
      *
      * @see CameraKit.Constants#SESSION_TYPE_PICTURE
      * @see CameraKit.Constants#SESSION_TYPE_VIDEO
@@ -808,8 +808,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @see #captureSnapshot()
      */
-    public void captureImage() {
-        mCameraImpl.captureImage();
+    public void capturePicture() {
+        mCameraImpl.capturePicture();
     }
 
 
@@ -818,10 +818,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * This eventually triggers {@link CameraListener#onPictureTaken(byte[])} if a listener
      * was registered.
      *
-     * The difference with {@link #captureImage()} is that this capture is faster, so it might be
+     * The difference with {@link #capturePicture()} is that this capture is faster, so it might be
      * better on slower cameras, though the result can be generally blurry or low quality.
      *
-     * @see #captureImage()
+     * @see #capturePicture()
      */
     public void captureSnapshot() {
         mCameraImpl.captureSnapshot();

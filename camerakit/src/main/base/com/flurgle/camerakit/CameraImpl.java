@@ -32,7 +32,7 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
     abstract void setSessionType(@SessionType int sessionType);
     abstract void setLocation(double latitude, double longitude);
 
-    abstract void captureImage();
+    abstract void capturePicture();
     abstract void captureSnapshot();
     abstract void startVideo(@NonNull File file);
     abstract void endVideo();

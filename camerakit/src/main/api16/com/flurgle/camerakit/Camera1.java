@@ -363,7 +363,7 @@ class Camera1 extends CameraImpl {
     }
 
     @Override
-    void captureImage() {
+    void capturePicture() {
         if (mIsCapturingImage) return;
         if (!isCameraOpened()) return;
         if (mSessionType == SESSION_TYPE_VIDEO && mIsCapturingVideo) {
@@ -403,9 +403,9 @@ class Camera1 extends CameraImpl {
         if (!isCameraOpened()) return;
         if (mIsCapturingImage) return;
         // This won't work while capturing a video.
-        // Switch to captureImage.
+        // Switch to capturePicture.
         if (mIsCapturingVideo) {
-            captureImage();
+            capturePicture();
             return;
         }
         mIsCapturingImage = true;
