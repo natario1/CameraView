@@ -37,6 +37,12 @@
             <enum name="pinch" value="0" />
         </attr>
 
+        <attr name="cameraGrid" format="enum">
+            <enum name="off" value="0" />
+            <enum name="grid3x3" value="1" />
+            <enum name="grid4x4" value="2" />
+            <enum name="phi" value="3" />
+        </attr>
 
         <attr name="cameraCaptureMethod" format="enum">
             <enum name="standard" value="0" />

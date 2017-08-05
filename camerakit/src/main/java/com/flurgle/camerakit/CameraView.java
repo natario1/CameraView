@@ -94,6 +94,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     private Lifecycle mLifecycle;
     private FocusMarkerLayout mFocusMarkerLayout;
+    private GridLinesLayout mGridLinesLayout;
     private boolean mIsStarted;
     private boolean mKeepScreenOn;
 
@@ -116,6 +117,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, CameraKit.Defaults.DEFAULT_SESSION_TYPE);
         int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
         int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
+        int grid = a.getInteger(R.styleable.CameraView_cameraGrid, CameraKit.Defaults.DEFAULT_GRID);
         mZoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraKit.Defaults.DEFAULT_ZOOM);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
@@ -125,7 +127,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mPreviewImpl = new TextureViewPreview(context, this);
         mCameraImpl = new Camera1(mCameraCallbacks, mPreviewImpl);
         mFocusMarkerLayout = new FocusMarkerLayout(context);
+        mGridLinesLayout = new GridLinesLayout(context);
         addView(mFocusMarkerLayout);
+        addView(mGridLinesLayout);
 
         mIsStarted = false;
         setFacing(facing);
@@ -135,6 +139,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setZoomMode(mZoom);
         setVideoQuality(videoQuality);
         setWhiteBalance(whiteBalance);
+        setGrid(grid);
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context) {
@@ -319,6 +324,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // And dispatch to everyone.
         mFocusMarkerLayout.onTouchEvent(event); // For drawing focus marker.
         mCameraImpl.onTouchEvent(event); // For focus behavior.
+        mGridLinesLayout.onTouchEvent(event); // For grid drawing.
         return true;
     }
 
@@ -468,6 +474,30 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Nullable
     public ExtraProperties getExtraProperties() {
         return mCameraImpl.getExtraProperties();
+    }
+
+
+    /**
+     * Controls the grids to be drawn over the current layout.
+     *
+     * @see CameraKit.Constants#GRID_OFF
+     * @see CameraKit.Constants#GRID_3X3
+     * @see CameraKit.Constants#GRID_4X4
+     *
+     * @param gridMode desired grid mode
+     */
+    public void setGrid(@Grid int gridMode) {
+        mGridLinesLayout.setGridMode(gridMode);
+    }
+
+
+    /**
+     * Gets the current grid mode.
+     * @return the current grid mode
+     */
+    @Grid
+    public int getGrid() {
+        return mGridLinesLayout.getGridMode();
     }
 
 

@@ -8,29 +8,28 @@
             android:descendantFocusability="beforeDescendants"
             android:focusable="true"
             android:focusableInTouchMode="true">
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Camera -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
             <com.flurgle.camerakit.CameraView xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/camera"
                 android:layout_width="match_parent"
                 android:layout_height="400dp"
                 android:layout_gravity="center_horizontal"
                 android:keepScreenOn="true"
+                app:cameraGrid="off"
                 app:cameraCropOutput="false"
                 app:cameraFacing="back"
                 app:cameraFlash="off"
                 app:cameraFocus="tapWithMarker"
                 app:cameraJpegQuality="100"
                 app:cameraSessionType="picture" />
-
         </RelativeLayout>
 
         <LinearLayout
@@ -39,6 +38,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Controls -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -87,6 +87,7 @@
 
             </LinearLayout>
 
+            <!-- Session type -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -139,6 +140,7 @@
 
             </FrameLayout>
 
+            <!-- Crop output -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -191,6 +193,7 @@
 
             </FrameLayout>
 
+            <!-- Width -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -290,6 +293,7 @@
 
             </FrameLayout>
 
+            <!-- Height -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -389,7 +393,7 @@
 
             </FrameLayout>
 
-
+            <!-- Video Quality -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -468,8 +472,76 @@
 
             </FrameLayout>
 
+            <!-- Grid -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <View
+                    android:layout_width="2.5dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/colorPrimary" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="3dp"
+                        android:text="GRID MODE"
+                        android:textColor="@android:color/black"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <RadioGroup
+                        android:id="@+id/gridModeRadioGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:checkedButton="@+id/gridModeOff"
+                        android:orientation="horizontal">
+
+                        <RadioButton
+                            android:id="@+id/gridModeOff"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Off" />
+
+                        <RadioButton
+                            android:id="@+id/gridMode3x3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:text="3X3" />
+
+
+                        <RadioButton
+                            android:id="@+id/gridMode4x4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:text="4x4" />
+
+
+                        <RadioButton
+                            android:id="@+id/gridModeGolden"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:text="Golden ratio" />
+
+                    </RadioGroup>
+
+                </LinearLayout>
+
+            </FrameLayout>
+
         </LinearLayout>
 
     </LinearLayout>
-
 </ScrollView>

@@ -26,6 +26,11 @@ public class CameraKit {
         public static final int ZOOM_OFF = 0;
         public static final int ZOOM_PINCH = 1;
 
+        public static final int GRID_OFF = 0;
+        public static final int GRID_3X3 = 1;
+        public static final int GRID_4X4 = 2;
+        public static final int GRID_PHI = 3;
+
         public static final int SESSION_TYPE_PICTURE = 0;
         public static final int SESSION_TYPE_VIDEO = 1;
 
@@ -79,6 +84,7 @@ public class CameraKit {
         static final int DEFAULT_WHITE_BALANCE = Constants.WHITE_BALANCE_AUTO;
         static final int DEFAULT_SESSION_TYPE = Constants.SESSION_TYPE_PICTURE;
         static final int DEFAULT_JPEG_QUALITY = 100;
+        static final int DEFAULT_GRID = Constants.GRID_OFF;
         static final boolean DEFAULT_CROP_OUTPUT = false;
 
     }

@@ -44,6 +44,10 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     @BindView(R.id.videoQualityRadioGroup)
     RadioGroup videoQualityRadioGroup;
 
+    // Grid mode:
+    @BindView(R.id.gridModeRadioGroup)
+    RadioGroup gridModeRadioGroup;
+
     // Width:
     @BindView(R.id.screenWidth)
     TextView screenWidth;
@@ -91,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         widthModeRadioGroup.setOnCheckedChangeListener(widthModeChangedListener);
         heightModeRadioGroup.setOnCheckedChangeListener(heightModeChangedListener);
         videoQualityRadioGroup.setOnCheckedChangeListener(videoQualityChangedListener);
+        gridModeRadioGroup.setOnCheckedChangeListener(gridModeChangedListener);
     }
 
     private void message(String content, boolean important) {
@@ -246,6 +251,22 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
             }
             camera.setVideoQuality(videoQuality);
             message("Video quality changed!", false);
+        }
+    };
+
+
+    RadioGroup.OnCheckedChangeListener gridModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(RadioGroup group, int checkedId) {
+            int grid = CameraKit.Constants.GRID_OFF;
+            switch (checkedId) {
+                case R.id.gridModeOff: grid = CameraKit.Constants.GRID_OFF; break;
+                case R.id.gridMode3x3: grid = CameraKit.Constants.GRID_3X3; break;
+                case R.id.gridMode4x4: grid = CameraKit.Constants.GRID_4X4; break;
+                case R.id.gridModeGolden: grid = CameraKit.Constants.GRID_PHI; break;
+            }
+            camera.setGrid(grid);
+            message("Grid mode changed!", false);
         }
     };
 

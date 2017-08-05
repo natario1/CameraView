@@ -13,6 +13,7 @@
 - *introduced a smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
 - *measure `CameraView` as center crop or center inside*
 - *add multiple `CameraListener`s for events*
+- *new `setGrid` APIs, to draw 3x3, 4x4 or golden ratio grids
 
 *Feel free to open issues with suggestions or contribute.*
 
@@ -40,8 +41,7 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - [cameraCropOutput](#cameracropoutput)
   - [cameraJpegQuality](#camerajpegquality)
   - [cameraWhiteBalance](#camerawhitebalance)
-  - [Deprecated: cameraCaptureMethod](#cameracapturemethod)
-  - [Deprecated: cameraPermissionsPolicy](#camerapermissionpolicy)
+  - [cameraGrid](#cameragrid)
 - [Permissions Behavior](#permissions-behavior)
 - [Manifest file](#manifest-file)
 - [Roadmap](#roadmap)
@@ -57,6 +57,7 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
 - Multiple capture methods
   - Take high-resolution pictures with `capturePicture`
   - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to SnapChat and Instagram)
+- Built-in grid drawing (3x3, 4x4, golden ratio)
 - Built-in tap to focus
 - `CameraUtils` to help with Bitmaps and orientations
 - EXIF support
@@ -220,6 +221,7 @@ This means that part of the preview is hidden, and the image output will contain
     app:cameraFlash="off"
     app:cameraFocus="continuous"
     app:cameraZoom="pinch"
+    app:cameraGrid="off"
     app:cameraSessionType="picture"
     app:cameraCropOutput="true"  
     app:cameraJpegQuality="100"
@@ -235,12 +237,11 @@ This means that part of the preview is hidden, and the image output will contain
 |[`cameraFlash`](#cameraflash)|`setFlash()`|`off` `on` `auto` `torch`|`off`|
 |[`cameraFocus`](#camerafocus)|`setFocus()`|`off` `continuous` `tap` `tapWithMarker`|`continuous`|
 |[`cameraZoomMode`](#camerazoommode)|`setZoom()`|`off` `pinch`|`off`|
+|[`cameraGrid`](#cameragrid)|`setGrid()`|`off` `grid3x3` `grid4x4` `phi`|`off`|
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 <= n <= 100`|`100`|
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`max480p` `max720p` `max1080p` `max2160p` `highest` `lowest`|`max480p`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
-|[`cameraCaptureMethod`](#cameracapturemethod) (Deprecated)|`setCaptureMethod()`|`standard` `frame`|`standard`|
-|[`cameraPermissionPolicy`](#camerapermissionpolicy) (Deprecated)|`setPermissionPolicy()`|`picture` `video`|`picture`|
 
 ### cameraSessionType
 
@@ -296,10 +297,20 @@ cameraView.setZoom(CameraKit.Constants.ZOOM_OFF);
 cameraView.setZoom(CameraKit.Constants.ZOOM_PINCH);
 ```
 
+### cameraGrid
+
+Lets you draw grids over the camera preview. Supported values are `off`, `grid3x3` and `grid4x4` for regular grids, and `phi` for a grid based on the golden ratio constant, often used in photography.
+
+```java
+cameraView.setZoom(CameraKit.Constants.GRID_OFF);
+cameraView.setZoom(CameraKit.Constants.GRID_3X3);
+cameraView.setZoom(CameraKit.Constants.GRID_4X4);
+cameraView.setZoom(CameraKit.Constants.GRID_PHI);
+```
 
 ### cameraCropOutput
 
-Wheter the output picture should be cropped to fit the aspect ratio of the preview surface.
+Whether the output picture should be cropped to fit the aspect ratio of the preview surface.
 This can guarantee consistency between what the user sees and the final output, if you fixed the camera view dimensions. This does not support videos.
 
 ### cameraJpegQuality
@@ -337,28 +348,6 @@ cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_DAYLIGHT);
 cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_CLOUDY);
 ```
 
-### cameraCaptureMethod
-*Deprecated. Use cameraSessionType instead*
-
-How to capture pictures, either standard or frame. The frame option lets you capture and save a preview frame, which can be better with slower camera sensors, though the captured image can be blurry or noisy.
-
-```java
-cameraView.setMethod(CameraKit.Constants.CAPTURE_METHOD_STANDARD);
-cameraView.setMethod(CameraKit.Constants.CAPTURE_METHOD_FRAME);
-```
-
-### cameraPermissionPolicy
-*Deprecated. Use cameraSessionType instead*
-
-Either picture or video. This tells the library which permissions should be asked before starting the camera session. In the case of 'picture', we require the camera permissions. In the case of 'video', the record audio permission is asked as well.
-
-Please note that, if needed, the latter should be added to your manifest file or the app will crash.
-
-```java
-cameraView.setPermissionPolicy(CameraKit.Constants.PERMISSIONS_PICTURE);
-cameraView.setPermissionPolicy(CameraKit.Constants.PERMISSIONS_VIDEO);
-```
-
 ## Permissions behavior
 
 `CameraView` needs two permissions:
@@ -394,7 +383,9 @@ These are things that need to be done, off the top of my head:
 
 - [x] fix CropOutput class presumably not working on rotated pictures
 - [x] test video and 'frame' capture behavior, I expect some bugs there
-- [ ] simple APIs to draw grid lines
+- [x] simple APIs to draw grid lines
+- [ ] animate grid lines similar to stock camera app
+- [ ] check focus, not sure it exposes the right part of the image
 - [x] replace setCameraListener() with addCameraListener()
 - [ ] add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`
 - [ ] pinch to zoom support
