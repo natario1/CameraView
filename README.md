@@ -4,16 +4,16 @@
 - lots *of serious bugs fixed, I have lost the count*
 - *decent orientation support for both pictures and videos*
 - *EXIF support*
-- *simpler APIs*
-- *docs and comments in code*
-- *introduced sessionType (picture or video), replacing Method and Permissions stuff* 
+- *real tap-to-focus support*
+- *simpler APIs, docs and heavily commented code*
+- *replacing Method and Permissions stuff with `sessionType`* 
 - *new `captureSnapshot` API*
 - *new `setLocation` and `setWhiteBalance` APIs*
+- *new `setGrid` APIs, to draw 3x3, 4x4 or golden ratio grids
 - *option to pass a `File` when recording a video*
-- *introduced a smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
+- *smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
 - *measure `CameraView` as center crop or center inside*
 - *add multiple `CameraListener`s for events*
-- *new `setGrid` APIs, to draw 3x3, 4x4 or golden ratio grids
 
 *Feel free to open issues with suggestions or contribute.*
 

@@ -31,8 +31,6 @@ class Camera1 extends CameraImpl {
 
     private static final String TAG = Camera1.class.getSimpleName();
 
-    private static final int FOCUS_AREA_SIZE_DEFAULT = 200;
-    private static final int FOCUS_METERING_AREA_WEIGHT_DEFAULT = 1000;
     private static final int DELAY_MILLIS_BEFORE_RESETTING_FOCUS = 3000;
 
     private int mCameraId;
@@ -672,17 +670,16 @@ class Camera1 extends CameraImpl {
         if (!mFocusOnTap) return;
         if (mCamera == null) return;
         if (event.getAction() != MotionEvent.ACTION_UP) return;
-        Rect rect = calculateFocusArea(event.getX(), event.getY());
-        List<Camera.Area> meteringAreas = new ArrayList<>();
-        meteringAreas.add(new Camera.Area(rect, getFocusMeteringAreaWeight()));
-
+        List<Camera.Area> meteringAreas2 = computeMeteringAreas(event.getX(), event.getY());
+        List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
         synchronized (mLock) {
             Camera.Parameters parameters = mCamera.getParameters();
             boolean autofocusSupported = parameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
             if (autofocusSupported) {
-                if (parameters.getMaxNumFocusAreas() > 0) parameters.setFocusAreas(meteringAreas);
-                if (parameters.getMaxNumMeteringAreas() > 0)
-                    parameters.setMeteringAreas(meteringAreas);
+                int maxAF = parameters.getMaxNumFocusAreas();
+                int maxAE = parameters.getMaxNumMeteringAreas();
+                if (maxAF > 0) parameters.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
+                if (maxAE > 0) parameters.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
                 parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
                 mCamera.setParameters(parameters);
                 mCamera.autoFocus(new Camera.AutoFocusCallback() {
@@ -695,15 +692,6 @@ class Camera1 extends CameraImpl {
         }
     }
 
-
-    private int getFocusAreaSize() {
-        return FOCUS_AREA_SIZE_DEFAULT;
-    }
-
-
-    private int getFocusMeteringAreaWeight() {
-        return FOCUS_METERING_AREA_WEIGHT_DEFAULT;
-    }
 
 
     private void resetFocus(final boolean success, final Camera camera) {
@@ -730,30 +718,45 @@ class Camera1 extends CameraImpl {
     }
 
 
-    private Rect calculateFocusArea(float x, float y) {
-        int buffer = getFocusAreaSize() / 2;
-        int centerX = calculateCenter(x, mPreview.getView().getWidth(), buffer);
-        int centerY = calculateCenter(y, mPreview.getView().getHeight(), buffer);
-        return new Rect(
-                centerX - buffer,
-                centerY - buffer,
-                centerX + buffer,
-                centerY + buffer
-        );
+    private List<Camera.Area> computeMeteringAreas(double viewClickX, double viewClickY) {
+
+        // Event came in view coordinates. As far as I know, we must rotate to sensor coordinates.
+        // First, rescale to the -1000 ... 1000 range.
+        int displayToSensor = -computeSensorToDisplayOffset();
+        double viewWidth = mPreview.getView().getWidth();
+        double viewHeight = mPreview.getView().getHeight();
+        viewClickX = -1000d + (viewClickX / viewWidth) * 2000d;
+        viewClickY = -1000d + (viewClickY / viewHeight) * 2000d;
+
+        // Apply rotation to this point.
+        // https://academo.org/demos/rotation-about-point/
+        double theta = ((double) displayToSensor) * Math.PI / 180;
+        double sensorClickX = viewClickX * Math.cos(theta) - viewClickY * Math.sin(theta);
+        double sensorClickY = viewClickX * Math.sin(theta) + viewClickY * Math.cos(theta);
+        Log.e(TAG, "viewClickX:"+viewClickX+", viewClickY:"+viewClickY);
+        Log.e(TAG, "sensorClickX:"+sensorClickX+", sensorClickY:"+sensorClickY);
+
+        // Compute the rect bounds.
+        Rect rect1 = computeMeteringArea(sensorClickX, sensorClickY, 150d);
+        int weight1 = 1000; // 150 * 150 * 1000 = more than 10.000.000
+        Rect rect2 = computeMeteringArea(sensorClickX, sensorClickY, 300d);
+        int weight2 = 100; // 300 * 300 * 100 = 9.000.000
+
+        List<Camera.Area> list = new ArrayList<>(2);
+        list.add(new Camera.Area(rect1, weight1));
+        list.add(new Camera.Area(rect2, weight2));
+        return list;
     }
 
 
-    private static int calculateCenter(float coord, int dimen, int buffer) {
-        int normalized = (int) ((coord / dimen) * 2000 - 1000);
-        if (Math.abs(normalized) + buffer > 1000) {
-            if (normalized > 0) {
-                return 1000 - buffer;
-            } else {
-                return -1000 + buffer;
-            }
-        } else {
-            return normalized;
-        }
+    private Rect computeMeteringArea(double centerX, double centerY, double size) {
+        double delta = size/2d;
+        int top = (int) Math.max(centerY - delta, -1000);
+        int bottom = (int) Math.min(centerY + delta, 1000);
+        int left = (int) Math.max(centerX - delta, -1000);
+        int right = (int) Math.min(centerX + delta, 1000);
+        // Log.e(TAG, "top:"+top+", left:"+left+", bottom:"+bottom+", right:"+right);
+        return new Rect(left, top, right, bottom);
     }
 
 
