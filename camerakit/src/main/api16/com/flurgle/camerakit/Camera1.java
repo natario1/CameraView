@@ -40,13 +40,11 @@ class Camera1 extends CameraImpl {
     private Size mCaptureSize;
     private MediaRecorder mMediaRecorder;
     private File mVideoFile;
-    private Camera.AutoFocusCallback mAutofocusCallback;
 
     private int mDisplayOffset;
     private int mDeviceOrientation;
     private int mSensorOffset;
 
-    @ZoomMode private int mZoom;
     private double mLatitude;
     private double mLongitude;
     private boolean mFocusOnTap;
@@ -84,7 +82,7 @@ class Camera1 extends CameraImpl {
             Size newSize = computePreviewSize();
             if (!newSize.equals(mPreviewSize)) {
                 mPreviewSize = newSize;
-                mCameraListener.onCameraPreviewSizeChanged();
+                mCameraCallbacks.onCameraPreviewSizeChanged();
                 synchronized (mLock) {
                     mCamera.stopPreview();
                     Camera.Parameters params = mCamera.getParameters();
@@ -121,7 +119,7 @@ class Camera1 extends CameraImpl {
         boolean invertPreviewSizes = shouldFlipSizes(); // mDisplayOffset % 180 != 0;
         mCaptureSize = computeCaptureSize();
         mPreviewSize = computePreviewSize();
-        mCameraListener.onCameraPreviewSizeChanged();
+        mCameraCallbacks.onCameraPreviewSizeChanged();
         mPreview.setDesiredSize(
                 invertPreviewSizes ? mPreviewSize.getHeight() : mPreviewSize.getWidth(),
                 invertPreviewSizes ? mPreviewSize.getWidth() : mPreviewSize.getHeight()
@@ -158,7 +156,7 @@ class Camera1 extends CameraImpl {
             mCamera.setDisplayOrientation(computeSensorToDisplayOffset()); // <- not allowed during preview
             if (shouldSetup()) setup();
             collectExtraProperties();
-            mCameraListener.dispatchOnCameraOpened();
+            mCameraCallbacks.dispatchOnCameraOpened();
         }
     }
 
@@ -170,7 +168,7 @@ class Camera1 extends CameraImpl {
             if (mIsCapturingVideo) endVideo();
             mCamera.stopPreview();
             mCamera.release();
-            mCameraListener.dispatchOnCameraClosed();
+            mCameraCallbacks.dispatchOnCameraClosed();
         }
         mCamera = null;
         mPreviewSize = null;
@@ -345,7 +343,6 @@ class Camera1 extends CameraImpl {
 
     @Override
     void setZoomMode(@ZoomMode int zoom) {
-        this.mZoom = zoom;
     }
 
     @Override
@@ -403,7 +400,7 @@ class Camera1 extends CameraImpl {
                     public void onPictureTaken(byte[] data, Camera camera) {
                         mIsCapturingImage = false;
                         camera.startPreview(); // This is needed, read somewhere in the docs.
-                        mCameraListener.processImage(data, consistentWithView, exifFlip);
+                        mCameraCallbacks.processImage(data, consistentWithView, exifFlip);
                     }
                 });
     }
@@ -443,7 +440,7 @@ class Camera1 extends CameraImpl {
                         final boolean consistentWithView = (sensorToDevice + sensorToDisplay + 180) % 180 == 0;
                         byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToDevice);
                         YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
-                        mCameraListener.processSnapshot(yuv, consistentWithView, exifFlip);
+                        mCameraCallbacks.processSnapshot(yuv, consistentWithView, exifFlip);
                         mIsCapturingImage = false;
                     }
                 }).start();
@@ -591,7 +588,7 @@ class Camera1 extends CameraImpl {
             mMediaRecorder.release();
             mMediaRecorder = null;
             if (mVideoFile != null) {
-                mCameraListener.dispatchOnVideoTaken(mVideoFile);
+                mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
                 mVideoFile = null;
             }
         }
@@ -670,7 +667,9 @@ class Camera1 extends CameraImpl {
         if (!mFocusOnTap) return;
         if (mCamera == null) return;
         if (event.getAction() != MotionEvent.ACTION_UP) return;
-        List<Camera.Area> meteringAreas2 = computeMeteringAreas(event.getX(), event.getY());
+        final float x = event.getX();
+        final float y = event.getY();
+        List<Camera.Area> meteringAreas2 = computeMeteringAreas(x, y);
         List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
         synchronized (mLock) {
             Camera.Parameters parameters = mCamera.getParameters();
@@ -682,10 +681,12 @@ class Camera1 extends CameraImpl {
                 if (maxAE > 0) parameters.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
                 parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
                 mCamera.setParameters(parameters);
+                mCameraCallbacks.dispatchOnFocusStart(x, y);
                 mCamera.autoFocus(new Camera.AutoFocusCallback() {
                     @Override
                     public void onAutoFocus(boolean success, Camera camera) {
-                        resetFocus(success, camera);
+                        mCameraCallbacks.dispatchOnFocusEnd(success, x, y);
+                        postResetFocus();
                     }
                 });
             }
@@ -693,25 +694,21 @@ class Camera1 extends CameraImpl {
     }
 
 
-
-    private void resetFocus(final boolean success, final Camera camera) {
+    private void postResetFocus() {
         mFocusHandler.removeCallbacksAndMessages(null);
         mFocusHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (camera != null) {
-                    camera.cancelAutoFocus();
-                    synchronized (mLock) {
-                        Camera.Parameters params = camera.getParameters();
-                        if (!params.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                            params.setFocusAreas(null);
-                            params.setMeteringAreas(null);
-                            mCamera.setParameters(params);
-                        }
+                if (!isCameraOpened()) return;
+                mCamera.cancelAutoFocus();
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (!params.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                        params.setFocusAreas(null);
+                        params.setMeteringAreas(null);
+                        mCamera.setParameters(params);
                     }
-
-                    if (mAutofocusCallback != null) mAutofocusCallback.onAutoFocus(success, camera);
                 }
             }
         }, DELAY_MILLIS_BEFORE_RESETTING_FOCUS);
@@ -720,7 +717,7 @@ class Camera1 extends CameraImpl {
 
     private List<Camera.Area> computeMeteringAreas(double viewClickX, double viewClickY) {
 
-        // Event came in view coordinates. As far as I know, we must rotate to sensor coordinates.
+        // Event came in view coordinates. We must rotate to sensor coordinates.
         // First, rescale to the -1000 ... 1000 range.
         int displayToSensor = -computeSensorToDisplayOffset();
         double viewWidth = mPreview.getView().getWidth();
@@ -750,7 +747,7 @@ class Camera1 extends CameraImpl {
 
 
     private Rect computeMeteringArea(double centerX, double centerY, double size) {
-        double delta = size/2d;
+        double delta = size / 2d;
         int top = (int) Math.max(centerY - delta, -1000);
         int bottom = (int) Math.min(centerY + delta, 1000);
         int left = (int) Math.max(centerX - delta, -1000);

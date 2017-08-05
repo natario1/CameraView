@@ -172,6 +172,12 @@ camera.setCameraListener(new CameraListener() {
 
     @Override
     public void onVideoTaken(File video) {}
+    
+    @Override
+    public void onFocusStart(float x, float y) {}
+    
+    @Override
+    public void onFocusEnd(boolean successful, float x, float y) {}
 
 });
 ```
@@ -387,14 +393,14 @@ These are things that need to be done, off the top of my head:
 - [x] fix CropOutput class presumably not working on rotated pictures
 - [x] test video and 'frame' capture behavior, I expect some bugs there
 - [x] simple APIs to draw grid lines
-- [ ] animate grid lines similar to stock camera app
-- [ ] check focus, not sure it exposes the right part of the image
+- [x] check focus, not sure it exposes the right part of the image
 - [x] replace setCameraListener() with addCameraListener()
-- [ ] add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`
+- [x] better threading, for example ensure callbacks are called in the ui thread
 - [ ] pinch to zoom support
 - [ ] exposure correction APIs
+- [ ] add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`
 - [ ] `Camera2` integration
+- [ ] animate grid lines similar to stock camera app
 - [ ] add onRequestPermissionResults for easy permission callback
 - [ ] better error handling, maybe with a onError(e) method in the public listener, or have each public method return a boolean
-- [x] better threading, for example ensure callbacks are called in the ui thread
 

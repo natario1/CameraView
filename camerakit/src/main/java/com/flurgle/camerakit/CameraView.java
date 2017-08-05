@@ -1135,6 +1135,30 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
 
+        public void dispatchOnFocusStart(final float x, final float y) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onFocusStart(x, y);
+                    }
+                }
+            });
+        }
+
+
+        public void dispatchOnFocusEnd(final boolean success, final float x, final float y) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onFocusEnd(success, x, y);
+                    }
+                }
+            });
+        }
+
+
         private void addListener(@NonNull CameraListener cameraListener) {
             mListeners.add(cameraListener);
         }

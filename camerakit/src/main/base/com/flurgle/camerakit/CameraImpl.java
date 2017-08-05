@@ -8,7 +8,7 @@ import java.io.File;
 
 abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
 
-    protected final CameraView.CameraCallbacks mCameraListener;
+    protected final CameraView.CameraCallbacks mCameraCallbacks;
     protected final PreviewImpl mPreview;
 
     @Facing protected int mFacing;
@@ -19,7 +19,7 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
     @SessionType protected int mSessionType;
 
     CameraImpl(CameraView.CameraCallbacks callback, PreviewImpl preview) {
-        mCameraListener = callback;
+        mCameraCallbacks = callback;
         mPreview = preview;
         mPreview.setSurfaceCallback(this);
     }
