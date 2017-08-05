@@ -21,9 +21,9 @@
 
 CameraKit is an easy to use utility to work with the Android Camera APIs. Everything at the moment is work in progress, but it works well for pictures at least.
 
-<p align="center">
-  <img src="art/screen1.png" width="250" vspace="20" hspace="50">
-  <img src="art/screen2.png" width="250" vspace="20" hspace="50">
+<p>
+  <img src="art/screen1.png" width="250" vspace="20" hspace="5">
+  <img src="art/screen2.png" width="250" vspace="20" hspace="5">
 </p>
 
 ## Table of Contents
