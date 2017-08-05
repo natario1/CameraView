@@ -21,6 +21,11 @@
 
 CameraKit is an easy to use utility to work with the Android Camera APIs. Everything at the moment is work in progress, but it works well for pictures at least.
 
+<p align="center">
+  <img src="art/screen1.png" width="250" vspace="20" hspace="50">
+  <img src="art/screen2.png" width="250" vspace="20" hspace="50">
+</p>
+
 ## Table of Contents
 
 - [Features](#features)
@@ -123,8 +128,6 @@ camera.capturePicture();
 You can also use `camera.captureSnapshot()` to capture a preview frame. This is faster, though will ensure lower quality output.
 
 ### Capturing Video
-
-TODO: test size and orientation stuff.
 
 To capture video just call `CameraView.startRecordingVideo(file)` to start, and `CameraView.stopRecordingVideo()` to finish. Make sure you setup a `CameraListener` to handle the video callback.
 
