@@ -1,16 +1,18 @@
 
-*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The CameraKit-Android at this point has been fairly rewritten and refactored:*
+*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The CameraKit-Android at this point has been completely rewritten and refactored:*
 
-- lots *of serious bugs fixed, I have lost the count*
+- lots *of serious bugs fixed*
 - *decent orientation support for both pictures and videos*
 - *EXIF support*
 - *real tap-to-focus support*
+- *pinch-to-zoom support*
 - *simpler APIs, docs and heavily commented code*
-- *replacing Method and Permissions stuff with `sessionType`* 
 - *new `captureSnapshot` API*
 - *new `setLocation` and `setWhiteBalance` APIs*
 - *new `setGrid` APIs, to draw 3x3, 4x4 or golden ratio grids
 - *option to pass a `File` when recording a video*
+- *other minor API additions*
+- *replacing Method and Permissions stuff with simpler `sessionType`* 
 - *smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
 - *measure `CameraView` as center crop or center inside*
 - *add multiple `CameraListener`s for events*
@@ -59,16 +61,17 @@ CameraKit is an easy to use utility to work with the Android Camera APIs. Everyt
   - Create a `CameraView` of any size (not just presets!)
   - Center inside or center crop behaviors
   - Automatic output cropping to match your `CameraView` bounds
+- Built-in tap to focus
+- Built-in pinch to zoom
+- Built-in grid drawing (3x3, 4x4, golden ratio)
+- Control the camera parameters via XML or programmatically
 - Multiple capture methods
   - Take high-resolution pictures with `capturePicture`
   - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to SnapChat and Instagram)
-- Built-in grid drawing (3x3, 4x4, golden ratio)
-- Built-in tap to focus
 - `CameraUtils` to help with Bitmaps and orientations
 - EXIF support
   - Automatically detected orientation tag
   - Plug in location tags with `CameraView.setLocation(double, double)` to pictures and videos
-- Control the camera parameters via XML or programmatically
 
 ## Setup
 
@@ -178,6 +181,9 @@ camera.setCameraListener(new CameraListener() {
     
     @Override
     public void onFocusEnd(boolean successful, float x, float y) {}
+    
+    @Override
+    public void onZoomChanged(float zoomValue, PointF[] fingers) {}
 
 });
 ```
@@ -229,7 +235,7 @@ This means that part of the preview is hidden, and the image output will contain
     app:cameraFacing="back"
     app:cameraFlash="off"
     app:cameraFocus="continuous"
-    app:cameraZoom="pinch"
+    app:cameraZoom="off"
     app:cameraGrid="off"
     app:cameraSessionType="picture"
     app:cameraCropOutput="true"  
@@ -299,11 +305,11 @@ cameraView.setFocus(CameraKit.Constants.FOCUS_TAP_WITH_MARKER);
 
 ### cameraZoomMode
 
-TODO: work in progress. Right now 'off' is the onlly option.
+Lets you enable built-in pinch-to-zoom behavior. This means that the camera will capture two-finger gestures and move the zoom value accordingly. Nothing is drawn on screen, but you can listen to `onZoomChanged` in your camera listener.
 
 ```java
-cameraView.setZoom(CameraKit.Constants.ZOOM_OFF);
-cameraView.setZoom(CameraKit.Constants.ZOOM_PINCH);
+cameraView.setZoomMode(CameraKit.Constants.ZOOM_OFF);
+cameraView.setZoomMode(CameraKit.Constants.ZOOM_PINCH);
 ```
 
 ### cameraGrid
@@ -396,7 +402,7 @@ These are things that need to be done, off the top of my head:
 - [x] check focus, not sure it exposes the right part of the image
 - [x] replace setCameraListener() with addCameraListener()
 - [x] better threading, for example ensure callbacks are called in the ui thread
-- [ ] pinch to zoom support
+- [x] pinch to zoom support
 - [ ] exposure correction APIs
 - [ ] add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`
 - [ ] `Camera2` integration
