@@ -682,13 +682,14 @@ class Camera1 extends CameraController {
         List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
         synchronized (mLock) {
             Camera.Parameters params = mCamera.getParameters();
-            boolean autofocusSupported = params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
+            // TODO remove this check once CameraView.setFocus TODO is fixed.
+            boolean autofocusSupported = mOptions.getSupportedFocus().contains(CameraConstants.FOCUS_TAP);
             if (autofocusSupported) {
                 int maxAF = params.getMaxNumFocusAreas();
                 int maxAE = params.getMaxNumMeteringAreas();
                 if (maxAF > 0) params.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
                 if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                params.setFocusMode((String) mMapper.mapFocus(FOCUS_TAP)); // auto
                 mCamera.setParameters(params);
                 mCameraCallbacks.dispatchOnFocusStart(x, y);
                 mCamera.autoFocus(new Camera.AutoFocusCallback() {

@@ -404,8 +404,9 @@ These are things that need to be done, off the top of my head:
 - [x] better threading, for example ensure callbacks are called in the ui thread
 - [x] pinch to zoom support
 - [ ] exposure correction APIs
-- [ ] add a `sizingMethod` API to choose the capture size? Could be `max`, `4:3`, `16:9`... Right now it's `max`
 - [ ] `Camera2` integration
+- [ ] check onPause / onStop / onSaveInstanceState consistency
+- [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
 - [ ] add onRequestPermissionResults for easy permission callback
 - [ ] better error handling, maybe with a onError(e) method in the public listener, or have each public method return a boolean
