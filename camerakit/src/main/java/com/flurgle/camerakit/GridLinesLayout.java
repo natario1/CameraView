@@ -52,17 +52,17 @@ class GridLinesLayout extends View {
 
     private int getLineCount() {
         switch (gridMode) {
-            case CameraKit.Constants.GRID_OFF: return 0;
-            case CameraKit.Constants.GRID_3X3: return 2;
-            case CameraKit.Constants.GRID_PHI: return 2;
-            case CameraKit.Constants.GRID_4X4: return 3;
+            case CameraConstants.GRID_OFF: return 0;
+            case CameraConstants.GRID_3X3: return 2;
+            case CameraConstants.GRID_PHI: return 2;
+            case CameraConstants.GRID_4X4: return 3;
         }
         return 0;
     }
 
     private float getLinePosition(int lineNumber) {
         int lineCount = getLineCount();
-        if (gridMode == CameraKit.Constants.GRID_PHI) {
+        if (gridMode == CameraConstants.GRID_PHI) {
             // 1 = 2x + GRIx
             // 1 = x(2+GRI)
             // x = 1/(2+GRI)

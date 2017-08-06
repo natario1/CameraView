@@ -7,7 +7,7 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 
-abstract class PreviewImpl {
+abstract class Preview {
 
     // This is used to notify CameraImpl to recompute its camera Preview size.
     // After that, CameraView will need a new layout pass to adapt to the Preview size.
@@ -27,7 +27,7 @@ abstract class PreviewImpl {
     private int mDesiredWidth;
     private int mDesiredHeight;
 
-    PreviewImpl(Context context, ViewGroup parent) {}
+    Preview(Context context, ViewGroup parent) {}
 
     abstract Surface getSurface();
     abstract View getView();

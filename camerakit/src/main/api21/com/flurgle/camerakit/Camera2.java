@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 @TargetApi(21)
-class Camera2 extends CameraImpl {
+class Camera2 extends CameraController {
 
     private CameraDevice mCamera;
     private CameraCharacteristics mCameraCharacteristics;
@@ -31,7 +31,7 @@ class Camera2 extends CameraImpl {
     private Size mCaptureSize;
     private Size mPreviewSize;
 
-    private MapperImpl mMapper = new MapperImpl.Mapper2();
+    private Mapper mMapper = new Mapper.Mapper2();
     private final HashMap<String, ExtraProperties> mExtraPropertiesMap = new HashMap<>();
 
 
@@ -50,7 +50,7 @@ class Camera2 extends CameraImpl {
 
     }
 
-    Camera2(CameraView.CameraCallbacks callback, PreviewImpl preview, Context context) {
+    Camera2(CameraView.CameraCallbacks callback, Preview preview, Context context) {
         super(callback, preview);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
 

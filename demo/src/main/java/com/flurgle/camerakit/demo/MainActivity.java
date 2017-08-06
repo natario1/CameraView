@@ -13,7 +13,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.flurgle.camerakit.CameraKit;
+import com.flurgle.camerakit.CameraConstants;
 import com.flurgle.camerakit.CameraListener;
 import com.flurgle.camerakit.CameraView;
 import com.flurgle.camerakit.Size;
@@ -158,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
     @OnClick(R.id.captureVideo)
     void captureVideo() {
-        if (camera.getSessionType() != CameraKit.Constants.SESSION_TYPE_VIDEO) {
+        if (camera.getSessionType() != CameraConstants.SESSION_TYPE_VIDEO) {
             message("Can't record video while session type is 'picture'.", false);
             return;
         }
@@ -190,11 +190,11 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     void toggleCamera() {
         if (mCapturingPicture) return;
         switch (camera.toggleFacing()) {
-            case CameraKit.Constants.FACING_BACK:
+            case CameraConstants.FACING_BACK:
                 message("Switched to back camera!", false);
                 break;
 
-            case CameraKit.Constants.FACING_FRONT:
+            case CameraConstants.FACING_FRONT:
                 message("Switched to front camera!", false);
                 break;
         }
@@ -204,15 +204,15 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     void toggleFlash() {
         if (mCapturingPicture) return;
         switch (camera.toggleFlash()) {
-            case CameraKit.Constants.FLASH_ON:
+            case CameraConstants.FLASH_ON:
                 message("Flash on!", false);
                 break;
 
-            case CameraKit.Constants.FLASH_OFF:
+            case CameraConstants.FLASH_OFF:
                 message("Flash off!", false);
                 break;
 
-            case CameraKit.Constants.FLASH_AUTO:
+            case CameraConstants.FLASH_AUTO:
                 message("Flash auto!", false);
                 break;
         }
@@ -224,8 +224,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
             if (mCapturingPicture) return;
             camera.setSessionType(
                     checkedId == R.id.sessionTypePicture ?
-                            CameraKit.Constants.SESSION_TYPE_PICTURE :
-                            CameraKit.Constants.SESSION_TYPE_VIDEO
+                            CameraConstants.SESSION_TYPE_PICTURE :
+                            CameraConstants.SESSION_TYPE_VIDEO
             );
             message("Session type set to" + (checkedId == R.id.sessionTypePicture ? " picture!" : " video!"), true);
         }
@@ -244,15 +244,15 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
             if (mCapturingVideo) return;
-            int videoQuality = CameraKit.Constants.VIDEO_QUALITY_HIGHEST;
+            int videoQuality = CameraConstants.VIDEO_QUALITY_HIGHEST;
             switch (checkedId) {
-                case R.id.videoQualityLowest: videoQuality = CameraKit.Constants.VIDEO_QUALITY_LOWEST; break;
-                case R.id.videoQualityQvga: videoQuality = CameraKit.Constants.VIDEO_QUALITY_QVGA; break;
-                case R.id.videoQuality480p: videoQuality = CameraKit.Constants.VIDEO_QUALITY_480P; break;
-                case R.id.videoQuality720p: videoQuality = CameraKit.Constants.VIDEO_QUALITY_720P; break;
-                case R.id.videoQuality1080p: videoQuality = CameraKit.Constants.VIDEO_QUALITY_1080P; break;
-                case R.id.videoQuality2160p: videoQuality = CameraKit.Constants.VIDEO_QUALITY_2160P; break;
-                case R.id.videoQualityHighest: videoQuality = CameraKit.Constants.VIDEO_QUALITY_HIGHEST; break;
+                case R.id.videoQualityLowest: videoQuality = CameraConstants.VIDEO_QUALITY_LOWEST; break;
+                case R.id.videoQualityQvga: videoQuality = CameraConstants.VIDEO_QUALITY_QVGA; break;
+                case R.id.videoQuality480p: videoQuality = CameraConstants.VIDEO_QUALITY_480P; break;
+                case R.id.videoQuality720p: videoQuality = CameraConstants.VIDEO_QUALITY_720P; break;
+                case R.id.videoQuality1080p: videoQuality = CameraConstants.VIDEO_QUALITY_1080P; break;
+                case R.id.videoQuality2160p: videoQuality = CameraConstants.VIDEO_QUALITY_2160P; break;
+                case R.id.videoQualityHighest: videoQuality = CameraConstants.VIDEO_QUALITY_HIGHEST; break;
             }
             camera.setVideoQuality(videoQuality);
             message("Video quality changed!", false);
@@ -263,12 +263,12 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     RadioGroup.OnCheckedChangeListener gridModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
-            int grid = CameraKit.Constants.GRID_OFF;
+            int grid = CameraConstants.GRID_OFF;
             switch (checkedId) {
-                case R.id.gridModeOff: grid = CameraKit.Constants.GRID_OFF; break;
-                case R.id.gridMode3x3: grid = CameraKit.Constants.GRID_3X3; break;
-                case R.id.gridMode4x4: grid = CameraKit.Constants.GRID_4X4; break;
-                case R.id.gridModeGolden: grid = CameraKit.Constants.GRID_PHI; break;
+                case R.id.gridModeOff: grid = CameraConstants.GRID_OFF; break;
+                case R.id.gridMode3x3: grid = CameraConstants.GRID_3X3; break;
+                case R.id.gridMode4x4: grid = CameraConstants.GRID_4X4; break;
+                case R.id.gridModeGolden: grid = CameraConstants.GRID_PHI; break;
             }
             camera.setGrid(grid);
             message("Grid mode changed!", false);
@@ -279,10 +279,10 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     RadioGroup.OnCheckedChangeListener zoomModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
-            int zoom = CameraKit.Constants.ZOOM_OFF;
+            int zoom = CameraConstants.ZOOM_OFF;
             switch (checkedId) {
-                case R.id.zoomModeOff: zoom = CameraKit.Constants.ZOOM_OFF; break;
-                case R.id.zoomModePinch: zoom = CameraKit.Constants.ZOOM_PINCH; break;
+                case R.id.zoomModeOff: zoom = CameraConstants.ZOOM_OFF; break;
+                case R.id.zoomModePinch: zoom = CameraConstants.ZOOM_PINCH; break;
             }
             camera.setZoomMode(zoom);
             message("Zoom mode changed! Note that pinch-to-zoom won't work well in ScrollViews like here", true);

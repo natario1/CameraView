@@ -1,14 +1,9 @@
 package com.flurgle.camerakit;
 
-import android.annotation.TargetApi;
 import android.hardware.Camera;
-import android.hardware.camera2.CameraCharacteristics;
 import android.support.v4.util.SparseArrayCompat;
-import android.util.SparseIntArray;
 
-import java.util.Map;
-
-abstract class MapperImpl {
+abstract class Mapper {
 
     abstract <T> T mapFlash(@Flash int internalConstant);
     abstract <T> T mapFacing(@Facing int internalConstant);
@@ -19,28 +14,28 @@ abstract class MapperImpl {
     @WhiteBalance abstract <T> int unmapWhiteBalance(T cameraConstant);
     @Focus abstract <T> int unmapFocus(T cameraConstant);
 
-    static class Mapper1 extends MapperImpl {
+    static class Mapper1 extends Mapper {
         private static final SparseArrayCompat<String> FLASH = new SparseArrayCompat<>();
         private static final SparseArrayCompat<String> WB = new SparseArrayCompat<>();
         private static final SparseArrayCompat<Integer> FACING = new SparseArrayCompat<>();
         private static final SparseArrayCompat<String> FOCUS = new SparseArrayCompat<>();
 
         static {
-            FLASH.put(CameraKit.Constants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
-            FLASH.put(CameraKit.Constants.FLASH_ON, Camera.Parameters.FLASH_MODE_ON);
-            FLASH.put(CameraKit.Constants.FLASH_AUTO, Camera.Parameters.FLASH_MODE_AUTO);
-            FLASH.put(CameraKit.Constants.FLASH_TORCH, Camera.Parameters.FLASH_MODE_TORCH);
-            FACING.put(CameraKit.Constants.FACING_BACK, Camera.CameraInfo.CAMERA_FACING_BACK);
-            FACING.put(CameraKit.Constants.FACING_FRONT, Camera.CameraInfo.CAMERA_FACING_FRONT);
-            WB.put(CameraKit.Constants.WHITE_BALANCE_AUTO, Camera.Parameters.WHITE_BALANCE_AUTO);
-            WB.put(CameraKit.Constants.WHITE_BALANCE_INCANDESCENT, Camera.Parameters.WHITE_BALANCE_INCANDESCENT);
-            WB.put(CameraKit.Constants.WHITE_BALANCE_FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
-            WB.put(CameraKit.Constants.WHITE_BALANCE_DAYLIGHT, Camera.Parameters.WHITE_BALANCE_DAYLIGHT);
-            WB.put(CameraKit.Constants.WHITE_BALANCE_CLOUDY, Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT);
-            FOCUS.put(CameraKit.Constants.FOCUS_FIXED, Camera.Parameters.FOCUS_MODE_FIXED);
-            FOCUS.put(CameraKit.Constants.FOCUS_CONTINUOUS, Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-            FOCUS.put(CameraKit.Constants.FOCUS_TAP, Camera.Parameters.FOCUS_MODE_AUTO);
-            FOCUS.put(CameraKit.Constants.FOCUS_TAP_WITH_MARKER, Camera.Parameters.FOCUS_MODE_AUTO);
+            FLASH.put(CameraConstants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
+            FLASH.put(CameraConstants.FLASH_ON, Camera.Parameters.FLASH_MODE_ON);
+            FLASH.put(CameraConstants.FLASH_AUTO, Camera.Parameters.FLASH_MODE_AUTO);
+            FLASH.put(CameraConstants.FLASH_TORCH, Camera.Parameters.FLASH_MODE_TORCH);
+            FACING.put(CameraConstants.FACING_BACK, Camera.CameraInfo.CAMERA_FACING_BACK);
+            FACING.put(CameraConstants.FACING_FRONT, Camera.CameraInfo.CAMERA_FACING_FRONT);
+            WB.put(CameraConstants.WHITE_BALANCE_AUTO, Camera.Parameters.WHITE_BALANCE_AUTO);
+            WB.put(CameraConstants.WHITE_BALANCE_INCANDESCENT, Camera.Parameters.WHITE_BALANCE_INCANDESCENT);
+            WB.put(CameraConstants.WHITE_BALANCE_FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
+            WB.put(CameraConstants.WHITE_BALANCE_DAYLIGHT, Camera.Parameters.WHITE_BALANCE_DAYLIGHT);
+            WB.put(CameraConstants.WHITE_BALANCE_CLOUDY, Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT);
+            FOCUS.put(CameraConstants.FOCUS_FIXED, Camera.Parameters.FOCUS_MODE_FIXED);
+            FOCUS.put(CameraConstants.FOCUS_CONTINUOUS, Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            FOCUS.put(CameraConstants.FOCUS_TAP, Camera.Parameters.FOCUS_MODE_AUTO);
+            FOCUS.put(CameraConstants.FOCUS_TAP_WITH_MARKER, Camera.Parameters.FOCUS_MODE_AUTO);
         }
 
         @Override
@@ -85,7 +80,7 @@ abstract class MapperImpl {
         }
     }
 
-    static class Mapper2 extends MapperImpl {
+    static class Mapper2 extends Mapper {
 
         @Override
         <T> T mapWhiteBalance(@WhiteBalance int internalConstant) {

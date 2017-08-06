@@ -1,5 +1,5 @@
 
-*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The CameraKit-Android at this point has been completely rewritten and refactored:*
+*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored:*
 
 - lots *of serious bugs fixed*
 - *decent orientation support for both pictures and videos*
@@ -268,8 +268,8 @@ What to capture - either picture or video. This has a couple of consequences:
 - Permission behavior: when requesting a `video` session, the record audio permission will be requested. If this is needed, the audio permission should be added to your manifest or the app will crash.
 
 ```java
-cameraView.setSessionType(CameraKit.Constants.SESSION_TYPE_PICTURE);
-cameraView.setSessionType(CameraKit.Constants.SESSION_TYPE_VIDEO);
+cameraView.setSessionType(CameraConstants.SESSION_TYPE_PICTURE);
+cameraView.setSessionType(CameraConstants.SESSION_TYPE_VIDEO);
 ```
 
 ### cameraFacing
@@ -277,8 +277,8 @@ cameraView.setSessionType(CameraKit.Constants.SESSION_TYPE_VIDEO);
 Which camera to use, either back facing or front facing.
 
 ```java
-cameraView.setFacing(CameraKit.Constants.FACING_BACK);
-cameraView.setFacing(CameraKit.Constants.FACING_FRONT);
+cameraView.setFacing(CameraConstants.FACING_BACK);
+cameraView.setFacing(CameraConstants.FACING_FRONT);
 ```
 
 ### cameraFlash
@@ -286,10 +286,10 @@ cameraView.setFacing(CameraKit.Constants.FACING_FRONT);
 Flash mode, either off, on, auto or *torch*.
 
 ```java
-cameraView.setFlash(CameraKit.Constants.FLASH_OFF);
-cameraView.setFlash(CameraKit.Constants.FLASH_ON);
-cameraView.setFlash(CameraKit.Constants.FLASH_AUTO);
-cameraView.setFlash(CameraKit.Constants.FLASH_TORCH);
+cameraView.setFlash(CameraConstants.FLASH_OFF);
+cameraView.setFlash(CameraConstants.FLASH_ON);
+cameraView.setFlash(CameraConstants.FLASH_AUTO);
+cameraView.setFlash(CameraConstants.FLASH_TORCH);
 ```
 
 ### cameraFocus
@@ -297,10 +297,10 @@ cameraView.setFlash(CameraKit.Constants.FLASH_TORCH);
 Focus behavior. Can be off, continuous (camera continuously tries to adapt its focus), tap (focus is driven by the user tap) and tapWithMarker (a marker is drawn on screen to indicate focusing).
 
 ```java
-cameraView.setFocus(CameraKit.Constants.FOCUS_FIXED);
-cameraView.setFocus(CameraKit.Constants.FOCUS_CONTINUOUS);
-cameraView.setFocus(CameraKit.Constants.FOCUS_TAP);
-cameraView.setFocus(CameraKit.Constants.FOCUS_TAP_WITH_MARKER);
+cameraView.setFocus(CameraConstants.FOCUS_FIXED);
+cameraView.setFocus(CameraConstants.FOCUS_CONTINUOUS);
+cameraView.setFocus(CameraConstants.FOCUS_TAP);
+cameraView.setFocus(CameraConstants.FOCUS_TAP_WITH_MARKER);
 ```
 
 ### cameraZoomMode
@@ -308,8 +308,8 @@ cameraView.setFocus(CameraKit.Constants.FOCUS_TAP_WITH_MARKER);
 Lets you enable built-in pinch-to-zoom behavior. This means that the camera will capture two-finger gestures and move the zoom value accordingly. Nothing is drawn on screen, but you can listen to `onZoomChanged` in your camera listener.
 
 ```java
-cameraView.setZoomMode(CameraKit.Constants.ZOOM_OFF);
-cameraView.setZoomMode(CameraKit.Constants.ZOOM_PINCH);
+cameraView.setZoomMode(CameraConstants.ZOOM_OFF);
+cameraView.setZoomMode(CameraConstants.ZOOM_PINCH);
 ```
 
 ### cameraGrid
@@ -317,10 +317,10 @@ cameraView.setZoomMode(CameraKit.Constants.ZOOM_PINCH);
 Lets you draw grids over the camera preview. Supported values are `off`, `grid3x3` and `grid4x4` for regular grids, and `phi` for a grid based on the golden ratio constant, often used in photography.
 
 ```java
-cameraView.setZoom(CameraKit.Constants.GRID_OFF);
-cameraView.setZoom(CameraKit.Constants.GRID_3X3);
-cameraView.setZoom(CameraKit.Constants.GRID_4X4);
-cameraView.setZoom(CameraKit.Constants.GRID_PHI);
+cameraView.setZoom(CameraConstants.GRID_OFF);
+cameraView.setZoom(CameraConstants.GRID_3X3);
+cameraView.setZoom(CameraConstants.GRID_4X4);
+cameraView.setZoom(CameraConstants.GRID_PHI);
 ```
 
 ### cameraCropOutput
@@ -342,13 +342,13 @@ cameraView.setJpegQuality(50);
 Sets the desired video quality.
 
 ```java
-cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_480P);
-cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_720P);
-cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_1080P);
-cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_2160P);
-cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_LOWEST);
-cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_HIGHEST);
-cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_QVGA);
+cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_480P);
+cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_720P);
+cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_1080P);
+cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_2160P);
+cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_LOWEST);
+cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_HIGHEST);
+cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_QVGA);
 ```
 
 ### cameraWhiteBalance
@@ -356,11 +356,11 @@ cameraView.setVideoQuality(CameraKit.Constants.VIDEO_QUALITY_QVGA);
 Sets the desired white balance for the current session.
 
 ```java
-cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_AUTO);
-cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_INCANDESCENT);
-cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_FLUORESCENT);
-cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_DAYLIGHT);
-cameraView.setWhiteBalance(CameraKit.Constants.WHITE_BALANCE_CLOUDY);
+cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_AUTO);
+cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_INCANDESCENT);
+cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_FLUORESCENT);
+cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_DAYLIGHT);
+cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_CLOUDY);
 ```
 
 ## Permissions behavior

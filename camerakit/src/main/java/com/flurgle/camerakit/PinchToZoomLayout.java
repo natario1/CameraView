@@ -67,7 +67,7 @@ class PinchToZoomLayout extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (mZoomMode != CameraKit.Constants.ZOOM_PINCH) return false;
+        if (mZoomMode != CameraConstants.ZOOM_PINCH) return false;
 
         // Reset the notify flag on a new gesture.
         // This is to ensure that the notify flag stays on until the

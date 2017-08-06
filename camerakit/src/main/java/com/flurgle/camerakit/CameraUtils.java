@@ -40,11 +40,11 @@ public class CameraUtils {
      * Facing value, so that a session can be started.
      *
      * @param context a valid context
-     * @param facing either {@link CameraKit.Constants#FACING_BACK} or {@link CameraKit.Constants#FACING_FRONT}
+     * @param facing either {@link CameraConstants#FACING_BACK} or {@link CameraConstants#FACING_FRONT}
      * @return true if such sensor exists
      */
     public static boolean hasCameraFacing(Context context, @Facing int facing) {
-        int internal = new MapperImpl.Mapper1().mapFacing(facing);
+        int internal = new Mapper.Mapper1().mapFacing(facing);
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);

@@ -18,15 +18,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_CONTINUOUS;
-import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_FIXED;
-import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_TAP;
-import static com.flurgle.camerakit.CameraKit.Constants.FOCUS_TAP_WITH_MARKER;
-import static com.flurgle.camerakit.CameraKit.Constants.SESSION_TYPE_PICTURE;
-import static com.flurgle.camerakit.CameraKit.Constants.SESSION_TYPE_VIDEO;
+import static com.flurgle.camerakit.CameraConstants.FOCUS_CONTINUOUS;
+import static com.flurgle.camerakit.CameraConstants.FOCUS_FIXED;
+import static com.flurgle.camerakit.CameraConstants.FOCUS_TAP;
+import static com.flurgle.camerakit.CameraConstants.FOCUS_TAP_WITH_MARKER;
+import static com.flurgle.camerakit.CameraConstants.SESSION_TYPE_PICTURE;
+import static com.flurgle.camerakit.CameraConstants.SESSION_TYPE_VIDEO;
 
 @SuppressWarnings("deprecation")
-class Camera1 extends CameraImpl {
+class Camera1 extends CameraController {
 
     private static final String TAG = Camera1.class.getSimpleName();
 
@@ -49,14 +49,14 @@ class Camera1 extends CameraImpl {
     private double mLongitude;
 
     private Handler mFocusHandler = new Handler();
-    private MapperImpl mMapper = new MapperImpl.Mapper1();
+    private Mapper mMapper = new Mapper.Mapper1();
     private boolean mIsSetup = false;
     private boolean mIsCapturingImage = false;
     private boolean mIsCapturingVideo = false;
     private final Object mLock = new Object();
 
 
-    Camera1(CameraView.CameraCallbacks callback, final PreviewImpl preview) {
+    Camera1(CameraView.CameraCallbacks callback, final Preview preview) {
         super(callback, preview);
     }
 
@@ -145,10 +145,10 @@ class Camera1 extends CameraImpl {
                 Camera.Parameters params = mCamera.getParameters();
                 mExtraProperties = new ExtraProperties(params);
                 mOptions = new CameraOptions(params);
-                mergeFocus(params, CameraKit.Defaults.DEFAULT_FOCUS);
-                mergeFlash(params, CameraKit.Defaults.DEFAULT_FLASH);
+                mergeFocus(params, CameraConstants.Defaults.DEFAULT_FOCUS);
+                mergeFlash(params, CameraConstants.Defaults.DEFAULT_FLASH);
                 mergeLocation(params, 0d, 0d);
-                mergeWhiteBalance(params, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
+                mergeWhiteBalance(params, CameraConstants.Defaults.DEFAULT_WHITE_BALANCE);
                 params.setRecordingHint(mSessionType == SESSION_TYPE_VIDEO);
                 mCamera.setParameters(params);
             }
@@ -349,7 +349,7 @@ class Camera1 extends CameraImpl {
         }
 
         mVideoQuality = videoQuality;
-        if (isCameraOpened() && mSessionType == CameraKit.Constants.SESSION_TYPE_VIDEO) {
+        if (isCameraOpened() && mSessionType == CameraConstants.SESSION_TYPE_VIDEO) {
             // Change capture size to a size that fits the video aspect ratio.
             Size oldSize = mCaptureSize;
             mCaptureSize = computeCaptureSize();
@@ -485,7 +485,7 @@ class Camera1 extends CameraImpl {
      * It is meant to be fed to Camera.setDisplayOrientation().
      */
     private int computeSensorToDisplayOffset() {
-        if (mFacing == CameraKit.Constants.FACING_FRONT) {
+        if (mFacing == CameraConstants.FACING_FRONT) {
             // or: (360 - ((mSensorOffset + mDisplayOffset) % 360)) % 360;
             return ((mSensorOffset - mDisplayOffset) + 360 + 180) % 360;
         } else {
@@ -499,7 +499,7 @@ class Camera1 extends CameraImpl {
      * This ignores flipping for facing camera.
      */
     private int computeExifRotation() {
-        if (mFacing == CameraKit.Constants.FACING_FRONT) {
+        if (mFacing == CameraConstants.FACING_FRONT) {
             return (mSensorOffset - mDeviceOrientation + 360) % 360;
         } else {
             return (mSensorOffset + mDeviceOrientation) % 360;
@@ -511,7 +511,7 @@ class Camera1 extends CameraImpl {
      * Whether the exif tag should include a 'flip' operation.
      */
     private boolean computeExifFlip() {
-        return mFacing == CameraKit.Constants.FACING_FRONT;
+        return mFacing == CameraConstants.FACING_FRONT;
     }
 
 
@@ -519,7 +519,7 @@ class Camera1 extends CameraImpl {
      * This is called either on cameraView.start(), or when the underlying surface changes.
      * It is possible that in the first call the preview surface has not already computed its
      * dimensions.
-     * But when it does, the {@link PreviewImpl.SurfaceCallback} should be called,
+     * But when it does, the {@link Preview.SurfaceCallback} should be called,
      * and this should be refreshed.
      */
     private Size computeCaptureSize() {
@@ -612,41 +612,41 @@ class Camera1 extends CameraImpl {
     @NonNull
     private CamcorderProfile getCamcorderProfile(@VideoQuality int videoQuality) {
         switch (videoQuality) {
-            case CameraKit.Constants.VIDEO_QUALITY_HIGHEST:
+            case CameraConstants.VIDEO_QUALITY_HIGHEST:
                 return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
 
-            case CameraKit.Constants.VIDEO_QUALITY_2160P:
+            case CameraConstants.VIDEO_QUALITY_2160P:
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
                         CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2160P)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_2160P);
                 }
                 // Don't break.
 
-            case CameraKit.Constants.VIDEO_QUALITY_1080P:
+            case CameraConstants.VIDEO_QUALITY_1080P:
                 if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_1080P)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_1080P);
                 }
                 // Don't break.
 
-            case CameraKit.Constants.VIDEO_QUALITY_720P:
+            case CameraConstants.VIDEO_QUALITY_720P:
                 if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_720P)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_720P);
                 }
                 // Don't break.
 
-            case CameraKit.Constants.VIDEO_QUALITY_480P:
+            case CameraConstants.VIDEO_QUALITY_480P:
                 if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_480P)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_480P);
                 }
                 // Don't break.
 
-            case CameraKit.Constants.VIDEO_QUALITY_QVGA:
+            case CameraConstants.VIDEO_QUALITY_QVGA:
                 if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_QVGA);
                 }
                 // Don't break.
 
-            case CameraKit.Constants.VIDEO_QUALITY_LOWEST:
+            case CameraConstants.VIDEO_QUALITY_LOWEST:
             default:
                 // Fallback to lowest.
                 return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_LOW);

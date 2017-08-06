@@ -8,7 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 // This is not used.
-class SurfaceViewPreview extends PreviewImpl {
+class SurfaceViewPreview extends Preview {
 
     private final SurfaceView mSurfaceView;
 

@@ -24,7 +24,7 @@ public class CameraOptions {
 
     CameraOptions(Camera.Parameters params) {
         List<String> strings;
-        MapperImpl mapper = new MapperImpl.Mapper1();
+        Mapper mapper = new Mapper.Mapper1();
 
         // Facing
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();

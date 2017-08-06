@@ -5,8 +5,8 @@ import android.support.annotation.IntDef;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_PICTURE;
-import static com.flurgle.camerakit.CameraKit.Constants.PERMISSIONS_VIDEO;
+import static com.flurgle.camerakit.CameraConstants.PERMISSIONS_PICTURE;
+import static com.flurgle.camerakit.CameraConstants.PERMISSIONS_VIDEO;
 
 @Deprecated
 @Retention(RetentionPolicy.SOURCE)

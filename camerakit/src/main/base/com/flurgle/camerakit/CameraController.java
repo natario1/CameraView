@@ -2,14 +2,13 @@ package com.flurgle.camerakit;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.view.MotionEvent;
 
 import java.io.File;
 
-abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
+abstract class CameraController implements Preview.SurfaceCallback {
 
     protected final CameraView.CameraCallbacks mCameraCallbacks;
-    protected final PreviewImpl mPreview;
+    protected final Preview mPreview;
 
     @Facing protected int mFacing;
     @Flash protected int mFlash;
@@ -18,7 +17,7 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
     @WhiteBalance protected int mWhiteBalance;
     @SessionType protected int mSessionType;
 
-    CameraImpl(CameraView.CameraCallbacks callback, PreviewImpl preview) {
+    CameraController(CameraView.CameraCallbacks callback, Preview preview) {
         mCameraCallbacks = callback;
         mPreview = preview;
         mPreview.setSurfaceCallback(this);
