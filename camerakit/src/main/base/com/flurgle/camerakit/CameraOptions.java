@@ -23,6 +23,9 @@ public class CameraOptions {
 
     private boolean zoomSupported;
     private boolean videoSnapshotSupported;
+    private boolean exposureCorrectionSupported;
+    private float exposureCorrectionMinValue;
+    private float exposureCorrectionMaxValue;
 
 
     // Camera1 constructor.
@@ -62,6 +65,13 @@ public class CameraOptions {
 
         zoomSupported = params.isZoomSupported();
         videoSnapshotSupported = params.isVideoSnapshotSupported();
+
+        // Exposure correction
+        float step = params.getExposureCompensationStep();
+        exposureCorrectionMinValue = (float) params.getMinExposureCompensation() * step;
+        exposureCorrectionMaxValue = (float) params.getMaxExposureCompensation() * step;
+        exposureCorrectionSupported = params.getMinExposureCompensation() != 0
+                || params.getMaxExposureCompensation() != 0;
     }
 
 
@@ -148,5 +158,40 @@ public class CameraOptions {
      */
     public boolean isVideoSnapshotSupported() {
         return videoSnapshotSupported;
+    }
+
+
+    /**
+     * Whether exposure correction is supported. If this is false, calling
+     * {@link CameraView#setExposureCorrection(float)} has no effect.
+     *
+     * @see #getExposureCorrectionMinValue()
+     * @see #getExposureCorrectionMaxValue()
+     * @return whether exposure correction is supported.
+     */
+    public boolean isExposureCorrectionSupported() {
+        return exposureCorrectionSupported;
+    }
+
+
+    /**
+     * The minimum value of negative exposure correction, in EV stops.
+     * This is presumably negative or 0 if not supported.
+     *
+     * @return min EV value
+     */
+    public float getExposureCorrectionMinValue() {
+        return exposureCorrectionMinValue;
+    }
+
+
+    /**
+     * The maximum value of positive exposure correction, in EV stops.
+     * This is presumably positive or 0 if not supported.
+     *
+     * @return max EV value
+     */
+    public float getExposureCorrectionMaxValue() {
+        return exposureCorrectionMaxValue;
     }
 }

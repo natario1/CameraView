@@ -654,22 +654,38 @@ class Camera1 extends CameraController {
     }
 
     // -----------------
-    // Zoom stuff.
+    // Zoom and simpler stuff.
 
 
     @Override
     boolean setZoom(float zoom) {
         if (!isCameraOpened()) return false;
+        if (!mOptions.isZoomSupported()) return false;
         synchronized (mLock) {
             Camera.Parameters params = mCamera.getParameters();
-            if (!mOptions.isZoomSupported()) return false;
             float max = params.getMaxZoom();
             params.setZoom((int) (zoom * max));
             mCamera.setParameters(params);
-            return true;
         }
+        return true;
     }
 
+
+    @Override
+    boolean setExposureCorrection(float EVvalue) {
+        if (!isCameraOpened()) return false;
+        if (!mOptions.isExposureCorrectionSupported()) return false;
+        float max = mOptions.getExposureCorrectionMaxValue();
+        float min = mOptions.getExposureCorrectionMinValue();
+        EVvalue = EVvalue < min ? min : EVvalue > max ? max : EVvalue; // cap
+        synchronized (mLock) {
+            Camera.Parameters params = mCamera.getParameters();
+            int indexValue = (int) (EVvalue / params.getExposureCompensationStep());
+            params.setExposureCompensation(indexValue);
+            mCamera.setParameters(params);
+        }
+        return true;
+    }
 
     // -----------------
     // Tap to focus stuff.
@@ -681,25 +697,22 @@ class Camera1 extends CameraController {
         List<Camera.Area> meteringAreas2 = computeMeteringAreas(x, y);
         List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
         synchronized (mLock) {
+            // At this point we are sure that camera supports auto focus... right? Look at CameraView.onTouchEvent().
             Camera.Parameters params = mCamera.getParameters();
-            // TODO remove this check once CameraView.setFocus TODO is fixed.
-            boolean autofocusSupported = mOptions.getSupportedFocus().contains(CameraConstants.FOCUS_TAP);
-            if (autofocusSupported) {
-                int maxAF = params.getMaxNumFocusAreas();
-                int maxAE = params.getMaxNumMeteringAreas();
-                if (maxAF > 0) params.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
-                if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
-                params.setFocusMode((String) mMapper.mapFocus(FOCUS_TAP)); // auto
-                mCamera.setParameters(params);
-                mCameraCallbacks.dispatchOnFocusStart(x, y);
-                mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                    @Override
-                    public void onAutoFocus(boolean success, Camera camera) {
-                        mCameraCallbacks.dispatchOnFocusEnd(success, x, y);
-                        postResetFocus();
-                    }
-                });
-            }
+            int maxAF = params.getMaxNumFocusAreas();
+            int maxAE = params.getMaxNumMeteringAreas();
+            if (maxAF > 0) params.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
+            if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
+            params.setFocusMode((String) mMapper.mapFocus(FOCUS_TAP)); // auto
+            mCamera.setParameters(params);
+            mCameraCallbacks.dispatchOnFocusStart(x, y);
+            mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean success, Camera camera) {
+                    mCameraCallbacks.dispatchOnFocusEnd(success, x, y);
+                    postResetFocus();
+                }
+            });
         }
     }
 

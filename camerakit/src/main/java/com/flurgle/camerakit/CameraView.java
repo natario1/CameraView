@@ -510,6 +510,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
+     * Sets exposure adjustment, in EV stops. A positive value will mean brighter picture.
+     *
+     * If camera is not opened, this will have no effect.
+     * If {@link CameraOptions#isExposureCorrectionSupported()} is false, this will have no effect.
+     * The provided value should be between the bounds returned by {@link CameraOptions}, or it will
+     * be capped.
+     *
+     * @see CameraOptions#getExposureCorrectionMinValue()
+     * @see CameraOptions#getExposureCorrectionMaxValue()
+     *
+     * @param EVvalue exposure correction value.
+     */
+    public void setExposureCorrection(float EVvalue) {
+        mCameraController.setExposureCorrection(EVvalue);
+    }
+
+
+    /**
      * Sets a zoom value. This is not guaranteed to be supported by the current device,
      * but you can take a look at {@link CameraOptions#isZoomSupported()}.
      * This will have no effect if called before the camera is opened.
@@ -523,8 +541,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             throw new IllegalArgumentException("Zoom value should be >= 0 and <= 1");
         }
         if (mCameraController.setZoom(zoom)) {
-            // Notify PinchToZoomLayout, just in case the call came from outside.
-            mPinchToZoomLayout.onExternalZoom(zoom);
+            mPinchToZoomLayout.onExternalZoom(zoom); // Notify PinchToZoomLayout
         }
     }
 
