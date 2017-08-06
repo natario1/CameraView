@@ -1,23 +1,5 @@
 
-*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored:*
-
-- lots *of serious bugs fixed*
-- *decent orientation support for both pictures and videos*
-- *EXIF support*
-- *real tap-to-focus support*
-- *pinch-to-zoom support*
-- *simpler APIs, docs and heavily commented code*
-- *new `captureSnapshot` API*
-- *new `setLocation` and `setWhiteBalance` APIs*
-- *new `setGrid` APIs, to draw 3x3, 4x4 or golden ratio grids
-- *option to pass a `File` when recording a video*
-- *other minor API additions*
-- *replacing Method and Permissions stuff with simpler `sessionType`* 
-- *smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
-- *measure `CameraView` as center crop or center inside*
-- *add multiple `CameraListener`s for events*
-
-*Feel free to open issues with suggestions or contribute.*
+*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored. See [below](#roadmap) for a list of what was done. Feel free to open issues with suggestions or contribute.*
 
 # CameraKit
 
@@ -396,7 +378,25 @@ If you don't request this feature, you can use `CameraUtils.hasCameras()` to det
 
 ## Roadmap
 
-These are things that need to be done, off the top of my head:
+This is what was done since the library was forked. I have kept the original structure, but practically all the code was changed.
+
+- *a huge number of serious bugs fixed*
+- *decent orientation support for both pictures and videos*
+- *EXIF support*
+- *real tap-to-focus support*
+- *pinch-to-zoom support*
+- *simpler APIs, docs and heavily commented code*
+- *new `captureSnapshot` API*
+- *new `setLocation` and `setWhiteBalance` APIs*
+- *new `setGrid` APIs, to draw 3x3, 4x4 or golden ratio grids*
+- *option to pass a `File` when recording a video*
+- *other minor API additions*
+- *replacing Method and Permissions stuff with simpler `sessionType`* 
+- *smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
+- *measure `CameraView` as center crop or center inside*
+- *add multiple `CameraListener`s for events*
+
+These are still things that need to be done, off the top of my head:
 
 - [x] fix CropOutput class presumably not working on rotated pictures
 - [x] test video and 'frame' capture behavior, I expect some bugs there
