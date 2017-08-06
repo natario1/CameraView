@@ -14,7 +14,6 @@ import java.util.Set;
 /**
  * Options telling you what is available and what is not.
  */
-@SuppressWarnings("deprecation")
 public class CameraOptions {
 
     private Set<Integer> supportedWhiteBalance = new HashSet<>(5);
@@ -27,6 +26,7 @@ public class CameraOptions {
 
 
     // Camera1 constructor.
+    @SuppressWarnings("deprecation")
     CameraOptions(Camera.Parameters params) {
         List<String> strings;
         Mapper mapper = new Mapper.Mapper1();

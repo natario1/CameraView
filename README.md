@@ -21,12 +21,14 @@
 
 # CameraKit
 
-CameraKit is an easy to use utility to work with the Android Camera APIs. Everything at the moment is work in progress, but it works well for pictures at least.
+CameraKit is a well documented, high-level library that makes capturing pictures and videos easy, addressing most of the common issues and needs, and still leaving you with flexibility where needed.
 
 <p>
   <img src="art/screen1.png" width="250" vspace="20" hspace="5">
   <img src="art/screen2.png" width="250" vspace="20" hspace="5">
 </p>
+
+Please read the javadocs in code if you have any doubt about the usage of a certain method or feature.
 
 ## Table of Contents
 
