@@ -8,21 +8,22 @@ import android.util.SparseIntArray;
 
 import java.util.Map;
 
-public class ConstantMapper {
+abstract class MapperImpl {
 
-    static abstract class MapperImpl {
-
-        MapperImpl() {}
-
-        abstract <T> T mapFlash(@Flash int internalConstant);
-        abstract <T> T mapFacing(@Facing int internalConstant);
-        abstract <T> T mapWhiteBalance(@WhiteBalance int internalConstant);
-    }
+    abstract <T> T mapFlash(@Flash int internalConstant);
+    abstract <T> T mapFacing(@Facing int internalConstant);
+    abstract <T> T mapWhiteBalance(@WhiteBalance int internalConstant);
+    abstract <T> T mapFocus(@Focus int internalConstant);
+    @Flash abstract <T> int unmapFlash(T cameraConstant);
+    @Facing abstract <T> int unmapFacing(T cameraConstant);
+    @WhiteBalance abstract <T> int unmapWhiteBalance(T cameraConstant);
+    @Focus abstract <T> int unmapFocus(T cameraConstant);
 
     static class Mapper1 extends MapperImpl {
         private static final SparseArrayCompat<String> FLASH = new SparseArrayCompat<>();
         private static final SparseArrayCompat<String> WB = new SparseArrayCompat<>();
         private static final SparseArrayCompat<Integer> FACING = new SparseArrayCompat<>();
+        private static final SparseArrayCompat<String> FOCUS = new SparseArrayCompat<>();
 
         static {
             FLASH.put(CameraKit.Constants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
@@ -36,6 +37,10 @@ public class ConstantMapper {
             WB.put(CameraKit.Constants.WHITE_BALANCE_FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
             WB.put(CameraKit.Constants.WHITE_BALANCE_DAYLIGHT, Camera.Parameters.WHITE_BALANCE_DAYLIGHT);
             WB.put(CameraKit.Constants.WHITE_BALANCE_CLOUDY, Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT);
+            FOCUS.put(CameraKit.Constants.FOCUS_FIXED, Camera.Parameters.FOCUS_MODE_FIXED);
+            FOCUS.put(CameraKit.Constants.FOCUS_CONTINUOUS, Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            FOCUS.put(CameraKit.Constants.FOCUS_TAP, Camera.Parameters.FOCUS_MODE_AUTO);
+            FOCUS.put(CameraKit.Constants.FOCUS_TAP_WITH_MARKER, Camera.Parameters.FOCUS_MODE_AUTO);
         }
 
         @Override
@@ -51,6 +56,32 @@ public class ConstantMapper {
         @Override
         <T> T mapWhiteBalance(int internalConstant) {
             return (T) WB.get(internalConstant, null);
+        }
+
+        @Override
+        <T> T mapFocus(@Focus int internalConstant) {
+            return (T) FOCUS.get(internalConstant, null);
+        }
+
+        @Override
+        <T> int unmapFlash(T cameraConstant) {
+            return FLASH.keyAt(FLASH.indexOfValue((String) cameraConstant));
+        }
+
+        @Override
+        <T> int unmapFacing(T cameraConstant) {
+            return FACING.keyAt(FACING.indexOfValue((Integer) cameraConstant));
+        }
+
+        @Override
+        <T> int unmapWhiteBalance(T cameraConstant) {
+            return WB.keyAt(WB.indexOfValue((String) cameraConstant));
+        }
+
+        // This will ignore FOCUS_TAP_WITH_MARKER but it's fine
+        @Override
+        <T> int unmapFocus(T cameraConstant) {
+            return FOCUS.keyAt(FOCUS.indexOfValue((String) cameraConstant));
         }
     }
 
@@ -69,6 +100,31 @@ public class ConstantMapper {
         @Override
         <T> T mapFlash(@Flash int internalConstant) {
             return null;
+        }
+
+        @Override
+        <T> int unmapFlash(T cameraConstant) {
+            return 0;
+        }
+
+        @Override
+        <T> int unmapFacing(T cameraConstant) {
+            return 0;
+        }
+
+        @Override
+        <T> int unmapWhiteBalance(T cameraConstant) {
+            return 0;
+        }
+
+        @Override
+        <T> T mapFocus(@Focus int internalConstant) {
+            return null;
+        }
+
+        @Override
+        <T> int unmapFocus(T cameraConstant) {
+            return 0;
         }
     }
 

@@ -51,8 +51,8 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
 
     abstract void startFocus(float x, float y);
 
-    @Nullable
-    abstract ExtraProperties getExtraProperties();
+    @Nullable abstract ExtraProperties getExtraProperties();
+    @Nullable abstract CameraOptions getCameraOptions();
 
     @Facing
     final int getFacing() {

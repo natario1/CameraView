@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.hardware.Camera;
 import android.os.Handler;
 import android.support.annotation.UiThread;
 import android.support.media.ExifInterface;
@@ -31,6 +32,25 @@ public class CameraUtils {
         // There's also FEATURE_CAMERA_EXTERNAL , should we support it?
         return manager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
                 || manager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
+    }
+
+
+    /**
+     * Determines whether the device has a valid camera sensor with the given
+     * Facing value, so that a session can be started.
+     *
+     * @param context a valid context
+     * @param facing either {@link CameraKit.Constants#FACING_BACK} or {@link CameraKit.Constants#FACING_FRONT}
+     * @return true if such sensor exists
+     */
+    public static boolean hasCameraFacing(Context context, @Facing int facing) {
+        int internal = new MapperImpl.Mapper1().mapFacing(facing);
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
+            Camera.getCameraInfo(i, cameraInfo);
+            if (cameraInfo.facing == internal) return true;
+        }
+        return false;
     }
 
 

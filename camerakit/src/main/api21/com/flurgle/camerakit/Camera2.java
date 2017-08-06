@@ -11,8 +11,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.util.SizeF;
-import android.view.MotionEvent;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,7 +31,7 @@ class Camera2 extends CameraImpl {
     private Size mCaptureSize;
     private Size mPreviewSize;
 
-    private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper2();
+    private MapperImpl mMapper = new MapperImpl.Mapper2();
     private final HashMap<String, ExtraProperties> mExtraPropertiesMap = new HashMap<>();
 
 
@@ -64,22 +62,8 @@ class Camera2 extends CameraImpl {
                 @SuppressWarnings("ConstantConditions")
                 int orientation = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (orientation == CameraCharacteristics.LENS_FACING_BACK) {
-                    float[] maxFocus = characteristics.get(
-                            CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
-                    if (maxFocus == null) {
-                        continue;
-                    }
-                    SizeF size = characteristics.get(
-                            CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
-                    if (size == null) {
-                        continue;
-                    }
-                    float w = size.getWidth();
-                    float h = size.getHeight();
-                    mExtraPropertiesMap.put(cameraId, new ExtraProperties(
-                            (float) Math.toDegrees(2*Math.atan(w/(maxFocus[0]*2))),
-                            (float) Math.toDegrees(2*Math.atan(h/(maxFocus[0]*2)))
-                    ));
+                    ExtraProperties props = new ExtraProperties(characteristics);
+                    mExtraPropertiesMap.put(cameraId, props);
                 }
             }
         } catch (CameraAccessException e) {
@@ -273,6 +257,13 @@ class Camera2 extends CameraImpl {
         return mExtraPropertiesMap.get(mCamera.getId());
     }
     // Internal
+
+
+    @Nullable
+    @Override
+    CameraOptions getCameraOptions() {
+        return null;
+    }
 
     private List<Size> getAvailableCaptureResolutions() {
         List<Size> output = new ArrayList<>();

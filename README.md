@@ -165,7 +165,7 @@ Make sure you can react to different camera events by setting up a `CameraListen
 camera.setCameraListener(new CameraListener() {
 
     @Override
-    public void onCameraOpened() {}
+    public void onCameraOpened(CameraOptions options) {}
 
     @Override
     public void onCameraClosed() {}
@@ -250,7 +250,7 @@ This means that part of the preview is hidden, and the image output will contain
 |[`cameraSessionType`](#camerasessiontype)|`setSessionType()`|`picture` `video`|`picture`|
 |[`cameraFacing`](#camerafacing)|`setFacing()`|`back` `front`|`back`|
 |[`cameraFlash`](#cameraflash)|`setFlash()`|`off` `on` `auto` `torch`|`off`|
-|[`cameraFocus`](#camerafocus)|`setFocus()`|`off` `continuous` `tap` `tapWithMarker`|`continuous`|
+|[`cameraFocus`](#camerafocus)|`setFocus()`|`fixed` `continuous` `tap` `tapWithMarker`|`continuous`|
 |[`cameraZoomMode`](#camerazoommode)|`setZoom()`|`off` `pinch`|`off`|
 |[`cameraGrid`](#cameragrid)|`setGrid()`|`off` `grid3x3` `grid4x4` `phi`|`off`|
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
@@ -297,7 +297,7 @@ cameraView.setFlash(CameraKit.Constants.FLASH_TORCH);
 Focus behavior. Can be off, continuous (camera continuously tries to adapt its focus), tap (focus is driven by the user tap) and tapWithMarker (a marker is drawn on screen to indicate focusing).
 
 ```java
-cameraView.setFocus(CameraKit.Constants.FOCUS_OFF);
+cameraView.setFocus(CameraKit.Constants.FOCUS_FIXED);
 cameraView.setFocus(CameraKit.Constants.FOCUS_CONTINUOUS);
 cameraView.setFocus(CameraKit.Constants.FOCUS_TAP);
 cameraView.setFocus(CameraKit.Constants.FOCUS_TAP_WITH_MARKER);

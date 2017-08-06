@@ -7,17 +7,26 @@ import java.io.File;
 
 public abstract class CameraListener {
 
-    public void onCameraOpened() {
+    /**
+     * Notifies that the camera was opened.
+     * The {@link CameraOptions} object collects all supported options by the current camera.
+     *
+     * @param options camera supported options
+     */
+    public void onCameraOpened(CameraOptions options) {
 
     }
+
 
     public void onCameraClosed() {
 
     }
 
+
     public void onPictureTaken(byte[] jpeg) {
 
     }
+    
 
     public void onVideoTaken(File video) {
 

@@ -478,6 +478,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
+     * Returns a {@link CameraOptions} instance holding supported options for this camera
+     * session. This might change over time. It's better to hold a reference from
+     * {@link CameraListener#onCameraOpened(CameraOptions)}.
+     *
+     * @return an options map, or null if camera was not opened
+     */
+    @Nullable
+    public CameraOptions getCameraOptions() {
+        return mCameraImpl.getCameraOptions();
+    }
+
+
+    /**
      * If present, returns a collection of extra properties from the current camera
      * session.
      * @return an ExtraProperties object.
@@ -648,7 +661,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     /**
      * Toggles the flash mode between {@link CameraKit.Constants#FLASH_OFF},
      * {@link CameraKit.Constants#FLASH_ON}, {@link CameraKit.Constants#FLASH_AUTO} and
-     * {@link CameraKit.Constants#FOCUS_OFF}, in this order.
+     * {@link CameraKit.Constants#FOCUS_FIXED}, in this order.
      *
      * @return the new flash value
      */
@@ -692,13 +705,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Sets the current focus behavior.
      *
      * @see CameraKit.Constants#FOCUS_CONTINUOUS
-     * @see CameraKit.Constants#FOCUS_OFF
+     * @see CameraKit.Constants#FOCUS_FIXED
      * @see CameraKit.Constants#FOCUS_TAP
      * @see CameraKit.Constants#FOCUS_TAP_WITH_MARKER
 
      * @param focus a Focus value.
      */
     public void setFocus(@Focus int focus) {
+        // TODO we are not sure this focus is supported at this point, yet we enable the layout!
         mFocusMarkerLayout.setEnabled(focus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER);
         if (focus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER) {
             focus = CameraKit.Constants.FOCUS_TAP;
@@ -1067,12 +1081,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
 
-        public void dispatchOnCameraOpened() {
+        public void dispatchOnCameraOpened(final CameraOptions options) {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     for (CameraListener listener : mListeners) {
-                        listener.onCameraOpened();
+                        listener.onCameraOpened(options);
                     }
                 }
             });

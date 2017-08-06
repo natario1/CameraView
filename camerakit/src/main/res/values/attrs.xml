@@ -16,7 +16,7 @@
         </attr>
 
         <attr name="cameraFocus" format="enum">
-            <enum name="off" value="0" />
+            <enum name="fixed" value="0" />
             <enum name="continuous" value="1" />
             <enum name="tap" value="2" />
             <enum name="tapWithMarker" value="3" />
