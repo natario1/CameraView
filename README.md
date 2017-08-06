@@ -23,7 +23,7 @@ Please read the javadocs in code if you have any doubt about the usage of a cert
 - [Dynamic Sizing Behavior](#dynamic-sizing-behavior)
   - [Center Inside](#center-inside)
   - [Center Crop](#center-crop)
-- [Extra Attributes](#extra-attributes)
+- [XML Attributes](#xml-attributes)
   - [cameraSessionType](#camerasessiontype)
   - [cameraFacing](#camerafacing)
   - [cameraFlash](#cameraflash)
@@ -33,6 +33,7 @@ Please read the javadocs in code if you have any doubt about the usage of a cert
   - [cameraJpegQuality](#camerajpegquality)
   - [cameraWhiteBalance](#camerawhitebalance)
   - [cameraGrid](#cameragrid)
+- [Other APIs](#other-apis)  
 - [Permissions Behavior](#permissions-behavior)
 - [Manifest file](#manifest-file)
 - [Roadmap](#roadmap)
@@ -51,6 +52,7 @@ Please read the javadocs in code if you have any doubt about the usage of a cert
 - Multiple capture methods
   - Take high-resolution pictures with `capturePicture`
   - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to Snapchat and Instagram)
+- Control flash, focus, zoom, white balance, exposure correction
 - `CameraUtils` to help with Bitmaps and orientations
 - Metadata support for pictures and videos
   - Automatically detected orientation tags
@@ -207,7 +209,7 @@ You can emulate a **center crop** behavior by setting both dimensions to fixed v
 
 This means that part of the preview is hidden, and the image output will contain parts of the scene that were not visible during the capture. If this is a problem, see [cameraCropOutput](#cameracropoutput).
 
-## Extra Attributes
+## XML Attributes
 
 ```xml
 <com.flurgle.camerakit.CameraView xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -346,6 +348,22 @@ cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_DAYLIGHT);
 cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_CLOUDY);
 ```
 
+## Other APIs
+
+Other APIs are provided and are well documented and commented in code.
+
+|Method|Description|
+|------|-----------|
+|`getCameraOptions()`|If camera was started, returns non-null object with information about what is supported.|
+|`getExtraProperties()`|If camera was started, returns non-null object with extra information about the camera sensor. Not very useful at the moment.|
+|`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
+|`setZoom(float)`|Sets a zoom value, where 0 means camera zoomed out and 1 means zoomed in. No-op if zoom is not supported, or camera not started.|
+|`setExposureCompensation(float)`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
+|`isStarted()`|Returns true if `start()` was called succesfully. This does not mean that camera is open or showing preview.|
+|`getPreviewSize()`|Returns the size of the preview surface. If CameraView was not constrained in its layout phase (e.g. it was `wrap_content`), this will return the same aspect ratio of CameraView.|
+|`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|
+|`getPictureSize()`|Returns the size of the output picture. The aspect ratio is consistent with `getPreviewSize()`.|
+
 ## Permissions behavior
 
 `CameraView` needs two permissions:
@@ -404,11 +422,11 @@ These are still things that need to be done, off the top of my head:
 - [x] replace setCameraListener() with addCameraListener()
 - [x] better threading, for example ensure callbacks are called in the ui thread
 - [x] pinch to zoom support
+- [x] exposure correction APIs
 - [ ] change demo app icon
 - [ ] refactor package name
 - [ ] `Camera2` integration
 - [ ] publish to bintray
-- [ ] exposure correction APIs
 - [ ] attach operations (e.g. zoom, exposure correction) to vertical swipes or horizontal swipes
 - [ ] check onPause / onStop / onSaveInstanceState consistency
 - [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
