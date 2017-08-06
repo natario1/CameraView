@@ -36,6 +36,12 @@ class Camera2 extends CameraImpl {
     private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper2();
     private final HashMap<String, ExtraProperties> mExtraPropertiesMap = new HashMap<>();
 
+
+    @Override
+    boolean setZoom(float zoom) {
+        return false;
+    }
+
     @Override
     public void onSurfaceChanged() {
 
@@ -157,11 +163,6 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    void setZoomMode(@ZoomMode int zoom) {
-
-    }
-
-    @Override
     void setLocation(double latitude, double longitude) {
 
     }
@@ -259,7 +260,7 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
-    void onTouchEvent(MotionEvent event) {
+    void startFocus(float x, float y) {
 
     }
 

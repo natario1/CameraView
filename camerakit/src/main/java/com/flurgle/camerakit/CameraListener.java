@@ -1,5 +1,6 @@
 package com.flurgle.camerakit;
 
+import android.graphics.PointF;
 import android.graphics.YuvImage;
 
 import java.io.File;
@@ -46,6 +47,18 @@ public abstract class CameraListener {
      * @param y coordinate with respect to CameraView.getHeight()
      */
     public void onFocusEnd(boolean successful, float x, float y) {
+
+    }
+
+
+    /**
+     * Noitifies that a finger pinch-to-zoom gesture just caused the camera zoom
+     * to be changed. This can be used to draw, for example, a seek bar.
+     *
+     * @param zoom the new zoom value, 0...1
+     * @param fingers finger positions that caused the event
+     */
+    public void onZoomChanged(float zoom, PointF[] fingers) {
 
     }
 

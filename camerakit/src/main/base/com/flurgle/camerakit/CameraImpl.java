@@ -30,10 +30,10 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
     abstract void onDisplayOffset(int displayOrientation);
     abstract void onDeviceOrientation(int deviceOrientation);
 
+    abstract boolean setZoom(float zoom);
     abstract void setFacing(@Facing int facing);
     abstract void setFlash(@Flash int flash);
     abstract void setFocus(@Focus int focus);
-    abstract void setZoomMode(@ZoomMode int zoom);
     abstract void setVideoQuality(@VideoQuality int videoQuality);
     abstract void setWhiteBalance(@WhiteBalance int whiteBalance);
     abstract void setSessionType(@SessionType int sessionType);
@@ -49,7 +49,7 @@ abstract class CameraImpl implements PreviewImpl.SurfaceCallback {
     abstract boolean shouldFlipSizes(); // Wheter the Sizes should be flipped to match the view orientation.
     abstract boolean isCameraOpened();
 
-    abstract void onTouchEvent(MotionEvent event);
+    abstract void startFocus(float x, float y);
 
     @Nullable
     abstract ExtraProperties getExtraProperties();

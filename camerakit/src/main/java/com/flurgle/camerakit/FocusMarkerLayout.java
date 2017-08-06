@@ -12,7 +12,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-public class FocusMarkerLayout extends FrameLayout {
+class FocusMarkerLayout extends FrameLayout {
 
     private FrameLayout mFocusMarkerContainer;
     private ImageView mFill;
@@ -35,6 +35,7 @@ public class FocusMarkerLayout extends FrameLayout {
         int action = event.getAction();
         if (action == MotionEvent.ACTION_UP && isEnabled()) {
             focus(event.getX(), event.getY());
+            return true;
         }
         return false; // We didn't consume, pass
     }

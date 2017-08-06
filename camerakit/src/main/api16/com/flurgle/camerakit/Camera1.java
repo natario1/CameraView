@@ -47,7 +47,6 @@ class Camera1 extends CameraImpl {
 
     private double mLatitude;
     private double mLongitude;
-    private boolean mFocusOnTap;
 
     private Handler mFocusHandler = new Handler();
     private ConstantMapper.MapperImpl mMapper = new ConstantMapper.Mapper1();
@@ -308,7 +307,6 @@ class Camera1 extends CameraImpl {
                 if (mergeFocus(params, old)) mCamera.setParameters(params);
             }
         }
-        mFocusOnTap = mFocus == FOCUS_TAP || mFocus == FOCUS_TAP_WITH_MARKER;
     }
 
 
@@ -342,14 +340,11 @@ class Camera1 extends CameraImpl {
 
 
     @Override
-    void setZoomMode(@ZoomMode int zoom) {
-    }
-
-    @Override
     void setVideoQuality(int videoQuality) {
         if (mIsCapturingVideo) {
             throw new IllegalStateException("Can't change video quality while recording a video.");
         }
+
         mVideoQuality = videoQuality;
         if (isCameraOpened() && mSessionType == CameraKit.Constants.SESSION_TYPE_VIDEO) {
             // Change capture size to a size that fits the video aspect ratio.
@@ -657,18 +652,31 @@ class Camera1 extends CameraImpl {
         }
     }
 
+    // -----------------
+    // Zoom stuff.
+
+
+    @Override
+    boolean setZoom(float zoom) {
+        if (!isCameraOpened()) return false;
+        synchronized (mLock) {
+            Camera.Parameters params = mCamera.getParameters();
+            if (!params.isZoomSupported()) return false;
+            float max = params.getMaxZoom();
+            params.setZoom((int) (zoom * max));
+            mCamera.setParameters(params);
+            return true;
+        }
+    }
+
 
     // -----------------
     // Tap to focus stuff.
 
 
     @Override
-    void onTouchEvent(MotionEvent event) {
-        if (!mFocusOnTap) return;
-        if (mCamera == null) return;
-        if (event.getAction() != MotionEvent.ACTION_UP) return;
-        final float x = event.getX();
-        final float y = event.getY();
+    void startFocus(final float x, final float y) {
+        if (!isCameraOpened()) return;
         List<Camera.Area> meteringAreas2 = computeMeteringAreas(x, y);
         List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
         synchronized (mLock) {
@@ -716,7 +724,6 @@ class Camera1 extends CameraImpl {
 
 
     private List<Camera.Area> computeMeteringAreas(double viewClickX, double viewClickY) {
-
         // Event came in view coordinates. We must rotate to sensor coordinates.
         // First, rescale to the -1000 ... 1000 range.
         int displayToSensor = -computeSensorToDisplayOffset();
@@ -730,8 +737,8 @@ class Camera1 extends CameraImpl {
         double theta = ((double) displayToSensor) * Math.PI / 180;
         double sensorClickX = viewClickX * Math.cos(theta) - viewClickY * Math.sin(theta);
         double sensorClickY = viewClickX * Math.sin(theta) + viewClickY * Math.cos(theta);
-        Log.e(TAG, "viewClickX:"+viewClickX+", viewClickY:"+viewClickY);
-        Log.e(TAG, "sensorClickX:"+sensorClickX+", sensorClickY:"+sensorClickY);
+        // Log.e(TAG, "viewClickX:"+viewClickX+", viewClickY:"+viewClickY);
+        // Log.e(TAG, "sensorClickX:"+sensorClickX+", sensorClickY:"+sensorClickY);
 
         // Compute the rect bounds.
         Rect rect1 = computeMeteringArea(sensorClickX, sensorClickY, 150d);

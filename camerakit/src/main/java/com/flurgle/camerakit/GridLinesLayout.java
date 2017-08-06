@@ -12,7 +12,7 @@ import android.util.TypedValue;
 import android.view.View;
 
 // TODO animate lines!
-public class GridLinesLayout extends View {
+class GridLinesLayout extends View {
 
     @Grid private int gridMode;
 
@@ -41,11 +41,11 @@ public class GridLinesLayout extends View {
     }
 
     @Grid
-    int getGridMode() {
+    public int getGridMode() {
         return gridMode;
     }
 
-    void setGridMode(@Grid int gridMode) {
+    public void setGridMode(@Grid int gridMode) {
         this.gridMode = gridMode;
         invalidate();
     }

@@ -11,6 +11,7 @@ import android.content.ContextWrapper;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.os.Handler;
@@ -83,7 +84,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         getWorkerHandler().post(runnable);
     }
 
-    @ZoomMode private int mZoom;
     private int mJpegQuality;
     private boolean mCropOutput;
     private int mDisplayOffset;
@@ -95,6 +95,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private Lifecycle mLifecycle;
     private FocusMarkerLayout mFocusMarkerLayout;
     private GridLinesLayout mGridLinesLayout;
+    private PinchToZoomLayout mPinchToZoomLayout;
     private boolean mIsStarted;
     private boolean mKeepScreenOn;
 
@@ -118,7 +119,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraKit.Defaults.DEFAULT_WHITE_BALANCE);
         int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraKit.Defaults.DEFAULT_VIDEO_QUALITY);
         int grid = a.getInteger(R.styleable.CameraView_cameraGrid, CameraKit.Defaults.DEFAULT_GRID);
-        mZoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraKit.Defaults.DEFAULT_ZOOM);
+        int zoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraKit.Defaults.DEFAULT_ZOOM);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraKit.Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraKit.Defaults.DEFAULT_CROP_OUTPUT);
         a.recycle();
@@ -128,15 +129,17 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraImpl = new Camera1(mCameraCallbacks, mPreviewImpl);
         mFocusMarkerLayout = new FocusMarkerLayout(context);
         mGridLinesLayout = new GridLinesLayout(context);
+        mPinchToZoomLayout = new PinchToZoomLayout(context);
         addView(mFocusMarkerLayout);
         addView(mGridLinesLayout);
+        addView(mPinchToZoomLayout);
 
         mIsStarted = false;
         setFacing(facing);
         setFlash(flash);
         setFocus(focus);
         setSessionType(sessionType);
-        setZoomMode(mZoom);
+        setZoomMode(zoom);
         setVideoQuality(videoQuality);
         setWhiteBalance(whiteBalance);
         setGrid(grid);
@@ -319,14 +322,22 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return true; // Steal our own events.
     }
 
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         // And dispatch to everyone.
-        mFocusMarkerLayout.onTouchEvent(event); // For drawing focus marker.
-        mCameraImpl.onTouchEvent(event); // For focus behavior.
-        mGridLinesLayout.onTouchEvent(event); // For grid drawing.
+        if (mPinchToZoomLayout.onTouchEvent(event)) {
+            // For pinch-to-zoom.
+            float zoom = mPinchToZoomLayout.getZoom();
+            boolean did = setZoom(zoom);
+            if (did) mCameraCallbacks.dispatchOnZoomChanged(zoom, mPinchToZoomLayout.getPoints());
+        } else if (mFocusMarkerLayout.onTouchEvent(event)) {
+            // For drawing focus marker.
+            startFocus(event.getX(), event.getY()); // For focus behavior.
+        }
         return true;
     }
+
 
     /**
      * Returns whether the camera has started showing its preview.
@@ -474,6 +485,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Nullable
     public ExtraProperties getExtraProperties() {
         return mCameraImpl.getExtraProperties();
+    }
+
+
+    /**
+     * Sets a zoom value. This is not guaranteed to be supported by the current device.
+     * Look at the returned boolean to check.
+     * Zoom value should be >= 0 and <= 1, where 1 will be the maximum available zoom.
+     *
+     * @param zoom value in [0,1]
+     */
+    public boolean setZoom(float zoom) {
+        if (zoom < 0 || zoom > 1) {
+            throw new IllegalArgumentException("Zoom value should be >= 0 and <= 1");
+        }
+        if (mCameraImpl.setZoom(zoom)) {
+            // Notify PinchToZoomLayout, just in case the call came from outside.
+            mPinchToZoomLayout.onExternalZoom(zoom);
+            return true;
+        }
+        return false;
     }
 
 
@@ -644,6 +675,20 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
+     * Starts an autofocus process at the given coordinates, with respect
+     * to the view width and height.
+     *
+     * @param x should be >= 0 and <= getWidth()
+     * @param y should be >= 0 and <= getHeight()
+     */
+    public void startFocus(float x, float y) {
+        if (x < 0 || x > getWidth()) throw new IllegalArgumentException("x should be >= 0 and <= getWidth()");
+        if (y < 0 || y > getHeight()) throw new IllegalArgumentException("y should be >= 0 and <= getHeight()");
+        mCameraImpl.startFocus(x, y);
+    }
+
+
+    /**
      * Sets the current focus behavior.
      *
      * @see CameraKit.Constants#FOCUS_CONTINUOUS
@@ -738,8 +783,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param zoom the zoom mode
      */
     public void setZoomMode(@ZoomMode int zoom) {
-        this.mZoom = zoom;
-        mCameraImpl.setZoomMode(mZoom);
+        mPinchToZoomLayout.setZoomMode(zoom);
     }
 
 
@@ -749,7 +793,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @ZoomMode
     public int getZoomMode() {
-        return mZoom;
+        return mPinchToZoomLayout.getZoomMode();
     }
 
 
@@ -1153,6 +1197,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 public void run() {
                     for (CameraListener listener : mListeners) {
                         listener.onFocusEnd(success, x, y);
+                    }
+                }
+            });
+        }
+
+
+        public void dispatchOnZoomChanged(final float zoom, final PointF[] fingers) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onZoomChanged(zoom, fingers);
                     }
                 }
             });
