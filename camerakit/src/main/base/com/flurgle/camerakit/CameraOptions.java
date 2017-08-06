@@ -4,9 +4,12 @@ package com.flurgle.camerakit;
 import android.annotation.TargetApi;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
+import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Options telling you what is available and what is not.
@@ -14,10 +17,10 @@ import java.util.List;
 @SuppressWarnings("deprecation")
 public class CameraOptions {
 
-    private List<Integer> supportedWhiteBalance = new ArrayList<>(5);
-    private List<Integer> supportedFacing = new ArrayList<>(2);
-    private List<Integer> supportedFlash = new ArrayList<>(3);
-    private List<Integer> supportedFocus = new ArrayList<>(3);
+    private Set<Integer> supportedWhiteBalance = new HashSet<>(5);
+    private Set<Integer> supportedFacing = new HashSet<>(2);
+    private Set<Integer> supportedFlash = new HashSet<>(4);
+    private Set<Integer> supportedFocus = new HashSet<>(4);
 
     private boolean zoomSupported;
     private boolean videoSnapshotSupported;
@@ -68,56 +71,60 @@ public class CameraOptions {
 
 
     /**
-     * List of supported facing values.
+     * Set of supported facing values.
      *
      * @see CameraConstants#FACING_BACK
      * @see CameraConstants#FACING_FRONT
-     * @return a list of supported values.
+     * @return a set of supported values.
      */
-    public List<Integer> getSupportedFacing() {
+    @NonNull
+    public Set<Integer> getSupportedFacing() {
         return supportedFacing;
     }
 
 
     /**
-     * List of supported flash values.
+     * Set of supported flash values.
      *
      * @see CameraConstants#FLASH_AUTO
      * @see CameraConstants#FLASH_OFF
      * @see CameraConstants#FLASH_ON
      * @see CameraConstants#FLASH_TORCH
-     * @return a list of supported values.
+     * @return a set of supported values.
      */
-    public List<Integer> getSupportedFlash() {
+    @NonNull
+    public Set<Integer> getSupportedFlash() {
         return supportedFlash;
     }
 
 
     /**
-     * List of supported white balance values.
+     * Set of supported white balance values.
      *
      * @see CameraConstants#WHITE_BALANCE_AUTO
      * @see CameraConstants#WHITE_BALANCE_CLOUDY
      * @see CameraConstants#WHITE_BALANCE_DAYLIGHT
      * @see CameraConstants#WHITE_BALANCE_FLUORESCENT
      * @see CameraConstants#WHITE_BALANCE_INCANDESCENT
-     * @return a list of supported values.
+     * @return a set of supported values.
      */
-    public List<Integer> getSupportedWhiteBalance() {
+    @NonNull
+    public Set<Integer> getSupportedWhiteBalance() {
         return supportedWhiteBalance;
     }
 
 
     /**
-     * List of supported focus values.
+     * Set of supported focus values.
      *
      * @see CameraConstants#FOCUS_FIXED
      * @see CameraConstants#FOCUS_CONTINUOUS
      * @see CameraConstants#FOCUS_TAP
      * @see CameraConstants#FOCUS_TAP_WITH_MARKER
-     * @return a list of supported values.
+     * @return a set of supported values.
      */
-    public List<Integer> getSupportedFocus() {
+    @NonNull
+    public Set<Integer> getSupportedFocus() {
         return supportedFocus;
     }
 
