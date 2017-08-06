@@ -86,7 +86,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     private int mJpegQuality;
     private boolean mCropOutput;
-    private int mDisplayOffset;
     private CameraCallbacks mCameraCallbacks;
     private OrientationHelper mOrientationHelper;
     private CameraController mCameraController;
@@ -148,7 +147,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mOrientationHelper = new OrientationHelper(context) {
                 @Override
                 public void onDisplayOffsetChanged(int displayOffset) {
-                    mDisplayOffset = displayOffset;
                     mCameraController.onDisplayOffset(displayOffset);
                     mPreviewImpl.onDisplayOffset(displayOffset);
                 }
@@ -325,15 +323,25 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        // And dispatch to everyone.
+        // Enable/Disable what needs to be enabled/disabled (because CameraOptions is involved).
+        // Pinch-to-zoom actually does not need it because it won't draw anything either way.
+        // Grid-lines does not need it because grid modes are always supported.
+        // Why don't we do it just once? Because shit happens when setFocus() is called before camera open.
+        // We don't know if focus is supported at that point.
+        CameraOptions options = mCameraController.getCameraOptions();
+        mFocusMarkerLayout.enable(mCameraController.getFocus() == CameraConstants.FOCUS_TAP_WITH_MARKER);
+        mPinchToZoomLayout.enable(options != null && options.isZoomSupported());
+
+        // Pinch to zoom gesture...
         if (mPinchToZoomLayout.onTouchEvent(event)) {
-            // For pinch-to-zoom.
             float zoom = mPinchToZoomLayout.getZoom();
-            boolean did = setZoom(zoom);
-            if (did) mCameraCallbacks.dispatchOnZoomChanged(zoom, mPinchToZoomLayout.getPoints());
+            PointF[] fingers = mPinchToZoomLayout.getPoints();
+            mCameraController.setZoom(zoom); // <- We know this is successful, due to mPinchToZoomLayout.enable() above.
+            mCameraCallbacks.dispatchOnZoomChanged(zoom, fingers);
+
+        // Focus gesture...
         } else if (mFocusMarkerLayout.onTouchEvent(event)) {
-            // For drawing focus marker.
-            startFocus(event.getX(), event.getY()); // For focus behavior.
+            startFocus(event.getX(), event.getY());
         }
         return true;
     }
@@ -502,22 +510,22 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Sets a zoom value. This is not guaranteed to be supported by the current device.
-     * Look at the returned boolean to check.
+     * Sets a zoom value. This is not guaranteed to be supported by the current device,
+     * but you can take a look at {@link CameraOptions#isZoomSupported()}.
+     * This will have no effect if called before the camera is opened.
+     *
      * Zoom value should be >= 0 and <= 1, where 1 will be the maximum available zoom.
      *
      * @param zoom value in [0,1]
      */
-    public boolean setZoom(float zoom) {
+    public void setZoom(float zoom) {
         if (zoom < 0 || zoom > 1) {
             throw new IllegalArgumentException("Zoom value should be >= 0 and <= 1");
         }
         if (mCameraController.setZoom(zoom)) {
             // Notify PinchToZoomLayout, just in case the call came from outside.
             mPinchToZoomLayout.onExternalZoom(zoom);
-            return true;
         }
-        return false;
     }
 
 
@@ -712,11 +720,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param focus a Focus value.
      */
     public void setFocus(@Focus int focus) {
-        // TODO we are not sure this focus is supported at this point, yet we enable the layout!
-        mFocusMarkerLayout.setEnabled(focus == CameraConstants.FOCUS_TAP_WITH_MARKER);
-        if (focus == CameraConstants.FOCUS_TAP_WITH_MARKER) {
-            focus = CameraConstants.FOCUS_TAP;
-        }
         mCameraController.setFocus(focus);
     }
 

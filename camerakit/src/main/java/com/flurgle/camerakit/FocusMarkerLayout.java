@@ -16,6 +16,7 @@ class FocusMarkerLayout extends FrameLayout {
 
     private FrameLayout mFocusMarkerContainer;
     private ImageView mFill;
+    private boolean mEnabled;
 
     public FocusMarkerLayout(@NonNull Context context) {
         this(context, null);
@@ -33,7 +34,7 @@ class FocusMarkerLayout extends FrameLayout {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
-        if (action == MotionEvent.ACTION_UP && isEnabled()) {
+        if (action == MotionEvent.ACTION_UP && mEnabled) {
             focus(event.getX(), event.getY());
             return true;
         }
@@ -79,4 +80,7 @@ class FocusMarkerLayout extends FrameLayout {
     }
 
 
+    public void enable(boolean enable) {
+        mEnabled = enable;
+    }
 }

@@ -13,8 +13,9 @@ import android.view.View;
 class PinchToZoomLayout extends View {
 
 
-    private ScaleGestureDetector detector;
-    private boolean notify;
+    private ScaleGestureDetector mDetector;
+    private boolean mNotify;
+    private boolean mEnabled;
     @ZoomMode private int mZoomMode;
     private float mZoom = 0;
     private PointF[] mPoints = new PointF[]{
@@ -28,10 +29,10 @@ class PinchToZoomLayout extends View {
 
     public PinchToZoomLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        detector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        mDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
-                notify = true;
+                mNotify = true;
                 mZoom += ((detector.getScaleFactor() - 1) * 2);
                 if (mZoom < 0) mZoom = 0;
                 if (mZoom > 1) mZoom = 1;
@@ -40,7 +41,7 @@ class PinchToZoomLayout extends View {
         });
 
         if (Build.VERSION.SDK_INT >= 19) {
-            detector.setQuickScaleEnabled(false);
+            mDetector.setQuickScaleEnabled(false);
         }
     }
 
@@ -68,19 +69,20 @@ class PinchToZoomLayout extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (mZoomMode != CameraConstants.ZOOM_PINCH) return false;
+        if (!mEnabled) return false;
 
-        // Reset the notify flag on a new gesture.
-        // This is to ensure that the notify flag stays on until the
+        // Reset the mNotify flag on a new gesture.
+        // This is to ensure that the mNotify flag stays on until the
         // previous gesture ends.
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            notify = false;
+            mNotify = false;
         }
 
         // Let's see if we detect something. This will call onScale().
-        detector.onTouchEvent(event);
+        mDetector.onTouchEvent(event);
 
         // Keep notifying CameraView as long as the gesture goes.
-        if (notify) {
+        if (mNotify) {
             mPoints[0].x = event.getX(0);
             mPoints[0].y = event.getY(0);
             if (event.getPointerCount() > 1) {
@@ -90,5 +92,9 @@ class PinchToZoomLayout extends View {
             return true;
         }
         return false;
+    }
+
+    public void enable(boolean enable) {
+        mEnabled = enable;
     }
 }

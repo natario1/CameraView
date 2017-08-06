@@ -1,5 +1,5 @@
 
-*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored. See [below](#roadmap) for a list of what was done. Feel free to open issues with suggestions or contribute.*
+*A fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored. See [below](#roadmap) for a list of what was done. This works better than any other library I have tried, and I would be grateful for any issue, suggestion or contribution.*
 
 # CameraKit
 
@@ -42,20 +42,19 @@ Please read the javadocs in code if you have any doubt about the usage of a cert
 - Seamless image and video capturing, even within the same session
 - System permission handling
 - Dynamic sizing behavior
-  - Create a `CameraView` of any size (not just presets!)
+  - Create a `CameraView` of **any** size
   - Center inside or center crop behaviors
   - Automatic output cropping to match your `CameraView` bounds
 - Built-in tap to focus
 - Built-in pinch to zoom
-- Built-in grid drawing (3x3, 4x4, golden ratio)
-- Control the camera parameters via XML or programmatically
+- Built-in grid drawing
 - Multiple capture methods
   - Take high-resolution pictures with `capturePicture`
-  - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to SnapChat and Instagram)
+  - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to Snapchat and Instagram)
 - `CameraUtils` to help with Bitmaps and orientations
-- EXIF support
-  - Automatically detected orientation tag
-  - Plug in location tags with `CameraView.setLocation(double, double)` to pictures and videos
+- Metadata support for pictures and videos
+  - Automatically detected orientation tags
+  - Plug in location tags with `setLocation()` API
 
 ## Setup
 
@@ -405,8 +404,12 @@ These are still things that need to be done, off the top of my head:
 - [x] replace setCameraListener() with addCameraListener()
 - [x] better threading, for example ensure callbacks are called in the ui thread
 - [x] pinch to zoom support
-- [ ] exposure correction APIs
+- [ ] change demo app icon
+- [ ] refactor package name
 - [ ] `Camera2` integration
+- [ ] publish to bintray
+- [ ] exposure correction APIs
+- [ ] attach operations (e.g. zoom, exposure correction) to vertical swipes or horizontal swipes
 - [ ] check onPause / onStop / onSaveInstanceState consistency
 - [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
