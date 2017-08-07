@@ -67,7 +67,7 @@ For now, you must clone the repo and add it to your project.
 To use CameraView engine, simply add a `CameraView` to your layout:
 
 ```xml
-<com.flurgle.camerakit.CameraView
+<com.otaliastudios.cameraview.CameraView
     android:id="@+id/camera"
     android:keepScreenOn="true"
     android:layout_width="match_parent"
@@ -190,7 +190,7 @@ You can emulate a **center inside** behavior (like the `ImageView` scaletype) by
 
 
 ```xml
-<com.flurgle.camerakit.CameraView
+<com.otaliastudios.cameraview.CameraView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content" />
 ```
@@ -202,7 +202,7 @@ This means that the whole preview is visible, and the image output matches what 
 You can emulate a **center crop** behavior by setting both dimensions to fixed values or to `MATCH_PARENT`. The camera view will fill the rect. If your dimensions don't match the aspect ratio of the internal preview surface, the surface will be cropped to fill the view, just like `android:scaleType="centerCrop"` on an `ImageView`.
 
 ```xml
-<com.flurgle.camerakit.CameraView
+<com.otaliastudios.cameraview.CameraView
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
 ```
@@ -212,7 +212,7 @@ This means that part of the preview is hidden, and the image output will contain
 ## XML Attributes
 
 ```xml
-<com.flurgle.camerakit.CameraView xmlns:app="http://schemas.android.com/apk/res-auto"
+<com.otaliastudios.cameraview.CameraView xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/camera"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

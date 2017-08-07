@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.flurgle.camerakit.demo">
+    package="com.otaliastudios.cameraview.demo">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
@@ -13,7 +13,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.otaliastudios.cameraview.demo.MainActivity"
             android:theme="@style/Theme.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,9 +22,9 @@
         </activity>
 
         <activity
-            android:name=".PicturePreviewActivity" />
+            android:name="com.otaliastudios.cameraview.demo.PicturePreviewActivity" />
 
-        <activity android:name=".VideoPreviewActivity"/>
+        <activity android:name="com.otaliastudios.cameraview.demo.VideoPreviewActivity"/>
 
     </application>
 

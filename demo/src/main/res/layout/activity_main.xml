@@ -19,20 +19,20 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <com.flurgle.camerakit.CameraView xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/camera"
-                android:layout_width="match_parent"
-                android:layout_height="400dp"
-                android:layout_gravity="center_horizontal"
-                android:keepScreenOn="true"
-                app:cameraZoomMode="off"
-                app:cameraGrid="off"
-                app:cameraCropOutput="false"
-                app:cameraFacing="back"
-                app:cameraFlash="off"
-                app:cameraFocus="tapWithMarker"
-                app:cameraJpegQuality="100"
-                app:cameraSessionType="picture" />
+            <com.otaliastudios.cameraview.CameraView xmlns:app="http://schemas.android.com/apk/res-auto"
+                                               android:id="@+id/camera"
+                                               android:layout_width="match_parent"
+                                               android:layout_height="400dp"
+                                               android:layout_gravity="center_horizontal"
+                                               android:keepScreenOn="true"
+                                               app:cameraZoomMode="off"
+                                               app:cameraGrid="off"
+                                               app:cameraCropOutput="false"
+                                               app:cameraFacing="back"
+                                               app:cameraFlash="off"
+                                               app:cameraFocus="tapWithMarker"
+                                               app:cameraJpegQuality="100"
+                                               app:cameraSessionType="picture" />
         </RelativeLayout>
 
         <LinearLayout
@@ -291,7 +291,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
-                        <com.flurgle.camerakit.demo.AutoUnfocusEditText
+                        <com.flurgle.cameraview.demo.AutoUnfocusEditText
                             android:id="@+id/width"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -391,7 +391,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
-                        <com.flurgle.camerakit.demo.AutoUnfocusEditText
+                        <com.flurgle.cameraview.demo.AutoUnfocusEditText
                             android:id="@+id/height"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
