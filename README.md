@@ -212,7 +212,7 @@ This means that part of the preview is hidden, and the image output will contain
 ## XML Attributes
 
 ```xml
-<com.otaliastudios.cameraview.CameraView xmlns:app="http://schemas.android.com/apk/res-auto"
+<com.otaliastudios.cameraview.CameraView
     android:id="@+id/camera"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -226,8 +226,7 @@ This means that part of the preview is hidden, and the image output will contain
     app:cameraCropOutput="true"  
     app:cameraJpegQuality="100"
     app:cameraVideoQuality="480p"
-    app:cameraWhiteBalance="auto"
-    android:adjustViewBounds="true" />
+    app:cameraWhiteBalance="auto" />
 ```
 
 |XML Attribute|Method|Values|Default Value|
