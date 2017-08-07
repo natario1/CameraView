@@ -3,11 +3,11 @@ package com.flurgle.camerakit;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
-import android.support.v4.util.SparseArrayCompat;
+import android.util.SparseArray;
 
 public class AspectRatio implements Comparable<AspectRatio>, Parcelable {
 
-    private final static SparseArrayCompat<SparseArrayCompat<AspectRatio>> sCache = new SparseArrayCompat<>(16);
+    private final static SparseArray<SparseArray<AspectRatio>> sCache = new SparseArray<>(16);
 
     private final int mX;
     private final int mY;
@@ -79,10 +79,10 @@ public class AspectRatio implements Comparable<AspectRatio>, Parcelable {
         int gcd = gcd(x, y);
         x /= gcd;
         y /= gcd;
-        SparseArrayCompat<AspectRatio> arrayX = sCache.get(x);
+        SparseArray<AspectRatio> arrayX = sCache.get(x);
         if (arrayX == null) {
             AspectRatio ratio = new AspectRatio(x, y);
-            arrayX = new SparseArrayCompat<>();
+            arrayX = new SparseArray<>();
             arrayX.put(y, ratio);
             sCache.put(x, arrayX);
             return ratio;

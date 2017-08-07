@@ -16,18 +16,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
     sourceSets {
-        main.java.srcDirs += 'src/main/base'
-        main.java.srcDirs += 'src/main/api16'
-        main.java.srcDirs += 'src/main/api21'
-        main.java.srcDirs += 'src/main/types'
+        main.java.srcDirs += 'src/main/options'
+        main.java.srcDirs += 'src/main/views'
         main.java.srcDirs += 'src/main/utils'
     }
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:exifinterface:25.3.1'
+    compile 'com.android.support:support-annotations:25.3.1'
     compile 'android.arch.lifecycle:runtime:1.0.0-alpha1'
     compile 'android.arch.lifecycle:extensions:1.0.0-alpha1'
     annotationProcessor 'android.arch.lifecycle:compiler:1.0.0-alpha1'

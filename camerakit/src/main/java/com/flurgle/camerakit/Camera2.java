@@ -36,6 +36,11 @@ class Camera2 extends CameraController {
 
 
     @Override
+    boolean setExposureCorrection(float EVvalue) {
+        return false;
+    }
+
+    @Override
     boolean setZoom(float zoom) {
         return false;
     }

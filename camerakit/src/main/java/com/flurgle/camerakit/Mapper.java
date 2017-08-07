@@ -1,7 +1,7 @@
 package com.flurgle.camerakit;
 
 import android.hardware.Camera;
-import android.support.v4.util.SparseArrayCompat;
+import android.util.SparseArray;
 
 abstract class Mapper {
 
@@ -15,10 +15,10 @@ abstract class Mapper {
     @Focus abstract <T> int unmapFocus(T cameraConstant);
 
     static class Mapper1 extends Mapper {
-        private static final SparseArrayCompat<String> FLASH = new SparseArrayCompat<>();
-        private static final SparseArrayCompat<String> WB = new SparseArrayCompat<>();
-        private static final SparseArrayCompat<Integer> FACING = new SparseArrayCompat<>();
-        private static final SparseArrayCompat<String> FOCUS = new SparseArrayCompat<>();
+        private static final SparseArray<String> FLASH = new SparseArray<>();
+        private static final SparseArray<String> WB = new SparseArray<>();
+        private static final SparseArray<Integer> FACING = new SparseArray<>();
+        private static final SparseArray<String> FOCUS = new SparseArray<>();
 
         static {
             FLASH.put(CameraConstants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);

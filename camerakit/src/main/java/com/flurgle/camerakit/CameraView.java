@@ -1,6 +1,7 @@
 package com.flurgle.camerakit;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
@@ -14,13 +15,12 @@ import android.content.res.TypedArray;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -418,8 +418,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     private boolean checkPermissions(@SessionType int sessionType) {
         checkPermissionsManifestOrThrow(sessionType);
-        int cameraCheck = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA);
-        int audioCheck = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.RECORD_AUDIO);
+        boolean api23 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
+        int cameraCheck, audioCheck;
+        if (!api23) {
+            cameraCheck = PackageManager.PERMISSION_GRANTED;
+            audioCheck = PackageManager.PERMISSION_GRANTED;
+        } else {
+            cameraCheck = getContext().checkSelfPermission(Manifest.permission.CAMERA);
+            audioCheck = getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO);
+        }
         switch (sessionType) {
             case SESSION_TYPE_VIDEO:
                 if (cameraCheck != PackageManager.PERMISSION_GRANTED || audioCheck != PackageManager.PERMISSION_GRANTED) {
@@ -1069,6 +1076,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
+    // If we end up here, we're in M.
+    @TargetApi(Build.VERSION_CODES.M)
     private void requestPermissions(boolean requestCamera, boolean requestAudio) {
         Activity activity = null;
         Context context = getContext();
@@ -1083,8 +1092,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (requestCamera) permissions.add(Manifest.permission.CAMERA);
         if (requestAudio) permissions.add(Manifest.permission.RECORD_AUDIO);
         if (activity != null) {
-            ActivityCompat.requestPermissions(activity,
-                    permissions.toArray(new String[permissions.size()]),
+            activity.requestPermissions(permissions.toArray(new String[permissions.size()]),
                     CameraConstants.PERMISSION_REQUEST_CODE);
         }
     }
