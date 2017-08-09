@@ -3,22 +3,24 @@ package com.otaliastudios.cameraview;
 import android.hardware.Camera;
 import android.util.SparseArray;
 
+import java.util.HashMap;
+
 abstract class Mapper {
 
     abstract <T> T mapFlash(@Flash int internalConstant);
     abstract <T> T mapFacing(@Facing int internalConstant);
     abstract <T> T mapWhiteBalance(@WhiteBalance int internalConstant);
     abstract <T> T mapFocus(@Focus int internalConstant);
-    @Flash abstract <T> int unmapFlash(T cameraConstant);
-    @Facing abstract <T> int unmapFacing(T cameraConstant);
-    @WhiteBalance abstract <T> int unmapWhiteBalance(T cameraConstant);
-    @Focus abstract <T> int unmapFocus(T cameraConstant);
+    @Flash abstract <T> Integer unmapFlash(T cameraConstant);
+    @Facing abstract <T> Integer unmapFacing(T cameraConstant);
+    @WhiteBalance abstract <T> Integer unmapWhiteBalance(T cameraConstant);
+    @Focus abstract <T> Integer unmapFocus(T cameraConstant);
 
     static class Mapper1 extends Mapper {
-        private static final SparseArray<String> FLASH = new SparseArray<>();
-        private static final SparseArray<String> WB = new SparseArray<>();
-        private static final SparseArray<Integer> FACING = new SparseArray<>();
-        private static final SparseArray<String> FOCUS = new SparseArray<>();
+        private static final HashMap<Integer, String> FLASH = new HashMap<>();
+        private static final HashMap<Integer, String> WB = new HashMap<>();
+        private static final HashMap<Integer, Integer> FACING = new HashMap<>();
+        private static final HashMap<Integer, String> FOCUS = new HashMap<>();
 
         static {
             FLASH.put(CameraConstants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
@@ -40,43 +42,52 @@ abstract class Mapper {
 
         @Override
         <T> T mapFlash(int internalConstant) {
-            return (T) FLASH.get(internalConstant, null);
+            return (T) FLASH.get(internalConstant);
         }
 
         @Override
         <T> T mapFacing(int internalConstant) {
-            return (T) FACING.get(internalConstant, null);
+            return (T) FACING.get(internalConstant);
         }
 
         @Override
         <T> T mapWhiteBalance(int internalConstant) {
-            return (T) WB.get(internalConstant, null);
+            return (T) WB.get(internalConstant);
         }
 
         @Override
         <T> T mapFocus(@Focus int internalConstant) {
-            return (T) FOCUS.get(internalConstant, null);
+            return (T) FOCUS.get(internalConstant);
+        }
+
+        private Integer reverseLookup(HashMap<Integer, ?> map, Object object) {
+            for (int value : map.keySet()) {
+                if (map.get(value).equals(object)) {
+                    return value;
+                }
+            }
+            return null;
         }
 
         @Override
-        <T> int unmapFlash(T cameraConstant) {
-            return FLASH.keyAt(FLASH.indexOfValue((String) cameraConstant));
+        <T> Integer unmapFlash(T cameraConstant) {
+            return reverseLookup(FLASH, cameraConstant);
         }
 
         @Override
-        <T> int unmapFacing(T cameraConstant) {
-            return FACING.keyAt(FACING.indexOfValue((Integer) cameraConstant));
+        <T> Integer unmapFacing(T cameraConstant) {
+            return reverseLookup(FACING, cameraConstant);
         }
 
         @Override
-        <T> int unmapWhiteBalance(T cameraConstant) {
-            return WB.keyAt(WB.indexOfValue((String) cameraConstant));
+        <T> Integer unmapWhiteBalance(T cameraConstant) {
+            return reverseLookup(WB, cameraConstant);
         }
 
         // This will ignore FOCUS_TAP_WITH_MARKER but it's fine
         @Override
-        <T> int unmapFocus(T cameraConstant) {
-            return FOCUS.keyAt(FOCUS.indexOfValue((String) cameraConstant));
+        <T> Integer unmapFocus(T cameraConstant) {
+            return reverseLookup(FOCUS, cameraConstant);
         }
     }
 
@@ -98,17 +109,17 @@ abstract class Mapper {
         }
 
         @Override
-        <T> int unmapFlash(T cameraConstant) {
+        <T> Integer unmapFlash(T cameraConstant) {
             return 0;
         }
 
         @Override
-        <T> int unmapFacing(T cameraConstant) {
+        <T> Integer unmapFacing(T cameraConstant) {
             return 0;
         }
 
         @Override
-        <T> int unmapWhiteBalance(T cameraConstant) {
+        <T> Integer unmapWhiteBalance(T cameraConstant) {
             return 0;
         }
 
@@ -118,7 +129,7 @@ abstract class Mapper {
         }
 
         @Override
-        <T> int unmapFocus(T cameraConstant) {
+        <T> Integer unmapFocus(T cameraConstant) {
             return 0;
         }
     }

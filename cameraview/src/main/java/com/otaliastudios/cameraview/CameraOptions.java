@@ -37,14 +37,16 @@ public class CameraOptions {
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
-            supportedFacing.add(mapper.unmapFacing(cameraInfo.facing));
+            Integer value = mapper.unmapFacing(cameraInfo.facing);
+            if (value != null) supportedFacing.add(value);
         }
 
         // WB
         strings = params.getSupportedWhiteBalance();
         if (strings != null) {
             for (String string : strings) {
-                supportedWhiteBalance.add(mapper.unmapWhiteBalance(string));
+                Integer value = mapper.unmapWhiteBalance(string);
+                if (value != null) supportedWhiteBalance.add(value);
             }
         }
 
@@ -52,14 +54,16 @@ public class CameraOptions {
         strings = params.getSupportedFlashModes();
         if (strings != null) {
             for (String string : strings) {
-                supportedFlash.add(mapper.unmapFlash(string));
+                Integer value = mapper.unmapFlash(string);
+                if (value != null) supportedFlash.add(value);
             }
         }
 
         // Focus
         strings = params.getSupportedFocusModes(); // Never null.
         for (String string : strings) {
-            supportedFocus.add(mapper.unmapFocus(string));
+            Integer value = mapper.unmapFocus(string);
+            if (value != null) supportedFocus.add(value);
         }
 
         zoomSupported = params.isZoomSupported();
