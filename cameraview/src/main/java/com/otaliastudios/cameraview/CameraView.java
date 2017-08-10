@@ -31,6 +31,7 @@ import android.widget.FrameLayout;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.otaliastudios.cameraview.CameraConstants.FACING_BACK;
@@ -61,6 +62,11 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
  * }
  * }
  * </pre>
+ *
+ * TODO: docs for gestures
+ * TODO: README for gestures
+ * TODO: deprecate setFocus, CONTINUOUS should be the default
+ *
  */
 public class CameraView extends FrameLayout implements LifecycleObserver {
 
@@ -92,11 +98,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private Preview mPreviewImpl;
 
     private Lifecycle mLifecycle;
-    private FocusMarkerLayout mFocusMarkerLayout;
     private GridLinesLayout mGridLinesLayout;
-    private PinchToZoomLayout mPinchToZoomLayout;
+    private PinchGestureLayout mPinchGestureLayout;
+    private TapGestureLayout mTapGestureLayout;
     private boolean mIsStarted;
     private boolean mKeepScreenOn;
+
+    private float mZoomValue;
+    private float mExposureCorrectionValue;
+
+    private HashMap<Gesture, Integer> mGestureMap = new HashMap<>(4);
 
     public CameraView(@NonNull Context context) {
         super(context, null);
@@ -118,30 +129,36 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraConstants.Defaults.DEFAULT_WHITE_BALANCE);
         int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraConstants.Defaults.DEFAULT_VIDEO_QUALITY);
         int grid = a.getInteger(R.styleable.CameraView_cameraGrid, CameraConstants.Defaults.DEFAULT_GRID);
-        int zoom = a.getInteger(R.styleable.CameraView_cameraZoomMode, CameraConstants.Defaults.DEFAULT_ZOOM);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraConstants.Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraConstants.Defaults.DEFAULT_CROP_OUTPUT);
+        int tapGesture = a.getInteger(R.styleable.CameraView_cameraGestureTap, CameraConstants.Defaults.DEFAULT_GESTURE_ACTION_TAP);
+        // int doubleTapGesture = a.getInteger(R.styleable.CameraView_cameraGestureDoubleTap, CameraConstants.Defaults.DEFAULT_GESTURE_ACTION_DOUBLE_TAP);
+        int longTapGesture = a.getInteger(R.styleable.CameraView_cameraGestureLongTap, CameraConstants.Defaults.DEFAULT_GESTURE_ACTION_LONG_TAP);
+        int pinchGesture = a.getInteger(R.styleable.CameraView_cameraGesturePinch, CameraConstants.Defaults.DEFAULT_GESTURE_ACTION_PINCH);
         a.recycle();
 
         mCameraCallbacks = new CameraCallbacks();
         mPreviewImpl = new TextureViewPreview(context, this);
         mCameraController = new Camera1(mCameraCallbacks, mPreviewImpl);
-        mFocusMarkerLayout = new FocusMarkerLayout(context);
         mGridLinesLayout = new GridLinesLayout(context);
-        mPinchToZoomLayout = new PinchToZoomLayout(context);
-        addView(mFocusMarkerLayout);
+        mPinchGestureLayout = new PinchGestureLayout(context);
+        mTapGestureLayout = new TapGestureLayout(context);
         addView(mGridLinesLayout);
-        addView(mPinchToZoomLayout);
+        addView(mPinchGestureLayout);
+        addView(mTapGestureLayout);
 
         mIsStarted = false;
         setFacing(facing);
         setFlash(flash);
         setFocus(focus);
         setSessionType(sessionType);
-        setZoomMode(zoom);
         setVideoQuality(videoQuality);
         setWhiteBalance(whiteBalance);
         setGrid(grid);
+        mapGesture(Gesture.TAP, tapGesture);
+        // mapGesture(Gesture.DOUBLE_TAP, doubleTapGesture);
+        mapGesture(Gesture.LONG_TAP, longTapGesture);
+        mapGesture(Gesture.PINCH, pinchGesture);
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context) {
@@ -315,6 +332,52 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
+    /**
+     * Maps a {@link Gesture} to a certain gesture action.
+     * For example, you can assign zoom control to the pinch gesture by just calling:
+     * <code>
+     *     cameraView.mapGesture(Gesture.PINCH, CameraConstants.GESTURE_ACTION_ZOOM);
+     * </code>
+     *
+     * Not all actions can be assigned to a certain gesture. For example, zoom control can't be
+     * assigned to the Gesture.TAP gesture. Look at {@link Gesture} to know more.
+     * This method returns false if they are not assignable.
+     *
+     * @param gesture which gesture to map
+     * @param action which action should be assigned
+     * @return true if this action could be assigned to this gesture
+     */
+    public boolean mapGesture(@NonNull Gesture gesture, @GestureAction int action) {
+        if (gesture.isAssignableTo(action)) {
+            mGestureMap.put(gesture, action);
+            switch (gesture) {
+                case PINCH:
+                    mPinchGestureLayout.enable(mGestureMap.get(Gesture.PINCH) != CameraConstants.GESTURE_ACTION_NONE);
+                    break;
+                case TAP:
+                // case DOUBLE_TAP:
+                case LONG_TAP:
+                    mTapGestureLayout.enable(mGestureMap.get(Gesture.TAP) != CameraConstants.GESTURE_ACTION_NONE ||
+                            // mGestureMap.get(Gesture.DOUBLE_TAP) != CameraConstants.GESTURE_ACTION_NONE ||
+                            mGestureMap.get(Gesture.LONG_TAP) != CameraConstants.GESTURE_ACTION_NONE);
+                    break;
+            }
+            return true;
+        }
+        mapGesture(gesture, CameraConstants.GESTURE_ACTION_NONE);
+        return false;
+    }
+
+
+    /**
+     * Clears any action mapped to the given gesture.
+     * @param gesture which gesture to clear
+     */
+    public void clearGesture(@NonNull Gesture gesture) {
+        mGestureMap.put(gesture, CameraConstants.GESTURE_ACTION_NONE);
+    }
+
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         return true; // Steal our own events.
@@ -323,25 +386,48 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        // Enable/Disable what needs to be enabled/disabled (because CameraOptions is involved).
-        // Pinch-to-zoom actually does not need it because it won't draw anything either way.
-        // Grid-lines does not need it because grid modes are always supported.
-        // Why don't we do it just once? Because shit happens when setFocus() is called before camera open.
-        // We don't know if focus is supported at that point.
-        CameraOptions options = mCameraController.getCameraOptions();
-        mFocusMarkerLayout.enable(mCameraController.getFocus() == CameraConstants.FOCUS_TAP_WITH_MARKER);
-        mPinchToZoomLayout.enable(options != null && options.isZoomSupported());
+        if (!mCameraController.isCameraOpened()) return true;
 
-        // Pinch to zoom gesture...
-        if (mPinchToZoomLayout.onTouchEvent(event)) {
-            float zoom = mPinchToZoomLayout.getZoom();
-            PointF[] fingers = mPinchToZoomLayout.getPoints();
-            mCameraController.setZoom(zoom); // <- We know this is successful, due to mPinchToZoomLayout.enable() above.
-            mCameraCallbacks.dispatchOnZoomChanged(zoom, fingers);
+        CameraOptions options = mCameraController.getCameraOptions(); // Non null
+        if (mPinchGestureLayout.onTouchEvent(event)) {
+            int action = mGestureMap.get(Gesture.PINCH);
+            // This currently can be zoom or AE.
+            // Camera can either support these or not.
+            if (action == CameraConstants.GESTURE_ACTION_ZOOM) {
+                float oldValue = mZoomValue;
+                float newValue = mPinchGestureLayout.scaleValue(oldValue, 0, 1);
+                PointF[] points = mPinchGestureLayout.getPoints();
+                if (mCameraController.setZoom(newValue)) {
+                    mZoomValue = newValue;
+                    mCameraCallbacks.dispatchOnZoomChanged(newValue, points);
+                }
 
-        // Focus gesture...
-        } else if (mFocusMarkerLayout.onTouchEvent(event)) {
-            startFocus(event.getX(), event.getY());
+            } else if (action == CameraConstants.GESTURE_ACTION_AE_CORRECTION) {
+                float oldValue = mExposureCorrectionValue;
+                float minValue = options.getExposureCorrectionMinValue();
+                float maxValue = options.getExposureCorrectionMaxValue();
+                float newValue = mPinchGestureLayout.scaleValue(oldValue, minValue, maxValue);
+                PointF[] points = mPinchGestureLayout.getPoints();
+                float[] bounds = new float[]{minValue, maxValue};
+                if (mCameraController.setExposureCorrection(newValue)) {
+                    mExposureCorrectionValue = newValue;
+                    mCameraCallbacks.dispatchOnExposureCorrectionChanged(newValue, bounds, points);
+                }
+            }
+
+        } else if (mTapGestureLayout.onTouchEvent(event)) {
+            Gesture gesture = mTapGestureLayout.getGestureType();
+            int action = mGestureMap.get(gesture);
+            // This currently can be capture, focus or focusWithMaker.
+            // Camera can either support these or not.
+            if (action == CameraConstants.GESTURE_ACTION_CAPTURE) {
+                capturePicture();
+
+            } else if (action == CameraConstants.GESTURE_ACTION_FOCUS ||
+                    action == CameraConstants.GESTURE_ACTION_FOCUS_WITH_MARKER) {
+                PointF point = mTapGestureLayout.getPoint();
+                mCameraController.startAutoFocus(gesture, point); // This will call onFocusStart and onFocusEnd
+            }
         }
         return true;
     }
@@ -424,7 +510,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             cameraCheck = PackageManager.PERMISSION_GRANTED;
             audioCheck = PackageManager.PERMISSION_GRANTED;
         } else {
+            //noinspection all
             cameraCheck = getContext().checkSelfPermission(Manifest.permission.CAMERA);
+            //noinspection all
             audioCheck = getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO);
         }
         switch (sessionType) {
@@ -530,7 +618,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param EVvalue exposure correction value.
      */
     public void setExposureCorrection(float EVvalue) {
-        mCameraController.setExposureCorrection(EVvalue);
+        CameraOptions options = getCameraOptions();
+        if (options != null) {
+            float min = options.getExposureCorrectionMinValue();
+            float max = options.getExposureCorrectionMaxValue();
+            if (EVvalue < min) EVvalue = min;
+            if (EVvalue > max) EVvalue = max;
+            if (mCameraController.setExposureCorrection(EVvalue)) {
+                mExposureCorrectionValue = EVvalue;
+            }
+        }
     }
 
 
@@ -540,15 +637,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * This will have no effect if called before the camera is opened.
      *
      * Zoom value should be >= 0 and <= 1, where 1 will be the maximum available zoom.
+     * If it's not, it will be capped.
      *
      * @param zoom value in [0,1]
      */
     public void setZoom(float zoom) {
-        if (zoom < 0 || zoom > 1) {
-            throw new IllegalArgumentException("Zoom value should be >= 0 and <= 1");
-        }
+        if (zoom < 0) zoom = 0;
+        if (zoom > 1) zoom = 1;
         if (mCameraController.setZoom(zoom)) {
-            mPinchToZoomLayout.onExternalZoom(zoom); // Notify PinchToZoomLayout
+            mZoomValue = zoom;
         }
     }
 
@@ -729,7 +826,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void startFocus(float x, float y) {
         if (x < 0 || x > getWidth()) throw new IllegalArgumentException("x should be >= 0 and <= getWidth()");
         if (y < 0 || y > getHeight()) throw new IllegalArgumentException("y should be >= 0 and <= getHeight()");
-        mCameraController.startFocus(x, y);
+        mCameraController.startAutoFocus(null, new PointF(x, y));
     }
 
 
@@ -821,20 +918,21 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @see CameraConstants#ZOOM_OFF
      * @see CameraConstants#ZOOM_PINCH
      *
-     * @param zoom the zoom mode
+     * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
      */
+    @Deprecated
     public void setZoomMode(@ZoomMode int zoom) {
-        mPinchToZoomLayout.setZoomMode(zoom);
     }
 
 
     /**
      * Gets the current zoom mode.
-     * @return the current zoom mode
+     * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
      */
     @ZoomMode
+    @Deprecated
     public int getZoomMode() {
-        return mPinchToZoomLayout.getZoomMode();
+        return CameraConstants.ZOOM_OFF;
     }
 
 
@@ -1221,36 +1319,59 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
 
-        public void dispatchOnFocusStart(final float x, final float y) {
+        public void dispatchOnFocusStart(@Nullable final Gesture gesture, final PointF point) {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    if (gesture != null && mGestureMap.get(gesture) == CameraConstants.GESTURE_ACTION_FOCUS_WITH_MARKER) {
+                        mTapGestureLayout.onFocusStart(point);
+                    }
+
                     for (CameraListener listener : mListeners) {
-                        listener.onFocusStart(x, y);
+                        listener.onFocusStart(point);
                     }
                 }
             });
         }
 
 
-        public void dispatchOnFocusEnd(final boolean success, final float x, final float y) {
+        public void dispatchOnFocusEnd(@Nullable final Gesture gesture, final boolean success,
+                                       final PointF point) {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    if (gesture != null && mGestureMap.get(gesture) == CameraConstants.GESTURE_ACTION_FOCUS_WITH_MARKER) {
+                        mTapGestureLayout.onFocusEnd(success);
+                    }
+
                     for (CameraListener listener : mListeners) {
-                        listener.onFocusEnd(success, x, y);
+                        listener.onFocusEnd(success, point);
                     }
                 }
             });
         }
 
 
-        public void dispatchOnZoomChanged(final float zoom, final PointF[] fingers) {
+        public void dispatchOnZoomChanged(final float newValue, final PointF[] fingers) {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     for (CameraListener listener : mListeners) {
-                        listener.onZoomChanged(zoom, fingers);
+                        listener.onZoomChanged(newValue, new float[]{0, 1}, fingers);
+                    }
+                }
+            });
+        }
+
+
+        public void dispatchOnExposureCorrectionChanged(final float newValue,
+                                                        final float[] bounds,
+                                                        final PointF[] fingers) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onExposureCorrectionChanged(newValue, bounds, fingers);
                     }
                 }
             });

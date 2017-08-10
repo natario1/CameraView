@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview;
 
+import android.graphics.PointF;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -49,7 +50,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     abstract boolean shouldFlipSizes(); // Wheter the Sizes should be flipped to match the view orientation.
     abstract boolean isCameraOpened();
 
-    abstract void startFocus(float x, float y);
+    abstract boolean startAutoFocus(@Nullable Gesture gesture, PointF point);
 
     @Nullable abstract ExtraProperties getExtraProperties();
     @Nullable abstract CameraOptions getCameraOptions();

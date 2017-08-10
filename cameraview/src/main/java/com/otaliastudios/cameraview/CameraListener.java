@@ -60,10 +60,9 @@ public abstract class CameraListener {
      * and the autofocus is trying to focus around that area.
      * This can be used to draw things on screen.
      *
-     * @param x coordinate with respect to CameraView.getWidth()
-     * @param y coordinate with respect to CameraView.getHeight()
+     * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
-    public void onFocusStart(float x, float y) {
+    public void onFocusStart(PointF point) {
 
     }
 
@@ -74,22 +73,35 @@ public abstract class CameraListener {
      * This might succeed or not.
      *
      * @param successful whether camera succeeded
-     * @param x coordinate with respect to CameraView.getWidth()
-     * @param y coordinate with respect to CameraView.getHeight()
+     * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
-    public void onFocusEnd(boolean successful, float x, float y) {
+    public void onFocusEnd(boolean successful, PointF point) {
 
     }
 
 
     /**
-     * Noitifies that a finger pinch-to-zoom gesture just caused the camera zoom
+     * Noitifies that a finger gesture just caused the camera zoom
      * to be changed. This can be used to draw, for example, a seek bar.
      *
-     * @param zoom the new zoom value, 0...1
+     * @param newValue the new zoom value
+     * @param bounds min and max bounds for newValue (fixed to 0 ... 1)
      * @param fingers finger positions that caused the event
      */
-    public void onZoomChanged(float zoom, PointF[] fingers) {
+    public void onZoomChanged(float newValue, float[] bounds, PointF[] fingers) {
+
+    }
+
+
+    /**
+     * Noitifies that a finger gesture just caused the camera exposure correction
+     * to be changed. This can be used to draw, for example, a seek bar.
+     *
+     * @param newValue the new correction value
+     * @param bounds min and max bounds for newValue, as returned by {@link CameraOptions}
+     * @param fingers finger positions that caused the event
+     */
+    public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {
 
     }
 

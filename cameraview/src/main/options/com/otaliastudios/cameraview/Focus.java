@@ -12,5 +12,6 @@ import static com.otaliastudios.cameraview.CameraConstants.FOCUS_TAP_WITH_MARKER
 
 @Retention(RetentionPolicy.SOURCE)
 @IntDef({FOCUS_CONTINUOUS, FOCUS_TAP, FOCUS_FIXED, FOCUS_TAP_WITH_MARKER})
+@Deprecated
 public @interface Focus {
 }

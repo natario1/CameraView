@@ -3,6 +3,33 @@
 
     <declare-styleable name="CameraView">
 
+        <attr name="cameraGestureTap" format="enum">
+            <enum name="none" value="0" />
+            <enum name="focus" value="1" />
+            <enum name="focusWithMarker" value="2" />
+            <enum name="capture" value="3" />
+        </attr>
+
+        <attr name="cameraGestureDoubleTap" format="enum">
+            <enum name="none" value="0" />
+            <enum name="focus" value="1" />
+            <enum name="focusWithMarker" value="2" />
+            <enum name="capture" value="3" />
+        </attr>
+
+        <attr name="cameraGestureLongTap" format="enum">
+            <enum name="none" value="0" />
+            <enum name="focus" value="1" />
+            <enum name="focusWithMarker" value="2" />
+            <enum name="capture" value="3" />
+        </attr>
+
+        <attr name="cameraGesturePinch" format="enum">
+            <enum name="zoom" value="4" />
+            <enum name="aeCorrection" value="5" />
+        </attr>
+
+
         <attr name="cameraFacing" format="enum">
             <enum name="back" value="0" />
             <enum name="front" value="1" />

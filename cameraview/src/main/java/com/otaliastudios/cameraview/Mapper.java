@@ -34,6 +34,7 @@ abstract class Mapper {
             WB.put(CameraConstants.WHITE_BALANCE_FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
             WB.put(CameraConstants.WHITE_BALANCE_DAYLIGHT, Camera.Parameters.WHITE_BALANCE_DAYLIGHT);
             WB.put(CameraConstants.WHITE_BALANCE_CLOUDY, Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT);
+            // TODO FOCUS_MODE_FIXED is rarely supported.
             FOCUS.put(CameraConstants.FOCUS_FIXED, Camera.Parameters.FOCUS_MODE_FIXED);
             FOCUS.put(CameraConstants.FOCUS_CONTINUOUS, Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
             FOCUS.put(CameraConstants.FOCUS_TAP, Camera.Parameters.FOCUS_MODE_AUTO);

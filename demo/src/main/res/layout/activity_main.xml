@@ -20,19 +20,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <com.otaliastudios.cameraview.CameraView xmlns:app="http://schemas.android.com/apk/res-auto"
-                                               android:id="@+id/camera"
-                                               android:layout_width="match_parent"
-                                               android:layout_height="400dp"
-                                               android:layout_gravity="center_horizontal"
-                                               android:keepScreenOn="true"
-                                               app:cameraZoomMode="off"
-                                               app:cameraGrid="off"
-                                               app:cameraCropOutput="false"
-                                               app:cameraFacing="back"
-                                               app:cameraFlash="off"
-                                               app:cameraFocus="tapWithMarker"
-                                               app:cameraJpegQuality="100"
-                                               app:cameraSessionType="picture" />
+                android:id="@+id/camera"
+                android:layout_width="match_parent"
+                android:layout_height="400dp"
+                android:layout_gravity="center_horizontal"
+                android:keepScreenOn="true"
+                app:cameraZoomMode="off"
+                app:cameraGrid="off"
+                app:cameraCropOutput="false"
+                app:cameraFacing="back"
+                app:cameraFlash="off"
+                app:cameraGestureTap="focusWithMarker"
+                app:cameraGestureLongTap="none"
+                app:cameraGesturePinch="zoom"
+                app:cameraJpegQuality="100"
+                app:cameraSessionType="picture" />
         </RelativeLayout>
 
         <LinearLayout

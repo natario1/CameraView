@@ -10,5 +10,6 @@ import static com.otaliastudios.cameraview.CameraConstants.ZOOM_PINCH;
 
 @Retention(RetentionPolicy.SOURCE)
 @IntDef({ZOOM_OFF, ZOOM_PINCH})
+@Deprecated
 public @interface ZoomMode {
 }

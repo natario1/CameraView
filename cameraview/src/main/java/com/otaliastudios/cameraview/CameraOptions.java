@@ -18,13 +18,14 @@ public class CameraOptions {
     private Set<Integer> supportedWhiteBalance = new HashSet<>(5);
     private Set<Integer> supportedFacing = new HashSet<>(2);
     private Set<Integer> supportedFlash = new HashSet<>(4);
-    private Set<Integer> supportedFocus = new HashSet<>(4);
+    @Deprecated private Set<Integer> supportedFocus = new HashSet<>(4);
 
     private boolean zoomSupported;
     private boolean videoSnapshotSupported;
     private boolean exposureCorrectionSupported;
     private float exposureCorrectionMinValue;
     private float exposureCorrectionMaxValue;
+    private boolean autoFocusSupported;
 
 
     // Camera1 constructor.
@@ -68,6 +69,7 @@ public class CameraOptions {
 
         zoomSupported = params.isZoomSupported();
         videoSnapshotSupported = params.isVideoSnapshotSupported();
+        autoFocusSupported = params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
 
         // Exposure correction
         float step = params.getExposureCompensationStep();
@@ -161,6 +163,18 @@ public class CameraOptions {
      */
     public boolean isVideoSnapshotSupported() {
         return videoSnapshotSupported;
+    }
+
+
+    /**
+     * Whether auto focus is supported. This means you can map gestures to
+     * {@link CameraConstants#GESTURE_ACTION_FOCUS} or {@link CameraConstants#GESTURE_ACTION_FOCUS_WITH_MARKER}
+     * and focus will be changed on tap.
+     *
+     * @return whether auto focus is supported.
+     */
+    public boolean isAutoFocusSupported() {
+        return autoFocusSupported;
     }
 
 

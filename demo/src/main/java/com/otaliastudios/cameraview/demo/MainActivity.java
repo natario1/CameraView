@@ -75,8 +75,9 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     private boolean mCapturingPicture;
     private boolean mCapturingVideo;
 
-    private CameraListener mPictureListener;
-    private CameraListener mVideoListener;
+    // To show stuff in the callback
+    private Size mCaptureNativeSize;
+    private long mCaptureTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,8 +93,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
             }
         });
 
-        camera.addOnLayoutChangeListener(this);
-
         sessionTypeRadioGroup.setOnCheckedChangeListener(sessionTypeChangedListener);
         cropModeRadioGroup.setOnCheckedChangeListener(cropModeChangedListener);
         widthModeRadioGroup.setOnCheckedChangeListener(widthModeChangedListener);
@@ -101,6 +100,35 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         videoQualityRadioGroup.setOnCheckedChangeListener(videoQualityChangedListener);
         gridModeRadioGroup.setOnCheckedChangeListener(gridModeChangedListener);
         zoomModeRadioGroup.setOnCheckedChangeListener(zoomModeChangedListener);
+
+        camera.addOnLayoutChangeListener(this);
+        camera.addCameraListener(new CameraListener() {
+            @Override
+            public void onPictureTaken(byte[] jpeg) {
+                super.onPictureTaken(jpeg);
+                mCapturingPicture = false;
+                long callbackTime = System.currentTimeMillis();
+                if (mCapturingVideo) {
+                    message("Captured while taking video. Size="+mCaptureNativeSize, false);
+                    return;
+                }
+                PicturePreviewActivity.setImage(jpeg);
+                Intent intent = new Intent(MainActivity.this, PicturePreviewActivity.class);
+                intent.putExtra("delay", callbackTime - mCaptureTime);
+                intent.putExtra("nativeWidth", mCaptureNativeSize.getWidth());
+                intent.putExtra("nativeHeight", mCaptureNativeSize.getHeight());
+                startActivity(intent);
+            }
+
+            @Override
+            public void onVideoTaken(File video) {
+                super.onVideoTaken(video);
+                mCapturingVideo = false;
+                Intent intent = new Intent(MainActivity.this, VideoPreviewActivity.class);
+                intent.putExtra("video", Uri.fromFile(video));
+                startActivity(intent);
+            }
+        });
     }
 
     private void message(String content, boolean important) {
@@ -126,33 +154,14 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         camera.destroy();
     }
 
+
     @OnClick(R.id.capturePhoto)
     void capturePhoto() {
         if (mCapturingPicture) return;
         mCapturingPicture = true;
-        final long startTime = System.currentTimeMillis();
-        final Size nativeSize = camera.getCaptureSize();
+        mCaptureTime = System.currentTimeMillis();
+        mCaptureNativeSize = camera.getCaptureSize();
         message("Capturing picture...", false);
-        camera.removeCameraListener(mPictureListener);
-        mPictureListener = new CameraListener() {
-            @Override
-            public void onPictureTaken(byte[] jpeg) {
-                super.onPictureTaken(jpeg);
-                mCapturingPicture = false;
-                long callbackTime = System.currentTimeMillis();
-                if (mCapturingVideo) {
-                    message("Captured while taking video. Size="+nativeSize, false);
-                    return;
-                }
-                PicturePreviewActivity.setImage(jpeg);
-                Intent intent = new Intent(MainActivity.this, PicturePreviewActivity.class);
-                intent.putExtra("delay", callbackTime-startTime);
-                intent.putExtra("nativeWidth", nativeSize.getWidth());
-                intent.putExtra("nativeHeight", nativeSize.getHeight());
-                startActivity(intent);
-            }
-        };
-        camera.addCameraListener(mPictureListener);
         camera.capturePicture();
     }
 
@@ -164,18 +173,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         }
         if (mCapturingPicture || mCapturingVideo) return;
         mCapturingVideo = true;
-        camera.removeCameraListener(mVideoListener);
-        mVideoListener = new CameraListener() {
-            @Override
-            public void onVideoTaken(File video) {
-                super.onVideoTaken(video);
-                mCapturingVideo = false;
-                Intent intent = new Intent(MainActivity.this, VideoPreviewActivity.class);
-                intent.putExtra("video", Uri.fromFile(video));
-                startActivity(intent);
-            }
-        };
-        camera.addCameraListener(mVideoListener);
         message("Recording for 8 seconds...", true);
         camera.startCapturingVideo(null);
         camera.postDelayed(new Runnable() {

@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview;
 
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
@@ -692,9 +693,11 @@ class Camera1 extends CameraController {
 
 
     @Override
-    void startFocus(final float x, final float y) {
-        if (!isCameraOpened()) return;
-        List<Camera.Area> meteringAreas2 = computeMeteringAreas(x, y);
+    boolean startAutoFocus(@Nullable final Gesture gesture, PointF point) {
+        if (!isCameraOpened()) return false;
+        if (!mOptions.isAutoFocusSupported()) return false;
+        final PointF p = new PointF(point.x, point.y); // copy.
+        List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y);
         List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
         synchronized (mLock) {
             // At this point we are sure that camera supports auto focus... right? Look at CameraView.onTouchEvent().
@@ -705,15 +708,18 @@ class Camera1 extends CameraController {
             if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
             params.setFocusMode((String) mMapper.mapFocus(FOCUS_TAP)); // auto
             mCamera.setParameters(params);
-            mCameraCallbacks.dispatchOnFocusStart(x, y);
+            mCameraCallbacks.dispatchOnFocusStart(gesture, p);
+            // TODO this is not guaranteed to be called... Fix.
             mCamera.autoFocus(new Camera.AutoFocusCallback() {
                 @Override
                 public void onAutoFocus(boolean success, Camera camera) {
-                    mCameraCallbacks.dispatchOnFocusEnd(success, x, y);
+                    // TODO lock auto exposure and white balance for a while
+                    mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
                     postResetFocus();
                 }
             });
         }
+        return true;
     }
 
 

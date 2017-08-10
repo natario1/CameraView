@@ -10,33 +10,32 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
-@Deprecated
-class PinchToZoomLayout extends View {
+class PinchGestureLayout extends GestureLayout {
 
+    private final static float ADD_SENSITIVITY = 2f;
 
     private ScaleGestureDetector mDetector;
     private boolean mNotify;
-    private boolean mEnabled;
-    @ZoomMode private int mZoomMode;
-    private float mZoom = 0;
+    private float mAdditionFactor = 0;
     private PointF[] mPoints = new PointF[]{
             new PointF(0, 0),
             new PointF(0, 0)
     };
 
-    public PinchToZoomLayout(@NonNull Context context) {
-        this(context, null);
+
+    public PinchGestureLayout(Context context) {
+        super(context);
     }
 
-    public PinchToZoomLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
+
+    @Override
+    protected void onInitialize(Context context) {
+        super.onInitialize(context);
         mDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
                 mNotify = true;
-                mZoom += ((detector.getScaleFactor() - 1) * 2);
-                if (mZoom < 0) mZoom = 0;
-                if (mZoom > 1) mZoom = 1;
+                mAdditionFactor = ((detector.getScaleFactor() - 1) * ADD_SENSITIVITY);
                 return true;
             }
         });
@@ -46,30 +45,9 @@ class PinchToZoomLayout extends View {
         }
     }
 
-    @ZoomMode
-    public int getZoomMode() {
-        return mZoomMode;
-    }
-
-    public void setZoomMode(@ZoomMode int zoomMode) {
-        mZoomMode = zoomMode;
-    }
-
-    public float getZoom() {
-        return mZoom;
-    }
-
-    public void onExternalZoom(float zoom) {
-        mZoom = zoom;
-    }
-
-    public PointF[] getPoints() {
-        return mPoints;
-    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (mZoomMode != CameraConstants.ZOOM_PINCH) return false;
         if (!mEnabled) return false;
 
         // Reset the mNotify flag on a new gesture.
@@ -95,7 +73,27 @@ class PinchToZoomLayout extends View {
         return false;
     }
 
-    public void enable(boolean enable) {
-        mEnabled = enable;
+    public float scaleValue(float currValue, float minValue, float maxValue) {
+        float add = mAdditionFactor;
+        // ^ This works well if minValue = 0, maxValue = 1.
+        // Account for the different range:
+        add *= (maxValue - minValue);
+
+        // ^ This works well if currValue = 0.
+        // Account for a different starting point:
+        /* if (add > 0) {
+            add *= (maxValue - currValue);
+        } else if (add < 0) {
+            add *= (currValue - minValue);
+        } Nope, I don't like this, it slows everything down. */
+
+        float newValue = currValue + add;
+        if (newValue < minValue) newValue = minValue;
+        if (newValue > maxValue) newValue = maxValue;
+        return newValue;
+    }
+
+    public PointF[] getPoints() {
+        return mPoints;
     }
 }

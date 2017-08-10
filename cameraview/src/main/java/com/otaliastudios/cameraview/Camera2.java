@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.ImageFormat;
+import android.graphics.PointF;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -249,8 +250,8 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void startFocus(float x, float y) {
-
+    boolean startAutoFocus(Gesture gesture, PointF point) {
+        return true;
     }
 
     @Nullable

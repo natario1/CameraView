@@ -11,6 +11,7 @@ import android.view.MotionEvent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+@Deprecated
 class FocusMarkerLayout extends FrameLayout {
 
     private FrameLayout mFocusMarkerContainer;
@@ -75,7 +76,6 @@ class FocusMarkerLayout extends FrameLayout {
                         mFill.animate().alpha(0).setDuration(800).setListener(null).start();
                     }
                 }).start();
-
     }
 
 
