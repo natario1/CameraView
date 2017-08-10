@@ -56,7 +56,7 @@ public abstract class CameraListener {
 
 
     /**
-     * Notifies that user tapped on screen at position given by x and y,
+     * Notifies that user interacted with the screen and started focus with a gesture,
      * and the autofocus is trying to focus around that area.
      * This can be used to draw things on screen.
      *
@@ -68,7 +68,7 @@ public abstract class CameraListener {
 
 
     /**
-     * Notifies that a tap-to-focus event just ended, and the camera converged
+     * Notifies that a gesture focus event just ended, and the camera converged
      * to a new focus (and possibly exposure and white balance).
      * This might succeed or not.
      *

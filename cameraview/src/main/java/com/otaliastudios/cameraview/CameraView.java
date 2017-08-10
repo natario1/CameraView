@@ -586,6 +586,16 @@ public class CameraView extends FrameLayout {
 
 
     /**
+     * Returns the current exposure correction value, typically 0
+     * at start-up.
+     * @return the current exposure correction value
+     */
+    public float getExposureCorrection() {
+        return mExposureCorrectionValue;
+    }
+
+
+    /**
      * Sets a zoom value. This is not guaranteed to be supported by the current device,
      * but you can take a look at {@link CameraOptions#isZoomSupported()}.
      * This will have no effect if called before the camera is opened.
@@ -601,6 +611,15 @@ public class CameraView extends FrameLayout {
         if (mCameraController.setZoom(zoom)) {
             mZoomValue = zoom;
         }
+    }
+
+
+    /**
+     * Returns the current zoom value, something between 0 and 1.
+     * @return the current zoom value
+     */
+    public float getZoom() {
+        return mZoomValue;
     }
 
 
@@ -743,8 +762,7 @@ public class CameraView extends FrameLayout {
 
     /**
      * Toggles the flash mode between {@link CameraConstants#FLASH_OFF},
-     * {@link CameraConstants#FLASH_ON}, {@link CameraConstants#FLASH_AUTO} and
-     * {@link CameraConstants#FOCUS_FIXED}, in this order.
+     * {@link CameraConstants#FLASH_ON} and {@link CameraConstants#FLASH_AUTO}, in this order.
      *
      * @return the new flash value
      */

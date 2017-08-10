@@ -11,7 +11,7 @@ CameraView is a well documented, high-level library that makes capturing picture
   <img src="art/screen2.png" width="250" vspace="20" hspace="5">
 </p>
 
-*This is a fork of [Dylan McIntyre's CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored. See [below](#roadmap) for a list of what was done. This works better than any other library I have tried, and I would be grateful for any issue, suggestion or contribution.*
+*This is a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored. See [below](#roadmap) for a list of what was done. This works better than any other library I have tried, and I would be grateful for any issue, suggestion or contribution.*
 
 ## Table of Contents
 
@@ -21,19 +21,11 @@ CameraView is a well documented, high-level library that makes capturing picture
   - [Capturing Images](#capturing-images)
   - [Capturing Video](#capturing-video)
   - [Other camera events](#other-camera-events)
+- [Gestures](#gestures)  
 - [Dynamic Sizing Behavior](#dynamic-sizing-behavior)
   - [Center Inside](#center-inside)
   - [Center Crop](#center-crop)
-- [XML Attributes](#xml-attributes)
-  - [cameraSessionType](#camerasessiontype)
-  - [cameraFacing](#camerafacing)
-  - [cameraFlash](#cameraflash)
-  - [cameraFocus](#camerafocus)
-  - [cameraZoomMode](#camerazoommode)
-  - [cameraCropOutput](#cameracropoutput)
-  - [cameraJpegQuality](#camerajpegquality)
-  - [cameraWhiteBalance](#camerawhitebalance)
-  - [cameraGrid](#cameragrid)
+- [Camera Controls](#camera-controls)
 - [Other APIs](#other-apis)  
 - [Permissions Behavior](#permissions-behavior)
 - [Manifest file](#manifest-file)
@@ -41,23 +33,23 @@ CameraView is a well documented, high-level library that makes capturing picture
 
 # Features
 
-- Seamless image and video capturing, even within the same session
+- Seamless image and video capturing
+- **Gestures** support (tap to focus, pinch to zoom and much more)
 - System permission handling
 - Dynamic sizing behavior
-  - Create a `CameraView` of **any** size
+  - Create a `CameraView` of **any size**
   - Center inside or center crop behaviors
   - Automatic output cropping to match your `CameraView` bounds
-- Built-in tap to focus
-- Built-in pinch to zoom
-- Built-in grid drawing
+- Built-in **grid drawing**
 - Multiple capture methods
   - Take high-resolution pictures with `capturePicture`
   - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to Snapchat and Instagram)
-- Control flash, focus, zoom, white balance, exposure correction
-- `CameraUtils` to help with Bitmaps and orientations
-- Metadata support for pictures and videos
+- Control flash, zoom, white balance, exposure correction and more
+- **Metadata** support for pictures and videos
   - Automatically detected orientation tags
   - Plug in location tags with `setLocation()` API
+- `CameraUtils` to help with Bitmaps and orientations
+- Lightweight, no dependencies, just support `ExifInterface`
 
 ## Setup
 
@@ -65,13 +57,13 @@ For now, you must clone the repo and add it to your project.
 
 ## Usage
 
-To use CameraView engine, simply add a `CameraView` to your layout:
+To use the CameraView engine, simply add a `CameraView` to your layout:
 
 ```xml
 <com.otaliastudios.cameraview.CameraView
     android:id="@+id/camera"
     android:keepScreenOn="true"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content" />
 ```
 
@@ -102,7 +94,7 @@ protected void onDestroy() {
 To capture an image just call `CameraView.capturePicture()`. Make sure you setup a `CameraListener` to handle the image callback.
 
 ```java
-camera.setCameraListener(new CameraListener() {
+camera.addCameraListener(new CameraListener() {
     @Override
     public void onPictureTaken(byte[] picture) {
         // Create a bitmap or a file...
@@ -121,7 +113,7 @@ You can also use `camera.captureSnapshot()` to capture a preview frame. This is 
 To capture video just call `CameraView.startRecordingVideo(file)` to start, and `CameraView.stopRecordingVideo()` to finish. Make sure you setup a `CameraListener` to handle the video callback.
 
 ```java
-camera.setCameraListener(new CameraListener() {
+camera.addCameraListener(new CameraListener() {
     @Override
     public void onVideoTaken(File video) {
         // The File is the same you passed before.
@@ -129,7 +121,13 @@ camera.setCameraListener(new CameraListener() {
     }
 });
 
-File file = ...; // Make sure you have permissions to write here.
+// Select output file. Make sure you have write permissions.
+File file = ...;
+
+// Record a 2500 ms video:
+camera.startRecordingVideo(file, 2500);
+
+// Full version
 camera.startRecordingVideo(file);
 camera.postDelayed(new Runnable() {
     @Override
@@ -139,45 +137,108 @@ camera.postDelayed(new Runnable() {
     }
 }, 2500);
 
-// Shorthand:
-camera.startRecordingVideo(file, 2500);
 ```
 
 ### Other camera events
 
-Make sure you can react to different camera events by setting up a `CameraListener` instance.
+Make sure you can react to different camera events by setting up one or more `CameraListener` instances.
 
 ```java
-camera.setCameraListener(new CameraListener() {
+camera.addCameraListener(new CameraListener() {
 
+    /**
+     * Notifies that the camera was opened.
+     * The options object collects all supported options by the current camera.
+     */
     @Override
     public void onCameraOpened(CameraOptions options) {}
 
+
+    /**
+     * Notifies that the camera session was closed.
+     */
     @Override
     public void onCameraClosed() {}
 
+
+    /**
+     * Notifies that a picture previously captured with capturePicture()
+     * or captureSnapshot() is ready to be shown or saved.
+     *
+     * If planning to get a bitmap, you can use CameraUtils.decodeBitmap()
+     * to decode the byte array taking care about orientation.
+     */
     @Override
     public void onPictureTaken(byte[] picture) {}
 
+
+    /**
+     * Notifies that a video capture has just ended. The file parameter is the one that
+     * was passed to startCapturingVideo(File), or a fallback video file.
+     */
     @Override
     public void onVideoTaken(File video) {}
-    
+
+
+    /**
+     * Notifies that user interacted with the screen and started focus with a gesture,
+     * and the autofocus is trying to focus around that area.
+     * This can be used to draw things on screen.
+     */    
     @Override
-    public void onFocusStart(float x, float y) {}
+    public void onFocusStart(PointF point) {}
     
-    @Override
-    public void onFocusEnd(boolean successful, float x, float y) {}
     
+    /**
+     * Notifies that a gesture focus event just ended, and the camera converged
+     * to a new focus (and possibly exposure and white balance).
+     */
     @Override
-    public void onZoomChanged(float zoomValue, PointF[] fingers) {}
+    public void onFocusEnd(boolean successful, PointF point) {}
+    
+    
+    /**
+     * Noitifies that a finger gesture just caused the camera zoom
+     * to be changed. This can be used, for example, to draw a seek bar.
+     */
+    @Override
+    public void onZoomChanged(float newValue, float[] bounds, PointF[] fingers) {}
+    
+    
+    /**
+     * Noitifies that a finger gesture just caused the camera exposure correction
+     * to be changed. This can be used, for example, to draw a seek bar.
+     */
+    public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {}
 
 });
 ```
 
+## Gestures
+
+`CameraView` listen to lots of different gestures inside its bounds. You have the chance to map these gestures to particular actions or camera controls, using `mapGesture()`. This lets you emulate typical behaviors in a single line:
+
+```java
+cameraView.mapGesture(Gesture.PINCH, CameraConstants.GESTURE_ACTION_ZOOM); // Pinch to zoom!
+cameraView.mapGesture(Gesture.TAP, CameraConstants.GESTURE_ACTION_FOCUS_WITH_MARKER); // Tap to focus!
+cameraView.mapGesture(Gesture.LONG_TAP, CameraConstants.GESTURE_ACTION_CAPTURE); // Long tap to shoot!
+```
+
+Simple as that. More gestures are coming. There are two things to be noted:
+
+- Not every mapping is valid. For example, you can't control zoom with long taps, or start focusing by pinching.
+- Some actions might not be supported by the sensor. Check out `CameraOptions` to know what's legit and what's not.
+
+|Gesture|XML|Description|Can be mapped to|
+|-------|---|-----------|----------------|
+|`PINCH`|`cameraGesturePinch`|Pinch gesture, typically assigned to the zoom control.|`zoom` `exposureCorrection` `none`|
+|`TAP`|`cameraGestureTap`|Single tap gesture, typically assigned to the focus control.|`focus` `focusWithMarker` `capture` `none`|
+|`LONG_TAP`|`cameraGestureLongTap`|Long tap gesture.|`focus` `focusWithMarker` `capture` `none`|
+
+
 ## Dynamic Sizing Behavior
 
-`CameraView` has a smart measuring behavior that will let you do what you want with a few flags.
-Measuring is controlled simply by `layout_width` and `layout_height` attributes, with this meaning:
+`CameraView` has a smart measuring behavior that will let you do what you want with a few flags. Measuring is controlled simply by `layout_width` and `layout_height` attributes, with this meaning:
 
 - `WRAP_CONTENT` : try to stretch this dimension to respect the preview aspect ratio.
 - `MATCH_PARENT` : fill this dimension, even if this means ignoring the aspect ratio.
@@ -210,7 +271,9 @@ You can emulate a **center crop** behavior by setting both dimensions to fixed v
 
 This means that part of the preview is hidden, and the image output will contain parts of the scene that were not visible during the capture. If this is a problem, see [cameraCropOutput](#cameracropoutput).
 
-## XML Attributes
+## Camera controls
+
+Most camera parameters can be controlled through XML attributes or linked methods.
 
 ```xml
 <com.otaliastudios.cameraview.CameraView
@@ -220,8 +283,6 @@ This means that part of the preview is hidden, and the image output will contain
     android:keepScreenOn="true"
     app:cameraFacing="back"
     app:cameraFlash="off"
-    app:cameraFocus="continuous"
-    app:cameraZoom="off"
     app:cameraGrid="off"
     app:cameraSessionType="picture"
     app:cameraCropOutput="true"  
@@ -235,15 +296,13 @@ This means that part of the preview is hidden, and the image output will contain
 |[`cameraSessionType`](#camerasessiontype)|`setSessionType()`|`picture` `video`|`picture`|
 |[`cameraFacing`](#camerafacing)|`setFacing()`|`back` `front`|`back`|
 |[`cameraFlash`](#cameraflash)|`setFlash()`|`off` `on` `auto` `torch`|`off`|
-|[`cameraFocus`](#camerafocus)|`setFocus()`|`fixed` `continuous` `tap` `tapWithMarker`|`continuous`|
-|[`cameraZoomMode`](#camerazoommode)|`setZoom()`|`off` `pinch`|`off`|
 |[`cameraGrid`](#cameragrid)|`setGrid()`|`off` `grid3x3` `grid4x4` `phi`|`off`|
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 <= n <= 100`|`100`|
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`max480p` `max720p` `max1080p` `max2160p` `highest` `lowest`|`max480p`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 
-### cameraSessionType
+#### cameraSessionType
 
 What to capture - either picture or video. This has a couple of consequences:
 
@@ -257,7 +316,7 @@ cameraView.setSessionType(CameraConstants.SESSION_TYPE_PICTURE);
 cameraView.setSessionType(CameraConstants.SESSION_TYPE_VIDEO);
 ```
 
-### cameraFacing
+#### cameraFacing
 
 Which camera to use, either back facing or front facing.
 
@@ -266,7 +325,7 @@ cameraView.setFacing(CameraConstants.FACING_BACK);
 cameraView.setFacing(CameraConstants.FACING_FRONT);
 ```
 
-### cameraFlash
+#### cameraFlash
 
 Flash mode, either off, on, auto or *torch*.
 
@@ -277,43 +336,23 @@ cameraView.setFlash(CameraConstants.FLASH_AUTO);
 cameraView.setFlash(CameraConstants.FLASH_TORCH);
 ```
 
-### cameraFocus
-
-Focus behavior. Can be off, continuous (camera continuously tries to adapt its focus), tap (focus is driven by the user tap) and tapWithMarker (a marker is drawn on screen to indicate focusing).
-
-```java
-cameraView.setFocus(CameraConstants.FOCUS_FIXED);
-cameraView.setFocus(CameraConstants.FOCUS_CONTINUOUS);
-cameraView.setFocus(CameraConstants.FOCUS_TAP);
-cameraView.setFocus(CameraConstants.FOCUS_TAP_WITH_MARKER);
-```
-
-### cameraZoomMode
-
-Lets you enable built-in pinch-to-zoom behavior. This means that the camera will capture two-finger gestures and move the zoom value accordingly. Nothing is drawn on screen, but you can listen to `onZoomChanged` in your camera listener.
-
-```java
-cameraView.setZoomMode(CameraConstants.ZOOM_OFF);
-cameraView.setZoomMode(CameraConstants.ZOOM_PINCH);
-```
-
-### cameraGrid
+#### cameraGrid
 
 Lets you draw grids over the camera preview. Supported values are `off`, `grid3x3` and `grid4x4` for regular grids, and `phi` for a grid based on the golden ratio constant, often used in photography.
 
 ```java
-cameraView.setZoom(CameraConstants.GRID_OFF);
-cameraView.setZoom(CameraConstants.GRID_3X3);
-cameraView.setZoom(CameraConstants.GRID_4X4);
-cameraView.setZoom(CameraConstants.GRID_PHI);
+cameraView.setGrid(CameraConstants.GRID_OFF);
+cameraView.setGrid(CameraConstants.GRID_3X3);
+cameraView.setGrid(CameraConstants.GRID_4X4);
+cameraView.setGrid(CameraConstants.GRID_PHI);
 ```
 
-### cameraCropOutput
+#### cameraCropOutput
 
 Whether the output picture should be cropped to fit the aspect ratio of the preview surface.
 This can guarantee consistency between what the user sees and the final output, if you fixed the camera view dimensions. This does not support videos.
 
-### cameraJpegQuality
+#### cameraJpegQuality
 
 Sets the JPEG quality of pictures.
 
@@ -322,7 +361,7 @@ cameraView.setJpegQuality(100);
 cameraView.setJpegQuality(50);
 ```
 
-### cameraVideoQuality
+#### cameraVideoQuality
 
 Sets the desired video quality.
 
@@ -336,7 +375,7 @@ cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_HIGHEST);
 cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_QVGA);
 ```
 
-### cameraWhiteBalance
+#### cameraWhiteBalance
 
 Sets the desired white balance for the current session.
 
@@ -350,19 +389,26 @@ cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_CLOUDY);
 
 ## Other APIs
 
-Other APIs are provided and are well documented and commented in code.
+Other APIs not mentioned above are provided, and are well documented and commented in code.
 
 |Method|Description|
 |------|-----------|
+|`isStarted()`|Returns true if `start()` was called succesfully. This does not mean that camera is open or showing preview.|
+|`mapGesture(Gesture, int)`|Maps a certain gesture to a certain action. No-op if the action is not supported.|
+|`clearGesture(Gesture)`|Clears any action mapped to the given gesture.|
 |`getCameraOptions()`|If camera was started, returns non-null object with information about what is supported.|
 |`getExtraProperties()`|If camera was started, returns non-null object with extra information about the camera sensor. Not very useful at the moment.|
+|`setZoom(float)`, `getZoom()`|Sets a zoom value, where 0 means camera zoomed out and 1 means zoomed in. No-op if zoom is not supported, or camera not started.|
+|`setExposureCorrection(float)`, `getExposureCorrection()`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
 |`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
-|`setZoom(float)`|Sets a zoom value, where 0 means camera zoomed out and 1 means zoomed in. No-op if zoom is not supported, or camera not started.|
-|`setExposureCompensation(float)`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
-|`isStarted()`|Returns true if `start()` was called succesfully. This does not mean that camera is open or showing preview.|
+|`toggleFacing()`|Toggles the facing value between `FACING_FRONT` and `FACING_BACK`.|
+|`toggleFlash()`|Toggles the flash value between `FLASH_OFF`, `FLASH_ON`, and `FLASH_AUTO`.|
+|`startAutoFocus(float, float)`|Starts an autofocus process at the given coordinates, with respect to the view dimensions.|
 |`getPreviewSize()`|Returns the size of the preview surface. If CameraView was not constrained in its layout phase (e.g. it was `wrap_content`), this will return the same aspect ratio of CameraView.|
 |`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|
 |`getPictureSize()`|Returns the size of the output picture. The aspect ratio is consistent with `getPreviewSize()`.|
+
+Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProperties`.
 
 ## Permissions behavior
 
@@ -412,6 +458,7 @@ This is what was done since the library was forked. I have kept the original str
 - *smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
 - *measure `CameraView` as center crop or center inside*
 - *add multiple `CameraListener`s for events*
+- *gesture framework support*
 
 These are still things that need to be done, off the top of my head:
 
@@ -423,11 +470,12 @@ These are still things that need to be done, off the top of my head:
 - [x] better threading, for example ensure callbacks are called in the ui thread
 - [x] pinch to zoom support
 - [x] exposure correction APIs
-- [ ] change demo app icon
-- [ ] refactor package name
+- [x] change demo app icon
+- [x] refactor package name
+- [x] new Gestures framework to map gestures to camera controls
+- [x] heavily reduced dependencies
 - [ ] `Camera2` integration
 - [ ] publish to bintray
-- [ ] attach operations (e.g. zoom, exposure correction) to vertical swipes or horizontal swipes
 - [ ] check onPause / onStop / onSaveInstanceState consistency
 - [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
