@@ -10,17 +10,14 @@ abstract class Mapper {
     abstract <T> T mapFlash(@Flash int internalConstant);
     abstract <T> T mapFacing(@Facing int internalConstant);
     abstract <T> T mapWhiteBalance(@WhiteBalance int internalConstant);
-    abstract <T> T mapFocus(@Focus int internalConstant);
     @Flash abstract <T> Integer unmapFlash(T cameraConstant);
     @Facing abstract <T> Integer unmapFacing(T cameraConstant);
     @WhiteBalance abstract <T> Integer unmapWhiteBalance(T cameraConstant);
-    @Focus abstract <T> Integer unmapFocus(T cameraConstant);
 
     static class Mapper1 extends Mapper {
         private static final HashMap<Integer, String> FLASH = new HashMap<>();
         private static final HashMap<Integer, String> WB = new HashMap<>();
         private static final HashMap<Integer, Integer> FACING = new HashMap<>();
-        private static final HashMap<Integer, String> FOCUS = new HashMap<>();
 
         static {
             FLASH.put(CameraConstants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
@@ -34,11 +31,6 @@ abstract class Mapper {
             WB.put(CameraConstants.WHITE_BALANCE_FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
             WB.put(CameraConstants.WHITE_BALANCE_DAYLIGHT, Camera.Parameters.WHITE_BALANCE_DAYLIGHT);
             WB.put(CameraConstants.WHITE_BALANCE_CLOUDY, Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT);
-            // TODO FOCUS_MODE_FIXED is rarely supported.
-            FOCUS.put(CameraConstants.FOCUS_FIXED, Camera.Parameters.FOCUS_MODE_FIXED);
-            FOCUS.put(CameraConstants.FOCUS_CONTINUOUS, Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-            FOCUS.put(CameraConstants.FOCUS_TAP, Camera.Parameters.FOCUS_MODE_AUTO);
-            FOCUS.put(CameraConstants.FOCUS_TAP_WITH_MARKER, Camera.Parameters.FOCUS_MODE_AUTO);
         }
 
         @Override
@@ -54,11 +46,6 @@ abstract class Mapper {
         @Override
         <T> T mapWhiteBalance(int internalConstant) {
             return (T) WB.get(internalConstant);
-        }
-
-        @Override
-        <T> T mapFocus(@Focus int internalConstant) {
-            return (T) FOCUS.get(internalConstant);
         }
 
         private Integer reverseLookup(HashMap<Integer, ?> map, Object object) {
@@ -83,12 +70,6 @@ abstract class Mapper {
         @Override
         <T> Integer unmapWhiteBalance(T cameraConstant) {
             return reverseLookup(WB, cameraConstant);
-        }
-
-        // This will ignore FOCUS_TAP_WITH_MARKER but it's fine
-        @Override
-        <T> Integer unmapFocus(T cameraConstant) {
-            return reverseLookup(FOCUS, cameraConstant);
         }
     }
 
@@ -124,15 +105,6 @@ abstract class Mapper {
             return 0;
         }
 
-        @Override
-        <T> T mapFocus(@Focus int internalConstant) {
-            return null;
-        }
-
-        @Override
-        <T> Integer unmapFocus(T cameraConstant) {
-            return 0;
-        }
     }
 
 }

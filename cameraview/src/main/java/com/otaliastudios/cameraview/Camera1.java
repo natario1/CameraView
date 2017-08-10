@@ -146,7 +146,7 @@ class Camera1 extends CameraController {
                 Camera.Parameters params = mCamera.getParameters();
                 mExtraProperties = new ExtraProperties(params);
                 mOptions = new CameraOptions(params);
-                mergeFocus(params, CameraConstants.Defaults.DEFAULT_FOCUS);
+                applyDefaultFocus(params);
                 mergeFlash(params, CameraConstants.Defaults.DEFAULT_FLASH);
                 mergeLocation(params, 0d, 0d);
                 mergeWhiteBalance(params, CameraConstants.Defaults.DEFAULT_WHITE_BALANCE);
@@ -297,49 +297,30 @@ class Camera1 extends CameraController {
     }
 
 
-    @Override
-    void setFocus(@Focus int focus) {
-        int old = mFocus;
-        mFocus = focus;
-        if (isCameraOpened()) {
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                if (mergeFocus(params, old)) mCamera.setParameters(params);
-            }
-        }
-    }
+    // Choose the best default focus, based on session type.
+    private void applyDefaultFocus(Camera.Parameters params) {
+        List<String> modes = params.getSupportedFocusModes();
 
-
-    private boolean mergeFocus(Camera.Parameters params, @Focus int oldFocus) {
-        if (!mOptions.getSupportedFocus().contains(mFocus)) {
-            mFocus = oldFocus;
-            return false;
+        if (mSessionType == SESSION_TYPE_VIDEO &&
+                modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+            return;
         }
 
-        switch (mFocus) {
-            case FOCUS_CONTINUOUS:
-                params.setFocusMode((String) mMapper.mapFocus(FOCUS_CONTINUOUS));
-                return true;
-
-            case FOCUS_TAP:
-            case FOCUS_TAP_WITH_MARKER:
-                // We are sure camera supports auto focus.
-                // Now we must just find a fallback, because FOCUS_AUTO is used only on tap.
-                if (mOptions.getSupportedFocus().contains(FOCUS_CONTINUOUS)) {
-                    params.setFocusMode((String) mMapper.mapFocus(FOCUS_CONTINUOUS));
-                    return true;
-                }
-                // Don't break.
-
-            case FOCUS_FIXED:
-                if (mOptions.getSupportedFocus().contains(FOCUS_FIXED)) {
-                    params.setFocusMode((String) mMapper.mapFocus(FOCUS_FIXED));
-                    return true;
-                }
+        if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            return;
         }
 
-        mFocus = oldFocus;
-        return false;
+        if (modes.contains(Camera.Parameters.FOCUS_MODE_INFINITY)) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+            return;
+        }
+
+        if (modes.contains(Camera.Parameters.FOCUS_MODE_FIXED)) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
+            return;
+        }
     }
 
 
@@ -706,7 +687,7 @@ class Camera1 extends CameraController {
             int maxAE = params.getMaxNumMeteringAreas();
             if (maxAF > 0) params.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
             if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
-            params.setFocusMode((String) mMapper.mapFocus(FOCUS_TAP)); // auto
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
             mCamera.setParameters(params);
             mCameraCallbacks.dispatchOnFocusStart(gesture, p);
             // TODO this is not guaranteed to be called... Fix.
@@ -734,7 +715,7 @@ class Camera1 extends CameraController {
                     Camera.Parameters params = mCamera.getParameters();
                     params.setFocusAreas(null);
                     params.setMeteringAreas(null);
-                    mergeFocus(params, mFocus); // Revert to internal focus (CONTINUOUS_PICTURE if present).
+                    applyDefaultFocus(params); // Revert to internal focus.
                     mCamera.setParameters(params);
                 }
             }

@@ -18,7 +18,6 @@ public class CameraOptions {
     private Set<Integer> supportedWhiteBalance = new HashSet<>(5);
     private Set<Integer> supportedFacing = new HashSet<>(2);
     private Set<Integer> supportedFlash = new HashSet<>(4);
-    @Deprecated private Set<Integer> supportedFocus = new HashSet<>(4);
 
     private boolean zoomSupported;
     private boolean videoSnapshotSupported;
@@ -58,13 +57,6 @@ public class CameraOptions {
                 Integer value = mapper.unmapFlash(string);
                 if (value != null) supportedFlash.add(value);
             }
-        }
-
-        // Focus
-        strings = params.getSupportedFocusModes(); // Never null.
-        for (String string : strings) {
-            Integer value = mapper.unmapFocus(string);
-            if (value != null) supportedFocus.add(value);
         }
 
         zoomSupported = params.isZoomSupported();
@@ -126,21 +118,6 @@ public class CameraOptions {
     @NonNull
     public Set<Integer> getSupportedWhiteBalance() {
         return supportedWhiteBalance;
-    }
-
-
-    /**
-     * Set of supported focus values.
-     *
-     * @see CameraConstants#FOCUS_FIXED
-     * @see CameraConstants#FOCUS_CONTINUOUS
-     * @see CameraConstants#FOCUS_TAP
-     * @see CameraConstants#FOCUS_TAP_WITH_MARKER
-     * @return a set of supported values.
-     */
-    @NonNull
-    public Set<Integer> getSupportedFocus() {
-        return supportedFocus;
     }
 
 

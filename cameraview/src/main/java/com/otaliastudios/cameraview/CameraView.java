@@ -98,7 +98,6 @@ public class CameraView extends FrameLayout {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
         int facing = a.getInteger(R.styleable.CameraView_cameraFacing, Defaults.DEFAULT_FACING);
         int flash = a.getInteger(R.styleable.CameraView_cameraFlash, Defaults.DEFAULT_FLASH);
-        int focus = a.getInteger(R.styleable.CameraView_cameraFocus, Defaults.DEFAULT_FOCUS);
         int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, Defaults.DEFAULT_SESSION_TYPE);
         int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, Defaults.DEFAULT_WHITE_BALANCE);
         int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, Defaults.DEFAULT_VIDEO_QUALITY);
@@ -124,7 +123,6 @@ public class CameraView extends FrameLayout {
         mIsStarted = false;
         setFacing(facing);
         setFlash(flash);
-        setFocus(focus);
         setSessionType(sessionType);
         setVideoQuality(videoQuality);
         setWhiteBalance(whiteBalance);
@@ -167,6 +165,10 @@ public class CameraView extends FrameLayout {
         }
         super.onDetachedFromWindow();
     }
+
+
+    // Smart measuring behavior
+    // ------------------------
 
 
     private String ms(int mode) {
@@ -305,6 +307,10 @@ public class CameraView extends FrameLayout {
     }
 
 
+    // Gesture APIs and touch control
+    // ------------------------------
+
+
     /**
      * Maps a {@link Gesture} to a certain gesture action.
      * For example, you can assign zoom control to the pinch gesture by just calling:
@@ -404,6 +410,10 @@ public class CameraView extends FrameLayout {
         }
         return true;
     }
+
+
+    // Lifecycle APIs
+    // --------------
 
 
     /**
@@ -518,6 +528,10 @@ public class CameraView extends FrameLayout {
         // This might be useless, but no time to think about it now.
         mWorkerHandler = null;
     }
+
+
+    // Public APIs for parameters and controls
+    // ---------------------------------------
 
 
     /**
@@ -763,52 +777,11 @@ public class CameraView extends FrameLayout {
      * @param x should be >= 0 and <= getWidth()
      * @param y should be >= 0 and <= getHeight()
      */
-    public void startFocus(float x, float y) {
+    public void startAutoFocus(float x, float y) {
         if (x < 0 || x > getWidth()) throw new IllegalArgumentException("x should be >= 0 and <= getWidth()");
         if (y < 0 || y > getHeight()) throw new IllegalArgumentException("y should be >= 0 and <= getHeight()");
         mCameraController.startAutoFocus(null, new PointF(x, y));
     }
-
-
-    /**
-     * Sets the current focus behavior.
-     *
-     * @see CameraConstants#FOCUS_CONTINUOUS
-     * @see CameraConstants#FOCUS_FIXED
-     * @see CameraConstants#FOCUS_TAP
-     * @see CameraConstants#FOCUS_TAP_WITH_MARKER
-
-     * @param focus a Focus value.
-     */
-    public void setFocus(@Focus int focus) {
-        mCameraController.setFocus(focus);
-    }
-
-
-    /**
-     * Gets the current focus behavior.
-     * @return a focus behavior
-     */
-    @Focus
-    public int getFocus() {
-        return mCameraController.getFocus();
-    }
-
-
-    /**
-     * This does nothing.
-     * @deprecated
-     */
-    @Deprecated
-    public void setCaptureMethod(@Method int method) {}
-
-
-    /**
-     * This does nothing.
-     * @deprecated
-     */
-    @Deprecated
-    public void setPermissionPolicy(@Permissions int permissions) {}
 
 
     /**
@@ -849,30 +822,6 @@ public class CameraView extends FrameLayout {
     @SessionType
     public int getSessionType() {
         return mCameraController.getSessionType();
-    }
-
-
-    /**
-     * Sets the zoom mode for the current session.
-     *
-     * @see CameraConstants#ZOOM_OFF
-     * @see CameraConstants#ZOOM_PINCH
-     *
-     * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
-     */
-    @Deprecated
-    public void setZoomMode(@ZoomMode int zoom) {
-    }
-
-
-    /**
-     * Gets the current zoom mode.
-     * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
-     */
-    @ZoomMode
-    @Deprecated
-    public int getZoomMode() {
-        return ZOOM_OFF;
     }
 
 
@@ -1135,6 +1084,11 @@ public class CameraView extends FrameLayout {
         }
     }
 
+
+    // Callbacks and dispatch
+    // ----------------------
+
+
     class CameraCallbacks {
 
         private ArrayList<CameraListener> mListeners;
@@ -1333,5 +1287,68 @@ public class CameraView extends FrameLayout {
         }
     }
 
+
+    // Deprecated stuff
+    // ----------------
+
+
+    /**
+     * This does nothing.
+     * @deprecated
+     */
+    @Deprecated
+    public void setFocus(@Focus int focus) {
+    }
+
+
+    /**
+     * This does nothing.
+     * @deprecated
+     */
+    @Deprecated
+    @Focus
+    public int getFocus() {
+        return FOCUS_FIXED;
+    }
+
+
+    /**
+     * This does nothing.
+     * @deprecated
+     */
+    @Deprecated
+    public void setCaptureMethod(@Method int method) {}
+
+
+    /**
+     * This does nothing.
+     * @deprecated
+     */
+    @Deprecated
+    public void setPermissionPolicy(@Permissions int permissions) {}
+
+
+    /**
+     * Sets the zoom mode for the current session.
+     *
+     * @see CameraConstants#ZOOM_OFF
+     * @see CameraConstants#ZOOM_PINCH
+     *
+     * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
+     */
+    @Deprecated
+    public void setZoomMode(@ZoomMode int zoom) {
+    }
+
+
+    /**
+     * Gets the current zoom mode.
+     * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
+     */
+    @ZoomMode
+    @Deprecated
+    public int getZoomMode() {
+        return ZOOM_OFF;
+    }
 
 }

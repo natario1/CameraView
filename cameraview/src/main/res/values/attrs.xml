@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <declare-styleable name="CameraView">
-
-        <attr name="cameraGestureTap" format="enum">
+        <!-- WIP attr name="cameraGestureDoubleTap" format="enum">
             <enum name="none" value="0" />
             <enum name="focus" value="1" />
             <enum name="focusWithMarker" value="2" />
             <enum name="capture" value="3" />
-        </attr>
+        </attr-->
 
-        <attr name="cameraGestureDoubleTap" format="enum">
+        <attr name="cameraGestureTap" format="enum">
             <enum name="none" value="0" />
             <enum name="focus" value="1" />
             <enum name="focusWithMarker" value="2" />
@@ -29,7 +27,6 @@
             <enum name="aeCorrection" value="5" />
         </attr>
 
-
         <attr name="cameraFacing" format="enum">
             <enum name="back" value="0" />
             <enum name="front" value="1" />
@@ -42,24 +39,12 @@
             <enum name="torch" value="3" />
         </attr>
 
-        <attr name="cameraFocus" format="enum">
-            <enum name="fixed" value="0" />
-            <enum name="continuous" value="1" />
-            <enum name="tap" value="2" />
-            <enum name="tapWithMarker" value="3" />
-        </attr>
-
         <attr name="cameraWhiteBalance" format="enum">
             <enum name="auto" value="0" />
             <enum name="incandescent" value="1" />
             <enum name="fluorescent" value="2" />
             <enum name="daylight" value="3" />
             <enum name="cloudy" value="4" />
-        </attr>
-
-        <attr name="cameraZoomMode" format="enum">
-            <enum name="off" value="0" />
-            <enum name="pinch" value="1" />
         </attr>
 
         <attr name="cameraGrid" format="enum">
@@ -69,19 +54,9 @@
             <enum name="phi" value="3" />
         </attr>
 
-        <attr name="cameraCaptureMethod" format="enum">
-            <enum name="standard" value="0" />
-            <enum name="frame" value="1" />
-        </attr>
-
         <attr name="cameraSessionType" format="enum">
             <enum name="picture" value="0" />
             <enum name="video" value="1" />
-        </attr>
-
-        <attr name="cameraPermissionPolicy" format="enum">
-            <enum name="video" value="0" />
-            <enum name="picture" value="1" />
         </attr>
 
         <attr name="cameraJpegQuality" format="integer" />
@@ -98,6 +73,27 @@
 
         <attr name="cameraCropOutput" format="boolean" />
 
+        <!-- deprecated attr name="cameraZoomMode" format="enum">
+            <enum name="off" value="0" />
+            <enum name="pinch" value="1" />
+        </attr -->
+
+        <!-- deprecated attr name="cameraCaptureMethod" format="enum">
+            <enum name="standard" value="0" />
+            <enum name="frame" value="1" />
+        </attr -->
+
+        <!-- deprecated attr name="cameraPermissionPolicy" format="enum">
+            <enum name="video" value="0" />
+            <enum name="picture" value="1" />
+        </attr -->
+
+        <!-- deprecated attr name="cameraFocus" format="enum">
+            <enum name="fixed" value="0" />
+            <enum name="continuous" value="1" />
+            <enum name="tap" value="2" />
+            <enum name="tapWithMarker" value="3" />
+        </attr -->
     </declare-styleable>
 
 </resources>

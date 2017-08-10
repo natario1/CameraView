@@ -143,11 +143,6 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setFocus(@Focus int focus) {
-
-    }
-
-    @Override
     void setSessionType(@SessionType int sessionType) {
 
     }

@@ -34,7 +34,6 @@ abstract class CameraController implements Preview.SurfaceCallback {
     abstract boolean setExposureCorrection(float EVvalue);
     abstract void setFacing(@Facing int facing);
     abstract void setFlash(@Flash int flash);
-    abstract void setFocus(@Focus int focus);
     abstract void setVideoQuality(@VideoQuality int videoQuality);
     abstract void setWhiteBalance(@WhiteBalance int whiteBalance);
     abstract void setSessionType(@SessionType int sessionType);
