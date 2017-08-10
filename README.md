@@ -13,25 +13,7 @@ CameraView is a well documented, high-level library that makes capturing picture
 
 *This is a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored. See [below](#roadmap) for a list of what was done. This works better than any other library I have tried, and I would be grateful for any issue, suggestion or contribution.*
 
-## Table of Contents
-
-- [Features](#features)
-- [Setup](#setup)
-- [Usage](#usage)
-  - [Capturing Images](#capturing-images)
-  - [Capturing Video](#capturing-video)
-  - [Other camera events](#other-camera-events)
-- [Gestures](#gestures)  
-- [Dynamic Sizing Behavior](#dynamic-sizing-behavior)
-  - [Center Inside](#center-inside)
-  - [Center Crop](#center-crop)
-- [Camera Controls](#camera-controls)
-- [Other APIs](#other-apis)  
-- [Permissions Behavior](#permissions-behavior)
-- [Manifest file](#manifest-file)
-- [Roadmap](#roadmap)
-
-# Features
+### Features
 
 - Seamless image and video capturing
 - **Gestures** support (tap to focus, pinch to zoom and much more)
@@ -51,9 +33,25 @@ CameraView is a well documented, high-level library that makes capturing picture
 - `CameraUtils` to help with Bitmaps and orientations
 - Lightweight, no dependencies, just support `ExifInterface`
 
-## Setup
+### Setup
 
 For now, you must clone the repo and add it to your project.
+
+# Docs
+
+- [Usage](#usage)
+  - [Capturing Images](#capturing-images)
+  - [Capturing Video](#capturing-video)
+  - [Other camera events](#other-camera-events)
+- [Gestures](#gestures)  
+- [Dynamic Sizing Behavior](#dynamic-sizing-behavior)
+  - [Center Inside](#center-inside)
+  - [Center Crop](#center-crop)
+- [Camera Controls](#camera-controls)
+- [Other APIs](#other-apis)  
+- [Permissions Behavior](#permissions-behavior)
+- [Manifest file](#manifest-file)
+- [Roadmap](#roadmap)
 
 ## Usage
 
