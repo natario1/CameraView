@@ -6,14 +6,14 @@
 
 CameraView is a well documented, high-level library that makes capturing pictures and videos easy, addressing most of the common issues and needs, and still leaving you with flexibility where needed.
 
+```groovy
+compile 'com.otaliastudios:cameraview:1.0.0'
+```
+
 <p>
   <img src="art/screen1.png" width="250" vspace="20" hspace="5">
   <img src="art/screen2.png" width="250" vspace="20" hspace="5">
 </p>
-
-```groovy
-compile 'com.otaliastudios:cameraview:1.0.0'
-```
 
 *This is a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored. See [below](#roadmap) for a list of what was done. This works better than any other library I have tried, and I would be grateful for any issue, suggestion or contribution.*
 
