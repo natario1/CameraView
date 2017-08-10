@@ -11,6 +11,10 @@ CameraView is a well documented, high-level library that makes capturing picture
   <img src="art/screen2.png" width="250" vspace="20" hspace="5">
 </p>
 
+```groovy
+compile 'com.otaliastudios:cameraview:1.0.0'
+```
+
 *This is a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored. See [below](#roadmap) for a list of what was done. This works better than any other library I have tried, and I would be grateful for any issue, suggestion or contribution.*
 
 ### Features
@@ -32,10 +36,6 @@ CameraView is a well documented, high-level library that makes capturing picture
   - Plug in location tags with `setLocation()` API
 - `CameraUtils` to help with Bitmaps and orientations
 - Lightweight, no dependencies, just support `ExifInterface`
-
-### Setup
-
-For now, you must clone the repo and add it to your project.
 
 # Docs
 
@@ -473,7 +473,7 @@ These are still things that need to be done, off the top of my head:
 - [x] new Gestures framework to map gestures to camera controls
 - [x] heavily reduced dependencies
 - [ ] `Camera2` integration
-- [ ] publish to bintray
+- [x] publish to bintray
 - [ ] check onPause / onStop / onSaveInstanceState consistency
 - [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app

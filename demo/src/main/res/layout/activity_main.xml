@@ -25,7 +25,6 @@
                 android:layout_height="400dp"
                 android:layout_gravity="center_horizontal"
                 android:keepScreenOn="true"
-                app:cameraZoomMode="off"
                 app:cameraGrid="off"
                 app:cameraCropOutput="false"
                 app:cameraFacing="back"

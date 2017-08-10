@@ -600,7 +600,7 @@ public class CameraView extends FrameLayout {
      * but you can take a look at {@link CameraOptions#isZoomSupported()}.
      * This will have no effect if called before the camera is opened.
      *
-     * Zoom value should be >= 0 and <= 1, where 1 will be the maximum available zoom.
+     * Zoom value should be between 0 and 1, where 1 will be the maximum available zoom.
      * If it's not, it will be capped.
      *
      * @param zoom value in [0,1]
@@ -792,8 +792,8 @@ public class CameraView extends FrameLayout {
      * Starts an autofocus process at the given coordinates, with respect
      * to the view width and height.
      *
-     * @param x should be >= 0 and <= getWidth()
-     * @param y should be >= 0 and <= getHeight()
+     * @param x should be between 0 and getWidth()
+     * @param y should be between 0 and getHeight()
      */
     public void startAutoFocus(float x, float y) {
         if (x < 0 || x > getWidth()) throw new IllegalArgumentException("x should be >= 0 and <= getWidth()");
@@ -1018,7 +1018,7 @@ public class CameraView extends FrameLayout {
      * @param file a file where the video will be saved
      * @param durationMillis video max duration
      *
-     * @throws IllegalArgumentException if durationMillis is < 500 milliseconds
+     * @throws IllegalArgumentException if durationMillis is less than 500 milliseconds
      */
     public void startCapturingVideo(File file, long durationMillis) {
         if (durationMillis < 500) {
@@ -1313,6 +1313,7 @@ public class CameraView extends FrameLayout {
     /**
      * This does nothing.
      * @deprecated
+     * @param focus no-op
      */
     @Deprecated
     public void setFocus(@Focus int focus) {
@@ -1321,6 +1322,7 @@ public class CameraView extends FrameLayout {
 
     /**
      * This does nothing.
+     * @return no-op
      * @deprecated
      */
     @Deprecated
@@ -1333,6 +1335,7 @@ public class CameraView extends FrameLayout {
     /**
      * This does nothing.
      * @deprecated
+     * @param method no-op
      */
     @Deprecated
     public void setCaptureMethod(@Method int method) {}
@@ -1341,6 +1344,7 @@ public class CameraView extends FrameLayout {
     /**
      * This does nothing.
      * @deprecated
+     * @param permissions no-op
      */
     @Deprecated
     public void setPermissionPolicy(@Permissions int permissions) {}
@@ -1352,6 +1356,7 @@ public class CameraView extends FrameLayout {
      * @see CameraConstants#ZOOM_OFF
      * @see CameraConstants#ZOOM_PINCH
      *
+     * @param zoom no-op
      * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
      */
     @Deprecated
@@ -1361,6 +1366,7 @@ public class CameraView extends FrameLayout {
 
     /**
      * Gets the current zoom mode.
+     * @return no-op
      * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
      */
     @ZoomMode
