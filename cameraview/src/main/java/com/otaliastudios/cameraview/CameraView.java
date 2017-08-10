@@ -3,10 +3,6 @@ package com.otaliastudios.cameraview;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageInfo;
@@ -50,25 +46,12 @@ import static android.view.View.MeasureSpec.UNSPECIFIED;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 /**
- * The CameraView implements the LifecycleObserver interface for ease of use. To take advantage of
- * this, simply call the following from any LifecycleOwner:
- * <pre>
- * {@code
- * protected void onCreate(@Nullable Bundle savedInstanceState) {
- *     super.onCreate(savedInstanceState);
- *     setContentView(R.layout.my_view);
- *     ...
- *     getLifecycle().addObserver(mCameraView);
- * }
- * }
- * </pre>
- *
  * TODO: docs for gestures
  * TODO: README for gestures
  * TODO: deprecate setFocus, CONTINUOUS should be the default
  *
  */
-public class CameraView extends FrameLayout implements LifecycleObserver {
+public class CameraView extends FrameLayout {
 
     private final static String TAG = CameraView.class.getSimpleName();
 
@@ -97,7 +80,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private CameraController mCameraController;
     private Preview mPreviewImpl;
 
-    private Lifecycle mLifecycle;
     private GridLinesLayout mGridLinesLayout;
     private PinchGestureLayout mPinchGestureLayout;
     private TapGestureLayout mTapGestureLayout;
@@ -175,7 +157,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 }
             };
         }
-        mLifecycle = null;
     }
 
     @Override
@@ -439,39 +420,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public boolean isStarted() {
         return mIsStarted;
-    }
-
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
-        if (mLifecycle != null && mLifecycle.getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
-            // Potentially update the UI
-            if (enabled) {
-                start();
-            } else {
-                stop();
-            }
-        }
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    public void onResume(LifecycleOwner owner) {
-        mLifecycle = owner.getLifecycle();
-        start();
-    }
-
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    public void onPause(LifecycleOwner owner) {
-        mLifecycle = owner.getLifecycle();
-        stop();
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    public void onDestroy(LifecycleOwner owner) {
-        mLifecycle = owner.getLifecycle();
-        destroy();
     }
 
 
