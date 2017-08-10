@@ -39,7 +39,6 @@ import static android.view.View.MeasureSpec.UNSPECIFIED;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 /**
- * TODO: docs for gestures
  * TODO: README for gestures
  * TODO: deprecate setFocus, CONTINUOUS should be the default
  *
