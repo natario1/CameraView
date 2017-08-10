@@ -30,14 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.otaliastudios.cameraview.CameraConstants.FACING_BACK;
-import static com.otaliastudios.cameraview.CameraConstants.FACING_FRONT;
-import static com.otaliastudios.cameraview.CameraConstants.FLASH_AUTO;
-import static com.otaliastudios.cameraview.CameraConstants.FLASH_OFF;
-import static com.otaliastudios.cameraview.CameraConstants.FLASH_ON;
-import static com.otaliastudios.cameraview.CameraConstants.FLASH_TORCH;
-import static com.otaliastudios.cameraview.CameraConstants.SESSION_TYPE_PICTURE;
-import static com.otaliastudios.cameraview.CameraConstants.SESSION_TYPE_VIDEO;
+import static com.otaliastudios.cameraview.CameraConstants.*;
 
 import static android.view.View.MeasureSpec.AT_MOST;
 import static android.view.View.MeasureSpec.EXACTLY;
@@ -104,19 +97,19 @@ public class CameraView extends FrameLayout {
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
-        int facing = a.getInteger(R.styleable.CameraView_cameraFacing, CameraConstants.Defaults.DEFAULT_FACING);
-        int flash = a.getInteger(R.styleable.CameraView_cameraFlash, CameraConstants.Defaults.DEFAULT_FLASH);
-        int focus = a.getInteger(R.styleable.CameraView_cameraFocus, CameraConstants.Defaults.DEFAULT_FOCUS);
-        int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, CameraConstants.Defaults.DEFAULT_SESSION_TYPE);
-        int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, CameraConstants.Defaults.DEFAULT_WHITE_BALANCE);
-        int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, CameraConstants.Defaults.DEFAULT_VIDEO_QUALITY);
-        int grid = a.getInteger(R.styleable.CameraView_cameraGrid, CameraConstants.Defaults.DEFAULT_GRID);
-        mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, CameraConstants.Defaults.DEFAULT_JPEG_QUALITY);
-        mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, CameraConstants.Defaults.DEFAULT_CROP_OUTPUT);
-        int tapGesture = a.getInteger(R.styleable.CameraView_cameraGestureTap, CameraConstants.Defaults.DEFAULT_GESTURE_ACTION_TAP);
-        // int doubleTapGesture = a.getInteger(R.styleable.CameraView_cameraGestureDoubleTap, CameraConstants.Defaults.DEFAULT_GESTURE_ACTION_DOUBLE_TAP);
-        int longTapGesture = a.getInteger(R.styleable.CameraView_cameraGestureLongTap, CameraConstants.Defaults.DEFAULT_GESTURE_ACTION_LONG_TAP);
-        int pinchGesture = a.getInteger(R.styleable.CameraView_cameraGesturePinch, CameraConstants.Defaults.DEFAULT_GESTURE_ACTION_PINCH);
+        int facing = a.getInteger(R.styleable.CameraView_cameraFacing, Defaults.DEFAULT_FACING);
+        int flash = a.getInteger(R.styleable.CameraView_cameraFlash, Defaults.DEFAULT_FLASH);
+        int focus = a.getInteger(R.styleable.CameraView_cameraFocus, Defaults.DEFAULT_FOCUS);
+        int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, Defaults.DEFAULT_SESSION_TYPE);
+        int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, Defaults.DEFAULT_WHITE_BALANCE);
+        int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, Defaults.DEFAULT_VIDEO_QUALITY);
+        int grid = a.getInteger(R.styleable.CameraView_cameraGrid, Defaults.DEFAULT_GRID);
+        mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, Defaults.DEFAULT_JPEG_QUALITY);
+        mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, Defaults.DEFAULT_CROP_OUTPUT);
+        int tapGesture = a.getInteger(R.styleable.CameraView_cameraGestureTap, Defaults.DEFAULT_GESTURE_ACTION_TAP);
+        // int doubleTapGesture = a.getInteger(R.styleable.CameraView_cameraGestureDoubleTap, Defaults.DEFAULT_GESTURE_ACTION_DOUBLE_TAP);
+        int longTapGesture = a.getInteger(R.styleable.CameraView_cameraGestureLongTap, Defaults.DEFAULT_GESTURE_ACTION_LONG_TAP);
+        int pinchGesture = a.getInteger(R.styleable.CameraView_cameraGesturePinch, Defaults.DEFAULT_GESTURE_ACTION_PINCH);
         a.recycle();
 
         mCameraCallbacks = new CameraCallbacks();
@@ -333,19 +326,19 @@ public class CameraView extends FrameLayout {
             mGestureMap.put(gesture, action);
             switch (gesture) {
                 case PINCH:
-                    mPinchGestureLayout.enable(mGestureMap.get(Gesture.PINCH) != CameraConstants.GESTURE_ACTION_NONE);
+                    mPinchGestureLayout.enable(mGestureMap.get(Gesture.PINCH) != GESTURE_ACTION_NONE);
                     break;
                 case TAP:
                 // case DOUBLE_TAP:
                 case LONG_TAP:
-                    mTapGestureLayout.enable(mGestureMap.get(Gesture.TAP) != CameraConstants.GESTURE_ACTION_NONE ||
-                            // mGestureMap.get(Gesture.DOUBLE_TAP) != CameraConstants.GESTURE_ACTION_NONE ||
-                            mGestureMap.get(Gesture.LONG_TAP) != CameraConstants.GESTURE_ACTION_NONE);
+                    mTapGestureLayout.enable(mGestureMap.get(Gesture.TAP) != GESTURE_ACTION_NONE ||
+                            // mGestureMap.get(Gesture.DOUBLE_TAP) != GESTURE_ACTION_NONE ||
+                            mGestureMap.get(Gesture.LONG_TAP) != GESTURE_ACTION_NONE);
                     break;
             }
             return true;
         }
-        mapGesture(gesture, CameraConstants.GESTURE_ACTION_NONE);
+        mapGesture(gesture, GESTURE_ACTION_NONE);
         return false;
     }
 
@@ -355,7 +348,7 @@ public class CameraView extends FrameLayout {
      * @param gesture which gesture to clear
      */
     public void clearGesture(@NonNull Gesture gesture) {
-        mGestureMap.put(gesture, CameraConstants.GESTURE_ACTION_NONE);
+        mGestureMap.put(gesture, GESTURE_ACTION_NONE);
     }
 
 
@@ -374,7 +367,7 @@ public class CameraView extends FrameLayout {
             int action = mGestureMap.get(Gesture.PINCH);
             // This currently can be zoom or AE.
             // Camera can either support these or not.
-            if (action == CameraConstants.GESTURE_ACTION_ZOOM) {
+            if (action == GESTURE_ACTION_ZOOM) {
                 float oldValue = mZoomValue;
                 float newValue = mPinchGestureLayout.scaleValue(oldValue, 0, 1);
                 PointF[] points = mPinchGestureLayout.getPoints();
@@ -383,7 +376,7 @@ public class CameraView extends FrameLayout {
                     mCameraCallbacks.dispatchOnZoomChanged(newValue, points);
                 }
 
-            } else if (action == CameraConstants.GESTURE_ACTION_AE_CORRECTION) {
+            } else if (action == GESTURE_ACTION_AE_CORRECTION) {
                 float oldValue = mExposureCorrectionValue;
                 float minValue = options.getExposureCorrectionMinValue();
                 float maxValue = options.getExposureCorrectionMaxValue();
@@ -401,11 +394,11 @@ public class CameraView extends FrameLayout {
             int action = mGestureMap.get(gesture);
             // This currently can be capture, focus or focusWithMaker.
             // Camera can either support these or not.
-            if (action == CameraConstants.GESTURE_ACTION_CAPTURE) {
+            if (action == GESTURE_ACTION_CAPTURE) {
                 capturePicture();
 
-            } else if (action == CameraConstants.GESTURE_ACTION_FOCUS ||
-                    action == CameraConstants.GESTURE_ACTION_FOCUS_WITH_MARKER) {
+            } else if (action == GESTURE_ACTION_FOCUS ||
+                    action == GESTURE_ACTION_FOCUS_WITH_MARKER) {
                 PointF point = mTapGestureLayout.getPoint();
                 mCameraController.startAutoFocus(gesture, point); // This will call onFocusStart and onFocusEnd
             }
@@ -880,7 +873,7 @@ public class CameraView extends FrameLayout {
     @ZoomMode
     @Deprecated
     public int getZoomMode() {
-        return CameraConstants.ZOOM_OFF;
+        return ZOOM_OFF;
     }
 
 
@@ -1139,7 +1132,7 @@ public class CameraView extends FrameLayout {
         if (requestAudio) permissions.add(Manifest.permission.RECORD_AUDIO);
         if (activity != null) {
             activity.requestPermissions(permissions.toArray(new String[permissions.size()]),
-                    CameraConstants.PERMISSION_REQUEST_CODE);
+                    PERMISSION_REQUEST_CODE);
         }
     }
 
@@ -1271,7 +1264,7 @@ public class CameraView extends FrameLayout {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (gesture != null && mGestureMap.get(gesture) == CameraConstants.GESTURE_ACTION_FOCUS_WITH_MARKER) {
+                    if (gesture != null && mGestureMap.get(gesture) == GESTURE_ACTION_FOCUS_WITH_MARKER) {
                         mTapGestureLayout.onFocusStart(point);
                     }
 
@@ -1288,7 +1281,7 @@ public class CameraView extends FrameLayout {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (gesture != null && mGestureMap.get(gesture) == CameraConstants.GESTURE_ACTION_FOCUS_WITH_MARKER) {
+                    if (gesture != null && mGestureMap.get(gesture) == GESTURE_ACTION_FOCUS_WITH_MARKER) {
                         mTapGestureLayout.onFocusEnd(success);
                     }
 
