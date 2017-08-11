@@ -4,7 +4,7 @@ package com.otaliastudios.cameraview;
 /**
  * Flash value indicates the flash mode to be used.
  *
- * @see CameraView#setFlash(int)
+ * @see CameraView#setFlash(Flash)
  */
 public enum Flash {
 

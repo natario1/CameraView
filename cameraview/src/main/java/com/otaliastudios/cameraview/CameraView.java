@@ -94,10 +94,10 @@ public class CameraView extends FrameLayout {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
         Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
+        Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
         int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, Defaults.DEFAULT_SESSION_TYPE);
         int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, Defaults.DEFAULT_WHITE_BALANCE);
         int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, Defaults.DEFAULT_VIDEO_QUALITY);
-        int grid = a.getInteger(R.styleable.CameraView_cameraGrid, Defaults.DEFAULT_GRID);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, Defaults.DEFAULT_CROP_OUTPUT);
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
@@ -621,13 +621,14 @@ public class CameraView extends FrameLayout {
     /**
      * Controls the grids to be drawn over the current layout.
      *
-     * @see CameraConstants#GRID_OFF
-     * @see CameraConstants#GRID_3X3
-     * @see CameraConstants#GRID_4X4
+     * @see Grid#OFF
+     * @see Grid#DRAW_3X3
+     * @see Grid#DRAW_4X4
+     * @see Grid#DRAW_PHI
      *
      * @param gridMode desired grid mode
      */
-    public void setGrid(@Grid int gridMode) {
+    public void setGrid(Grid gridMode) {
         mGridLinesLayout.setGridMode(gridMode);
     }
 
@@ -636,8 +637,7 @@ public class CameraView extends FrameLayout {
      * Gets the current grid mode.
      * @return the current grid mode
      */
-    @Grid
-    public int getGrid() {
+    public Grid getGrid() {
         return mGridLinesLayout.getGridMode();
     }
 

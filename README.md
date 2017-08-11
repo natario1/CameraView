@@ -294,7 +294,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraSessionType`](#camerasessiontype)|`setSessionType()`|`picture` `video`|`picture`|
 |[`cameraFacing`](#camerafacing)|`setFacing()`|`back` `front`|`back`|
 |[`cameraFlash`](#cameraflash)|`setFlash()`|`off` `on` `auto` `torch`|`off`|
-|[`cameraGrid`](#cameragrid)|`setGrid()`|`off` `grid3x3` `grid4x4` `phi`|`off`|
+|[`cameraGrid`](#cameragrid)|`setGrid()`|`off` `draw3x3` `draw4x4` `drawPhi`|`off`|
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 <= n <= 100`|`100`|
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`max480p` `max720p` `max1080p` `max2160p` `highest` `lowest`|`max480p`|
@@ -328,21 +328,21 @@ cameraView.setFacing(Facing.FRONT);
 Flash mode, either off, on, auto or *torch*.
 
 ```java
-cameraView.setFlash(CameraConstants.FLASH_OFF);
-cameraView.setFlash(CameraConstants.FLASH_ON);
-cameraView.setFlash(CameraConstants.FLASH_AUTO);
-cameraView.setFlash(CameraConstants.FLASH_TORCH);
+cameraView.setFlash(Flash.OFF);
+cameraView.setFlash(Flash.ON);
+cameraView.setFlash(Flash.AUTO);
+cameraView.setFlash(Flash.TORCH);
 ```
 
 #### cameraGrid
 
-Lets you draw grids over the camera preview. Supported values are `off`, `grid3x3` and `grid4x4` for regular grids, and `phi` for a grid based on the golden ratio constant, often used in photography.
+Lets you draw grids over the camera preview. Supported values are `off`, `draw3x3` and `draw4x4` for regular grids, and `drawPhi` for a grid based on the golden ratio constant, often used in photography.
 
 ```java
-cameraView.setGrid(CameraConstants.GRID_OFF);
-cameraView.setGrid(CameraConstants.GRID_3X3);
-cameraView.setGrid(CameraConstants.GRID_4X4);
-cameraView.setGrid(CameraConstants.GRID_PHI);
+cameraView.setGrid(Grid.OFF);
+cameraView.setGrid(Grid.DRAW_3X3);
+cameraView.setGrid(Grid.DRAW_4X4);
+cameraView.setGrid(Grid.DRAW_PHI);
 ```
 
 #### cameraCropOutput

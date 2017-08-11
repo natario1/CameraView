@@ -1,16 +1,54 @@
 package com.otaliastudios.cameraview;
 
-import android.support.annotation.IntDef;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+/**
+ * Grid values can be used to draw grid lines over the camera preview.
+ *
+ * @see CameraView#setGrid(Grid)
+ */
+public enum Grid {
 
-import static com.otaliastudios.cameraview.CameraConstants.GRID_OFF;
-import static com.otaliastudios.cameraview.CameraConstants.GRID_3X3;
-import static com.otaliastudios.cameraview.CameraConstants.GRID_4X4;
-import static com.otaliastudios.cameraview.CameraConstants.GRID_PHI;
 
-@IntDef({GRID_OFF, GRID_3X3, GRID_4X4, GRID_PHI})
-@Retention(RetentionPolicy.SOURCE)
-public @interface Grid {
+    /**
+     * No grid is drawn.
+     */
+    OFF(0),
+
+    /**
+     * Draws a regular, 3x3 grid.
+     */
+    DRAW_3X3(1),
+
+    /**
+     * Draws a regular, 4x4 grid.
+     */
+    DRAW_4X4(2),
+
+    /**
+     * Draws a grid respecting the 'phi' constant proportions,
+     * often referred as to the golden ratio.
+     */
+    DRAW_PHI(3);
+
+    static final Grid DEFAULT = OFF;
+
+    private int value;
+
+    Grid(int value) {
+        this.value = value;
+    }
+
+    int value() {
+        return value;
+    }
+
+    static Grid fromValue(int value) {
+        Grid[] list = Grid.values();
+        for (Grid action : list) {
+            if (action.value() == value) {
+                return action;
+            }
+        }
+        return null;
+    }
 }

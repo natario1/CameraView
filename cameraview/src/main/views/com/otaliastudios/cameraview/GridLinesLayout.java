@@ -14,7 +14,7 @@ import android.view.View;
 // TODO animate lines!
 class GridLinesLayout extends View {
 
-    @Grid private int gridMode;
+    private Grid gridMode;
 
     private final Drawable horiz;
     private final Drawable vert;
@@ -40,29 +40,28 @@ class GridLinesLayout extends View {
         vert.setBounds(0, top, (int) width, bottom);
     }
 
-    @Grid
-    public int getGridMode() {
+    public Grid getGridMode() {
         return gridMode;
     }
 
-    public void setGridMode(@Grid int gridMode) {
+    public void setGridMode(Grid gridMode) {
         this.gridMode = gridMode;
         invalidate();
     }
 
     private int getLineCount() {
         switch (gridMode) {
-            case CameraConstants.GRID_OFF: return 0;
-            case CameraConstants.GRID_3X3: return 2;
-            case CameraConstants.GRID_PHI: return 2;
-            case CameraConstants.GRID_4X4: return 3;
+            case OFF: return 0;
+            case DRAW_3X3: return 2;
+            case DRAW_PHI: return 2;
+            case DRAW_4X4: return 3;
         }
         return 0;
     }
 
     private float getLinePosition(int lineNumber) {
         int lineCount = getLineCount();
-        if (gridMode == CameraConstants.GRID_PHI) {
+        if (gridMode == Grid.DRAW_PHI) {
             // 1 = 2x + GRIx
             // 1 = x(2+GRI)
             // x = 1/(2+GRI)

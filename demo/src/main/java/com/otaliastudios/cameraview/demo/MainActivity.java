@@ -17,6 +17,7 @@ import com.otaliastudios.cameraview.CameraConstants;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.Facing;
+import com.otaliastudios.cameraview.Grid;
 import com.otaliastudios.cameraview.Size;
 
 import java.io.File;
@@ -256,12 +257,12 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     RadioGroup.OnCheckedChangeListener gridModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
-            int grid = CameraConstants.GRID_OFF;
+            Grid grid = Grid.OFF;
             switch (checkedId) {
-                case R.id.gridModeOff: grid = CameraConstants.GRID_OFF; break;
-                case R.id.gridMode3x3: grid = CameraConstants.GRID_3X3; break;
-                case R.id.gridMode4x4: grid = CameraConstants.GRID_4X4; break;
-                case R.id.gridModeGolden: grid = CameraConstants.GRID_PHI; break;
+                case R.id.gridModeOff: grid = Grid.OFF; break;
+                case R.id.gridMode3x3: grid = Grid.DRAW_3X3; break;
+                case R.id.gridMode4x4: grid = Grid.DRAW_4X4; break;
+                case R.id.gridModeGolden: grid = Grid.DRAW_PHI; break;
             }
             camera.setGrid(grid);
             message("Grid mode changed!", false);
