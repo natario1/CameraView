@@ -6,14 +6,9 @@ public class CameraConstants {
     public static final int PERMISSION_REQUEST_CODE = 16;
 
     @Deprecated public static final int GESTURE_ACTION_NONE = 0;
-    @Deprecated public static final int GESTURE_ACTION_FOCUS = 1;
-    @Deprecated public static final int GESTURE_ACTION_FOCUS_WITH_MARKER = 2;
-    @Deprecated public static final int GESTURE_ACTION_CAPTURE = 3;
-    @Deprecated public static final int GESTURE_ACTION_ZOOM = 4;
-    @Deprecated public static final int GESTURE_ACTION_AE_CORRECTION = 5;
-
     @Deprecated public static final int FACING_BACK = 0;
-    @Deprecated public static final int FACING_FRONT = 1;
+    @Deprecated public static final int FOCUS_CONTINUOUS = 1;
+    @Deprecated public static final int ZOOM_OFF = 0;
 
     public static final int FLASH_OFF = 0;
     public static final int FLASH_ON = 1;
@@ -42,24 +37,20 @@ public class CameraConstants {
     public static final int WHITE_BALANCE_DAYLIGHT = 3;
     public static final int WHITE_BALANCE_CLOUDY = 4;
 
-    @Deprecated public static final int FOCUS_FIXED = 0;
-    @Deprecated public static final int FOCUS_CONTINUOUS = 1;
-    @Deprecated public static final int FOCUS_TAP = 2;
-    @Deprecated public static final int FOCUS_TAP_WITH_MARKER = 3;
-    @Deprecated public static final int ZOOM_OFF = 0;
-    @Deprecated public static final int ZOOM_PINCH = 1;
-    @Deprecated public static final int CAPTURE_METHOD_STANDARD = 0;
-    @Deprecated public static final int CAPTURE_METHOD_FRAME = 1;
-    @Deprecated public static final int PERMISSIONS_VIDEO = 0;
-    @Deprecated public static final int PERMISSIONS_PICTURE = 1;
 
     static class Defaults {
+
+        // TODO: Move to enum classes
         static final int DEFAULT_GESTURE_ACTION_TAP = GESTURE_ACTION_NONE;
-        // WIP static final int DEFAULT_GESTURE_ACTION_DOUBLE_TAP = GESTURE_ACTION_NONE;
         static final int DEFAULT_GESTURE_ACTION_LONG_TAP = GESTURE_ACTION_NONE;
         static final int DEFAULT_GESTURE_ACTION_PINCH = GESTURE_ACTION_NONE;
-
         static final int DEFAULT_FACING = FACING_BACK;
+
+        // Deprecated
+        @Deprecated static final int DEFAULT_FOCUS = FOCUS_CONTINUOUS;
+        @Deprecated static final int DEFAULT_ZOOM = ZOOM_OFF;
+
+        // OK
         static final int DEFAULT_FLASH = FLASH_OFF;
         static final int DEFAULT_VIDEO_QUALITY = VIDEO_QUALITY_480P;
         static final int DEFAULT_WHITE_BALANCE = WHITE_BALANCE_AUTO;
@@ -68,10 +59,6 @@ public class CameraConstants {
         static final int DEFAULT_GRID = GRID_OFF;
         static final boolean DEFAULT_CROP_OUTPUT = false;
 
-        @Deprecated static final int DEFAULT_FOCUS = FOCUS_CONTINUOUS;
-        @Deprecated static final int DEFAULT_ZOOM = ZOOM_OFF;
-        @Deprecated static final int DEFAULT_METHOD = CAPTURE_METHOD_STANDARD;
-        @Deprecated static final int DEFAULT_PERMISSIONS = PERMISSIONS_PICTURE;
 
     }
 }

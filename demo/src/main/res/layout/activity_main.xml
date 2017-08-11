@@ -197,59 +197,6 @@
 
             </FrameLayout>
 
-            <!-- Pinch to zoom -->
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp">
-
-                <View
-                    android:layout_width="2.5dp"
-                    android:layout_height="match_parent"
-                    android:background="@color/colorPrimary" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="3dp"
-                        android:text="ZOOM MODE"
-                        android:textColor="@android:color/black"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <RadioGroup
-                        android:id="@+id/zoomModeRadioGroup"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:checkedButton="@+id/zoomModeOff"
-                        android:orientation="horizontal">
-
-                        <RadioButton
-                            android:id="@+id/zoomModeOff"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Off" />
-
-                        <RadioButton
-                            android:id="@+id/zoomModePinch"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="10dp"
-                            android:text="Pinch to zoom" />
-
-                    </RadioGroup>
-
-                </LinearLayout>
-
-            </FrameLayout>
-
             <!-- Width -->
             <FrameLayout
                 android:layout_width="match_parent"

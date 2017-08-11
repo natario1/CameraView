@@ -41,10 +41,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     @BindView(R.id.cropModeRadioGroup)
     RadioGroup cropModeRadioGroup;
 
-    // Pinch to zoom:
-    @BindView(R.id.zoomModeRadioGroup)
-    RadioGroup zoomModeRadioGroup;
-
     // Video Quality:
     @BindView(R.id.videoQualityRadioGroup)
     RadioGroup videoQualityRadioGroup;
@@ -100,7 +96,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         heightModeRadioGroup.setOnCheckedChangeListener(heightModeChangedListener);
         videoQualityRadioGroup.setOnCheckedChangeListener(videoQualityChangedListener);
         gridModeRadioGroup.setOnCheckedChangeListener(gridModeChangedListener);
-        zoomModeRadioGroup.setOnCheckedChangeListener(zoomModeChangedListener);
 
         camera.addOnLayoutChangeListener(this);
         camera.addCameraListener(new CameraListener() {
@@ -273,19 +268,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         }
     };
 
-
-    RadioGroup.OnCheckedChangeListener zoomModeChangedListener = new RadioGroup.OnCheckedChangeListener() {
-        @Override
-        public void onCheckedChanged(RadioGroup group, int checkedId) {
-            int zoom = CameraConstants.ZOOM_OFF;
-            switch (checkedId) {
-                case R.id.zoomModeOff: zoom = CameraConstants.ZOOM_OFF; break;
-                case R.id.zoomModePinch: zoom = CameraConstants.ZOOM_PINCH; break;
-            }
-            camera.setZoomMode(zoom);
-            message("Zoom mode changed! Note that pinch-to-zoom won't work well in ScrollViews like here", true);
-        }
-    };
 
     @OnClick(R.id.widthUpdate)
     void widthUpdateClicked() {

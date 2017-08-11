@@ -13,7 +13,6 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     protected Facing mFacing;
     @Flash protected int mFlash;
-    @Focus protected int mFocus;
     @VideoQuality protected int mVideoQuality;
     @WhiteBalance protected int mWhiteBalance;
     @SessionType protected int mSessionType;
@@ -61,11 +60,6 @@ abstract class CameraController implements Preview.SurfaceCallback {
     @Flash
     final int getFlash() {
         return mFlash;
-    }
-
-    @Focus
-    final int getFocus() {
-        return mFocus;
     }
 
     @WhiteBalance

@@ -1314,7 +1314,7 @@ public class CameraView extends FrameLayout {
      * @param focus no-op
      */
     @Deprecated
-    public void setFocus(@Focus int focus) {
+    public void setFocus(int focus) {
     }
 
 
@@ -1324,9 +1324,8 @@ public class CameraView extends FrameLayout {
      * @deprecated
      */
     @Deprecated
-    @Focus
     public int getFocus() {
-        return FOCUS_FIXED;
+        return Defaults.DEFAULT_FOCUS;
     }
 
 
@@ -1336,7 +1335,7 @@ public class CameraView extends FrameLayout {
      * @param method no-op
      */
     @Deprecated
-    public void setCaptureMethod(@Method int method) {}
+    public void setCaptureMethod(int method) {}
 
 
     /**
@@ -1345,20 +1344,17 @@ public class CameraView extends FrameLayout {
      * @param permissions no-op
      */
     @Deprecated
-    public void setPermissionPolicy(@Permissions int permissions) {}
+    public void setPermissionPolicy(int permissions) {}
 
 
     /**
      * Sets the zoom mode for the current session.
      *
-     * @see CameraConstants#ZOOM_OFF
-     * @see CameraConstants#ZOOM_PINCH
-     *
      * @param zoom no-op
      * @deprecated use {@link #mapGesture(Gesture, GestureAction)} to map zoom control to gestures
      */
     @Deprecated
-    public void setZoomMode(@ZoomMode int zoom) {
+    public void setZoomMode(int zoom) {
     }
 
 
@@ -1367,10 +1363,9 @@ public class CameraView extends FrameLayout {
      * @return no-op
      * @deprecated use {@link #mapGesture(Gesture, GestureAction)} to map zoom control to gestures
      */
-    @ZoomMode
     @Deprecated
     public int getZoomMode() {
-        return ZOOM_OFF;
+        return Defaults.DEFAULT_ZOOM;
     }
 
 }
