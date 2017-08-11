@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public class CameraOptions {
 
-    private Set<Integer> supportedWhiteBalance = new HashSet<>(5);
+    private Set<WhiteBalance> supportedWhiteBalance = new HashSet<>(5);
     private Set<Facing> supportedFacing = new HashSet<>(2);
     private Set<Flash> supportedFlash = new HashSet<>(4);
 
@@ -45,7 +45,7 @@ public class CameraOptions {
         strings = params.getSupportedWhiteBalance();
         if (strings != null) {
             for (String string : strings) {
-                Integer value = mapper.unmapWhiteBalance(string);
+                WhiteBalance value = mapper.unmapWhiteBalance(string);
                 if (value != null) supportedWhiteBalance.add(value);
             }
         }
@@ -108,15 +108,15 @@ public class CameraOptions {
     /**
      * Set of supported white balance values.
      *
-     * @see CameraConstants#WHITE_BALANCE_AUTO
-     * @see CameraConstants#WHITE_BALANCE_CLOUDY
-     * @see CameraConstants#WHITE_BALANCE_DAYLIGHT
-     * @see CameraConstants#WHITE_BALANCE_FLUORESCENT
-     * @see CameraConstants#WHITE_BALANCE_INCANDESCENT
+     * @see WhiteBalance#AUTO
+     * @see WhiteBalance#INCANDESCENT
+     * @see WhiteBalance#FLUORESCENT
+     * @see WhiteBalance#DAYLIGHT
+     * @see WhiteBalance#CLOUDY
      * @return a set of supported values.
      */
     @NonNull
-    public Set<Integer> getSupportedWhiteBalance() {
+    public Set<WhiteBalance> getSupportedWhiteBalance() {
         return supportedWhiteBalance;
     }
 

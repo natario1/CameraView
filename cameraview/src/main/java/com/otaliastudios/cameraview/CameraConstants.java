@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import android.hardware.Camera;
+
 public class CameraConstants {
 
     public static final int PERMISSION_REQUEST_CODE = 16;
@@ -16,17 +18,9 @@ public class CameraConstants {
     public static final int VIDEO_QUALITY_LOWEST = 5;
     public static final int VIDEO_QUALITY_QVGA = 6;
 
-    public static final int WHITE_BALANCE_AUTO = 0;
-    public static final int WHITE_BALANCE_INCANDESCENT = 1;
-    public static final int WHITE_BALANCE_FLUORESCENT = 2;
-    public static final int WHITE_BALANCE_DAYLIGHT = 3;
-    public static final int WHITE_BALANCE_CLOUDY = 4;
-
-
     static class Defaults {
 
         static final int DEFAULT_VIDEO_QUALITY = VIDEO_QUALITY_480P;
-        static final int DEFAULT_WHITE_BALANCE = WHITE_BALANCE_AUTO;
         static final int DEFAULT_SESSION_TYPE = SESSION_TYPE_PICTURE;
         static final int DEFAULT_JPEG_QUALITY = 100;
         static final boolean DEFAULT_CROP_OUTPUT = false;

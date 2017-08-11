@@ -1,18 +1,73 @@
 package com.otaliastudios.cameraview;
 
-import android.support.annotation.IntDef;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
-import static com.otaliastudios.cameraview.CameraConstants.WHITE_BALANCE_AUTO;
-import static com.otaliastudios.cameraview.CameraConstants.WHITE_BALANCE_INCANDESCENT;
-import static com.otaliastudios.cameraview.CameraConstants.WHITE_BALANCE_FLUORESCENT;
-import static com.otaliastudios.cameraview.CameraConstants.WHITE_BALANCE_DAYLIGHT;
-import static com.otaliastudios.cameraview.CameraConstants.WHITE_BALANCE_CLOUDY;
+/**
+ * White balance values control the white balance settings.
+ *
+ * @see CameraView#setWhiteBalance(WhiteBalance)
+ */
+public enum WhiteBalance {
 
-@Retention(RetentionPolicy.SOURCE)
-@IntDef({WHITE_BALANCE_AUTO, WHITE_BALANCE_INCANDESCENT, WHITE_BALANCE_FLUORESCENT,
-        WHITE_BALANCE_DAYLIGHT, WHITE_BALANCE_CLOUDY})
-public @interface WhiteBalance {
+    /**
+     * Automatic white balance selection (AWB).
+     * This is not guaranteed to be supported.
+     *
+     * @see CameraOptions#getSupportedWhiteBalance()
+     */
+    AUTO(0),
+
+    /**
+     * White balance appropriate for incandescent light.
+     * This is not guaranteed to be supported.
+     *
+     * @see CameraOptions#getSupportedWhiteBalance()
+     */
+    INCANDESCENT(1),
+
+    /**
+     * White balance appropriate for fluorescent light.
+     * This is not guaranteed to be supported.
+     *
+     * @see CameraOptions#getSupportedWhiteBalance()
+     */
+    FLUORESCENT(2),
+
+    /**
+     * White balance appropriate for daylight captures.
+     * This is not guaranteed to be supported.
+     *
+     * @see CameraOptions#getSupportedWhiteBalance()
+     */
+    DAYLIGHT(3),
+
+    /**
+     * White balance appropriate for pictures in cloudy conditions.
+     * This is not guaranteed to be supported.
+     *
+     * @see CameraOptions#getSupportedWhiteBalance()
+     */
+    CLOUDY(4);
+
+    static final WhiteBalance DEFAULT = AUTO;
+
+    private int value;
+
+    WhiteBalance(int value) {
+        this.value = value;
+    }
+
+    int value() {
+        return value;
+    }
+
+    static WhiteBalance fromValue(int value) {
+        WhiteBalance[] list = WhiteBalance.values();
+        for (WhiteBalance action : list) {
+            if (action.value() == value) {
+                return action;
+            }
+        }
+        return null;
+    }
 }

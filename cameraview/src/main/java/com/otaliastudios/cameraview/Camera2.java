@@ -152,7 +152,7 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setWhiteBalance(@WhiteBalance int whiteBalance) {
+    void setWhiteBalance(WhiteBalance whiteBalance) {
 
     }
 

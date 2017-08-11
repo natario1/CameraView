@@ -95,8 +95,8 @@ public class CameraView extends FrameLayout {
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
         Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
         Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
+        WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
         int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, Defaults.DEFAULT_SESSION_TYPE);
-        int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, Defaults.DEFAULT_WHITE_BALANCE);
         int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, Defaults.DEFAULT_VIDEO_QUALITY);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, Defaults.DEFAULT_CROP_OUTPUT);
@@ -656,15 +656,15 @@ public class CameraView extends FrameLayout {
     /**
      * Sets desired white balance to current camera session.
      *
-     * @see CameraConstants#WHITE_BALANCE_AUTO
-     * @see CameraConstants#WHITE_BALANCE_CLOUDY
-     * @see CameraConstants#WHITE_BALANCE_DAYLIGHT
-     * @see CameraConstants#WHITE_BALANCE_FLUORESCENT
-     * @see CameraConstants#WHITE_BALANCE_INCANDESCENT
+     * @see WhiteBalance#AUTO
+     * @see WhiteBalance#INCANDESCENT
+     * @see WhiteBalance#FLUORESCENT
+     * @see WhiteBalance#DAYLIGHT
+     * @see WhiteBalance#CLOUDY
      *
      * @param whiteBalance desired white balance behavior.
      */
-    public void setWhiteBalance(@WhiteBalance int whiteBalance) {
+    public void setWhiteBalance(WhiteBalance whiteBalance) {
         mCameraController.setWhiteBalance(whiteBalance);
     }
 
@@ -673,8 +673,7 @@ public class CameraView extends FrameLayout {
      * Returns the current white balance behavior.
      * @return white balance value.
      */
-    @WhiteBalance
-    public int getWhiteBalance() {
+    public WhiteBalance getWhiteBalance() {
         return mCameraController.getWhiteBalance();
     }
 

@@ -145,7 +145,7 @@ class Camera1 extends CameraController {
                 applyDefaultFocus(params);
                 mergeFlash(params, Flash.DEFAULT);
                 mergeLocation(params, 0d, 0d);
-                mergeWhiteBalance(params, CameraConstants.Defaults.DEFAULT_WHITE_BALANCE);
+                mergeWhiteBalance(params, WhiteBalance.DEFAULT);
                 params.setRecordingHint(mSessionType == SESSION_TYPE_VIDEO);
                 mCamera.setParameters(params);
             }
@@ -250,8 +250,8 @@ class Camera1 extends CameraController {
     }
 
     @Override
-    void setWhiteBalance(@WhiteBalance int whiteBalance) {
-        int old = mWhiteBalance;
+    void setWhiteBalance(WhiteBalance whiteBalance) {
+        WhiteBalance old = mWhiteBalance;
         mWhiteBalance = whiteBalance;
         if (isCameraOpened()) {
             synchronized (mLock) {
@@ -261,7 +261,7 @@ class Camera1 extends CameraController {
         }
     }
 
-    private boolean mergeWhiteBalance(Camera.Parameters params, @WhiteBalance int oldWhiteBalance) {
+    private boolean mergeWhiteBalance(Camera.Parameters params, WhiteBalance oldWhiteBalance) {
         if (mOptions.getSupportedWhiteBalance().contains(mWhiteBalance)) {
             params.setWhiteBalance((String) mMapper.mapWhiteBalance(mWhiteBalance));
             return true;
