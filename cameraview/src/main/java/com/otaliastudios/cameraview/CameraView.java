@@ -30,8 +30,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.otaliastudios.cameraview.CameraConstants.*;
-
 import static android.view.View.MeasureSpec.AT_MOST;
 import static android.view.View.MeasureSpec.EXACTLY;
 import static android.view.View.MeasureSpec.UNSPECIFIED;
@@ -42,6 +40,10 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 public class CameraView extends FrameLayout {
 
     private final static String TAG = CameraView.class.getSimpleName();
+    public final static int PERMISSION_REQUEST_CODE = 16;
+
+    private final static int DEFAULT_JPEG_QUALITY = 100;
+    private final static boolean DEFAULT_CROP_OUTPUT = false;
 
     private Handler mWorkerHandler;
 
@@ -92,14 +94,14 @@ public class CameraView extends FrameLayout {
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
+        mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, DEFAULT_JPEG_QUALITY);
+        mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, DEFAULT_CROP_OUTPUT);
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
         Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
         Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
         WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
         VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
-        int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, Defaults.DEFAULT_SESSION_TYPE);
-        mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, Defaults.DEFAULT_JPEG_QUALITY);
-        mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, Defaults.DEFAULT_CROP_OUTPUT);
+        SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
         GestureAction longTapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureLongTap, GestureAction.DEFAULT_LONG_TAP.value()));
         GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, GestureAction.DEFAULT_PINCH.value()));
@@ -310,7 +312,7 @@ public class CameraView extends FrameLayout {
      * Maps a {@link Gesture} to a certain gesture action.
      * For example, you can assign zoom control to the pinch gesture by just calling:
      * <code>
-     *     cameraView.mapGesture(Gesture.PINCH, CameraConstants.GESTURE_ACTION_ZOOM);
+     *     cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
      * </code>
      *
      * Not all actions can be assigned to a certain gesture. For example, zoom control can't be
@@ -447,7 +449,7 @@ public class CameraView extends FrameLayout {
      * Throws if session = audio and manifest did not add the microphone permissions.
      * @return true if we can go on, false otherwise.
      */
-    private boolean checkPermissions(@SessionType int sessionType) {
+    private boolean checkPermissions(SessionType sessionType) {
         checkPermissionsManifestOrThrow(sessionType);
         boolean api23 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
         int cameraCheck, audioCheck;
@@ -461,14 +463,14 @@ public class CameraView extends FrameLayout {
             audioCheck = getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO);
         }
         switch (sessionType) {
-            case SESSION_TYPE_VIDEO:
+            case VIDEO:
                 if (cameraCheck != PackageManager.PERMISSION_GRANTED || audioCheck != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(true, true);
                     return false;
                 }
                 break;
 
-            case SESSION_TYPE_PICTURE:
+            case PICTURE:
                 if (cameraCheck != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(true, false);
                     return false;
@@ -484,8 +486,8 @@ public class CameraView extends FrameLayout {
      * If the developer did not add this to its manifest, throw and fire warnings.
      * (Hoping this is not cought elsewhere... we should test).
      */
-    private void checkPermissionsManifestOrThrow(@SessionType int sessionType) {
-        if (sessionType == SESSION_TYPE_VIDEO) {
+    private void checkPermissionsManifestOrThrow(SessionType sessionType) {
+        if (sessionType == SessionType.VIDEO) {
             try {
                 PackageManager manager = getContext().getPackageManager();
                 PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
@@ -796,14 +798,14 @@ public class CameraView extends FrameLayout {
      * Set the current session type to either picture or video.
      * When sessionType is video,
      * - {@link #startCapturingVideo(File)} will not throw any exception
-     * - {@link #capturePicture()} will fallback to {@link #captureSnapshot()}
+     * - {@link #capturePicture()} might fallback to {@link #captureSnapshot()} or might not work
      *
-     * @see CameraConstants#SESSION_TYPE_PICTURE
-     * @see CameraConstants#SESSION_TYPE_VIDEO
+     * @see SessionType#PICTURE
+     * @see SessionType#VIDEO
      *
      * @param sessionType desired session type.
      */
-    public void setSessionType(@SessionType int sessionType) {
+    public void setSessionType(SessionType sessionType) {
 
         if (sessionType == getSessionType() || !mIsStarted) {
             // Check did took place, or will happen on start().
@@ -827,8 +829,7 @@ public class CameraView extends FrameLayout {
      * Gets the current session type.
      * @return the current session type
      */
-    @SessionType
-    public int getSessionType() {
+    public SessionType getSessionType() {
         return mCameraController.getSessionType();
     }
 
@@ -943,7 +944,7 @@ public class CameraView extends FrameLayout {
      * This will trigger {@link CameraListener#onPictureTaken(byte[])} if a listener
      * was registered.
      *
-     * Note that if sessionType is {@link CameraConstants#SESSION_TYPE_VIDEO}, this
+     * Note that if sessionType is {@link SessionType#VIDEO}, this
      * might fall back to {@link #captureSnapshot()} (that is, we might capture a preview frame).
      *
      * @see #captureSnapshot()

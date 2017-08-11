@@ -310,8 +310,8 @@ What to capture - either picture or video. This has a couple of consequences:
 - Permission behavior: when requesting a `video` session, the record audio permission will be requested. If this is needed, the audio permission should be added to your manifest or the app will crash.
 
 ```java
-cameraView.setSessionType(CameraConstants.SESSION_TYPE_PICTURE);
-cameraView.setSessionType(CameraConstants.SESSION_TYPE_VIDEO);
+cameraView.setSessionType(SessionType.PICTURE);
+cameraView.setSessionType(SessionType.VIDEO);
 ```
 
 #### cameraFacing

@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.otaliastudios.cameraview.CameraConstants.SESSION_TYPE_PICTURE;
-import static com.otaliastudios.cameraview.CameraConstants.SESSION_TYPE_VIDEO;
 
 @SuppressWarnings("deprecation")
 class Camera1 extends CameraController {
@@ -146,7 +144,7 @@ class Camera1 extends CameraController {
                 mergeFlash(params, Flash.DEFAULT);
                 mergeLocation(params, 0d, 0d);
                 mergeWhiteBalance(params, WhiteBalance.DEFAULT);
-                params.setRecordingHint(mSessionType == SESSION_TYPE_VIDEO);
+                params.setRecordingHint(mSessionType == SessionType.VIDEO);
                 mCamera.setParameters(params);
             }
 
@@ -202,7 +200,7 @@ class Camera1 extends CameraController {
 
 
     @Override
-    void setSessionType(@SessionType int sessionType) {
+    void setSessionType(SessionType sessionType) {
         if (sessionType != mSessionType) {
             mSessionType = sessionType;
             if (isCameraOpened()) {
@@ -297,7 +295,7 @@ class Camera1 extends CameraController {
     private void applyDefaultFocus(Camera.Parameters params) {
         List<String> modes = params.getSupportedFocusModes();
 
-        if (mSessionType == SESSION_TYPE_VIDEO &&
+        if (mSessionType == SessionType.VIDEO &&
                 modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
             params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
             return;
@@ -327,7 +325,7 @@ class Camera1 extends CameraController {
         }
 
         mVideoQuality = videoQuality;
-        if (isCameraOpened() && mSessionType == CameraConstants.SESSION_TYPE_VIDEO) {
+        if (isCameraOpened() && mSessionType == SessionType.VIDEO) {
             // Change capture size to a size that fits the video aspect ratio.
             Size oldSize = mCaptureSize;
             mCaptureSize = computeCaptureSize();
@@ -350,7 +348,7 @@ class Camera1 extends CameraController {
     void capturePicture() {
         if (mIsCapturingImage) return;
         if (!isCameraOpened()) return;
-        if (mSessionType == SESSION_TYPE_VIDEO && mIsCapturingVideo) {
+        if (mSessionType == SessionType.VIDEO && mIsCapturingVideo) {
             if (!mOptions.isVideoSnapshotSupported()) return;
         }
 
@@ -502,7 +500,7 @@ class Camera1 extends CameraController {
      */
     private Size computeCaptureSize() {
         Camera.Parameters params = mCamera.getParameters();
-        if (mSessionType == SESSION_TYPE_PICTURE) {
+        if (mSessionType == SessionType.PICTURE) {
             // Choose the max size.
             List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
             return Collections.max(captureSizes);
@@ -536,7 +534,7 @@ class Camera1 extends CameraController {
         if (!isCameraOpened()) return false;
         Camera.Parameters params = mCamera.getParameters();
         params.setVideoStabilization(false);
-        if (mSessionType == SESSION_TYPE_VIDEO) {
+        if (mSessionType == SessionType.VIDEO) {
             mIsCapturingVideo = true;
             initMediaRecorder();
             try {

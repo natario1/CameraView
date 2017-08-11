@@ -13,11 +13,10 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.otaliastudios.cameraview.CameraConstants;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraView;
-import com.otaliastudios.cameraview.Facing;
 import com.otaliastudios.cameraview.Grid;
+import com.otaliastudios.cameraview.SessionType;
 import com.otaliastudios.cameraview.Size;
 import com.otaliastudios.cameraview.VideoQuality;
 
@@ -165,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
 
     @OnClick(R.id.captureVideo)
     void captureVideo() {
-        if (camera.getSessionType() != CameraConstants.SESSION_TYPE_VIDEO) {
+        if (camera.getSessionType() != SessionType.VIDEO) {
             message("Can't record video while session type is 'picture'.", false);
             return;
         }
@@ -217,12 +216,9 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
             if (mCapturingPicture) return;
-            camera.setSessionType(
-                    checkedId == R.id.sessionTypePicture ?
-                            CameraConstants.SESSION_TYPE_PICTURE :
-                            CameraConstants.SESSION_TYPE_VIDEO
-            );
-            message("Session type set to" + (checkedId == R.id.sessionTypePicture ? " picture!" : " video!"), true);
+            boolean pic = checkedId == R.id.sessionTypePicture;
+            camera.setSessionType(pic ? SessionType.PICTURE : SessionType.VIDEO);
+            message("Session type set to" + (pic ? " picture!" : " video!"), true);
         }
     };
 

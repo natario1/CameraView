@@ -142,7 +142,7 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setSessionType(@SessionType int sessionType) {
+    void setSessionType(SessionType sessionType) {
 
     }
 
@@ -157,7 +157,7 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setVideoQuality(int videoQuality) {
+    void setVideoQuality(VideoQuality videoQuality) {
 
     }
 
