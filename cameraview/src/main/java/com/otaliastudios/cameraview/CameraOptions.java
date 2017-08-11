@@ -17,7 +17,7 @@ public class CameraOptions {
 
     private Set<Integer> supportedWhiteBalance = new HashSet<>(5);
     private Set<Facing> supportedFacing = new HashSet<>(2);
-    private Set<Integer> supportedFlash = new HashSet<>(4);
+    private Set<Flash> supportedFlash = new HashSet<>(4);
 
     private boolean zoomSupported;
     private boolean videoSnapshotSupported;
@@ -54,7 +54,7 @@ public class CameraOptions {
         strings = params.getSupportedFlashModes();
         if (strings != null) {
             for (String string : strings) {
-                Integer value = mapper.unmapFlash(string);
+                Flash value = mapper.unmapFlash(string);
                 if (value != null) supportedFlash.add(value);
             }
         }
@@ -93,14 +93,14 @@ public class CameraOptions {
     /**
      * Set of supported flash values.
      *
-     * @see CameraConstants#FLASH_AUTO
-     * @see CameraConstants#FLASH_OFF
-     * @see CameraConstants#FLASH_ON
-     * @see CameraConstants#FLASH_TORCH
+     * @see Flash#AUTO
+     * @see Flash#OFF
+     * @see Flash#ON
+     * @see Flash#TORCH
      * @return a set of supported values.
      */
     @NonNull
-    public Set<Integer> getSupportedFlash() {
+    public Set<Flash> getSupportedFlash() {
         return supportedFlash;
     }
 

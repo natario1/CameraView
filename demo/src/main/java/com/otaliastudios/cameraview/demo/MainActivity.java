@@ -197,15 +197,15 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     void toggleFlash() {
         if (mCapturingPicture) return;
         switch (camera.toggleFlash()) {
-            case CameraConstants.FLASH_ON:
+            case ON:
                 message("Flash on!", false);
                 break;
 
-            case CameraConstants.FLASH_OFF:
+            case OFF:
                 message("Flash off!", false);
                 break;
 
-            case CameraConstants.FLASH_AUTO:
+            case AUTO:
                 message("Flash auto!", false);
                 break;
         }

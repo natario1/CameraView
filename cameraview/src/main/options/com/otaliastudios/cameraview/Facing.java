@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview;
 
 
 /**
- * Facing values indicates which camera sensor should be used for the current session.
+ * Facing value indicates which camera sensor should be used for the current session.
  *
  * @see CameraView#setFacing(int)
  */
@@ -18,13 +18,15 @@ public enum Facing {
      */
     FRONT(1);
 
+    final static Facing DEFAULT = BACK;
+
     private int value;
 
     Facing(int value) {
         this.value = value;
     }
 
-    private int value() {
+    int value() {
         return value;
     }
 

@@ -6,23 +6,23 @@ import java.util.HashMap;
 
 abstract class Mapper {
 
-    abstract <T> T mapFlash(@Flash int internalConstant);
+    abstract <T> T mapFlash(Flash internalConstant);
     abstract <T> T mapFacing(Facing internalConstant);
     abstract <T> T mapWhiteBalance(@WhiteBalance int internalConstant);
-    @Flash abstract <T> Integer unmapFlash(T cameraConstant);
+    abstract <T> Flash unmapFlash(T cameraConstant);
     abstract <T> Facing unmapFacing(T cameraConstant);
     @WhiteBalance abstract <T> Integer unmapWhiteBalance(T cameraConstant);
 
     static class Mapper1 extends Mapper {
-        private static final HashMap<Integer, String> FLASH = new HashMap<>();
+        private static final HashMap<Flash, String> FLASH = new HashMap<>();
         private static final HashMap<Integer, String> WB = new HashMap<>();
         private static final HashMap<Facing, Integer> FACING = new HashMap<>();
 
         static {
-            FLASH.put(CameraConstants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
-            FLASH.put(CameraConstants.FLASH_ON, Camera.Parameters.FLASH_MODE_ON);
-            FLASH.put(CameraConstants.FLASH_AUTO, Camera.Parameters.FLASH_MODE_AUTO);
-            FLASH.put(CameraConstants.FLASH_TORCH, Camera.Parameters.FLASH_MODE_TORCH);
+            FLASH.put(Flash.OFF, Camera.Parameters.FLASH_MODE_OFF);
+            FLASH.put(Flash.ON, Camera.Parameters.FLASH_MODE_ON);
+            FLASH.put(Flash.AUTO, Camera.Parameters.FLASH_MODE_AUTO);
+            FLASH.put(Flash.TORCH, Camera.Parameters.FLASH_MODE_TORCH);
             FACING.put(Facing.BACK, Camera.CameraInfo.CAMERA_FACING_BACK);
             FACING.put(Facing.FRONT, Camera.CameraInfo.CAMERA_FACING_FRONT);
             WB.put(CameraConstants.WHITE_BALANCE_AUTO, Camera.Parameters.WHITE_BALANCE_AUTO);
@@ -33,7 +33,7 @@ abstract class Mapper {
         }
 
         @Override
-        <T> T mapFlash(int internalConstant) {
+        <T> T mapFlash(Flash internalConstant) {
             return (T) FLASH.get(internalConstant);
         }
 
@@ -57,7 +57,7 @@ abstract class Mapper {
         }
 
         @Override
-        <T> Integer unmapFlash(T cameraConstant) {
+        <T> Flash unmapFlash(T cameraConstant) {
             return reverseLookup(FLASH, cameraConstant);
         }
 
@@ -80,18 +80,18 @@ abstract class Mapper {
         }
 
         @Override
-        <T> T mapFlash(@Flash int internalConstant) {
+        <T> T mapFlash(Flash internalConstant) {
             return null;
         }
 
         @Override
-        <T> Integer unmapFlash(T cameraConstant) {
-            return 0;
+        <T> Flash unmapFlash(T cameraConstant) {
+            return null;
         }
 
         @Override
         <T> Integer unmapWhiteBalance(T cameraConstant) {
-            return 0;
+            return null;
         }
 
         @Override

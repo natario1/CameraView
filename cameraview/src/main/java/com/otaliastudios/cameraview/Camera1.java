@@ -143,7 +143,7 @@ class Camera1 extends CameraController {
                 mExtraProperties = new ExtraProperties(params);
                 mOptions = new CameraOptions(params);
                 applyDefaultFocus(params);
-                mergeFlash(params, CameraConstants.Defaults.DEFAULT_FLASH);
+                mergeFlash(params, Flash.DEFAULT);
                 mergeLocation(params, 0d, 0d);
                 mergeWhiteBalance(params, CameraConstants.Defaults.DEFAULT_WHITE_BALANCE);
                 params.setRecordingHint(mSessionType == SESSION_TYPE_VIDEO);
@@ -271,8 +271,8 @@ class Camera1 extends CameraController {
     }
 
     @Override
-    void setFlash(@Flash int flash) {
-        int old = mFlash;
+    void setFlash(Flash flash) {
+        Flash old = mFlash;
         mFlash = flash;
         if (isCameraOpened()) {
             synchronized (mLock) {
@@ -283,7 +283,7 @@ class Camera1 extends CameraController {
     }
 
 
-    private boolean mergeFlash(Camera.Parameters params, @Flash int oldFlash) {
+    private boolean mergeFlash(Camera.Parameters params, Flash oldFlash) {
         if (mOptions.getSupportedFlash().contains(mFlash)) {
             params.setFlashMode((String) mMapper.mapFlash(mFlash));
             return true;

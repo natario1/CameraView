@@ -137,7 +137,7 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setFlash(@Flash int flash) {
+    void setFlash(Flash flash) {
 
     }
 

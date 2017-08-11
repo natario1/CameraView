@@ -38,11 +38,7 @@ import static android.view.View.MeasureSpec.UNSPECIFIED;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
-/**
- * TODO: README for gestures
- * TODO: deprecate setFocus, CONTINUOUS should be the default
- *
- */
+
 public class CameraView extends FrameLayout {
 
     private final static String TAG = CameraView.class.getSimpleName();
@@ -96,18 +92,17 @@ public class CameraView extends FrameLayout {
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
-        Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Defaults.DEFAULT_FACING));
-        int flash = a.getInteger(R.styleable.CameraView_cameraFlash, Defaults.DEFAULT_FLASH);
+        Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
+        Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
         int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, Defaults.DEFAULT_SESSION_TYPE);
         int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, Defaults.DEFAULT_WHITE_BALANCE);
         int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, Defaults.DEFAULT_VIDEO_QUALITY);
         int grid = a.getInteger(R.styleable.CameraView_cameraGrid, Defaults.DEFAULT_GRID);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, Defaults.DEFAULT_CROP_OUTPUT);
-        GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, Defaults.DEFAULT_GESTURE_ACTION_TAP));
-        // int doubleTapGesture = a.getInteger(R.styleable.CameraView_cameraGestureDoubleTap, Defaults.DEFAULT_GESTURE_ACTION_DOUBLE_TAP);
-        GestureAction longTapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureLongTap, Defaults.DEFAULT_GESTURE_ACTION_LONG_TAP));
-        GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, Defaults.DEFAULT_GESTURE_ACTION_PINCH));
+        GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
+        GestureAction longTapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureLongTap, GestureAction.DEFAULT_LONG_TAP.value()));
+        GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, GestureAction.DEFAULT_PINCH.value()));
         a.recycle();
 
         mCameraCallbacks = new CameraCallbacks();
@@ -736,14 +731,14 @@ public class CameraView extends FrameLayout {
     /**
      * Sets the flash mode.
      *
-     * @see CameraConstants#FLASH_OFF
-     * @see CameraConstants#FLASH_ON
-     * @see CameraConstants#FLASH_AUTO
-     * @see CameraConstants#FLASH_TORCH
+     * @see Flash#OFF
+     * @see Flash#ON
+     * @see Flash#AUTO
+     * @see Flash#TORCH
 
      * @param flash desired flash mode.
      */
-    public void setFlash(@Flash int flash) {
+    public void setFlash(Flash flash) {
         mCameraController.setFlash(flash);
     }
 
@@ -752,33 +747,31 @@ public class CameraView extends FrameLayout {
      * Gets the current flash mode.
      * @return a flash mode
      */
-    @Flash
-    public int getFlash() {
+    public Flash getFlash() {
         return mCameraController.getFlash();
     }
 
 
     /**
-     * Toggles the flash mode between {@link CameraConstants#FLASH_OFF},
-     * {@link CameraConstants#FLASH_ON} and {@link CameraConstants#FLASH_AUTO}, in this order.
+     * Toggles the flash mode between {@link Flash#OFF},
+     * {@link Flash#ON} and {@link Flash#AUTO}, in this order.
      *
      * @return the new flash value
      */
-    @Flash
-    public int toggleFlash() {
-        int flash = mCameraController.getFlash();
+    public Flash toggleFlash() {
+        Flash flash = mCameraController.getFlash();
         switch (flash) {
-            case FLASH_OFF:
-                setFlash(FLASH_ON);
+            case OFF:
+                setFlash(Flash.ON);
                 break;
 
-            case FLASH_ON:
-                setFlash(FLASH_AUTO);
+            case ON:
+                setFlash(Flash.AUTO);
                 break;
 
-            case FLASH_AUTO:
-            case FLASH_TORCH:
-                setFlash(FLASH_OFF);
+            case AUTO:
+            case TORCH:
+                setFlash(Flash.OFF);
                 break;
         }
 
@@ -1325,7 +1318,7 @@ public class CameraView extends FrameLayout {
      */
     @Deprecated
     public int getFocus() {
-        return Defaults.DEFAULT_FOCUS;
+        return 0;
     }
 
 
@@ -1365,7 +1358,7 @@ public class CameraView extends FrameLayout {
      */
     @Deprecated
     public int getZoomMode() {
-        return Defaults.DEFAULT_ZOOM;
+        return 0;
     }
 
 }

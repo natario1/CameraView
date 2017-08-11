@@ -61,13 +61,17 @@ public enum GestureAction {
     EXPOSURE_CORRECTION(5);
 
 
+    final static GestureAction DEFAULT_PINCH = NONE;
+    final static GestureAction DEFAULT_TAP = NONE;
+    final static GestureAction DEFAULT_LONG_TAP = NONE;
+
     private int value;
 
     GestureAction(int value) {
         this.value = value;
     }
 
-    private int value() {
+    int value() {
         return value;
     }
 

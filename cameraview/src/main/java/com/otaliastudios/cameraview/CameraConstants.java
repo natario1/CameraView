@@ -5,16 +5,6 @@ public class CameraConstants {
 
     public static final int PERMISSION_REQUEST_CODE = 16;
 
-    @Deprecated public static final int GESTURE_ACTION_NONE = 0;
-    @Deprecated public static final int FACING_BACK = 0;
-    @Deprecated public static final int FOCUS_CONTINUOUS = 1;
-    @Deprecated public static final int ZOOM_OFF = 0;
-
-    public static final int FLASH_OFF = 0;
-    public static final int FLASH_ON = 1;
-    public static final int FLASH_AUTO = 2;
-    public static final int FLASH_TORCH = 3;
-
     public static final int GRID_OFF = 0;
     public static final int GRID_3X3 = 1;
     public static final int GRID_4X4 = 2;
@@ -41,17 +31,7 @@ public class CameraConstants {
     static class Defaults {
 
         // TODO: Move to enum classes
-        static final int DEFAULT_GESTURE_ACTION_TAP = GESTURE_ACTION_NONE;
-        static final int DEFAULT_GESTURE_ACTION_LONG_TAP = GESTURE_ACTION_NONE;
-        static final int DEFAULT_GESTURE_ACTION_PINCH = GESTURE_ACTION_NONE;
-        static final int DEFAULT_FACING = FACING_BACK;
 
-        // Deprecated
-        @Deprecated static final int DEFAULT_FOCUS = FOCUS_CONTINUOUS;
-        @Deprecated static final int DEFAULT_ZOOM = ZOOM_OFF;
-
-        // OK
-        static final int DEFAULT_FLASH = FLASH_OFF;
         static final int DEFAULT_VIDEO_QUALITY = VIDEO_QUALITY_480P;
         static final int DEFAULT_WHITE_BALANCE = WHITE_BALANCE_AUTO;
         static final int DEFAULT_SESSION_TYPE = SESSION_TYPE_PICTURE;

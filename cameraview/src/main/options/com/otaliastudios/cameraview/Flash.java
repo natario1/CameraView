@@ -1,16 +1,64 @@
 package com.otaliastudios.cameraview;
 
-import android.support.annotation.IntDef;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+/**
+ * Flash value indicates the flash mode to be used.
+ *
+ * @see CameraView#setFlash(int)
+ */
+public enum Flash {
 
-import static com.otaliastudios.cameraview.CameraConstants.FLASH_AUTO;
-import static com.otaliastudios.cameraview.CameraConstants.FLASH_OFF;
-import static com.otaliastudios.cameraview.CameraConstants.FLASH_ON;
-import static com.otaliastudios.cameraview.CameraConstants.FLASH_TORCH;
+    /**
+     * Flash is always off.
+     */
+    OFF(0),
 
-@Retention(RetentionPolicy.SOURCE)
-@IntDef({FLASH_OFF, FLASH_ON, FLASH_AUTO, FLASH_TORCH})
-public @interface Flash {
+    /**
+     * Flash will be on when capturing.
+     * This is not guaranteed to be supported.
+     *
+     * @see CameraOptions#getSupportedFlash()
+     */
+    ON(1),
+
+
+    /**
+     * Flash mode is chosen by the camera.
+     * This is not guaranteed to be supported.
+     *
+     * @see CameraOptions#getSupportedFlash()
+     */
+    AUTO(2),
+
+
+    /**
+     * TODO: is this true?
+     * Flash is always on, working as a torch.
+     * This is not guaranteed to be supported.
+     *
+     * @see CameraOptions#getSupportedFlash()
+     */
+    TORCH(3);
+
+    static final Flash DEFAULT = OFF;
+
+    private int value;
+
+    Flash(int value) {
+        this.value = value;
+    }
+
+    int value() {
+        return value;
+    }
+
+    static Flash fromValue(int value) {
+        Flash[] list = Flash.values();
+        for (Flash action : list) {
+            if (action.value() == value) {
+                return action;
+            }
+        }
+        return null;
+    }
 }
