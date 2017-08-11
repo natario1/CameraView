@@ -321,7 +321,7 @@ class Camera1 extends CameraController {
 
 
     @Override
-    void setVideoQuality(int videoQuality) {
+    void setVideoQuality(VideoQuality videoQuality) {
         if (mIsCapturingVideo) {
             throw new IllegalStateException("Can't change video quality while recording a video.");
         }
@@ -588,43 +588,43 @@ class Camera1 extends CameraController {
 
 
     @NonNull
-    private CamcorderProfile getCamcorderProfile(@VideoQuality int videoQuality) {
+    private CamcorderProfile getCamcorderProfile(VideoQuality videoQuality) {
         switch (videoQuality) {
-            case CameraConstants.VIDEO_QUALITY_HIGHEST:
+            case HIGHEST:
                 return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
 
-            case CameraConstants.VIDEO_QUALITY_2160P:
+            case MAX_2160P:
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
                         CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2160P)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_2160P);
                 }
                 // Don't break.
 
-            case CameraConstants.VIDEO_QUALITY_1080P:
+            case MAX_1080P:
                 if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_1080P)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_1080P);
                 }
                 // Don't break.
 
-            case CameraConstants.VIDEO_QUALITY_720P:
+            case MAX_720P:
                 if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_720P)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_720P);
                 }
                 // Don't break.
 
-            case CameraConstants.VIDEO_QUALITY_480P:
+            case MAX_480P:
                 if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_480P)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_480P);
                 }
                 // Don't break.
 
-            case CameraConstants.VIDEO_QUALITY_QVGA:
+            case MAX_QVGA:
                 if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
                     return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_QVGA);
                 }
                 // Don't break.
 
-            case CameraConstants.VIDEO_QUALITY_LOWEST:
+            case LOWEST:
             default:
                 // Fallback to lowest.
                 return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_LOW);

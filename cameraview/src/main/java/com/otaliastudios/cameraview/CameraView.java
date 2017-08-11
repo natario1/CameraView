@@ -96,8 +96,8 @@ public class CameraView extends FrameLayout {
         Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
         Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
         WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
+        VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
         int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, Defaults.DEFAULT_SESSION_TYPE);
-        int videoQuality = a.getInteger(R.styleable.CameraView_cameraVideoQuality, Defaults.DEFAULT_VIDEO_QUALITY);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, Defaults.DEFAULT_CROP_OUTPUT);
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
@@ -838,17 +838,17 @@ public class CameraView extends FrameLayout {
      * If it's not, a lower quality will be chosen, until a supported one is found.
      * If sessionType is video, this might trigger a camera restart and a change in preview size.
      *
-     * @see CameraConstants#VIDEO_QUALITY_LOWEST
-     * @see CameraConstants#VIDEO_QUALITY_QVGA
-     * @see CameraConstants#VIDEO_QUALITY_480P
-     * @see CameraConstants#VIDEO_QUALITY_720P
-     * @see CameraConstants#VIDEO_QUALITY_1080P
-     * @see CameraConstants#VIDEO_QUALITY_2160P
-     * @see CameraConstants#VIDEO_QUALITY_HIGHEST
+     * @see VideoQuality#LOWEST
+     * @see VideoQuality#HIGHEST
+     * @see VideoQuality#MAX_QVGA
+     * @see VideoQuality#MAX_480P
+     * @see VideoQuality#MAX_720P
+     * @see VideoQuality#MAX_1080P
+     * @see VideoQuality#MAX_2160P
      *
      * @param videoQuality requested video quality
      */
-    public void setVideoQuality(@VideoQuality int videoQuality) {
+    public void setVideoQuality(VideoQuality videoQuality) {
         mCameraController.setVideoQuality(videoQuality);
     }
 
@@ -857,8 +857,7 @@ public class CameraView extends FrameLayout {
      * Gets the current video quality.
      * @return the current video quality
      */
-    @VideoQuality
-    public int getVideoQuality() {
+    public VideoQuality getVideoQuality() {
         return mCameraController.getVideoQuality();
     }
 

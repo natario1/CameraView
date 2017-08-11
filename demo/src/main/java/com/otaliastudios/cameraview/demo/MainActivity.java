@@ -19,6 +19,7 @@ import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.Facing;
 import com.otaliastudios.cameraview.Grid;
 import com.otaliastudios.cameraview.Size;
+import com.otaliastudios.cameraview.VideoQuality;
 
 import java.io.File;
 
@@ -238,15 +239,15 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
             if (mCapturingVideo) return;
-            int videoQuality = CameraConstants.VIDEO_QUALITY_HIGHEST;
+            VideoQuality videoQuality = VideoQuality.HIGHEST;
             switch (checkedId) {
-                case R.id.videoQualityLowest: videoQuality = CameraConstants.VIDEO_QUALITY_LOWEST; break;
-                case R.id.videoQualityQvga: videoQuality = CameraConstants.VIDEO_QUALITY_QVGA; break;
-                case R.id.videoQuality480p: videoQuality = CameraConstants.VIDEO_QUALITY_480P; break;
-                case R.id.videoQuality720p: videoQuality = CameraConstants.VIDEO_QUALITY_720P; break;
-                case R.id.videoQuality1080p: videoQuality = CameraConstants.VIDEO_QUALITY_1080P; break;
-                case R.id.videoQuality2160p: videoQuality = CameraConstants.VIDEO_QUALITY_2160P; break;
-                case R.id.videoQualityHighest: videoQuality = CameraConstants.VIDEO_QUALITY_HIGHEST; break;
+                case R.id.videoQualityLowest: videoQuality = VideoQuality.LOWEST; break;
+                case R.id.videoQualityQvga: videoQuality = VideoQuality.MAX_QVGA; break;
+                case R.id.videoQuality480p: videoQuality = VideoQuality.MAX_480P; break;
+                case R.id.videoQuality720p: videoQuality = VideoQuality.MAX_720P; break;
+                case R.id.videoQuality1080p: videoQuality = VideoQuality.MAX_1080P; break;
+                case R.id.videoQuality2160p: videoQuality = VideoQuality.MAX_2160P; break;
+                case R.id.videoQualityHighest: videoQuality = VideoQuality.HIGHEST; break;
             }
             camera.setVideoQuality(videoQuality);
             message("Video quality changed!", false);

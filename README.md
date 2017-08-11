@@ -297,7 +297,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraGrid`](#cameragrid)|`setGrid()`|`off` `draw3x3` `draw4x4` `drawPhi`|`off`|
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 <= n <= 100`|`100`|
-|[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`max480p` `max720p` `max1080p` `max2160p` `highest` `lowest`|`max480p`|
+|[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`lowest` `highest` `maxQvga` `max480p` `max720p` `max1080p` `max2160p`|`max480p`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 
 #### cameraSessionType
@@ -364,13 +364,13 @@ cameraView.setJpegQuality(50);
 Sets the desired video quality.
 
 ```java
-cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_480P);
-cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_720P);
-cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_1080P);
-cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_2160P);
-cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_LOWEST);
-cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_HIGHEST);
-cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_QVGA);
+cameraView.setVideoQuality(VideoQuality.LOWEST);
+cameraView.setVideoQuality(VideoQuality.HIGHEST);
+cameraView.setVideoQuality(VideoQuality.MAX_QVGA);
+cameraView.setVideoQuality(VideoQuality.MAX_480P);
+cameraView.setVideoQuality(VideoQuality.MAX_720P);
+cameraView.setVideoQuality(VideoQuality.MAX_1080P);
+cameraView.setVideoQuality(VideoQuality.MAX_2160P);
 ```
 
 #### cameraWhiteBalance
@@ -378,11 +378,11 @@ cameraView.setVideoQuality(CameraConstants.VIDEO_QUALITY_QVGA);
 Sets the desired white balance for the current session.
 
 ```java
-cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_AUTO);
-cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_INCANDESCENT);
-cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_FLUORESCENT);
-cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_DAYLIGHT);
-cameraView.setWhiteBalance(CameraConstants.WHITE_BALANCE_CLOUDY);
+cameraView.setWhiteBalance(WhiteBalance.AUTO);
+cameraView.setWhiteBalance(WhiteBalance.INCANDESCENT);
+cameraView.setWhiteBalance(WhiteBalance.FLUORESCENT);
+cameraView.setWhiteBalance(WhiteBalance.DAYLIGHT);
+cameraView.setWhiteBalance(WhiteBalance.CLOUDY);
 ```
 
 ## Other APIs

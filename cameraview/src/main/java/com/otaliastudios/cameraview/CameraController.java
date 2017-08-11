@@ -14,7 +14,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     protected Facing mFacing;
     protected Flash mFlash;
     protected WhiteBalance mWhiteBalance;
-    @VideoQuality protected int mVideoQuality;
+    protected VideoQuality mVideoQuality;
     @SessionType protected int mSessionType;
 
     CameraController(CameraView.CameraCallbacks callback, Preview preview) {
@@ -34,7 +34,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     abstract void setFacing(Facing facing);
     abstract void setFlash(Flash flash);
     abstract void setWhiteBalance(WhiteBalance whiteBalance);
-    abstract void setVideoQuality(@VideoQuality int videoQuality);
+    abstract void setVideoQuality(VideoQuality videoQuality);
     abstract void setSessionType(@SessionType int sessionType);
     abstract void setLocation(double latitude, double longitude);
 
@@ -56,11 +56,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     final Facing getFacing() { return mFacing; }
     final Flash getFlash() { return mFlash; }
     final WhiteBalance getWhiteBalance() { return mWhiteBalance; }
-
-    @VideoQuality
-    final int getVideoQuality() {
-        return mVideoQuality;
-    }
+    final VideoQuality getVideoQuality() { return mVideoQuality; }
 
     @SessionType
     final int getSessionType() {
