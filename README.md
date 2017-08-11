@@ -15,7 +15,7 @@ compile 'com.otaliastudios:cameraview:1.0.0'
   <img src="art/screen2.png" width="250" vspace="20" hspace="5">
 </p>
 
-*This is a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview). The library at this point has been completely rewritten and refactored. See [below](#roadmap) for a list of what was done. This works better than any other library I have tried, and I would be grateful for any issue, suggestion or contribution.*
+*This is a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview), but has been completely rewritten. See [below](#roadmap) for a list of what was done. Feel free to contribute - this is under active development.*
 
 ### Features
 
@@ -217,9 +217,9 @@ camera.addCameraListener(new CameraListener() {
 `CameraView` listen to lots of different gestures inside its bounds. You have the chance to map these gestures to particular actions or camera controls, using `mapGesture()`. This lets you emulate typical behaviors in a single line:
 
 ```java
-cameraView.mapGesture(Gesture.PINCH, CameraConstants.GESTURE_ACTION_ZOOM); // Pinch to zoom!
-cameraView.mapGesture(Gesture.TAP, CameraConstants.GESTURE_ACTION_FOCUS_WITH_MARKER); // Tap to focus!
-cameraView.mapGesture(Gesture.LONG_TAP, CameraConstants.GESTURE_ACTION_CAPTURE); // Long tap to shoot!
+cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM); // Pinch to zoom!
+cameraView.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER); // Tap to focus!
+cameraView.mapGesture(Gesture.LONG_TAP, GestureAction.CAPTURE); // Long tap to shoot!
 ```
 
 Simple as that. More gestures are coming. There are two things to be noted:
@@ -283,7 +283,7 @@ Most camera parameters can be controlled through XML attributes or linked method
     app:cameraFlash="off"
     app:cameraGrid="off"
     app:cameraSessionType="picture"
-    app:cameraCropOutput="true"  
+    app:cameraCropOutput="false"  
     app:cameraJpegQuality="100"
     app:cameraVideoQuality="480p"
     app:cameraWhiteBalance="auto" />
@@ -392,7 +392,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |Method|Description|
 |------|-----------|
 |`isStarted()`|Returns true if `start()` was called succesfully. This does not mean that camera is open or showing preview.|
-|`mapGesture(Gesture, int)`|Maps a certain gesture to a certain action. No-op if the action is not supported.|
+|`mapGesture(Gesture, GestureAction)`|Maps a certain gesture to a certain action. No-op if the action is not supported.|
 |`clearGesture(Gesture)`|Clears any action mapped to the given gesture.|
 |`getCameraOptions()`|If camera was started, returns non-null object with information about what is supported.|
 |`getExtraProperties()`|If camera was started, returns non-null object with extra information about the camera sensor. Not very useful at the moment.|

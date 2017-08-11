@@ -1,14 +1,83 @@
 package com.otaliastudios.cameraview;
 
-import android.support.annotation.IntDef;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+/**
+ * Gestures actions are actions over camera controls that can be mapped to certain gestures over
+ * the screen, using XML attributes or {@link CameraView#mapGesture(Gesture, GestureAction)}.
+ *
+ * Not every gesture can control a certain action. For example, pinch gestures can only control
+ * continuous values, such as zoom or AE correction. Single point gestures, on the other hand,
+ * can only control point actions such as focusing or capturing a picture.
+ */
+public enum GestureAction {
 
-import static com.otaliastudios.cameraview.CameraConstants.*;
+    /**
+     * No action. This can be mapped to any gesture to disable it.
+     */
+    NONE(0),
 
-@Retention(RetentionPolicy.SOURCE)
-@IntDef({GESTURE_ACTION_NONE, GESTURE_ACTION_FOCUS, GESTURE_ACTION_FOCUS_WITH_MARKER,
-        GESTURE_ACTION_AE_CORRECTION, GESTURE_ACTION_CAPTURE, GESTURE_ACTION_ZOOM})
-public @interface GestureAction {
+    /**
+     * Auto focus control, typically assigned to the tap gesture.
+     * This action can be mapped to:
+     *
+     * - {@link Gesture#TAP}
+     * - {@link Gesture#LONG_TAP}
+     */
+    FOCUS(1),
+
+    /**
+     * Auto focus control, typically assigned to the tap gesture.
+     * On top of {@link #FOCUS}, this will draw a default marker on screen.
+     * This action can be mapped to:
+     *
+     * - {@link Gesture#TAP}
+     * - {@link Gesture#LONG_TAP}
+     */
+    FOCUS_WITH_MARKER(2),
+
+    /**
+     * When triggered, this action will fire a picture shoot.
+     * This action can be mapped to:
+     *
+     * - {@link Gesture#TAP}
+     * - {@link Gesture#LONG_TAP}
+     */
+    CAPTURE(3),
+
+    /**
+     * Zoom control, typically assigned to the pinch gesture.
+     * This action can be mapped to:
+     *
+     * - {@link Gesture#PINCH}
+     */
+    ZOOM(4),
+
+    /**
+     * Exposure correction control.
+     * This action can be mapped to:
+     *
+     * - {@link Gesture#PINCH}
+     */
+    EXPOSURE_CORRECTION(5);
+
+
+    private int value;
+
+    GestureAction(int value) {
+        this.value = value;
+    }
+
+    private int value() {
+        return value;
+    }
+
+    static GestureAction fromValue(int value) {
+        GestureAction[] list = GestureAction.values();
+        for (GestureAction action : list) {
+            if (action.value() == value) {
+                return action;
+            }
+        }
+        return null;
+    }
 }

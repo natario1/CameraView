@@ -81,7 +81,7 @@ public class CameraView extends FrameLayout {
     private float mZoomValue;
     private float mExposureCorrectionValue;
 
-    private HashMap<Gesture, Integer> mGestureMap = new HashMap<>(4);
+    private HashMap<Gesture, GestureAction> mGestureMap = new HashMap<>(4);
 
     public CameraView(@NonNull Context context) {
         super(context, null);
@@ -104,10 +104,10 @@ public class CameraView extends FrameLayout {
         int grid = a.getInteger(R.styleable.CameraView_cameraGrid, Defaults.DEFAULT_GRID);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, Defaults.DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, Defaults.DEFAULT_CROP_OUTPUT);
-        int tapGesture = a.getInteger(R.styleable.CameraView_cameraGestureTap, Defaults.DEFAULT_GESTURE_ACTION_TAP);
+        GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, Defaults.DEFAULT_GESTURE_ACTION_TAP));
         // int doubleTapGesture = a.getInteger(R.styleable.CameraView_cameraGestureDoubleTap, Defaults.DEFAULT_GESTURE_ACTION_DOUBLE_TAP);
-        int longTapGesture = a.getInteger(R.styleable.CameraView_cameraGestureLongTap, Defaults.DEFAULT_GESTURE_ACTION_LONG_TAP);
-        int pinchGesture = a.getInteger(R.styleable.CameraView_cameraGesturePinch, Defaults.DEFAULT_GESTURE_ACTION_PINCH);
+        GestureAction longTapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureLongTap, Defaults.DEFAULT_GESTURE_ACTION_LONG_TAP));
+        GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, Defaults.DEFAULT_GESTURE_ACTION_PINCH));
         a.recycle();
 
         mCameraCallbacks = new CameraCallbacks();
@@ -326,24 +326,24 @@ public class CameraView extends FrameLayout {
      * @param action which action should be assigned
      * @return true if this action could be assigned to this gesture
      */
-    public boolean mapGesture(@NonNull Gesture gesture, @GestureAction int action) {
+    public boolean mapGesture(@NonNull Gesture gesture, GestureAction action) {
         if (gesture.isAssignableTo(action)) {
             mGestureMap.put(gesture, action);
             switch (gesture) {
                 case PINCH:
-                    mPinchGestureLayout.enable(mGestureMap.get(Gesture.PINCH) != GESTURE_ACTION_NONE);
+                    mPinchGestureLayout.enable(mGestureMap.get(Gesture.PINCH) != GestureAction.NONE);
                     break;
                 case TAP:
                 // case DOUBLE_TAP:
                 case LONG_TAP:
-                    mTapGestureLayout.enable(mGestureMap.get(Gesture.TAP) != GESTURE_ACTION_NONE ||
-                            // mGestureMap.get(Gesture.DOUBLE_TAP) != GESTURE_ACTION_NONE ||
-                            mGestureMap.get(Gesture.LONG_TAP) != GESTURE_ACTION_NONE);
+                    mTapGestureLayout.enable(mGestureMap.get(Gesture.TAP) != GestureAction.NONE ||
+                            // mGestureMap.get(Gesture.DOUBLE_TAP) != GestureAction.NONE ||
+                            mGestureMap.get(Gesture.LONG_TAP) != GestureAction.NONE);
                     break;
             }
             return true;
         }
-        mapGesture(gesture, GESTURE_ACTION_NONE);
+        mapGesture(gesture, GestureAction.NONE);
         return false;
     }
 
@@ -353,7 +353,7 @@ public class CameraView extends FrameLayout {
      * @param gesture which gesture to clear
      */
     public void clearGesture(@NonNull Gesture gesture) {
-        mGestureMap.put(gesture, GESTURE_ACTION_NONE);
+        mGestureMap.put(gesture, GestureAction.NONE);
     }
 
 
@@ -369,10 +369,10 @@ public class CameraView extends FrameLayout {
 
         CameraOptions options = mCameraController.getCameraOptions(); // Non null
         if (mPinchGestureLayout.onTouchEvent(event)) {
-            int action = mGestureMap.get(Gesture.PINCH);
+            GestureAction action = mGestureMap.get(Gesture.PINCH);
             // This currently can be zoom or AE.
             // Camera can either support these or not.
-            if (action == GESTURE_ACTION_ZOOM) {
+            if (action == GestureAction.ZOOM) {
                 float oldValue = mZoomValue;
                 float newValue = mPinchGestureLayout.scaleValue(oldValue, 0, 1);
                 PointF[] points = mPinchGestureLayout.getPoints();
@@ -381,7 +381,7 @@ public class CameraView extends FrameLayout {
                     mCameraCallbacks.dispatchOnZoomChanged(newValue, points);
                 }
 
-            } else if (action == GESTURE_ACTION_AE_CORRECTION) {
+            } else if (action == GestureAction.EXPOSURE_CORRECTION) {
                 float oldValue = mExposureCorrectionValue;
                 float minValue = options.getExposureCorrectionMinValue();
                 float maxValue = options.getExposureCorrectionMaxValue();
@@ -396,14 +396,14 @@ public class CameraView extends FrameLayout {
 
         } else if (mTapGestureLayout.onTouchEvent(event)) {
             Gesture gesture = mTapGestureLayout.getGestureType();
-            int action = mGestureMap.get(gesture);
+            GestureAction action = mGestureMap.get(gesture);
             // This currently can be capture, focus or focusWithMaker.
             // Camera can either support these or not.
-            if (action == GESTURE_ACTION_CAPTURE) {
+            if (action == GestureAction.CAPTURE) {
                 capturePicture();
 
-            } else if (action == GESTURE_ACTION_FOCUS ||
-                    action == GESTURE_ACTION_FOCUS_WITH_MARKER) {
+            } else if (action == GestureAction.FOCUS ||
+                    action == GestureAction.FOCUS_WITH_MARKER) {
                 PointF point = mTapGestureLayout.getPoint();
                 mCameraController.startAutoFocus(gesture, point); // This will call onFocusStart and onFocusEnd
             }
@@ -1235,7 +1235,7 @@ public class CameraView extends FrameLayout {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (gesture != null && mGestureMap.get(gesture) == GESTURE_ACTION_FOCUS_WITH_MARKER) {
+                    if (gesture != null && mGestureMap.get(gesture) == GestureAction.FOCUS_WITH_MARKER) {
                         mTapGestureLayout.onFocusStart(point);
                     }
 
@@ -1252,7 +1252,7 @@ public class CameraView extends FrameLayout {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (gesture != null && mGestureMap.get(gesture) == GESTURE_ACTION_FOCUS_WITH_MARKER) {
+                    if (gesture != null && mGestureMap.get(gesture) == GestureAction.FOCUS_WITH_MARKER) {
                         mTapGestureLayout.onFocusEnd(success);
                     }
 
@@ -1357,7 +1357,7 @@ public class CameraView extends FrameLayout {
      * @see CameraConstants#ZOOM_PINCH
      *
      * @param zoom no-op
-     * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
+     * @deprecated use {@link #mapGesture(Gesture, GestureAction)} to map zoom control to gestures
      */
     @Deprecated
     public void setZoomMode(@ZoomMode int zoom) {
@@ -1367,7 +1367,7 @@ public class CameraView extends FrameLayout {
     /**
      * Gets the current zoom mode.
      * @return no-op
-     * @deprecated use {@link #mapGesture(Gesture, int)} to map zoom control to gestures
+     * @deprecated use {@link #mapGesture(Gesture, GestureAction)} to map zoom control to gestures
      */
     @ZoomMode
     @Deprecated
