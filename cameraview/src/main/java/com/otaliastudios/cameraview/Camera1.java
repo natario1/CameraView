@@ -19,10 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.otaliastudios.cameraview.CameraConstants.FOCUS_CONTINUOUS;
-import static com.otaliastudios.cameraview.CameraConstants.FOCUS_FIXED;
-import static com.otaliastudios.cameraview.CameraConstants.FOCUS_TAP;
-import static com.otaliastudios.cameraview.CameraConstants.FOCUS_TAP_WITH_MARKER;
 import static com.otaliastudios.cameraview.CameraConstants.SESSION_TYPE_PICTURE;
 import static com.otaliastudios.cameraview.CameraConstants.SESSION_TYPE_VIDEO;
 
@@ -244,7 +240,7 @@ class Camera1 extends CameraController {
     }
 
     @Override
-    void setFacing(@Facing int facing) {
+    void setFacing(Facing facing) {
         if (facing != mFacing) {
             mFacing = facing;
             if (collectCameraId() && isCameraOpened()) {
@@ -467,7 +463,7 @@ class Camera1 extends CameraController {
      * It is meant to be fed to Camera.setDisplayOrientation().
      */
     private int computeSensorToDisplayOffset() {
-        if (mFacing == CameraConstants.FACING_FRONT) {
+        if (mFacing == Facing.FRONT) {
             // or: (360 - ((mSensorOffset + mDisplayOffset) % 360)) % 360;
             return ((mSensorOffset - mDisplayOffset) + 360 + 180) % 360;
         } else {
@@ -481,7 +477,7 @@ class Camera1 extends CameraController {
      * This ignores flipping for facing camera.
      */
     private int computeExifRotation() {
-        if (mFacing == CameraConstants.FACING_FRONT) {
+        if (mFacing == Facing.FRONT) {
             return (mSensorOffset - mDeviceOrientation + 360) % 360;
         } else {
             return (mSensorOffset + mDeviceOrientation) % 360;
@@ -493,7 +489,7 @@ class Camera1 extends CameraController {
      * Whether the exif tag should include a 'flip' operation.
      */
     private boolean computeExifFlip() {
-        return mFacing == CameraConstants.FACING_FRONT;
+        return mFacing == Facing.FRONT;
     }
 
 

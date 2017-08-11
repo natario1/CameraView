@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.otaliastudios.cameraview.CameraConstants;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.Facing;
 import com.otaliastudios.cameraview.Size;
 
 import java.io.File;
@@ -187,11 +188,11 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
     void toggleCamera() {
         if (mCapturingPicture) return;
         switch (camera.toggleFacing()) {
-            case CameraConstants.FACING_BACK:
+            case BACK:
                 message("Switched to back camera!", false);
                 break;
 
-            case CameraConstants.FACING_FRONT:
+            case FRONT:
                 message("Switched to front camera!", false);
                 break;
         }

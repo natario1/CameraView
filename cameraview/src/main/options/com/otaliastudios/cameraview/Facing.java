@@ -1,14 +1,40 @@
 package com.otaliastudios.cameraview;
 
-import android.support.annotation.IntDef;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+/**
+ * Facing values indicates which camera sensor should be used for the current session.
+ *
+ * @see CameraView#setFacing(int)
+ */
+public enum Facing {
 
-import static com.otaliastudios.cameraview.CameraConstants.FACING_BACK;
-import static com.otaliastudios.cameraview.CameraConstants.FACING_FRONT;
+    /**
+     * Back-facing camera sensor.
+     */
+    BACK(0),
 
-@IntDef({FACING_BACK, FACING_FRONT})
-@Retention(RetentionPolicy.SOURCE)
-public @interface Facing {
+    /**
+     * Front-facing camera sensor.
+     */
+    FRONT(1);
+
+    private int value;
+
+    Facing(int value) {
+        this.value = value;
+    }
+
+    private int value() {
+        return value;
+    }
+
+    static Facing fromValue(int value) {
+        Facing[] list = Facing.values();
+        for (Facing action : list) {
+            if (action.value() == value) {
+                return action;
+            }
+        }
+        return null;
+    }
 }

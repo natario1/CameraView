@@ -96,7 +96,7 @@ public class CameraView extends FrameLayout {
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
-        int facing = a.getInteger(R.styleable.CameraView_cameraFacing, Defaults.DEFAULT_FACING);
+        Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Defaults.DEFAULT_FACING));
         int flash = a.getInteger(R.styleable.CameraView_cameraFlash, Defaults.DEFAULT_FLASH);
         int sessionType = a.getInteger(R.styleable.CameraView_cameraSessionType, Defaults.DEFAULT_SESSION_TYPE);
         int whiteBalance = a.getInteger(R.styleable.CameraView_cameraWhiteBalance, Defaults.DEFAULT_WHITE_BALANCE);
@@ -687,12 +687,12 @@ public class CameraView extends FrameLayout {
     /**
      * Sets which camera sensor should be used.
      *
-     * @see CameraConstants#FACING_FRONT
-     * @see CameraConstants#FACING_BACK
+     * @see Facing#FRONT
+     * @see Facing#BACK
      *
      * @param facing a facing value.
      */
-    public void setFacing(@Facing final int facing) {
+    public void setFacing(final Facing facing) {
         run(new Runnable() {
             @Override
             public void run() {
@@ -706,28 +706,26 @@ public class CameraView extends FrameLayout {
      * Gets the facing camera currently being used.
      * @return a facing value.
      */
-    @Facing
-    public int getFacing() {
+    public Facing getFacing() {
         return mCameraController.getFacing();
     }
 
 
     /**
-     * Toggles the facing value between {@link CameraConstants#FACING_BACK}
-     * and {@link CameraConstants#FACING_FRONT}.
+     * Toggles the facing value between {@link Facing#BACK}
+     * and {@link Facing#FRONT}.
      *
      * @return the new facing value
      */
-    @Facing
-    public int toggleFacing() {
-        int facing = mCameraController.getFacing();
+    public Facing toggleFacing() {
+        Facing facing = mCameraController.getFacing();
         switch (facing) {
-            case FACING_BACK:
-                setFacing(FACING_FRONT);
+            case BACK:
+                setFacing(Facing.FRONT);
                 break;
 
-            case FACING_FRONT:
-                setFacing(FACING_BACK);
+            case FRONT:
+                setFacing(Facing.BACK);
                 break;
         }
 

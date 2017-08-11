@@ -16,7 +16,7 @@ import java.util.Set;
 public class CameraOptions {
 
     private Set<Integer> supportedWhiteBalance = new HashSet<>(5);
-    private Set<Integer> supportedFacing = new HashSet<>(2);
+    private Set<Facing> supportedFacing = new HashSet<>(2);
     private Set<Integer> supportedFlash = new HashSet<>(4);
 
     private boolean zoomSupported;
@@ -37,7 +37,7 @@ public class CameraOptions {
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
-            Integer value = mapper.unmapFacing(cameraInfo.facing);
+            Facing value = mapper.unmapFacing(cameraInfo.facing);
             if (value != null) supportedFacing.add(value);
         }
 
@@ -80,12 +80,12 @@ public class CameraOptions {
     /**
      * Set of supported facing values.
      *
-     * @see CameraConstants#FACING_BACK
-     * @see CameraConstants#FACING_FRONT
+     * @see Facing#BACK
+     * @see Facing#FRONT
      * @return a set of supported values.
      */
     @NonNull
-    public Set<Integer> getSupportedFacing() {
+    public Set<Facing> getSupportedFacing() {
         return supportedFacing;
     }
 
@@ -145,7 +145,7 @@ public class CameraOptions {
 
     /**
      * Whether auto focus is supported. This means you can map gestures to
-     * {@link CameraConstants#GESTURE_ACTION_FOCUS} or {@link CameraConstants#GESTURE_ACTION_FOCUS_WITH_MARKER}
+     * {@link GestureAction#FOCUS} or {@link GestureAction#FOCUS_WITH_MARKER}
      * and focus will be changed on tap.
      *
      * @return whether auto focus is supported.

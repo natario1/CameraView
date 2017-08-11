@@ -319,8 +319,8 @@ cameraView.setSessionType(CameraConstants.SESSION_TYPE_VIDEO);
 Which camera to use, either back facing or front facing.
 
 ```java
-cameraView.setFacing(CameraConstants.FACING_BACK);
-cameraView.setFacing(CameraConstants.FACING_FRONT);
+cameraView.setFacing(Facing.BACK);
+cameraView.setFacing(Facing.FRONT);
 ```
 
 #### cameraFlash
@@ -399,7 +399,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`setZoom(float)`, `getZoom()`|Sets a zoom value, where 0 means camera zoomed out and 1 means zoomed in. No-op if zoom is not supported, or camera not started.|
 |`setExposureCorrection(float)`, `getExposureCorrection()`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
 |`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
-|`toggleFacing()`|Toggles the facing value between `FACING_FRONT` and `FACING_BACK`.|
+|`toggleFacing()`|Toggles the facing value between `Facing.FRONT` and `Facing.BACK`.|
 |`toggleFlash()`|Toggles the flash value between `FLASH_OFF`, `FLASH_ON`, and `FLASH_AUTO`.|
 |`startAutoFocus(float, float)`|Starts an autofocus process at the given coordinates, with respect to the view dimensions.|
 |`getPreviewSize()`|Returns the size of the preview surface. If CameraView was not constrained in its layout phase (e.g. it was `wrap_content`), this will return the same aspect ratio of CameraView.|

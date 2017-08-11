@@ -27,7 +27,6 @@ class Camera2 extends CameraController {
     private CameraManager mCameraManager;
 
     private String mCameraId;
-    private int mFacing;
 
     private Size mCaptureSize;
     private Size mPreviewSize;
@@ -100,7 +99,7 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setFacing(@Facing int facing) {
+    void setFacing(Facing facing) {
         int internalFacing = mMapper.mapFacing(facing);
         final String[] ids;
         try {

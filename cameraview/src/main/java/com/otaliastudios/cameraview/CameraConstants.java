@@ -5,15 +5,15 @@ public class CameraConstants {
 
     public static final int PERMISSION_REQUEST_CODE = 16;
 
-    public static final int GESTURE_ACTION_NONE = 0;
-    public static final int GESTURE_ACTION_FOCUS = 1;
-    public static final int GESTURE_ACTION_FOCUS_WITH_MARKER = 2;
-    public static final int GESTURE_ACTION_CAPTURE = 3;
-    public static final int GESTURE_ACTION_ZOOM = 4;
-    public static final int GESTURE_ACTION_AE_CORRECTION = 5;
+    @Deprecated public static final int GESTURE_ACTION_NONE = 0;
+    @Deprecated public static final int GESTURE_ACTION_FOCUS = 1;
+    @Deprecated public static final int GESTURE_ACTION_FOCUS_WITH_MARKER = 2;
+    @Deprecated public static final int GESTURE_ACTION_CAPTURE = 3;
+    @Deprecated public static final int GESTURE_ACTION_ZOOM = 4;
+    @Deprecated public static final int GESTURE_ACTION_AE_CORRECTION = 5;
 
-    public static final int FACING_BACK = 0;
-    public static final int FACING_FRONT = 1;
+    @Deprecated public static final int FACING_BACK = 0;
+    @Deprecated public static final int FACING_FRONT = 1;
 
     public static final int FLASH_OFF = 0;
     public static final int FLASH_ON = 1;

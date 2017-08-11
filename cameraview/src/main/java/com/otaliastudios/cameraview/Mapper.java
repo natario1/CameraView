@@ -1,31 +1,30 @@
 package com.otaliastudios.cameraview;
 
 import android.hardware.Camera;
-import android.util.SparseArray;
 
 import java.util.HashMap;
 
 abstract class Mapper {
 
     abstract <T> T mapFlash(@Flash int internalConstant);
-    abstract <T> T mapFacing(@Facing int internalConstant);
+    abstract <T> T mapFacing(Facing internalConstant);
     abstract <T> T mapWhiteBalance(@WhiteBalance int internalConstant);
     @Flash abstract <T> Integer unmapFlash(T cameraConstant);
-    @Facing abstract <T> Integer unmapFacing(T cameraConstant);
+    abstract <T> Facing unmapFacing(T cameraConstant);
     @WhiteBalance abstract <T> Integer unmapWhiteBalance(T cameraConstant);
 
     static class Mapper1 extends Mapper {
         private static final HashMap<Integer, String> FLASH = new HashMap<>();
         private static final HashMap<Integer, String> WB = new HashMap<>();
-        private static final HashMap<Integer, Integer> FACING = new HashMap<>();
+        private static final HashMap<Facing, Integer> FACING = new HashMap<>();
 
         static {
             FLASH.put(CameraConstants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
             FLASH.put(CameraConstants.FLASH_ON, Camera.Parameters.FLASH_MODE_ON);
             FLASH.put(CameraConstants.FLASH_AUTO, Camera.Parameters.FLASH_MODE_AUTO);
             FLASH.put(CameraConstants.FLASH_TORCH, Camera.Parameters.FLASH_MODE_TORCH);
-            FACING.put(CameraConstants.FACING_BACK, Camera.CameraInfo.CAMERA_FACING_BACK);
-            FACING.put(CameraConstants.FACING_FRONT, Camera.CameraInfo.CAMERA_FACING_FRONT);
+            FACING.put(Facing.BACK, Camera.CameraInfo.CAMERA_FACING_BACK);
+            FACING.put(Facing.FRONT, Camera.CameraInfo.CAMERA_FACING_FRONT);
             WB.put(CameraConstants.WHITE_BALANCE_AUTO, Camera.Parameters.WHITE_BALANCE_AUTO);
             WB.put(CameraConstants.WHITE_BALANCE_INCANDESCENT, Camera.Parameters.WHITE_BALANCE_INCANDESCENT);
             WB.put(CameraConstants.WHITE_BALANCE_FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
@@ -39,7 +38,7 @@ abstract class Mapper {
         }
 
         @Override
-        <T> T mapFacing(int internalConstant) {
+        <T> T mapFacing(Facing internalConstant) {
             return (T) FACING.get(internalConstant);
         }
 
@@ -48,8 +47,8 @@ abstract class Mapper {
             return (T) WB.get(internalConstant);
         }
 
-        private Integer reverseLookup(HashMap<Integer, ?> map, Object object) {
-            for (int value : map.keySet()) {
+        private <T> T reverseLookup(HashMap<T, ?> map, Object object) {
+            for (T value : map.keySet()) {
                 if (map.get(value).equals(object)) {
                     return value;
                 }
@@ -63,7 +62,7 @@ abstract class Mapper {
         }
 
         @Override
-        <T> Integer unmapFacing(T cameraConstant) {
+        <T> Facing unmapFacing(T cameraConstant) {
             return reverseLookup(FACING, cameraConstant);
         }
 
@@ -81,11 +80,6 @@ abstract class Mapper {
         }
 
         @Override
-        <T> T mapFacing(@Facing int internalConstant) {
-            return null;
-        }
-
-        @Override
         <T> T mapFlash(@Flash int internalConstant) {
             return null;
         }
@@ -96,15 +90,19 @@ abstract class Mapper {
         }
 
         @Override
-        <T> Integer unmapFacing(T cameraConstant) {
-            return 0;
-        }
-
-        @Override
         <T> Integer unmapWhiteBalance(T cameraConstant) {
             return 0;
         }
 
+        @Override
+        <T> T mapFacing(Facing internalConstant) {
+            return null;
+        }
+
+        @Override
+        <T> Facing unmapFacing(T cameraConstant) {
+            return null;
+        }
     }
 
 }

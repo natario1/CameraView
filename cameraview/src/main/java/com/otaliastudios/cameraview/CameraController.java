@@ -11,7 +11,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     protected final CameraView.CameraCallbacks mCameraCallbacks;
     protected final Preview mPreview;
 
-    @Facing protected int mFacing;
+    protected Facing mFacing;
     @Flash protected int mFlash;
     @Focus protected int mFocus;
     @VideoQuality protected int mVideoQuality;
@@ -32,7 +32,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     abstract boolean setZoom(float zoom);
     abstract boolean setExposureCorrection(float EVvalue);
-    abstract void setFacing(@Facing int facing);
+    abstract void setFacing(Facing facing);
     abstract void setFlash(@Flash int flash);
     abstract void setVideoQuality(@VideoQuality int videoQuality);
     abstract void setWhiteBalance(@WhiteBalance int whiteBalance);
@@ -54,8 +54,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     @Nullable abstract ExtraProperties getExtraProperties();
     @Nullable abstract CameraOptions getCameraOptions();
 
-    @Facing
-    final int getFacing() {
+    final Facing getFacing() {
         return mFacing;
     }
 
