@@ -38,7 +38,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     abstract void setSessionType(SessionType sessionType);
     abstract void setLocation(double latitude, double longitude);
 
-    abstract void capturePicture();
+    abstract boolean capturePicture();
     abstract void captureSnapshot();
     abstract boolean startVideo(@NonNull File file);
     abstract void endVideo();

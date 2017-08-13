@@ -345,11 +345,11 @@ class Camera1 extends CameraController {
     }
 
     @Override
-    void capturePicture() {
-        if (mIsCapturingImage) return;
-        if (!isCameraOpened()) return;
+    boolean capturePicture() {
+        if (mIsCapturingImage) return false;
+        if (!isCameraOpened()) return false;
         if (mSessionType == SessionType.VIDEO && mIsCapturingVideo) {
-            if (!mOptions.isVideoSnapshotSupported()) return;
+            if (!mOptions.isVideoSnapshotSupported()) return false;
         }
 
         // Set boolean to wait for image callback
@@ -376,6 +376,7 @@ class Camera1 extends CameraController {
                         mCameraCallbacks.processImage(data, consistentWithView, exifFlip);
                     }
                 });
+        return true;
     }
 
 

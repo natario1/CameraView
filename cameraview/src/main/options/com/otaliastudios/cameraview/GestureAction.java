@@ -49,6 +49,8 @@ public enum GestureAction {
      * This action can be mapped to:
      *
      * - {@link Gesture#PINCH}
+     * - {@link Gesture#SCROLL_HORIZONTAL}
+     * - {@link Gesture#SCROLL_VERTICAL}
      */
     ZOOM(4),
 
@@ -57,6 +59,8 @@ public enum GestureAction {
      * This action can be mapped to:
      *
      * - {@link Gesture#PINCH}
+     * - {@link Gesture#SCROLL_HORIZONTAL}
+     * - {@link Gesture#SCROLL_VERTICAL}
      */
     EXPOSURE_CORRECTION(5);
 
@@ -64,6 +68,8 @@ public enum GestureAction {
     final static GestureAction DEFAULT_PINCH = NONE;
     final static GestureAction DEFAULT_TAP = NONE;
     final static GestureAction DEFAULT_LONG_TAP = NONE;
+    final static GestureAction DEFAULT_SCROLL_HORIZONTAL = NONE;
+    final static GestureAction DEFAULT_SCROLL_VERTICAL = NONE;
 
     private int value;
 

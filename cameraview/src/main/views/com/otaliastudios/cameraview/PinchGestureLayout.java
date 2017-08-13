@@ -17,10 +17,6 @@ class PinchGestureLayout extends GestureLayout {
     private ScaleGestureDetector mDetector;
     private boolean mNotify;
     private float mAdditionFactor = 0;
-    private PointF[] mPoints = new PointF[]{
-            new PointF(0, 0),
-            new PointF(0, 0)
-    };
 
 
     public PinchGestureLayout(Context context) {
@@ -31,6 +27,7 @@ class PinchGestureLayout extends GestureLayout {
     @Override
     protected void onInitialize(Context context) {
         super.onInitialize(context);
+        mPoints = new PointF[]{ new PointF(0, 0), new PointF(0, 0) };
         mDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
@@ -43,6 +40,9 @@ class PinchGestureLayout extends GestureLayout {
         if (Build.VERSION.SDK_INT >= 19) {
             mDetector.setQuickScaleEnabled(false);
         }
+
+        // We listen only to the pinch type.
+        mType = Gesture.PINCH;
     }
 
 
@@ -73,6 +73,7 @@ class PinchGestureLayout extends GestureLayout {
         return false;
     }
 
+    @Override
     public float scaleValue(float currValue, float minValue, float maxValue) {
         float add = mAdditionFactor;
         // ^ This works well if minValue = 0, maxValue = 1.
@@ -91,9 +92,5 @@ class PinchGestureLayout extends GestureLayout {
         if (newValue < minValue) newValue = minValue;
         if (newValue > maxValue) newValue = maxValue;
         return newValue;
-    }
-
-    public PointF[] getPoints() {
-        return mPoints;
     }
 }

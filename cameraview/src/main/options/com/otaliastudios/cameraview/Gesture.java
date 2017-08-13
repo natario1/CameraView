@@ -46,8 +46,27 @@ public enum Gesture {
      * - {@link GestureAction#CAPTURE}
      * - {@link GestureAction#NONE}
      */
-    LONG_TAP(GestureAction.FOCUS, GestureAction.FOCUS_WITH_MARKER, GestureAction.CAPTURE);
+    LONG_TAP(GestureAction.FOCUS, GestureAction.FOCUS_WITH_MARKER, GestureAction.CAPTURE),
 
+    /**
+     * Horizontal scroll gesture.
+     * This gesture can be mapped to:
+     *
+     * - {@link GestureAction#ZOOM}
+     * - {@link GestureAction#EXPOSURE_CORRECTION}
+     * - {@link GestureAction#NONE}
+     */
+    SCROLL_HORIZONTAL(GestureAction.ZOOM, GestureAction.EXPOSURE_CORRECTION),
+
+    /**
+     * Vertical scroll gesture.
+     * This gesture can be mapped to:
+     *
+     * - {@link GestureAction#ZOOM}
+     * - {@link GestureAction#EXPOSURE_CORRECTION}
+     * - {@link GestureAction#NONE}
+     */
+    SCROLL_VERTICAL(GestureAction.ZOOM, GestureAction.EXPOSURE_CORRECTION);
 
     Gesture(GestureAction... controls) {
         mControls = Arrays.asList(controls);

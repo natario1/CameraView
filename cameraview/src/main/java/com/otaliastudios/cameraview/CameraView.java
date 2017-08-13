@@ -73,6 +73,7 @@ public class CameraView extends FrameLayout {
     private GridLinesLayout mGridLinesLayout;
     private PinchGestureLayout mPinchGestureLayout;
     private TapGestureLayout mTapGestureLayout;
+    private ScrollGestureLayout mScrollGestureLayout;
     private boolean mIsStarted;
     private boolean mKeepScreenOn;
 
@@ -96,15 +97,19 @@ public class CameraView extends FrameLayout {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
         mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, DEFAULT_JPEG_QUALITY);
         mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, DEFAULT_CROP_OUTPUT);
+
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
         Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
         Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
         WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
         VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
         SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
+
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
         GestureAction longTapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureLongTap, GestureAction.DEFAULT_LONG_TAP.value()));
         GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, GestureAction.DEFAULT_PINCH.value()));
+        GestureAction scrollHorizontalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollHorizontal, GestureAction.DEFAULT_SCROLL_HORIZONTAL.value()));
+        GestureAction scrollVerticalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollVertical, GestureAction.DEFAULT_SCROLL_VERTICAL.value()));
         a.recycle();
 
         mCameraCallbacks = new CameraCallbacks();
@@ -113,9 +118,11 @@ public class CameraView extends FrameLayout {
         mGridLinesLayout = new GridLinesLayout(context);
         mPinchGestureLayout = new PinchGestureLayout(context);
         mTapGestureLayout = new TapGestureLayout(context);
+        mScrollGestureLayout = new ScrollGestureLayout(context);
         addView(mGridLinesLayout);
         addView(mPinchGestureLayout);
         addView(mTapGestureLayout);
+        addView(mScrollGestureLayout);
 
         mIsStarted = false;
         setFacing(facing);
@@ -128,6 +135,8 @@ public class CameraView extends FrameLayout {
         // mapGesture(Gesture.DOUBLE_TAP, doubleTapGesture);
         mapGesture(Gesture.LONG_TAP, longTapGesture);
         mapGesture(Gesture.PINCH, pinchGesture);
+        mapGesture(Gesture.SCROLL_HORIZONTAL, scrollHorizontalGesture);
+        mapGesture(Gesture.SCROLL_VERTICAL, scrollVerticalGesture);
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context) {
@@ -324,23 +333,31 @@ public class CameraView extends FrameLayout {
      * @return true if this action could be assigned to this gesture
      */
     public boolean mapGesture(@NonNull Gesture gesture, GestureAction action) {
+        GestureAction none = GestureAction.NONE;
         if (gesture.isAssignableTo(action)) {
             mGestureMap.put(gesture, action);
             switch (gesture) {
                 case PINCH:
-                    mPinchGestureLayout.enable(mGestureMap.get(Gesture.PINCH) != GestureAction.NONE);
+                    mPinchGestureLayout.enable(mGestureMap.get(Gesture.PINCH) != none);
                     break;
                 case TAP:
                 // case DOUBLE_TAP:
                 case LONG_TAP:
-                    mTapGestureLayout.enable(mGestureMap.get(Gesture.TAP) != GestureAction.NONE ||
-                            // mGestureMap.get(Gesture.DOUBLE_TAP) != GestureAction.NONE ||
-                            mGestureMap.get(Gesture.LONG_TAP) != GestureAction.NONE);
+                    mTapGestureLayout.enable(
+                            mGestureMap.get(Gesture.TAP) != none ||
+                            // mGestureMap.get(Gesture.DOUBLE_TAP) != none ||
+                            mGestureMap.get(Gesture.LONG_TAP) != none);
+                    break;
+                case SCROLL_HORIZONTAL:
+                case SCROLL_VERTICAL:
+                    mScrollGestureLayout.enable(
+                            mGestureMap.get(Gesture.SCROLL_HORIZONTAL) != none ||
+                            mGestureMap.get(Gesture.SCROLL_VERTICAL) != none);
                     break;
             }
             return true;
         }
-        mapGesture(gesture, GestureAction.NONE);
+        mapGesture(gesture, none);
         return false;
     }
 
@@ -364,48 +381,63 @@ public class CameraView extends FrameLayout {
     public boolean onTouchEvent(MotionEvent event) {
         if (!mCameraController.isCameraOpened()) return true;
 
+        // Pass to our own GestureLayouts
         CameraOptions options = mCameraController.getCameraOptions(); // Non null
         if (mPinchGestureLayout.onTouchEvent(event)) {
-            GestureAction action = mGestureMap.get(Gesture.PINCH);
-            // This currently can be zoom or AE.
-            // Camera can either support these or not.
-            if (action == GestureAction.ZOOM) {
-                float oldValue = mZoomValue;
-                float newValue = mPinchGestureLayout.scaleValue(oldValue, 0, 1);
-                PointF[] points = mPinchGestureLayout.getPoints();
+            Log.e(TAG, "pinch!");
+            onGesture(mPinchGestureLayout, options);
+        } else if (mScrollGestureLayout.onTouchEvent(event)) {
+            Log.e(TAG, "scroll!");
+            onGesture(mScrollGestureLayout, options);
+        } else if (mTapGestureLayout.onTouchEvent(event)) {
+            Log.e(TAG, "tap!");
+            onGesture(mTapGestureLayout, options);
+        }
+        return true;
+    }
+
+
+    // Some gesture layout detected a gesture. It's not known at this moment:
+    // (1) if it was mapped to some action (we check here)
+    // (2) if it's supported by the camera (CameraController checks)
+    private boolean onGesture(GestureLayout source, @NonNull CameraOptions options) {
+        Gesture gesture = source.getGestureType();
+        GestureAction action = mGestureMap.get(gesture);
+        PointF[] points = source.getPoints();
+        float oldValue, newValue;
+        switch (action) {
+
+            case CAPTURE:
+                return mCameraController.capturePicture();
+
+            case FOCUS:
+            case FOCUS_WITH_MARKER:
+                return mCameraController.startAutoFocus(gesture, points[0]);
+
+            case ZOOM:
+                oldValue = mZoomValue;
+                newValue = source.scaleValue(oldValue, 0, 1);
                 if (mCameraController.setZoom(newValue)) {
                     mZoomValue = newValue;
                     mCameraCallbacks.dispatchOnZoomChanged(newValue, points);
+                    return true;
                 }
+                break;
 
-            } else if (action == GestureAction.EXPOSURE_CORRECTION) {
-                float oldValue = mExposureCorrectionValue;
+            case EXPOSURE_CORRECTION:
+                oldValue = mExposureCorrectionValue;
                 float minValue = options.getExposureCorrectionMinValue();
                 float maxValue = options.getExposureCorrectionMaxValue();
-                float newValue = mPinchGestureLayout.scaleValue(oldValue, minValue, maxValue);
-                PointF[] points = mPinchGestureLayout.getPoints();
+                newValue = source.scaleValue(oldValue, minValue, maxValue);
                 float[] bounds = new float[]{minValue, maxValue};
                 if (mCameraController.setExposureCorrection(newValue)) {
                     mExposureCorrectionValue = newValue;
                     mCameraCallbacks.dispatchOnExposureCorrectionChanged(newValue, bounds, points);
+                    return true;
                 }
-            }
-
-        } else if (mTapGestureLayout.onTouchEvent(event)) {
-            Gesture gesture = mTapGestureLayout.getGestureType();
-            GestureAction action = mGestureMap.get(gesture);
-            // This currently can be capture, focus or focusWithMaker.
-            // Camera can either support these or not.
-            if (action == GestureAction.CAPTURE) {
-                capturePicture();
-
-            } else if (action == GestureAction.FOCUS ||
-                    action == GestureAction.FOCUS_WITH_MARKER) {
-                PointF point = mTapGestureLayout.getPoint();
-                mCameraController.startAutoFocus(gesture, point); // This will call onFocusStart and onFocusEnd
-            }
+                break;
         }
-        return true;
+        return false;
     }
 
 

@@ -162,8 +162,8 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void capturePicture() {
-
+    boolean capturePicture() {
+        return true;
     }
 
     @Override

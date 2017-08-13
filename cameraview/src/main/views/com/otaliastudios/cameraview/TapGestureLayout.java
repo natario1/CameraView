@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.graphics.PointF;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -17,8 +16,6 @@ class TapGestureLayout extends GestureLayout {
 
     private GestureDetector mDetector;
     private boolean mNotify;
-    private Gesture mType;
-    private PointF mPoint = new PointF(0, 0);
 
     private FrameLayout mFocusMarkerContainer;
     private ImageView mFocusMarkerFill;
@@ -31,6 +28,7 @@ class TapGestureLayout extends GestureLayout {
     @Override
     protected void onInitialize(Context context) {
         super.onInitialize(context);
+        mPoints = new PointF[]{ new PointF(0, 0) };
         mDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
 
             @Override
@@ -81,25 +79,19 @@ class TapGestureLayout extends GestureLayout {
 
         // Keep notifying CameraView as long as the gesture goes.
         if (mNotify) {
-            mPoint.x = event.getX();
-            mPoint.y = event.getY();
+            mPoints[0].x = event.getX();
+            mPoints[0].y = event.getY();
             return true;
         }
         return false;
     }
 
-
-    public Gesture getGestureType() {
-        return mType;
+    @Override
+    public float scaleValue(float currValue, float minValue, float maxValue) {
+        return 0;
     }
 
-
-    public PointF getPoint() {
-        return mPoint;
-    }
-
-
-    // Draw
+// Draw
 
     private final Runnable mFocusMarkerHideRunnable = new Runnable() {
         @Override

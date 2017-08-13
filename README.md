@@ -232,6 +232,8 @@ Simple as that. More gestures are coming. There are two things to be noted:
 |`PINCH`|`cameraGesturePinch`|Pinch gesture, typically assigned to the zoom control.|`zoom` `exposureCorrection` `none`|
 |`TAP`|`cameraGestureTap`|Single tap gesture, typically assigned to the focus control.|`focus` `focusWithMarker` `capture` `none`|
 |`LONG_TAP`|`cameraGestureLongTap`|Long tap gesture.|`focus` `focusWithMarker` `capture` `none`|
+|`SCROLL_HORIZONTAL`|`cameraGestureScrollHorizontal`|Horizontal movement gesture.|`zoom` `exposureCorrection` `none`|
+|`SCROLL_VERTICAL`|`cameraGestureScrollVertical`|Vertical movement gesture.|`zoom` `exposureCorrection` `none`|
 
 
 ## Dynamic Sizing Behavior
@@ -457,6 +459,7 @@ This is what was done since the library was forked. I have kept the original str
 - *measure `CameraView` as center crop or center inside*
 - *add multiple `CameraListener`s for events*
 - *gesture framework support*
+- *scroll gestures support*
 
 These are still things that need to be done, off the top of my head:
 
