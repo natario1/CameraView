@@ -140,16 +140,31 @@ public class CameraView extends FrameLayout {
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context) {
+
+                private Integer mDisplayOffset;
+                private Integer mDeviceOrientation;
+
                 @Override
                 public void onDisplayOffsetChanged(int displayOffset) {
                     mCameraController.onDisplayOffset(displayOffset);
                     mPreviewImpl.onDisplayOffset(displayOffset);
+                    mDisplayOffset = displayOffset;
+                    send();
                 }
 
                 @Override
                 protected void onDeviceOrientationChanged(int deviceOrientation) {
                     mCameraController.onDeviceOrientation(deviceOrientation);
                     mPreviewImpl.onDeviceOrientation(deviceOrientation);
+                    mDeviceOrientation = deviceOrientation;
+                    send();
+                }
+
+                private void send() {
+                    if (mDeviceOrientation == null) return;
+                    if (mDisplayOffset == null) return;
+                    int value = (mDeviceOrientation + mDisplayOffset) % 360;
+                    mCameraCallbacks.dispatchOnOrientationChanged(value);
                 }
             };
         }
@@ -1280,6 +1295,18 @@ public class CameraView extends FrameLayout {
 
                     for (CameraListener listener : mListeners) {
                         listener.onFocusEnd(success, point);
+                    }
+                }
+            });
+        }
+
+
+        public void dispatchOnOrientationChanged(final int value) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onOrientationChanged(value);
                     }
                 }
             });

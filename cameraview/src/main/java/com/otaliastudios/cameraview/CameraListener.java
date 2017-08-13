@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
+import android.support.annotation.UiThread;
 
 import java.io.File;
 
@@ -13,6 +14,7 @@ public abstract class CameraListener {
      *
      * @param options camera supported options
      */
+    @UiThread
     public void onCameraOpened(CameraOptions options) {
 
     }
@@ -21,6 +23,7 @@ public abstract class CameraListener {
     /**
      * Notifies that the camera session was closed.
      */
+    @UiThread
     public void onCameraClosed() {
 
     }
@@ -35,6 +38,7 @@ public abstract class CameraListener {
      *
      * @param jpeg captured picture
      */
+    @UiThread
     public void onPictureTaken(byte[] jpeg) {
 
     }
@@ -50,7 +54,24 @@ public abstract class CameraListener {
      *
      * @param video file hosting the mp4 video
      */
+    @UiThread
     public void onVideoTaken(File video) {
+
+    }
+
+
+    /**
+     * Notifies that the device was tilted or the window offset changed.
+     * The orientation passed is exactly the rotation that a View should have,
+     * in order to appear correctly oriented to the user, considering the way she is
+     * holding the device, and the native activity orientation.
+     *
+     * This is meant to be used for aligning views (e.g. buttons) to the current camera viewport.
+     *
+     * @param orientation either 0, 90, 180 or 270
+     */
+    @UiThread
+    public void onOrientationChanged(int orientation) {
 
     }
 
@@ -62,6 +83,7 @@ public abstract class CameraListener {
      *
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
+    @UiThread
     public void onFocusStart(PointF point) {
 
     }
@@ -75,6 +97,7 @@ public abstract class CameraListener {
      * @param successful whether camera succeeded
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
+    @UiThread
     public void onFocusEnd(boolean successful, PointF point) {
 
     }
@@ -88,6 +111,7 @@ public abstract class CameraListener {
      * @param bounds min and max bounds for newValue (fixed to 0 ... 1)
      * @param fingers finger positions that caused the event
      */
+    @UiThread
     public void onZoomChanged(float newValue, float[] bounds, PointF[] fingers) {
 
     }
@@ -101,6 +125,7 @@ public abstract class CameraListener {
      * @param bounds min and max bounds for newValue, as returned by {@link CameraOptions}
      * @param fingers finger positions that caused the event
      */
+    @UiThread
     public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {
 
     }
