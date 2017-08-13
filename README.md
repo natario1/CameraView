@@ -398,9 +398,9 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`getExtraProperties()`|If camera was started, returns non-null object with extra information about the camera sensor. Not very useful at the moment.|
 |`setZoom(float)`, `getZoom()`|Sets a zoom value, where 0 means camera zoomed out and 1 means zoomed in. No-op if zoom is not supported, or camera not started.|
 |`setExposureCorrection(float)`, `getExposureCorrection()`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
-|`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
 |`toggleFacing()`|Toggles the facing value between `Facing.FRONT` and `Facing.BACK`.|
-|`toggleFlash()`|Toggles the flash value between `FLASH_OFF`, `FLASH_ON`, and `FLASH_AUTO`.|
+|`toggleFlash()`|Toggles the flash value between `Flash.OFF`, `Flash.ON`, and `Flash.AUTO`.|
+|`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
 |`startAutoFocus(float, float)`|Starts an autofocus process at the given coordinates, with respect to the view dimensions.|
 |`getPreviewSize()`|Returns the size of the preview surface. If CameraView was not constrained in its layout phase (e.g. it was `wrap_content`), this will return the same aspect ratio of CameraView.|
 |`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|

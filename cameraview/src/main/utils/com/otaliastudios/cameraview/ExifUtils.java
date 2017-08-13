@@ -3,9 +3,10 @@ package com.otaliastudios.cameraview;
 
 import android.support.media.ExifInterface;
 
+// TODO unused.
 class ExifUtils {
 
-    public static int getOrientationTag(int rotation, boolean flip) {
+    static int getOrientationTag(int rotation, boolean flip) {
         switch (rotation) {
             case 90:
                 return flip ? ExifInterface.ORIENTATION_TRANSPOSE :

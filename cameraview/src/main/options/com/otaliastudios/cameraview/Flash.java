@@ -32,7 +32,6 @@ public enum Flash {
 
 
     /**
-     * TODO: is this true?
      * Flash is always on, working as a torch.
      * This is not guaranteed to be supported.
      *

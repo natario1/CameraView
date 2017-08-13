@@ -6,11 +6,10 @@ import android.graphics.YuvImage;
 
 import java.io.ByteArrayOutputStream;
 
-public class CropHelper {
+class CropHelper {
 
 
-    // TODO test this. How is YuvImage? Does it come already well rotated?
-    public static byte[] cropToJpeg(YuvImage yuv, AspectRatio targetRatio, int jpegCompression) {
+    static byte[] cropToJpeg(YuvImage yuv, AspectRatio targetRatio, int jpegCompression) {
         Rect crop = computeCrop(yuv.getWidth(), yuv.getHeight(), targetRatio);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         yuv.compressToJpeg(crop, jpegCompression, out);
@@ -20,7 +19,7 @@ public class CropHelper {
 
     // This reads a rotated Bitmap thanks to CameraUtils. Then crops and returns a byte array.
     // In doing so, EXIF data is deleted.
-    public static byte[] cropToJpeg(byte[] jpeg, AspectRatio targetRatio, int jpegCompression) {
+    static byte[] cropToJpeg(byte[] jpeg, AspectRatio targetRatio, int jpegCompression) {
 
         Bitmap image = CameraUtils.decodeBitmap(jpeg);
         Rect cropRect = computeCrop(image.getWidth(), image.getHeight(), targetRatio);
