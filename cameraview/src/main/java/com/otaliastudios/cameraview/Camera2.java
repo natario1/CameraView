@@ -167,8 +167,8 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void captureSnapshot() {
-
+    boolean captureSnapshot() {
+        return true;
     }
 
     @Override
@@ -177,8 +177,8 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void endVideo() {
-
+    boolean endVideo() {
+        return false;
     }
 
     @Override

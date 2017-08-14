@@ -62,7 +62,7 @@ public abstract class CameraListener {
 
     /**
      * Notifies that the device was tilted or the window offset changed.
-     * The orientation passed is exactly the rotation that a View should have,
+     * The orientation passed is exactly the counter-clockwise rotation that a View should have,
      * in order to appear correctly oriented to the user, considering the way she is
      * holding the device, and the native activity orientation.
      *

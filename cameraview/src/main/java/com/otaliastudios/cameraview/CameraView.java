@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -11,6 +12,7 @@ import android.content.res.TypedArray;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.media.MediaActionSound;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -95,9 +97,11 @@ public class CameraView extends FrameLayout {
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
-        mJpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, DEFAULT_JPEG_QUALITY);
-        mCropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, DEFAULT_CROP_OUTPUT);
+        // Self managed
+        int jpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, DEFAULT_JPEG_QUALITY);
+        boolean cropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, DEFAULT_CROP_OUTPUT);
 
+        // Camera controller params
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
         Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
         Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
@@ -105,6 +109,7 @@ public class CameraView extends FrameLayout {
         VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
         SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
 
+        // Gestures
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
         GestureAction longTapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureLongTap, GestureAction.DEFAULT_LONG_TAP.value()));
         GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, GestureAction.DEFAULT_PINCH.value()));
@@ -125,12 +130,20 @@ public class CameraView extends FrameLayout {
         addView(mScrollGestureLayout);
 
         mIsStarted = false;
+
+        // Self managed
+        setCropOutput(cropOutput);
+        setJpegQuality(jpegQuality);
+
+        // Camera controller params
         setFacing(facing);
         setFlash(flash);
         setSessionType(sessionType);
         setVideoQuality(videoQuality);
         setWhiteBalance(whiteBalance);
         setGrid(grid);
+
+        // Gestures
         mapGesture(Gesture.TAP, tapGesture);
         // mapGesture(Gesture.DOUBLE_TAP, doubleTapGesture);
         mapGesture(Gesture.LONG_TAP, longTapGesture);
@@ -997,7 +1010,9 @@ public class CameraView extends FrameLayout {
      * @see #captureSnapshot()
      */
     public void capturePicture() {
-        mCameraController.capturePicture();
+        if (mCameraController.capturePicture() && mUseSounds) {
+            // TODO: sound
+        }
     }
 
 
@@ -1012,7 +1027,10 @@ public class CameraView extends FrameLayout {
      * @see #capturePicture()
      */
     public void captureSnapshot() {
-        mCameraController.captureSnapshot();
+        if (mCameraController.captureSnapshot() && mUseSounds) {
+            //noinspection all
+            sound(MediaActionSound.SHUTTER_CLICK);
+        }
     }
 
 
@@ -1079,8 +1097,9 @@ public class CameraView extends FrameLayout {
      * This will fire {@link CameraListener#onVideoTaken(File)}.
      */
     public void stopCapturingVideo() {
-        mCameraController.endVideo();
-        if (getKeepScreenOn() != mKeepScreenOn) setKeepScreenOn(mKeepScreenOn);
+        if (mCameraController.endVideo()) {
+            if (getKeepScreenOn() != mKeepScreenOn) setKeepScreenOn(mKeepScreenOn);
+        }
     }
 
 
@@ -1143,6 +1162,17 @@ public class CameraView extends FrameLayout {
     // Callbacks and dispatch
     // ----------------------
 
+
+    private MediaActionSound mSound;
+    private final boolean mUseSounds = Build.VERSION.SDK_INT >= 16;
+
+    @SuppressWarnings("all")
+    private void sound(int soundType) {
+        if (mUseSounds) {
+            if (mSound == null) mSound = new MediaActionSound();
+            mSound.play(soundType);
+        }
+    }
 
     class CameraCallbacks {
 
@@ -1289,6 +1319,11 @@ public class CameraView extends FrameLayout {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    if (success && mUseSounds) {
+                        //noinspection all
+                        sound(MediaActionSound.FOCUS_COMPLETE);
+                    }
+
                     if (gesture != null && mGestureMap.get(gesture) == GestureAction.FOCUS_WITH_MARKER) {
                         mTapGestureLayout.onFocusEnd(success);
                     }

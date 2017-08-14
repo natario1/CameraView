@@ -462,6 +462,7 @@ This is what was done since the library was forked. I have kept the original str
 - *add multiple `CameraListener`s for events*
 - *gesture framework support*
 - *scroll gestures support*
+- *MediaActionSound support*
 
 These are still things that need to be done, off the top of my head:
 

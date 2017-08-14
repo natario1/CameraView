@@ -359,7 +359,6 @@ class Camera1 extends CameraController {
         final int sensorToDisplay = computeSensorToDisplayOffset();
         synchronized (mLock) {
             Camera.Parameters params = mCamera.getParameters();
-            Log.e(TAG, "Setting exif rotation to "+exifRotation);
             params.setRotation(exifRotation);
             mCamera.setParameters(params);
         }
@@ -381,14 +380,14 @@ class Camera1 extends CameraController {
 
 
     @Override
-    void captureSnapshot() {
-        if (!isCameraOpened()) return;
-        if (mIsCapturingImage) return;
+    boolean captureSnapshot() {
+        if (!isCameraOpened()) return false;
+        if (mIsCapturingImage) return false;
         // This won't work while capturing a video.
         // Switch to capturePicture.
         if (mIsCapturingVideo) {
             capturePicture();
-            return;
+            return false;
         }
         mIsCapturingImage = true;
         mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
@@ -420,6 +419,7 @@ class Camera1 extends CameraController {
                 }).start();
             }
         });
+        return true;
     }
 
     @Override
@@ -554,7 +554,7 @@ class Camera1 extends CameraController {
     }
 
     @Override
-    void endVideo() {
+    boolean endVideo() {
         if (mIsCapturingVideo) {
             mIsCapturingVideo = false;
             mMediaRecorder.stop();
@@ -564,7 +564,9 @@ class Camera1 extends CameraController {
                 mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
                 mVideoFile = null;
             }
+            return true;
         }
+        return false;
     }
 
 
