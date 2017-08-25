@@ -1215,7 +1215,12 @@ public class CameraView extends FrameLayout {
             // Request a layout pass for onMeasure() to do its stuff.
             // Potentially this will change CameraView size, which changes Surface size,
             // which triggers a new Preview size. But hopefully it will converge.
-            requestLayout();
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    requestLayout();
+                }
+            });
         }
 
 
