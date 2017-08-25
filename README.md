@@ -230,13 +230,13 @@ Simple as that. More gestures are coming. There are two things to be noted:
 - Not every mapping is valid. For example, you can't control zoom with long taps, or start focusing by pinching.
 - Some actions might not be supported by the sensor. Check out `CameraOptions` to know what's legit and what's not.
 
-|Gesture|XML|Description|Can be mapped to|
-|-------|---|-----------|----------------|
-|`PINCH`|`cameraGesturePinch`|Pinch gesture, typically assigned to the zoom control.|`zoom` `exposureCorrection` `none`|
-|`TAP`|`cameraGestureTap`|Single tap gesture, typically assigned to the focus control.|`focus` `focusWithMarker` `capture` `none`|
-|`LONG_TAP`|`cameraGestureLongTap`|Long tap gesture.|`focus` `focusWithMarker` `capture` `none`|
-|`SCROLL_HORIZONTAL`|`cameraGestureScrollHorizontal`|Horizontal movement gesture.|`zoom` `exposureCorrection` `none`|
-|`SCROLL_VERTICAL`|`cameraGestureScrollVertical`|Vertical movement gesture.|`zoom` `exposureCorrection` `none`|
+|Gesture (XML)|Description|Can be mapped to|
+|-------------|-----------|----------------|
+|`PINCH` (`cameraGesturePinch`)|Pinch gesture, typically assigned to the zoom control.|`zoom` `exposureCorrection` `none`|
+|`TAP` (`cameraGestureTap`)|Single tap gesture, typically assigned to the focus control.|`focus` `focusWithMarker` `capture` `none`|
+|`LONG_TAP` (`cameraGestureLongTap`)|Long tap gesture.|`focus` `focusWithMarker` `capture` `none`|
+|`SCROLL_HORIZONTAL` (`cameraGestureScrollHorizontal`)|Horizontal movement gesture.|`zoom` `exposureCorrection` `none`|
+|`SCROLL_VERTICAL` (`cameraGestureScrollVertical`)|Vertical movement gesture.|`zoom` `exposureCorrection` `none`|
 
 
 ## Dynamic Sizing Behavior
