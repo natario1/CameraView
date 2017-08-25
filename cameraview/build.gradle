@@ -71,13 +71,19 @@ install {
     }
 }
 
-Properties props = new Properties()
-props.load(project.rootProject.file('local.properties').newDataInputStream())
+def bintrayUser = System.getenv("BINTRAY_USER")
+def bintrayKey = System.getenv("BINTRAY_KEY")
+if (bintrayKey == null) {
+    Properties props = new Properties()
+    props.load(project.rootProject.file('local.properties').newDataInputStream())
+    bintrayUser = props.getProperty('bintray.user')
+    bintrayKey = props.get('bintray.key')
+}
 
 bintray {
     // https://github.com/bintray/gradle-bintray-plugin
-    user = props.getProperty('bintray.user')
-    key = props.get('bintray.key')
+    user = bintrayUser
+    key = bintrayKey
     configurations = ['archives']
     pkg {
         repo = 'android'
