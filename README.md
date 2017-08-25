@@ -15,7 +15,7 @@ compile 'com.otaliastudios:cameraview:1.1.2'
   <img src="art/screen2.png" width="250" vspace="20" hspace="5">
 </p>
 
-*This is a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview), but has been completely rewritten. See [below](#roadmap) for a list of what was done. Feel free to contribute - this is under active development.*
+*This was a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview), but has been completely rewritten. See [below](#roadmap) for a list of what was done. Feel free to contribute - this is under active development.*
 
 ### Features
 
@@ -140,7 +140,7 @@ camera.postDelayed(new Runnable() {
 
 ### Other camera events
 
-Make sure you can react to different camera events by setting up one or more `CameraListener` instances.
+Make sure you can react to different camera events by setting up one or more `CameraListener` instances. All these are executed on the UI thread.
 
 ```java
 camera.addCameraListener(new CameraListener() {
@@ -181,7 +181,7 @@ camera.addCameraListener(new CameraListener() {
      * camera viewport so they will appear correctly oriented to the user.
      */
     @Override
-    public void onOrientationChanged(int orientation) 
+    public void onOrientationChanged(int orientation) {}
 
     /**
      * Notifies that user interacted with the screen and started focus with a gesture,
@@ -209,6 +209,7 @@ camera.addCameraListener(new CameraListener() {
      * Noitifies that a finger gesture just caused the camera exposure correction
      * to be changed. This can be used, for example, to draw a seek bar.
      */
+    @Override 
     public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {}
 
 });
