@@ -3,6 +3,7 @@ language: android
 branches:
   only:
     - master
+    - /^v\d+\.\d+\.\d+$/
 
 sudo: false
 
@@ -16,6 +17,11 @@ android:
     - build-tools-26.0.1
     - android-26
     - doc-26
+
+cache:
+  directories:
+    - $HOME/.gradle
+    - $HOME/.m2/repository
 
 deploy:
   provider: script
