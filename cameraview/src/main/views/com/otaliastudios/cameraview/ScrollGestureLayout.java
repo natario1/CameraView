@@ -33,7 +33,7 @@ class ScrollGestureLayout extends GestureLayout {
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                 boolean horizontal;
-                Log.e("ScrollGestureLayout", "onScroll, distanceX="+distanceX+", distanceY="+distanceY);
+                // Log.e("ScrollGestureLayout", "onScroll, distanceX="+distanceX+", distanceY="+distanceY);
                 if (e1.getX() != mPoints[0].x || e1.getY() != mPoints[0].y) {
                     // First step. We choose now if it's a vertical or horizontal scroll, and
                     // stick to it for the whole gesture.
@@ -46,7 +46,7 @@ class ScrollGestureLayout extends GestureLayout {
                 }
                 mPoints[1].set(e2.getX(), e2.getY());
                 mDistance = horizontal ? (distanceX / getWidth()) : (distanceY / getHeight());
-                mDistance = -mDistance; // they are provided inverted.
+                mDistance = horizontal ? -mDistance : mDistance; // When vertical, up = positive
                 mNotify = true;
                 return true;
             }
@@ -71,7 +71,7 @@ class ScrollGestureLayout extends GestureLayout {
         mDetector.onTouchEvent(event);
 
         // Keep notifying CameraView as long as the gesture goes.
-        if (mNotify) Log.e("ScrollGestureLayout", "notifying a gesture "+mType.name());
+        // if (mNotify) Log.e("ScrollGestureLayout", "notifying a gesture "+mType.name());
         return mNotify;
     }
 
@@ -91,7 +91,7 @@ class ScrollGestureLayout extends GestureLayout {
         float newValue = currValue + delta;
         if (newValue < minValue) newValue = minValue;
         if (newValue > maxValue) newValue = maxValue;
-        Log.e("ScrollGestureLayout", "curr="+currValue+", min="+minValue+", max="+maxValue+", out="+newValue);
+        // Log.e("ScrollGestureLayout", "curr="+currValue+", min="+minValue+", max="+maxValue+", out="+newValue);
         return newValue;
     }
 

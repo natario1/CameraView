@@ -415,13 +415,13 @@ public class CameraView extends FrameLayout {
         // Pass to our own GestureLayouts
         CameraOptions options = mCameraController.getCameraOptions(); // Non null
         if (mPinchGestureLayout.onTouchEvent(event)) {
-            Log.e(TAG, "pinch!");
+            // Log.e(TAG, "pinch!");
             onGesture(mPinchGestureLayout, options);
         } else if (mScrollGestureLayout.onTouchEvent(event)) {
-            Log.e(TAG, "scroll!");
+            // Log.e(TAG, "scroll!");
             onGesture(mScrollGestureLayout, options);
         } else if (mTapGestureLayout.onTouchEvent(event)) {
-            Log.e(TAG, "tap!");
+            // Log.e(TAG, "tap!");
             onGesture(mTapGestureLayout, options);
         }
         return true;
@@ -1252,8 +1252,8 @@ public class CameraView extends FrameLayout {
                         int w = consistentWithView ? getWidth() : getHeight();
                         int h = consistentWithView ? getHeight() : getWidth();
                         AspectRatio targetRatio = AspectRatio.of(w, h);
-                        Log.e(TAG, "is Consistent? " + consistentWithView);
-                        Log.e(TAG, "viewWidth? " + getWidth() + ", viewHeight? " + getHeight());
+                        // Log.e(TAG, "is Consistent? " + consistentWithView);
+                        // Log.e(TAG, "viewWidth? " + getWidth() + ", viewHeight? " + getHeight());
                         jpeg2 = CropHelper.cropToJpeg(jpeg, targetRatio, mJpegQuality);
                     }
                     dispatchOnPictureTaken(jpeg2);
