@@ -94,6 +94,8 @@ public class CameraView extends FrameLayout {
         init(context, attrs);
     }
 
+    //region Init
+
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
@@ -200,10 +202,9 @@ public class CameraView extends FrameLayout {
         super.onDetachedFromWindow();
     }
 
+    //endregion
 
-    // Smart measuring behavior
-    // ------------------------
-
+    //region Measuring behavior
 
     private String ms(int mode) {
         switch (mode) {
@@ -249,7 +250,7 @@ public class CameraView extends FrameLayout {
         final float previewHeight = flip ? previewSize.getWidth() : previewSize.getHeight();
 
         // If MATCH_PARENT is interpreted as AT_MOST, transform to EXACTLY
-        // to be consistent with our semantics.
+        // to be consistent with our semantics (and our docs).
         final ViewGroup.LayoutParams lp = getLayoutParams();
         if (widthMode == AT_MOST && lp.width == MATCH_PARENT) widthMode = EXACTLY;
         if (heightMode == AT_MOST && lp.height == MATCH_PARENT) heightMode = EXACTLY;
@@ -261,7 +262,7 @@ public class CameraView extends FrameLayout {
 
         // If we have fixed dimensions (either 300dp or MATCH_PARENT), there's nothing we should do,
         // other than respect it. The preview will eventually be cropped at the sides (by PreviewImpl scaling)
-        // except the case in which these fixed dimensions somehow fit exactly the preview aspect ratio.
+        // except the case in which these fixed dimensions manage to fit exactly the preview aspect ratio.
         if (widthMode == EXACTLY && heightMode == EXACTLY) {
             Log.e(TAG, "onMeasure, both are MATCH_PARENT or fixed value. We adapt. This means CROP_INSIDE. " +
                     "(" + widthValue + "x" + heightValue + ")");
@@ -272,17 +273,20 @@ public class CameraView extends FrameLayout {
         // If both dimensions are free, with no limits, then our size will be exactly the
         // preview size. This can happen rarely, for example in scrollable containers.
         if (widthMode == UNSPECIFIED && heightMode == UNSPECIFIED) {
-            Log.e(TAG, "onMeasure, both are completely free. We respect that and extend to the whole preview size. " +
+            Log.e(TAG, "onMeasure, both are completely free. " +
+                    "We respect that and extend to the whole preview size. " +
                     "(" + previewWidth + "x" + previewHeight + ")");
-            super.onMeasure(MeasureSpec.makeMeasureSpec((int) previewWidth, EXACTLY),
+            super.onMeasure(
+                    MeasureSpec.makeMeasureSpec((int) previewWidth, EXACTLY),
                     MeasureSpec.makeMeasureSpec((int) previewHeight, EXACTLY));
             return;
         }
 
-        // It sure now that at least one dimension can be determined (either because EXACTLY or AT_MOST).
+        // It's sure now that at least one dimension can be determined (either because EXACTLY or AT_MOST).
         // This starts to seem a pleasant situation.
 
-        // If one of the dimension is completely free, take the other and fit the ratio.
+        // If one of the dimension is completely free (e.g. in a scrollable container),
+        // take the other and fit the ratio.
         // One of the two might be AT_MOST, but we use the value anyway.
         float ratio = previewHeight / previewWidth;
         if (widthMode == UNSPECIFIED || heightMode == UNSPECIFIED) {
@@ -325,7 +329,7 @@ public class CameraView extends FrameLayout {
         // Last case, AT_MOST and AT_MOST. Here we can SURELY fit the aspect ratio by filling one
         // dimension and adapting the other.
         int height, width;
-        float atMostRatio = heightValue / widthValue;
+        float atMostRatio = (float) heightValue / (float) widthValue;
         if (atMostRatio >= ratio) {
             // We must reduce height.
             width = widthValue;
@@ -340,10 +344,9 @@ public class CameraView extends FrameLayout {
                 MeasureSpec.makeMeasureSpec(height, EXACTLY));
     }
 
+    //endregion
 
-    // Gesture APIs and touch control
-    // ------------------------------
-
+    //region Gesture APIs
 
     /**
      * Maps a {@link Gesture} to a certain gesture action.
@@ -468,10 +471,9 @@ public class CameraView extends FrameLayout {
         return false;
     }
 
+    //endregion
 
-    // Lifecycle APIs
-    // --------------
-
+    //region Lifecycle APIs
 
     /**
      * Returns whether the camera has started showing its preview.
@@ -586,10 +588,9 @@ public class CameraView extends FrameLayout {
         mWorkerHandler = null;
     }
 
+    //endregion
 
-    // Public APIs for parameters and controls
-    // ---------------------------------------
-
+    //region Public APIs for controls
 
     /**
      * Returns a {@link CameraOptions} instance holding supported options for this camera
@@ -1158,10 +1159,9 @@ public class CameraView extends FrameLayout {
         }
     }
 
+    //endregion
 
-    // Callbacks and dispatch
-    // ----------------------
-
+    //region Callbacks and dispatching
 
     private MediaActionSound mSound;
     private final boolean mUseSounds = Build.VERSION.SDK_INT >= 16;
@@ -1394,10 +1394,9 @@ public class CameraView extends FrameLayout {
         }
     }
 
+    //endregion
 
-    // Deprecated stuff
-    // ----------------
-
+    //region Deprecated
 
     /**
      * This does nothing.
@@ -1459,4 +1458,5 @@ public class CameraView extends FrameLayout {
         return 0;
     }
 
+    //endregion
 }
