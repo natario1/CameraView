@@ -94,6 +94,8 @@ public class CameraView extends FrameLayout {
         init(context, attrs);
     }
 
+    //region Init
+
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
@@ -200,10 +202,9 @@ public class CameraView extends FrameLayout {
         super.onDetachedFromWindow();
     }
 
+    //endregion
 
-    // Smart measuring behavior
-    // ------------------------
-
+    //region Measuring behavior
 
     private String ms(int mode) {
         switch (mode) {
@@ -340,10 +341,9 @@ public class CameraView extends FrameLayout {
                 MeasureSpec.makeMeasureSpec(height, EXACTLY));
     }
 
+    //endregion
 
-    // Gesture APIs and touch control
-    // ------------------------------
-
+    //region Gesture APIs
 
     /**
      * Maps a {@link Gesture} to a certain gesture action.
@@ -468,10 +468,9 @@ public class CameraView extends FrameLayout {
         return false;
     }
 
+    //endregion
 
-    // Lifecycle APIs
-    // --------------
-
+    //region Lifecycle APIs
 
     /**
      * Returns whether the camera has started showing its preview.
@@ -586,10 +585,9 @@ public class CameraView extends FrameLayout {
         mWorkerHandler = null;
     }
 
+    //endregion
 
-    // Public APIs for parameters and controls
-    // ---------------------------------------
-
+    //region Public APIs for controls
 
     /**
      * Returns a {@link CameraOptions} instance holding supported options for this camera
@@ -1158,10 +1156,9 @@ public class CameraView extends FrameLayout {
         }
     }
 
+    //endregion
 
-    // Callbacks and dispatch
-    // ----------------------
-
+    //region Callbacks and dispatching
 
     private MediaActionSound mSound;
     private final boolean mUseSounds = Build.VERSION.SDK_INT >= 16;
@@ -1394,10 +1391,9 @@ public class CameraView extends FrameLayout {
         }
     }
 
+    //endregion
 
-    // Deprecated stuff
-    // ----------------
-
+    //region Deprecated
 
     /**
      * This does nothing.
@@ -1459,4 +1455,5 @@ public class CameraView extends FrameLayout {
         return 0;
     }
 
+    //endregion
 }
