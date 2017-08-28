@@ -171,13 +171,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         if (mCapturingPicture || mCapturingVideo) return;
         mCapturingVideo = true;
         message("Recording for 8 seconds...", true);
-        camera.startCapturingVideo(null);
-        camera.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                camera.stopCapturingVideo();
-            }
-        }, 8000);
+        camera.startCapturingVideo(null, 8000);
     }
 
     @OnClick(R.id.toggleCamera)
