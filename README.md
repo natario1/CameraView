@@ -416,6 +416,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`setExposureCorrection(float)`, `getExposureCorrection()`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
 |`toggleFacing()`|Toggles the facing value between `Facing.FRONT` and `Facing.BACK`.|
 |`toggleFlash()`|Toggles the flash value between `Flash.OFF`, `Flash.ON`, and `Flash.AUTO`.|
+|`setLocation(Location)`|Sets location data to be appended to picture/video metadata.|
 |`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
 |`startAutoFocus(float, float)`|Starts an autofocus process at the given coordinates, with respect to the view dimensions.|
 |`getPreviewSize()`|Returns the size of the preview surface. If CameraView was not constrained in its layout phase (e.g. it was `wrap_content`), this will return the same aspect ratio of CameraView.|

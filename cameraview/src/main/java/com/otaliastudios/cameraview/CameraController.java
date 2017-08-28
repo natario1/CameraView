@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
+import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -37,8 +38,8 @@ abstract class CameraController implements Preview.SurfaceCallback {
     abstract void setWhiteBalance(WhiteBalance whiteBalance);
     abstract void setVideoQuality(VideoQuality videoQuality);
     abstract void setSessionType(SessionType sessionType);
-    abstract void setLocation(double latitude, double longitude);
     abstract void setHdr(Hdr hdr);
+    abstract void setLocation(Location location);
 
     abstract boolean capturePicture();
     abstract boolean captureSnapshot();

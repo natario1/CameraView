@@ -4,6 +4,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.location.Location;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
@@ -40,8 +41,7 @@ class Camera1 extends CameraController {
     private int mDeviceOrientation;
     private int mSensorOffset;
 
-    private double mLatitude;
-    private double mLongitude;
+    private Location mLocation;
 
     private Handler mFocusHandler = new Handler();
     private Mapper mMapper = new Mapper.Mapper1();
@@ -142,7 +142,7 @@ class Camera1 extends CameraController {
                 mOptions = new CameraOptions(params);
                 applyDefaultFocus(params);
                 mergeFlash(params, Flash.DEFAULT);
-                mergeLocation(params, 0d, 0d);
+                mergeLocation(params, null);
                 mergeWhiteBalance(params, WhiteBalance.DEFAULT);
                 params.setRecordingHint(mSessionType == SessionType.VIDEO);
                 mCamera.setParameters(params);
@@ -210,28 +210,28 @@ class Camera1 extends CameraController {
     }
 
     @Override
-    void setLocation(double latitude, double longitude) {
-        double oldLat = mLatitude;
-        double oldLong = mLongitude;
-        mLatitude = latitude;
-        mLongitude = longitude;
+    void setLocation(Location location) {
+        Location oldLocation = mLocation;
+        mLocation = location;
         if (isCameraOpened()) {
             synchronized (mLock) {
                 Camera.Parameters params = mCamera.getParameters();
-                if (mergeLocation(params, oldLat, oldLong)) mCamera.setParameters(params);
+                if (mergeLocation(params, oldLocation)) mCamera.setParameters(params);
             }
         }
     }
 
-    private boolean mergeLocation(Camera.Parameters params, double oldLatitude, double oldLongitude) {
-        if (mLatitude != 0 && mLongitude != 0) {
-            params.setGpsLatitude(mLatitude);
-            params.setGpsLongitude(mLongitude);
-            params.setGpsTimestamp(System.currentTimeMillis());
-            params.setGpsProcessingMethod("Unknown");
+    private boolean mergeLocation(Camera.Parameters params, Location oldLocation) {
+        if (mLocation != null) {
+            params.setGpsLatitude(mLocation.getLatitude());
+            params.setGpsLongitude(mLocation.getLongitude());
+            params.setGpsAltitude(mLocation.getAltitude());
+            params.setGpsTimestamp(mLocation.getTime());
+            params.setGpsProcessingMethod(mLocation.getProvider());
 
             if (mIsCapturingVideo && mMediaRecorder != null) {
-                mMediaRecorder.setLocation((float) mLatitude, (float) mLongitude);
+                mMediaRecorder.setLocation((float) mLocation.getLatitude(),
+                        (float) mLocation.getLongitude());
             }
         }
         return true;
@@ -598,8 +598,9 @@ class Camera1 extends CameraController {
 
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-        if (mLatitude != 0 && mLongitude != 0) {
-            mMediaRecorder.setLocation((float) mLatitude, (float) mLongitude);
+        if (mLocation != null) {
+            mMediaRecorder.setLocation((float) mLocation.getLatitude(),
+                    (float) mLocation.getLongitude());
         }
 
         mMediaRecorder.setProfile(getCamcorderProfile(mVideoQuality));

@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.demo;
 
 import android.content.Intent;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -126,6 +127,15 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
                 startActivity(intent);
             }
         });
+
+        // Debug location.
+        /* camera.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                message("set Location", false);
+                camera.setLocation(-20, 40.12345);
+            }
+        }, 4500); */
     }
 
     private void message(String content, boolean important) {
@@ -171,13 +181,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         if (mCapturingPicture || mCapturingVideo) return;
         mCapturingVideo = true;
         message("Recording for 8 seconds...", true);
-        camera.startCapturingVideo(null);
-        camera.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                camera.stopCapturingVideo();
-            }
-        }, 8000);
+        camera.startCapturingVideo(null, 8000);
     }
 
     @OnClick(R.id.toggleCamera)
