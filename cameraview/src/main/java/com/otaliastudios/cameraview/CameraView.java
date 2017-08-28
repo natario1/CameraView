@@ -12,6 +12,7 @@ import android.content.res.TypedArray;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.location.Location;
 import android.media.MediaActionSound;
 import android.os.Build;
 import android.os.Handler;
@@ -712,7 +713,22 @@ public class CameraView extends FrameLayout {
      * @param longitude current longitude
      */
     public void setLocation(double latitude, double longitude) {
-        mCameraController.setLocation(latitude, longitude);
+        Location location = new Location("Unknown");
+        location.setTime(System.currentTimeMillis());
+        location.setAltitude(0);
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+        mCameraController.setLocation(location);
+    }
+
+
+    /**
+     * Set location values to be found later in the jpeg EXIF header
+     *
+     * @param location current location
+     */
+    public void setLocation(Location location) {
+        mCameraController.setLocation(location);
     }
 
 
