@@ -174,7 +174,7 @@ class Camera1 extends CameraController {
     }
 
     private boolean collectCameraId() {
-        int internalFacing = mMapper.mapFacing(mFacing);
+        int internalFacing = mMapper.map(mFacing);
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
@@ -261,10 +261,31 @@ class Camera1 extends CameraController {
 
     private boolean mergeWhiteBalance(Camera.Parameters params, WhiteBalance oldWhiteBalance) {
         if (mOptions.getSupportedWhiteBalance().contains(mWhiteBalance)) {
-            params.setWhiteBalance((String) mMapper.mapWhiteBalance(mWhiteBalance));
+            params.setWhiteBalance((String) mMapper.map(mWhiteBalance));
             return true;
         }
         mWhiteBalance = oldWhiteBalance;
+        return false;
+    }
+
+    @Override
+    void setHdr(Hdr hdr) {
+        Hdr old = mHdr;
+        mHdr = hdr;
+        if (isCameraOpened()) {
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                if (mergeHdr(params, old)) mCamera.setParameters(params);
+            }
+        }
+    }
+
+    private boolean mergeHdr(Camera.Parameters params, Hdr oldHdr) {
+        if (mOptions.getSupportedHdr().contains(mHdr)) {
+            params.setSceneMode((String) mMapper.map(mHdr));
+            return true;
+        }
+        mHdr = oldHdr;
         return false;
     }
 
@@ -283,7 +304,7 @@ class Camera1 extends CameraController {
 
     private boolean mergeFlash(Camera.Parameters params, Flash oldFlash) {
         if (mOptions.getSupportedFlash().contains(mFlash)) {
-            params.setFlashMode((String) mMapper.mapFlash(mFlash));
+            params.setFlashMode((String) mMapper.map(mFlash));
             return true;
         }
         mFlash = oldFlash;

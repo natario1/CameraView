@@ -30,7 +30,7 @@ compile 'com.otaliastudios:cameraview:1.1.4'
 - Multiple capture methods
   - Take high-resolution pictures with `capturePicture`
   - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to Snapchat and Instagram)
-- Control flash, zoom, white balance, exposure correction and more
+- Control HDR, flash, zoom, white balance, exposure correction and more
 - **Metadata** support for pictures and videos
   - Automatically detected orientation tags
   - Plug in location tags with `setLocation()` API
@@ -66,7 +66,7 @@ To use the CameraView engine, simply add a `CameraView` to your layout:
     android:layout_height="wrap_content" />
 ```
 
-Make sure you override `onResume`, `onPause` and  `onDestroy` in your activity or fragment, and call `CameraView.start()`, `stop()` and `destroy()`.
+`CameraView` has lots of XML attributes, so keep reading. Make sure you override `onResume`, `onPause` and  `onDestroy` in your activity or fragment, and call `CameraView.start()`, `stop()` and `destroy()`.
 
 ```java
 @Override
@@ -291,7 +291,8 @@ Most camera parameters can be controlled through XML attributes or linked method
     app:cameraCropOutput="false"  
     app:cameraJpegQuality="100"
     app:cameraVideoQuality="480p"
-    app:cameraWhiteBalance="auto" />
+    app:cameraWhiteBalance="auto"
+    app:cameraHdr="off" />
 ```
 
 |XML Attribute|Method|Values|Default Value|
@@ -304,6 +305,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 <= n <= 100`|`100`|
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`lowest` `highest` `maxQvga` `max480p` `max720p` `max1080p` `max2160p`|`max480p`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
+|[`cameraHdr`](#camerahdr)|`setHdr()`|`off` `on`|`off`|
 
 #### cameraSessionType
 
@@ -390,6 +392,15 @@ cameraView.setWhiteBalance(WhiteBalance.DAYLIGHT);
 cameraView.setWhiteBalance(WhiteBalance.CLOUDY);
 ```
 
+#### cameraHdr
+
+Turns on or off HDR captures.
+
+```java
+cameraView.setHdr(Hdr.OFF);
+cameraView.setHdr(Hdr.ON);
+```
+
 ## Other APIs
 
 Other APIs not mentioned above are provided, and are well documented and commented in code.
@@ -464,6 +475,7 @@ This is what was done since the library was forked. I have kept the original str
 - *gesture framework support*
 - *scroll gestures support*
 - *MediaActionSound support*
+- *Hdr controls*
 
 These are still things that need to be done, off the top of my head:
 

@@ -45,6 +45,11 @@
             <enum name="front" value="1" />
         </attr>
 
+        <attr name="cameraHdr" format="enum">
+            <enum name="off" value="0" />
+            <enum name="on" value="1" />
+        </attr>
+
         <attr name="cameraFlash" format="enum">
             <enum name="off" value="0" />
             <enum name="on" value="1" />

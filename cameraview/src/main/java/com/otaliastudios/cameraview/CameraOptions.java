@@ -6,6 +6,7 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.support.annotation.NonNull;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +19,7 @@ public class CameraOptions {
     private Set<WhiteBalance> supportedWhiteBalance = new HashSet<>(5);
     private Set<Facing> supportedFacing = new HashSet<>(2);
     private Set<Flash> supportedFlash = new HashSet<>(4);
+    private Set<Hdr> supportedHdr = new HashSet<>(2);
 
     private boolean zoomSupported;
     private boolean videoSnapshotSupported;
@@ -59,6 +61,15 @@ public class CameraOptions {
             }
         }
 
+        // Hdr
+        strings = params.getSupportedSceneModes();
+        if (strings != null) {
+            for (String string : strings) {
+                Hdr value = mapper.unmapHdr(string);
+                if (value != null) supportedHdr.add(value);
+            }
+        }
+
         zoomSupported = params.isZoomSupported();
         videoSnapshotSupported = params.isVideoSnapshotSupported();
         autoFocusSupported = params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
@@ -86,7 +97,7 @@ public class CameraOptions {
      */
     @NonNull
     public Set<Facing> getSupportedFacing() {
-        return supportedFacing;
+        return Collections.unmodifiableSet(supportedFacing);
     }
 
 
@@ -101,7 +112,7 @@ public class CameraOptions {
      */
     @NonNull
     public Set<Flash> getSupportedFlash() {
-        return supportedFlash;
+        return Collections.unmodifiableSet(supportedFlash);
     }
 
 
@@ -117,9 +128,21 @@ public class CameraOptions {
      */
     @NonNull
     public Set<WhiteBalance> getSupportedWhiteBalance() {
-        return supportedWhiteBalance;
+        return Collections.unmodifiableSet(supportedWhiteBalance);
     }
 
+
+    /**
+     * Set of supported hdr values.
+     *
+     * @see Hdr#OFF
+     * @see Hdr#ON
+     * @return a set of supported values.
+     */
+    @NonNull
+    public Set<Hdr> getSupportedHdr() {
+        return Collections.unmodifiableSet(supportedHdr);
+    }
 
     /**
      * Whether zoom is supported. If this is false, pinch-to-zoom

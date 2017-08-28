@@ -706,6 +706,28 @@ public class CameraView extends FrameLayout {
 
 
     /**
+     * Controls the grids to be drawn over the current layout.
+     *
+     * @see Hdr#OFF
+     * @see Hdr#ON
+     *
+     * @param hdr desired hdr value
+     */
+    public void setHdr(Hdr hdr) {
+        mCameraController.setHdr(hdr);
+    }
+
+
+    /**
+     * Gets the current hdr value.
+     * @return the current hdr value
+     */
+    public Hdr getHdr() {
+        return mCameraController.getHdr();
+    }
+
+
+    /**
      * Set location coordinates to be found later in the jpeg EXIF header
      *
      * @param latitude current latitude
