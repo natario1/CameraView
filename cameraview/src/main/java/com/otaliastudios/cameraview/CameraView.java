@@ -250,7 +250,7 @@ public class CameraView extends FrameLayout {
         final float previewHeight = flip ? previewSize.getWidth() : previewSize.getHeight();
 
         // If MATCH_PARENT is interpreted as AT_MOST, transform to EXACTLY
-        // to be consistent with our semantics.
+        // to be consistent with our semantics (and our docs).
         final ViewGroup.LayoutParams lp = getLayoutParams();
         if (widthMode == AT_MOST && lp.width == MATCH_PARENT) widthMode = EXACTLY;
         if (heightMode == AT_MOST && lp.height == MATCH_PARENT) heightMode = EXACTLY;
@@ -262,7 +262,7 @@ public class CameraView extends FrameLayout {
 
         // If we have fixed dimensions (either 300dp or MATCH_PARENT), there's nothing we should do,
         // other than respect it. The preview will eventually be cropped at the sides (by PreviewImpl scaling)
-        // except the case in which these fixed dimensions somehow fit exactly the preview aspect ratio.
+        // except the case in which these fixed dimensions manage to fit exactly the preview aspect ratio.
         if (widthMode == EXACTLY && heightMode == EXACTLY) {
             Log.e(TAG, "onMeasure, both are MATCH_PARENT or fixed value. We adapt. This means CROP_INSIDE. " +
                     "(" + widthValue + "x" + heightValue + ")");
@@ -273,17 +273,20 @@ public class CameraView extends FrameLayout {
         // If both dimensions are free, with no limits, then our size will be exactly the
         // preview size. This can happen rarely, for example in scrollable containers.
         if (widthMode == UNSPECIFIED && heightMode == UNSPECIFIED) {
-            Log.e(TAG, "onMeasure, both are completely free. We respect that and extend to the whole preview size. " +
+            Log.e(TAG, "onMeasure, both are completely free. " +
+                    "We respect that and extend to the whole preview size. " +
                     "(" + previewWidth + "x" + previewHeight + ")");
-            super.onMeasure(MeasureSpec.makeMeasureSpec((int) previewWidth, EXACTLY),
+            super.onMeasure(
+                    MeasureSpec.makeMeasureSpec((int) previewWidth, EXACTLY),
                     MeasureSpec.makeMeasureSpec((int) previewHeight, EXACTLY));
             return;
         }
 
-        // It sure now that at least one dimension can be determined (either because EXACTLY or AT_MOST).
+        // It's sure now that at least one dimension can be determined (either because EXACTLY or AT_MOST).
         // This starts to seem a pleasant situation.
 
-        // If one of the dimension is completely free, take the other and fit the ratio.
+        // If one of the dimension is completely free (e.g. in a scrollable container),
+        // take the other and fit the ratio.
         // One of the two might be AT_MOST, but we use the value anyway.
         float ratio = previewHeight / previewWidth;
         if (widthMode == UNSPECIFIED || heightMode == UNSPECIFIED) {
@@ -326,7 +329,7 @@ public class CameraView extends FrameLayout {
         // Last case, AT_MOST and AT_MOST. Here we can SURELY fit the aspect ratio by filling one
         // dimension and adapting the other.
         int height, width;
-        float atMostRatio = heightValue / widthValue;
+        float atMostRatio = (float) heightValue / (float) widthValue;
         if (atMostRatio >= ratio) {
             // We must reduce height.
             width = widthValue;
@@ -412,13 +415,13 @@ public class CameraView extends FrameLayout {
         // Pass to our own GestureLayouts
         CameraOptions options = mCameraController.getCameraOptions(); // Non null
         if (mPinchGestureLayout.onTouchEvent(event)) {
-            Log.e(TAG, "pinch!");
+            // Log.e(TAG, "pinch!");
             onGesture(mPinchGestureLayout, options);
         } else if (mScrollGestureLayout.onTouchEvent(event)) {
-            Log.e(TAG, "scroll!");
+            // Log.e(TAG, "scroll!");
             onGesture(mScrollGestureLayout, options);
         } else if (mTapGestureLayout.onTouchEvent(event)) {
-            Log.e(TAG, "tap!");
+            // Log.e(TAG, "tap!");
             onGesture(mTapGestureLayout, options);
         }
         return true;
@@ -1249,8 +1252,8 @@ public class CameraView extends FrameLayout {
                         int w = consistentWithView ? getWidth() : getHeight();
                         int h = consistentWithView ? getHeight() : getWidth();
                         AspectRatio targetRatio = AspectRatio.of(w, h);
-                        Log.e(TAG, "is Consistent? " + consistentWithView);
-                        Log.e(TAG, "viewWidth? " + getWidth() + ", viewHeight? " + getHeight());
+                        // Log.e(TAG, "is Consistent? " + consistentWithView);
+                        // Log.e(TAG, "viewWidth? " + getWidth() + ", viewHeight? " + getHeight());
                         jpeg2 = CropHelper.cropToJpeg(jpeg, targetRatio, mJpegQuality);
                     }
                     dispatchOnPictureTaken(jpeg2);
