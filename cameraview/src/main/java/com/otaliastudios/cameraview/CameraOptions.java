@@ -133,6 +133,30 @@ public class CameraOptions {
 
 
     /**
+     * Shorthand for other methods in this class,
+     * e.g. supports(GestureAction.ZOOM) == isZoomSupported().
+     *
+     * @param action value to be checked
+     * @return whether it's supported
+     */
+    public boolean supports(GestureAction action) {
+        switch (action) {
+            case FOCUS:
+            case FOCUS_WITH_MARKER:
+                return isAutoFocusSupported();
+            case CAPTURE:
+            case NONE:
+                return true;
+            case ZOOM:
+                return isZoomSupported();
+            case EXPOSURE_CORRECTION:
+                return isExposureCorrectionSupported();
+        }
+        return false;
+    }
+
+
+    /**
      * Set of supported facing values.
      *
      * @see Facing#BACK
