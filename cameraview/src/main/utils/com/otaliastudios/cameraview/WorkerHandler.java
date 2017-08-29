@@ -20,6 +20,10 @@ class WorkerHandler {
         mHandler = new Handler(mThread.getLooper());
     }
 
+    public Handler get() {
+        return mHandler;
+    }
+
     public void post(Runnable runnable) {
         mHandler.post(runnable);
     }

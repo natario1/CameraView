@@ -27,24 +27,31 @@ class Camera1 extends CameraController {
 
     private static final String TAG = Camera1.class.getSimpleName();
 
-    private static final int DELAY_MILLIS_BEFORE_RESETTING_FOCUS = 3000;
-
     private int mCameraId;
     private Camera mCamera;
-    private ExtraProperties mExtraProperties;
-    private CameraOptions mOptions;
-    private Size mPreviewSize;
-    private Size mCaptureSize;
     private MediaRecorder mMediaRecorder;
     private File mVideoFile;
 
-    private int mDisplayOffset;
-    private int mDeviceOrientation;
     private int mSensorOffset;
 
     private Location mLocation;
 
-    private Handler mFocusHandler = new Handler();
+    private final int mPostFocusResetDelay = 3000;
+    private Runnable mPostFocusResetRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!isCameraOpened()) return;
+            mCamera.cancelAutoFocus();
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                params.setFocusAreas(null);
+                params.setMeteringAreas(null);
+                applyDefaultFocus(params); // Revert to internal focus.
+                mCamera.setParameters(params);
+            }
+        }
+    };
+
     private Mapper mMapper = new Mapper.Mapper1();
     private boolean mIsSetup = false;
     private boolean mIsCapturingImage = false;
@@ -160,7 +167,7 @@ class Camera1 extends CameraController {
     @WorkerThread
     @Override
     void onStop() {
-        mFocusHandler.removeCallbacksAndMessages(null);
+        mHandler.get().removeCallbacks(mPostFocusResetRunnable);
         if (isCameraOpened()) {
             if (mIsCapturingVideo) endVideo();
             mCamera.stopPreview();
@@ -187,17 +194,6 @@ class Camera1 extends CameraController {
             }
         }
         return false;
-    }
-
-    @Override
-    void onDisplayOffset(int displayOrientation) {
-        // I doubt this will ever change.
-        this.mDisplayOffset = displayOrientation;
-    }
-
-    @Override
-    void onDeviceOrientation(int deviceOrientation) {
-        this.mDeviceOrientation = deviceOrientation;
     }
 
 
@@ -394,7 +390,7 @@ class Camera1 extends CameraController {
                     @Override
                     public void onPictureTaken(byte[] data, final Camera camera) {
                         mIsCapturingImage = false;
-                        post(new Runnable() {
+                        mHandler.post(new Runnable() {
                             @Override
                             public void run() {
                                 // This is needed, read somewhere in the docs.
@@ -452,16 +448,6 @@ class Camera1 extends CameraController {
     }
 
     @Override
-    Size getCaptureSize() {
-        return mCaptureSize;
-    }
-
-    @Override
-    Size getPreviewSize() {
-        return mPreviewSize;
-    }
-
-    @Override
     boolean shouldFlipSizes() {
         return mSensorOffset % 180 != 0;
     }
@@ -471,17 +457,6 @@ class Camera1 extends CameraController {
         return mCamera != null;
     }
 
-    @Nullable
-    @Override
-    ExtraProperties getExtraProperties() {
-        return mExtraProperties;
-    }
-
-    @Nullable
-    @Override
-    CameraOptions getCameraOptions() {
-        return mOptions;
-    }
 
     // Internal:
 
@@ -723,30 +698,12 @@ class Camera1 extends CameraController {
                 public void onAutoFocus(boolean success, Camera camera) {
                     // TODO lock auto exposure and white balance for a while
                     mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
-                    postResetFocus();
+                    mHandler.get().removeCallbacks(mPostFocusResetRunnable);
+                    mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
                 }
             });
         }
         return true;
-    }
-
-
-    private void postResetFocus() {
-        mFocusHandler.removeCallbacksAndMessages(null);
-        mFocusHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (!isCameraOpened()) return;
-                mCamera.cancelAutoFocus();
-                synchronized (mLock) {
-                    Camera.Parameters params = mCamera.getParameters();
-                    params.setFocusAreas(null);
-                    params.setMeteringAreas(null);
-                    applyDefaultFocus(params); // Revert to internal focus.
-                    mCamera.setParameters(params);
-                }
-            }
-        }, DELAY_MILLIS_BEFORE_RESETTING_FOCUS);
     }
 
 

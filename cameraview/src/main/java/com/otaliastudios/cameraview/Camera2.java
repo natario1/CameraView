@@ -30,8 +30,6 @@ class Camera2 extends CameraController {
 
     private String mCameraId;
 
-    private Size mCaptureSize;
-    private Size mPreviewSize;
 
     private Mapper mMapper = new Mapper.Mapper2();
     private final HashMap<String, ExtraProperties> mExtraPropertiesMap = new HashMap<>();
@@ -189,57 +187,7 @@ class Camera2 extends CameraController {
         return false;
     }
 
-    @Override
-    Size getCaptureSize() {
-        if (mCaptureSize == null && mCameraCharacteristics != null) {
-            TreeSet<Size> sizes = new TreeSet<>();
-            sizes.addAll(getAvailableCaptureResolutions());
 
-            /* TreeSet<AspectRatio> aspectRatios = new CommonAspectRatioFilter(
-                    getAvailablePreviewResolutions(),
-                    getAvailableCaptureResolutions()
-            ).filter();
-            AspectRatio targetRatio = aspectRatios.size() > 0 ? aspectRatios.last() : null;
-
-            Iterator<Size> descendingSizes = sizes.descendingIterator();
-            Size size;
-            while (descendingSizes.hasNext() && mCaptureSize == null) {
-                size = descendingSizes.next();
-                if (targetRatio == null || targetRatio.matches(size)) {
-                    mCaptureSize = size;
-                    break;
-                }
-            } */
-        }
-
-        return mCaptureSize;
-    }
-
-    @Override
-    Size getPreviewSize() {
-        if (mPreviewSize == null && mCameraCharacteristics != null) {
-            TreeSet<Size> sizes = new TreeSet<>();
-            sizes.addAll(getAvailablePreviewResolutions());
-
-            /* TreeSet<AspectRatio> aspectRatios = new CommonAspectRatioFilter(
-                    getAvailablePreviewResolutions(),
-                    getAvailableCaptureResolutions()
-            ).filter();
-            AspectRatio targetRatio = aspectRatios.size() > 0 ? aspectRatios.last() : null;
-
-            Iterator<Size> descendingSizes = sizes.descendingIterator();
-            Size size;
-            while (descendingSizes.hasNext() && mPreviewSize == null) {
-                size = descendingSizes.next();
-                if (targetRatio == null || targetRatio.matches(size)) {
-                    mPreviewSize = size;
-                    break;
-                }
-            } */
-        }
-
-        return mPreviewSize;
-    }
 
     @Override
     boolean shouldFlipSizes() {
@@ -256,22 +204,9 @@ class Camera2 extends CameraController {
         return true;
     }
 
-    @Nullable
-    @Override
-    ExtraProperties getExtraProperties() {
-        if (mCamera == null) {
-            return null;
-        }
-        return mExtraPropertiesMap.get(mCamera.getId());
-    }
+
     // Internal
 
-
-    @Nullable
-    @Override
-    CameraOptions getCameraOptions() {
-        return null;
-    }
 
     private List<Size> getAvailableCaptureResolutions() {
         List<Size> output = new ArrayList<>();
