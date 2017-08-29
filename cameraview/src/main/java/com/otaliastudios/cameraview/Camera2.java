@@ -101,7 +101,7 @@ class Camera2 extends CameraController {
 
     @Override
     void setFacing(Facing facing) {
-        int internalFacing = mMapper.mapFacing(facing);
+        int internalFacing = mMapper.map(facing);
         final String[] ids;
         try {
             ids = mCameraManager.getCameraIdList();
@@ -139,11 +139,15 @@ class Camera2 extends CameraController {
 
     @Override
     void setFlash(Flash flash) {
-
     }
 
     @Override
     void setSessionType(SessionType sessionType) {
+
+    }
+
+    @Override
+    void setHdr(Hdr hdr) {
 
     }
 

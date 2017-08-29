@@ -17,6 +17,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     protected WhiteBalance mWhiteBalance;
     protected VideoQuality mVideoQuality;
     protected SessionType mSessionType;
+    protected Hdr mHdr;
 
     CameraController(CameraView.CameraCallbacks callback, Preview preview) {
         mCameraCallbacks = callback;
@@ -37,6 +38,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     abstract void setWhiteBalance(WhiteBalance whiteBalance);
     abstract void setVideoQuality(VideoQuality videoQuality);
     abstract void setSessionType(SessionType sessionType);
+    abstract void setHdr(Hdr hdr);
     abstract void setLocation(Location location);
 
     abstract boolean capturePicture();
@@ -59,4 +61,5 @@ abstract class CameraController implements Preview.SurfaceCallback {
     final WhiteBalance getWhiteBalance() { return mWhiteBalance; }
     final VideoQuality getVideoQuality() { return mVideoQuality; }
     final SessionType getSessionType() { return mSessionType; }
+    final Hdr getHdr() { return mHdr; }
 }
