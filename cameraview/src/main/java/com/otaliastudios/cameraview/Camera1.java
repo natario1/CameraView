@@ -258,7 +258,7 @@ class Camera1 extends CameraController {
     }
 
     private boolean mergeWhiteBalance(Camera.Parameters params, WhiteBalance oldWhiteBalance) {
-        if (mOptions.getSupportedWhiteBalance().contains(mWhiteBalance)) {
+        if (mOptions.supports(mWhiteBalance)) {
             params.setWhiteBalance((String) mMapper.map(mWhiteBalance));
             return true;
         }
@@ -279,7 +279,7 @@ class Camera1 extends CameraController {
     }
 
     private boolean mergeHdr(Camera.Parameters params, Hdr oldHdr) {
-        if (mOptions.getSupportedHdr().contains(mHdr)) {
+        if (mOptions.supports(mHdr)) {
             params.setSceneMode((String) mMapper.map(mHdr));
             return true;
         }
@@ -301,7 +301,7 @@ class Camera1 extends CameraController {
 
 
     private boolean mergeFlash(Camera.Parameters params, Flash oldFlash) {
-        if (mOptions.getSupportedFlash().contains(mFlash)) {
+        if (mOptions.supports(mFlash)) {
             params.setFlashMode((String) mMapper.map(mFlash));
             return true;
         }

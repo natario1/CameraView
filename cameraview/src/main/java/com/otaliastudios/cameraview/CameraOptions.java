@@ -89,6 +89,50 @@ public class CameraOptions {
 
 
     /**
+     * Shorthand for getSupportedFacing().contains(value).
+     *
+     * @param facing value
+     * @return whether it's supported
+     */
+    public boolean supports(Facing facing) {
+        return getSupportedFacing().contains(facing);
+    }
+
+
+    /**
+     * Shorthand for getSupportedFlash().contains(value).
+     *
+     * @param flash value
+     * @return whether it's supported
+     */
+    public boolean supports(Flash flash) {
+        return getSupportedFlash().contains(flash);
+    }
+
+
+    /**
+     * Shorthand for getSupportedWhiteBalance().contains(value).
+     *
+     * @param whiteBalance value
+     * @return whether it's supported
+     */
+    public boolean supports(WhiteBalance whiteBalance) {
+        return getSupportedWhiteBalance().contains(whiteBalance);
+    }
+
+
+    /**
+     * Shorthand for getSupportedHdr().contains(value).
+     *
+     * @param hdr value
+     * @return whether it's supported
+     */
+    public boolean supports(Hdr hdr) {
+        return getSupportedHdr().contains(hdr);
+    }
+
+
+    /**
      * Set of supported facing values.
      *
      * @see Facing#BACK
