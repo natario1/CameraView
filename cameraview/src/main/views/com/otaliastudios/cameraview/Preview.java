@@ -33,8 +33,6 @@ abstract class Preview {
     abstract View getView();
     abstract Class getOutputClass();
     abstract boolean isReady();
-    protected void onDisplayOffset(int displayOrientation) {}
-    protected void onDeviceOrientation(int deviceOrientation) {}
     SurfaceHolder getSurfaceHolder() {
         return null;
     }

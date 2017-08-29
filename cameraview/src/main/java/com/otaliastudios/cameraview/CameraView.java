@@ -147,34 +147,7 @@ public class CameraView extends FrameLayout {
         mapGesture(Gesture.SCROLL_VERTICAL, scrollVerticalGesture);
 
         if (!isInEditMode()) {
-            mOrientationHelper = new OrientationHelper(context) {
-
-                private Integer mDisplayOffset;
-                private Integer mDeviceOrientation;
-
-                @Override
-                public void onDisplayOffsetChanged(int displayOffset) {
-                    mCameraController.onDisplayOffset(displayOffset);
-                    mPreviewImpl.onDisplayOffset(displayOffset);
-                    mDisplayOffset = displayOffset;
-                    send();
-                }
-
-                @Override
-                protected void onDeviceOrientationChanged(int deviceOrientation) {
-                    mCameraController.onDeviceOrientation(deviceOrientation);
-                    mPreviewImpl.onDeviceOrientation(deviceOrientation);
-                    mDeviceOrientation = deviceOrientation;
-                    send();
-                }
-
-                private void send() {
-                    if (mDeviceOrientation == null) return;
-                    if (mDisplayOffset == null) return;
-                    int value = (mDeviceOrientation + mDisplayOffset) % 360;
-                    mCameraCallbacks.dispatchOnOrientationChanged(value);
-                }
-            };
+            mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
         }
     }
 
@@ -1193,9 +1166,15 @@ public class CameraView extends FrameLayout {
         }
     }
 
-    class CameraCallbacks {
 
+    class CameraCallbacks implements OrientationHelper.Callbacks {
+
+        // Outer listeners
         private ArrayList<CameraListener> mListeners = new ArrayList<>(2);
+
+        // Orientation TODO: move this logic into OrientationHelper
+        private Integer mDisplayOffset;
+        private Integer mDeviceOrientation;
 
         CameraCallbacks() {}
 
@@ -1359,8 +1338,28 @@ public class CameraView extends FrameLayout {
             });
         }
 
+        @Override
+        public void onDisplayOffsetChanged(int displayOffset) {
+            mCameraController.onDisplayOffset(displayOffset);
+            mDisplayOffset = displayOffset;
+            if (mDeviceOrientation != null) {
+                int value = (mDeviceOrientation + mDisplayOffset) % 360;
+                dispatchOnOrientationChanged(value);
+            }
+        }
 
-        public void dispatchOnOrientationChanged(final int value) {
+        @Override
+        public void onDeviceOrientationChanged(int deviceOrientation) {
+            mCameraController.onDeviceOrientation(deviceOrientation);
+            mDeviceOrientation = deviceOrientation;
+            if (mDisplayOffset != null) {
+                int value = (mDeviceOrientation + mDisplayOffset) % 360;
+                dispatchOnOrientationChanged(value);
+            }
+        }
+
+
+        private void dispatchOnOrientationChanged(final int value) {
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
