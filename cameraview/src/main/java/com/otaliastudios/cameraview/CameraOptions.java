@@ -89,6 +89,74 @@ public class CameraOptions {
 
 
     /**
+     * Shorthand for getSupportedFacing().contains(value).
+     *
+     * @param facing value
+     * @return whether it's supported
+     */
+    public boolean supports(Facing facing) {
+        return getSupportedFacing().contains(facing);
+    }
+
+
+    /**
+     * Shorthand for getSupportedFlash().contains(value).
+     *
+     * @param flash value
+     * @return whether it's supported
+     */
+    public boolean supports(Flash flash) {
+        return getSupportedFlash().contains(flash);
+    }
+
+
+    /**
+     * Shorthand for getSupportedWhiteBalance().contains(value).
+     *
+     * @param whiteBalance value
+     * @return whether it's supported
+     */
+    public boolean supports(WhiteBalance whiteBalance) {
+        return getSupportedWhiteBalance().contains(whiteBalance);
+    }
+
+
+    /**
+     * Shorthand for getSupportedHdr().contains(value).
+     *
+     * @param hdr value
+     * @return whether it's supported
+     */
+    public boolean supports(Hdr hdr) {
+        return getSupportedHdr().contains(hdr);
+    }
+
+
+    /**
+     * Shorthand for other methods in this class,
+     * e.g. supports(GestureAction.ZOOM) == isZoomSupported().
+     *
+     * @param action value to be checked
+     * @return whether it's supported
+     */
+    public boolean supports(GestureAction action) {
+        switch (action) {
+            case FOCUS:
+            case FOCUS_WITH_MARKER:
+                return isAutoFocusSupported();
+            case CAPTURE:
+            case NONE:
+                return true;
+            case ZOOM:
+                return isZoomSupported();
+            case EXPOSURE_CORRECTION:
+                return isExposureCorrectionSupported();
+        }
+        return false;
+    }
+
+
+    /**
      * Set of supported facing values.
      *
      * @see Facing#BACK

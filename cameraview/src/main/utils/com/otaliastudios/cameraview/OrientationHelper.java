@@ -2,14 +2,13 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.hardware.SensorManager;
+import android.support.annotation.NonNull;
 import android.util.SparseIntArray;
 import android.view.Display;
 import android.view.OrientationEventListener;
 import android.view.Surface;
 
-abstract class OrientationHelper {
-
-    private final OrientationEventListener mOrientationEventListener;
+class OrientationHelper {
 
     private static final SparseIntArray DISPLAY_ORIENTATIONS = new SparseIntArray();
     static {
@@ -19,13 +18,20 @@ abstract class OrientationHelper {
         DISPLAY_ORIENTATIONS.put(Surface.ROTATION_270, 270);
     }
 
+    private final OrientationEventListener mListener;
+    private final Callbacks mCallbacks;
     private Display mDisplay;
-
     private int mLastKnownDisplayOffset = -1;
     private int mLastOrientation = -1;
 
-    OrientationHelper(Context context) {
-        mOrientationEventListener = new OrientationEventListener(context, SensorManager.SENSOR_DELAY_NORMAL) {
+    interface Callbacks {
+        void onDisplayOffsetChanged(int displayOffset);
+        void onDeviceOrientationChanged(int deviceOrientation);
+    }
+
+    OrientationHelper(Context context, @NonNull Callbacks callbacks) {
+        mCallbacks = callbacks;
+        mListener = new OrientationEventListener(context, SensorManager.SENSOR_DELAY_NORMAL) {
 
             @Override
             public void onOrientationChanged(int orientation) {
@@ -44,7 +50,7 @@ abstract class OrientationHelper {
 
                 if (or != mLastOrientation) {
                     mLastOrientation = or;
-                    onDeviceOrientationChanged(mLastOrientation);
+                    mCallbacks.onDeviceOrientationChanged(mLastOrientation);
                 }
 
                 // Let's see if display rotation has changed.. but how could it ever change...??
@@ -53,7 +59,7 @@ abstract class OrientationHelper {
                     final int offset = mDisplay.getRotation();
                     if (mLastKnownDisplayOffset != offset) {
                         mLastKnownDisplayOffset = offset;
-                        onDisplayOffsetChanged(DISPLAY_ORIENTATIONS.get(offset));
+                        mCallbacks.onDisplayOffsetChanged(DISPLAY_ORIENTATIONS.get(offset));
                     }
                 }
             }
@@ -63,18 +69,13 @@ abstract class OrientationHelper {
 
     void enable(Display display) {
         mDisplay = display;
-        mOrientationEventListener.enable();
+        mListener.enable();
         mLastKnownDisplayOffset = DISPLAY_ORIENTATIONS.get(display.getRotation());
-        onDisplayOffsetChanged(mLastKnownDisplayOffset);
+        mCallbacks.onDisplayOffsetChanged(mLastKnownDisplayOffset);
     }
 
     void disable() {
-        mOrientationEventListener.disable();
+        mListener.disable();
         mDisplay = null;
     }
-
-    protected abstract void onDisplayOffsetChanged(int displayOffset);
-
-    protected abstract void onDeviceOrientationChanged(int deviceOrientation);
-
 }
