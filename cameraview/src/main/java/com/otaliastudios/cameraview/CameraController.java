@@ -4,6 +4,7 @@ import android.graphics.PointF;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 
 import java.io.File;
 
@@ -19,14 +20,50 @@ abstract class CameraController implements Preview.SurfaceCallback {
     protected SessionType mSessionType;
     protected Hdr mHdr;
 
+    private WorkerHandler mHandler;
+
     CameraController(CameraView.CameraCallbacks callback, Preview preview) {
         mCameraCallbacks = callback;
         mPreview = preview;
         mPreview.setSurfaceCallback(this);
+        mHandler = new WorkerHandler("CameraViewController");
     }
 
-    abstract void start();
-    abstract void stop();
+    protected final void post(Runnable runnable) {
+        mHandler.post(runnable);
+    }
+
+    //region Start&Stop
+
+    // Starts the preview asynchronously.
+    final void start() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                onStart();
+            }
+        });
+    }
+
+    // Stops the preview asynchronously.
+    final void stop() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                onStop();
+            }
+        });
+    }
+
+    // Starts the preview.
+    @WorkerThread
+    abstract void onStart();
+
+    // Stops the preview.
+    @WorkerThread
+    abstract void onStop();
+
+    //endregion
 
     abstract void onDisplayOffset(int displayOrientation);
     abstract void onDeviceOrientation(int deviceOrientation);

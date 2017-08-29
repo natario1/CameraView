@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
@@ -129,9 +130,10 @@ class Camera1 extends CameraController {
     }
 
 
+    @WorkerThread
     @Override
-    void start() {
-        if (isCameraOpened()) stop();
+    void onStart() {
+        if (isCameraOpened()) onStop();
         if (collectCameraId()) {
             mCamera = Camera.open(mCameraId);
 
@@ -155,9 +157,9 @@ class Camera1 extends CameraController {
         }
     }
 
-
+    @WorkerThread
     @Override
-    void stop() {
+    void onStop() {
         mFocusHandler.removeCallbacksAndMessages(null);
         if (isCameraOpened()) {
             if (mIsCapturingVideo) endVideo();
@@ -390,9 +392,15 @@ class Camera1 extends CameraController {
         mCamera.takePicture(null, null, null,
                 new Camera.PictureCallback() {
                     @Override
-                    public void onPictureTaken(byte[] data, Camera camera) {
+                    public void onPictureTaken(byte[] data, final Camera camera) {
                         mIsCapturingImage = false;
-                        camera.startPreview(); // This is needed, read somewhere in the docs.
+                        post(new Runnable() {
+                            @Override
+                            public void run() {
+                                // This is needed, read somewhere in the docs.
+                                camera.startPreview();
+                            }
+                        });
                         mCameraCallbacks.processImage(data, consistentWithView, exifFlip);
                     }
                 });
