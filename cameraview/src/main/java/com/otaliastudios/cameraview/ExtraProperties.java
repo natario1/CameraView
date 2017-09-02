@@ -4,6 +4,7 @@ package com.otaliastudios.cameraview;
 import android.annotation.TargetApi;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
+import android.util.Log;
 import android.util.SizeF;
 
 /**
@@ -12,8 +13,8 @@ import android.util.SizeF;
 @SuppressWarnings("deprecation")
 public class ExtraProperties {
 
-    float verticalViewingAngle;
-    float horizontalViewingAngle;
+    private float verticalViewingAngle;
+    private float horizontalViewingAngle;
 
     ExtraProperties(Camera.Parameters params) {
         verticalViewingAngle = params.getVerticalViewAngle();

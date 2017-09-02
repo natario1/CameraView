@@ -18,6 +18,9 @@ android:
     - android-26
     - doc-26
 
+script:
+  - ./gradlew clean connectedCheck testDebugUnitTest
+
 cache:
   directories:
     - $HOME/.gradle
