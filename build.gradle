@@ -3,9 +3,11 @@
 buildscript {
     repositories {
         jcenter()
+        google()
     }
+
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.2'
+        classpath 'com.android.tools.build:gradle:2.3.3'
         // https://inthecheesefactory.com/blog/how-to-upload-library-to-jcenter-maven-central-as-dependency/en
         // https://www.theguardian.com/technology/developer-blog/2016/dec/06/how-to-publish-an-android-library-a-mysterious-conversation
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
@@ -16,16 +18,16 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
-        maven { url 'https://maven.google.com' }
+        google()
     }
 }
 
 ext {
     compileSdkVersion = 26
     buildToolsVersion = "26.0.1"
-    supportLibVersion = '26.0.1'
+    supportLibVersion = '26.0.2'
     minSdkVersion = 15
-    targetSdkVersion = 25
+    targetSdkVersion = 26
 }
 
 task clean(type: Delete) {
