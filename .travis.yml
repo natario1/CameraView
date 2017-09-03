@@ -26,10 +26,11 @@ android:
     # Android tests
     - android-$EMULATOR_API
     - sys-img-$EMULATOR_ABI-android-$EMULATOR_API
+    # sys-img-x86-google_apis-26
 
 before_script:
   - echo no | android create avd --force --name test --target android-$EMULATOR_API --abi $EMULATOR_ABI
-  - emulator -avd test -no-skin -no-audio -no-window &
+  - emulator -avd test -no-audio -no-window &
   - android-wait-for-emulator
   - adb shell input keyevent 82 &
 

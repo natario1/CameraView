@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -496,6 +497,7 @@ public class CameraView extends FrameLayout {
      * Throws if session = audio and manifest did not add the microphone permissions.
      * @return true if we can go on, false otherwise.
      */
+    @SuppressLint("NewApi")
     private boolean checkPermissions(SessionType sessionType) {
         checkPermissionsManifestOrThrow(sessionType);
         boolean api23 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
@@ -504,9 +506,7 @@ public class CameraView extends FrameLayout {
             cameraCheck = PackageManager.PERMISSION_GRANTED;
             audioCheck = PackageManager.PERMISSION_GRANTED;
         } else {
-            //noinspection all
             cameraCheck = getContext().checkSelfPermission(Manifest.permission.CAMERA);
-            //noinspection all
             audioCheck = getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO);
         }
         switch (sessionType) {
@@ -1202,7 +1202,7 @@ public class CameraView extends FrameLayout {
     private MediaActionSound mSound;
     private final boolean mUseSounds = Build.VERSION.SDK_INT >= 16;
 
-    @SuppressWarnings("all")
+    @SuppressLint("NewApi")
     private void sound(int soundType) {
         if (mUseSounds) {
             if (mSound == null) mSound = new MediaActionSound();
