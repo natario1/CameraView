@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -44,8 +45,8 @@ public class CameraView extends FrameLayout {
     private final static String TAG = CameraView.class.getSimpleName();
     public final static int PERMISSION_REQUEST_CODE = 16;
 
-    private final static int DEFAULT_JPEG_QUALITY = 100;
-    private final static boolean DEFAULT_CROP_OUTPUT = false;
+    final static int DEFAULT_JPEG_QUALITY = 100;
+    final static boolean DEFAULT_CROP_OUTPUT = false;
 
     // Self managed parameters
     private int mJpegQuality;
@@ -61,10 +62,10 @@ public class CameraView extends FrameLayout {
     private Preview mPreviewImpl;
 
     // Views
-    private GridLinesLayout mGridLinesLayout;
-    private PinchGestureLayout mPinchGestureLayout;
-    private TapGestureLayout mTapGestureLayout;
-    private ScrollGestureLayout mScrollGestureLayout;
+    GridLinesLayout mGridLinesLayout;
+    PinchGestureLayout mPinchGestureLayout;
+    TapGestureLayout mTapGestureLayout;
+    ScrollGestureLayout mScrollGestureLayout;
     private boolean mIsStarted;
     private boolean mKeepScreenOn;
 
@@ -98,6 +99,7 @@ public class CameraView extends FrameLayout {
         WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
         VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
         SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
+        Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
 
         // Gestures
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
@@ -109,8 +111,8 @@ public class CameraView extends FrameLayout {
 
         // Components
         mCameraCallbacks = new CameraCallbacks();
-        mPreviewImpl = new TextureViewPreview(context, this);
-        mCameraController = new Camera1(mCameraCallbacks, mPreviewImpl);
+        mPreviewImpl = instantiatePreview(context, this);
+        mCameraController = instantiateCameraController(mCameraCallbacks, mPreviewImpl);
         mUiHandler = new Handler(Looper.getMainLooper());
         mWorkerHandler = new WorkerHandler("CameraViewWorker");
 
@@ -137,6 +139,7 @@ public class CameraView extends FrameLayout {
         setVideoQuality(videoQuality);
         setWhiteBalance(whiteBalance);
         setGrid(grid);
+        setHdr(hdr);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -150,6 +153,17 @@ public class CameraView extends FrameLayout {
             mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
         }
     }
+
+
+    protected Preview instantiatePreview(Context context, ViewGroup container) {
+        return new TextureViewPreview(context, container);
+    }
+
+
+    protected CameraController instantiateCameraController(CameraCallbacks callbacks, Preview preview) {
+        return new Camera1(callbacks, preview);
+    }
+
 
     @Override
     protected void onAttachedToWindow() {
@@ -364,7 +378,18 @@ public class CameraView extends FrameLayout {
      * @param gesture which gesture to clear
      */
     public void clearGesture(@NonNull Gesture gesture) {
-        mGestureMap.put(gesture, GestureAction.NONE);
+        mapGesture(gesture, GestureAction.NONE);
+    }
+
+
+    /**
+     * Returns the action currently mapped to the given gesture.
+     *
+     * @param gesture which gesture to inspect
+     * @return mapped action
+     */
+    public GestureAction getGestureAction(@NonNull Gesture gesture) {
+        return mGestureMap.get(gesture);
     }
 
 
@@ -472,6 +497,7 @@ public class CameraView extends FrameLayout {
      * Throws if session = audio and manifest did not add the microphone permissions.
      * @return true if we can go on, false otherwise.
      */
+    @SuppressLint("NewApi")
     private boolean checkPermissions(SessionType sessionType) {
         checkPermissionsManifestOrThrow(sessionType);
         boolean api23 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
@@ -480,9 +506,7 @@ public class CameraView extends FrameLayout {
             cameraCheck = PackageManager.PERMISSION_GRANTED;
             audioCheck = PackageManager.PERMISSION_GRANTED;
         } else {
-            //noinspection all
             cameraCheck = getContext().checkSelfPermission(Manifest.permission.CAMERA);
-            //noinspection all
             audioCheck = getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO);
         }
         switch (sessionType) {
@@ -922,9 +946,18 @@ public class CameraView extends FrameLayout {
      */
     public void setJpegQuality(int jpegQuality) {
         if (jpegQuality <= 0 || jpegQuality > 100) {
-            throw new IllegalArgumentException("JPEG quality should be > 0 and <= 0");
+            throw new IllegalArgumentException("JPEG quality should be > 0 and <= 100");
         }
         mJpegQuality = jpegQuality;
+    }
+
+
+    /**
+     * Gets the JPEG compression quality for image outputs.
+     * @return a 0-100 integer
+     */
+    public int getJpegQuality() {
+        return mJpegQuality;
     }
 
 
@@ -939,6 +972,17 @@ public class CameraView extends FrameLayout {
      */
     public void setCropOutput(boolean cropOutput) {
         this.mCropOutput = cropOutput;
+    }
+
+
+    /**
+     * Returns whether we should crop the picture output to match CameraView aspect ratio.
+     *
+     * @see #setCropOutput(boolean)
+     * @return whether we crop
+     */
+    public boolean getCropOutput() {
+        return mCropOutput;
     }
 
 
@@ -1158,7 +1202,7 @@ public class CameraView extends FrameLayout {
     private MediaActionSound mSound;
     private final boolean mUseSounds = Build.VERSION.SDK_INT >= 16;
 
-    @SuppressWarnings("all")
+    @SuppressLint("NewApi")
     private void sound(int soundType) {
         if (mUseSounds) {
             if (mSound == null) mSound = new MediaActionSound();

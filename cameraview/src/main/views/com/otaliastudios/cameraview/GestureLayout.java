@@ -29,6 +29,10 @@ abstract class GestureLayout extends FrameLayout {
         mEnabled = enable;
     }
 
+    public boolean enabled() {
+        return mEnabled;
+    }
+
     public abstract boolean onTouchEvent(MotionEvent event);
 
     public final Gesture getGestureType() {

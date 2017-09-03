@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/natario1/CameraView.svg?branch=master)](https://travis-ci.org/natario1/CameraView)
+[![Code Coverage](https://codecov.io/gh/natario1/CameraView/branch/master/graph/badge.svg)](https://codecov.io/gh/natario1/CameraView)
+
 <p align="center">
   <img src="art/icon.png" vspace="10" width="250" height="250">
 </p>
@@ -409,6 +412,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |------|-----------|
 |`isStarted()`|Returns true if `start()` was called succesfully. This does not mean that camera is open or showing preview.|
 |`mapGesture(Gesture, GestureAction)`|Maps a certain gesture to a certain action. No-op if the action is not supported.|
+|`getGestureAction(Gesture)`|Returns the action currently mapped to the given gesture.|
 |`clearGesture(Gesture)`|Clears any action mapped to the given gesture.|
 |`getCameraOptions()`|If camera was started, returns non-null object with information about what is supported.|
 |`getExtraProperties()`|If camera was started, returns non-null object with extra information about the camera sensor. Not very useful at the moment.|

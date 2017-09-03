@@ -10,6 +10,12 @@ sudo: false
 jdk:
   - oraclejdk8
 
+env:
+  global:
+    # Run android tests on api level 22
+    - EMULATOR_API=22
+    - EMULATOR_ABI=armeabi-v7a
+
 android:
   components:
     - tools
@@ -17,9 +23,22 @@ android:
     - build-tools-26.0.1
     - android-26
     - doc-26
+    # Android tests
+    - android-$EMULATOR_API
+    - sys-img-$EMULATOR_ABI-android-$EMULATOR_API
+    # sys-img-x86-google_apis-26
+
+before_script:
+  - echo no | android create avd --force --name test --target android-$EMULATOR_API --abi $EMULATOR_ABI
+  - emulator -avd test -no-audio -no-window &
+  - android-wait-for-emulator
+  - adb shell input keyevent 82 &
 
 script:
-  - ./gradlew clean connectedCheck testDebugUnitTest
+  - ./gradlew clean testDebugUnitTest connectedCheck coverageReport
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 cache:
   directories:

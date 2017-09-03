@@ -4,15 +4,20 @@ package com.otaliastudios.cameraview;
 import android.annotation.TargetApi;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.SizeF;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
-public class ExtraPropertiesTest {
+@RunWith(AndroidJUnit4.class)
+@SmallTest
+public class ExtraProperties1Test {
 
     @Test
     public void testConstructor1() {
