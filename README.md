@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/natario1/CameraView.svg?branch=master)](https://travis-ci.org/natario1/CameraView)
+
 <p align="center">
   <img src="art/icon.png" vspace="10" width="250" height="250">
 </p>
