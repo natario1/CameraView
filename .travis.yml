@@ -35,7 +35,10 @@ before_script:
   - adb shell input keyevent 82 &
 
 script:
-  - ./gradlew build connectedCheck testDebugUnitTest
+  - ./gradlew clean testDebugUnitTest connectedCheck coverageReport
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 cache:
   directories:

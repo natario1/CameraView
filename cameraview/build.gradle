@@ -6,6 +6,8 @@ apply plugin: 'com.jfrog.bintray'
 version = '1.2.0'
 group = 'com.otaliastudios'
 
+//region android dependencies
+
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -49,6 +51,9 @@ dependencies {
     compile "com.android.support:support-annotations:$supportLibVersion"
 }
 
+//endregion
+
+//region bintray
 
 install {
     repositories.mavenInstaller {
@@ -115,6 +120,10 @@ bintray {
     }
 }
 
+//endregion
+
+//region javadoc and sources
+
 // From official sample https://github.com/bintray/bintray-examples/blob/master/gradle-aar-example/build.gradle
 task sourcesJar(type: Jar) {
     classifier = 'sources'
@@ -144,6 +153,58 @@ artifacts {
     archives javadocJar
     archives sourcesJar
 }
+
+//endregion
+
+//region code coverage
+
+// 1. running androidTests with connectedCheck will generate an .ec file
+// in build/outputs/code-coverage/connected, plus the XML result in
+// in build/reports/coverage/debug/report.xml .
+
+// 2. running unit tests with testDebugUnitTest will just generate the .exec file.
+// The JacocoReport task from the jacoco plugin can create the XML report out of it.
+
+// to have a unified report, we just pass both the .exec and the .ec file
+// to the jacoco task, so we get a unified XML report with total coverage.
+// Reference: https://medium.com/@rafael_toledo/setting-up-an-unified-coverage-report-in-android-with-jacoco-robolectric-and-espresso-ffe239aaf3fa
+
+apply plugin: 'jacoco'
+
+jacoco {
+    // Using a different version might get 0 coverage reports.
+    // No time to investigate now.
+    toolVersion = "0.7.6.201602180812"
+    reportsDir = file("$buildDir/reports/jacoco/merged/")
+}
+
+task coverageReport(type: JacocoReport) {
+    dependsOn "testDebugUnitTest"
+    dependsOn "connectedCheck"
+
+    def testData = "jacoco/testDebugUnitTest.exec"
+    def androidTestData = "outputs/code-coverage/connected/*coverage.ec"
+    executionData = fileTree(dir: "$buildDir", includes: [testData, androidTestData])
+
+    // Sources.
+    sourceDirectories = android.sourceSets.main.java.sourceFiles
+    // Add BuildConfig and R.
+    additionalSourceDirs = files([
+            "$buildDir/generated/source/buildConfig/debug",
+            "$buildDir/generated/source/r/debug"
+    ])
+
+    // Classes.
+    def debugDir = "$buildDir/intermediates/classes/debug"
+    def filter = ['**/R.class', '**/R$*.class', '**/*$ViewInjector*.*',
+                  '**/BuildConfig.*', '**/Manifest*.*']
+    classDirectories = fileTree(dir: debugDir, excludes: filter);
+
+    reports.xml.enabled = true
+    reports.html.enabled = true
+}
+
+//endregion
 
 // export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home
 // To deploy ./gradlew bintrayUpload
