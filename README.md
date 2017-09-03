@@ -409,6 +409,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |------|-----------|
 |`isStarted()`|Returns true if `start()` was called succesfully. This does not mean that camera is open or showing preview.|
 |`mapGesture(Gesture, GestureAction)`|Maps a certain gesture to a certain action. No-op if the action is not supported.|
+|`getGestureAction(Gesture)`|Returns the action currently mapped to the given gesture.|
 |`clearGesture(Gesture)`|Clears any action mapped to the given gesture.|
 |`getCameraOptions()`|If camera was started, returns non-null object with information about what is supported.|
 |`getExtraProperties()`|If camera was started, returns non-null object with extra information about the camera sensor. Not very useful at the moment.|
