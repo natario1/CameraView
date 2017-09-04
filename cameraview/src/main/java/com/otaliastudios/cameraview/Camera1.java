@@ -449,7 +449,7 @@ class Camera1 extends CameraController {
 
     @Override
     boolean shouldFlipSizes() {
-        return mSensorOffset % 180 != 0;
+        return (mDeviceOrientation  + mSensorOffset) % 180 != 0;
     }
 
     @Override
