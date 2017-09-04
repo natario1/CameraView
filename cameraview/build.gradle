@@ -171,14 +171,15 @@ artifacts {
 
 apply plugin: 'jacoco'
 
+def reportsDirectory = "$buildDir/reports/"
 jacoco {
     // Using a different version might get 0 coverage reports.
     // No time to investigate now.
     toolVersion = "0.7.6.201602180812"
-    reportsDir = file("$buildDir/reports/jacoco/merged/")
+    reportsDir = file(reportsDirectory)
 }
 
-task coverageReport(type: JacocoReport) {
+task mergedCoverageReport(type: JacocoReport) {
     dependsOn "testDebugUnitTest"
     dependsOn "connectedCheck"
 
@@ -202,6 +203,7 @@ task coverageReport(type: JacocoReport) {
 
     reports.xml.enabled = true
     reports.html.enabled = true
+    reports.xml.destination = "$reportsDirectory/mergedCoverageReport/report.xml"
 }
 
 //endregion

@@ -39,6 +39,11 @@ abstract class GestureLayout extends FrameLayout {
         return mType;
     }
 
+    // For tests.
+    void setGestureType(Gesture type) {
+        mType = type;
+    }
+
     public final PointF[] getPoints() {
         return mPoints;
     }
