@@ -14,6 +14,8 @@ import android.widget.ImageView;
 
 class ScrollGestureLayout extends GestureLayout {
 
+    private static final String TAG = ScrollGestureLayout.class.getSimpleName();
+    private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private GestureDetector mDetector;
     private boolean mNotify;
@@ -33,7 +35,7 @@ class ScrollGestureLayout extends GestureLayout {
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                 boolean horizontal;
-                // Log.e("ScrollGestureLayout", "onScroll, distanceX="+distanceX+", distanceY="+distanceY);
+                LOG.i("onScroll:", "distanceX="+distanceX, "distanceY="+distanceY);
                 if (e1.getX() != mPoints[0].x || e1.getY() != mPoints[0].y) {
                     // First step. We choose now if it's a vertical or horizontal scroll, and
                     // stick to it for the whole gesture.
@@ -71,7 +73,7 @@ class ScrollGestureLayout extends GestureLayout {
         mDetector.onTouchEvent(event);
 
         // Keep notifying CameraView as long as the gesture goes.
-        // if (mNotify) Log.e("ScrollGestureLayout", "notifying a gesture "+mType.name());
+        if (mNotify) LOG.i("Notifying a gesture of type", mType.name());
         return mNotify;
     }
 
@@ -91,7 +93,7 @@ class ScrollGestureLayout extends GestureLayout {
         float newValue = currValue + delta;
         if (newValue < minValue) newValue = minValue;
         if (newValue > maxValue) newValue = maxValue;
-        // Log.e("ScrollGestureLayout", "curr="+currValue+", min="+minValue+", max="+maxValue+", out="+newValue);
+        LOG.i("curr="+currValue, "min="+minValue, "max="+maxValue, "out="+newValue);
         return newValue;
     }
 

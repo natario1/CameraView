@@ -90,9 +90,13 @@ install {
     }
 }
 
-def bintrayUser = System.getenv("BINTRAY_USER")
-def bintrayKey = System.getenv("BINTRAY_KEY")
-if (bintrayKey == null) {
+def bintrayUser
+def bintrayKey
+def travis = System.getenv("TRAVIS")
+if (travis) {
+    bintrayUser = System.getenv("BINTRAY_USER")
+    bintrayKey = System.getenv("BINTRAY_KEY")
+} else {
     Properties props = new Properties()
     props.load(project.rootProject.file('local.properties').newDataInputStream())
     bintrayUser = props.getProperty('bintray.user')

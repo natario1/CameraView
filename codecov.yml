@@ -12,6 +12,6 @@ coverage:
         target: 60%
     changes: no
 
-# comment:
-  # diff, changes, footer, reach, flags, suggestions,
-  # layout: "header, sunburst, tree, files"
+comment:
+  # diff, changes, footer, reach, flags, suggestions
+  layout: "header, files"
