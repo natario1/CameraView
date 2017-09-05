@@ -71,9 +71,10 @@ public final class CameraLogger {
         if (should(messageLevel)) {
             for (Object o : ofData) {
                 message += String.valueOf(o);
+                message += " ";
             }
         }
-        return message;
+        return message.trim();
     }
 
     public void i(Object... data) {
