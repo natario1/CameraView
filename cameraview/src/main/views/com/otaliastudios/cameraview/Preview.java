@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 
 abstract class Preview {
 
+    private final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
+
     // This is used to notify CameraImpl to recompute its camera Preview size.
     // After that, CameraView will need a new layout pass to adapt to the Preview size.
     interface SurfaceCallback {
@@ -45,6 +47,7 @@ abstract class Preview {
     // This is called by the CameraImpl.
     // These must be alredy rotated, if needed, to be consistent with surface/view sizes.
     void setDesiredSize(int width, int height) {
+        LOG.i("setDesiredSize:", "desiredW=", width, "desiredH=", height);
         this.mDesiredWidth = width;
         this.mDesiredHeight = height;
         crop();
@@ -60,6 +63,7 @@ abstract class Preview {
 
 
     protected final void onSurfaceAvailable(int width, int height) {
+        LOG.i("onSurfaceAvailable:", "w=", width, "h=", height);
         mSurfaceWidth = width;
         mSurfaceHeight = height;
         crop();
@@ -70,6 +74,7 @@ abstract class Preview {
     // As far as I can see, these are the view/surface dimensions.
     // This is called by subclasses.
     protected final void onSurfaceSizeChanged(int width, int height) {
+        LOG.i("onSurfaceSizeChanged:", "w=", width, "h=", height);
         if (width != mSurfaceWidth || height != mSurfaceHeight) {
             mSurfaceWidth = width;
             mSurfaceHeight = height;
@@ -87,30 +92,33 @@ abstract class Preview {
 
 
     /**
-     * As far as I can see, this extends either width or height of the surface,
-     * to match the desired aspect ratio.
-     * This means that the external part of the surface will be cropped by the outer view.
+     * Here we must crop the visible part by applying a > 1 scale to one of our
+     * dimensions. This way our internal aspect ratio (mSurfaceWidth / mSurfaceHeight)
+     * will match the preview size aspect ratio (mDesiredWidth / mDesiredHeight).
+     *
+     * There might still be some absolute difference (e.g. same ratio but bigger / smaller).
+     * However that should be already managed by the framework.
      */
     private final void crop() {
         getView().post(new Runnable() {
             @Override
             public void run() {
-                if (mDesiredWidth != 0 && mDesiredHeight != 0) {
-                    AspectRatio aspectRatio = AspectRatio.of(mDesiredWidth, mDesiredHeight);
-                    float targetHeight = (float) mSurfaceWidth / aspectRatio.toFloat();
-                    float scale = 1;
-                    if (mSurfaceHeight > 0) {
-                        scale = targetHeight / (float) mSurfaceHeight;
-                    }
-
-                    if (scale > 1) {
-                        getView().setScaleX(1f);
-                        getView().setScaleY(scale);
-                    } else {
-                        getView().setScaleX(1f / scale);
-                        getView().setScaleY(1f);
-                    }
+                if (mDesiredHeight == 0 || mDesiredWidth == 0) return;
+                if (mSurfaceHeight == 0 || mSurfaceWidth == 0) return;
+                float scaleX = 1f, scaleY = 1f;
+                AspectRatio current = AspectRatio.of(mSurfaceWidth, mSurfaceHeight);
+                AspectRatio target = AspectRatio.of(mDesiredWidth, mDesiredHeight);
+                if (current.toFloat() >= target.toFloat()) {
+                    // We are too short. Must increase height.
+                    scaleY = current.toFloat() / target.toFloat();
+                } else {
+                    // We must increase width.
+                    scaleX = target.toFloat() / current.toFloat();
                 }
+                getView().setScaleX(scaleX);
+                getView().setScaleY(scaleY);
+                LOG.i("crop:", "applied scaleX=", scaleX);
+                LOG.i("crop:", "applied scaleY=", scaleY);
             }
         });
     }
