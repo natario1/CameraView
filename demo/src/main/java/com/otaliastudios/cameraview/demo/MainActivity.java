@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.otaliastudios.cameraview.CameraListener;
+import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.Grid;
 import com.otaliastudios.cameraview.SessionType;
@@ -83,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLayoutChan
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        CameraLogger.setLogLevel(CameraLogger.LEVEL_VERBOSE);
 
         parent.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override

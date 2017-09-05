@@ -427,7 +427,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|
 |`getPictureSize()`|Returns the size of the output picture. The aspect ratio is consistent with `getPreviewSize()`.|
 
-Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProperties`.
+Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProperties`, `CameraLogger`.
 
 ## Permissions behavior
 
@@ -464,6 +464,7 @@ This is what was done since the library was forked. I have kept the original str
 
 - *a huge number of serious bugs fixed*
 - *decent orientation support for both pictures and videos*
+- *less dependencies*
 - *EXIF support*
 - *real tap-to-focus support*
 - *pinch-to-zoom support*
@@ -477,30 +478,23 @@ This is what was done since the library was forked. I have kept the original str
 - *smart measuring and sizing behavior, replacing bugged `adjustViewBounds`*
 - *measure `CameraView` as center crop or center inside*
 - *add multiple `CameraListener`s for events*
-- *gesture framework support*
+- *gesture framework support, map gestures to camera controls*
+- *pinch gesture support*
+- *tap & long tap gesture support*
 - *scroll gestures support*
 - *MediaActionSound support*
 - *Hdr controls*
+- *zoom and exposure correction controls*
+- *Tests!*
+- *`CameraLogger` APIs for logging and bug reports*
+- *Better threading, start() in worker thread and callbacks in UI*
 
 These are still things that need to be done, off the top of my head:
 
-- [x] fix CropOutput class presumably not working on rotated pictures
-- [x] test video and 'frame' capture behavior, I expect some bugs there
-- [x] simple APIs to draw grid lines
-- [x] check focus, not sure it exposes the right part of the image
-- [x] replace setCameraListener() with addCameraListener()
-- [x] better threading, for example ensure callbacks are called in the ui thread
-- [x] pinch to zoom support
-- [x] exposure correction APIs
-- [x] change demo app icon
-- [x] refactor package name
-- [x] new Gestures framework to map gestures to camera controls
-- [x] heavily reduced dependencies
 - [ ] `Camera2` integration
-- [x] publish to bintray
 - [ ] check onPause / onStop / onSaveInstanceState consistency
 - [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
 - [ ] add onRequestPermissionResults for easy permission callback
 - [ ] better error handling, maybe with a onError(e) method in the public listener, or have each public method return a boolean
-
+- [ ] decent code coverage
