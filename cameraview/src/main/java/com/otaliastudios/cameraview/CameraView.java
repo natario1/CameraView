@@ -22,6 +22,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -171,8 +172,7 @@ public class CameraView extends FrameLayout {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (!isInEditMode()) {
-            WindowManager manager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-            mOrientationHelper.enable(manager.getDefaultDisplay());
+            mOrientationHelper.enable(getContext());
         }
     }
 
@@ -491,6 +491,8 @@ public class CameraView extends FrameLayout {
 
         if (checkPermissions(getSessionType())) {
             mIsStarted = true;
+            // Update display orientation for current CameraController
+            mOrientationHelper.enable(getContext());
             mCameraController.start();
         }
     }
