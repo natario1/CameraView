@@ -13,7 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class WorkerHandler {
 
-    private static ConcurrentHashMap<String, WeakReference<WorkerHandler>> sCache = new ConcurrentHashMap<>(4);
+    private final static CameraLogger LOG = CameraLogger.create(WorkerHandler.class.getSimpleName());
+    private final static ConcurrentHashMap<String, WeakReference<WorkerHandler>> sCache = new ConcurrentHashMap<>(4);
 
     public static WorkerHandler get(String name) {
         if (sCache.containsKey(name)) {
@@ -21,11 +22,15 @@ class WorkerHandler {
             if (cached != null) {
                 HandlerThread thread = cached.mThread;
                 if (thread.isAlive() && !thread.isInterrupted()) {
+                    LOG.w("get:", "Reusing cached worker handler.", name);
                     return cached;
                 }
             }
+            LOG.w("get:", "Thread reference died, removing.", name);
             sCache.remove(name);
         }
+
+        LOG.i("get:", "Creating new handler.", name);
         WorkerHandler handler = new WorkerHandler(name);
         sCache.put(name, new WeakReference<>(handler));
         return handler;
@@ -34,7 +39,7 @@ class WorkerHandler {
     private HandlerThread mThread;
     private Handler mHandler;
 
-    public WorkerHandler(String name) {
+    private WorkerHandler(String name) {
         mThread = new HandlerThread(name);
         mThread.setDaemon(true);
         mThread.start();
