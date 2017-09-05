@@ -35,7 +35,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
         mCameraCallbacks = callback;
         mPreview = preview;
         mPreview.setSurfaceCallback(this);
-        mHandler = new WorkerHandler("CameraViewController");
+        mHandler = WorkerHandler.get("CameraViewController");
     }
 
     //region Start&Stop

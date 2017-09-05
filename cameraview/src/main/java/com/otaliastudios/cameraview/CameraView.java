@@ -117,7 +117,7 @@ public class CameraView extends FrameLayout {
         mPreviewImpl = instantiatePreview(context, this);
         mCameraController = instantiateCameraController(mCameraCallbacks, mPreviewImpl);
         mUiHandler = new Handler(Looper.getMainLooper());
-        mWorkerHandler = new WorkerHandler("CameraViewWorker");
+        mWorkerHandler = WorkerHandler.get("CameraViewWorker");
 
         // Views
         mGridLinesLayout = new GridLinesLayout(context);
