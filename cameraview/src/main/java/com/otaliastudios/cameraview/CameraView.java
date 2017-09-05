@@ -170,8 +170,7 @@ public class CameraView extends FrameLayout {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (!isInEditMode()) {
-            WindowManager manager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-            mOrientationHelper.enable(manager.getDefaultDisplay());
+            mOrientationHelper.enable(getContext());
         }
     }
 
@@ -488,14 +487,8 @@ public class CameraView extends FrameLayout {
 
         if (checkPermissions(getSessionType())) {
             mIsStarted = true;
-
             // Update display orientation for current CameraController
-            WindowManager manager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-            Display display = manager.getDefaultDisplay();
-            if (display != null) {
-                mOrientationHelper.enable(display);
-            }
-
+            mOrientationHelper.enable(getContext());
             mCameraController.start();
         }
     }
