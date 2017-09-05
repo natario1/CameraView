@@ -13,18 +13,18 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name="com.otaliastudios.cameraview.demo.MainActivity"
-            android:theme="@style/Theme.MainActivity">
+            android:name=".MainActivity"
+            android:theme="@style/Theme.MainActivity"
+            android:configChanges="orientation|screenLayout|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.otaliastudios.cameraview.demo.PicturePreviewActivity" />
+        <activity android:name=".PicturePreviewActivity" />
 
-        <activity android:name="com.otaliastudios.cameraview.demo.VideoPreviewActivity"/>
+        <activity android:name=".VideoPreviewActivity"/>
 
     </application>
 
