@@ -7,6 +7,7 @@ import android.util.SparseIntArray;
 import android.view.Display;
 import android.view.OrientationEventListener;
 import android.view.Surface;
+import android.view.WindowManager;
 
 class OrientationHelper {
 
@@ -67,10 +68,10 @@ class OrientationHelper {
         };
     }
 
-    void enable(Display display) {
-        mDisplay = display;
+    void enable(Context context) {
+        mDisplay = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         mListener.enable();
-        mLastKnownDisplayOffset = DISPLAY_ORIENTATIONS.get(display.getRotation());
+        mLastKnownDisplayOffset = DISPLAY_ORIENTATIONS.get(mDisplay.getRotation());
         mCallbacks.onDisplayOffsetChanged(mLastKnownDisplayOffset);
     }
 
