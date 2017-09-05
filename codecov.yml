@@ -18,4 +18,4 @@ coverage:
 
 comment:
   # diff, changes, footer, reach, flags, suggestions,
-  layout: "header, sunburst, tree, files"
+  layout: "header, files"
