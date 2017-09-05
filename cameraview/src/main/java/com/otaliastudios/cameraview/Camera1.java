@@ -509,6 +509,8 @@ class Camera1 extends CameraController {
         if (mSessionType == SessionType.PICTURE) {
             // Choose the max size.
             List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
+            Size maxSize = Collections.max(captureSizes);
+            LOG.i("computeCaptureSize:", "computed", maxSize, "from", captureSizes);
             return Collections.max(captureSizes);
         } else {
             // Choose according to developer choice in setVideoQuality.
@@ -517,6 +519,7 @@ class Camera1 extends CameraController {
             List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
             CamcorderProfile profile = getCamcorderProfile(mVideoQuality);
             AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
+            LOG.i("computeCaptureSize:", "videoQuality:", mVideoQuality, "targetRatio:", targetRatio);
             return matchSize(captureSizes, targetRatio, new Size(0, 0), true);
         }
     }
@@ -525,7 +528,9 @@ class Camera1 extends CameraController {
         Camera.Parameters params = mCamera.getParameters();
         List<Size> previewSizes = sizesFromList(params.getSupportedPreviewSizes());
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
-        return matchSize(previewSizes, targetRatio, mPreview.getSurfaceSize(), false);
+        Size biggerThan = mPreview.getSurfaceSize();
+        LOG.i("computePreviewSize:", "targetRatio:", targetRatio, "surface size:", biggerThan);
+        return matchSize(previewSizes, targetRatio, biggerThan, false);
     }
 
 
@@ -763,6 +768,7 @@ class Camera1 extends CameraController {
         for (Camera.Size size : sizes) {
             result.add(new Size(size.width, size.height));
         }
+        LOG.i("sizesFromList:", result.toArray());
         return result;
     }
 
@@ -792,15 +798,20 @@ class Camera1 extends CameraController {
             }
         }
 
+        LOG.i("matchSize:", "found consistent:", consistent.size());
+        LOG.i("matchSize:", "found big enough and consistent:", bigEnoughAndConsistent.size());
+        Size result;
         if (biggestPossible) {
             if (bigEnoughAndConsistent.size() > 0) return Collections.max(bigEnoughAndConsistent);
             if (consistent.size() > 0) return Collections.max(consistent);
-            return Collections.max(sizes);
+            result = Collections.max(sizes);
         } else {
             if (bigEnoughAndConsistent.size() > 0) return Collections.min(bigEnoughAndConsistent);
             if (consistent.size() > 0) return Collections.max(consistent);
-            return Collections.max(sizes);
+            result = Collections.max(sizes);
         }
+        LOG.i("matchSize:", "returning result", result);
+        return result;
     }
 
 
