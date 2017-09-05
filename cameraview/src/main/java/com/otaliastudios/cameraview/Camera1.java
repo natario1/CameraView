@@ -450,6 +450,7 @@ class Camera1 extends CameraController {
 
     @Override
     boolean shouldFlipSizes() {
+        LOG.i("shouldFlip:", "mDeviceOrientation=", mDeviceOrientation, "mSensorOffset=", mSensorOffset);
         return (mDeviceOrientation  + mSensorOffset) % 180 != 0;
     }
 
@@ -510,7 +511,7 @@ class Camera1 extends CameraController {
             // Choose the max size.
             List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
             Size maxSize = Collections.max(captureSizes);
-            LOG.i("computeCaptureSize:", "computed", maxSize, "from", captureSizes);
+            LOG.i("computeCaptureSize:", "computed", maxSize);
             return Collections.max(captureSizes);
         } else {
             // Choose according to developer choice in setVideoQuality.
@@ -768,7 +769,7 @@ class Camera1 extends CameraController {
         for (Camera.Size size : sizes) {
             result.add(new Size(size.width, size.height));
         }
-        LOG.i("sizesFromList:", result.toArray());
+        LOG.i("sizesFromList:", result);
         return result;
     }
 
@@ -802,13 +803,21 @@ class Camera1 extends CameraController {
         LOG.i("matchSize:", "found big enough and consistent:", bigEnoughAndConsistent.size());
         Size result;
         if (biggestPossible) {
-            if (bigEnoughAndConsistent.size() > 0) return Collections.max(bigEnoughAndConsistent);
-            if (consistent.size() > 0) return Collections.max(consistent);
-            result = Collections.max(sizes);
+            if (bigEnoughAndConsistent.size() > 0) {
+                result = Collections.max(bigEnoughAndConsistent);
+            } else if (consistent.size() > 0) {
+                result = Collections.max(consistent);
+            } else {
+                result = Collections.max(sizes);
+            }
         } else {
-            if (bigEnoughAndConsistent.size() > 0) return Collections.min(bigEnoughAndConsistent);
-            if (consistent.size() > 0) return Collections.max(consistent);
-            result = Collections.max(sizes);
+            if (bigEnoughAndConsistent.size() > 0) {
+                result = Collections.min(bigEnoughAndConsistent);
+            } else if (consistent.size() > 0) {
+                result = Collections.max(consistent);
+            } else {
+                result = Collections.max(sizes);
+            }
         }
         LOG.i("matchSize:", "returning result", result);
         return result;
