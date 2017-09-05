@@ -26,6 +26,7 @@ import java.util.List;
 class Camera1 extends CameraController {
 
     private static final String TAG = Camera1.class.getSimpleName();
+    private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private int mCameraId;
     private Camera mCamera;
@@ -68,7 +69,7 @@ class Camera1 extends CameraController {
      */
     @Override
     public void onSurfaceAvailable() {
-        Log.e(TAG, "onSurfaceAvailable, size is "+mPreview.getSurfaceSize());
+        LOG.i("onSurfaceAvailable, size is", mPreview.getSurfaceSize());
         if (shouldSetup()) setup();
     }
 
@@ -78,7 +79,7 @@ class Camera1 extends CameraController {
      */
     @Override
     public void onSurfaceChanged() {
-        Log.e(TAG, "onSurfaceChanged, size is "+mPreview.getSurfaceSize());
+        LOG.i("onSurfaceChanged, size is", mPreview.getSurfaceSize());
         if (mIsSetup) {
             // Compute a new camera preview size.
             Size newSize = computePreviewSize();
@@ -358,8 +359,8 @@ class Camera1 extends CameraController {
                 }
                 onSurfaceChanged();
             }
-            Log.e(TAG, "captureSize: "+mCaptureSize);
-            Log.e(TAG, "previewSize: "+mPreviewSize);
+            LOG.i("captureSize: "+mCaptureSize);
+            LOG.i("previewSize: "+mPreviewSize);
         }
     }
 
@@ -508,6 +509,8 @@ class Camera1 extends CameraController {
         if (mSessionType == SessionType.PICTURE) {
             // Choose the max size.
             List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
+            Size maxSize = Collections.max(captureSizes);
+            LOG.i("computeCaptureSize:", "computed", maxSize, "from", captureSizes);
             return Collections.max(captureSizes);
         } else {
             // Choose according to developer choice in setVideoQuality.
@@ -516,6 +519,7 @@ class Camera1 extends CameraController {
             List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
             CamcorderProfile profile = getCamcorderProfile(mVideoQuality);
             AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
+            LOG.i("computeCaptureSize:", "videoQuality:", mVideoQuality, "targetRatio:", targetRatio);
             return matchSize(captureSizes, targetRatio, new Size(0, 0), true);
         }
     }
@@ -524,7 +528,9 @@ class Camera1 extends CameraController {
         Camera.Parameters params = mCamera.getParameters();
         List<Size> previewSizes = sizesFromList(params.getSupportedPreviewSizes());
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
-        return matchSize(previewSizes, targetRatio, mPreview.getSurfaceSize(), false);
+        Size biggerThan = mPreview.getSurfaceSize();
+        LOG.i("computePreviewSize:", "targetRatio:", targetRatio, "surface size:", biggerThan);
+        return matchSize(previewSizes, targetRatio, biggerThan, false);
     }
 
 
@@ -721,8 +727,8 @@ class Camera1 extends CameraController {
         double theta = ((double) displayToSensor) * Math.PI / 180;
         double sensorClickX = viewClickX * Math.cos(theta) - viewClickY * Math.sin(theta);
         double sensorClickY = viewClickX * Math.sin(theta) + viewClickY * Math.cos(theta);
-        // Log.e(TAG, "viewClickX:"+viewClickX+", viewClickY:"+viewClickY);
-        // Log.e(TAG, "sensorClickX:"+sensorClickX+", sensorClickY:"+sensorClickY);
+        LOG.i("viewClickX:", viewClickX, "viewClickY:", viewClickY);
+        LOG.i("sensorClickX:", sensorClickX, "sensorClickY:", sensorClickY);
 
         // Compute the rect bounds.
         Rect rect1 = computeMeteringArea(sensorClickX, sensorClickY, 150d);
@@ -743,7 +749,7 @@ class Camera1 extends CameraController {
         int bottom = (int) Math.min(centerY + delta, 1000);
         int left = (int) Math.max(centerX - delta, -1000);
         int right = (int) Math.min(centerX + delta, 1000);
-        // Log.e(TAG, "top:"+top+", left:"+left+", bottom:"+bottom+", right:"+right);
+        LOG.i("metering area:", "top:", top, "left:", left, "bottom:", bottom, "right:", right);
         return new Rect(left, top, right, bottom);
     }
 
@@ -762,6 +768,7 @@ class Camera1 extends CameraController {
         for (Camera.Size size : sizes) {
             result.add(new Size(size.width, size.height));
         }
+        LOG.i("sizesFromList:", result.toArray());
         return result;
     }
 
@@ -791,15 +798,20 @@ class Camera1 extends CameraController {
             }
         }
 
+        LOG.i("matchSize:", "found consistent:", consistent.size());
+        LOG.i("matchSize:", "found big enough and consistent:", bigEnoughAndConsistent.size());
+        Size result;
         if (biggestPossible) {
             if (bigEnoughAndConsistent.size() > 0) return Collections.max(bigEnoughAndConsistent);
             if (consistent.size() > 0) return Collections.max(consistent);
-            return Collections.max(sizes);
+            result = Collections.max(sizes);
         } else {
             if (bigEnoughAndConsistent.size() > 0) return Collections.min(bigEnoughAndConsistent);
             if (consistent.size() > 0) return Collections.max(consistent);
-            return Collections.max(sizes);
+            result = Collections.max(sizes);
         }
+        LOG.i("matchSize:", "returning result", result);
+        return result;
     }
 
 

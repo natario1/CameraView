@@ -107,7 +107,6 @@ class Camera2 extends CameraController {
         try {
             ids = mCameraManager.getCameraIdList();
         } catch (CameraAccessException e) {
-            Log.e("CameraKit", e.toString());
             return;
         }
 

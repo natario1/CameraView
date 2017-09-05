@@ -44,6 +44,8 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 public class CameraView extends FrameLayout {
 
     private final static String TAG = CameraView.class.getSimpleName();
+    private static final CameraLogger LOG = CameraLogger.create(TAG);
+
     public final static int PERMISSION_REQUEST_CODE = 16;
 
     final static int DEFAULT_JPEG_QUALITY = 100;
@@ -215,7 +217,7 @@ public class CameraView extends FrameLayout {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         Size previewSize = getPreviewSize();
         if (previewSize == null) {
-            Log.e(TAG, "onMeasure, surface is not ready. Calling default behavior.");
+            LOG.w("onMeasure:", "surface is not ready. Calling default behavior.");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
@@ -234,18 +236,18 @@ public class CameraView extends FrameLayout {
         final ViewGroup.LayoutParams lp = getLayoutParams();
         if (widthMode == AT_MOST && lp.width == MATCH_PARENT) widthMode = EXACTLY;
         if (heightMode == AT_MOST && lp.height == MATCH_PARENT) heightMode = EXACTLY;
-        Log.e(TAG, "onMeasure, requested dimensions are (" +
-                widthValue + "[" + ms(widthMode) + "]x" +
+        LOG.i("onMeasure:", "requested dimensions are",
+                "(" + widthValue + "[" + ms(widthMode) + "]x" +
                 heightValue + "[" + ms(heightMode) + "])");
-        Log.e(TAG, "onMeasure, previewSize is (" + previewWidth + "x" + previewHeight + ")");
+        LOG.i("onMeasure:",  "previewSize is", "(" + previewWidth + "x" + previewHeight + ")");
 
 
         // If we have fixed dimensions (either 300dp or MATCH_PARENT), there's nothing we should do,
         // other than respect it. The preview will eventually be cropped at the sides (by PreviewImpl scaling)
         // except the case in which these fixed dimensions manage to fit exactly the preview aspect ratio.
         if (widthMode == EXACTLY && heightMode == EXACTLY) {
-            Log.e(TAG, "onMeasure, both are MATCH_PARENT or fixed value. We adapt. This means CROP_INSIDE. " +
-                    "(" + widthValue + "x" + heightValue + ")");
+            LOG.w("onMeasure:", "both are MATCH_PARENT or fixed value. We adapt.",
+                    "This means CROP_CENTER.", "(" + widthValue + "x" + heightValue + ")");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
@@ -253,8 +255,8 @@ public class CameraView extends FrameLayout {
         // If both dimensions are free, with no limits, then our size will be exactly the
         // preview size. This can happen rarely, for example in scrollable containers.
         if (widthMode == UNSPECIFIED && heightMode == UNSPECIFIED) {
-            Log.e(TAG, "onMeasure, both are completely free. " +
-                    "We respect that and extend to the whole preview size. " +
+            LOG.i("onMeasure:", "both are completely free.",
+                    "We respect that and extend to the whole preview size.",
                     "(" + previewWidth + "x" + previewHeight + ")");
             super.onMeasure(
                     MeasureSpec.makeMeasureSpec((int) previewWidth, EXACTLY),
@@ -279,7 +281,7 @@ public class CameraView extends FrameLayout {
                 width = widthValue;
                 height = (int) (width * ratio);
             }
-            Log.e(TAG, "onMeasure, one dimension was free, we adapted it to fit the aspect ratio. " +
+            LOG.i("onMeasure:", "one dimension was free, we adapted it to fit the aspect ratio.",
                     "(" + width + "x" + height + ")");
             super.onMeasure(MeasureSpec.makeMeasureSpec(width, EXACTLY),
                     MeasureSpec.makeMeasureSpec(height, EXACTLY));
@@ -299,8 +301,9 @@ public class CameraView extends FrameLayout {
                 width = widthValue;
                 height = Math.min((int) (width * ratio), heightValue);
             }
-            Log.e(TAG, "onMeasure, one dimension was EXACTLY, another AT_MOST. We have TRIED to fit " +
-                    "the aspect ratio, but it's not guaranteed. (" + width + "x" + height + ")");
+            LOG.i("onMeasure:", "one dimension was EXACTLY, another AT_MOST.",
+                    "We have TRIED to fit the aspect ratio, but it's not guaranteed.",
+                    "(" + width + "x" + height + ")");
             super.onMeasure(MeasureSpec.makeMeasureSpec(width, EXACTLY),
                     MeasureSpec.makeMeasureSpec(height, EXACTLY));
             return;
@@ -318,7 +321,8 @@ public class CameraView extends FrameLayout {
             height = heightValue;
             width = (int) (height / ratio);
         }
-        Log.e(TAG, "onMeasure, both dimension were AT_MOST. We fit the preview aspect ratio. " +
+        LOG.i("onMeasure:", "both dimension were AT_MOST.",
+                "We fit the preview aspect ratio.",
                 "(" + width + "x" + height + ")");
         super.onMeasure(MeasureSpec.makeMeasureSpec(width, EXACTLY),
                 MeasureSpec.makeMeasureSpec(height, EXACTLY));
@@ -406,13 +410,13 @@ public class CameraView extends FrameLayout {
         // Pass to our own GestureLayouts
         CameraOptions options = mCameraController.getCameraOptions(); // Non null
         if (mPinchGestureLayout.onTouchEvent(event)) {
-            // Log.e(TAG, "pinch!");
+            LOG.i("onTouchEvent", "pinch!");
             onGesture(mPinchGestureLayout, options);
         } else if (mScrollGestureLayout.onTouchEvent(event)) {
-            // Log.e(TAG, "scroll!");
+            LOG.i("onTouchEvent", "scroll!");
             onGesture(mScrollGestureLayout, options);
         } else if (mTapGestureLayout.onTouchEvent(event)) {
-            // Log.e(TAG, "tap!");
+            LOG.i("onTouchEvent", "tap!");
             onGesture(mTapGestureLayout, options);
         }
         return true;
@@ -545,10 +549,9 @@ public class CameraView extends FrameLayout {
                         return;
                     }
                 }
-                String message = "When the session type is set to video, the RECORD_AUDIO permission " +
-                        "should be added to the application manifest file.";
-                Log.w(TAG, message);
-                throw new IllegalStateException(message);
+                LOG.e("Permission error:", "When the session type is set to video,",
+                        "the RECORD_AUDIO permission should be added to the app manifest file.");
+                throw new IllegalStateException(CameraLogger.lastMessage);
             } catch (PackageManager.NameNotFoundException e) {
                 // Not possible.
             }
@@ -1217,6 +1220,7 @@ public class CameraView extends FrameLayout {
 
         // Outer listeners
         private ArrayList<CameraListener> mListeners = new ArrayList<>(2);
+        private CameraLogger mLogger = CameraLogger.create(CameraCallbacks.class.getSimpleName());
 
         // Orientation TODO: move this logic into OrientationHelper
         private Integer mDisplayOffset;
@@ -1226,6 +1230,7 @@ public class CameraView extends FrameLayout {
 
 
         public void dispatchOnCameraOpened(final CameraOptions options) {
+            mLogger.i("dispatchOnCameraOpened", options);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1238,6 +1243,7 @@ public class CameraView extends FrameLayout {
 
 
         public void dispatchOnCameraClosed() {
+            mLogger.i("dispatchOnCameraClosed");
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1250,6 +1256,7 @@ public class CameraView extends FrameLayout {
 
 
         public void onCameraPreviewSizeChanged() {
+            mLogger.i("onCameraPreviewSizeChanged");
             // Camera preview size, as returned by getPreviewSize(), has changed.
             // Request a layout pass for onMeasure() to do its stuff.
             // Potentially this will change CameraView size, which changes Surface size,
@@ -1281,6 +1288,7 @@ public class CameraView extends FrameLayout {
          *                         because it was taken with the front camera.
          */
         public void processImage(final byte[] jpeg, final boolean consistentWithView, final boolean flipHorizontally) {
+            mLogger.i("processImage");
             mWorkerHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1291,8 +1299,8 @@ public class CameraView extends FrameLayout {
                         int w = consistentWithView ? getWidth() : getHeight();
                         int h = consistentWithView ? getHeight() : getWidth();
                         AspectRatio targetRatio = AspectRatio.of(w, h);
-                        // Log.e(TAG, "is Consistent? " + consistentWithView);
-                        // Log.e(TAG, "viewWidth? " + getWidth() + ", viewHeight? " + getHeight());
+                        mLogger.i("processImage", "is consistent?", consistentWithView);
+                        mLogger.i("processImage", "viewWidth?", getWidth(), "viewHeight?", getHeight());
                         jpeg2 = CropHelper.cropToJpeg(jpeg, targetRatio, mJpegQuality);
                     }
                     dispatchOnPictureTaken(jpeg2);
@@ -1302,6 +1310,7 @@ public class CameraView extends FrameLayout {
 
 
         public void processSnapshot(final YuvImage yuv, final boolean consistentWithView, boolean flipHorizontally) {
+            mLogger.i("processSnapshot");
             mWorkerHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1310,6 +1319,8 @@ public class CameraView extends FrameLayout {
                         int w = consistentWithView ? getWidth() : getHeight();
                         int h = consistentWithView ? getHeight() : getWidth();
                         AspectRatio targetRatio = AspectRatio.of(w, h);
+                        mLogger.i("processSnapshot", "is consistent?", consistentWithView);
+                        mLogger.i("processSnapshot", "viewWidth?", getWidth(), "viewHeight?", getHeight());
                         jpeg = CropHelper.cropToJpeg(yuv, targetRatio, mJpegQuality);
                     } else {
                         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -1323,6 +1334,7 @@ public class CameraView extends FrameLayout {
 
 
         private void dispatchOnPictureTaken(byte[] jpeg) {
+            mLogger.i("dispatchOnPictureTaken");
             final byte[] data = jpeg;
             mUiHandler.post(new Runnable() {
                 @Override
@@ -1336,6 +1348,7 @@ public class CameraView extends FrameLayout {
 
 
         public void dispatchOnVideoTaken(final File video) {
+            mLogger.i("dispatchOnVideoTaken", video);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1348,6 +1361,7 @@ public class CameraView extends FrameLayout {
 
 
         public void dispatchOnFocusStart(@Nullable final Gesture gesture, final PointF point) {
+            mLogger.i("dispatchOnFocusStart", gesture, point);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1365,6 +1379,7 @@ public class CameraView extends FrameLayout {
 
         public void dispatchOnFocusEnd(@Nullable final Gesture gesture, final boolean success,
                                        final PointF point) {
+            mLogger.i("dispatchOnFocusEnd", gesture, success, point);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1386,6 +1401,7 @@ public class CameraView extends FrameLayout {
 
         @Override
         public void onDisplayOffsetChanged(int displayOffset) {
+            mLogger.i("onDisplayOffsetChanged", displayOffset);
             mCameraController.onDisplayOffset(displayOffset);
             mDisplayOffset = displayOffset;
             if (mDeviceOrientation != null) {
@@ -1396,6 +1412,7 @@ public class CameraView extends FrameLayout {
 
         @Override
         public void onDeviceOrientationChanged(int deviceOrientation) {
+            mLogger.i("onDeviceOrientationChanged", deviceOrientation);
             mCameraController.onDeviceOrientation(deviceOrientation);
             mDeviceOrientation = deviceOrientation;
             if (mDisplayOffset != null) {
@@ -1406,6 +1423,7 @@ public class CameraView extends FrameLayout {
 
 
         private void dispatchOnOrientationChanged(final int value) {
+            mLogger.i("dispatchOnOrientationChanged", value);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1418,6 +1436,7 @@ public class CameraView extends FrameLayout {
 
 
         public void dispatchOnZoomChanged(final float newValue, final PointF[] fingers) {
+            mLogger.i("dispatchOnZoomChanged", newValue);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1432,6 +1451,7 @@ public class CameraView extends FrameLayout {
         public void dispatchOnExposureCorrectionChanged(final float newValue,
                                                         final float[] bounds,
                                                         final PointF[] fingers) {
+            mLogger.i("dispatchOnExposureCorrectionChanged", newValue);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1444,16 +1464,19 @@ public class CameraView extends FrameLayout {
 
 
         private void addListener(@NonNull CameraListener cameraListener) {
+            mLogger.i("addListener");
             mListeners.add(cameraListener);
         }
 
 
         private void removeListener(@NonNull CameraListener cameraListener) {
+            mLogger.i("removeListener");
             mListeners.remove(cameraListener);
         }
 
 
         private void clearListeners() {
+            mLogger.i("clearListeners");
             mListeners.clear();
         }
     }
