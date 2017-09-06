@@ -91,6 +91,11 @@
 
         <attr name="cameraCropOutput" format="boolean" />
 
+        <attr name="cameraAudio" format="enum">
+            <enum name="off" value="0" />
+            <enum name="on" value="1" />
+        </attr>
+
         <!-- deprecated attr name="cameraZoomMode" format="enum">
             <enum name="off" value="0" />
             <enum name="pinch" value="1" />

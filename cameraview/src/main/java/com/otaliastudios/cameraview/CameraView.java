@@ -103,6 +103,7 @@ public class CameraView extends FrameLayout {
         VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
         SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
         Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
+        Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
 
         // Gestures
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
@@ -143,6 +144,7 @@ public class CameraView extends FrameLayout {
         setWhiteBalance(whiteBalance);
         setGrid(grid);
         setHdr(hdr);
+        setAudio(audio);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -862,6 +864,28 @@ public class CameraView extends FrameLayout {
         }
 
         return mCameraController.getFlash();
+    }
+
+
+    /**
+     * Controls the audio
+     *
+     * @see Audio#OFF
+     * @see Audio#ON
+     *
+     * @param audio desired audio value
+     */
+    public void setAudio(Audio audio) {
+        mCameraController.setAudio(audio);
+    }
+
+
+    /**
+     * Gets the current audio value.
+     * @return the current audio value
+     */
+    public Audio getAudio() {
+        return mCameraController.getAudio();
     }
 
 
