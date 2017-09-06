@@ -14,7 +14,7 @@ class PinchGestureLayout extends GestureLayout {
 
     private final static float ADD_SENSITIVITY = 2f;
 
-    private ScaleGestureDetector mDetector;
+    ScaleGestureDetector mDetector;
     private boolean mNotify;
     private float mAdditionFactor = 0;
 

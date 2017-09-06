@@ -27,20 +27,17 @@ import static android.view.ViewGroup.LayoutParams.*;
 
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-public class CameraViewTest {
+public class CameraViewTest extends BaseTest {
 
     private CameraView cameraView;
     private MockCameraController mockController;
     private Preview mockPreview;
     private boolean hasPermissions;
 
-    private void postOnUiSync(Runnable runnable) {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(runnable);
-    }
 
     @Before
     public void setUp() {
-        postOnUiSync(new Runnable() {
+        ui(new Runnable() {
             @Override
             public void run() {
                 Context context = InstrumentationRegistry.getContext();
@@ -180,7 +177,7 @@ public class CameraViewTest {
     @Test
     public void testGestureAction_capture() {
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
-        postOnUiSync(new Runnable() {
+        ui(new Runnable() {
             @Override
             public void run() {
                 cameraView.mTapGestureLayout = new TapGestureLayout(cameraView.getContext()) {
@@ -198,7 +195,7 @@ public class CameraViewTest {
     @Test
     public void testGestureAction_focus() {
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
-        postOnUiSync(new Runnable() {
+        ui(new Runnable() {
             @Override
             public void run() {
                 cameraView.mTapGestureLayout = new TapGestureLayout(cameraView.getContext()) {
@@ -222,7 +219,7 @@ public class CameraViewTest {
     @Test
     public void testGestureAction_zoom() {
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
-        postOnUiSync(new Runnable() {
+        ui(new Runnable() {
             @Override
             public void run() {
                 cameraView.mPinchGestureLayout = new PinchGestureLayout(cameraView.getContext()) {
@@ -246,7 +243,7 @@ public class CameraViewTest {
         mockController.setMockCameraOptions(o);
 
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
-        postOnUiSync(new Runnable() {
+        ui(new Runnable() {
             @Override
             public void run() {
                 cameraView.mScrollGestureLayout = new ScrollGestureLayout(cameraView.getContext()) {

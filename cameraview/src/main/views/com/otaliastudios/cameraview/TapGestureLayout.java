@@ -58,8 +58,8 @@ class TapGestureLayout extends GestureLayout {
 
         // Views to draw the focus marker.
         LayoutInflater.from(getContext()).inflate(R.layout.layout_focus_marker, this);
-        mFocusMarkerContainer = (FrameLayout) findViewById(R.id.focusMarkerContainer);
-        mFocusMarkerFill = (ImageView) findViewById(R.id.fill);
+        mFocusMarkerContainer = findViewById(R.id.focusMarkerContainer);
+        mFocusMarkerFill = findViewById(R.id.fill);
     }
 
 

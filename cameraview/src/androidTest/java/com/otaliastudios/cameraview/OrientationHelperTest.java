@@ -19,18 +19,18 @@ import static org.mockito.Mockito.*;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class OrientationHelperTest {
+public class OrientationHelperTest extends BaseTest {
 
     private OrientationHelper helper;
     private OrientationHelper.Callbacks callbacks;
 
     @Before
     public void setUp() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+        ui(new Runnable() {
             @Override
             public void run() {
                 callbacks = mock(OrientationHelper.Callbacks.class);
-                helper = new OrientationHelper(InstrumentationRegistry.getContext(), callbacks);
+                helper = new OrientationHelper(context(), callbacks);
             }
         });
     }
@@ -46,12 +46,12 @@ public class OrientationHelperTest {
         assertNotNull(helper.mListener);
         assertNull(helper.mDisplay);
 
-        helper.enable(InstrumentationRegistry.getContext());
+        helper.enable(context());
         assertNotNull(helper.mListener);
         assertNotNull(helper.mDisplay);
 
         // Ensure nothing bad if called twice.
-        helper.enable(InstrumentationRegistry.getContext());
+        helper.enable(context());
         assertNotNull(helper.mListener);
         assertNotNull(helper.mDisplay);
 
@@ -64,7 +64,7 @@ public class OrientationHelperTest {
 
     @Test
     public void testRotation() {
-        helper.enable(InstrumentationRegistry.getContext());
+        helper.enable(context());
 
         reset(callbacks); // Reset counts.
         helper.mListener.onOrientationChanged(OrientationEventListener.ORIENTATION_UNKNOWN);

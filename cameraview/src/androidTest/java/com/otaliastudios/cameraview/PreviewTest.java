@@ -2,58 +2,61 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
-import java.util.concurrent.Semaphore;
 
 import static org.junit.Assert.*;
 
 import static org.mockito.Mockito.*;
 
-public abstract class PreviewTest {
+public abstract class PreviewTest extends BaseTest {
 
     protected abstract Preview createPreview(Context context, ViewGroup parent);
-
-    private Preview preview;
-    private ViewGroup parent;
-    private Preview.SurfaceCallback callback;
-    private Size surfaceSize = new Size(1000, 1000);
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
+    private Preview preview;
+    private Preview.SurfaceCallback callback;
+    private Size surfaceSize;
+    private Task<Void> surfaceAvailability;
+
     @Before
     public void setUp() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+        ui(new Runnable() {
             @Override
             public void run() {
-                Context context = rule.getActivity();
+                TestActivity a = rule.getActivity();
+                preview = createPreview(a, a.getContentView());
+                surfaceSize = a.getContentSize();
 
-                // Using a parent so we know its size.
-                parent = new FrameLayout(context);
-                parent.setLayoutParams(new ViewGroup.LayoutParams(
-                        surfaceSize.getWidth(), surfaceSize.getHeight()));
-                preview = createPreview(context, parent);
                 callback = mock(Preview.SurfaceCallback.class);
                 preview.setSurfaceCallback(callback);
 
-                // Add all to a decor view and to the activity.
-                FrameLayout decor = new FrameLayout(context);
-                decor.addView(parent);
-                rule.getActivity().setContentView(decor);
+                surfaceAvailability = new Task<>();
+                surfaceAvailability.listen();
+                surfaceAvailability.start();
+                doAnswer(new Answer() {
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        surfaceAvailability.end(null);
+                        return null;
+                    }
+                }).when(callback).onSurfaceAvailable();
             }
         });
     }
 
     @Test
     public void testDefaults() {
+        ViewGroup parent = rule.getActivity().getContentView();
         assertNotNull(preview.getView());
         assertEquals(parent.getChildAt(0), preview.getView());
         assertNotNull(preview.getOutputClass());
@@ -67,56 +70,52 @@ public abstract class PreviewTest {
     }
 
     @Test
-    public void testSurfaceSize() {
-        preview.onSurfaceAvailable(500, 1000);
-        assertEquals(500, preview.getSurfaceSize().getWidth());
-        assertEquals(1000, preview.getSurfaceSize().getHeight());
+    public void testSurfaceAvailable() {
+        surfaceAvailability.await();
 
-        preview.onSurfaceSizeChanged(50, 100);
-        assertEquals(50, preview.getSurfaceSize().getWidth());
-        assertEquals(100, preview.getSurfaceSize().getHeight());
+        // Wait for surface to be available.
+        verify(callback, times(1)).onSurfaceAvailable();
+        assertEquals(surfaceSize.getWidth(), preview.getSurfaceSize().getWidth());
+        assertEquals(surfaceSize.getHeight(), preview.getSurfaceSize().getHeight());
+    }
 
-        preview.onSurfaceDestroyed();
+    @Test
+    public void testSurfaceDestroyed() {
+        surfaceAvailability.await();
+
+        // Trigger a destroy.
+        ui(new Runnable() {
+            @Override
+            public void run() {
+                rule.getActivity().getContentView().removeAllViews();
+            }
+        });
         assertEquals(0, preview.getSurfaceSize().getWidth());
         assertEquals(0, preview.getSurfaceSize().getHeight());
     }
 
     @Test
-    public void testCallbacks() {
-        preview.onSurfaceAvailable(500, 1000);
-        verify(callback, times(1)).onSurfaceAvailable();
-
-        preview.onSurfaceSizeChanged(50, 100);
-        verify(callback, times(1)).onSurfaceChanged();
-    }
-
-    @Test
     public void testCropCenter() throws Exception {
-        Task cropTask = preview.mCropTask;
-
-        // If aspect ratio is different, there should be a crop.
-        preview.onSurfaceAvailable(
-                surfaceSize.getWidth(),
-                surfaceSize.getHeight());
+        surfaceAvailability.await();
 
         // Not cropping.
-        cropTask.listen();
+        preview.mCropTask.listen();
         preview.setDesiredSize(100, 100); // Wait...
-        cropTask.await();
+        preview.mCropTask.await();
         assertEquals(100f / 100f, getScaledAspectRatio(), 0.01f);
         assertFalse(preview.isCropping());
 
         // Cropping.
-        cropTask.listen();
+        preview.mCropTask.listen();
         preview.setDesiredSize(160, 50); // Wait...
-        cropTask.await();
+        preview.mCropTask.await();
         assertEquals(160f / 50f, getScaledAspectRatio(), 0.01f);
         assertTrue(preview.isCropping());
 
         // Not cropping.
-        cropTask.listen();
+        preview.mCropTask.listen();
         preview.onSurfaceSizeChanged(1600, 500); // Wait...
-        cropTask.await();
+        preview.mCropTask.await();
         assertEquals(160f / 50f, getScaledAspectRatio(), 0.01f);
         assertFalse(preview.isCropping());
     }
