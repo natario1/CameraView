@@ -1,15 +1,14 @@
 package com.otaliastudios.cameraview;
 
 import android.content.Context;
-import android.graphics.SurfaceTexture;
+import android.support.annotation.NonNull;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 
-abstract class Preview {
+abstract class Preview<T extends View, Output> {
 
-    private final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
+    protected final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
 
     // This is used to notify CameraImpl to recompute its camera Preview size.
     // After that, CameraView will need a new layout pass to adapt to the Preview size.
@@ -19,6 +18,7 @@ abstract class Preview {
     }
 
     private SurfaceCallback mSurfaceCallback;
+    private T mView;
 
     // As far as I can see, these are the view/surface dimensions.
     // This live in the 'View' orientation.
@@ -29,19 +29,25 @@ abstract class Preview {
     private int mDesiredWidth;
     private int mDesiredHeight;
 
-    Preview(Context context, ViewGroup parent) {}
+    Preview(Context context, ViewGroup parent) {
+        mView = onCreateView(context, parent);
+    }
+
+    @NonNull
+    protected abstract T onCreateView(Context context, ViewGroup parent);
 
     abstract Surface getSurface();
-    abstract View getView();
-    abstract Class getOutputClass();
-    abstract boolean isReady();
-    SurfaceHolder getSurfaceHolder() {
-        return null;
-    }
-    SurfaceTexture getSurfaceTexture() {
-        return null;
+
+    @NonNull
+    final T getView() {
+        return mView;
     }
 
+    abstract Class<Output> getOutputClass();
+
+    abstract Output getOutput();
+
+    abstract boolean isReady();
 
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
     // This is called by the CameraImpl.
@@ -51,6 +57,10 @@ abstract class Preview {
         this.mDesiredWidth = width;
         this.mDesiredHeight = height;
         crop();
+    }
+
+    final Size getDesiredSize() {
+        return new Size(mDesiredWidth, mDesiredHeight);
     }
 
     final Size getSurfaceSize() {
@@ -87,7 +97,6 @@ abstract class Preview {
     protected final void onSurfaceDestroyed() {
         mSurfaceWidth = 0;
         mSurfaceHeight = 0;
-        crop();
     }
 
 
@@ -100,11 +109,16 @@ abstract class Preview {
      * However that should be already managed by the framework.
      */
     private final void crop() {
+        onPreCrop();
         getView().post(new Runnable() {
             @Override
             public void run() {
-                if (mDesiredHeight == 0 || mDesiredWidth == 0) return;
-                if (mSurfaceHeight == 0 || mSurfaceWidth == 0) return;
+                if (mDesiredHeight == 0 || mDesiredWidth == 0 ||
+                        mSurfaceHeight == 0 || mSurfaceWidth == 0) {
+                    onPostCrop();
+                    return;
+                }
+
                 float scaleX = 1f, scaleY = 1f;
                 AspectRatio current = AspectRatio.of(mSurfaceWidth, mSurfaceHeight);
                 AspectRatio target = AspectRatio.of(mDesiredWidth, mDesiredHeight);
@@ -119,6 +133,7 @@ abstract class Preview {
                 getView().setScaleY(scaleY);
                 LOG.i("crop:", "applied scaleX=", scaleX);
                 LOG.i("crop:", "applied scaleY=", scaleY);
+                onPostCrop();
             }
         });
     }
@@ -131,5 +146,26 @@ abstract class Preview {
      */
     final boolean isCropping() {
         return getView().getScaleX() > 1 || getView().getScaleY() > 1;
+    }
+
+
+    // Utils for testing.
+    interface CropListener {
+        void onPreCrop();
+        void onPostCrop();
+    }
+
+    private CropListener cropListener;
+
+    private void onPreCrop() {
+        if (cropListener != null) cropListener.onPreCrop();
+    }
+
+    private void onPostCrop() {
+        if (cropListener != null) cropListener.onPostCrop();
+    }
+
+    void setCropListener(CropListener listener) {
+        cropListener = listener;
     }
 }

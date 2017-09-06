@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.SurfaceTexture;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.location.Location;
@@ -110,12 +111,14 @@ class Camera1 extends CameraController {
     // These can happen at different times but we want to end up here.
     private void setup() {
         try {
+            Object output = mPreview.getOutput();
             if (mPreview.getOutputClass() == SurfaceHolder.class) {
-                mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
+                mCamera.setPreviewDisplay((SurfaceHolder) output);
             } else {
-                mCamera.setPreviewTexture(mPreview.getSurfaceTexture());
+                mCamera.setPreviewTexture((SurfaceTexture) output);
             }
         } catch (IOException e) {
+            LOG.e("Error while trying to setup Camera1.", e);
             throw new RuntimeException(e);
         }
 
@@ -450,8 +453,10 @@ class Camera1 extends CameraController {
 
     @Override
     boolean shouldFlipSizes() {
+        int offset = computeSensorToDisplayOffset();
         LOG.i("shouldFlip:", "mDeviceOrientation=", mDeviceOrientation, "mSensorOffset=", mSensorOffset);
-        return (mDeviceOrientation  + mSensorOffset) % 180 != 0;
+        LOG.i("shouldFlip:", "sensorToDisplay=", offset);
+        return offset % 180 != 0;
     }
 
     @Override

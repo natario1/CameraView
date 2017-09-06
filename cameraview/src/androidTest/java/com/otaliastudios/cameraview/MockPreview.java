@@ -2,14 +2,21 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class MockPreview extends Preview {
+public class MockPreview extends Preview<View, Void> {
 
-    public MockPreview(Context context, ViewGroup parent) {
+    MockPreview(Context context, ViewGroup parent) {
         super(context, parent);
+    }
+
+    @NonNull
+    @Override
+    protected View onCreateView(Context context, ViewGroup parent) {
+        return new View(context);
     }
 
     @Override
@@ -18,12 +25,12 @@ public class MockPreview extends Preview {
     }
 
     @Override
-    View getView() {
+    Class<Void> getOutputClass() {
         return null;
     }
 
     @Override
-    Class getOutputClass() {
+    Void getOutput() {
         return null;
     }
 
