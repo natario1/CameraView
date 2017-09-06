@@ -5,9 +5,11 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.view.View;
 
+import org.junit.Before;
 import org.junit.Rule;
 
 public class BaseTest {
