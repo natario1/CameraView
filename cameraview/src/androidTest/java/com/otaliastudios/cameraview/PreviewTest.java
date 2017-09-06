@@ -12,8 +12,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.*;
 
@@ -26,7 +24,7 @@ public abstract class PreviewTest {
     private Preview preview;
     private ViewGroup parent;
     private Preview.SurfaceCallback callback;
-    private Semaphore lock;
+    private Size surfaceSize = new Size(1000, 1000);
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
@@ -37,13 +35,19 @@ public abstract class PreviewTest {
             @Override
             public void run() {
                 Context context = rule.getActivity();
+
+                // Using a parent so we know its size.
                 parent = new FrameLayout(context);
+                parent.setLayoutParams(new ViewGroup.LayoutParams(
+                        surfaceSize.getWidth(), surfaceSize.getHeight()));
                 preview = createPreview(context, parent);
                 callback = mock(Preview.SurfaceCallback.class);
                 preview.setSurfaceCallback(callback);
-                rule.getActivity().setContentView(parent);
 
-                lock = new Semaphore(1, true);
+                // Add all to a decor view and to the activity.
+                FrameLayout decor = new FrameLayout(context);
+                decor.addView(parent);
+                rule.getActivity().setContentView(decor);
             }
         });
     }
@@ -88,52 +92,39 @@ public abstract class PreviewTest {
 
     @Test
     public void testCropCenter() throws Exception {
-        preview.setCropListener(new Preview.CropListener() {
-            @Override
-            public void onPreCrop() {
-                try {
-                    lock.acquire();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                };
-            }
-
-            @Override
-            public void onPostCrop() {
-                lock.release();
-            }
-        });
+        Task cropTask = preview.mCropTask;
 
         // If aspect ratio is different, there should be a crop.
-        Size s = new Size(1000, 1000);
-        preview.onSurfaceAvailable(s.getWidth(), s.getHeight());
+        preview.onSurfaceAvailable(
+                surfaceSize.getWidth(),
+                surfaceSize.getHeight());
 
         // Not cropping.
+        cropTask.listen();
         preview.setDesiredSize(100, 100); // Wait...
-        lock.acquire();
-        assertEquals(AspectRatio.of(100, 100), getScaledAspectRatio());
+        cropTask.await();
+        assertEquals(100f / 100f, getScaledAspectRatio(), 0.01f);
         assertFalse(preview.isCropping());
-        lock.release();
 
         // Cropping.
+        cropTask.listen();
         preview.setDesiredSize(160, 50); // Wait...
-        lock.acquire();
-        assertEquals(AspectRatio.of(160, 50), getScaledAspectRatio());
+        cropTask.await();
+        assertEquals(160f / 50f, getScaledAspectRatio(), 0.01f);
         assertTrue(preview.isCropping());
-        lock.release();
 
         // Not cropping.
+        cropTask.listen();
         preview.onSurfaceSizeChanged(1600, 500); // Wait...
-        lock.acquire();
-        assertEquals(AspectRatio.of(160, 50), getScaledAspectRatio());
+        cropTask.await();
+        assertEquals(160f / 50f, getScaledAspectRatio(), 0.01f);
         assertFalse(preview.isCropping());
-        lock.release();
     }
 
-    private AspectRatio getScaledAspectRatio() {
+    private float getScaledAspectRatio() {
         Size size = preview.getSurfaceSize();
-        int newWidth = (int) ((float) size.getWidth() * preview.getView().getScaleX());
-        int newHeight = (int) ((float) size.getHeight() * preview.getView().getScaleY());
-        return AspectRatio.of(newWidth, newHeight);
+        int newWidth = (int) (((float) size.getWidth()) * preview.getView().getScaleX());
+        int newHeight = (int) (((float) size.getHeight()) * preview.getView().getScaleY());
+        return AspectRatio.of(newWidth, newHeight).toFloat();
     }
 }

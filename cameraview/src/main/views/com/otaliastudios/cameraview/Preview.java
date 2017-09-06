@@ -10,6 +10,9 @@ abstract class Preview<T extends View, Output> {
 
     protected final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
 
+    // Used for testing.
+    Task<Void> mCropTask = new Task<Void>();
+
     // This is used to notify CameraImpl to recompute its camera Preview size.
     // After that, CameraView will need a new layout pass to adapt to the Preview size.
     interface SurfaceCallback {
@@ -109,13 +112,13 @@ abstract class Preview<T extends View, Output> {
      * However that should be already managed by the framework.
      */
     private final void crop() {
-        onPreCrop();
+        mCropTask.start();
         getView().post(new Runnable() {
             @Override
             public void run() {
                 if (mDesiredHeight == 0 || mDesiredWidth == 0 ||
                         mSurfaceHeight == 0 || mSurfaceWidth == 0) {
-                    onPostCrop();
+                    mCropTask.end(null);
                     return;
                 }
 
@@ -133,7 +136,7 @@ abstract class Preview<T extends View, Output> {
                 getView().setScaleY(scaleY);
                 LOG.i("crop:", "applied scaleX=", scaleX);
                 LOG.i("crop:", "applied scaleY=", scaleY);
-                onPostCrop();
+                mCropTask.end(null);
             }
         });
     }
@@ -145,27 +148,7 @@ abstract class Preview<T extends View, Output> {
      * @return true if cropping
      */
     final boolean isCropping() {
-        return getView().getScaleX() > 1 || getView().getScaleY() > 1;
-    }
-
-
-    // Utils for testing.
-    interface CropListener {
-        void onPreCrop();
-        void onPostCrop();
-    }
-
-    private CropListener cropListener;
-
-    private void onPreCrop() {
-        if (cropListener != null) cropListener.onPreCrop();
-    }
-
-    private void onPostCrop() {
-        if (cropListener != null) cropListener.onPostCrop();
-    }
-
-    void setCropListener(CropListener listener) {
-        cropListener = listener;
+        // Account for some error
+        return getView().getScaleX() > 1.02f || getView().getScaleY() > 1.02f;
     }
 }
