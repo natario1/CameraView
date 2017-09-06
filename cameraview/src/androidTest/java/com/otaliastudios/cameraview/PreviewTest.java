@@ -26,22 +26,24 @@ public abstract class PreviewTest {
     private Preview preview;
     private ViewGroup parent;
     private Preview.SurfaceCallback callback;
-    private final Semaphore lock = new Semaphore(1, true);
+    private Semaphore lock;
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
     @Before
     public void setUp() {
-        Context context = rule.getActivity();
-        parent = new FrameLayout(context);
-        preview = createPreview(context, parent);
-        callback = mock(Preview.SurfaceCallback.class);
-        preview.setSurfaceCallback(callback);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
+                Context context = rule.getActivity();
+                parent = new FrameLayout(context);
+                preview = createPreview(context, parent);
+                callback = mock(Preview.SurfaceCallback.class);
+                preview.setSurfaceCallback(callback);
                 rule.getActivity().setContentView(parent);
+
+                lock = new Semaphore(1, true);
             }
         });
     }
