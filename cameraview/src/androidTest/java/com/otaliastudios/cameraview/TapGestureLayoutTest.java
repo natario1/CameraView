@@ -2,8 +2,14 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
+import android.support.test.espresso.action.GeneralClickAction;
+import android.support.test.espresso.action.GeneralLocation;
+import android.support.test.espresso.action.Press;
+import android.support.test.espresso.action.Tap;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,14 +42,16 @@ public class TapGestureLayoutTest extends GestureLayoutTest<TapGestureLayout> {
     public void testTap() {
         touch.listen();
         touch.start();
-        Size size = rule.getActivity().getContentSize();
-        int x = (int) (size.getWidth() / 2f);
-        int y = (int) (size.getHeight() / 2f);
-        onView(withId(layout.getId())).perform(click(x, y));
+        GeneralClickAction a = new GeneralClickAction(Tap.SINGLE,
+                GeneralLocation.CENTER, Press.FINGER,
+                InputDevice.SOURCE_UNKNOWN, MotionEvent.BUTTON_PRIMARY);
+        onLayout().perform(a);
         Gesture found = touch.await(500, TimeUnit.MILLISECONDS);
+
         assertEquals(found, Gesture.TAP);
-        assertEquals(layout.getPoints()[0].x, x, 1);
-        assertEquals(layout.getPoints()[0].y, y, 1);
+        Size size = rule.getActivity().getContentSize();
+        assertEquals(layout.getPoints()[0].x, (size.getWidth() / 2f), 1f);
+        assertEquals(layout.getPoints()[0].y, (size.getHeight() / 2f), 1f);
     }
 
     @Test
@@ -51,10 +59,7 @@ public class TapGestureLayoutTest extends GestureLayoutTest<TapGestureLayout> {
         layout.enable(false);
         touch.listen();
         touch.start();
-        Size size = rule.getActivity().getContentSize();
-        int x = (int) (size.getWidth() / 2f);
-        int y = (int) (size.getHeight() / 2f);
-        onView(withId(layout.getId())).perform(click(x, y));
+        onLayout().perform(click());
         Gesture found = touch.await(500, TimeUnit.MILLISECONDS);
         assertNull(found);
     }
@@ -63,11 +68,14 @@ public class TapGestureLayoutTest extends GestureLayoutTest<TapGestureLayout> {
     public void testLongTap() {
         touch.listen();
         touch.start();
-        Size size = rule.getActivity().getContentSize();
-        int x = (int) (size.getWidth() / 2f);
-        int y = (int) (size.getHeight() / 2f);
-        onView(withId(layout.getId())).perform(longClick());
+        GeneralClickAction a = new GeneralClickAction(Tap.LONG,
+                GeneralLocation.CENTER, Press.FINGER,
+                InputDevice.SOURCE_UNKNOWN, MotionEvent.BUTTON_PRIMARY);
+        onLayout().perform(a);
         Gesture found = touch.await(500, TimeUnit.MILLISECONDS);
         assertEquals(found, Gesture.LONG_TAP);
+        Size size = rule.getActivity().getContentSize();
+        assertEquals(layout.getPoints()[0].x, (size.getWidth() / 2f), 1f);
+        assertEquals(layout.getPoints()[0].y, (size.getHeight() / 2f), 1f);
     }
 }

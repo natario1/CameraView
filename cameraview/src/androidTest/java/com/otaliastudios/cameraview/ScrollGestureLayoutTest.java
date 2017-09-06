@@ -46,7 +46,7 @@ public class ScrollGestureLayoutTest extends GestureLayoutTest<ScrollGestureLayo
         layout.enable(false);
         touch.listen();
         touch.start();
-        onView(withId(layout.getId())).perform(swipeUp());
+        onLayout().perform(swipeUp());
         Gesture found = touch.await(500, TimeUnit.MILLISECONDS);
         assertNull(found);
     }
@@ -54,7 +54,7 @@ public class ScrollGestureLayoutTest extends GestureLayoutTest<ScrollGestureLayo
     private void testScroll(ViewAction scroll, Gesture expected, boolean increasing) {
         touch.listen();
         touch.start();
-        onView(withId(layout.getId())).perform(scroll);
+        onLayout().perform(scroll);
         Gesture found = touch.await(500, TimeUnit.MILLISECONDS);
         assertEquals(found, expected);
 

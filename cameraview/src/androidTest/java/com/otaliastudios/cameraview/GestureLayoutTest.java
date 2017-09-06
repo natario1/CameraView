@@ -3,10 +3,13 @@ package com.otaliastudios.cameraview;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.support.test.espresso.Espresso;
+import android.support.test.espresso.ViewInteraction;
 import android.support.test.rule.ActivityTestRule;
 import android.view.MotionEvent;
 import android.view.View;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 
@@ -40,8 +43,11 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
                         return true;
                     }
                 });
-                layout.setId(View.generateViewId());
             }
         });
+    }
+
+    protected ViewInteraction onLayout() {
+        return Espresso.onView(Matchers.<View>is(layout));
     }
 }

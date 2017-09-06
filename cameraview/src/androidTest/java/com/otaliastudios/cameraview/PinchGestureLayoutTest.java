@@ -68,7 +68,7 @@ public class PinchGestureLayoutTest extends GestureLayoutTest<PinchGestureLayout
     private void testPinch(ViewAction action, boolean increasing) {
         touch.listen();
         touch.start();
-        onView(withId(layout.getId())).perform(action);
+        onLayout().perform(action);
         Gesture found = touch.await(10000, TimeUnit.MILLISECONDS);
         assertNotNull(found);
 
