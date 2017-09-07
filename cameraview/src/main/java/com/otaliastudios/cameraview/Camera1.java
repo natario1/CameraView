@@ -294,10 +294,12 @@ class Camera1 extends CameraController {
 
     @Override
     void setAudio(Audio audio) {
-        if (mIsCapturingVideo) {
-            throw new IllegalStateException("Can't change audio while recording a video.");
+        if (mAudio != audio) {
+            if (mIsCapturingVideo) {
+                LOG.w("Changing audio mode while recording. Changes will take place starting from next video");
+            }
+            mAudio = audio;
         }
-        mAudio = audio;
     }
 
     @Override
@@ -606,7 +608,7 @@ class Camera1 extends CameraController {
         if (mAudio == Audio.ON) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
             mMediaRecorder.setProfile(profile);
-        }else{
+        } else {
             // Set all values contained in profile except audio settings
             mMediaRecorder.setOutputFormat(profile.fileFormat);
             mMediaRecorder.setVideoEncoder(profile.videoCodec);
