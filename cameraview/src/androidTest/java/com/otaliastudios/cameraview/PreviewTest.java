@@ -46,7 +46,7 @@ public abstract class PreviewTest extends BaseTest {
                 doAnswer(new Answer() {
                     @Override
                     public Object answer(InvocationOnMock invocation) throws Throwable {
-                        availability.end(true);
+                        if (availability != null) availability.end(true);
                         return null;
                     }
                 }).when(callback).onSurfaceAvailable();
