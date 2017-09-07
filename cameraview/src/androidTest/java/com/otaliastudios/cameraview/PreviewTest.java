@@ -26,14 +26,15 @@ public abstract class PreviewTest extends BaseTest {
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
-    private Preview preview;
+    protected Preview preview;
+    protected Size surfaceSize;
     private Preview.SurfaceCallback callback;
-    private Size surfaceSize;
+    private Task<Boolean> availability;
 
     @Before
     public void setUp() {
-        final Task<Boolean> task = new Task<>();
-        task.listen();
+        availability = new Task<>();
+        availability.listen();
 
         ui(new Runnable() {
             @Override
@@ -45,16 +46,29 @@ public abstract class PreviewTest extends BaseTest {
                 doAnswer(new Answer() {
                     @Override
                     public Object answer(InvocationOnMock invocation) throws Throwable {
-                        task.end(true);
+                        availability.end(true);
                         return null;
                     }
                 }).when(callback).onSurfaceAvailable();
                 preview = createPreview(a, a.getContentView(), callback);
             }
         });
+    }
 
-        Boolean available = task.await(2, TimeUnit.SECONDS);
-        assertNotNull(available);
+    // Wait for surface to be available.
+    protected void ensureAvailable() {
+        assertNotNull(availability.await(2, TimeUnit.SECONDS));
+    }
+
+    // Trigger a destroy.
+    protected void ensureDestroyed() {
+        ui(new Runnable() {
+            @Override
+            public void run() {
+                rule.getActivity().getContentView().removeView(preview.getView());
+            }
+        });
+        waitUi();
     }
 
     @After
@@ -62,14 +76,14 @@ public abstract class PreviewTest extends BaseTest {
         preview = null;
         callback = null;
         surfaceSize = null;
+        availability = null;
     }
 
     @Test
     public void testDefaults() {
+        ensureAvailable();
         assertTrue(preview.isReady());
-        ViewGroup parent = rule.getActivity().getContentView();
         assertNotNull(preview.getView());
-        assertEquals(parent.getChildAt(0), preview.getView());
         assertNotNull(preview.getOutputClass());
     }
 
@@ -82,6 +96,7 @@ public abstract class PreviewTest extends BaseTest {
 
     @Test
     public void testSurfaceAvailable() {
+        ensureAvailable();
         verify(callback, times(1)).onSurfaceAvailable();
         assertEquals(surfaceSize.getWidth(), preview.getSurfaceSize().getWidth());
         assertEquals(surfaceSize.getHeight(), preview.getSurfaceSize().getHeight());
@@ -89,19 +104,16 @@ public abstract class PreviewTest extends BaseTest {
 
     @Test
     public void testSurfaceDestroyed() {
-        // Trigger a destroy.
-        ui(new Runnable() {
-            @Override
-            public void run() {
-                rule.getActivity().getContentView().removeView(preview.getView());
-            }
-        });
+        ensureAvailable();
+        ensureDestroyed();
         assertEquals(0, preview.getSurfaceSize().getWidth());
         assertEquals(0, preview.getSurfaceSize().getHeight());
     }
 
     @Test
     public void testCropCenter() throws Exception {
+        ensureAvailable();
+
         // This is given by the activity, it's the fixed size.
         float view = getViewAspectRatio();
 

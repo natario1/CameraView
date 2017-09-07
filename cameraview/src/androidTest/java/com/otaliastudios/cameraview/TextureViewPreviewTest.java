@@ -16,4 +16,28 @@ public class TextureViewPreviewTest extends PreviewTest {
     protected Preview createPreview(Context context, ViewGroup parent, Preview.SurfaceCallback callback) {
         return new TextureViewPreview(context, parent, callback);
     }
+
+    @Override
+    protected void ensureAvailable() {
+        if (isHardwareAccelerated()) {
+            super.ensureAvailable();
+        } else {
+            preview.onSurfaceAvailable(
+                    surfaceSize.getWidth(),
+                    surfaceSize.getHeight());
+        }
+    }
+
+    @Override
+    protected void ensureDestroyed() {
+        super.ensureDestroyed();
+        if (!isHardwareAccelerated()) {
+            // Ensure it is called.
+            preview.onSurfaceDestroyed();
+        }
+    }
+
+    private boolean isHardwareAccelerated() {
+        return preview.getView().isHardwareAccelerated();
+    }
 }

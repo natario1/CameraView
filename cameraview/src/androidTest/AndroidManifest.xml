@@ -5,7 +5,9 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application>
-        <activity android:name=".TestActivity"/>
+        <activity
+            android:hardwareAccelerated="true"
+            android:name=".TestActivity"/>
     </application>
 
 </manifest>
