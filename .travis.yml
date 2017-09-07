@@ -35,7 +35,7 @@ before_script:
   - adb shell input keyevent 82 &
 
 script:
-  - ./gradlew --info clean testDebugUnitTest connectedCheck mergedCoverageReport
+  - ./gradlew clean testDebugUnitTest connectedCheck mergedCoverageReport
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) -s "*/build/reports/mergedCoverageReport/"
