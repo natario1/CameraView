@@ -8,7 +8,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 
-// This is not used.
+// Fallback preview when hardware acceleration is off.
 class SurfaceViewPreview extends Preview<SurfaceView, SurfaceHolder> {
 
 
