@@ -310,7 +310,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`lowest` `highest` `maxQvga` `max480p` `max720p` `max1080p` `max2160p`|`max480p`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 |[`cameraHdr`](#camerahdr)|`setHdr()`|`off` `on`|`off`|
-|[`cameraAudio`](#cameraaudio)|`setHdr()`|`off` `on`|`on`|
+|[`cameraAudio`](#cameraaudio)|`setAudio()`|`off` `on`|`on`|
 
 #### cameraSessionType
 
