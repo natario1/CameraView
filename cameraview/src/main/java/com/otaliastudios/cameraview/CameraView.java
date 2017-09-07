@@ -159,7 +159,7 @@ public class CameraView extends FrameLayout {
 
 
     protected Preview instantiatePreview(Context context, ViewGroup container) {
-        return new TextureViewPreview(context, container);
+        return new TextureViewPreview(context, container, null);
     }
 
 
@@ -504,7 +504,7 @@ public class CameraView extends FrameLayout {
      * @return true if we can go on, false otherwise.
      */
     @SuppressLint("NewApi")
-    private boolean checkPermissions(SessionType sessionType) {
+    protected boolean checkPermissions(SessionType sessionType) {
         checkPermissionsManifestOrThrow(sessionType);
         boolean api23 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
         int cameraCheck, audioCheck;
@@ -537,7 +537,7 @@ public class CameraView extends FrameLayout {
     /**
      * If mSessionType == SESSION_TYPE_VIDEO we will ask for RECORD_AUDIO permission.
      * If the developer did not add this to its manifest, throw and fire warnings.
-     * (Hoping this is not cought elsewhere... we should test).
+     * (Hoping this is not caught elsewhere... we should test).
      */
     private void checkPermissionsManifestOrThrow(SessionType sessionType) {
         if (sessionType == SessionType.VIDEO) {

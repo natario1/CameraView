@@ -19,11 +19,12 @@ class OrientationHelper {
         DISPLAY_ORIENTATIONS.put(Surface.ROTATION_270, 270);
     }
 
-    private final OrientationEventListener mListener;
+    final OrientationEventListener mListener;
+    Display mDisplay;
+
     private final Callbacks mCallbacks;
-    private Display mDisplay;
-    private int mLastKnownDisplayOffset = -1;
-    private int mLastOrientation = -1;
+    int mLastKnownDisplayOffset = -1;
+    int mLastOrientation = -1;
 
     interface Callbacks {
         void onDisplayOffsetChanged(int displayOffset);

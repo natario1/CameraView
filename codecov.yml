@@ -6,16 +6,12 @@ coverage:
   status:
     project:
       default:
-        enabled: yes
-        target: 30%
+        target: 40%
     patch:
       default:
-        enabled: yes
         target: 60%
-    changes:
-      default:
-        enabled: no
+    changes: no
 
 comment:
-  # diff, changes, footer, reach, flags, suggestions,
+  # diff, changes, footer, reach, flags, suggestions
   layout: "header, files"

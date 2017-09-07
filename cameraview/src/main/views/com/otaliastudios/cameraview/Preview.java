@@ -1,15 +1,17 @@
 package com.otaliastudios.cameraview;
 
 import android.content.Context;
-import android.graphics.SurfaceTexture;
+import android.support.annotation.NonNull;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 
-abstract class Preview {
+abstract class Preview<T extends View, Output> {
 
-    private final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
+    protected final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
+
+    // Used for testing.
+    Task<Void> mCropTask = new Task<>();
 
     // This is used to notify CameraImpl to recompute its camera Preview size.
     // After that, CameraView will need a new layout pass to adapt to the Preview size.
@@ -19,6 +21,7 @@ abstract class Preview {
     }
 
     private SurfaceCallback mSurfaceCallback;
+    private T mView;
 
     // As far as I can see, these are the view/surface dimensions.
     // This live in the 'View' orientation.
@@ -29,19 +32,24 @@ abstract class Preview {
     private int mDesiredWidth;
     private int mDesiredHeight;
 
-    Preview(Context context, ViewGroup parent) {}
+    Preview(Context context, ViewGroup parent, SurfaceCallback callback) {
+        mView = onCreateView(context, parent);
+        mSurfaceCallback = callback;
+    }
+
+    @NonNull
+    protected abstract T onCreateView(Context context, ViewGroup parent);
 
     abstract Surface getSurface();
-    abstract View getView();
-    abstract Class getOutputClass();
-    abstract boolean isReady();
-    SurfaceHolder getSurfaceHolder() {
-        return null;
-    }
-    SurfaceTexture getSurfaceTexture() {
-        return null;
+
+    @NonNull
+    final T getView() {
+        return mView;
     }
 
+    abstract Class<Output> getOutputClass();
+
+    abstract Output getOutput();
 
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
     // This is called by the CameraImpl.
@@ -53,12 +61,20 @@ abstract class Preview {
         crop();
     }
 
+    final Size getDesiredSize() {
+        return new Size(mDesiredWidth, mDesiredHeight);
+    }
+
     final Size getSurfaceSize() {
         return new Size(mSurfaceWidth, mSurfaceHeight);
     }
 
     final void setSurfaceCallback(SurfaceCallback callback) {
         mSurfaceCallback = callback;
+        // If surface already available, dispatch.
+        if (mSurfaceWidth != 0 || mSurfaceHeight != 0) {
+            mSurfaceCallback.onSurfaceAvailable();
+        }
     }
 
 
@@ -83,13 +99,14 @@ abstract class Preview {
         }
     }
 
-
     protected final void onSurfaceDestroyed() {
         mSurfaceWidth = 0;
         mSurfaceHeight = 0;
-        crop();
     }
 
+    final boolean isReady() {
+        return mSurfaceWidth > 0 && mSurfaceHeight > 0;
+    }
 
     /**
      * Here we must crop the visible part by applying a > 1 scale to one of our
@@ -100,11 +117,16 @@ abstract class Preview {
      * However that should be already managed by the framework.
      */
     private final void crop() {
+        mCropTask.start();
         getView().post(new Runnable() {
             @Override
             public void run() {
-                if (mDesiredHeight == 0 || mDesiredWidth == 0) return;
-                if (mSurfaceHeight == 0 || mSurfaceWidth == 0) return;
+                if (mDesiredHeight == 0 || mDesiredWidth == 0 ||
+                        mSurfaceHeight == 0 || mSurfaceWidth == 0) {
+                    mCropTask.end(null);
+                    return;
+                }
+
                 float scaleX = 1f, scaleY = 1f;
                 AspectRatio current = AspectRatio.of(mSurfaceWidth, mSurfaceHeight);
                 AspectRatio target = AspectRatio.of(mDesiredWidth, mDesiredHeight);
@@ -119,6 +141,7 @@ abstract class Preview {
                 getView().setScaleY(scaleY);
                 LOG.i("crop:", "applied scaleX=", scaleX);
                 LOG.i("crop:", "applied scaleY=", scaleY);
+                mCropTask.end(null);
             }
         });
     }
@@ -130,6 +153,7 @@ abstract class Preview {
      * @return true if cropping
      */
     final boolean isCropping() {
-        return getView().getScaleX() > 1 || getView().getScaleY() > 1;
+        // Account for some error
+        return getView().getScaleX() > 1.02f || getView().getScaleY() > 1.02f;
     }
 }

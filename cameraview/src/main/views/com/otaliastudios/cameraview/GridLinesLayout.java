@@ -16,9 +16,11 @@ class GridLinesLayout extends View {
 
     private Grid gridMode;
 
-    private final Drawable horiz;
-    private final Drawable vert;
+    Drawable horiz;
+    Drawable vert;
     private final float width;
+
+    Task<Void> drawTask = new Task<>();
 
     private final static float GOLDEN_RATIO_INV = 0.61803398874989f;
 
@@ -46,7 +48,7 @@ class GridLinesLayout extends View {
 
     public void setGridMode(Grid gridMode) {
         this.gridMode = gridMode;
-        invalidate();
+        postInvalidate();
     }
 
     private int getLineCount() {
@@ -75,6 +77,7 @@ class GridLinesLayout extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        drawTask.start();
         int count = getLineCount();
         for (int n = 0; n < count; n++) {
             float pos = getLinePosition(n);
@@ -89,5 +92,6 @@ class GridLinesLayout extends View {
             vert.draw(canvas);
             canvas.translate(- pos * getWidth(), 0);
         }
+        drawTask.end(null);
     }
 }

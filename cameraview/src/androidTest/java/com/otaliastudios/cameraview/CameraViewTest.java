@@ -4,10 +4,12 @@ package com.otaliastudios.cameraview;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.hardware.Camera;
+import android.location.Location;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -25,15 +27,17 @@ import static android.view.ViewGroup.LayoutParams.*;
 
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-public class CameraViewTest {
+public class CameraViewTest extends BaseTest {
 
     private CameraView cameraView;
     private MockCameraController mockController;
     private Preview mockPreview;
+    private boolean hasPermissions;
+
 
     @Before
     public void setUp() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+        ui(new Runnable() {
             @Override
             public void run() {
                 Context context = InstrumentationRegistry.getContext();
@@ -49,6 +53,11 @@ public class CameraViewTest {
                         mockPreview = new MockPreview(context, container);
                         return mockPreview;
                     }
+
+                    @Override
+                    protected boolean checkPermissions(SessionType sessionType) {
+                        return hasPermissions;
+                    }
                 };
             }
         });
@@ -59,12 +68,13 @@ public class CameraViewTest {
         cameraView = null;
         mockController = null;
         mockPreview = null;
+        hasPermissions = false;
     }
 
     //region testDefaults
 
     @Test
-    public void testNotStarted() {
+    public void testNullBeforeStart() {
         assertFalse(cameraView.isStarted());
         assertNull(cameraView.getCameraOptions());
         assertNull(cameraView.getExtraProperties());
@@ -94,6 +104,23 @@ public class CameraViewTest {
         assertEquals(cameraView.getGestureAction(Gesture.PINCH), GestureAction.DEFAULT_PINCH);
         assertEquals(cameraView.getGestureAction(Gesture.SCROLL_HORIZONTAL), GestureAction.DEFAULT_SCROLL_HORIZONTAL);
         assertEquals(cameraView.getGestureAction(Gesture.SCROLL_VERTICAL), GestureAction.DEFAULT_SCROLL_VERTICAL);
+    }
+
+    @Test
+    public void testStartWithPermissions() {
+        hasPermissions = true;
+        cameraView.start();
+        assertTrue(cameraView.isStarted());
+
+        cameraView.stop();
+        assertFalse(cameraView.isStarted());
+    }
+
+    @Test
+    public void testStartWithoutPermissions() {
+        hasPermissions = false;
+        cameraView.start();
+        assertFalse(cameraView.isStarted());
     }
 
     //endregion
@@ -141,6 +168,94 @@ public class CameraViewTest {
         assertTrue(cameraView.mScrollGestureLayout.enabled());
         cameraView.clearGesture(Gesture.SCROLL_HORIZONTAL);
         assertFalse(cameraView.mScrollGestureLayout.enabled());
+    }
+
+    //endregion
+
+    //region testGestureAction
+
+    @Test
+    public void testGestureAction_capture() {
+        MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
+        ui(new Runnable() {
+            @Override
+            public void run() {
+                cameraView.mTapGestureLayout = new TapGestureLayout(cameraView.getContext()) {
+                    public boolean onTouchEvent(MotionEvent event) { return true; }
+
+                };
+                cameraView.mTapGestureLayout.setGestureType(Gesture.TAP);
+            }
+        });
+        cameraView.mapGesture(Gesture.TAP, GestureAction.CAPTURE);
+        cameraView.dispatchTouchEvent(event);
+        assertTrue(mockController.mPictureCaptured);
+    }
+
+    @Test
+    public void testGestureAction_focus() {
+        MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
+        ui(new Runnable() {
+            @Override
+            public void run() {
+                cameraView.mTapGestureLayout = new TapGestureLayout(cameraView.getContext()) {
+                    public boolean onTouchEvent(MotionEvent event) { return true; }
+                };
+                cameraView.mTapGestureLayout.setGestureType(Gesture.TAP);
+            }
+        });
+        mockController.mFocusStarted = false;
+        cameraView.mapGesture(Gesture.TAP, GestureAction.FOCUS);
+        cameraView.dispatchTouchEvent(event);
+        assertTrue(mockController.mFocusStarted);
+
+        // Try with FOCUS_WITH_MARKER
+        mockController.mFocusStarted = false;
+        cameraView.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
+        cameraView.dispatchTouchEvent(event);
+        assertTrue(mockController.mFocusStarted);
+    }
+
+    @Test
+    public void testGestureAction_zoom() {
+        MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
+        ui(new Runnable() {
+            @Override
+            public void run() {
+                cameraView.mPinchGestureLayout = new PinchGestureLayout(cameraView.getContext()) {
+                    public boolean onTouchEvent(MotionEvent event) { return true; }
+                };
+                cameraView.mPinchGestureLayout.setGestureType(Gesture.PINCH);
+            }
+        });
+        mockController.mZoomChanged = false;
+        cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
+        cameraView.dispatchTouchEvent(event);
+        assertTrue(mockController.mZoomChanged);
+    }
+
+    @Test
+    public void testGestureAction_exposureCorrection() {
+        // This needs a valid CameraOptions value.
+        CameraOptions o = mock(CameraOptions.class);
+        when(o.getExposureCorrectionMinValue()).thenReturn(-10f);
+        when(o.getExposureCorrectionMaxValue()).thenReturn(10f);
+        mockController.setMockCameraOptions(o);
+
+        MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
+        ui(new Runnable() {
+            @Override
+            public void run() {
+                cameraView.mScrollGestureLayout = new ScrollGestureLayout(cameraView.getContext()) {
+                    public boolean onTouchEvent(MotionEvent event) { return true; }
+                };
+                cameraView.mScrollGestureLayout.setGestureType(Gesture.SCROLL_HORIZONTAL);
+            }
+        });
+        mockController.mExposureCorrectionChanged = false;
+        cameraView.mapGesture(Gesture.SCROLL_HORIZONTAL, GestureAction.EXPOSURE_CORRECTION);
+        cameraView.dispatchTouchEvent(event);
+        assertTrue(mockController.mExposureCorrectionChanged);
     }
 
     //endregion
@@ -268,11 +383,34 @@ public class CameraViewTest {
 
     //endregion
 
-    // TODO: test setLocation
+    //region testLocation
 
-    // TODO: test touch events
+    @Test
+    public void testSetLocation() {
+        cameraView.setLocation(50d, -50d);
+        assertEquals(50d, mockController.mLocation.getLatitude(), 0);
+        assertEquals(-50d, mockController.mLocation.getLongitude(), 0);
+        assertEquals(0, mockController.mLocation.getAltitude(), 0);
+        assertEquals("Unknown", mockController.mLocation.getProvider());
+        assertEquals(System.currentTimeMillis(), mockController.mLocation.getTime(), 1000f);
 
-    // TODO: test permissions and start() stop() isStarted()
+        Location source = new Location("Provider");
+        source.setTime(5000);
+        source.setLatitude(10d);
+        source.setLongitude(-10d);
+        source.setAltitude(50d);
+        cameraView.setLocation(source);
+        Location other = mockController.mLocation;
+        assertEquals(10d, other.getLatitude(), 0d);
+        assertEquals(-10d, other.getLongitude(), 0d);
+        assertEquals(50d, other.getAltitude(), 0d);
+        assertEquals("Provider", other.getProvider());
+        assertEquals(5000, other.getTime());
+    }
+
+    //endregion
+
+    // TODO: test permissions
 
     // TODO: test CameraCallbacks
 

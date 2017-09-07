@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -8,20 +9,24 @@ import android.view.View;
 import android.view.ViewGroup;
 
 // This is not used.
-class SurfaceViewPreview extends Preview {
+class SurfaceViewPreview extends Preview<SurfaceView, SurfaceHolder> {
 
-    private final SurfaceView mSurfaceView;
 
-    SurfaceViewPreview(Context context, ViewGroup parent) {
-        super(context, parent);
-        final View view = View.inflate(context, R.layout.surface_view, parent); // MATCH_PARENT
-        mSurfaceView = (SurfaceView) view.findViewById(R.id.surface_view);
-        final SurfaceHolder holder = mSurfaceView.getHolder();
+    SurfaceViewPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
+        super(context, parent, callback);
+    }
+
+    @NonNull
+    @Override
+    protected SurfaceView onCreateView(Context context, ViewGroup parent) {
+        final View root = View.inflate(context, R.layout.surface_view, parent); // MATCH_PARENT
+        SurfaceView surface = root.findViewById(R.id.surface_view);
+        final SurfaceHolder holder = surface.getHolder();
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                onSurfaceAvailable(mSurfaceView.getWidth(), mSurfaceView.getHeight());
+                onSurfaceAvailable(getView().getWidth(), getView().getHeight());
             }
 
             @Override
@@ -34,31 +39,22 @@ class SurfaceViewPreview extends Preview {
                 onSurfaceDestroyed();
             }
         });
+        return surface;
     }
 
     @Override
     Surface getSurface() {
-        return getSurfaceHolder().getSurface();
+        return getOutput().getSurface();
     }
 
     @Override
-    View getView() {
-        return mSurfaceView;
+    SurfaceHolder getOutput() {
+        return getView().getHolder();
     }
 
     @Override
-    SurfaceHolder getSurfaceHolder() {
-        return mSurfaceView.getHolder();
-    }
-
-    @Override
-    Class getOutputClass() {
+    Class<SurfaceHolder> getOutputClass() {
         return SurfaceHolder.class;
-    }
-
-    @Override
-    boolean isReady() {
-        return mSurfaceView.getWidth() != 0 && mSurfaceView.getHeight() != 0;
     }
 
 }

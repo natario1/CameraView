@@ -46,6 +46,7 @@ dependencies {
     androidTestCompile 'com.android.support.test:rules:1.0.1'
     androidTestCompile 'com.google.dexmaker:dexmaker:1.2'
     androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.2'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.1'
 
     compile "com.android.support:exifinterface:$supportLibVersion"
     compile "com.android.support:support-annotations:$supportLibVersion"
@@ -175,14 +176,15 @@ artifacts {
 
 apply plugin: 'jacoco'
 
+def reportsDirectory = "$buildDir/reports/"
 jacoco {
     // Using a different version might get 0 coverage reports.
     // No time to investigate now.
     toolVersion = "0.7.6.201602180812"
-    reportsDir = file("$buildDir/reports/jacoco/merged/")
+    reportsDir = file(reportsDirectory)
 }
 
-task coverageReport(type: JacocoReport) {
+task mergedCoverageReport(type: JacocoReport) {
     dependsOn "testDebugUnitTest"
     dependsOn "connectedCheck"
 
@@ -206,6 +208,7 @@ task coverageReport(type: JacocoReport) {
 
     reports.xml.enabled = true
     reports.html.enabled = true
+    reports.xml.destination = "$reportsDirectory/mergedCoverageReport/report.xml"
 }
 
 //endregion

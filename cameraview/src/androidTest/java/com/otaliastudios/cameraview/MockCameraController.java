@@ -10,6 +10,12 @@ import java.io.File;
 
 public class MockCameraController extends CameraController {
 
+    Location mLocation;
+    boolean mPictureCaptured;
+    boolean mFocusStarted;
+    boolean mZoomChanged;
+    boolean mExposureCorrectionChanged;
+
     MockCameraController(CameraView.CameraCallbacks callback, Preview preview) {
         super(callback, preview);
     }
@@ -24,21 +30,21 @@ public class MockCameraController extends CameraController {
 
     @Override
     void onStart() {
-
     }
 
     @Override
     void onStop() {
-
     }
 
     @Override
     boolean setZoom(float zoom) {
+        mZoomChanged = true;
         return true;
     }
 
     @Override
     boolean setExposureCorrection(float EVvalue) {
+        mExposureCorrectionChanged = true;
         return true;
     }
 
@@ -74,11 +80,12 @@ public class MockCameraController extends CameraController {
 
     @Override
     void setLocation(Location location) {
-
+        mLocation = location;
     }
 
     @Override
     boolean capturePicture() {
+        mPictureCaptured = true;
         return true;
     }
 
@@ -109,6 +116,7 @@ public class MockCameraController extends CameraController {
 
     @Override
     boolean startAutoFocus(@Nullable Gesture gesture, PointF point) {
+        mFocusStarted = true;
         return true;
     }
 
