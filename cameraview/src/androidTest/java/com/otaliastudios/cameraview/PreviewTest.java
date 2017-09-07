@@ -98,29 +98,41 @@ public abstract class PreviewTest extends BaseTest {
     public void testCropCenter() throws Exception {
         surfaceAvailability.await();
 
-        // Not cropping.
-        preview.mCropTask.listen();
-        preview.setDesiredSize(100, 100); // Wait...
-        preview.mCropTask.await();
-        assertEquals(100f / 100f, getScaledAspectRatio(), 0.01f);
+        // This is given by the activity, it's the fixed size.
+        float view = getViewAspectRatio();
+
+        // If we apply a desired size with same aspect ratio, there should be no crop.
+        setDesiredAspectRatio(view);
         assertFalse(preview.isCropping());
 
-        // Cropping.
-        preview.mCropTask.listen();
-        preview.setDesiredSize(160, 50); // Wait...
-        preview.mCropTask.await();
-        assertEquals(160f / 50f, getScaledAspectRatio(), 0.01f);
+        // If we apply a different aspect ratio, there should be cropping.
+        float desired = view * 1.2f;
+        setDesiredAspectRatio(desired);
         assertTrue(preview.isCropping());
 
-        // Not cropping.
+        // Since desired is 'desired', let's fake a new view size that is consistent with it.
+        // Ensure crop is not happening anymore.
         preview.mCropTask.listen();
-        preview.onSurfaceSizeChanged(1600, 500); // Wait...
+        preview.onSurfaceSizeChanged((int) (50f * desired), 50); // Wait...
         preview.mCropTask.await();
-        assertEquals(160f / 50f, getScaledAspectRatio(), 0.01f);
+        assertEquals(desired, getViewAspectRatioWithScale(), 0.01f);
         assertFalse(preview.isCropping());
     }
 
-    private float getScaledAspectRatio() {
+    private void setDesiredAspectRatio(float desiredAspectRatio) {
+        preview.mCropTask.listen();
+        preview.setDesiredSize((int) (10f * desiredAspectRatio), 10); // Wait...
+        preview.mCropTask.await();
+        assertEquals(desiredAspectRatio, getViewAspectRatioWithScale(), 0.01f);
+
+    }
+
+    private float getViewAspectRatio() {
+        Size size = preview.getSurfaceSize();
+        return AspectRatio.of(size.getWidth(), size.getHeight()).toFloat();
+    }
+
+    private float getViewAspectRatioWithScale() {
         Size size = preview.getSurfaceSize();
         int newWidth = (int) (((float) size.getWidth()) * preview.getView().getScaleX());
         int newHeight = (int) (((float) size.getHeight()) * preview.getView().getScaleY());

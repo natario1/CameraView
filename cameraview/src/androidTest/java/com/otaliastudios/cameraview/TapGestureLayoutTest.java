@@ -42,8 +42,8 @@ public class TapGestureLayoutTest extends GestureLayoutTest<TapGestureLayout> {
     public void testTap() {
         touch.listen();
         touch.start();
-        GeneralClickAction a = new GeneralClickAction(Tap.SINGLE,
-                GeneralLocation.CENTER, Press.FINGER,
+        GeneralClickAction a = new GeneralClickAction(
+                Tap.SINGLE, GeneralLocation.CENTER, Press.FINGER,
                 InputDevice.SOURCE_UNKNOWN, MotionEvent.BUTTON_PRIMARY);
         onLayout().perform(a);
         Gesture found = touch.await(500, TimeUnit.MILLISECONDS);
@@ -68,8 +68,8 @@ public class TapGestureLayoutTest extends GestureLayoutTest<TapGestureLayout> {
     public void testLongTap() {
         touch.listen();
         touch.start();
-        GeneralClickAction a = new GeneralClickAction(Tap.LONG,
-                GeneralLocation.CENTER, Press.FINGER,
+        GeneralClickAction a = new GeneralClickAction(
+                Tap.LONG, GeneralLocation.CENTER, Press.FINGER,
                 InputDevice.SOURCE_UNKNOWN, MotionEvent.BUTTON_PRIMARY);
         onLayout().perform(a);
         Gesture found = touch.await(500, TimeUnit.MILLISECONDS);
