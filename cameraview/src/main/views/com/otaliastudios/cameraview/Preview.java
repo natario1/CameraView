@@ -50,8 +50,6 @@ abstract class Preview<T extends View, Output> {
 
     abstract Output getOutput();
 
-    abstract boolean isReady();
-
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
     // This is called by the CameraImpl.
     // These must be alredy rotated, if needed, to be consistent with surface/view sizes.
@@ -72,6 +70,10 @@ abstract class Preview<T extends View, Output> {
 
     final void setSurfaceCallback(SurfaceCallback callback) {
         mSurfaceCallback = callback;
+        // If surface already available, dispatch.
+        if (mSurfaceWidth != 0 || mSurfaceHeight != 0) {
+            mSurfaceCallback.onSurfaceAvailable();
+        }
     }
 
 
@@ -96,12 +98,14 @@ abstract class Preview<T extends View, Output> {
         }
     }
 
-
     protected final void onSurfaceDestroyed() {
         mSurfaceWidth = 0;
         mSurfaceHeight = 0;
     }
 
+    final boolean isReady() {
+        return mSurfaceWidth > 0 && mSurfaceHeight > 0;
+    }
 
     /**
      * Here we must crop the visible part by applying a > 1 scale to one of our

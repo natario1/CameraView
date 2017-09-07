@@ -57,9 +57,4 @@ class SurfaceViewPreview extends Preview<SurfaceView, SurfaceHolder> {
         return SurfaceHolder.class;
     }
 
-    @Override
-    boolean isReady() {
-        return getView().getWidth() != 0 && getView().getHeight() != 0;
-    }
-
 }

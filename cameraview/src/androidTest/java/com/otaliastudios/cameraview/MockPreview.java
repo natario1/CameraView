@@ -34,8 +34,4 @@ public class MockPreview extends Preview<View, Void> {
         return null;
     }
 
-    @Override
-    boolean isReady() {
-        return true;
-    }
 }

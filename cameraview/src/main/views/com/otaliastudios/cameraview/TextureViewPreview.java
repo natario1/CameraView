@@ -61,11 +61,6 @@ class TextureViewPreview extends Preview<TextureView, SurfaceTexture> {
     }
 
     @Override
-    boolean isReady() {
-        return getOutput() != null;
-    }
-
-    @Override
     SurfaceTexture getOutput() {
         return getView().getSurfaceTexture();
     }

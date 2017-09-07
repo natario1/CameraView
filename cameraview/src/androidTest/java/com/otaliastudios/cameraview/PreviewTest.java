@@ -34,12 +34,9 @@ public abstract class PreviewTest extends BaseTest {
             @Override
             public void run() {
                 TestActivity a = rule.getActivity();
-                preview = createPreview(a, a.getContentView());
                 surfaceSize = a.getContentSize();
 
                 callback = mock(Preview.SurfaceCallback.class);
-                preview.setSurfaceCallback(callback);
-
                 surfaceAvailability = new Task<>();
                 surfaceAvailability.listen();
                 surfaceAvailability.start();
@@ -50,6 +47,9 @@ public abstract class PreviewTest extends BaseTest {
                         return null;
                     }
                 }).when(callback).onSurfaceAvailable();
+
+                preview = createPreview(a, a.getContentView());
+                preview.setSurfaceCallback(callback);
             }
         });
     }
