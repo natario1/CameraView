@@ -12,13 +12,15 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.Assert.*;
 
 import static org.mockito.Mockito.*;
 
 public abstract class PreviewTest extends BaseTest {
 
-    protected abstract Preview createPreview(Context context, ViewGroup parent);
+    protected abstract Preview createPreview(Context context, ViewGroup parent, Preview.SurfaceCallback callback);
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
@@ -26,7 +28,7 @@ public abstract class PreviewTest extends BaseTest {
     private Preview preview;
     private Preview.SurfaceCallback callback;
     private Size surfaceSize;
-    private Task<Void> surfaceAvailability;
+    private Task<Boolean> surfaceAvailability;
 
     @Before
     public void setUp() {
@@ -43,13 +45,13 @@ public abstract class PreviewTest extends BaseTest {
                 doAnswer(new Answer() {
                     @Override
                     public Object answer(InvocationOnMock invocation) throws Throwable {
-                        surfaceAvailability.end(null);
+                        surfaceAvailability.end(true);
                         return null;
                     }
                 }).when(callback).onSurfaceAvailable();
 
-                preview = createPreview(a, a.getContentView());
-                preview.setSurfaceCallback(callback);
+                preview = createPreview(a, a.getContentView(), callback);
+                // preview.setSurfaceCallback(callback);
             }
         });
     }
@@ -71,7 +73,7 @@ public abstract class PreviewTest extends BaseTest {
 
     @Test
     public void testSurfaceAvailable() {
-        surfaceAvailability.await();
+        assertTrue(surfaceAvailability.await(1, TimeUnit.SECONDS));
 
         // Wait for surface to be available.
         verify(callback, times(1)).onSurfaceAvailable();
@@ -81,7 +83,7 @@ public abstract class PreviewTest extends BaseTest {
 
     @Test
     public void testSurfaceDestroyed() {
-        surfaceAvailability.await();
+        assertTrue(surfaceAvailability.await(1, TimeUnit.SECONDS));
 
         // Trigger a destroy.
         ui(new Runnable() {
@@ -96,7 +98,7 @@ public abstract class PreviewTest extends BaseTest {
 
     @Test
     public void testCropCenter() throws Exception {
-        surfaceAvailability.await();
+        assertTrue(surfaceAvailability.await(1, TimeUnit.SECONDS));
 
         // This is given by the activity, it's the fixed size.
         float view = getViewAspectRatio();

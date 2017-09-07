@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
 public class TextureViewPreviewTest extends PreviewTest {
 
     @Override
-    protected Preview createPreview(Context context, ViewGroup parent) {
-        return new TextureViewPreview(context, parent);
+    protected Preview createPreview(Context context, ViewGroup parent, Preview.SurfaceCallback callback) {
+        return new TextureViewPreview(context, parent, callback);
     }
 }

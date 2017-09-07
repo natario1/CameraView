@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
 public class SurfaceViewPreviewTest extends PreviewTest {
 
     @Override
-    protected Preview createPreview(Context context, ViewGroup parent) {
-        return new SurfaceViewPreview(context, parent);
+    protected Preview createPreview(Context context, ViewGroup parent, Preview.SurfaceCallback callback) {
+        return new SurfaceViewPreview(context, parent, callback);
     }
 }

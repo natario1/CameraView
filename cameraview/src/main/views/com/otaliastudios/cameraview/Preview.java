@@ -11,7 +11,7 @@ abstract class Preview<T extends View, Output> {
     protected final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
 
     // Used for testing.
-    Task<Void> mCropTask = new Task<Void>();
+    Task<Void> mCropTask = new Task<>();
 
     // This is used to notify CameraImpl to recompute its camera Preview size.
     // After that, CameraView will need a new layout pass to adapt to the Preview size.
@@ -32,8 +32,9 @@ abstract class Preview<T extends View, Output> {
     private int mDesiredWidth;
     private int mDesiredHeight;
 
-    Preview(Context context, ViewGroup parent) {
+    Preview(Context context, ViewGroup parent, SurfaceCallback callback) {
         mView = onCreateView(context, parent);
+        mSurfaceCallback = callback;
     }
 
     @NonNull

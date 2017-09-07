@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 public class MockPreview extends Preview<View, Void> {
 
     MockPreview(Context context, ViewGroup parent) {
-        super(context, parent);
+        super(context, parent, null);
     }
 
     @NonNull

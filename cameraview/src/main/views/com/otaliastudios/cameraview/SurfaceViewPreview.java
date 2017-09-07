@@ -12,8 +12,8 @@ import android.view.ViewGroup;
 class SurfaceViewPreview extends Preview<SurfaceView, SurfaceHolder> {
 
 
-    SurfaceViewPreview(Context context, ViewGroup parent) {
-        super(context, parent);
+    SurfaceViewPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
+        super(context, parent, callback);
     }
 
     @NonNull

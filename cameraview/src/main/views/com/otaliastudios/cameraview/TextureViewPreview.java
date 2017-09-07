@@ -13,8 +13,8 @@ class TextureViewPreview extends Preview<TextureView, SurfaceTexture> {
 
     private Surface mSurface;
 
-    TextureViewPreview(Context context, ViewGroup parent) {
-        super(context, parent);
+    TextureViewPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
+        super(context, parent, callback);
     }
 
     @NonNull

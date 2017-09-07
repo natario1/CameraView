@@ -159,7 +159,7 @@ public class CameraView extends FrameLayout {
 
 
     protected Preview instantiatePreview(Context context, ViewGroup container) {
-        return new TextureViewPreview(context, container);
+        return new TextureViewPreview(context, container, null);
     }
 
 
