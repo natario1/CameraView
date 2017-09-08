@@ -268,6 +268,16 @@ public class CameraViewTest extends BaseTest {
     }
 
     @Test
+    public void testMeasure_early() {
+        mockController.setMockPreviewSize(null);
+        cameraView.measure(
+                makeMeasureSpec(500, EXACTLY),
+                makeMeasureSpec(500, EXACTLY));
+        assertEquals(cameraView.getMeasuredWidth(), 500);
+        assertEquals(cameraView.getMeasuredHeight(), 500);
+    }
+
+    @Test
     public void testMeasure_matchParentBoth() {
         mockPreviewSize();
 
@@ -410,6 +420,34 @@ public class CameraViewTest extends BaseTest {
 
     //endregion
 
+    //region test autofocus
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartAutoFocus_illegal() {
+        cameraView.startAutoFocus(-1, -1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartAutoFocus_illegal2() {
+        cameraView.setLeft(0);
+        cameraView.setRight(100);
+        cameraView.setTop(0);
+        cameraView.setBottom(100);
+        cameraView.startAutoFocus(200, 200);
+    }
+
+    @Test
+    public void testStartAutoFocus() {
+        cameraView.setLeft(0);
+        cameraView.setRight(100);
+        cameraView.setTop(0);
+        cameraView.setBottom(100);
+        cameraView.startAutoFocus(50, 50);
+        assertTrue(mockController.mFocusStarted);
+    }
+
+    //endregion
+
     //region test setParameters
 
     @Test
@@ -428,6 +466,11 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getJpegQuality(), 100);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetJpegQuality_illegal() {
+        cameraView.setJpegQuality(-10);
+    }
+
     @Test
     public void testSetFlash() {
         cameraView.setFlash(Flash.TORCH);
@@ -437,11 +480,31 @@ public class CameraViewTest extends BaseTest {
     }
 
     @Test
+    public void testToggleFlash() {
+        cameraView.setFlash(Flash.OFF);
+        cameraView.toggleFlash();
+        assertEquals(cameraView.getFlash(), Flash.ON);
+        cameraView.toggleFlash();
+        assertEquals(cameraView.getFlash(), Flash.AUTO);
+        cameraView.toggleFlash();
+        assertEquals(cameraView.getFlash(), Flash.OFF);
+    }
+
+    @Test
     public void testSetFacing() {
         cameraView.setFacing(Facing.FRONT);
         assertEquals(cameraView.getFacing(), Facing.FRONT);
         cameraView.setFacing(Facing.BACK);
         assertEquals(cameraView.getFacing(), Facing.BACK);
+    }
+
+    @Test
+    public void testToggleFacing() {
+        cameraView.setFacing(Facing.FRONT);
+        cameraView.toggleFacing();
+        assertEquals(cameraView.getFacing(), Facing.BACK);
+        cameraView.toggleFacing();
+        assertEquals(cameraView.getFacing(), Facing.FRONT);
     }
 
     @Test

@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,7 +52,25 @@ public class CameraOptions1Test {
         assertEquals(o.getSupportedFacing().size(), supported.size());
         for (Facing facing : s) {
             assertTrue(supported.contains(m.<Integer>map(facing)));
+            assertTrue(o.supports(facing));
         }
+    }
+
+    @Test
+    public void testGestureActions() {
+        Camera.Parameters params = mock(Camera.Parameters.class);
+        when(params.getSupportedFocusModes()).thenReturn(Collections.<String>emptyList());
+        when(params.isZoomSupported()).thenReturn(true);
+        when(params.getMaxExposureCompensation()).thenReturn(0);
+        when(params.getMinExposureCompensation()).thenReturn(0);
+
+        CameraOptions o = new CameraOptions(params);
+        assertFalse(o.supports(GestureAction.FOCUS));
+        assertFalse(o.supports(GestureAction.FOCUS_WITH_MARKER));
+        assertTrue(o.supports(GestureAction.CAPTURE));
+        assertTrue(o.supports(GestureAction.NONE));
+        assertTrue(o.supports(GestureAction.ZOOM));
+        assertFalse(o.supports(GestureAction.EXPOSURE_CORRECTION));
     }
 
     @Test

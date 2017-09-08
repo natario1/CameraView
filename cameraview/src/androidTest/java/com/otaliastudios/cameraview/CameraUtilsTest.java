@@ -47,7 +47,16 @@ public class CameraUtilsTest {
         source.compress(Bitmap.CompressFormat.PNG, 100, os);
 
         // No orientation.
-        Bitmap other = CameraUtils.decodeBitmap(os.toByteArray());
+        final Task<Bitmap> decode = new Task<>();
+        decode.listen();
+        CameraUtils.decodeBitmap(os.toByteArray(), new CameraUtils.BitmapCallback() {
+            @Override
+            public void onBitmapReady(Bitmap bitmap) {
+                decode.end(bitmap);
+            }
+        });
+        Bitmap other = decode.await(800);
+        assertNotNull(other);
         assertEquals(100, w);
         assertEquals(200, h);
         assertEquals(color, other.getPixel(0, 0));

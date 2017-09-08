@@ -19,10 +19,21 @@ public class SizeTest {
     @Test
     public void testEquals() {
         Size s1 = new Size(10, 20);
+        assertTrue(s1.equals(s1));
+        assertFalse(s1.equals(null));
+        assertFalse(s1.equals(""));
+
         Size s2 = new Size(10, 0);
         Size s3 = new Size(10, 20);
         assertTrue(s1.equals(s3));
         assertFalse(s1.equals(s2));
+    }
+
+    @Test
+    public void testHashCode() {
+        Size s1 = new Size(10, 20);
+        Size s2 = new Size(10, 0);
+        assertNotEquals(s1.hashCode(), s2.hashCode());
     }
 
     @Test

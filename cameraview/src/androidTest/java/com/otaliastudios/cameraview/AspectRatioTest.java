@@ -29,11 +29,29 @@ public class AspectRatioTest {
     @Test
     public void testEquals() {
         AspectRatio ratio = AspectRatio.of(50, 10);
+        assertFalse(ratio.equals(null));
+        assertTrue(ratio.equals(ratio));
+
         AspectRatio ratio1 = AspectRatio.of(5, 1);
         assertTrue(ratio.equals(ratio1));
 
+        AspectRatio.sCache.clear();
+        AspectRatio ratio2 = AspectRatio.of(500, 100);
+        assertTrue(ratio.equals(ratio2));
+
         Size size = new Size(500, 100);
         assertTrue(ratio.matches(size));
+    }
+
+    @Test
+    public void testCompare() {
+        AspectRatio ratio1 = AspectRatio.of(10, 2);
+        AspectRatio ratio2 = AspectRatio.of(10, 10);
+        AspectRatio ratio3 = AspectRatio.of(2, 10);
+        assertTrue(ratio1.compareTo(ratio2) > 0);
+        assertTrue(ratio1.compareTo(ratio3) < 0);
+        assertTrue(ratio1.compareTo(ratio1) == 0);
+        assertNotEquals(ratio1.hashCode(), ratio2.hashCode());
     }
 
     @Test
