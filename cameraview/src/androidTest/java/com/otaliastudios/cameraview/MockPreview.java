@@ -13,6 +13,11 @@ public class MockPreview extends Preview<View, Void> {
         super(context, parent, null);
     }
 
+    public void setIsCropping(boolean crop) {
+        getView().setScaleX(crop ? 2 : 1);
+        getView().setScaleY(crop ? 2 : 1);
+    }
+
     @NonNull
     @Override
     protected View onCreateView(Context context, ViewGroup parent) {

@@ -13,8 +13,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.*;
 
 import static org.mockito.Mockito.*;
@@ -57,7 +55,7 @@ public abstract class PreviewTest extends BaseTest {
 
     // Wait for surface to be available.
     protected void ensureAvailable() {
-        assertNotNull(availability.await(2, TimeUnit.SECONDS));
+        assertNotNull(availability.await(2000));
     }
 
     // Trigger a destroy.

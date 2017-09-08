@@ -40,7 +40,7 @@ public class CameraViewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                Context context = InstrumentationRegistry.getContext();
+                Context context = context();
                 cameraView = new CameraView(context) {
                     @Override
                     protected CameraController instantiateCameraController(CameraCallbacks callbacks, Preview preview) {

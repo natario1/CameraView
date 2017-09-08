@@ -3,17 +3,12 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.support.test.espresso.ViewAction;
-import android.support.test.espresso.assertion.ViewAssertions;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.TimeUnit;
-
-import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.swipeDown;
 import static android.support.test.espresso.action.ViewActions.swipeLeft;
@@ -50,7 +45,7 @@ public class ScrollGestureLayoutTest extends GestureLayoutTest<ScrollGestureLayo
         touch.listen();
         touch.start();
         onLayout().perform(swipeUp());
-        Gesture found = touch.await(500, TimeUnit.MILLISECONDS);
+        Gesture found = touch.await(500);
         assertNull(found);
     }
 
@@ -58,7 +53,7 @@ public class ScrollGestureLayoutTest extends GestureLayoutTest<ScrollGestureLayo
         touch.listen();
         touch.start();
         onLayout().perform(scroll);
-        Gesture found = touch.await(500, TimeUnit.MILLISECONDS);
+        Gesture found = touch.await(500);
         assertEquals(found, expected);
 
         // How will this move our parameter?

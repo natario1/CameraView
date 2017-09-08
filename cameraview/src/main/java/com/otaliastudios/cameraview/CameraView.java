@@ -59,7 +59,7 @@ public class CameraView extends FrameLayout {
     private HashMap<Gesture, GestureAction> mGestureMap = new HashMap<>(4);
 
     // Components
-    private CameraCallbacks mCameraCallbacks;
+    CameraCallbacks mCameraCallbacks;
     private OrientationHelper mOrientationHelper;
     private CameraController mCameraController;
     private Preview mPreviewImpl;
