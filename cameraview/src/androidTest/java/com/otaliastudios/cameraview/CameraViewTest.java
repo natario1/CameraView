@@ -410,6 +410,82 @@ public class CameraViewTest extends BaseTest {
 
     //endregion
 
+    //region test setParameters
+
+    @Test
+    public void testSetCropOutput() {
+        cameraView.setCropOutput(true);
+        assertTrue(cameraView.getCropOutput());
+        cameraView.setCropOutput(false);
+        assertFalse(cameraView.getCropOutput());
+    }
+
+    @Test
+    public void testSetJpegQuality() {
+        cameraView.setJpegQuality(10);
+        assertEquals(cameraView.getJpegQuality(), 10);
+        cameraView.setJpegQuality(100);
+        assertEquals(cameraView.getJpegQuality(), 100);
+    }
+
+    @Test
+    public void testSetFlash() {
+        cameraView.setFlash(Flash.TORCH);
+        assertEquals(cameraView.getFlash(), Flash.TORCH);
+        cameraView.setFlash(Flash.OFF);
+        assertEquals(cameraView.getFlash(), Flash.OFF);
+    }
+
+    @Test
+    public void testSetFacing() {
+        cameraView.setFacing(Facing.FRONT);
+        assertEquals(cameraView.getFacing(), Facing.FRONT);
+        cameraView.setFacing(Facing.BACK);
+        assertEquals(cameraView.getFacing(), Facing.BACK);
+    }
+
+    @Test
+    public void testSetGrid() {
+        cameraView.setGrid(Grid.DRAW_3X3);
+        assertEquals(cameraView.getGrid(), Grid.DRAW_3X3);
+        cameraView.setGrid(Grid.OFF);
+        assertEquals(cameraView.getGrid(), Grid.OFF);
+    }
+
+    @Test
+    public void testSetWhiteBalance() {
+        cameraView.setWhiteBalance(WhiteBalance.CLOUDY);
+        assertEquals(cameraView.getWhiteBalance(), WhiteBalance.CLOUDY);
+        cameraView.setWhiteBalance(WhiteBalance.AUTO);
+        assertEquals(cameraView.getWhiteBalance(), WhiteBalance.AUTO);
+    }
+
+    @Test
+    public void testSessionType() {
+        cameraView.setSessionType(SessionType.VIDEO);
+        assertEquals(cameraView.getSessionType(), SessionType.VIDEO);
+        cameraView.setSessionType(SessionType.PICTURE);
+        assertEquals(cameraView.getSessionType(), SessionType.PICTURE);
+    }
+
+    @Test
+    public void testHdr() {
+        cameraView.setHdr(Hdr.ON);
+        assertEquals(cameraView.getHdr(), Hdr.ON);
+        cameraView.setHdr(Hdr.OFF);
+        assertEquals(cameraView.getHdr(), Hdr.OFF);
+    }
+
+    @Test
+    public void testVideoQuality() {
+        cameraView.setVideoQuality(VideoQuality.MAX_1080P);
+        assertEquals(cameraView.getVideoQuality(), VideoQuality.MAX_1080P);
+        cameraView.setVideoQuality(VideoQuality.LOWEST);
+        assertEquals(cameraView.getVideoQuality(), VideoQuality.LOWEST);
+    }
+
+    //endregion
+
     // TODO: test permissions
 
     // TODO: test CameraCallbacks
