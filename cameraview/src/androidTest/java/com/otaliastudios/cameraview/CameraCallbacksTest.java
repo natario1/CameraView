@@ -85,7 +85,6 @@ public class CameraCallbacksTest extends BaseTest {
 
     @After
     public void tearDown() {
-        camera.removeCameraListener(listener);
         camera = null;
         mockController = null;
         mockPreview = null;

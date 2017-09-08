@@ -45,11 +45,11 @@ public class AspectRatioTest {
 
     @Test
     public void testCompare() {
-        AspectRatio ratio1 = AspectRatio.of(10, 2);
-        AspectRatio ratio2 = AspectRatio.of(10, 10);
+        AspectRatio ratio1 = AspectRatio.of(10, 10);
+        AspectRatio ratio2 = AspectRatio.of(10, 2);
         AspectRatio ratio3 = AspectRatio.of(2, 10);
-        assertTrue(ratio1.compareTo(ratio2) > 0);
-        assertTrue(ratio1.compareTo(ratio3) < 0);
+        assertTrue(ratio1.compareTo(ratio2) < 0);
+        assertTrue(ratio1.compareTo(ratio3) > 0);
         assertTrue(ratio1.compareTo(ratio1) == 0);
         assertNotEquals(ratio1.hashCode(), ratio2.hashCode());
     }
