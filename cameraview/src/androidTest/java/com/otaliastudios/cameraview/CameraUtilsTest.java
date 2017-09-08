@@ -22,7 +22,7 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class CameraUtilsTest {
+public class CameraUtilsTest extends BaseTest {
 
     @Test
     public void testHasCameras() {
@@ -41,18 +41,25 @@ public class CameraUtilsTest {
         int w = 100, h = 200, color = Color.WHITE;
         Bitmap source = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         source.setPixel(0, 0, color);
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        final ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         // Using lossy JPG we can't have strict comparison of values after compression.
         source.compress(Bitmap.CompressFormat.PNG, 100, os);
 
-        // No orientation.
         final Task<Bitmap> decode = new Task<>();
         decode.listen();
-        CameraUtils.decodeBitmap(os.toByteArray(), new CameraUtils.BitmapCallback() {
+        final CameraUtils.BitmapCallback callback = new CameraUtils.BitmapCallback() {
             @Override
             public void onBitmapReady(Bitmap bitmap) {
                 decode.end(bitmap);
+            }
+        };
+
+        // Run on ui because it involves handlers.
+        ui(new Runnable() {
+            @Override
+            public void run() {
+                CameraUtils.decodeBitmap(os.toByteArray(), callback);
             }
         });
         Bitmap other = decode.await(800);
