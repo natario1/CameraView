@@ -75,7 +75,6 @@ public class CameraCallbacksTest extends BaseTest {
                     }
                 };
                 camera.addCameraListener(listener);
-                camera.addCameraListener(new CameraListener() {}); // Add another so the class is covered.
                 callbacks = camera.mCameraCallbacks;
                 task = new Task<>();
                 task.listen();
