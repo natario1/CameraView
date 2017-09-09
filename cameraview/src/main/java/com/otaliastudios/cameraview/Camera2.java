@@ -11,15 +11,12 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
-import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TreeSet;
 
 @TargetApi(21)
 class Camera2 extends CameraController {
@@ -90,15 +87,6 @@ class Camera2 extends CameraController {
 
     }
 
-    @Override
-    void onDisplayOffset(int displayOrientation) {
-
-    }
-
-    @Override
-    void onDeviceOrientation(int deviceOrientation) {
-
-    }
 
     @Override
     void setFacing(Facing facing) {
@@ -131,7 +119,7 @@ class Camera2 extends CameraController {
 //            }
 //        }
 
-        if (mFacing == facing && isCameraOpened()) {
+        if (mFacing == facing && isCameraAvailable()) {
             stop();
             start();
         }
@@ -194,7 +182,7 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    boolean isCameraOpened() {
+    boolean isCameraAvailable() {
         return mCamera != null;
     }
 

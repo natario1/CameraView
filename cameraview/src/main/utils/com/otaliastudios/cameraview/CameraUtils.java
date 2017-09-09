@@ -68,7 +68,7 @@ public class CameraUtils {
      */
     public static void decodeBitmap(final byte[] source, final BitmapCallback callback) {
         final Handler ui = new Handler();
-        new Thread(new Runnable() {
+        WorkerHandler.run(new Runnable() {
             @Override
             public void run() {
                 final Bitmap bitmap = decodeBitmap(source);
@@ -79,7 +79,7 @@ public class CameraUtils {
                     }
                 });
             }
-        }).start();
+        });
     }
 
 

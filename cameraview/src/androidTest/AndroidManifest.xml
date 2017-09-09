@@ -6,6 +6,7 @@
 
     <application>
         <activity
+            android:configChanges="orientation|screenLayout|keyboardHidden"
             android:hardwareAccelerated="true"
             android:name=".TestActivity"/>
     </application>

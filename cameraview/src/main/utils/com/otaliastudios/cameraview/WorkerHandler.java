@@ -36,6 +36,13 @@ class WorkerHandler {
         return handler;
     }
 
+    // Handy util to perform action in a fallback thread.
+    // Not to be used for long-running operations since they will
+    // block the fallback thread.
+    public static void run(Runnable action) {
+        get("FallbackCameraThread").post(action);
+    }
+
     private HandlerThread mThread;
     private Handler mHandler;
 

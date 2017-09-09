@@ -9,11 +9,9 @@ import android.location.Location;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
-import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.File;
@@ -36,13 +34,11 @@ class Camera1 extends CameraController {
 
     private int mSensorOffset;
 
-    private Location mLocation;
-
     private final int mPostFocusResetDelay = 3000;
     private Runnable mPostFocusResetRunnable = new Runnable() {
         @Override
         public void run() {
-            if (!isCameraOpened()) return;
+            if (!isCameraAvailable()) return;
             mCamera.cancelAutoFocus();
             synchronized (mLock) {
                 Camera.Parameters params = mCamera.getParameters();
@@ -104,7 +100,7 @@ class Camera1 extends CameraController {
     }
 
     private boolean shouldSetup() {
-        return isCameraOpened() && mPreview.isReady() && !mIsSetup;
+        return isCameraAvailable() && mPreview.isReady() && !mIsSetup;
     }
 
     // The act of binding an "open" camera to a "ready" preview.
@@ -144,7 +140,7 @@ class Camera1 extends CameraController {
     @WorkerThread
     @Override
     void onStart() {
-        if (isCameraOpened()) onStop();
+        if (isCameraAvailable()) onStop();
         if (collectCameraId()) {
             mCamera = Camera.open(mCameraId);
 
@@ -172,7 +168,7 @@ class Camera1 extends CameraController {
     @Override
     void onStop() {
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
-        if (isCameraOpened()) {
+        if (isCameraAvailable()) {
             if (mIsCapturingVideo) endVideo();
             mCamera.stopPreview();
             mCamera.release();
@@ -205,7 +201,7 @@ class Camera1 extends CameraController {
     void setSessionType(SessionType sessionType) {
         if (sessionType != mSessionType) {
             mSessionType = sessionType;
-            if (isCameraOpened()) {
+            if (isCameraAvailable()) {
                 start();
             }
         }
@@ -215,7 +211,7 @@ class Camera1 extends CameraController {
     void setLocation(Location location) {
         Location oldLocation = mLocation;
         mLocation = location;
-        if (isCameraOpened()) {
+        if (isCameraAvailable()) {
             synchronized (mLock) {
                 Camera.Parameters params = mCamera.getParameters();
                 if (mergeLocation(params, oldLocation)) mCamera.setParameters(params);
@@ -243,7 +239,7 @@ class Camera1 extends CameraController {
     void setFacing(Facing facing) {
         if (facing != mFacing) {
             mFacing = facing;
-            if (collectCameraId() && isCameraOpened()) {
+            if (collectCameraId() && isCameraAvailable()) {
                 start();
             }
         }
@@ -253,7 +249,7 @@ class Camera1 extends CameraController {
     void setWhiteBalance(WhiteBalance whiteBalance) {
         WhiteBalance old = mWhiteBalance;
         mWhiteBalance = whiteBalance;
-        if (isCameraOpened()) {
+        if (isCameraAvailable()) {
             synchronized (mLock) {
                 Camera.Parameters params = mCamera.getParameters();
                 if (mergeWhiteBalance(params, old)) mCamera.setParameters(params);
@@ -274,7 +270,7 @@ class Camera1 extends CameraController {
     void setHdr(Hdr hdr) {
         Hdr old = mHdr;
         mHdr = hdr;
-        if (isCameraOpened()) {
+        if (isCameraAvailable()) {
             synchronized (mLock) {
                 Camera.Parameters params = mCamera.getParameters();
                 if (mergeHdr(params, old)) mCamera.setParameters(params);
@@ -295,7 +291,7 @@ class Camera1 extends CameraController {
     void setFlash(Flash flash) {
         Flash old = mFlash;
         mFlash = flash;
-        if (isCameraOpened()) {
+        if (isCameraAvailable()) {
             synchronized (mLock) {
                 Camera.Parameters params = mCamera.getParameters();
                 if (mergeFlash(params, old)) mCamera.setParameters(params);
@@ -348,7 +344,7 @@ class Camera1 extends CameraController {
         }
 
         mVideoQuality = videoQuality;
-        if (isCameraOpened() && mSessionType == SessionType.VIDEO) {
+        if (isCameraAvailable() && mSessionType == SessionType.VIDEO) {
             // Change capture size to a size that fits the video aspect ratio.
             Size oldSize = mCaptureSize;
             mCaptureSize = computeCaptureSize();
@@ -370,7 +366,7 @@ class Camera1 extends CameraController {
     @Override
     boolean capturePicture() {
         if (mIsCapturingImage) return false;
-        if (!isCameraOpened()) return false;
+        if (!isCameraAvailable()) return false;
         if (mSessionType == SessionType.VIDEO && mIsCapturingVideo) {
             if (!mOptions.isVideoSnapshotSupported()) return false;
         }
@@ -410,7 +406,7 @@ class Camera1 extends CameraController {
 
     @Override
     boolean captureSnapshot() {
-        if (!isCameraOpened()) return false;
+        if (!isCameraAvailable()) return false;
         if (mIsCapturingImage) return false;
         // This won't work while capturing a video.
         // Switch to capturePicture.
@@ -435,7 +431,7 @@ class Camera1 extends CameraController {
                 final int postWidth = flip ? preHeight : preWidth;
                 final int postHeight = flip ? preWidth : preHeight;
                 final int format = params.getPreviewFormat();
-                new Thread(new Runnable() {
+                WorkerHandler.run(new Runnable() {
                     @Override
                     public void run() {
 
@@ -445,7 +441,7 @@ class Camera1 extends CameraController {
                         mCameraCallbacks.processSnapshot(yuv, consistentWithView, exifFlip);
                         mIsCapturingImage = false;
                     }
-                }).start();
+                });
             }
         });
         return true;
@@ -460,7 +456,7 @@ class Camera1 extends CameraController {
     }
 
     @Override
-    boolean isCameraOpened() {
+    boolean isCameraAvailable() {
         return mCamera != null;
     }
 
@@ -548,7 +544,7 @@ class Camera1 extends CameraController {
     boolean startVideo(@NonNull File videoFile) {
         mVideoFile = videoFile;
         if (mIsCapturingVideo) return false;
-        if (!isCameraOpened()) return false;
+        if (!isCameraAvailable()) return false;
         Camera.Parameters params = mCamera.getParameters();
         params.setVideoStabilization(false);
         if (mSessionType == SessionType.VIDEO) {
@@ -573,9 +569,17 @@ class Camera1 extends CameraController {
     boolean endVideo() {
         if (mIsCapturingVideo) {
             mIsCapturingVideo = false;
-            mMediaRecorder.stop();
-            mMediaRecorder.release();
-            mMediaRecorder = null;
+            if (mMediaRecorder != null) {
+                try {
+                    mMediaRecorder.stop();
+                    mMediaRecorder.release();
+                } catch (Exception e) {
+                    // This can happen if endVideo() is called right after startVideo().
+                    // We don't care.
+                    LOG.w("Error while closing media recorder.", e);
+                }
+                mMediaRecorder = null;
+            }
             if (mVideoFile != null) {
                 mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
                 mVideoFile = null;
@@ -655,7 +659,7 @@ class Camera1 extends CameraController {
 
     @Override
     boolean setZoom(float zoom) {
-        if (!isCameraOpened()) return false;
+        if (!isCameraAvailable()) return false;
         if (!mOptions.isZoomSupported()) return false;
         synchronized (mLock) {
             Camera.Parameters params = mCamera.getParameters();
@@ -669,7 +673,7 @@ class Camera1 extends CameraController {
 
     @Override
     boolean setExposureCorrection(float EVvalue) {
-        if (!isCameraOpened()) return false;
+        if (!isCameraAvailable()) return false;
         if (!mOptions.isExposureCorrectionSupported()) return false;
         float max = mOptions.getExposureCorrectionMaxValue();
         float min = mOptions.getExposureCorrectionMinValue();
@@ -689,7 +693,7 @@ class Camera1 extends CameraController {
 
     @Override
     boolean startAutoFocus(@Nullable final Gesture gesture, PointF point) {
-        if (!isCameraOpened()) return false;
+        if (!isCameraAvailable()) return false;
         if (!mOptions.isAutoFocusSupported()) return false;
         final PointF p = new PointF(point.x, point.y); // copy.
         List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y);

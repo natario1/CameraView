@@ -93,6 +93,7 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getSessionType(), SessionType.DEFAULT);
         assertEquals(cameraView.getHdr(), Hdr.DEFAULT);
         assertEquals(cameraView.getVideoQuality(), VideoQuality.DEFAULT);
+        assertEquals(cameraView.getLocation(), null);
 
         // Self managed
         assertEquals(cameraView.getExposureCorrection(), 0f, 0f);
@@ -410,7 +411,7 @@ public class CameraViewTest extends BaseTest {
         source.setLongitude(-10d);
         source.setAltitude(50d);
         cameraView.setLocation(source);
-        Location other = mockController.mLocation;
+        Location other = cameraView.getLocation();
         assertEquals(10d, other.getLatitude(), 0d);
         assertEquals(-10d, other.getLongitude(), 0d);
         assertEquals(50d, other.getAltitude(), 0d);

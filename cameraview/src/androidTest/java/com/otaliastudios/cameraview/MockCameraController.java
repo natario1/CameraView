@@ -10,7 +10,6 @@ import java.io.File;
 
 public class MockCameraController extends CameraController {
 
-    Location mLocation;
     boolean mPictureCaptured;
     boolean mFocusStarted;
     boolean mZoomChanged;
@@ -110,7 +109,7 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    boolean isCameraOpened() {
+    boolean isCameraAvailable() {
         return true;
     }
 

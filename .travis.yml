@@ -30,7 +30,7 @@ android:
 
 before_script:
   - echo no | android create avd --force --name test --target android-$EMULATOR_API --abi $EMULATOR_ABI
-  - emulator -avd test -no-audio -no-window &
+  - emulator -avd test -no-audio -no-window -camera-back emulated -camera-front emulated &
   - android-wait-for-emulator
   - adb shell input keyevent 82 &
 

@@ -422,6 +422,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`toggleFlash()`|Toggles the flash value between `Flash.OFF`, `Flash.ON`, and `Flash.AUTO`.|
 |`setLocation(Location)`|Sets location data to be appended to picture/video metadata.|
 |`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
+|`getLocation()`|Retrieves location data previously applied with setLocation().|
 |`startAutoFocus(float, float)`|Starts an autofocus process at the given coordinates, with respect to the view dimensions.|
 |`getPreviewSize()`|Returns the size of the preview surface. If CameraView was not constrained in its layout phase (e.g. it was `wrap_content`), this will return the same aspect ratio of CameraView.|
 |`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|

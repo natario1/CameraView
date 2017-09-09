@@ -19,6 +19,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     protected VideoQuality mVideoQuality;
     protected SessionType mSessionType;
     protected Hdr mHdr;
+    protected Location mLocation;
 
     protected Size mCaptureSize;
     protected Size mPreviewSize;
@@ -68,6 +69,11 @@ abstract class CameraController implements Preview.SurfaceCallback {
     @WorkerThread
     abstract void onStop();
 
+    // Returns whether the camera is available (started),
+    // so we can start setting parameters on it.
+    // Preview surface might still be off at this point.
+    abstract boolean isCameraAvailable();
+
     //endregion
 
     //region Rotation callbacks
@@ -85,23 +91,33 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     //region Abstract setParameters
 
-    abstract boolean setZoom(float zoom);
-
-    abstract boolean setExposureCorrection(float EVvalue);
-
-    abstract void setFacing(Facing facing);
-
-    abstract void setFlash(Flash flash);
-
-    abstract void setWhiteBalance(WhiteBalance whiteBalance);
-
-    abstract void setVideoQuality(VideoQuality videoQuality);
-
+    // Should restart the session if active.
     abstract void setSessionType(SessionType sessionType);
 
+    // Should restart the session if active.
+    abstract void setFacing(Facing facing);
+
+    // If opened and supported, apply and return true.
+    abstract boolean setZoom(float zoom);
+
+    // If opened and supported, apply and return true.
+    abstract boolean setExposureCorrection(float EVvalue);
+
+    // If closed, keep. If opened, check supported and apply.
+    abstract void setFlash(Flash flash);
+
+    // If closed, keep. If opened, check supported and apply.
+    abstract void setWhiteBalance(WhiteBalance whiteBalance);
+
+    // If closed, keep. If opened, check supported and apply.
     abstract void setHdr(Hdr hdr);
 
+    // If closed, keep. If opened, check supported and apply.
     abstract void setLocation(Location location);
+
+    // Throw if capturing. If in video session, recompute capture size, and, if needed, preview size.
+    abstract void setVideoQuality(VideoQuality videoQuality);
+
 
     //endregion
 
@@ -115,10 +131,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     abstract boolean endVideo();
 
-
     abstract boolean shouldFlipSizes(); // Wheter the Sizes should be flipped to match the view orientation.
-
-    abstract boolean isCameraOpened();
 
     abstract boolean startAutoFocus(@Nullable Gesture gesture, PointF point);
 
@@ -158,6 +171,10 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     final Hdr getHdr() {
         return mHdr;
+    }
+
+    final Location getLocation() {
+        return mLocation;
     }
 
     final Size getCaptureSize() {
