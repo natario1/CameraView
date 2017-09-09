@@ -67,7 +67,14 @@ class Camera1 extends CameraController {
     @Override
     public void onSurfaceAvailable() {
         LOG.i("onSurfaceAvailable, size is", mPreview.getSurfaceSize());
-        if (shouldSetup()) setup();
+        if (shouldSetup()) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (shouldSetup()) setup();
+                }
+            });
+        }
     }
 
     /**
@@ -340,6 +347,8 @@ class Camera1 extends CameraController {
     @Override
     void setVideoQuality(VideoQuality videoQuality) {
         if (mIsCapturingVideo) {
+            // TODO: actually any call to getParameters() could fail while recording a video.
+            // See. https://stackoverflow.com/questions/14941625/correct-handling-of-exception-getparameters-failed-empty-parameters
             throw new IllegalStateException("Can't change video quality while recording a video.");
         }
 
@@ -545,21 +554,21 @@ class Camera1 extends CameraController {
         mVideoFile = videoFile;
         if (mIsCapturingVideo) return false;
         if (!isCameraAvailable()) return false;
-        Camera.Parameters params = mCamera.getParameters();
-        params.setVideoStabilization(false);
         if (mSessionType == SessionType.VIDEO) {
             mIsCapturingVideo = true;
             initMediaRecorder();
             try {
                 mMediaRecorder.prepare();
+                mMediaRecorder.start();
+                return true;
             } catch (Exception e) {
-                e.printStackTrace();
+                Exception m = e; // FileNotFoundException: Read only file system.
+                LOG.e("Error while starting MediaRecorder.", e);
                 mVideoFile = null;
+                mCamera.lock();
                 endVideo();
                 return false;
             }
-            mMediaRecorder.start();
-            return true;
         } else {
             throw new IllegalStateException("Can't record video while session type is picture");
         }

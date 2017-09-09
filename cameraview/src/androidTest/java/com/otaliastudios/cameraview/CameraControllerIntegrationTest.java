@@ -94,7 +94,7 @@ public class CameraControllerIntegrationTest extends BaseTest {
     //region test open/close
 
     @Test
-    public void testOpenClose() {
+    public void testOpenClose() throws Exception {
         assertFalse(controller.isCameraAvailable());
 
         camera.start();
@@ -248,14 +248,14 @@ public class CameraControllerIntegrationTest extends BaseTest {
     public void testSetHdr() {
         camera.start();
         CameraOptions options = waitForOpen(true);
-        WhiteBalance[] values = WhiteBalance.values();
-        WhiteBalance oldValue = camera.getWhiteBalance();
-        for (WhiteBalance value : values) {
-            camera.setWhiteBalance(value);
+        Hdr[] values = Hdr.values();
+        Hdr oldValue = camera.getHdr();
+        for (Hdr value : values) {
+            camera.setHdr(value);
             if (options.supports(value)) {
-                assertEquals(camera.getWhiteBalance(), value);
+                assertEquals(camera.getHdr(), value);
             } else {
-                assertEquals(camera.getWhiteBalance(), oldValue);
+                assertEquals(camera.getHdr(), oldValue);
             }
         }
     }

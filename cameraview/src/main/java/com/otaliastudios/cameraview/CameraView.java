@@ -1106,7 +1106,7 @@ public class CameraView extends FrameLayout {
      */
     public void startCapturingVideo(File file) {
         if (file == null) {
-            file = new File(getContext().getExternalFilesDir(null), "video.mp4");
+            file = new File(getContext().getFilesDir(), "video.mp4");
         }
         if (mCameraController.startVideo(file)) {
             mUiHandler.post(new Runnable() {
