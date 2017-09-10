@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
+import android.graphics.PointF;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -16,6 +17,7 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -71,6 +73,7 @@ public class CameraControllerIntegrationTest extends BaseTest {
             waitForClose(true);
         } */
         camera.destroy();
+        WorkerHandler.clearCache();
     }
 
     private CameraOptions waitForOpen(boolean expectSuccess) {
@@ -95,6 +98,32 @@ public class CameraControllerIntegrationTest extends BaseTest {
             assertNotNull("Can close", result);
         } else {
             assertNull("Should not close", result);
+        }
+        return result;
+    }
+
+    private Boolean waitForVideo(boolean expectSuccess) {
+        final Task<Boolean> video = new Task<>();
+        video.listen();
+        doEndTask(video, true).when(listener).onVideoTaken(any(File.class));
+        Boolean result = video.await(2000);
+        if (expectSuccess) {
+            assertNotNull("Can take video", result);
+        } else {
+            assertNull("Should not take video", result);
+        }
+        return result;
+    }
+
+    private PointF waitForFocusStart(boolean expectSuccess) {
+        final Task<PointF> focus = new Task<>();
+        focus.listen();
+        doEndTask(focus, 0).when(listener).onFocusStart(any(PointF.class));
+        PointF result = focus.await(5000);
+        if (expectSuccess) {
+            assertNotNull("Can do autofocus", result);
+        } else {
+            assertNull("Should not do autofocus", result);
         }
         return result;
     }
@@ -319,9 +348,52 @@ public class CameraControllerIntegrationTest extends BaseTest {
 
     //endregion
 
-    // TODO: startVideo, endVideo
+    //region test startVideo
 
-    // TODO: startAutoFocus
+    @Test(expected = IllegalStateException.class)
+    public void testStartVideo_whileInPictureMode() {
+        camera.setSessionType(SessionType.PICTURE);
+        camera.start();
+        waitForOpen(true);
+        camera.startCapturingVideo(null);
+    }
+
+    @Test
+    public void testStartEndVideo() {
+        camera.setSessionType(SessionType.VIDEO);
+        camera.start();
+        waitForOpen(true);
+        camera.startCapturingVideo(null, 1000);
+        waitForVideo(true); // waits 2000
+    }
+
+    @Test
+    public void testEndVideo_withoutStarting() {
+        camera.setSessionType(SessionType.VIDEO);
+        camera.start();
+        waitForOpen(true);
+        camera.stopCapturingVideo();
+        waitForVideo(false);
+    }
+
+    //endregion
+
+    //region startAutoFocus
+    // TODO: won't test onStopAutoFocus because that is not guaranteed to be called
+
+    @Test
+    public void testStartAutoFocus() {
+        camera.start();
+        CameraOptions o = waitForOpen(true);
+        camera.startAutoFocus(1, 1);
+        if (o.isAutoFocusSupported()) {
+            verify(listener, times(1)).onFocusStart(new PointF(1, 1));
+        } else {
+            verify(listener, never()).onFocusStart(any(PointF.class));
+        }
+    }
+
+    //endregion
 
     // TODO: capturePicture
 

@@ -564,10 +564,10 @@ class Camera1 extends CameraController {
 
     @Override
     boolean startVideo(@NonNull File videoFile) {
-        mVideoFile = videoFile;
         if (mIsCapturingVideo) return false;
         if (!isCameraAvailable()) return false;
         if (mSessionType == SessionType.VIDEO) {
+            mVideoFile = videoFile;
             mIsCapturingVideo = true;
             initMediaRecorder();
             try {
@@ -575,7 +575,6 @@ class Camera1 extends CameraController {
                 mMediaRecorder.start();
                 return true;
             } catch (Exception e) {
-                Exception m = e; // FileNotFoundException: Read only file system.
                 LOG.e("Error while starting MediaRecorder.", e);
                 mVideoFile = null;
                 mCamera.lock();

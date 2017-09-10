@@ -1129,7 +1129,7 @@ public class CameraView extends FrameLayout {
             throw new IllegalArgumentException("Video duration can't be < 500 milliseconds");
         }
         startCapturingVideo(file);
-        postDelayed(new Runnable() {
+        mUiHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 stopCapturingVideo();
