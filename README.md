@@ -295,7 +295,8 @@ Most camera parameters can be controlled through XML attributes or linked method
     app:cameraJpegQuality="100"
     app:cameraVideoQuality="480p"
     app:cameraWhiteBalance="auto"
-    app:cameraHdr="off" />
+    app:cameraHdr="off"
+    app:cameraAudio="on"/>
 ```
 
 |XML Attribute|Method|Values|Default Value|
@@ -309,6 +310,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`lowest` `highest` `maxQvga` `max480p` `max720p` `max1080p` `max2160p`|`max480p`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 |[`cameraHdr`](#camerahdr)|`setHdr()`|`off` `on`|`off`|
+|[`cameraAudio`](#cameraaudio)|`setAudio()`|`off` `on`|`on`|
 
 #### cameraSessionType
 
@@ -402,6 +404,15 @@ Turns on or off HDR captures.
 ```java
 cameraView.setHdr(Hdr.OFF);
 cameraView.setHdr(Hdr.ON);
+```
+
+#### cameraAudio
+
+Turns on or off audio stream.
+
+```java
+cameraView.setAudio(Audio.OFF);
+cameraView.setAudio(Audio.ON);
 ```
 
 ## Other APIs

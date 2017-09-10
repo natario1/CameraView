@@ -19,6 +19,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     protected VideoQuality mVideoQuality;
     protected SessionType mSessionType;
     protected Hdr mHdr;
+    protected Audio mAudio;
 
     protected Size mCaptureSize;
     protected Size mPreviewSize;
@@ -101,6 +102,8 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     abstract void setHdr(Hdr hdr);
 
+    abstract void setAudio(Audio audio);
+
     abstract void setLocation(Location location);
 
     //endregion
@@ -158,6 +161,10 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     final Hdr getHdr() {
         return mHdr;
+    }
+
+    final Audio getAudio() {
+        return mAudio;
     }
 
     final Size getCaptureSize() {
