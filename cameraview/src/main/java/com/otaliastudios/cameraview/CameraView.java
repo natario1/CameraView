@@ -494,7 +494,7 @@ public class CameraView extends FrameLayout {
             return;
         }
 
-        if (checkPermissions(getSessionType())) {
+        if (checkPermissions(getSessionType(), getAudio())) {
             mIsStarted = true;
             // Update display orientation for current CameraController
             mOrientationHelper.enable(getContext());
