@@ -2,6 +2,8 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -111,6 +113,19 @@ public class CameraControllerIntegrationTest extends BaseTest {
             assertNotNull("Can take video", result);
         } else {
             assertNull("Should not take video", result);
+        }
+        return result;
+    }
+
+    private byte[] waitForPicture(boolean expectSuccess) {
+        final Task<byte[]> pic = new Task<>();
+        pic.listen();
+        doEndTask(pic, 0).when(listener).onPictureTaken(any(byte[].class));
+        byte[] result = pic.await(2000);
+        if (expectSuccess) {
+            assertNotNull("Can take picture", result);
+        } else {
+            assertNull("Should not take picture", result);
         }
         return result;
     }
@@ -384,7 +399,82 @@ public class CameraControllerIntegrationTest extends BaseTest {
 
     //endregion
 
-    // TODO: capturePicture
+    //region capture
 
-    // TODO: captureSnapshot
+    @Test
+    public void testCapturePicture_beforeStarted() {
+        camera.capturePicture();
+        waitForPicture(false);
+    }
+
+    @Test
+    public void testCapturePicture_concurrentCalls() throws Exception {
+        // Second take should fail.
+        camera.start();
+        waitForOpen(true);
+
+        CountDownLatch latch = new CountDownLatch(2);
+        doCountDown(latch).when(listener).onPictureTaken(any(byte[].class));
+
+        camera.capturePicture();
+        camera.capturePicture();
+        boolean did = latch.await(4, TimeUnit.SECONDS);
+        assertFalse(did);
+        assertEquals(latch.getCount(), 1);
+    }
+
+    @Test
+    public void testCapturePicture_size() throws Exception {
+        camera.setCropOutput(false);
+        camera.start();
+        waitForOpen(true);
+
+        Size size = camera.getCaptureSize();
+        camera.capturePicture();
+        byte[] jpeg = waitForPicture(true);
+        Bitmap b = CameraUtils.decodeBitmap(jpeg);
+        // Result can actually have swapped dimensions
+        // Which one, depends on factors including device physical orientation
+        assertTrue(b.getWidth() == size.getHeight() || b.getWidth() == size.getWidth());
+        assertTrue(b.getHeight() == size.getHeight() || b.getHeight() == size.getWidth());
+    }
+
+    @Test
+    public void testCaptureSnapshot_beforeStarted() {
+        camera.captureSnapshot();
+        waitForPicture(false);
+    }
+
+    @Test
+    public void testCaptureSnapshot_concurrentCalls() throws Exception {
+        // Second take should fail.
+        camera.start();
+        waitForOpen(true);
+
+        CountDownLatch latch = new CountDownLatch(2);
+        doCountDown(latch).when(listener).onPictureTaken(any(byte[].class));
+
+        camera.captureSnapshot();
+        camera.captureSnapshot();
+        boolean did = latch.await(4, TimeUnit.SECONDS);
+        assertFalse(did);
+        assertEquals(latch.getCount(), 1);
+    }
+
+    @Test
+    public void testCaptureSnapshot_size() throws Exception {
+        camera.setCropOutput(false);
+        camera.start();
+        waitForOpen(true);
+
+        Size size = camera.getPreviewSize();
+        camera.captureSnapshot();
+        byte[] jpeg = waitForPicture(true);
+        Bitmap b = CameraUtils.decodeBitmap(jpeg);
+        // Result can actually have swapped dimensions
+        // Which one, depends on factors including device physical orientation
+        assertTrue(b.getWidth() == size.getHeight() || b.getWidth() == size.getWidth());
+        assertTrue(b.getHeight() == size.getHeight() || b.getHeight() == size.getWidth());
+    }
+
 }
