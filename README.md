@@ -445,15 +445,15 @@ Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProp
 `CameraView` needs two permissions:
 
 - `android.permission.CAMERA` : required for capturing pictures and videos
-- `android.permission.RECORD_AUDIO` : required for capturing videos
+- `android.permission.RECORD_AUDIO` : required for capturing videos with `Audio.ON` (the default)
 
-You can handle permissions yourself and then call `CameraView.start()` once they are acquired. If they are not, `CameraView` will request permissions to the user based on the `sessionType` that was set. In that case, you can restart the camera if you have a successful response from `onRequestPermissionResults()`.
+You can handle permissions yourself and then call `CameraView.start()` once they are acquired. If they are not, `CameraView` will request permissions to the user based on whether they are needed. In that case, you can restart the camera if you have a successful response from `onRequestPermissionResults()`.
 
 ## Manifest file
 
 The library manifest file is not strict and only asks for camera permissions. This means that:
 
-- If you wish to record videos, you should also add `android.permission.RECORD_AUDIO` to required permissions
+- If you wish to record videos with `Audio.ON` (the default), you should also add `android.permission.RECORD_AUDIO` to required permissions
 
 ```xml
 <uses-permission android:name="android.permission.RECORD_AUDIO"/>
