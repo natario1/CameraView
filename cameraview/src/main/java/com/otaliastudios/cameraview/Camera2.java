@@ -11,6 +11,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
 import java.io.File;
@@ -21,25 +22,13 @@ import java.util.List;
 @TargetApi(21)
 class Camera2 extends CameraController {
 
-    private CameraDevice mCamera;
-    private CameraCharacteristics mCameraCharacteristics;
-    private CameraManager mCameraManager;
-
-    private String mCameraId;
-
-
-    private Mapper mMapper = new Mapper.Mapper2();
-    private final HashMap<String, ExtraProperties> mExtraPropertiesMap = new HashMap<>();
-
-
-    @Override
-    boolean setExposureCorrection(float EVvalue) {
-        return false;
+    public Camera2(CameraView.CameraCallbacks callback, Preview preview) {
+        super(callback, preview);
     }
 
     @Override
-    boolean setZoom(float zoom) {
-        return false;
+    public void onSurfaceAvailable() {
+
     }
 
     @Override
@@ -48,89 +37,42 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    public void onSurfaceAvailable() {
+    void onStart() throws Exception {
 
-    }
-
-    Camera2(CameraView.CameraCallbacks callback, Preview preview, Context context) {
-        super(callback, preview);
-        mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-
-        // Get all view angles
-        try {
-            for (final String cameraId : mCameraManager.getCameraIdList()) {
-                CameraCharacteristics characteristics =
-                        mCameraManager.getCameraCharacteristics(cameraId);
-                @SuppressWarnings("ConstantConditions")
-                int orientation = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (orientation == CameraCharacteristics.LENS_FACING_BACK) {
-                    ExtraProperties props = new ExtraProperties(characteristics);
-                    mExtraPropertiesMap.put(cameraId, props);
-                }
-            }
-        } catch (CameraAccessException e) {
-            throw new RuntimeException("Failed to get camera view angles", e);
-        }
-    }
-
-    // CameraImpl:
-
-    @WorkerThread
-    @Override
-    void onStart() {
-
-    }
-
-    @WorkerThread
-    @Override
-    void onStop() {
-
-    }
-
-
-    @Override
-    void setFacing(Facing facing) {
-        int internalFacing = mMapper.map(facing);
-        final String[] ids;
-        try {
-            ids = mCameraManager.getCameraIdList();
-        } catch (CameraAccessException e) {
-            return;
-        }
-
-        if (ids.length == 0) {
-            throw new RuntimeException("No camera available.");
-        }
-//
-//        for (String id : ids) {
-//            CameraCharacteristics cameraCharacteristics = mCameraManager.getCameraCharacteristics(id);
-//            Integer level = cameraCharacteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-//            if (level == null || level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
-//                continue;
-//            }
-//            Integer internal = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
-//            if (internal == null) {
-//                throw new NullPointerException("Unexpected state: LENS_FACING null");
-//            }
-//            if (internal == internalFacing) {
-//                mCameraId = id;
-//                mCameraCharacteristics = cameraCharacteristics;
-//                return true;
-//            }
-//        }
-
-        if (mFacing == facing && isCameraAvailable()) {
-            stop();
-            start();
-        }
     }
 
     @Override
-    void setFlash(Flash flash) {
+    void onStop() throws Exception {
+
     }
 
     @Override
     void setSessionType(SessionType sessionType) {
+
+    }
+
+    @Override
+    void setFacing(Facing facing) {
+
+    }
+
+    @Override
+    boolean setZoom(float zoom) {
+        return false;
+    }
+
+    @Override
+    boolean setExposureCorrection(float EVvalue) {
+        return false;
+    }
+
+    @Override
+    void setFlash(Flash flash) {
+
+    }
+
+    @Override
+    void setWhiteBalance(WhiteBalance whiteBalance) {
 
     }
 
@@ -145,27 +87,22 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setWhiteBalance(WhiteBalance whiteBalance) {
-
-    }
-
-    @Override
     void setVideoQuality(VideoQuality videoQuality) {
 
     }
 
     @Override
     boolean capturePicture() {
-        return true;
+        return false;
     }
 
     @Override
     boolean captureSnapshot() {
-        return true;
+        return false;
     }
 
     @Override
-    boolean startVideo(@NonNull File videoFile) {
+    boolean startVideo(@NonNull File file) {
         return false;
     }
 
@@ -174,59 +111,13 @@ class Camera2 extends CameraController {
         return false;
     }
 
-
-
     @Override
     boolean shouldFlipSizes() {
         return false;
     }
 
     @Override
-    boolean isCameraAvailable() {
-        return mCamera != null;
+    boolean startAutoFocus(@Nullable Gesture gesture, PointF point) {
+        return false;
     }
-
-    @Override
-    boolean startAutoFocus(Gesture gesture, PointF point) {
-        return true;
-    }
-
-
-    // Internal
-
-
-    private List<Size> getAvailableCaptureResolutions() {
-        List<Size> output = new ArrayList<>();
-
-        if (mCameraCharacteristics != null) {
-            StreamConfigurationMap map = mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            if (map == null) {
-                throw new IllegalStateException("Failed to get configuration map: " + mCameraId);
-            }
-
-            for (android.util.Size size : map.getOutputSizes(ImageFormat.JPEG)) {
-                output.add(new Size(size.getWidth(), size.getHeight()));
-            }
-        }
-
-        return output;
-    }
-
-    private List<Size> getAvailablePreviewResolutions() {
-        List<Size> output = new ArrayList<>();
-
-        if (mCameraCharacteristics != null) {
-            StreamConfigurationMap map = mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            if (map == null) {
-                throw new IllegalStateException("Failed to get configuration map: " + mCameraId);
-            }
-
-            for (android.util.Size size : map.getOutputSizes(mPreview.getOutputClass())) {
-                output.add(new Size(size.getWidth(), size.getHeight()));
-            }
-        }
-
-        return output;
-    }
-
 }

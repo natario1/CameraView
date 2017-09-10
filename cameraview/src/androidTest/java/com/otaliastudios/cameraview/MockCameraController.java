@@ -17,6 +17,7 @@ public class MockCameraController extends CameraController {
 
     MockCameraController(CameraView.CameraCallbacks callback, Preview preview) {
         super(callback, preview);
+        mState = CameraController.STATE_STARTED;
     }
 
     void setMockCameraOptions(CameraOptions options) {
@@ -28,11 +29,11 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void onStart() {
+    void onStart() throws Exception {
     }
 
     @Override
-    void onStop() {
+    void onStop() throws Exception {
     }
 
     @Override
@@ -108,10 +109,7 @@ public class MockCameraController extends CameraController {
         return false;
     }
 
-    @Override
-    boolean isCameraAvailable() {
-        return true;
-    }
+
 
     @Override
     boolean startAutoFocus(@Nullable Gesture gesture, PointF point) {

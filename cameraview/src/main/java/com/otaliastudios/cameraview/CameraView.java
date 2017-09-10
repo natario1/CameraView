@@ -67,7 +67,6 @@ public class CameraView extends FrameLayout {
     PinchGestureLayout mPinchGestureLayout;
     TapGestureLayout mTapGestureLayout;
     ScrollGestureLayout mScrollGestureLayout;
-    private boolean mStartCalled;
     private boolean mKeepScreenOn;
 
     // Threading
@@ -126,8 +125,6 @@ public class CameraView extends FrameLayout {
         addView(mPinchGestureLayout);
         addView(mTapGestureLayout);
         addView(mScrollGestureLayout);
-
-        mStartCalled = false;
 
         // Apply self managed
         setCropOutput(cropOutput);
@@ -406,7 +403,7 @@ public class CameraView extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (!mCameraController.isCameraAvailable()) return true;
+        if (!isStarted()) return true;
 
         // Pass to our own GestureLayouts
         CameraOptions options = mCameraController.getCameraOptions(); // Non null
@@ -476,7 +473,11 @@ public class CameraView extends FrameLayout {
      * @return whether the camera has started
      */
     public boolean isStarted() {
-        return mStartCalled;
+        return mCameraController.getState() >= CameraController.STATE_STARTED;
+    }
+
+    private boolean isStopped() {
+        return mCameraController.getState() == CameraController.STATE_STOPPED;
     }
 
 
@@ -485,13 +486,9 @@ public class CameraView extends FrameLayout {
      * This should be called onResume(), or when you are ready with permissions.
      */
     public void start() {
-        if (mStartCalled || !isEnabled()) {
-            // Already started, do nothing.
-            return;
-        }
+        if (!isEnabled()) return;
 
         if (checkPermissions(getSessionType())) {
-            mStartCalled = true;
             // Update display orientation for current CameraController
             mOrientationHelper.enable(getContext());
             mCameraController.start();
@@ -565,17 +562,13 @@ public class CameraView extends FrameLayout {
      * This should be called onPause().
      */
     public void stop() {
-        if (!mStartCalled) {
-            // Already stopped, do nothing.
-            return;
-        }
-        mStartCalled = false;
         mCameraController.stop();
     }
 
     public void destroy() {
         // TODO: this is not strictly needed
         clearCameraListeners(); // Release
+        mCameraController.stopImmediately();
     }
 
     //endregion
@@ -900,7 +893,7 @@ public class CameraView extends FrameLayout {
      */
     public void setSessionType(SessionType sessionType) {
 
-        if (sessionType == getSessionType() || !mStartCalled) {
+        if (sessionType == getSessionType() || isStopped()) {
             // Check did took place, or will happen on start().
             mCameraController.setSessionType(sessionType);
 

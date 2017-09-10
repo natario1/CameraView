@@ -67,14 +67,18 @@ class Camera1 extends CameraController {
     @Override
     public void onSurfaceAvailable() {
         LOG.i("onSurfaceAvailable, size is", mPreview.getSurfaceSize());
-        if (shouldSetup()) {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (shouldSetup()) setup();
+        if (!shouldSetup()) return;
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (!shouldSetup()) return;
+                try {
+                    setup();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            });
-        }
+            }
+        });
     }
 
     /**
@@ -112,20 +116,16 @@ class Camera1 extends CameraController {
 
     // The act of binding an "open" camera to a "ready" preview.
     // These can happen at different times but we want to end up here.
-    private void setup() {
-        try {
-            Object output = mPreview.getOutput();
-            if (mPreview.getOutputClass() == SurfaceHolder.class) {
-                mCamera.setPreviewDisplay((SurfaceHolder) output);
-            } else {
-                mCamera.setPreviewTexture((SurfaceTexture) output);
-            }
-        } catch (IOException e) {
-            LOG.e("Error while trying to setup Camera1.", e);
-            throw new RuntimeException(e);
+    @WorkerThread
+    private void setup() throws Exception {
+        Object output = mPreview.getOutput();
+        if (mPreview.getOutputClass() == SurfaceHolder.class) {
+            mCamera.setPreviewDisplay((SurfaceHolder) output);
+        } else {
+            mCamera.setPreviewTexture((SurfaceTexture) output);
         }
 
-        boolean invertPreviewSizes = shouldFlipSizes(); // mDisplayOffset % 180 != 0;
+        boolean invertPreviewSizes = shouldFlipSizes();
         mCaptureSize = computeCaptureSize();
         mPreviewSize = computePreviewSize();
         mCameraCallbacks.onCameraPreviewSizeChanged();
@@ -139,6 +139,7 @@ class Camera1 extends CameraController {
             params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
             mCamera.setParameters(params);
         }
+
         mCamera.startPreview();
         mIsSetup = true;
     }
@@ -146,8 +147,10 @@ class Camera1 extends CameraController {
 
     @WorkerThread
     @Override
-    void onStart() {
-        if (isCameraAvailable()) onStop();
+    void onStart() throws Exception {
+        if (isCameraAvailable()) {
+            onStop(); // Should not happen.
+        }
         if (collectCameraId()) {
             mCamera = Camera.open(mCameraId);
 
@@ -167,19 +170,28 @@ class Camera1 extends CameraController {
             // Try starting preview.
             mCamera.setDisplayOrientation(computeSensorToDisplayOffset()); // <- not allowed during preview
             if (shouldSetup()) setup();
-            mCameraCallbacks.dispatchOnCameraOpened(mOptions);
         }
     }
 
     @WorkerThread
     @Override
-    void onStop() {
+    void onStop() throws Exception {
+        Exception error = null;
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
         if (isCameraAvailable()) {
             if (mIsCapturingVideo) endVideo();
-            mCamera.stopPreview();
-            mCamera.release();
-            mCameraCallbacks.dispatchOnCameraClosed();
+
+            try {
+                mCamera.stopPreview();
+            } catch (Exception e) {
+                error = e;
+            }
+
+            try {
+                mCamera.release();
+            } catch (Exception e) {
+                error = e;
+            }
         }
         mExtraProperties = null;
         mOptions = null;
@@ -187,6 +199,8 @@ class Camera1 extends CameraController {
         mPreviewSize = null;
         mCaptureSize = null;
         mIsSetup = false;
+
+        if (error != null) throw error;
     }
 
     private boolean collectCameraId() {
@@ -209,7 +223,7 @@ class Camera1 extends CameraController {
         if (sessionType != mSessionType) {
             mSessionType = sessionType;
             if (isCameraAvailable()) {
-                start();
+                restart();
             }
         }
     }
@@ -247,7 +261,7 @@ class Camera1 extends CameraController {
         if (facing != mFacing) {
             mFacing = facing;
             if (collectCameraId() && isCameraAvailable()) {
-                start();
+                restart();
             }
         }
     }
@@ -464,8 +478,7 @@ class Camera1 extends CameraController {
         return offset % 180 != 0;
     }
 
-    @Override
-    boolean isCameraAvailable() {
+    private boolean isCameraAvailable() {
         return mCamera != null;
     }
 

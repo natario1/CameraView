@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
 import android.location.Location;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -9,6 +10,14 @@ import android.support.annotation.WorkerThread;
 import java.io.File;
 
 abstract class CameraController implements Preview.SurfaceCallback {
+
+    private static final String TAG = CameraController.class.getSimpleName();
+    private static final CameraLogger LOG = CameraLogger.create(TAG);
+
+    static final int STATE_STOPPING = -1; // Camera is about to be stopped.
+    static final int STATE_STOPPED = 0; // Camera is stopped.
+    static final int STATE_STARTING = 1; // Camera is about to start.
+    static final int STATE_STARTED = 2; // Camera is available and we can set parameters.
 
     protected final CameraView.CameraCallbacks mCameraCallbacks;
     protected final Preview mPreview;
@@ -29,6 +38,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     protected int mDisplayOffset;
     protected int mDeviceOrientation;
+    protected int mState = STATE_STOPPED;
 
     protected WorkerHandler mHandler;
 
@@ -37,6 +47,21 @@ abstract class CameraController implements Preview.SurfaceCallback {
         mPreview = preview;
         mPreview.setSurfaceCallback(this);
         mHandler = WorkerHandler.get("CameraViewController");
+        mHandler.getThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread thread, Throwable throwable) {
+                // Something went wrong. Thread is terminated (about to?).
+                // Move to other thread and stop resources.
+                WorkerHandler.clearCache();
+                mHandler = WorkerHandler.get("CameraViewController");
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopImmediately();
+                    }
+                });
+            }
+        });
     }
 
     //region Start&Stop
@@ -46,7 +71,18 @@ abstract class CameraController implements Preview.SurfaceCallback {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                onStart();
+                try {
+                    int a = mState;
+                    if (mState >= STATE_STARTING) return;
+                    mState = STATE_STARTING;
+                    onStart();
+                    mState = STATE_STARTED;
+                    mCameraCallbacks.dispatchOnCameraOpened(mOptions);
+
+                } catch (Exception e) {
+                    LOG.e("Error while starting the camera engine.", e);
+                    throw new RuntimeException(e);
+                }
             }
         });
     }
@@ -56,23 +92,76 @@ abstract class CameraController implements Preview.SurfaceCallback {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                onStop();
+                try {
+                    int a = mState;
+                    if (mState <= STATE_STOPPED) return;
+                    mState = STATE_STOPPING;
+                    onStop();
+                    mState = STATE_STOPPED;
+                    mCameraCallbacks.dispatchOnCameraClosed();
+
+                } catch (Exception e) {
+                    LOG.e("Error while stopping the camera engine.", e);
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+    }
+
+    // Stops the preview synchronously, ensuring no exceptions are thrown.
+    void stopImmediately() {
+        try {
+            // Don't check, try stop again.
+            mState = STATE_STOPPING;
+            onStop();
+            mState = STATE_STOPPED;
+        } catch (Exception e) {
+            // Do nothing.
+            mState = STATE_STOPPED;
+        }
+    }
+
+    // Forces a restart.
+    protected final void restart() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Don't stop if stopped.
+                    if (mState > STATE_STOPPED) {
+                        mState = STATE_STOPPING;
+                        onStop();
+                        mState = STATE_STOPPED;
+                        mCameraCallbacks.dispatchOnCameraClosed();
+                    }
+                    mState = STATE_STARTING;
+                    onStart();
+                    mState = STATE_STARTED;
+                    mCameraCallbacks.dispatchOnCameraOpened(mOptions);
+
+                } catch (Exception e) {
+                    LOG.e("Error while restarting the camera engine.", e);
+                    throw new RuntimeException(e);
+
+                }
             }
         });
     }
 
     // Starts the preview.
+    // At the end of this method camera must be available, e.g. for setting parameters.
     @WorkerThread
-    abstract void onStart();
+    abstract void onStart() throws Exception;
 
     // Stops the preview.
     @WorkerThread
-    abstract void onStop();
+    abstract void onStop() throws Exception;
 
-    // Returns whether the camera is available (started),
-    // so we can start setting parameters on it.
-    // Preview surface might still be off at this point.
-    abstract boolean isCameraAvailable();
+    // Returns current state.
+    final int getState() {
+        return mState;
+    }
+
 
     //endregion
 

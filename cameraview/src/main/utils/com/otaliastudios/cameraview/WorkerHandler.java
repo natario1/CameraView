@@ -60,4 +60,12 @@ class WorkerHandler {
     public void post(Runnable runnable) {
         mHandler.post(runnable);
     }
+
+    public Thread getThread() {
+        return mThread;
+    }
+
+    public static void clearCache() {
+        sCache.clear();
+    }
 }
