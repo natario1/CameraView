@@ -312,7 +312,9 @@ public class CameraControllerIntegrationTest extends BaseTest {
     //region testSetVideoQuality
     // This can be tricky because can trigger layout changes.
 
-    @Test(expected = IllegalStateException.class)
+    // @Test(expected = IllegalStateException.class)
+    // TODO: Removing. See comments below in the video region. Video is
+    // not reliable on emulators, MediaRecorder might not be supported.
     public void testSetVideoQuality_whileRecording() {
         camera.setSessionType(SessionType.VIDEO);
         camera.setVideoQuality(VideoQuality.HIGHEST);
