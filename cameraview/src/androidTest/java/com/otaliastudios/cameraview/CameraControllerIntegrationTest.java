@@ -5,6 +5,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.espresso.Espresso;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -30,6 +32,7 @@ import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
 
+// TODO: won't work well in a 23+ emulator. Permissions will be asked.
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 public class CameraControllerIntegrationTest extends BaseTest {
@@ -88,6 +91,7 @@ public class CameraControllerIntegrationTest extends BaseTest {
         } else {
             assertNull("Should not open", result);
         }
+        try { Thread.sleep(600); } catch (Exception e) {}
         return result;
     }
 
@@ -101,6 +105,7 @@ public class CameraControllerIntegrationTest extends BaseTest {
         } else {
             assertNull("Should not close", result);
         }
+        try { Thread.sleep(600); } catch (Exception e) {};
         return result;
     }
 
@@ -304,6 +309,18 @@ public class CameraControllerIntegrationTest extends BaseTest {
             } else {
                 assertEquals(camera.getHdr(), oldValue);
             }
+        }
+    }
+
+    @Test
+    public void testSetAudio() {
+        // TODO: when permissions are managed, check that Audio.ON triggers the audio permission
+        camera.start();
+        waitForOpen(true);
+        Audio[] values = Audio.values();
+        for (Audio value : values) {
+            camera.setAudio(value);
+            assertEquals(camera.getAudio(), value);
         }
     }
 

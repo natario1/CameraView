@@ -86,6 +86,7 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getWhiteBalance(), WhiteBalance.DEFAULT);
         assertEquals(cameraView.getSessionType(), SessionType.DEFAULT);
         assertEquals(cameraView.getHdr(), Hdr.DEFAULT);
+        assertEquals(cameraView.getAudio(), Audio.DEFAULT);
         assertEquals(cameraView.getVideoQuality(), VideoQuality.DEFAULT);
         assertEquals(cameraView.getLocation(), null);
 
@@ -519,6 +520,14 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getHdr(), Hdr.ON);
         cameraView.setHdr(Hdr.OFF);
         assertEquals(cameraView.getHdr(), Hdr.OFF);
+    }
+
+    @Test
+    public void testAudio() {
+        cameraView.setAudio(Audio.ON);
+        assertEquals(cameraView.getAudio(), Audio.ON);
+        cameraView.setAudio(Audio.OFF);
+        assertEquals(cameraView.getAudio(), Audio.OFF);
     }
 
     @Test

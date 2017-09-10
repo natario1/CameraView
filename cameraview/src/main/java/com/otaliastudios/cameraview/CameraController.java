@@ -205,6 +205,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     // If closed, keep. If opened, check supported and apply.
     abstract void setLocation(Location location);
 
+    // Just set.
     abstract void setAudio(Audio audio);
 
     // Throw if capturing. If in video session, recompute capture size, and, if needed, preview size.
