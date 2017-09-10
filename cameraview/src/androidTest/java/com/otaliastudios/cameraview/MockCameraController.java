@@ -82,6 +82,11 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
+    void setAudio(Audio audio) {
+        mAudio = audio;
+    }
+
+    @Override
     void setLocation(Location location) {
         mLocation = location;
     }

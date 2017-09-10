@@ -82,6 +82,11 @@ class Camera2 extends CameraController {
     }
 
     @Override
+    void setAudio(Audio audio) {
+
+    }
+
+    @Override
     void setLocation(Location location) {
 
     }

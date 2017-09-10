@@ -29,6 +29,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     protected SessionType mSessionType;
     protected Hdr mHdr;
     protected Location mLocation;
+    protected Audio mAudio;
 
     protected Size mCaptureSize;
     protected Size mPreviewSize;
@@ -204,6 +205,8 @@ abstract class CameraController implements Preview.SurfaceCallback {
     // If closed, keep. If opened, check supported and apply.
     abstract void setLocation(Location location);
 
+    abstract void setAudio(Audio audio);
+
     // Throw if capturing. If in video session, recompute capture size, and, if needed, preview size.
     abstract void setVideoQuality(VideoQuality videoQuality);
 
@@ -264,6 +267,10 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     final Location getLocation() {
         return mLocation;
+    }
+
+    final Audio getAudio() {
+        return mAudio;
     }
 
     final Size getCaptureSize() {

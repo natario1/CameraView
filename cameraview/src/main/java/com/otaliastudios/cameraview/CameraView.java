@@ -100,6 +100,7 @@ public class CameraView extends FrameLayout {
         VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
         SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
         Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
+        Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
 
         // Gestures
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
@@ -138,6 +139,7 @@ public class CameraView extends FrameLayout {
         setWhiteBalance(whiteBalance);
         setGrid(grid);
         setHdr(hdr);
+        setAudio(audio);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -488,7 +490,7 @@ public class CameraView extends FrameLayout {
     public void start() {
         if (!isEnabled()) return;
 
-        if (checkPermissions(getSessionType())) {
+        if (checkPermissions(getSessionType(), getAudio())) {
             // Update display orientation for current CameraController
             mOrientationHelper.enable(getContext());
             mCameraController.start();
@@ -502,31 +504,21 @@ public class CameraView extends FrameLayout {
      * @return true if we can go on, false otherwise.
      */
     @SuppressLint("NewApi")
-    protected boolean checkPermissions(SessionType sessionType) {
-        checkPermissionsManifestOrThrow(sessionType);
-        boolean api23 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
-        int cameraCheck, audioCheck;
-        if (!api23) {
-            cameraCheck = PackageManager.PERMISSION_GRANTED;
-            audioCheck = PackageManager.PERMISSION_GRANTED;
-        } else {
-            cameraCheck = getContext().checkSelfPermission(Manifest.permission.CAMERA);
-            audioCheck = getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO);
-        }
-        switch (sessionType) {
-            case VIDEO:
-                if (cameraCheck != PackageManager.PERMISSION_GRANTED || audioCheck != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(true, true);
-                    return false;
-                }
-                break;
+    protected boolean checkPermissions(SessionType sessionType, Audio audio) {
+        checkPermissionsManifestOrThrow(sessionType, audio);
+        // Manifest is OK at this point. Let's check runtime permissions.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
 
-            case PICTURE:
-                if (cameraCheck != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(true, false);
-                    return false;
-                }
-                break;
+        Context c = getContext();
+        boolean needsCamera = true;
+        boolean needsAudio = sessionType == SessionType.VIDEO && audio == Audio.ON;
+
+        needsCamera = needsCamera && c.checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED;
+        needsAudio = needsAudio && c.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED;
+
+        if (needsCamera || needsAudio) {
+            requestPermissions(needsCamera, needsAudio);
+            return false;
         }
         return true;
     }
@@ -537,8 +529,8 @@ public class CameraView extends FrameLayout {
      * If the developer did not add this to its manifest, throw and fire warnings.
      * (Hoping this is not caught elsewhere... we should test).
      */
-    private void checkPermissionsManifestOrThrow(SessionType sessionType) {
-        if (sessionType == SessionType.VIDEO) {
+    private void checkPermissionsManifestOrThrow(SessionType sessionType, Audio audio) {
+        if (sessionType == SessionType.VIDEO && audio == Audio.ON) {
             try {
                 PackageManager manager = getContext().getPackageManager();
                 PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
@@ -867,6 +859,43 @@ public class CameraView extends FrameLayout {
 
 
     /**
+     * Controls the audio mode.
+     *
+     * @see Audio#OFF
+     * @see Audio#ON
+     *
+     * @param audio desired audio value
+     */
+    public void setAudio(Audio audio) {
+
+        if (audio == getAudio() || isStopped()) {
+            // Check did took place, or will happen on start().
+            mCameraController.setAudio(audio);
+
+        } else if (checkPermissions(getSessionType(), audio)) {
+            // Camera is running. Pass.
+            mCameraController.setAudio(audio);
+
+        } else {
+            // This means that the audio permission is being asked.
+            // Stop the camera so it can be restarted by the developer onPermissionResult.
+            // Developer must also set the audio value again...
+            // Not ideal but good for now.
+            stop();
+        }
+    }
+
+
+    /**
+     * Gets the current audio value.
+     * @return the current audio value
+     */
+    public Audio getAudio() {
+        return mCameraController.getAudio();
+    }
+
+
+    /**
      * Starts an autofocus process at the given coordinates, with respect
      * to the view width and height.
      *
@@ -897,7 +926,7 @@ public class CameraView extends FrameLayout {
             // Check did took place, or will happen on start().
             mCameraController.setSessionType(sessionType);
 
-        } else if (checkPermissions(sessionType)) {
+        } else if (checkPermissions(sessionType, getAudio())) {
             // Camera is running. CameraImpl setSessionType will do the trick.
             mCameraController.setSessionType(sessionType);
 

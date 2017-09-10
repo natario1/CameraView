@@ -308,6 +308,17 @@ class Camera1 extends CameraController {
         return false;
     }
 
+
+    @Override
+    void setAudio(Audio audio) {
+        if (mAudio != audio) {
+            if (mIsCapturingVideo) {
+                LOG.w("Changing audio mode while recording. Changes will take place starting from next video");
+            }
+            mAudio = audio;
+        }
+    }
+
     @Override
     void setFlash(Flash flash) {
         Flash old = mFlash;
@@ -617,13 +628,25 @@ class Camera1 extends CameraController {
         mMediaRecorder.setCamera(mCamera);
 
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+
+        CamcorderProfile profile = getCamcorderProfile(mVideoQuality);
+        if (mAudio == Audio.ON) {
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+            mMediaRecorder.setProfile(profile);
+        } else {
+            // Set all values contained in profile except audio settings
+            mMediaRecorder.setOutputFormat(profile.fileFormat);
+            mMediaRecorder.setVideoEncoder(profile.videoCodec);
+            mMediaRecorder.setVideoEncodingBitRate(profile.videoBitRate);
+            mMediaRecorder.setVideoFrameRate(profile.videoFrameRate);
+            mMediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
+        }
+
         if (mLocation != null) {
             mMediaRecorder.setLocation((float) mLocation.getLatitude(),
                     (float) mLocation.getLongitude());
         }
 
-        mMediaRecorder.setProfile(getCamcorderProfile(mVideoQuality));
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
         mMediaRecorder.setOrientationHint(computeExifRotation());
         // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());

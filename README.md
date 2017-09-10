@@ -295,7 +295,8 @@ Most camera parameters can be controlled through XML attributes or linked method
     app:cameraJpegQuality="100"
     app:cameraVideoQuality="480p"
     app:cameraWhiteBalance="auto"
-    app:cameraHdr="off" />
+    app:cameraHdr="off"
+    app:cameraAudio="on"/>
 ```
 
 |XML Attribute|Method|Values|Default Value|
@@ -309,6 +310,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`lowest` `highest` `maxQvga` `max480p` `max720p` `max1080p` `max2160p`|`max480p`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 |[`cameraHdr`](#camerahdr)|`setHdr()`|`off` `on`|`off`|
+|[`cameraAudio`](#cameraaudio)|`setAudio()`|`off` `on`|`on`|
 
 #### cameraSessionType
 
@@ -404,6 +406,15 @@ cameraView.setHdr(Hdr.OFF);
 cameraView.setHdr(Hdr.ON);
 ```
 
+#### cameraAudio
+
+Turns on or off audio stream.
+
+```java
+cameraView.setAudio(Audio.OFF);
+cameraView.setAudio(Audio.ON);
+```
+
 ## Other APIs
 
 Other APIs not mentioned above are provided, and are well documented and commented in code.
@@ -435,15 +446,15 @@ Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProp
 `CameraView` needs two permissions:
 
 - `android.permission.CAMERA` : required for capturing pictures and videos
-- `android.permission.RECORD_AUDIO` : required for capturing videos
+- `android.permission.RECORD_AUDIO` : required for capturing videos with `Audio.ON` (the default)
 
-You can handle permissions yourself and then call `CameraView.start()` once they are acquired. If they are not, `CameraView` will request permissions to the user based on the `sessionType` that was set. In that case, you can restart the camera if you have a successful response from `onRequestPermissionResults()`.
+You can handle permissions yourself and then call `CameraView.start()` once they are acquired. If they are not, `CameraView` will request permissions to the user based on whether they are needed. In that case, you can restart the camera if you have a successful response from `onRequestPermissionResults()`.
 
 ## Manifest file
 
 The library manifest file is not strict and only asks for camera permissions. This means that:
 
-- If you wish to record videos, you should also add `android.permission.RECORD_AUDIO` to required permissions
+- If you wish to record videos with `Audio.ON` (the default), you should also add `android.permission.RECORD_AUDIO` to required permissions
 
 ```xml
 <uses-permission android:name="android.permission.RECORD_AUDIO"/>

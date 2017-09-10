@@ -49,7 +49,7 @@ public class CameraViewTest extends BaseTest {
                     }
 
                     @Override
-                    protected boolean checkPermissions(SessionType sessionType) {
+                    protected boolean checkPermissions(SessionType sessionType, Audio audio) {
                         return hasPermissions;
                     }
                 };
