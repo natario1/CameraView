@@ -1,16 +1,11 @@
 package com.otaliastudios.cameraview;
 
 
-import android.app.Instrumentation;
 import android.content.Context;
-import android.hardware.Camera;
 import android.location.Location;
-import android.os.Looper;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewGroup;
 
 import org.junit.After;
@@ -33,7 +28,6 @@ public class CameraViewTest extends BaseTest {
     private MockCameraController mockController;
     private Preview mockPreview;
     private boolean hasPermissions;
-
 
     @Before
     public void setUp() {
@@ -107,23 +101,6 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getGestureAction(Gesture.SCROLL_VERTICAL), GestureAction.DEFAULT_SCROLL_VERTICAL);
     }
 
-    @Test
-    public void testStartWithPermissions() {
-        hasPermissions = true;
-        cameraView.start();
-        assertTrue(cameraView.isStarted());
-
-        cameraView.stop();
-        assertFalse(cameraView.isStarted());
-    }
-
-    @Test
-    public void testStartWithoutPermissions() {
-        hasPermissions = false;
-        cameraView.start();
-        assertFalse(cameraView.isStarted());
-    }
-
     //endregion
 
     //region testGesture
@@ -177,6 +154,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_capture() {
+        mockController.mockStarted(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -195,6 +173,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_focus() {
+        mockController.mockStarted(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -219,6 +198,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_zoom() {
+        mockController.mockStarted(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -242,6 +222,7 @@ public class CameraViewTest extends BaseTest {
         when(o.getExposureCorrectionMinValue()).thenReturn(-10f);
         when(o.getExposureCorrectionMaxValue()).thenReturn(10f);
         mockController.setMockCameraOptions(o);
+        mockController.mockStarted(true);
 
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
@@ -551,7 +532,4 @@ public class CameraViewTest extends BaseTest {
     //endregion
 
     // TODO: test permissions
-
-    // TODO: test CameraCallbacks
-
 }

@@ -17,7 +17,6 @@ public class MockCameraController extends CameraController {
 
     MockCameraController(CameraView.CameraCallbacks callback, Preview preview) {
         super(callback, preview);
-        mState = CameraController.STATE_STARTED;
     }
 
     void setMockCameraOptions(CameraOptions options) {
@@ -26,6 +25,10 @@ public class MockCameraController extends CameraController {
 
     void setMockPreviewSize(Size size) {
         mPreviewSize = size;
+    }
+
+    void mockStarted(boolean started) {
+        mState = started ? STATE_STARTED : STATE_STOPPED;
     }
 
     @Override

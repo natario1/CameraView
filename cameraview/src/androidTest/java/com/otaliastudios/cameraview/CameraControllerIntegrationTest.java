@@ -318,4 +318,12 @@ public class CameraControllerIntegrationTest extends BaseTest {
     }
 
     //endregion
+
+    // TODO: startVideo, endVideo
+
+    // TODO: startAutoFocus
+
+    // TODO: capturePicture
+
+    // TODO: captureSnapshot
 }
