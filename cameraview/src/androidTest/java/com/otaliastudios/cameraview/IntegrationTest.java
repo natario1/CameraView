@@ -142,7 +142,7 @@ public class IntegrationTest extends BaseTest {
         waitForClose(false);
     }
 
-    // @Test
+    @Test
     // TODO: This works great on the device but crashes on the emulator.
     // There must be something wrong with the emulated camera...
     // Like stopPreview() and release() are not really sync calls?
@@ -317,10 +317,9 @@ public class IntegrationTest extends BaseTest {
     //region testSetVideoQuality
     // This can be tricky because can trigger layout changes.
 
-    // @Test(expected = IllegalStateException.class)
-    // TODO: Can't run on Travis, MediaRecorder not supported.
+    // TODO: @Test(expected = IllegalStateException.class)
+    // Can't run on Travis, MediaRecorder not supported.
     // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
-    @Test
     public void testSetVideoQuality_whileRecording() {
         camera.setSessionType(SessionType.VIDEO);
         camera.setVideoQuality(VideoQuality.HIGHEST);
@@ -328,7 +327,6 @@ public class IntegrationTest extends BaseTest {
         waitForOpen(true);
         camera.startCapturingVideo(null);
         camera.setVideoQuality(VideoQuality.LOWEST);
-        throw new RuntimeException(CameraLogger.lastTag + ":" + CameraLogger.lastMessage);
     }
 
     //-@Test
@@ -361,8 +359,8 @@ public class IntegrationTest extends BaseTest {
 
     //region test startVideo
 
-    // @Test(expected = IllegalStateException.class)
-    // TODO: fails on Travis. Some emulators can't deal with MediaRecorder
+    // TODO: @Test(expected = IllegalStateException.class)
+    // Fails on Travis. Some emulators can't deal with MediaRecorder
     // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
     // as documented. This works locally though.
     public void testStartVideo_whileInPictureMode() {
@@ -372,8 +370,8 @@ public class IntegrationTest extends BaseTest {
         camera.startCapturingVideo(null);
     }
 
-    // @Test
-    // TODO: fails on Travis. Some emulators can't deal with MediaRecorder,
+    // TODO: @Test
+    // Fails on Travis. Some emulators can't deal with MediaRecorder,
     // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
     // as documented. This works locally though.
     public void testStartEndVideo() {

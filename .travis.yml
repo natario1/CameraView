@@ -57,9 +57,9 @@ before_script:
 script:
   - ./gradlew clean testDebugUnitTest
   - adb logcat -c
-  - adb logcat &
+  - adb logcat -v color Test:V TestRunner:V CameraView:V CameraController:V Camera1:V WorkerHandler:V *:S &
   - export LOGCAT_PID=$!
-  - ./gradlew --info connectedCheck # Want info here
+  - ./gradlew connectedCheck
   - kill $LOGCAT_PID
   - ./gradlew mergedCoverageReport
 
