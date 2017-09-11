@@ -56,7 +56,11 @@ before_script:
 
 script:
   - ./gradlew clean testDebugUnitTest
+  - adb logcat -c
+  - adb logcat &
+  - export LOGCAT_PID=$!
   - ./gradlew --info connectedCheck # Want info here
+  - kill $LOGCAT_PID
   - ./gradlew mergedCoverageReport
 
 after_success:
