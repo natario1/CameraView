@@ -53,7 +53,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
             public void uncaughtException(Thread thread, Throwable throwable) {
                 // Something went wrong. Thread is terminated (about to?).
                 // Move to other thread and stop resources.
-                WorkerHandler.clearCache();
+                thread.interrupt();
                 mHandler = WorkerHandler.get("CameraViewController");
                 mHandler.post(new Runnable() {
                     @Override

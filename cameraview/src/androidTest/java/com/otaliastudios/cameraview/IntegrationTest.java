@@ -1,30 +1,19 @@
 package com.otaliastudios.cameraview;
 
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PointF;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.Espresso;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -35,7 +24,7 @@ import static org.junit.Assert.*;
 // TODO: won't work well in a 23+ emulator. Permissions will be asked.
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-public class CameraControllerIntegrationTest extends BaseTest {
+public class IntegrationTest extends BaseTest {
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
@@ -68,17 +57,8 @@ public class CameraControllerIntegrationTest extends BaseTest {
     @After
     public void tearDown() throws Exception {
         camera.stopCapturingVideo();
-        /* int state = controller.getState();
-        if (state >= CameraController.STATE_STARTING) {
-            // Enqueue a stop and wait.
-            camera.stop();
-            waitForClose(true);
-        } else if (state == CameraController.STATE_STOPPING) {
-            // Wait for incoming stop.
-            waitForClose(true);
-        } */
         camera.destroy();
-        WorkerHandler.clearCache();
+        WorkerHandler.destroy();
     }
 
     private CameraOptions waitForOpen(boolean expectSuccess) {
@@ -88,7 +68,6 @@ public class CameraControllerIntegrationTest extends BaseTest {
         CameraOptions result = open.await(4000);
         if (expectSuccess) {
             assertNotNull("Can open", result);
-            // try { Thread.sleep(600); } catch (Exception e) {}
         } else {
             assertNull("Should not open", result);
         }
@@ -102,7 +81,6 @@ public class CameraControllerIntegrationTest extends BaseTest {
         Boolean result = close.await(4000);
         if (expectSuccess) {
             assertNotNull("Can close", result);
-            // try { Thread.sleep(600); } catch (Exception e) {}
         } else {
             assertNull("Should not close", result);
         }

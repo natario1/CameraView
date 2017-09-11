@@ -65,7 +65,15 @@ class WorkerHandler {
         return mThread;
     }
 
-    public static void clearCache() {
+    public static void destroy() {
+        for (String key : sCache.keySet()) {
+            WeakReference<WorkerHandler> ref = sCache.get(key);
+            WorkerHandler handler = ref.get();
+            if (handler != null && handler.getThread().isAlive()) {
+                handler.getThread().interrupt();
+            }
+            ref.clear();
+        }
         sCache.clear();
     }
 }
