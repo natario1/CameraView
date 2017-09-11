@@ -1,3 +1,5 @@
+# https://github.com/andstatus/andstatus/blob/master/.travis.yml
+
 language: android
 
 branches:
@@ -15,6 +17,8 @@ env:
     # Run android tests on api level 22
     - EMULATOR_API=22
     - EMULATOR_ABI=armeabi-v7a
+    - EMULATOR_TAG=default
+    - PATH=$ANDROID_HOME:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
 
 android:
   components:
@@ -23,16 +27,31 @@ android:
     - build-tools-26.0.1
     - android-26
     - doc-26
-    # Android tests
-    - android-$EMULATOR_API
-    - sys-img-$EMULATOR_ABI-android-$EMULATOR_API
-    # sys-img-x86-google_apis-26
+
+install:
+  # Setup
+  - echo $ANDROID_HOME # We assume this is correctly set when setting path
+  - sdkmanager --list || true # Look at the packages
+  - echo yes | sdkmanager "tools" # Ensure tools is updated
+
+  # Install emulator
+  - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
+  - echo yes | sdkmanager "platforms;android-$EMULATOR_API" # Install sdk
+  - echo yes | sdkmanager "$EMULATOR" # Install system image
+
+  # Create adn start emulator
+  - echo no | avdmanager create avd -n test -k "$EMULATOR" -f # Create emulator
+  - emulator -avd test -no-window -camera-back emulated -camera-front emulated -memory 2048 & # Launch
+  - adb wait-for-device # Wait for adb process
+  - sdkmanager --list || true # Check everything is updated
 
 before_script:
-  - echo no | android create avd --force --name test --target android-$EMULATOR_API --abi $EMULATOR_ABI
-  - emulator -avd test -no-audio -no-window -camera-back emulated -camera-front emulated &
-  - android-wait-for-emulator
-  - adb shell input keyevent 82 &
+  - android-wait-for-emulator # Wait for emulator ready to interact
+  - adb shell settings put global window_animation_scale 0 & # Disable animations
+  - adb shell settings put global transition_animation_scale 0 & # Disable animations
+  - adb shell settings put global animator_duration_scale 0 & # Disable animations
+  - sleep 20 # Sleep 20 seconds just in case
+  - adb shell input keyevent 82 & # Dispatch event
 
 script:
   - ./gradlew clean testDebugUnitTest connectedCheck mergedCoverageReport
