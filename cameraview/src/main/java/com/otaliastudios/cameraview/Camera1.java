@@ -66,15 +66,17 @@ class Camera1 extends CameraController {
      */
     @Override
     public void onSurfaceAvailable() {
-        LOG.i("onSurfaceAvailable, size is", mPreview.getSurfaceSize());
+        LOG.i("onSurfaceAvailable:", "Size is", mPreview.getSurfaceSize());
         if (!shouldSetup()) return;
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 if (!shouldSetup()) return;
+                LOG.i("onSurfaceAvailable:", "Inside handler. About to bind.");
                 try {
                     setup();
                 } catch (Exception e) {
+                    LOG.w("onSurfaceAvailable:", "Exception while binding camera to preview.", e);
                     throw new RuntimeException(e);
                 }
             }
@@ -92,10 +94,13 @@ class Camera1 extends CameraController {
             // Compute a new camera preview size.
             Size newSize = computePreviewSize();
             if (!newSize.equals(mPreviewSize)) {
+                LOG.i("onSurfaceChanged:", "Computed a new preview size. Dispatching.");
                 mPreviewSize = newSize;
                 mCameraCallbacks.onCameraPreviewSizeChanged();
                 synchronized (mLock) {
+                    LOG.i("onSurfaceChanged:", "Stopping preview.");
                     mCamera.stopPreview();
+                    LOG.i("onSurfaceChanged:", "Stopped preview.");
                     Camera.Parameters params = mCamera.getParameters();
                     params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
                     mCamera.setParameters(params);
@@ -105,7 +110,9 @@ class Camera1 extends CameraController {
                         invertPreviewSizes ? mPreviewSize.getHeight() : mPreviewSize.getWidth(),
                         invertPreviewSizes ? mPreviewSize.getWidth() : mPreviewSize.getHeight()
                 );
+                LOG.i("onSurfaceChanged:", "Restarting preview.");
                 mCamera.startPreview();
+                LOG.i("onSurfaceChanged:", "Restarted preview.");
             }
         }
     }
@@ -118,6 +125,7 @@ class Camera1 extends CameraController {
     // These can happen at different times but we want to end up here.
     @WorkerThread
     private void setup() throws Exception {
+        LOG.i("setup:", "Started");
         Object output = mPreview.getOutput();
         if (mPreview.getOutputClass() == SurfaceHolder.class) {
             mCamera.setPreviewDisplay((SurfaceHolder) output);
@@ -128,6 +136,7 @@ class Camera1 extends CameraController {
         boolean invertPreviewSizes = shouldFlipSizes();
         mCaptureSize = computeCaptureSize();
         mPreviewSize = computePreviewSize();
+        LOG.i("setup:", "Dispatching onCameraPreviewSizeChanged.");
         mCameraCallbacks.onCameraPreviewSizeChanged();
         mPreview.setDesiredSize(
                 invertPreviewSizes ? mPreviewSize.getHeight() : mPreviewSize.getWidth(),
@@ -139,8 +148,9 @@ class Camera1 extends CameraController {
             params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
             mCamera.setParameters(params);
         }
-
+        LOG.i("setup:", "Starting preview with startPreview().");
         mCamera.startPreview();
+        LOG.i("setup:", "Started preview with startPreview().");
         mIsSetup = true;
     }
 
@@ -149,6 +159,7 @@ class Camera1 extends CameraController {
     @Override
     void onStart() throws Exception {
         if (isCameraAvailable()) {
+            LOG.w("onStart:", "Camera not available. Should not happen.");
             onStop(); // Should not happen.
         }
         if (collectCameraId()) {
@@ -156,6 +167,7 @@ class Camera1 extends CameraController {
 
             // Set parameters that might have been set before the camera was opened.
             synchronized (mLock) {
+                LOG.i("onStart:", "Applying default parameters.");
                 Camera.Parameters params = mCamera.getParameters();
                 mExtraProperties = new ExtraProperties(params);
                 mOptions = new CameraOptions(params);
@@ -170,6 +182,7 @@ class Camera1 extends CameraController {
             // Try starting preview.
             mCamera.setDisplayOrientation(computeSensorToDisplayOffset()); // <- not allowed during preview
             if (shouldSetup()) setup();
+            LOG.i("onStart:", "Ended");
         }
     }
 
@@ -177,19 +190,27 @@ class Camera1 extends CameraController {
     @Override
     void onStop() throws Exception {
         Exception error = null;
+        LOG.i("onStop:", "About to clean up.");
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
         if (isCameraAvailable()) {
+            LOG.i("onStop:", "Clean up.", "Ending video?", mIsCapturingVideo);
             if (mIsCapturingVideo) endVideo();
 
             try {
+                LOG.i("onStop:", "Clean up.", "Stopping preview.");
                 mCamera.stopPreview();
+                LOG.i("onStop:", "Clean up.", "Stopped preview.");
             } catch (Exception e) {
+                LOG.w("onStop:", "Clean up.", "Exception while stopping preview.");
                 error = e;
             }
 
             try {
+                LOG.i("onStop:", "Clean up.", "Releasing camera.");
                 mCamera.release();
+                LOG.i("onStop:", "Clean up.", "Released camera.");
             } catch (Exception e) {
+                LOG.w("onStop:", "Clean up.", "Exception while releasing camera.");
                 error = e;
             }
         }
@@ -392,8 +413,8 @@ class Camera1 extends CameraController {
                 }
                 onSurfaceChanged();
             }
-            LOG.i("captureSize: "+mCaptureSize);
-            LOG.i("previewSize: "+mPreviewSize);
+            LOG.i("setVideoQuality:", "captureSize:", mCaptureSize);
+            LOG.i("setVideoQuality:", "previewSize:", mPreviewSize);
         }
     }
 
@@ -484,8 +505,8 @@ class Camera1 extends CameraController {
     @Override
     boolean shouldFlipSizes() {
         int offset = computeSensorToDisplayOffset();
-        LOG.i("shouldFlip:", "mDeviceOrientation=", mDeviceOrientation, "mSensorOffset=", mSensorOffset);
-        LOG.i("shouldFlip:", "sensorToDisplay=", offset);
+        LOG.i("shouldFlipSizes:", "mDeviceOrientation=", mDeviceOrientation, "mSensorOffset=", mSensorOffset);
+        LOG.i("shouldFlipSizes:", "sensorToDisplay=", offset);
         return offset % 180 != 0;
     }
 
@@ -545,7 +566,7 @@ class Camera1 extends CameraController {
             // Choose the max size.
             List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
             Size maxSize = Collections.max(captureSizes);
-            LOG.i("computeCaptureSize:", "computed", maxSize);
+            LOG.i("size:", "computeCaptureSize:", "computed", maxSize);
             return Collections.max(captureSizes);
         } else {
             // Choose according to developer choice in setVideoQuality.
@@ -554,7 +575,7 @@ class Camera1 extends CameraController {
             List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
             CamcorderProfile profile = getCamcorderProfile(mVideoQuality);
             AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
-            LOG.i("computeCaptureSize:", "videoQuality:", mVideoQuality, "targetRatio:", targetRatio);
+            LOG.i("size:", "computeCaptureSize:", "videoQuality:", mVideoQuality, "targetRatio:", targetRatio);
             return matchSize(captureSizes, targetRatio, new Size(0, 0), true);
         }
     }
@@ -564,7 +585,7 @@ class Camera1 extends CameraController {
         List<Size> previewSizes = sizesFromList(params.getSupportedPreviewSizes());
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         Size biggerThan = mPreview.getSurfaceSize();
-        LOG.i("computePreviewSize:", "targetRatio:", targetRatio, "surface size:", biggerThan);
+        LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "surface size:", biggerThan);
         return matchSize(previewSizes, targetRatio, biggerThan, false);
     }
 
@@ -586,7 +607,7 @@ class Camera1 extends CameraController {
                 mMediaRecorder.start();
                 return true;
             } catch (Exception e) {
-                LOG.e("Error while starting MediaRecorder.", e);
+                LOG.e("Error while starting MediaRecorder. Swallowing.", e);
                 mVideoFile = null;
                 mCamera.lock();
                 endVideo();
@@ -608,7 +629,7 @@ class Camera1 extends CameraController {
                 } catch (Exception e) {
                     // This can happen if endVideo() is called right after startVideo().
                     // We don't care.
-                    LOG.w("Error while closing media recorder.", e);
+                    LOG.w("Error while closing media recorder. Swallowing", e);
                 }
                 mMediaRecorder = null;
             }
@@ -781,8 +802,8 @@ class Camera1 extends CameraController {
         double theta = ((double) displayToSensor) * Math.PI / 180;
         double sensorClickX = viewClickX * Math.cos(theta) - viewClickY * Math.sin(theta);
         double sensorClickY = viewClickX * Math.sin(theta) + viewClickY * Math.cos(theta);
-        LOG.i("viewClickX:", viewClickX, "viewClickY:", viewClickY);
-        LOG.i("sensorClickX:", sensorClickX, "sensorClickY:", sensorClickY);
+        LOG.i("focus:", "viewClickX:", viewClickX, "viewClickY:", viewClickY);
+        LOG.i("focus:", "sensorClickX:", sensorClickX, "sensorClickY:", sensorClickY);
 
         // Compute the rect bounds.
         Rect rect1 = computeMeteringArea(sensorClickX, sensorClickY, 150d);
@@ -803,7 +824,7 @@ class Camera1 extends CameraController {
         int bottom = (int) Math.min(centerY + delta, 1000);
         int left = (int) Math.max(centerX - delta, -1000);
         int right = (int) Math.min(centerX + delta, 1000);
-        LOG.i("metering area:", "top:", top, "left:", left, "bottom:", bottom, "right:", right);
+        LOG.i("focus:", "computeMeteringArea:", "top:", top, "left:", left, "bottom:", bottom, "right:", right);
         return new Rect(left, top, right, bottom);
     }
 
@@ -822,7 +843,7 @@ class Camera1 extends CameraController {
         for (Camera.Size size : sizes) {
             result.add(new Size(size.width, size.height));
         }
-        LOG.i("sizesFromList:", result);
+        LOG.i("size:", "sizesFromList:", result);
         return result;
     }
 
@@ -852,8 +873,8 @@ class Camera1 extends CameraController {
             }
         }
 
-        LOG.i("matchSize:", "found consistent:", consistent.size());
-        LOG.i("matchSize:", "found big enough and consistent:", bigEnoughAndConsistent.size());
+        LOG.i("size:", "matchSize:", "found consistent:", consistent.size());
+        LOG.i("size:", "matchSize:", "found big enough and consistent:", bigEnoughAndConsistent.size());
         Size result;
         if (biggestPossible) {
             if (bigEnoughAndConsistent.size() > 0) {
@@ -872,7 +893,7 @@ class Camera1 extends CameraController {
                 result = Collections.max(sizes);
             }
         }
-        LOG.i("matchSize:", "returning result", result);
+        LOG.i("size", "matchSize:", "returning result", result);
         return result;
     }
 

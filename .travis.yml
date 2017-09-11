@@ -39,29 +39,34 @@ install:
   - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
   - echo yes | sdkmanager "platforms;android-$EMULATOR_API" # Install sdk
   - echo yes | sdkmanager "$EMULATOR" # Install system image
+  - sdkmanager --list || true # Check everything is updated
 
   # Create adn start emulator
   - echo no | avdmanager create avd -n test -k "$EMULATOR" -f # Create emulator
-  - emulator -avd test -no-window -camera-back emulated -camera-front emulated -memory 2048 & # Launch
+  - which emulator # ensure we are using the right emulator (home/emulator/)
+  - emulator -avd test -no-window -camera-back emulated -camera-front emulated -memory 2048 -writable-system & # Launch
   - adb wait-for-device # Wait for adb process
-  - sdkmanager --list || true # Check everything is updated
+  - adb remount # Mount as writable
 
 before_script:
+  # Wait for emulator
   - android-wait-for-emulator # Wait for emulator ready to interact
   - adb shell settings put global window_animation_scale 0 & # Disable animations
   - adb shell settings put global transition_animation_scale 0 & # Disable animations
   - adb shell settings put global animator_duration_scale 0 & # Disable animations
+
+  # Unlock and configure logs.
+  # Would be great to use -v color to adb logcat but looks not supported on travis.
   - sleep 20 # Sleep 20 seconds just in case
-  - adb shell input keyevent 82 & # Dispatch event
+  - adb shell input keyevent 82 & # Dispatch unlock event
+  - adb logcat -c # Clear logcat until now
+  - adb logcat Test:V TestRunner:V CameraView:V CameraController:V Camera1:V WorkerHandler:V *:E &
+  # - export LOGCAT_PID=$! # Save PID of the logcat process. Should kill later with kill $LOGCAT_PID
+
+
 
 script:
-  - ./gradlew clean testDebugUnitTest
-  - adb logcat -c
-  - adb logcat -v color Test:V TestRunner:V CameraView:V CameraController:V Camera1:V WorkerHandler:V *:S &
-  - export LOGCAT_PID=$!
-  - ./gradlew connectedCheck
-  - kill $LOGCAT_PID
-  - ./gradlew mergedCoverageReport
+  - ./gradlew clean testDebugUnitTest connectedCheck mergedCoverageReport
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) -s "*/build/reports/mergedCoverageReport/"

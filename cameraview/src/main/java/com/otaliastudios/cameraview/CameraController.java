@@ -53,7 +53,9 @@ abstract class CameraController implements Preview.SurfaceCallback {
             public void uncaughtException(Thread thread, Throwable throwable) {
                 // Something went wrong. Thread is terminated (about to?).
                 // Move to other thread and stop resources.
+                LOG.w("Interrupting thread, due to exception.", throwable);
                 thread.interrupt();
+                LOG.w("Interrupted thread. Posting a stopImmediately.", ss());
                 mHandler = WorkerHandler.get("CameraViewController");
                 mHandler.post(new Runnable() {
                     @Override
@@ -67,16 +69,29 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     //region Start&Stop
 
+    private String ss() {
+        switch (mState) {
+            case STATE_STOPPING: return "STATE_STOPPING";
+            case STATE_STOPPED: return "STATE_STOPPED";
+            case STATE_STARTING: return "STATE_STARTING";
+            case STATE_STARTED: return "STATE_STARTED";
+        }
+        return "null";
+    }
+
     // Starts the preview asynchronously.
     final void start() {
+        LOG.i("Start:", "posting runnable. State:", ss());
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 try {
-                    int a = mState;
+                    LOG.i("Start:", "executing. State:", ss());
                     if (mState >= STATE_STARTING) return;
                     mState = STATE_STARTING;
+                    LOG.i("Start:", "about to call onStart()", ss());
                     onStart();
+                    LOG.i("Start:", "returned from onStart().", "Dispatching.", ss());
                     mState = STATE_STARTED;
                     mCameraCallbacks.dispatchOnCameraOpened(mOptions);
 
@@ -90,14 +105,17 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     // Stops the preview asynchronously.
     final void stop() {
+        LOG.i("Stop:", "posting runnable. State:", ss());
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 try {
-                    int a = mState;
+                    LOG.i("Stop:", "executing. State:", ss());
                     if (mState <= STATE_STOPPED) return;
                     mState = STATE_STOPPING;
+                    LOG.i("Stop:", "about to call onStop()");
                     onStop();
+                    LOG.i("Stop:", "returned from onStop().", "Dispatching.");
                     mState = STATE_STOPPED;
                     mCameraCallbacks.dispatchOnCameraClosed();
 
@@ -113,31 +131,40 @@ abstract class CameraController implements Preview.SurfaceCallback {
     void stopImmediately() {
         try {
             // Don't check, try stop again.
+            LOG.i("Stop immediately. State was:", ss());
             mState = STATE_STOPPING;
             onStop();
             mState = STATE_STOPPED;
+            LOG.i("Stop immediately. Stopped. State is:", ss());
         } catch (Exception e) {
             // Do nothing.
+            LOG.i("Stop immediately. Exception while stopping.", e);
             mState = STATE_STOPPED;
         }
     }
 
     // Forces a restart.
     protected final void restart() {
+        LOG.i("Restart:", "posting runnable");
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 try {
+                    LOG.i("Restart:", "executing. Needs stopping:", mState > STATE_STOPPED, ss());
                     // Don't stop if stopped.
                     if (mState > STATE_STOPPED) {
                         mState = STATE_STOPPING;
                         onStop();
                         mState = STATE_STOPPED;
+                        LOG.i("Restart:", "stopped. Dispatching.", ss());
                         mCameraCallbacks.dispatchOnCameraClosed();
                     }
+
+                    LOG.i("Restart: about to start. State:", ss());
                     mState = STATE_STARTING;
                     onStart();
                     mState = STATE_STARTED;
+                    LOG.i("Restart: returned from start. Dispatching. State:", ss());
                     mCameraCallbacks.dispatchOnCameraOpened(mOptions);
 
                 } catch (Exception e) {
