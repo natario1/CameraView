@@ -33,6 +33,7 @@ install:
   - echo $ANDROID_HOME # We assume this is correctly set when setting path
   - sdkmanager --list || true # Look at the packages
   - echo yes | sdkmanager "tools" # Ensure tools is updated
+  - echo yes | sdkmanager "emulator" # Ensure emulator is present
 
   # Install emulator
   - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
@@ -54,7 +55,9 @@ before_script:
   - adb shell input keyevent 82 & # Dispatch event
 
 script:
-  - ./gradlew clean testDebugUnitTest connectedCheck mergedCoverageReport
+  - ./gradlew clean testDebugUnitTest
+  - ./gradlew --info connectedCheck # Want info here
+  - ./gradlew mergedCoverageReport
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) -s "*/build/reports/mergedCoverageReport/"
