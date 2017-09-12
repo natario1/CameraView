@@ -39,12 +39,16 @@ import static org.mockito.Mockito.when;
 
 public class BaseTest {
 
+    public static CameraLogger LOG = CameraLogger.create("Test");
+
     private static KeyguardManager.KeyguardLock keyguardLock;
     private static PowerManager.WakeLock wakeLock;
 
     // https://github.com/linkedin/test-butler/blob/bc2bb4df13d0a554d2e2b0ea710795017717e710/test-butler-app/src/main/java/com/linkedin/android/testbutler/ButlerService.java#L121
     @BeforeClass
     public static void wakeUp() {
+        CameraLogger.setLogLevel(CameraLogger.LEVEL_VERBOSE);
+
         // Acquire a keyguard lock to prevent the lock screen from randomly appearing and breaking tests
         KeyguardManager keyguardManager = (KeyguardManager) context().getSystemService(KEYGUARD_SERVICE);
         keyguardLock = keyguardManager.newKeyguardLock("CameraViewLock");

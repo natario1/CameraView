@@ -237,11 +237,13 @@ public class CameraCallbacksTest extends BaseTest {
 
         // With crop flag: expect a 1:1 ratio.
         int[] output = testProcessImage(true, true, viewDim, imageDim);
+        LOG.i("testProcessJpeg", output);
         assertEquals(output[0], 1000);
         assertEquals(output[1], 1000);
 
         // Without crop flag: expect original ratio.
         output = testProcessImage(true, false, viewDim, imageDim);
+        LOG.i("testProcessJpeg", output);
         assertEquals(output[0], imageDim[0]);
         assertEquals(output[1], imageDim[1]);
     }
@@ -253,11 +255,13 @@ public class CameraCallbacksTest extends BaseTest {
 
         // With crop flag: expect a 1:1 ratio.
         int[] output = testProcessImage(false, true, viewDim, imageDim);
+        LOG.i("testProcessYuv", output);
         assertEquals(output[0], 1000);
         assertEquals(output[1], 1000);
 
         // Without crop flag: expect original ratio.
         output = testProcessImage(false, false, viewDim, imageDim);
+        LOG.i("testProcessYuv", output);
         assertEquals(output[0], imageDim[0]);
         assertEquals(output[1], imageDim[1]);
     }
@@ -292,8 +296,8 @@ public class CameraCallbacksTest extends BaseTest {
         }
 
         // Wait for result and get out dimensions.
-        byte[] result = jpegTask.await(800);
-        assertNotNull(result);
+        byte[] result = jpegTask.await(3000);
+        assertNotNull("Image was processed", result);
         Bitmap bitmap = BitmapFactory.decodeByteArray(result, 0, result.length);
         return new int[]{ bitmap.getWidth(), bitmap.getHeight() };
     }
