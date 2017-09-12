@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
@@ -56,6 +57,17 @@ public class BaseTest {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
     }
 
+    public static void grantPermissions() {
+        grantPermission("android.permission.CAMERA");
+        grantPermission("android.permission.RECORD_AUDIO");
+        grantPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+    }
+
+    public static void grantPermission(String permission) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
+        String command = "pm grant " + context().getPackageName() + " " + permission;
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(command);
+    }
 
     public static byte[] mockJpeg(int width, int height) {
         Bitmap source = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);

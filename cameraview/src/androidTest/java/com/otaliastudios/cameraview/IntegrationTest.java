@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,7 +24,6 @@ import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
 
-// TODO: won't work well in a 23+ emulator. Permissions will be asked.
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 public class IntegrationTest extends BaseTest {
@@ -34,6 +34,11 @@ public class IntegrationTest extends BaseTest {
     private CameraView camera;
     private Camera1 controller;
     private CameraListener listener;
+
+    @BeforeClass
+    public static void grant() {
+        grantPermissions();
+    }
 
     @Before
     public void setUp() {

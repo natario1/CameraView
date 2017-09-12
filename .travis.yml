@@ -14,8 +14,8 @@ jdk:
 
 env:
   global:
-    # Run android tests on api level 22
-    - EMULATOR_API=22
+    # Where to run androidTests
+    - EMULATOR_API=24 # was 22
     - EMULATOR_ABI=armeabi-v7a
     - EMULATOR_TAG=default
     - PATH=$ANDROID_HOME:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
