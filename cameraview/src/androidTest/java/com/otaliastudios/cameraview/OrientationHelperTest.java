@@ -64,9 +64,10 @@ public class OrientationHelperTest extends BaseTest {
 
     @Test
     public void testRotation() {
-        helper.enable(context());
 
-        reset(callbacks); // Reset counts.
+        // Sometimes (on some APIs) the helper will trigger an update to 0
+        // right after enabling. But that's fine for us, times(1) will be OK either way.
+        helper.enable(context());
         helper.mListener.onOrientationChanged(OrientationEventListener.ORIENTATION_UNKNOWN);
         assertEquals(helper.mLastOrientation, 0);
         helper.mListener.onOrientationChanged(10);

@@ -66,7 +66,7 @@ public abstract class PreviewTest extends BaseTest {
                 rule.getActivity().getContentView().removeView(preview.getView());
             }
         });
-        waitUi();
+        idle();
     }
 
     @After

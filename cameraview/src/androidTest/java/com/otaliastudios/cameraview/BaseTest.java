@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 
+import android.annotation.SuppressLint;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -46,6 +47,7 @@ public class BaseTest {
 
     // https://github.com/linkedin/test-butler/blob/bc2bb4df13d0a554d2e2b0ea710795017717e710/test-butler-app/src/main/java/com/linkedin/android/testbutler/ButlerService.java#L121
     @BeforeClass
+    @SuppressWarnings("MissingPermission")
     public static void wakeUp() {
         CameraLogger.setLogLevel(CameraLogger.LEVEL_VERBOSE);
 
@@ -63,6 +65,7 @@ public class BaseTest {
     }
 
     @AfterClass
+    @SuppressWarnings("MissingPermission")
     public static void releaseWakeUp() {
         wakeLock.release();
         keyguardLock.reenableKeyguard();
@@ -89,8 +92,16 @@ public class BaseTest {
         });
     }
 
-    public static void waitUi() {
+    public static void idle() {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+    }
+
+    public static void sleep(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void grantPermissions() {

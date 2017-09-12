@@ -15,7 +15,7 @@ jdk:
 env:
   global:
     # Where to run androidTests
-    - EMULATOR_API=22 # 24 has some issues
+    - EMULATOR_API=22 # 24 has some issues, probably some overlayed window
     - EMULATOR_ABI=armeabi-v7a
     - EMULATOR_TAG=default
     - PATH=$ANDROID_HOME:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
