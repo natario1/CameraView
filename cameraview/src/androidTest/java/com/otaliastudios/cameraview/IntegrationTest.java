@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,8 +25,15 @@ import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
 
+/**
+ * These tests work great on real devices, and are the only way to test actual CameraController
+ * implementation - we really need to open the camera device.
+ * Unfortunately they fail unreliably on emulated devices, due to some bug with the
+ * emulated camera controller. Waiting for it to be fixed.
+ */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
+@Ignore
 public class IntegrationTest extends BaseTest {
 
     @Rule
@@ -42,6 +50,7 @@ public class IntegrationTest extends BaseTest {
 
     @Before
     public void setUp() {
+        WorkerHandler.destroy();
         ui(new Runnable() {
             @Override
             public void run() {
