@@ -1,16 +1,11 @@
 package com.otaliastudios.cameraview;
 
 
-import android.app.Instrumentation;
 import android.content.Context;
-import android.hardware.Camera;
 import android.location.Location;
-import android.os.Looper;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewGroup;
 
 import org.junit.After;
@@ -34,13 +29,12 @@ public class CameraViewTest extends BaseTest {
     private Preview mockPreview;
     private boolean hasPermissions;
 
-
     @Before
     public void setUp() {
         ui(new Runnable() {
             @Override
             public void run() {
-                Context context = InstrumentationRegistry.getContext();
+                Context context = context();
                 cameraView = new CameraView(context) {
                     @Override
                     protected CameraController instantiateCameraController(CameraCallbacks callbacks, Preview preview) {
@@ -92,7 +86,9 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getWhiteBalance(), WhiteBalance.DEFAULT);
         assertEquals(cameraView.getSessionType(), SessionType.DEFAULT);
         assertEquals(cameraView.getHdr(), Hdr.DEFAULT);
+        assertEquals(cameraView.getAudio(), Audio.DEFAULT);
         assertEquals(cameraView.getVideoQuality(), VideoQuality.DEFAULT);
+        assertEquals(cameraView.getLocation(), null);
 
         // Self managed
         assertEquals(cameraView.getExposureCorrection(), 0f, 0f);
@@ -104,23 +100,6 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getGestureAction(Gesture.PINCH), GestureAction.DEFAULT_PINCH);
         assertEquals(cameraView.getGestureAction(Gesture.SCROLL_HORIZONTAL), GestureAction.DEFAULT_SCROLL_HORIZONTAL);
         assertEquals(cameraView.getGestureAction(Gesture.SCROLL_VERTICAL), GestureAction.DEFAULT_SCROLL_VERTICAL);
-    }
-
-    @Test
-    public void testStartWithPermissions() {
-        hasPermissions = true;
-        cameraView.start();
-        assertTrue(cameraView.isStarted());
-
-        cameraView.stop();
-        assertFalse(cameraView.isStarted());
-    }
-
-    @Test
-    public void testStartWithoutPermissions() {
-        hasPermissions = false;
-        cameraView.start();
-        assertFalse(cameraView.isStarted());
     }
 
     //endregion
@@ -176,6 +155,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_capture() {
+        mockController.mockStarted(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -194,6 +174,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_focus() {
+        mockController.mockStarted(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -218,6 +199,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_zoom() {
+        mockController.mockStarted(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -241,6 +223,7 @@ public class CameraViewTest extends BaseTest {
         when(o.getExposureCorrectionMinValue()).thenReturn(-10f);
         when(o.getExposureCorrectionMaxValue()).thenReturn(10f);
         mockController.setMockCameraOptions(o);
+        mockController.mockStarted(true);
 
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
@@ -265,6 +248,16 @@ public class CameraViewTest extends BaseTest {
     private void mockPreviewSize() {
         Size size = new Size(900, 1600);
         mockController.setMockPreviewSize(size);
+    }
+
+    @Test
+    public void testMeasure_early() {
+        mockController.setMockPreviewSize(null);
+        cameraView.measure(
+                makeMeasureSpec(500, EXACTLY),
+                makeMeasureSpec(500, EXACTLY));
+        assertEquals(cameraView.getMeasuredWidth(), 500);
+        assertEquals(cameraView.getMeasuredHeight(), 500);
     }
 
     @Test
@@ -400,7 +393,7 @@ public class CameraViewTest extends BaseTest {
         source.setLongitude(-10d);
         source.setAltitude(50d);
         cameraView.setLocation(source);
-        Location other = mockController.mLocation;
+        Location other = cameraView.getLocation();
         assertEquals(10d, other.getLatitude(), 0d);
         assertEquals(-10d, other.getLongitude(), 0d);
         assertEquals(50d, other.getAltitude(), 0d);
@@ -410,8 +403,142 @@ public class CameraViewTest extends BaseTest {
 
     //endregion
 
+    //region test autofocus
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartAutoFocus_illegal() {
+        cameraView.startAutoFocus(-1, -1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartAutoFocus_illegal2() {
+        cameraView.setLeft(0);
+        cameraView.setRight(100);
+        cameraView.setTop(0);
+        cameraView.setBottom(100);
+        cameraView.startAutoFocus(200, 200);
+    }
+
+    @Test
+    public void testStartAutoFocus() {
+        cameraView.setLeft(0);
+        cameraView.setRight(100);
+        cameraView.setTop(0);
+        cameraView.setBottom(100);
+        cameraView.startAutoFocus(50, 50);
+        assertTrue(mockController.mFocusStarted);
+    }
+
+    //endregion
+
+    //region test setParameters
+
+    @Test
+    public void testSetCropOutput() {
+        cameraView.setCropOutput(true);
+        assertTrue(cameraView.getCropOutput());
+        cameraView.setCropOutput(false);
+        assertFalse(cameraView.getCropOutput());
+    }
+
+    @Test
+    public void testSetJpegQuality() {
+        cameraView.setJpegQuality(10);
+        assertEquals(cameraView.getJpegQuality(), 10);
+        cameraView.setJpegQuality(100);
+        assertEquals(cameraView.getJpegQuality(), 100);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetJpegQuality_illegal() {
+        cameraView.setJpegQuality(-10);
+    }
+
+    @Test
+    public void testSetFlash() {
+        cameraView.setFlash(Flash.TORCH);
+        assertEquals(cameraView.getFlash(), Flash.TORCH);
+        cameraView.setFlash(Flash.OFF);
+        assertEquals(cameraView.getFlash(), Flash.OFF);
+    }
+
+    @Test
+    public void testToggleFlash() {
+        cameraView.setFlash(Flash.OFF);
+        cameraView.toggleFlash();
+        assertEquals(cameraView.getFlash(), Flash.ON);
+        cameraView.toggleFlash();
+        assertEquals(cameraView.getFlash(), Flash.AUTO);
+        cameraView.toggleFlash();
+        assertEquals(cameraView.getFlash(), Flash.OFF);
+    }
+
+    @Test
+    public void testSetFacing() {
+        cameraView.setFacing(Facing.FRONT);
+        assertEquals(cameraView.getFacing(), Facing.FRONT);
+        cameraView.setFacing(Facing.BACK);
+        assertEquals(cameraView.getFacing(), Facing.BACK);
+    }
+
+    @Test
+    public void testToggleFacing() {
+        cameraView.setFacing(Facing.FRONT);
+        cameraView.toggleFacing();
+        assertEquals(cameraView.getFacing(), Facing.BACK);
+        cameraView.toggleFacing();
+        assertEquals(cameraView.getFacing(), Facing.FRONT);
+    }
+
+    @Test
+    public void testSetGrid() {
+        cameraView.setGrid(Grid.DRAW_3X3);
+        assertEquals(cameraView.getGrid(), Grid.DRAW_3X3);
+        cameraView.setGrid(Grid.OFF);
+        assertEquals(cameraView.getGrid(), Grid.OFF);
+    }
+
+    @Test
+    public void testSetWhiteBalance() {
+        cameraView.setWhiteBalance(WhiteBalance.CLOUDY);
+        assertEquals(cameraView.getWhiteBalance(), WhiteBalance.CLOUDY);
+        cameraView.setWhiteBalance(WhiteBalance.AUTO);
+        assertEquals(cameraView.getWhiteBalance(), WhiteBalance.AUTO);
+    }
+
+    @Test
+    public void testSessionType() {
+        cameraView.setSessionType(SessionType.VIDEO);
+        assertEquals(cameraView.getSessionType(), SessionType.VIDEO);
+        cameraView.setSessionType(SessionType.PICTURE);
+        assertEquals(cameraView.getSessionType(), SessionType.PICTURE);
+    }
+
+    @Test
+    public void testHdr() {
+        cameraView.setHdr(Hdr.ON);
+        assertEquals(cameraView.getHdr(), Hdr.ON);
+        cameraView.setHdr(Hdr.OFF);
+        assertEquals(cameraView.getHdr(), Hdr.OFF);
+    }
+
+    @Test
+    public void testAudio() {
+        cameraView.setAudio(Audio.ON);
+        assertEquals(cameraView.getAudio(), Audio.ON);
+        cameraView.setAudio(Audio.OFF);
+        assertEquals(cameraView.getAudio(), Audio.OFF);
+    }
+
+    @Test
+    public void testVideoQuality() {
+        cameraView.setVideoQuality(VideoQuality.MAX_1080P);
+        assertEquals(cameraView.getVideoQuality(), VideoQuality.MAX_1080P);
+        cameraView.setVideoQuality(VideoQuality.LOWEST);
+        assertEquals(cameraView.getVideoQuality(), VideoQuality.LOWEST);
+    }
+
+    //endregion
+
     // TODO: test permissions
-
-    // TODO: test CameraCallbacks
-
 }

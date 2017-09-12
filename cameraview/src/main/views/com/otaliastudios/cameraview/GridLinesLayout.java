@@ -16,11 +16,11 @@ class GridLinesLayout extends View {
 
     private Grid gridMode;
 
-    Drawable horiz;
-    Drawable vert;
+    private Drawable horiz;
+    private Drawable vert;
     private final float width;
 
-    Task<Void> drawTask = new Task<>();
+    Task<Integer> drawTask = new Task<>();
 
     private final static float GOLDEN_RATIO_INV = 0.61803398874989f;
 
@@ -92,6 +92,6 @@ class GridLinesLayout extends View {
             vert.draw(canvas);
             canvas.translate(- pos * getWidth(), 0);
         }
-        drawTask.end(null);
+        drawTask.end(count);
     }
 }

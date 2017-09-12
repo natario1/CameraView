@@ -11,7 +11,7 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class WorkerHandlerTest {
+public class WorkerHandlerTest extends BaseTest {
 
     @Test
     public void testCache() {
@@ -20,5 +20,21 @@ public class WorkerHandlerTest {
         WorkerHandler w2 = WorkerHandler.get("handler2");
         assertTrue(w1 == w1a);
         assertFalse(w1 == w2);
+    }
+
+    @Test
+    public void testStaticRun() {
+        final Task<Boolean> task = new Task<>();
+        task.listen();
+        Runnable action = new Runnable() {
+            @Override
+            public void run() {
+                task.end(true);
+            }
+        };
+        WorkerHandler.run(action);
+        Boolean result = task.await(500);
+        assertNotNull(result);
+        assertTrue(result);
     }
 }

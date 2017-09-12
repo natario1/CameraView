@@ -8,6 +8,7 @@ import android.support.test.espresso.Root;
 import android.support.test.espresso.ViewAssertion;
 import android.support.test.espresso.ViewInteraction;
 import android.support.test.espresso.assertion.ViewAssertions;
+import android.support.test.espresso.matcher.RootMatchers;
 import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.rule.ActivityTestRule;
 import android.view.MotionEvent;
@@ -57,6 +58,8 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
     }
 
     protected final ViewInteraction onLayout() {
-        return onView(Matchers.<View>is(layout)).inRoot(any(Root.class));
+        return onView(Matchers.<View>is(layout))
+                .inRoot(RootMatchers.withDecorView(
+                        Matchers.is(rule.getActivity().getWindow().getDecorView())));
     }
 }

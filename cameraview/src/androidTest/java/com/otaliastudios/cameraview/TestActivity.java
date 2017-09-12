@@ -24,6 +24,7 @@ public class TestActivity extends Activity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        CameraLogger.setLogLevel(CameraLogger.LEVEL_VERBOSE);
         wakeScreen();
 
         // Match parent decor view.

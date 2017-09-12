@@ -2,33 +2,13 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
-import android.support.test.espresso.Espresso;
-import android.support.test.espresso.UiController;
 import android.support.test.espresso.ViewAction;
-import android.support.test.espresso.action.CoordinatesProvider;
-import android.support.test.espresso.action.GeneralLocation;
-import android.support.test.espresso.action.GeneralSwipeAction;
-import android.support.test.espresso.action.MotionEvents;
-import android.support.test.espresso.action.PrecisionDescriber;
-import android.support.test.espresso.action.Press;
-import android.support.test.espresso.action.Swipe;
-import android.support.test.espresso.action.ViewActions;
-import android.support.test.espresso.assertion.ViewAssertions;
-import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.View;
 
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.TimeUnit;
-
-import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -69,7 +49,7 @@ public class PinchGestureLayoutTest extends GestureLayoutTest<PinchGestureLayout
         touch.listen();
         touch.start();
         onLayout().perform(action);
-        Gesture found = touch.await(10000, TimeUnit.MILLISECONDS);
+        Gesture found = touch.await(10000);
         assertNotNull(found);
 
         // How will this move  our parameter?

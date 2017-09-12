@@ -44,19 +44,15 @@ class Task<T> {
         }
     }
 
-    T await() {
-        try {
-            mLatch.await();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        T result = mResult;
-        mResult = null;
-        mLatch = null;
-        return result;
+    T await(long millis) {
+        return await(millis, TimeUnit.MILLISECONDS);
     }
 
-    T await(long time, @NonNull TimeUnit unit) {
+    T await() {
+        return await(1, TimeUnit.MINUTES);
+    }
+
+    private T await(long time, @NonNull TimeUnit unit) {
         try {
             mLatch.await(time, unit);
         } catch (Exception e) {

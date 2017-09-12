@@ -10,7 +10,6 @@ import java.io.File;
 
 public class MockCameraController extends CameraController {
 
-    Location mLocation;
     boolean mPictureCaptured;
     boolean mFocusStarted;
     boolean mZoomChanged;
@@ -28,12 +27,16 @@ public class MockCameraController extends CameraController {
         mPreviewSize = size;
     }
 
-    @Override
-    void onStart() {
+    void mockStarted(boolean started) {
+        mState = started ? STATE_STARTED : STATE_STOPPED;
     }
 
     @Override
-    void onStop() {
+    void onStart() throws Exception {
+    }
+
+    @Override
+    void onStop() throws Exception {
     }
 
     @Override
@@ -114,10 +117,7 @@ public class MockCameraController extends CameraController {
         return false;
     }
 
-    @Override
-    boolean isCameraOpened() {
-        return true;
-    }
+
 
     @Override
     boolean startAutoFocus(@Nullable Gesture gesture, PointF point) {

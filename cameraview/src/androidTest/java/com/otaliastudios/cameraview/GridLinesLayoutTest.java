@@ -2,8 +2,6 @@ package com.otaliastudios.cameraview;
 
 
 import android.graphics.Canvas;
-import android.graphics.drawable.ColorDrawable;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -14,6 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.mockito.Mockito.*;
+import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 @MediumTest
@@ -32,47 +31,44 @@ public class GridLinesLayoutTest extends BaseTest {
                 TestActivity a = rule.getActivity();
                 layout = new GridLinesLayout(a);
                 layout.setGridMode(Grid.OFF);
+                layout.drawTask.listen();
                 a.getContentView().addView(layout);
-                layout.vert = mock(ColorDrawable.class);
-                layout.horiz = mock(ColorDrawable.class);
             }
         });
+        // Wait for first draw.
+        layout.drawTask.await(1000);
+    }
+
+    private int setGridAndWait(Grid value) {
+        layout.drawTask.listen();
+        layout.setGridMode(value);
+        Integer result = layout.drawTask.await(1000);
+        assertNotNull(result);
+        return result;
     }
 
     @Test
     public void testOff() {
-        layout.drawTask.listen();
-        layout.setGridMode(Grid.OFF);
-        layout.drawTask.await();
-        verify(layout.vert, never()).draw(any(Canvas.class));
-        verify(layout.horiz, never()).draw(any(Canvas.class));
+        int linesDrawn = setGridAndWait(Grid.OFF);
+        assertEquals(linesDrawn, 0);
     }
 
     @Test
     public void test3x3() {
-        layout.drawTask.listen();
-        layout.setGridMode(Grid.DRAW_3X3);
-        layout.drawTask.await();
-        verify(layout.vert, times(2)).draw(any(Canvas.class));
-        verify(layout.horiz, times(2)).draw(any(Canvas.class));
+        int linesDrawn = setGridAndWait(Grid.DRAW_3X3);
+        assertEquals(linesDrawn, 2);
     }
 
     @Test
     public void testPhi() {
-        layout.drawTask.listen();
-        layout.setGridMode(Grid.DRAW_PHI);
-        layout.drawTask.await();
-        verify(layout.vert, times(2)).draw(any(Canvas.class));
-        verify(layout.horiz, times(2)).draw(any(Canvas.class));
+        int linesDrawn = setGridAndWait(Grid.DRAW_PHI);
+        assertEquals(linesDrawn, 2);
     }
 
     @Test
     public void test4x4() {
-        layout.drawTask.listen();
-        layout.setGridMode(Grid.DRAW_4X4);
-        layout.drawTask.await();
-        verify(layout.vert, times(3)).draw(any(Canvas.class));
-        verify(layout.horiz, times(3)).draw(any(Canvas.class));
+        int linesDrawn = setGridAndWait(Grid.DRAW_4X4);
+        assertEquals(linesDrawn, 3);
     }
 
 }
