@@ -59,8 +59,9 @@ before_script:
   # Would be great to use -v color to adb logcat but looks not supported on travis.
   - sleep 20 # Sleep 20 seconds just in case
   - adb shell input keyevent 82 & # Dispatch unlock event
-  - adb logcat -c # Clear logcat until now
-  - adb logcat Test:V TestRunner:V CameraView:V CameraController:V Camera1:V WorkerHandler:V *:E &
+  - adb logcat --help # See if this version supports color
+  - adb logcat -c # Clear logcat
+  - adb logcat Test:V TestRunner:V CameraView:V CameraController:V Camera1:V WorkerHandler:V THREAD_STATE:S *:E &
   # - export LOGCAT_PID=$! # Save PID of the logcat process. Should kill later with kill $LOGCAT_PID
 
 

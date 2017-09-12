@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 
+import android.app.KeyguardManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -8,13 +9,17 @@ import android.graphics.YuvImage;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.espresso.core.internal.deps.guava.collect.ObjectArrays;
 import android.support.test.rule.ActivityTestRule;
 import android.view.View;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -24,6 +29,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
 
+import static android.content.Context.KEYGUARD_SERVICE;
+import static android.content.Context.POWER_SERVICE;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
@@ -31,6 +38,31 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class BaseTest {
+
+    private static KeyguardManager.KeyguardLock keyguardLock;
+    private static PowerManager.WakeLock wakeLock;
+
+    // https://github.com/linkedin/test-butler/blob/bc2bb4df13d0a554d2e2b0ea710795017717e710/test-butler-app/src/main/java/com/linkedin/android/testbutler/ButlerService.java#L121
+    @BeforeClass
+    public static void wakeUp() {
+        // Acquire a keyguard lock to prevent the lock screen from randomly appearing and breaking tests
+        KeyguardManager keyguardManager = (KeyguardManager) context().getSystemService(KEYGUARD_SERVICE);
+        keyguardLock = keyguardManager.newKeyguardLock("CameraViewLock");
+        keyguardLock.disableKeyguard();
+
+        // Acquire a wake lock to prevent the cpu from going to sleep and breaking tests
+        PowerManager powerManager = (PowerManager) context().getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK
+                | PowerManager.ACQUIRE_CAUSES_WAKEUP
+                | PowerManager.ON_AFTER_RELEASE, "CameraViewLock");
+        wakeLock.acquire();
+    }
+
+    @AfterClass
+    public static void releaseWakeUp() {
+        wakeLock.release();
+        keyguardLock.reenableKeyguard();
+    }
 
     public static void ui(Runnable runnable) {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(runnable);

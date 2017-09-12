@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class CameraOptions1Test {
+public class CameraOptions1Test extends BaseTest {
 
     @Test
     public void testEmpty() {

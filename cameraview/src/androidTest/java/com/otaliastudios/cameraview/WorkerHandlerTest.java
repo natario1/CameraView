@@ -11,7 +11,7 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class WorkerHandlerTest {
+public class WorkerHandlerTest extends BaseTest {
 
     @Test
     public void testCache() {

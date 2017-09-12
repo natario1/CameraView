@@ -17,7 +17,7 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class ExtraProperties1Test {
+public class ExtraProperties1Test extends BaseTest {
 
     @Test
     public void testConstructor1() {

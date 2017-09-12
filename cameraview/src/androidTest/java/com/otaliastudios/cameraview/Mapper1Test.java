@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class Mapper1Test {
+public class Mapper1Test extends BaseTest {
 
     private Mapper mapper = new Mapper.Mapper1();
 
