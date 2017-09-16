@@ -93,6 +93,7 @@ public class CameraViewTest extends BaseTest {
         // Self managed
         assertEquals(cameraView.getExposureCorrection(), 0f, 0f);
         assertEquals(cameraView.getZoom(), 0f, 0f);
+        assertEquals(cameraView.getPlaySounds(), CameraView.DEFAULT_PLAY_SOUNDS);
         assertEquals(cameraView.getCropOutput(), CameraView.DEFAULT_CROP_OUTPUT);
         assertEquals(cameraView.getJpegQuality(), CameraView.DEFAULT_JPEG_QUALITY);
         assertEquals(cameraView.getGestureAction(Gesture.TAP), GestureAction.DEFAULT_TAP);
@@ -447,6 +448,14 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getJpegQuality(), 10);
         cameraView.setJpegQuality(100);
         assertEquals(cameraView.getJpegQuality(), 100);
+    }
+
+    @Test
+    public void testSetPlaySounds() {
+        cameraView.setPlaySounds(true);
+        assertEquals(cameraView.getPlaySounds(), true);
+        cameraView.setPlaySounds(false);
+        assertEquals(cameraView.getPlaySounds(), false);
     }
 
     @Test(expected = IllegalArgumentException.class)

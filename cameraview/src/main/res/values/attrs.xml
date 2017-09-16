@@ -96,6 +96,8 @@
             <enum name="on" value="1" />
         </attr>
 
+        <attr name="cameraPlaySounds" format="boolean" />
+
         <!-- deprecated attr name="cameraZoomMode" format="enum">
             <enum name="off" value="0" />
             <enum name="pinch" value="1" />

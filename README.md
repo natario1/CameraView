@@ -296,7 +296,8 @@ Most camera parameters can be controlled through XML attributes or linked method
     app:cameraVideoQuality="480p"
     app:cameraWhiteBalance="auto"
     app:cameraHdr="off"
-    app:cameraAudio="on"/>
+    app:cameraAudio="on"
+    app:cameraPlaySounds="true"/>
 ```
 
 |XML Attribute|Method|Values|Default Value|
@@ -311,6 +312,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 |[`cameraHdr`](#camerahdr)|`setHdr()`|`off` `on`|`off`|
 |[`cameraAudio`](#cameraaudio)|`setAudio()`|`off` `on`|`on`|
+|[`cameraPlaySounds`](#cameraplaysounds)|`setPlaySounds()`|`true` `false`|`true`|
 
 #### cameraSessionType
 
@@ -408,11 +410,24 @@ cameraView.setHdr(Hdr.ON);
 
 #### cameraAudio
 
-Turns on or off audio stream.
+Turns on or off audio stream while recording videos.
 
 ```java
 cameraView.setAudio(Audio.OFF);
 cameraView.setAudio(Audio.ON);
+```
+
+#### cameraPlaySounds
+
+Controls whether we should play platform-provided sounds during certain events (shutter click, focus completed).
+Please note that:
+
+- on API < 16, this flag is always set to `false`
+- the Camera1 engine will always play shutter sounds regardless of this flag
+
+```java
+cameraView.setPlaySounds(true);
+cameraView.setPlaySounds(false);
 ```
 
 ## Other APIs
