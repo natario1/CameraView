@@ -192,7 +192,7 @@ class Camera1 extends CameraController {
         Exception error = null;
         LOG.i("onStop:", "About to clean up.");
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
-        if (isCameraAvailable()) {
+        if (mCamera != null) {
             LOG.i("onStop:", "Clean up.", "Ending video?", mIsCapturingVideo);
             if (mIsCapturingVideo) endVideo();
 
@@ -511,7 +511,9 @@ class Camera1 extends CameraController {
     }
 
     private boolean isCameraAvailable() {
-        return mCamera != null;
+        // Don't do if state is stopping. The camera instance might have been released,
+        // even if onStop did not return yet.
+        return mCamera != null && mState > STATE_STOPPING;
     }
 
 
