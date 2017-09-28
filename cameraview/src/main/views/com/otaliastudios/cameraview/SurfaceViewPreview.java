@@ -24,19 +24,29 @@ class SurfaceViewPreview extends Preview<SurfaceView, SurfaceHolder> {
         final SurfaceHolder holder = surface.getHolder();
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder.addCallback(new SurfaceHolder.Callback() {
+
+            private boolean mFirstTime = true;
+
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                onSurfaceAvailable(getView().getWidth(), getView().getHeight());
+                // Looks like this is too early to call anything.
+                // onSurfaceAvailable(getView().getWidth(), getView().getHeight());
             }
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                onSurfaceSizeChanged(width, height);
+                if (mFirstTime) {
+                    onSurfaceAvailable(width, height);
+                    mFirstTime = false;
+                } else {
+                    onSurfaceSizeChanged(width, height);
+                }
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
                 onSurfaceDestroyed();
+                mFirstTime = true;
             }
         });
         return surface;
