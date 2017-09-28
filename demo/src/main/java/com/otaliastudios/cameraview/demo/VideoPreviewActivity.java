@@ -5,28 +5,30 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.VideoView;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 
 public class VideoPreviewActivity extends Activity {
 
-    @BindView(R.id.video)
     VideoView videoView;
-
-    @BindView(R.id.actualResolution)
     TextView actualResolution;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video_preview);
-        ButterKnife.bind(this);
+        videoView = findViewById(R.id.video);
+        videoView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                playVideo();
+            }
+        });
+        actualResolution = findViewById(R.id.actualResolution);
 
         Uri videoUri = getIntent().getParcelableExtra("video");
         MediaController controller = new MediaController(this);
@@ -50,8 +52,6 @@ public class VideoPreviewActivity extends Activity {
         });
     }
 
-
-    @OnClick(R.id.video)
     void playVideo() {
         if (videoView.isPlaying()) return;
         videoView.start();

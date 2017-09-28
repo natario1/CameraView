@@ -12,24 +12,13 @@ import com.otaliastudios.cameraview.CameraUtils;
 
 import java.lang.ref.WeakReference;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class PicturePreviewActivity extends Activity {
 
-    @BindView(R.id.image)
     ImageView imageView;
-
-    @BindView(R.id.nativeCaptureResolution)
     TextView nativeCaptureResolution;
-
-    @BindView(R.id.actualResolution)
     TextView actualResolution;
-
-    @BindView(R.id.approxUncompressedSize)
     TextView approxUncompressedSize;
-
-    @BindView(R.id.captureLatency)
     TextView captureLatency;
 
     private static WeakReference<byte[]> image;
@@ -42,7 +31,11 @@ public class PicturePreviewActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_picture_preview);
-        ButterKnife.bind(this);
+        imageView = findViewById(R.id.image);
+        nativeCaptureResolution = findViewById(R.id.nativeCaptureResolution);
+        actualResolution = findViewById(R.id.actualResolution);
+        approxUncompressedSize = findViewById(R.id.approxUncompressedSize);
+        captureLatency = findViewById(R.id.captureLatency);
 
         final long delay = getIntent().getLongExtra("delay", 0);
         final int nativeWidth = getIntent().getIntExtra("nativeWidth", 0);
