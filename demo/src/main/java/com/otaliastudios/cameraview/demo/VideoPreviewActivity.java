@@ -14,8 +14,7 @@ import android.widget.VideoView;
 
 public class VideoPreviewActivity extends Activity {
 
-    VideoView videoView;
-    TextView actualResolution;
+    private VideoView videoView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -28,7 +27,7 @@ public class VideoPreviewActivity extends Activity {
                 playVideo();
             }
         });
-        actualResolution = findViewById(R.id.actualResolution);
+        final MessageView actualResolution = findViewById(R.id.actualResolution);
 
         Uri videoUri = getIntent().getParcelableExtra("video");
         MediaController controller = new MediaController(this);
@@ -40,7 +39,8 @@ public class VideoPreviewActivity extends Activity {
         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-                actualResolution.setText(mp.getVideoWidth() + " x " + mp.getVideoHeight());
+                actualResolution.setTitle("Actual resolution");
+                actualResolution.setMessage(mp.getVideoWidth() + " x " + mp.getVideoHeight());
                 ViewGroup.LayoutParams lp = videoView.getLayoutParams();
                 float videoWidth = mp.getVideoWidth();
                 float videoHeight = mp.getVideoHeight();
