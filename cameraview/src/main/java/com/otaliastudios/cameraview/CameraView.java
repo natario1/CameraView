@@ -926,7 +926,7 @@ public class CameraView extends FrameLayout {
      */
     public void setSessionType(SessionType sessionType) {
 
-        if (sessionType == getSessionType() || isStopped()) {
+        if (sessionType != getSessionType() || isStopped()) {
             // Check did took place, or will happen on start().
             mCameraController.setSessionType(sessionType);
 
