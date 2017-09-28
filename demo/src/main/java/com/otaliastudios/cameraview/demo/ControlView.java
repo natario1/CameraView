@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.demo;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -63,8 +64,12 @@ public class ControlView<Value> extends LinearLayout implements Spinner.OnItemSe
         }
 
         if (values.isEmpty()) {
+            spinner.setOnItemSelectedListener(null);
             spinner.setEnabled(false);
             spinner.setAlpha(0.8f);
+            spinner.setAdapter(new ArrayAdapter(getContext(),
+                    R.layout.spinner_text, new String[]{ "Not supported." }));
+            spinner.setSelection(0, false);
         } else {
             spinner.setEnabled(true);
             spinner.setAlpha(1f);
@@ -88,9 +93,9 @@ public class ControlView<Value> extends LinearLayout implements Spinner.OnItemSe
 
     private String stringify(Value value) {
         if (value instanceof Integer) {
-            if ((Integer) value == ViewGroup.LayoutParams.MATCH_PARENT) return "MATCH_PARENT";
-            if ((Integer) value == ViewGroup.LayoutParams.WRAP_CONTENT) return "WRAP_CONTENT";
+            if ((Integer) value == ViewGroup.LayoutParams.MATCH_PARENT) return "match parent";
+            if ((Integer) value == ViewGroup.LayoutParams.WRAP_CONTENT) return "wrap content";
         }
-        return String.valueOf(value);
+        return String.valueOf(value).replace("_", " ").toLowerCase();
     }
 }
