@@ -161,6 +161,7 @@ public class CameraView extends FrameLayout {
 
     protected Preview instantiatePreview(Context context, ViewGroup container) {
         // TextureView is not supported without hardware acceleration.
+        LOG.i("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
         return isHardwareAccelerated() ?
                 new TextureViewPreview(context, container, null) :
                 new SurfaceViewPreview(context, container, null);

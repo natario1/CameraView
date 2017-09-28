@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 
 abstract class Preview<T extends View, Output> {
 
-    protected final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
+    private final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
 
     // Used for testing.
     Task<Void> mCropTask = new Task<>();

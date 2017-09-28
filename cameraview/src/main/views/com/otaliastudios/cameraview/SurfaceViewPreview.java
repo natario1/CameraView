@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 // Fallback preview when hardware acceleration is off.
 class SurfaceViewPreview extends Preview<SurfaceView, SurfaceHolder> {
 
+    private final static CameraLogger LOG = CameraLogger.create(SurfaceViewPreview.class.getSimpleName());
 
     SurfaceViewPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         super(context, parent, callback);
@@ -29,12 +30,14 @@ class SurfaceViewPreview extends Preview<SurfaceView, SurfaceHolder> {
 
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
+                LOG.i("callback:", "surfaceCreated");
                 // Looks like this is too early to call anything.
                 // onSurfaceAvailable(getView().getWidth(), getView().getHeight());
             }
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                LOG.i("callback:", "surfaceChanged", "w:", width, "h:", height, "firstTime:", mFirstTime);
                 if (mFirstTime) {
                     onSurfaceAvailable(width, height);
                     mFirstTime = false;
@@ -45,6 +48,7 @@ class SurfaceViewPreview extends Preview<SurfaceView, SurfaceHolder> {
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
+                LOG.i("callback:", "surfaceDestroyed");
                 onSurfaceDestroyed();
                 mFirstTime = true;
             }
