@@ -44,6 +44,8 @@ public class ControlView<Value> extends LinearLayout implements Spinner.OnItemSe
         inflate(context, R.layout.control_view, this);
         TextView title = findViewById(R.id.title);
         title.setText(control.getName());
+        View divider = findViewById(R.id.divider);
+        divider.setVisibility(control.isSectionLast() ? View.VISIBLE : View.GONE);
 
         ViewGroup content = findViewById(R.id.content);
         spinner = new Spinner(context, Spinner.MODE_DROPDOWN);

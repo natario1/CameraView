@@ -7,6 +7,8 @@ import com.otaliastudios.cameraview.Audio;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.Flash;
+import com.otaliastudios.cameraview.Gesture;
+import com.otaliastudios.cameraview.GestureAction;
 import com.otaliastudios.cameraview.Grid;
 import com.otaliastudios.cameraview.SessionType;
 import com.otaliastudios.cameraview.VideoQuality;
@@ -15,36 +17,42 @@ import com.otaliastudios.cameraview.WhiteBalance;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Controls that we want to display in a ControlView.
  */
 public enum Control {
 
-    WIDTH("Width", Integer.class),
-    HEIGHT("Height", Integer.class),
-    SESSION("Session type", SessionType.class),
-    CROP_OUTPUT("Crop output", Boolean.class),
-    FLASH("Flash", Flash.class),
-    WHITE_BALANCE("White balance", WhiteBalance.class),
-    GRID("Grid", Grid.class),
-    VIDEO_QUALITY("Video quality", VideoQuality.class),
-    AUDIO("Audio", Audio.class);
+    WIDTH("Width", false),
+    HEIGHT("Height", true),
+    SESSION("Session type", false),
+    CROP_OUTPUT("Crop output", true),
+    FLASH("Flash", false),
+    WHITE_BALANCE("White balance", false),
+    GRID("Grid", true),
+    VIDEO_QUALITY("Video quality", false),
+    AUDIO("Audio", true),
+    PINCH("Pinch gesture", false),
+    HSCROLL("Horizontal scroll gesture", false),
+    VSCROLL("Vertical scroll gesture", false),
+    TAP("Single tap gesture", false),
+    LONG_TAP("Long tap gesture", true);
 
     private String name;
-    private Class<?> cla;
+    private boolean last;
 
-    Control(String n, Class<?> cl) {
+    Control(String n, boolean l) {
         name = n;
-        cla = cl;
+        last = l;
     }
 
     public String getName() {
         return name;
     }
 
-    public Class<?> getType() {
-        return cla;
+    public boolean isSectionLast() {
+        return last;
     }
 
     public Collection<?> getValues(CameraView view) {
@@ -70,8 +78,29 @@ public enum Control {
             case GRID: return Arrays.asList(Grid.values());
             case VIDEO_QUALITY: return Arrays.asList(VideoQuality.values());
             case AUDIO: return Arrays.asList(Audio.values());
+            case PINCH:
+            case HSCROLL:
+            case VSCROLL:
+                ArrayList<GestureAction> list1 = new ArrayList<>();
+                addIfSupported(options, list1, GestureAction.NONE);
+                addIfSupported(options, list1, GestureAction.ZOOM);
+                addIfSupported(options, list1, GestureAction.EXPOSURE_CORRECTION);
+                return list1;
+            case TAP:
+            case LONG_TAP:
+                ArrayList<GestureAction> list2 = new ArrayList<>();
+                addIfSupported(options, list2, GestureAction.NONE);
+                addIfSupported(options, list2, GestureAction.CAPTURE);
+                addIfSupported(options, list2, GestureAction.FOCUS);
+                addIfSupported(options, list2, GestureAction.FOCUS_WITH_MARKER);
+                return list2;
+
         }
         return null;
+    }
+
+    private void addIfSupported(CameraOptions options, List<GestureAction> list, GestureAction value) {
+        if (options.supports(value)) list.add(value);
     }
 
     public Object getCurrentValue(CameraView view) {
@@ -85,8 +114,62 @@ public enum Control {
             case GRID: return view.getGrid();
             case VIDEO_QUALITY: return view.getVideoQuality();
             case AUDIO: return view.getAudio();
+            case PINCH: return view.getGestureAction(Gesture.PINCH);
+            case HSCROLL: return view.getGestureAction(Gesture.SCROLL_HORIZONTAL);
+            case VSCROLL: return view.getGestureAction(Gesture.SCROLL_VERTICAL);
+            case TAP: return view.getGestureAction(Gesture.TAP);
+            case LONG_TAP: return view.getGestureAction(Gesture.LONG_TAP);
         }
         return null;
+    }
+
+    public void applyValue(CameraView camera, Object value) {
+        switch (this) {
+            case WIDTH:
+                camera.getLayoutParams().width = (int) value;
+                camera.setLayoutParams(camera.getLayoutParams());
+                break;
+            case HEIGHT:
+                camera.getLayoutParams().height = (int) value;
+                camera.setLayoutParams(camera.getLayoutParams());
+                break;
+            case SESSION:
+                camera.setSessionType((SessionType) value);
+                break;
+            case CROP_OUTPUT:
+                camera.setCropOutput((boolean) value);
+                break;
+            case FLASH:
+                camera.setFlash((Flash) value);
+                break;
+            case WHITE_BALANCE:
+                camera.setWhiteBalance((WhiteBalance) value);
+                break;
+            case GRID:
+                camera.setGrid((Grid) value);
+                break;
+            case VIDEO_QUALITY:
+                camera.setVideoQuality((VideoQuality) value);
+                break;
+            case AUDIO:
+                camera.setAudio((Audio) value);
+                break;
+            case PINCH:
+                camera.mapGesture(Gesture.PINCH, (GestureAction) value);
+                break;
+            case HSCROLL:
+                camera.mapGesture(Gesture.SCROLL_HORIZONTAL, (GestureAction) value);
+                break;
+            case VSCROLL:
+                camera.mapGesture(Gesture.SCROLL_VERTICAL, (GestureAction) value);
+                break;
+            case TAP:
+                camera.mapGesture(Gesture.TAP, (GestureAction) value);
+                break;
+            case LONG_TAP:
+                camera.mapGesture(Gesture.LONG_TAP, (GestureAction) value);
+                break;
+        }
     }
 
 

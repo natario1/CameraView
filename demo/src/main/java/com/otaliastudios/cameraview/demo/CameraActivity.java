@@ -96,12 +96,20 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             message("Captured while taking video. Size="+mCaptureNativeSize, false);
             return;
         }
+
+        // This can happen if picture was taken with a gesture.
+        if (mCaptureTime == 0) mCaptureTime = callbackTime - 300;
+        if (mCaptureNativeSize == null) mCaptureNativeSize = camera.getCaptureSize();
+
         PicturePreviewActivity.setImage(jpeg);
         Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
         intent.putExtra("delay", callbackTime - mCaptureTime);
         intent.putExtra("nativeWidth", mCaptureNativeSize.getWidth());
         intent.putExtra("nativeHeight", mCaptureNativeSize.getHeight());
         startActivity(intent);
+
+        mCaptureTime = 0;
+        mCaptureNativeSize = null;
     }
 
     private void onVideo(File video) {
@@ -161,31 +169,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
     @Override
     public void onValueChanged(Control control, Object value, String name) {
-        switch (control) {
-            case WIDTH:
-                camera.getLayoutParams().width = (int) value;
-                camera.setLayoutParams(camera.getLayoutParams());
-                break;
-            case HEIGHT:
-                camera.getLayoutParams().height = (int) value;
-                camera.setLayoutParams(camera.getLayoutParams());
-                break;
-            case SESSION:
-                camera.setSessionType((SessionType) value); break;
-            case CROP_OUTPUT:
-                camera.setCropOutput((boolean) value); break;
-            case FLASH:
-                camera.setFlash((Flash) value); break;
-            case WHITE_BALANCE:
-                camera.setWhiteBalance((WhiteBalance) value); break;
-            case GRID:
-                camera.setGrid((Grid) value); break;
-            case VIDEO_QUALITY:
-                camera.setVideoQuality((VideoQuality) value); break;
-            case AUDIO:
-                camera.setAudio((Audio) value); break;
-        }
-
+        control.applyValue(camera, value);
         BottomSheetBehavior b = BottomSheetBehavior.from(controlPanel);
         b.setState(BottomSheetBehavior.STATE_HIDDEN);
         message("Changed " + control.getName() + " to " + name, false);

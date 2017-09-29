@@ -14,11 +14,15 @@
 
     <FrameLayout
         android:id="@+id/content"
-        android:padding="8dp"
+        android:paddingTop="4dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
     <View
+        android:id="@+id/divider"
+        android:layout_marginTop="8dp"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#44AAAAAA" />
