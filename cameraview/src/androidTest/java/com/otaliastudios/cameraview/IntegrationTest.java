@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
  */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-// @Ignore
+@Ignore
 public class IntegrationTest extends BaseTest {
 
     @Rule
