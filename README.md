@@ -14,8 +14,9 @@ compile 'com.otaliastudios:cameraview:1.2.1'
 ```
 
 <p>
-  <img src="art/screen1.png" width="250" vspace="20" hspace="5">
-  <img src="art/screen2.png" width="250" vspace="20" hspace="5">
+  <img src="art/screen1.jpg" width="250" vspace="20" hspace="5">
+  <img src="art/screen2.jpg" width="250" vspace="20" hspace="5">
+  <img src="art/screen3.jpg" width="250" vspace="20" hspace="5">
 </p>
 
 *This was a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview), but has been [completely rewritten](https://github.com/natario1/CameraView/graphs/contributors?type=d). See [below](#roadmap) for a list of what was done. Feel free to contribute - this is under active development.*
