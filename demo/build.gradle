@@ -23,6 +23,5 @@ android {
 dependencies {
     compile project(':cameraview')
     compile "com.android.support:appcompat-v7:$supportLibVersion"
-    compile 'com.jakewharton:butterknife:8.4.0'
-    annotationProcessor 'com.jakewharton:butterknife-compiler:8.4.0'
+    compile "com.android.support:design:$supportLibVersion"
 }

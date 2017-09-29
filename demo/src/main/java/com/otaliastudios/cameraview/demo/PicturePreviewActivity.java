@@ -12,25 +12,8 @@ import com.otaliastudios.cameraview.CameraUtils;
 
 import java.lang.ref.WeakReference;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class PicturePreviewActivity extends Activity {
-
-    @BindView(R.id.image)
-    ImageView imageView;
-
-    @BindView(R.id.nativeCaptureResolution)
-    TextView nativeCaptureResolution;
-
-    @BindView(R.id.actualResolution)
-    TextView actualResolution;
-
-    @BindView(R.id.approxUncompressedSize)
-    TextView approxUncompressedSize;
-
-    @BindView(R.id.captureLatency)
-    TextView captureLatency;
 
     private static WeakReference<byte[]> image;
 
@@ -42,7 +25,11 @@ public class PicturePreviewActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_picture_preview);
-        ButterKnife.bind(this);
+        final ImageView imageView = findViewById(R.id.image);
+        final MessageView nativeCaptureResolution = findViewById(R.id.nativeCaptureResolution);
+        final MessageView actualResolution = findViewById(R.id.actualResolution);
+        final MessageView approxUncompressedSize = findViewById(R.id.approxUncompressedSize);
+        final MessageView captureLatency = findViewById(R.id.captureLatency);
 
         final long delay = getIntent().getLongExtra("delay", 0);
         final int nativeWidth = getIntent().getIntExtra("nativeWidth", 0);
@@ -57,14 +44,21 @@ public class PicturePreviewActivity extends Activity {
             @Override
             public void onBitmapReady(Bitmap bitmap) {
                 imageView.setImageBitmap(bitmap);
-                approxUncompressedSize.setText(getApproximateFileMegabytes(bitmap) + "MB");
-                captureLatency.setText(delay + " milliseconds");
+
+                approxUncompressedSize.setTitle("Approx. uncompressed size");
+                approxUncompressedSize.setMessage(getApproximateFileMegabytes(bitmap) + "MB");
+
+                captureLatency.setTitle("Capture latency");
+                captureLatency.setMessage(delay + " milliseconds");
 
                 // ncr and ar might be different when cropOutput is true.
                 AspectRatio nativeRatio = AspectRatio.of(nativeWidth, nativeHeight);
                 AspectRatio finalRatio = AspectRatio.of(bitmap.getWidth(), bitmap.getHeight());
-                nativeCaptureResolution.setText(nativeWidth + "x" + nativeHeight + " (" + nativeRatio + ")");
-                actualResolution.setText(bitmap.getWidth() + "x" + bitmap.getHeight() + " (" + finalRatio + ")");
+                nativeCaptureResolution.setTitle("Native capture resolution");
+                nativeCaptureResolution.setMessage(nativeWidth + "x" + nativeHeight + " (" + nativeRatio + ")");
+
+                actualResolution.setTitle("Actual resolution");
+                actualResolution.setMessage(bitmap.getWidth() + "x" + bitmap.getHeight() + " (" + finalRatio + ")");
             }
         });
 
