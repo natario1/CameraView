@@ -22,8 +22,8 @@ import java.util.List;
 @TargetApi(21)
 class Camera2 extends CameraController {
 
-    public Camera2(CameraView.CameraCallbacks callback, Preview preview) {
-        super(callback, preview);
+    public Camera2(CameraView.CameraCallbacks callback) {
+        super(callback);
     }
 
     @Override

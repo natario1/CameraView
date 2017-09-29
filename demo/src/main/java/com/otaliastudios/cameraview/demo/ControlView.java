@@ -25,7 +25,7 @@ import java.util.Collection;
 public class ControlView<Value> extends LinearLayout implements Spinner.OnItemSelectedListener {
 
     interface Callback {
-        void onValueChanged(Control control, Object value, String name);
+        boolean onValueChanged(Control control, Object value, String name);
     }
 
     private Value value;
@@ -86,7 +86,11 @@ public class ControlView<Value> extends LinearLayout implements Spinner.OnItemSe
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         if (values.get(i) != value) {
             Log.e("ControlView", "curr: " + value + " new: " + values.get(i));
-            callback.onValueChanged(control, values.get(i), valuesStrings.get(i));
+            if (!callback.onValueChanged(control, values.get(i), valuesStrings.get(i))) {
+                spinner.setSelection(values.indexOf(value)); // Go back.
+            } else {
+                value = values.get(i);
+            }
         }
     }
 

@@ -26,7 +26,7 @@ public class CameraViewTest extends BaseTest {
 
     private CameraView cameraView;
     private MockCameraController mockController;
-    private Preview mockPreview;
+    private CameraPreview mockPreview;
     private boolean hasPermissions;
 
     @Before
@@ -37,14 +37,14 @@ public class CameraViewTest extends BaseTest {
                 Context context = context();
                 cameraView = new CameraView(context) {
                     @Override
-                    protected CameraController instantiateCameraController(CameraCallbacks callbacks, Preview preview) {
-                        mockController = new MockCameraController(callbacks, preview);
+                    protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
+                        mockController = new MockCameraController(callbacks);
                         return mockController;
                     }
 
                     @Override
-                    protected Preview instantiatePreview(Context context, ViewGroup container) {
-                        mockPreview = new MockPreview(context, container);
+                    protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
+                        mockPreview = new MockCameraPreview(context, container);
                         return mockPreview;
                     }
 
@@ -53,6 +53,8 @@ public class CameraViewTest extends BaseTest {
                         return hasPermissions;
                     }
                 };
+                // Instantiate preview now.
+                cameraView.instantiatePreview();
             }
         });
     }

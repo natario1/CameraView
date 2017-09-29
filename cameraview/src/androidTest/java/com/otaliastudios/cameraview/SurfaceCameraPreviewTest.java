@@ -10,10 +10,10 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class SurfaceViewPreviewTest extends PreviewTest {
+public class SurfaceCameraPreviewTest extends PreviewTest {
 
     @Override
-    protected Preview createPreview(Context context, ViewGroup parent, Preview.SurfaceCallback callback) {
-        return new SurfaceViewPreview(context, parent, callback);
+    protected CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback) {
+        return new SurfaceCameraPreview(context, parent, callback);
     }
 }

@@ -58,9 +58,9 @@ public class CameraView extends FrameLayout {
 
     // Components
     /* for tests */ CameraCallbacks mCameraCallbacks;
+    private CameraPreview mCameraPreview;
     private OrientationHelper mOrientationHelper;
     private CameraController mCameraController;
-    private Preview mPreviewImpl;
     private ArrayList<CameraListener> mListeners = new ArrayList<>(2);
     private MediaActionSound mSound;
 
@@ -89,6 +89,7 @@ public class CameraView extends FrameLayout {
 
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
+        setWillNotDraw(false);
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
         // Self managed
         int jpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, DEFAULT_JPEG_QUALITY);
@@ -115,8 +116,7 @@ public class CameraView extends FrameLayout {
 
         // Components
         mCameraCallbacks = new Callbacks();
-        mPreviewImpl = instantiatePreview(context, this);
-        mCameraController = instantiateCameraController(mCameraCallbacks, mPreviewImpl);
+        mCameraController = instantiateCameraController(mCameraCallbacks);
         mUiHandler = new Handler(Looper.getMainLooper());
         mWorkerHandler = WorkerHandler.get("CameraViewWorker");
 
@@ -158,23 +158,31 @@ public class CameraView extends FrameLayout {
         }
     }
 
+    protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
+        return new Camera1(callbacks);
+    }
 
-    protected Preview instantiatePreview(Context context, ViewGroup container) {
+    protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
         // TextureView is not supported without hardware acceleration.
+        LOG.w("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
         return isHardwareAccelerated() ?
-                new TextureViewPreview(context, container, null) :
-                new SurfaceViewPreview(context, container, null);
+                new TextureCameraPreview(context, container, null) :
+                new SurfaceCameraPreview(context, container, null);
     }
 
-
-    protected CameraController instantiateCameraController(CameraCallbacks callbacks, Preview preview) {
-        return new Camera1(callbacks, preview);
+    /* for tests */ void instantiatePreview() {
+        mCameraPreview = instantiatePreview(getContext(), this);
+        mCameraController.setPreview(mCameraPreview);
     }
-
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        if (mCameraPreview == null) {
+            // isHardwareAccelerated will return the real value only after we are
+            // attached. That's why we instantiate the preview here.
+            instantiatePreview();
+        }
         if (!isInEditMode()) {
             mOrientationHelper.enable(getContext());
         }
@@ -211,7 +219,7 @@ public class CameraView extends FrameLayout {
      *                 aspect ratio.
      *
      * When both dimensions are MATCH_PARENT, CameraView will fill its
-     * parent no matter the preview. Thanks to what happens in {@link Preview}, this acts like
+     * parent no matter the preview. Thanks to what happens in {@link CameraPreview}, this acts like
      * a CENTER CROP scale type.
      *
      * When both dimensions are WRAP_CONTENT, CameraView will take the biggest dimensions that
@@ -235,18 +243,24 @@ public class CameraView extends FrameLayout {
         final float previewWidth = flip ? previewSize.getHeight() : previewSize.getWidth();
         final float previewHeight = flip ? previewSize.getWidth() : previewSize.getHeight();
 
-        // If MATCH_PARENT is interpreted as AT_MOST, transform to EXACTLY
-        // to be consistent with our semantics (and our docs).
+        // Pre-process specs
         final ViewGroup.LayoutParams lp = getLayoutParams();
-        if (widthMode == AT_MOST && lp.width == MATCH_PARENT) widthMode = EXACTLY;
-        if (heightMode == AT_MOST && lp.height == MATCH_PARENT) heightMode = EXACTLY;
-        LOG.i("onMeasure:", "requested dimensions are",
-                "(" + widthValue + "[" + ms(widthMode) + "]x" +
+        if (!mCameraPreview.supportsCropping()) {
+            // We can't allow EXACTLY constraints in this case.
+            if (widthMode == EXACTLY) widthMode = AT_MOST;
+            if (heightMode == EXACTLY) heightMode = AT_MOST;
+        } else {
+            // If MATCH_PARENT is interpreted as AT_MOST, transform to EXACTLY
+            // to be consistent with our semantics (and our docs).
+            if (widthMode == AT_MOST && lp.width == MATCH_PARENT) widthMode = EXACTLY;
+            if (heightMode == AT_MOST && lp.height == MATCH_PARENT) heightMode = EXACTLY;
+        }
+
+        LOG.i("onMeasure:", "requested dimensions are", "(" + widthValue + "[" + ms(widthMode) + "]x" +
                 heightValue + "[" + ms(heightMode) + "])");
         LOG.i("onMeasure:",  "previewSize is", "(" + previewWidth + "x" + previewHeight + ")");
 
-
-        // If we have fixed dimensions (either 300dp or MATCH_PARENT), there's nothing we should do,
+        // (1) If we have fixed dimensions (either 300dp or MATCH_PARENT), there's nothing we should do,
         // other than respect it. The preview will eventually be cropped at the sides (by PreviewImpl scaling)
         // except the case in which these fixed dimensions manage to fit exactly the preview aspect ratio.
         if (widthMode == EXACTLY && heightMode == EXACTLY) {
@@ -256,8 +270,8 @@ public class CameraView extends FrameLayout {
             return;
         }
 
-        // If both dimensions are free, with no limits, then our size will be exactly the
-        // preview size. This can happen rarely, for example in scrollable containers.
+        // (2) If both dimensions are free, with no limits, then our size will be exactly the
+        // preview size. This can happen rarely, for example in 2d scrollable containers.
         if (widthMode == UNSPECIFIED && heightMode == UNSPECIFIED) {
             LOG.i("onMeasure:", "both are completely free.",
                     "We respect that and extend to the whole preview size.",
@@ -271,7 +285,7 @@ public class CameraView extends FrameLayout {
         // It's sure now that at least one dimension can be determined (either because EXACTLY or AT_MOST).
         // This starts to seem a pleasant situation.
 
-        // If one of the dimension is completely free (e.g. in a scrollable container),
+        // (3) If one of the dimension is completely free (e.g. in a scrollable container),
         // take the other and fit the ratio.
         // One of the two might be AT_MOST, but we use the value anyway.
         float ratio = previewHeight / previewWidth;
@@ -292,7 +306,7 @@ public class CameraView extends FrameLayout {
             return;
         }
 
-        // At this point both dimensions are either AT_MOST-AT_MOST, EXACTLY-AT_MOST or AT_MOST-EXACTLY.
+        // (4) At this point both dimensions are either AT_MOST-AT_MOST, EXACTLY-AT_MOST or AT_MOST-EXACTLY.
         // Let's manage this sanely. If only one is EXACTLY, we can TRY to fit the aspect ratio,
         // but it is not guaranteed to succeed. It depends on the AT_MOST value of the other dimensions.
         if (widthMode == EXACTLY || heightMode == EXACTLY) {
@@ -313,8 +327,8 @@ public class CameraView extends FrameLayout {
             return;
         }
 
-        // Last case, AT_MOST and AT_MOST. Here we can SURELY fit the aspect ratio by filling one
-        // dimension and adapting the other.
+        // (5) Last case, AT_MOST and AT_MOST. Here we can SURELY fit the aspect ratio by
+        // filling one dimension and adapting the other.
         int height, width;
         float atMostRatio = (float) heightValue / (float) widthValue;
         if (atMostRatio >= ratio) {
@@ -1373,7 +1387,7 @@ public class CameraView extends FrameLayout {
                 @Override
                 public void run() {
                     byte[] jpeg2 = jpeg;
-                    if (mCropOutput && mPreviewImpl.isCropping()) {
+                    if (mCropOutput && mCameraPreview.isCropping()) {
                         // If consistent, dimensions of the jpeg Bitmap and dimensions of getWidth(), getHeight()
                         // Live in the same reference system.
                         int w = consistentWithView ? getWidth() : getHeight();
@@ -1395,7 +1409,7 @@ public class CameraView extends FrameLayout {
                 @Override
                 public void run() {
                     byte[] jpeg;
-                    if (mCropOutput && mPreviewImpl.isCropping()) {
+                    if (mCropOutput && mCameraPreview.isCropping()) {
                         int w = consistentWithView ? getWidth() : getHeight();
                         int h = consistentWithView ? getHeight() : getWidth();
                         AspectRatio targetRatio = AspectRatio.of(w, h);
