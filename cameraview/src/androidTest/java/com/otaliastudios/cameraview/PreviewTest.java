@@ -19,14 +19,14 @@ import static org.mockito.Mockito.*;
 
 public abstract class PreviewTest extends BaseTest {
 
-    protected abstract Preview createPreview(Context context, ViewGroup parent, Preview.SurfaceCallback callback);
+    protected abstract CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback);
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
-    protected Preview preview;
+    protected CameraPreview preview;
     protected Size surfaceSize;
-    private Preview.SurfaceCallback callback;
+    private CameraPreview.SurfaceCallback callback;
     private Task<Boolean> availability;
 
     @Before
@@ -40,7 +40,7 @@ public abstract class PreviewTest extends BaseTest {
                 TestActivity a = rule.getActivity();
                 surfaceSize = a.getContentSize();
 
-                callback = mock(Preview.SurfaceCallback.class);
+                callback = mock(CameraPreview.SurfaceCallback.class);
                 doAnswer(new Answer() {
                     @Override
                     public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -121,8 +121,10 @@ public abstract class PreviewTest extends BaseTest {
 
         // If we apply a different aspect ratio, there should be cropping.
         float desired = view * 1.2f;
-        setDesiredAspectRatio(desired);
-        assertTrue(preview.isCropping());
+        if (preview.supportsCropping()) {
+            setDesiredAspectRatio(desired);
+            assertTrue(preview.isCropping());
+        }
 
         // Since desired is 'desired', let's fake a new view size that is consistent with it.
         // Ensure crop is not happening anymore.

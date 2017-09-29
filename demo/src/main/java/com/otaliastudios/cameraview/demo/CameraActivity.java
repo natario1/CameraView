@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.otaliastudios.cameraview.Audio;
@@ -43,6 +44,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         setContentView(R.layout.activity_camera);
         CameraLogger.setLogLevel(CameraLogger.LEVEL_VERBOSE);
 
@@ -168,11 +171,20 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     @Override
-    public void onValueChanged(Control control, Object value, String name) {
+    public boolean onValueChanged(Control control, Object value, String name) {
+        if (!camera.isHardwareAccelerated() && (control == Control.WIDTH || control == Control.HEIGHT)) {
+            if ((Integer) value > 0) {
+                message("This device does not support hardware acceleration. " +
+                        "In this case you can not change width or height. " +
+                        "The view will act as WRAP_CONTENT by default.", true);
+                return false;
+            }
+        }
         control.applyValue(camera, value);
         BottomSheetBehavior b = BottomSheetBehavior.from(controlPanel);
         b.setState(BottomSheetBehavior.STATE_HIDDEN);
         message("Changed " + control.getName() + " to " + name, false);
+        return true;
     }
 
     //region Boilerplate

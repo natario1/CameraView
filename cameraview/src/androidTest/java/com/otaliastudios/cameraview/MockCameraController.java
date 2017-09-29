@@ -15,8 +15,8 @@ public class MockCameraController extends CameraController {
     boolean mZoomChanged;
     boolean mExposureCorrectionChanged;
 
-    MockCameraController(CameraView.CameraCallbacks callback, Preview preview) {
-        super(callback, preview);
+    MockCameraController(CameraView.CameraCallbacks callback) {
+        super(callback);
     }
 
     void setMockCameraOptions(CameraOptions options) {
