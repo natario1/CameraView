@@ -15,7 +15,6 @@ import android.support.annotation.WorkerThread;
 import android.view.SurfaceHolder;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,8 +56,8 @@ class Camera1 extends CameraController {
     private final Object mLock = new Object();
 
 
-    Camera1(CameraView.CameraCallbacks callback, final Preview preview) {
-        super(callback, preview);
+    Camera1(CameraView.CameraCallbacks callback) {
+        super(callback);
     }
 
     /**
@@ -118,7 +117,7 @@ class Camera1 extends CameraController {
     }
 
     private boolean shouldSetup() {
-        return isCameraAvailable() && mPreview.isReady() && !mIsSetup;
+        return isCameraAvailable() && mPreview != null && mPreview.isReady() && !mIsSetup;
     }
 
     // The act of binding an "open" camera to a "ready" preview.
@@ -557,7 +556,7 @@ class Camera1 extends CameraController {
      * This is called either on cameraView.start(), or when the underlying surface changes.
      * It is possible that in the first call the preview surface has not already computed its
      * dimensions.
-     * But when it does, the {@link Preview.SurfaceCallback} should be called,
+     * But when it does, the {@link CameraPreview.SurfaceCallback} should be called,
      * and this should be refreshed.
      */
     private Size computeCaptureSize() {

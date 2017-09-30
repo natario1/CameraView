@@ -7,15 +7,21 @@ import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class MockPreview extends Preview<View, Void> {
+public class MockCameraPreview extends CameraPreview<View, Void> {
 
-    MockPreview(Context context, ViewGroup parent) {
+    MockCameraPreview(Context context, ViewGroup parent) {
         super(context, parent, null);
     }
 
+    private boolean mCropping = false;
+
     public void setIsCropping(boolean crop) {
-        getView().setScaleX(crop ? 2 : 1);
-        getView().setScaleY(crop ? 2 : 1);
+        mCropping = crop;
+    }
+
+    @Override
+    boolean isCropping() {
+        return mCropping;
     }
 
     @NonNull

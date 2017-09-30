@@ -14,8 +14,9 @@ compile 'com.otaliastudios:cameraview:1.2.1'
 ```
 
 <p>
-  <img src="art/screen1.png" width="250" vspace="20" hspace="5">
-  <img src="art/screen2.png" width="250" vspace="20" hspace="5">
+  <img src="art/screen1.jpg" width="250" vspace="20" hspace="5">
+  <img src="art/screen2.jpg" width="250" vspace="20" hspace="5">
+  <img src="art/screen3.jpg" width="250" vspace="20" hspace="5">
 </p>
 
 *This was a fork of [CameraKit-Android library](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView library](https://github.com/google/cameraview), but has been [completely rewritten](https://github.com/natario1/CameraView/graphs/contributors?type=d). See [below](#roadmap) for a list of what was done. Feel free to contribute - this is under active development.*
@@ -56,6 +57,7 @@ compile 'com.otaliastudios:cameraview:1.2.1'
 - [Permissions Behavior](#permissions-behavior)
 - [Manifest file](#manifest-file)
 - [Roadmap](#roadmap)
+- [Device-specific issues](#device-specific-issues)
 
 ## Usage
 
@@ -525,3 +527,11 @@ These are still things that need to be done, off the top of my head:
 - [ ] add onRequestPermissionResults for easy permission callback
 - [ ] better error handling, maybe with a onError(e) method in the public listener, or have each public method return a boolean
 - [ ] decent code coverage
+
+## Device-specific issues
+
+There are a couple of known issues if you are working with certain devices. The emulator is one of
+the most tricky in this sense.
+
+- Devices, or activities, with hardware acceleration turned off: this can be the case with emulators. In this case we will use SurfaceView as our surface provider. That is intrinsically flawed and can't deal with all we want to do here (runtime layout changes, scaling, etc.). So, nothing to do in this case.
+- Devices with no support for MediaRecorder: the emulator does not support it, officially. This means that video/audio recording is flawed. Again, not our fault.

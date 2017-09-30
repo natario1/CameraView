@@ -56,8 +56,8 @@ public class IntegrationTest extends BaseTest {
             public void run() {
                 camera = new CameraView(rule.getActivity()) {
                     @Override
-                    protected CameraController instantiateCameraController(CameraCallbacks callbacks, Preview preview) {
-                        controller = new Camera1(callbacks, preview);
+                    protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
+                        controller = new Camera1(callbacks);
                         return controller;
                     }
                 };

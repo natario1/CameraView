@@ -6,9 +6,9 @@ import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 
-abstract class Preview<T extends View, Output> {
+abstract class CameraPreview<T extends View, Output> {
 
-    protected final static CameraLogger LOG = CameraLogger.create(Preview.class.getSimpleName());
+    private final static CameraLogger LOG = CameraLogger.create(CameraPreview.class.getSimpleName());
 
     // Used for testing.
     Task<Void> mCropTask = new Task<>();
@@ -22,6 +22,7 @@ abstract class Preview<T extends View, Output> {
 
     private SurfaceCallback mSurfaceCallback;
     private T mView;
+    private boolean mCropping;
 
     // As far as I can see, these are the view/surface dimensions.
     // This live in the 'View' orientation.
@@ -32,7 +33,7 @@ abstract class Preview<T extends View, Output> {
     private int mDesiredWidth;
     private int mDesiredHeight;
 
-    Preview(Context context, ViewGroup parent, SurfaceCallback callback) {
+    CameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         mView = onCreateView(context, parent);
         mSurfaceCallback = callback;
     }
@@ -118,6 +119,12 @@ abstract class Preview<T extends View, Output> {
      */
     private final void crop() {
         mCropTask.start();
+
+        if (!supportsCropping()) {
+            mCropTask.end(null);
+            return;
+        };
+
         getView().post(new Runnable() {
             @Override
             public void run() {
@@ -137,8 +144,8 @@ abstract class Preview<T extends View, Output> {
                     // We must increase width.
                     scaleX = target.toFloat() / current.toFloat();
                 }
-                getView().setScaleX(scaleX);
-                getView().setScaleY(scaleY);
+                applyCrop(scaleX, scaleY);
+                mCropping = scaleX > 1.02f || scaleY > 1.02f;
                 LOG.i("crop:", "applied scaleX=", scaleX);
                 LOG.i("crop:", "applied scaleY=", scaleY);
                 mCropTask.end(null);
@@ -146,14 +153,21 @@ abstract class Preview<T extends View, Output> {
         });
     }
 
+    protected void applyCrop(float scaleX, float scaleY) {
+        getView().setScaleX(scaleX);
+        getView().setScaleY(scaleY);
+    }
+
+    boolean supportsCropping() {
+        return true;
+    }
 
     /**
      * Whether we are cropping the output.
      * If false, this means that the output image will match the visible bounds.
      * @return true if cropping
      */
-    final boolean isCropping() {
-        // Account for some error
-        return getView().getScaleX() > 1.02f || getView().getScaleY() > 1.02f;
+    /* not final for tests */ boolean isCropping() {
+        return mCropping;
     }
 }
