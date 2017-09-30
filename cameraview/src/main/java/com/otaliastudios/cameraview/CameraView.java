@@ -518,7 +518,9 @@ public class CameraView extends FrameLayout {
 
     /**
      * Checks that we have appropriate permissions for this session type.
-     * Throws if session = audio and manifest did not add the microphone permissions.
+     * Throws if session = audio and manifest did not add the microphone permissions.     
+     * @param sessionType
+     * @param audio
      * @return true if we can go on, false otherwise.
      */
     @SuppressLint("NewApi")
@@ -1274,7 +1276,7 @@ public class CameraView extends FrameLayout {
     /**
      * Controls whether CameraView should play sound effects on certain
      * events (picture taken, focus complete). Note that:
-     * - On API level < 16, this flag is always false
+     * - On API level {@literal <} 16, this flag is always false
      * - Camera1 will always play the shutter sound when taking pictures
      *
      * @param playSounds whether to play sound effects
