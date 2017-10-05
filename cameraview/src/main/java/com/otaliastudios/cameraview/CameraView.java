@@ -1569,10 +1569,15 @@ public class CameraView extends FrameLayout {
             LOG.e(message, cause);
 
             // redirect
-            CameraException cameraException = new CameraException(message, cause);
-            for (CameraListener listener : mListeners) {
-                listener.onError(cameraException);
-            }
+            final CameraException cameraException = new CameraException(message, cause);
+            mUiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onError(cameraException);
+                    }
+                }
+            });
         }
     }
 
