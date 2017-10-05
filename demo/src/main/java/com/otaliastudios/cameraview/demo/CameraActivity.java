@@ -132,6 +132,16 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        BottomSheetBehavior b = BottomSheetBehavior.from(controlPanel);
+        if (b.getState() != BottomSheetBehavior.STATE_HIDDEN) {
+            b.setState(BottomSheetBehavior.STATE_HIDDEN);
+            return;
+        }
+        super.onBackPressed();
+    }
+
     private void edit() {
         BottomSheetBehavior b = BottomSheetBehavior.from(controlPanel);
         b.setState(BottomSheetBehavior.STATE_COLLAPSED);
