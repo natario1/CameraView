@@ -130,4 +130,17 @@ public abstract class CameraListener {
 
     }
 
+    /**
+     * Notifies that an error occurred in any of the previously called methods.
+     *
+     * The default implementation will just throw the original exception again to prevent missing
+     * error handling. Override this method without calling the super method in order to implement
+     * custom error handling.
+     *
+     * @param exception the caught exception
+     */
+    @UiThread
+    public void onError(CameraException exception) {
+        throw exception;
+    }
 }

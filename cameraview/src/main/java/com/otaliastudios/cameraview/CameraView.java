@@ -1308,6 +1308,7 @@ public class CameraView extends FrameLayout {
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, PointF where);
         void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
         void dispatchOnExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers);
+        void onError(String message, Exception cause);
     }
 
     private class Callbacks implements CameraCallbacks {
@@ -1554,6 +1555,24 @@ public class CameraView extends FrameLayout {
                     }
                 }
             });
+        }
+
+        /**
+         * Log and redirect the given error information to the CameraListeners.
+         *
+         * @param message a message describing which camera action failed
+         * @param cause the original exception that caused the error
+         */
+        @Override
+        public void onError(String message, Exception cause) {
+            // log
+            LOG.e(message, cause);
+
+            // redirect
+            CameraException cameraException = new CameraException(message, cause);
+            for (CameraListener listener : mListeners) {
+                listener.onError(cameraException);
+            }
         }
     }
 

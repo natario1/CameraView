@@ -98,8 +98,7 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
                     mCameraCallbacks.dispatchOnCameraOpened(mOptions);
 
                 } catch (Exception e) {
-                    LOG.e("Error while starting the camera engine.", e);
-                    throw new RuntimeException(e);
+                    mCameraCallbacks.onError("Error while starting the camera engine.", e);
                 }
             }
         });
@@ -122,8 +121,7 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
                     mCameraCallbacks.dispatchOnCameraClosed();
 
                 } catch (Exception e) {
-                    LOG.e("Error while stopping the camera engine.", e);
-                    throw new RuntimeException(e);
+                    mCameraCallbacks.onError("Error while stopping the camera engine.", e);
                 }
             }
         });
@@ -140,8 +138,8 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
             LOG.i("Stop immediately. Stopped. State is:", ss());
         } catch (Exception e) {
             // Do nothing.
-            LOG.i("Stop immediately. Exception while stopping.", e);
             mState = STATE_STOPPED;
+            mCameraCallbacks.onError("Stop immediately. Exception while stopping.", e);
         }
     }
 
@@ -170,9 +168,7 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
                     mCameraCallbacks.dispatchOnCameraOpened(mOptions);
 
                 } catch (Exception e) {
-                    LOG.e("Error while restarting the camera engine.", e);
-                    throw new RuntimeException(e);
-
+                    mCameraCallbacks.onError("Error while restarting the camera engine.", e);
                 }
             }
         });
