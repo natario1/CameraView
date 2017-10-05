@@ -216,6 +216,17 @@ camera.addCameraListener(new CameraListener() {
      */
     @Override 
     public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {}
+    
+    /**
+     * Notifies that an error occurred in any of the previously called methods.
+     * The default implementation will just throw the original exception again to prevent missing
+     * error handling. Override this method without calling the super method in order to implement
+     * custom error handling.
+     */
+    @Override 
+    public void onError(CameraException exception) {
+        throw exception;
+    }
 
 });
 ```
@@ -525,7 +536,7 @@ These are still things that need to be done, off the top of my head:
 - [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
 - [ ] add onRequestPermissionResults for easy permission callback
-- [ ] better error handling, maybe with a onError(e) method in the public listener, or have each public method return a boolean
+- [ ] better error handling, maybe extending the current onError(e) method to handle more use cases, or have each public method return a boolean
 - [ ] decent code coverage
 
 ## Device-specific issues
