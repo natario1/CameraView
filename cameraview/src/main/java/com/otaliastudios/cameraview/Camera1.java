@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static android.hardware.Camera.CAMERA_ERROR_SERVER_DIED;
+import static android.hardware.Camera.CAMERA_ERROR_UNKNOWN;
+
 
 @SuppressWarnings("deprecation")
 class Camera1 extends CameraController {
@@ -164,6 +167,38 @@ class Camera1 extends CameraController {
         }
         if (collectCameraId()) {
             mCamera = Camera.open(mCameraId);
+
+            /**
+             * attach Android native error listener for the Camera1 API
+             * TODO it's not yet sure how the caught errors interact with the exceptions caught
+             * outside of the following handler. Furthermore, for most errors it's not known whether
+             * they are crucial or not. Therefore, such errors are handled as low-priority
+             * CameraConfigurationFailedExceptions for now.
+             */
+            mCamera.setErrorCallback(new Camera.ErrorCallback() {
+                @Override
+                public void onError(int errorCode, Camera camera) {
+
+                    // extend error information by known error codes
+                    CameraException cameraException;
+                    if (errorCode == CAMERA_ERROR_SERVER_DIED) {
+                        cameraException = new CameraUnavailableException(
+                                "Media server died. In this case, the application must release the" +
+                                        " Camera object and instantiate a new one.");
+                    }
+                    else if (errorCode == CAMERA_ERROR_UNKNOWN) {
+                        cameraException = new CameraConfigurationFailedException(
+                                "Unspecified camera error.");
+                    }
+                    else {
+                        cameraException = new CameraConfigurationFailedException(
+                                "Received camera error code: " + errorCode);
+                    }
+
+                    // redirect error
+                    mCameraCallbacks.onError(cameraException);
+                }
+            });
 
             // Set parameters that might have been set before the camera was opened.
             synchronized (mLock) {
