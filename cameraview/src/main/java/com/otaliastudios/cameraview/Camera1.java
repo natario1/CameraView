@@ -797,8 +797,8 @@ class Camera1 extends CameraController {
             return true;
         }
         catch (Exception e) {
-            // at least setParameters may fail.
-            // TODO why does it fail and is it possible to prevent such errors?
+            // at least getParameters and setParameters may fail.
+            // TODO why do they fail and is it possible to prevent such errors?
             CameraException cameraException = new CameraConfigurationFailedException("Failed to " +
                     "start auto focus.", e);
             mCameraCallbacks.onError(cameraException);

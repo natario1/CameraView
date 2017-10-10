@@ -1579,15 +1579,24 @@ public class CameraView extends FrameLayout {
                 public void run() {
 
                     // all error listeners will be called, but at most one of them should actually
-                    // throw the exception
+                    // throw an exception
                     int count = 0;
                     for (CameraListener listener : mListeners) {
                         try {
                             listener.onError(exception);
                         } catch (CameraException ce) {
-                            count++;
+                            // if a custom error handler caused a new exception, we throw the new
+                            // one instead of the original one
+                            if (ce == exception) {
+                                count++;
+                            }
+                            else {
+                                throw ce;
+                            }
                         }
                     }
+
+                    // the original exception is only thrown, if all existing listeners threw it
                     if (count == mListeners.size()) {
                         throw exception;
                     }
