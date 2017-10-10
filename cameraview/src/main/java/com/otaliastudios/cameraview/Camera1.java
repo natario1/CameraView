@@ -428,36 +428,43 @@ class Camera1 extends CameraController {
             if (!mOptions.isVideoSnapshotSupported()) return false;
         }
 
-        // Set boolean to wait for image callback
-        mIsCapturingImage = true;
-        final int exifRotation = computeExifRotation();
-        final boolean exifFlip = computeExifFlip();
-        final int sensorToDisplay = computeSensorToDisplayOffset();
-        synchronized (mLock) {
-            Camera.Parameters params = mCamera.getParameters();
-            params.setRotation(exifRotation);
-            mCamera.setParameters(params);
+        try {
+            // Set boolean to wait for image callback
+            mIsCapturingImage = true;
+            final int exifRotation = computeExifRotation();
+            final boolean exifFlip = computeExifFlip();
+            final int sensorToDisplay = computeSensorToDisplayOffset();
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                params.setRotation(exifRotation);
+                mCamera.setParameters(params);
+            }
+            // Is the final picture (decoded respecting EXIF) consistent with CameraView orientation?
+            // We must consider exifOrientation to bring back the picture in the sensor world.
+            // Then use sensorToDisplay to move to the display world, where CameraView lives.
+            final boolean consistentWithView = (exifRotation + sensorToDisplay + 180) % 180 == 0;
+            mCamera.takePicture(null, null, null,
+                    new Camera.PictureCallback() {
+                        @Override
+                        public void onPictureTaken(byte[] data, final Camera camera) {
+                            mIsCapturingImage = false;
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // This is needed, read somewhere in the docs.
+                                    camera.startPreview();
+                                }
+                            });
+                            mCameraCallbacks.processImage(data, consistentWithView, exifFlip);
+                        }
+                    });
+            return true;
         }
-        // Is the final picture (decoded respecting EXIF) consistent with CameraView orientation?
-        // We must consider exifOrientation to bring back the picture in the sensor world.
-        // Then use sensorToDisplay to move to the display world, where CameraView lives.
-        final boolean consistentWithView = (exifRotation + sensorToDisplay + 180) % 180 == 0;
-        mCamera.takePicture(null, null, null,
-                new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, final Camera camera) {
-                        mIsCapturingImage = false;
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                // This is needed, read somewhere in the docs.
-                                camera.startPreview();
-                            }
-                        });
-                        mCameraCallbacks.processImage(data, consistentWithView, exifFlip);
-                    }
-                });
-        return true;
+        catch (Exception e) {
+            CameraException cameraException = new CapturingPictureFailedException("Capturing a picture failed.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
     }
 
 
@@ -471,37 +478,45 @@ class Camera1 extends CameraController {
             capturePicture();
             return false;
         }
-        mIsCapturingImage = true;
-        mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
-            @Override
-            public void onPreviewFrame(final byte[] data, Camera camera) {
-                // Got to rotate the preview frame, since byte[] data here does not include
-                // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
-                // Adding EXIF to a byte array, unfortunately, is hard.
-                Camera.Parameters params = mCamera.getParameters();
-                final int sensorToDevice = computeExifRotation();
-                final int sensorToDisplay = computeSensorToDisplayOffset();
-                final boolean exifFlip = computeExifFlip();
-                final boolean flip = sensorToDevice % 180 != 0;
-                final int preWidth = mPreviewSize.getWidth();
-                final int preHeight = mPreviewSize.getHeight();
-                final int postWidth = flip ? preHeight : preWidth;
-                final int postHeight = flip ? preWidth : preHeight;
-                final int format = params.getPreviewFormat();
-                WorkerHandler.run(new Runnable() {
-                    @Override
-                    public void run() {
 
-                        final boolean consistentWithView = (sensorToDevice + sensorToDisplay + 180) % 180 == 0;
-                        byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToDevice);
-                        YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
-                        mCameraCallbacks.processSnapshot(yuv, consistentWithView, exifFlip);
-                        mIsCapturingImage = false;
-                    }
-                });
-            }
-        });
-        return true;
+        try {
+            mIsCapturingImage = true;
+            mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
+                @Override
+                public void onPreviewFrame(final byte[] data, Camera camera) {
+                    // Got to rotate the preview frame, since byte[] data here does not include
+                    // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
+                    // Adding EXIF to a byte array, unfortunately, is hard.
+                    Camera.Parameters params = mCamera.getParameters();
+                    final int sensorToDevice = computeExifRotation();
+                    final int sensorToDisplay = computeSensorToDisplayOffset();
+                    final boolean exifFlip = computeExifFlip();
+                    final boolean flip = sensorToDevice % 180 != 0;
+                    final int preWidth = mPreviewSize.getWidth();
+                    final int preHeight = mPreviewSize.getHeight();
+                    final int postWidth = flip ? preHeight : preWidth;
+                    final int postHeight = flip ? preWidth : preHeight;
+                    final int format = params.getPreviewFormat();
+                    WorkerHandler.run(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            final boolean consistentWithView = (sensorToDevice + sensorToDisplay + 180) % 180 == 0;
+                            byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToDevice);
+                            YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
+                            mCameraCallbacks.processSnapshot(yuv, consistentWithView, exifFlip);
+                            mIsCapturingImage = false;
+                        }
+                    });
+                }
+            });
+            return true;
+        }
+        catch (Exception e) {
+            CameraException cameraException = new CapturingSnapshotFailedException("Capturing a snapshot failed.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
     }
 
     @Override
