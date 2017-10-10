@@ -75,8 +75,9 @@ class Camera1 extends CameraController {
                 try {
                     setup();
                 } catch (Exception e) {
-                    LOG.w("onSurfaceAvailable:", "Exception while binding camera to preview.", e);
-                    throw new RuntimeException(e);
+                    CameraException cameraException = new CameraUnavailableException(
+                            "onSurfaceAvailable: Exception while binding camera to preview.", e);
+                    mCameraCallbacks.onError(cameraException);
                 }
             }
         });
@@ -394,7 +395,9 @@ class Camera1 extends CameraController {
         if (mIsCapturingVideo) {
             // TODO: actually any call to getParameters() could fail while recording a video.
             // See. https://stackoverflow.com/questions/14941625/correct-handling-of-exception-getparameters-failed-empty-parameters
-            throw new IllegalStateException("Can't change video quality while recording a video.");
+            CameraException cameraException = new CameraConfigurationFailedException("Can't change video quality while recording a video.");
+            mCameraCallbacks.onError(cameraException);
+            return;
         }
 
         mVideoQuality = videoQuality;
@@ -606,14 +609,20 @@ class Camera1 extends CameraController {
                 mMediaRecorder.start();
                 return true;
             } catch (Exception e) {
-                LOG.e("Error while starting MediaRecorder. Swallowing.", e);
+                CameraException cameraException =
+                        new CapturingVideoFailedException("Error while starting MediaRecorder. " +
+                                "Swallowing.", e);
+                mCameraCallbacks.onError(cameraException);
                 mVideoFile = null;
                 mCamera.lock();
                 endVideo();
                 return false;
             }
         } else {
-            throw new IllegalStateException("Can't record video while session type is picture");
+            CameraException cameraException =
+                    new CapturingVideoFailedException("Can't record video while session type is picture");
+            mCameraCallbacks.onError(cameraException);
+            return false;
         }
     }
 
