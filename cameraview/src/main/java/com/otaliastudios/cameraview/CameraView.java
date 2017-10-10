@@ -1571,8 +1571,19 @@ public class CameraView extends FrameLayout {
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
+
+                    // all error listeners will be called, but at most one of them should actually
+                    // throw the exception
+                    int count = 0;
                     for (CameraListener listener : mListeners) {
-                        listener.onError(exception);
+                        try {
+                            listener.onError(exception);
+                        } catch (CameraException ce) {
+                            count++;
+                        }
+                    }
+                    if (count == mListeners.size()) {
+                        throw exception;
                     }
                 }
             });

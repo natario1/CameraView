@@ -220,8 +220,9 @@ camera.addCameraListener(new CameraListener() {
     /**
      * Notifies that an error occurred in any of the previously called methods.
      * The default implementation will just throw the original exception again to prevent missing
-     * error handling. Override this method without calling the super method in order to implement
-     * custom error handling.
+     * error handling. As soon as this method was overridden at least once (without calling the
+     * super method or re-throwing the exception), the default behavior will be disabled. So pay
+     * attention to not swallowing any exceptions.
      */
     @Override 
     public void onError(CameraException exception) {
