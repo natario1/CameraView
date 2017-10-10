@@ -286,13 +286,20 @@ class Camera1 extends CameraController {
 
     @Override
     void setLocation(Location location) {
-        Location oldLocation = mLocation;
-        mLocation = location;
-        if (isCameraAvailable()) {
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                if (mergeLocation(params, oldLocation)) mCamera.setParameters(params);
+        try {
+            Location oldLocation = mLocation;
+            mLocation = location;
+            if (isCameraAvailable()) {
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (mergeLocation(params, oldLocation)) mCamera.setParameters(params);
+                }
             }
+        }
+        catch (Exception e) {
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set the location.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -324,13 +331,21 @@ class Camera1 extends CameraController {
 
     @Override
     void setWhiteBalance(WhiteBalance whiteBalance) {
-        WhiteBalance old = mWhiteBalance;
-        mWhiteBalance = whiteBalance;
-        if (isCameraAvailable()) {
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                if (mergeWhiteBalance(params, old)) mCamera.setParameters(params);
+        try {
+            WhiteBalance old = mWhiteBalance;
+            mWhiteBalance = whiteBalance;
+            if (isCameraAvailable()) {
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (mergeWhiteBalance(params, old)) mCamera.setParameters(params);
+                }
             }
+        }
+        catch (Exception e) {
+            // TODO handle, !mergeWhiteBalance, too?
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set the white balance.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -345,13 +360,21 @@ class Camera1 extends CameraController {
 
     @Override
     void setHdr(Hdr hdr) {
-        Hdr old = mHdr;
-        mHdr = hdr;
-        if (isCameraAvailable()) {
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                if (mergeHdr(params, old)) mCamera.setParameters(params);
+        try {
+            Hdr old = mHdr;
+            mHdr = hdr;
+            if (isCameraAvailable()) {
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (mergeHdr(params, old)) mCamera.setParameters(params);
+                }
             }
+        }
+        catch (Exception e) {
+            // TODO handle, !mergeHdr, too?
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set hdr.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -377,13 +400,21 @@ class Camera1 extends CameraController {
 
     @Override
     void setFlash(Flash flash) {
-        Flash old = mFlash;
-        mFlash = flash;
-        if (isCameraAvailable()) {
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                if (mergeFlash(params, old)) mCamera.setParameters(params);
+        try {
+            Flash old = mFlash;
+            mFlash = flash;
+            if (isCameraAvailable()) {
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (mergeFlash(params, old)) mCamera.setParameters(params);
+                }
             }
+        }
+        catch (Exception e) {
+            // TODO handle, !mergeFlash, too?
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set flash.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -427,31 +458,37 @@ class Camera1 extends CameraController {
 
     @Override
     void setVideoQuality(VideoQuality videoQuality) {
-        if (mIsCapturingVideo) {
-            // TODO: actually any call to getParameters() could fail while recording a video.
-            // See. https://stackoverflow.com/questions/14941625/correct-handling-of-exception-getparameters-failed-empty-parameters
-            CameraException cameraException = new CameraConfigurationFailedException("Can't change video quality while recording a video.");
-            mCameraCallbacks.onError(cameraException);
-            return;
-        }
 
-        mVideoQuality = videoQuality;
-        if (isCameraAvailable() && mSessionType == SessionType.VIDEO) {
-            // Change capture size to a size that fits the video aspect ratio.
-            Size oldSize = mCaptureSize;
-            mCaptureSize = computeCaptureSize();
-            if (!mCaptureSize.equals(oldSize)) {
-                // New video quality triggers a new aspect ratio.
-                // Go on and see if preview size should change also.
-                synchronized (mLock) {
-                    Camera.Parameters params = mCamera.getParameters();
-                    params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
-                    mCamera.setParameters(params);
-                }
-                onSurfaceChanged();
+        try {
+            if (mIsCapturingVideo) {
+                // TODO: actually any call to getParameters() could fail while recording a video.
+                // See. https://stackoverflow.com/questions/14941625/correct-handling-of-exception-getparameters-failed-empty-parameters
+                throw new IllegalStateException("Can't change video quality while recording a video.");
             }
-            LOG.i("setVideoQuality:", "captureSize:", mCaptureSize);
-            LOG.i("setVideoQuality:", "previewSize:", mPreviewSize);
+
+            mVideoQuality = videoQuality;
+            if (isCameraAvailable() && mSessionType == SessionType.VIDEO) {
+                // Change capture size to a size that fits the video aspect ratio.
+                Size oldSize = mCaptureSize;
+                mCaptureSize = computeCaptureSize();
+                if (!mCaptureSize.equals(oldSize)) {
+                    // New video quality triggers a new aspect ratio.
+                    // Go on and see if preview size should change also.
+                    synchronized (mLock) {
+                        Camera.Parameters params = mCamera.getParameters();
+                        params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+                        mCamera.setParameters(params);
+                    }
+                    onSurfaceChanged();
+                }
+                LOG.i("setVideoQuality:", "captureSize:", mCaptureSize);
+                LOG.i("setVideoQuality:", "previewSize:", mPreviewSize);
+            }
+        }
+        catch (Exception e) {
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set video quality.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -782,32 +819,50 @@ class Camera1 extends CameraController {
 
     @Override
     boolean setZoom(float zoom) {
-        if (!isCameraAvailable()) return false;
-        if (!mOptions.isZoomSupported()) return false;
-        synchronized (mLock) {
-            Camera.Parameters params = mCamera.getParameters();
-            float max = params.getMaxZoom();
-            params.setZoom((int) (zoom * max));
-            mCamera.setParameters(params);
+        try {
+            if (!isCameraAvailable()) return false;
+            if (!mOptions.isZoomSupported()) return false;
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                float max = params.getMaxZoom();
+                params.setZoom((int) (zoom * max));
+                mCamera.setParameters(params);
+            }
+            return true;
         }
-        return true;
+        catch (Exception e) {
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set zoom.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
+
     }
 
 
     @Override
     boolean setExposureCorrection(float EVvalue) {
-        if (!isCameraAvailable()) return false;
-        if (!mOptions.isExposureCorrectionSupported()) return false;
-        float max = mOptions.getExposureCorrectionMaxValue();
-        float min = mOptions.getExposureCorrectionMinValue();
-        EVvalue = EVvalue < min ? min : EVvalue > max ? max : EVvalue; // cap
-        synchronized (mLock) {
-            Camera.Parameters params = mCamera.getParameters();
-            int indexValue = (int) (EVvalue / params.getExposureCompensationStep());
-            params.setExposureCompensation(indexValue);
-            mCamera.setParameters(params);
+        try {
+            if (!isCameraAvailable()) return false;
+            if (!mOptions.isExposureCorrectionSupported()) return false;
+            float max = mOptions.getExposureCorrectionMaxValue();
+            float min = mOptions.getExposureCorrectionMinValue();
+            EVvalue = EVvalue < min ? min : EVvalue > max ? max : EVvalue; // cap
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                int indexValue = (int) (EVvalue / params.getExposureCompensationStep());
+                params.setExposureCompensation(indexValue);
+                mCamera.setParameters(params);
+            }
+            return true;
         }
-        return true;
+        catch (Exception e) {
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set exposure correction.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
+
     }
 
     // -----------------
