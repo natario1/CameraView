@@ -768,31 +768,42 @@ class Camera1 extends CameraController {
     boolean startAutoFocus(@Nullable final Gesture gesture, PointF point) {
         if (!isCameraAvailable()) return false;
         if (!mOptions.isAutoFocusSupported()) return false;
-        final PointF p = new PointF(point.x, point.y); // copy.
-        List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y);
-        List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
-        synchronized (mLock) {
-            // At this point we are sure that camera supports auto focus... right? Look at CameraView.onTouchEvent().
-            Camera.Parameters params = mCamera.getParameters();
-            int maxAF = params.getMaxNumFocusAreas();
-            int maxAE = params.getMaxNumMeteringAreas();
-            if (maxAF > 0) params.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
-            if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-            mCamera.setParameters(params);
-            mCameraCallbacks.dispatchOnFocusStart(gesture, p);
-            // TODO this is not guaranteed to be called... Fix.
-            mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                @Override
-                public void onAutoFocus(boolean success, Camera camera) {
-                    // TODO lock auto exposure and white balance for a while
-                    mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
-                    mHandler.get().removeCallbacks(mPostFocusResetRunnable);
-                    mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
-                }
-            });
+
+        try {
+            final PointF p = new PointF(point.x, point.y); // copy.
+            List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y);
+            List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
+            synchronized (mLock) {
+                // At this point we are sure that camera supports auto focus... right? Look at CameraView.onTouchEvent().
+                Camera.Parameters params = mCamera.getParameters();
+                int maxAF = params.getMaxNumFocusAreas();
+                int maxAE = params.getMaxNumMeteringAreas();
+                if (maxAF > 0) params.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
+                if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                mCamera.setParameters(params);
+                mCameraCallbacks.dispatchOnFocusStart(gesture, p);
+                // TODO this is not guaranteed to be called... Fix.
+                mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean success, Camera camera) {
+                        // TODO lock auto exposure and white balance for a while
+                        mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
+                        mHandler.get().removeCallbacks(mPostFocusResetRunnable);
+                        mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
+                    }
+                });
+            }
+            return true;
         }
-        return true;
+        catch (Exception e) {
+            // at least setParameters may fail.
+            // TODO why does it fail and is it possible to prevent such errors?
+            CameraException cameraException = new CameraConfigurationFailedException("Failed to " +
+                    "start auto focus.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
     }
 
 
