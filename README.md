@@ -143,6 +143,74 @@ camera.postDelayed(new Runnable() {
 
 ```
 
+### Error Handling
+
+#### Default Handler
+The default implementation will just throw all exceptions to prevent missing error handling.
+
+#### Basic Custom Handler
+You can implement custom error handling by overriding the ``onError`` listener.
+As soon as this method was overridden at least once (without calling the super method or re-throwing the exception),
+the default behavior will be disabled. So pay attention to not swallowing any exceptions.
+
+```java
+camera.addCameraListener(new CameraListener() {
+    @Override 
+    public void onError(CameraException exception) {
+        throw exception;
+    }
+});
+```
+
+#### Advanced Custom Handler
+Furthermore, you can distinguish different error types. E.g. some of them imply that the
+CameraView should be disabled or restarted while others may be ignored in some use cases.
+
+```java
+camera.addCameraListener(new CameraListener() {
+    @Override 
+    public void onError(CameraException exception) {
+        if (exception instanceof CameraUnavailableException) {
+            // the exception prevents the camera from being used. The cause may be
+            // temporary or permanent. You should restart the camera or deactivate any
+            // user interaction with the camera.
+        }
+        else if (exception instanceof CameraConfigurationFailedException) {
+            // The previously started setting change failed,
+            // but the camera should be still available.
+        }
+        else if (exception instanceof CapturingFailedException) {
+            // The previously started capturing (of any kind) failed, but the camera
+            // should be still available.
+
+            if (exception instanceof CapturingImageFailedException) {
+                // the previously started image capturing failed (snapshot or
+                // "real picture"), but the camera should be still available.
+
+                if (exception instanceof CapturingPictureFailedException) {
+                    // The previously started picture capturing failed, but the camera
+                    // should be still available. This exception does not handle failed
+                    // snapshots.
+                }
+                else if (exception instanceof CapturingSnapshotFailedException) {
+                    // The previously started snapshot capturing failed, but the camera
+                    // should be still available. This exception does not handle failed
+                    // "real picture" capturing.
+                }
+            }
+            else if (exception instanceof CapturingVideoFailedException) {
+                // The previously started video capturing failed, but the camera
+                // should be still available.
+            }
+        }
+        else {
+            throw exception;
+        }
+    }
+});
+```
+
+
 ### Other camera events
 
 Make sure you can react to different camera events by setting up one or more `CameraListener` instances. All these are executed on the UI thread.
@@ -215,20 +283,7 @@ camera.addCameraListener(new CameraListener() {
      * to be changed. This can be used, for example, to draw a seek bar.
      */
     @Override 
-    public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {}
-    
-    /**
-     * Notifies that an error occurred in any of the previously called methods.
-     * The default implementation will just throw the original exception again to prevent missing
-     * error handling. As soon as this method was overridden at least once (without calling the
-     * super method or re-throwing the exception), the default behavior will be disabled. So pay
-     * attention to not swallowing any exceptions.
-     */
-    @Override 
-    public void onError(CameraException exception) {
-        throw exception;
-    }
-
+    public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {}  
 });
 ```
 
@@ -529,6 +584,7 @@ This is what was done since the library was forked. I have kept the original str
 - *Tests!*
 - *`CameraLogger` APIs for logging and bug reports*
 - *Better threading, start() in worker thread and callbacks in UI*
+- *Custom error handling: prevent app crashes (caused by inevitable errors) by simply overriding a listener*
 
 These are still things that need to be done, off the top of my head:
 
@@ -537,7 +593,7 @@ These are still things that need to be done, off the top of my head:
 - [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
 - [ ] add onRequestPermissionResults for easy permission callback
-- [ ] better error handling, maybe extending the current onError(e) method to handle more use cases, or have each public method return a boolean
+- [ ] better error handling, maybe extending the current onError(e) method to handle more use cases (e.g. the ones only caught by a boolean return value)
 - [ ] decent code coverage
 
 ## Device-specific issues
