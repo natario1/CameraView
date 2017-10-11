@@ -9,11 +9,11 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 
-class TextureViewPreview extends Preview<TextureView, SurfaceTexture> {
+class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
     private Surface mSurface;
 
-    TextureViewPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
+    TextureCameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         super(context, parent, callback);
     }
 

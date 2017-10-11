@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:background="#FF444444"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Camera -->
+    <com.otaliastudios.cameraview.CameraView
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:keepScreenOn="true"
+        app:cameraGrid="off"
+        app:cameraCropOutput="false"
+        app:cameraFacing="back"
+        app:cameraFlash="off"
+        app:cameraAudio="on"
+        app:cameraGestureTap="focusWithMarker"
+        app:cameraGestureLongTap="none"
+        app:cameraGesturePinch="zoom"
+        app:cameraGestureScrollHorizontal="exposureCorrection"
+        app:cameraGestureScrollVertical="none"
+        app:cameraJpegQuality="100"
+        app:cameraSessionType="picture" />
+
+    <!-- Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:padding="16dp"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <ImageButton
+            android:id="@+id/edit"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/background"
+            app:srcCompat="@drawable/ic_edit" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/capturePhoto"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/background"
+            app:srcCompat="@drawable/ic_photo" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/captureVideo"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/background"
+            app:srcCompat="@drawable/ic_video" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/toggleCamera"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/background"
+            app:srcCompat="@drawable/ic_switch" />
+    </LinearLayout>
+
+    <!-- Edit -->
+    <android.support.v4.widget.NestedScrollView
+        android:id="@+id/controls"
+        android:background="@android:color/white"
+        app:layout_behavior="@string/bottom_sheet_behavior"
+        app:behavior_hideable="true"
+        app:behavior_peekHeight="300dp"
+        app:behavior_skipCollapsed="false"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </android.support.v4.widget.NestedScrollView>
+
+</android.support.design.widget.CoordinatorLayout>

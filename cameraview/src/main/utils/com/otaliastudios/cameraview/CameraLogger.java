@@ -38,7 +38,7 @@ public final class CameraLogger {
         mTag = tag;
     }
 
-    public void i(String message) {
+    void i(String message) {
         if (should(LEVEL_VERBOSE)) {
             Log.i(mTag, message);
             lastMessage = message;
@@ -46,7 +46,7 @@ public final class CameraLogger {
         }
     }
 
-    public void w(String message) {
+    void w(String message) {
         if (should(LEVEL_WARNING)) {
             Log.w(mTag, message);
             lastMessage = message;
@@ -54,7 +54,7 @@ public final class CameraLogger {
         }
     }
 
-    public void e(String message) {
+    void e(String message) {
         if (should(LEVEL_ERROR)) {
             Log.w(mTag, message);
             lastMessage = message;
@@ -77,15 +77,15 @@ public final class CameraLogger {
         return message.trim();
     }
 
-    public void i(Object... data) {
+    void i(Object... data) {
         i(string(LEVEL_VERBOSE, data));
     }
 
-    public void w(Object... data) {
+    void w(Object... data) {
         w(string(LEVEL_WARNING, data));
     }
 
-    public void e(Object... data) {
+    void e(Object... data) {
         e(string(LEVEL_ERROR, data));
     }
 }

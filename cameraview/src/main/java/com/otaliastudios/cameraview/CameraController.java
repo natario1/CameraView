@@ -2,14 +2,13 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
 import android.location.Location;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
 import java.io.File;
 
-abstract class CameraController implements Preview.SurfaceCallback {
+abstract class CameraController implements CameraPreview.SurfaceCallback {
 
     private static final String TAG = CameraController.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -20,7 +19,7 @@ abstract class CameraController implements Preview.SurfaceCallback {
     static final int STATE_STARTED = 2; // Camera is available and we can set parameters.
 
     protected final CameraView.CameraCallbacks mCameraCallbacks;
-    protected final Preview mPreview;
+    protected CameraPreview mPreview;
 
     protected Facing mFacing;
     protected Flash mFlash;
@@ -43,10 +42,8 @@ abstract class CameraController implements Preview.SurfaceCallback {
 
     protected WorkerHandler mHandler;
 
-    CameraController(CameraView.CameraCallbacks callback, Preview preview) {
+    CameraController(CameraView.CameraCallbacks callback) {
         mCameraCallbacks = callback;
-        mPreview = preview;
-        mPreview.setSurfaceCallback(this);
         mHandler = WorkerHandler.get("CameraViewController");
         mHandler.getThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
@@ -65,6 +62,11 @@ abstract class CameraController implements Preview.SurfaceCallback {
                 });
             }
         });
+    }
+
+    void setPreview(CameraPreview cameraPreview) {
+        mPreview = cameraPreview;
+        mPreview.setSurfaceCallback(this);
     }
 
     //region Start&Stop
