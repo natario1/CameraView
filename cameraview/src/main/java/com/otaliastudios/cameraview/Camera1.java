@@ -191,7 +191,7 @@ class Camera1 extends CameraController {
         Exception error = null;
         LOG.i("onStop:", "About to clean up.");
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
-        if (isCameraAvailable()) {
+        if (mCamera != null) {
             LOG.i("onStop:", "Clean up.", "Ending video?", mIsCapturingVideo);
             if (mIsCapturingVideo) endVideo();
 
@@ -510,7 +510,20 @@ class Camera1 extends CameraController {
     }
 
     private boolean isCameraAvailable() {
-        return mCamera != null;
+        switch (mState) {
+            // If we are stopped, don't.
+            case STATE_STOPPED: return false;
+            // If we are going to be closed, don't act on camera.
+            // Even if mCamera != null, it might have been released.
+            case STATE_STOPPING: return false;
+            // If we are started, act as long as there is no stop/restart scheduled.
+            // At this point mCamera should never be null.
+            case STATE_STARTED: return !mScheduledForStop && !mScheduledForRestart;
+            // If we are starting, theoretically we could act.
+            // Just check that camera is available.
+            case STATE_STARTING: return mCamera != null && !mScheduledForStop && !mScheduledForRestart;
+        }
+        return false;
     }
 
 
