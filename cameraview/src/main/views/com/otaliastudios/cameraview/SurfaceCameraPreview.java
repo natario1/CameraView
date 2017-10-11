@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -25,7 +26,8 @@ class SurfaceCameraPreview extends CameraPreview<View, SurfaceHolder> {
     @NonNull
     @Override
     protected View onCreateView(Context context, ViewGroup parent) {
-        final View root = View.inflate(context, R.layout.surface_view, parent); // MATCH_PARENT
+        View root = LayoutInflater.from(context).inflate(R.layout.surface_view, parent, false);
+        parent.addView(root, 0);
         mSurfaceView = root.findViewById(R.id.surface_view);
         final SurfaceHolder holder = mSurfaceView.getHolder();
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
