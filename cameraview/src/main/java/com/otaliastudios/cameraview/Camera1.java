@@ -510,9 +510,20 @@ class Camera1 extends CameraController {
     }
 
     private boolean isCameraAvailable() {
-        // Don't do if state is stopping. The camera instance might have been released,
-        // even if onStop did not return yet.
-        return mCamera != null && mState > STATE_STOPPING;
+        switch (mState) {
+            // If we are stopped, don't.
+            case STATE_STOPPED: return false;
+            // If we are going to be closed, don't act on camera.
+            // Even if mCamera != null, it might have been released.
+            case STATE_STOPPING: return false;
+            // If we are started, act as long as there is no stop/restart scheduled.
+            // At this point mCamera should never be null.
+            case STATE_STARTED: return !mScheduledForStop && !mScheduledForRestart;
+            // If we are starting, theoretically we could act.
+            // Just check that camera is available.
+            case STATE_STARTING: return mCamera != null && !mScheduledForStop && !mScheduledForRestart;
+        }
+        return false;
     }
 
 

@@ -38,6 +38,10 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
 
     protected int mDisplayOffset;
     protected int mDeviceOrientation;
+
+    protected boolean mScheduledForStart = false;
+    protected boolean mScheduledForStop = false;
+    protected boolean mScheduledForRestart = false;
     protected int mState = STATE_STOPPED;
 
     protected WorkerHandler mHandler;
@@ -84,11 +88,13 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
     // Starts the preview asynchronously.
     final void start() {
         LOG.i("Start:", "posting runnable. State:", ss());
+        mScheduledForStart = true;
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 try {
                     LOG.i("Start:", "executing. State:", ss());
+                    mScheduledForStart = false;
                     if (mState >= STATE_STARTING) return;
                     mState = STATE_STARTING;
                     LOG.i("Start:", "about to call onStart()", ss());
@@ -108,11 +114,13 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
     // Stops the preview asynchronously.
     final void stop() {
         LOG.i("Stop:", "posting runnable. State:", ss());
+        mScheduledForStop = true;
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 try {
                     LOG.i("Stop:", "executing. State:", ss());
+                    mScheduledForStop = false;
                     if (mState <= STATE_STOPPED) return;
                     mState = STATE_STOPPING;
                     LOG.i("Stop:", "about to call onStop()");
@@ -148,11 +156,13 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
     // Forces a restart.
     protected final void restart() {
         LOG.i("Restart:", "posting runnable");
+        mScheduledForRestart = true;
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 try {
                     LOG.i("Restart:", "executing. Needs stopping:", mState > STATE_STOPPED, ss());
+                    mScheduledForRestart = false;
                     // Don't stop if stopped.
                     if (mState > STATE_STOPPED) {
                         mState = STATE_STOPPING;
