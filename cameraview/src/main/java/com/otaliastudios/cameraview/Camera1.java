@@ -40,14 +40,24 @@ class Camera1 extends CameraController {
     private Runnable mPostFocusResetRunnable = new Runnable() {
         @Override
         public void run() {
-            if (!isCameraAvailable()) return;
-            mCamera.cancelAutoFocus();
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                params.setFocusAreas(null);
-                params.setMeteringAreas(null);
-                applyDefaultFocus(params); // Revert to internal focus.
-                mCamera.setParameters(params);
+            try {
+                if (!isCameraAvailable()) return;
+                mCamera.cancelAutoFocus();
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    params.setFocusAreas(null);
+                    params.setMeteringAreas(null);
+                    applyDefaultFocus(params); // Revert to internal focus.
+                    mCamera.setParameters(params);
+                }
+            }
+            catch (Exception e) {
+                // at least setParameters may fail.
+                // problem may be device-specific to the Samsung Galaxy J5
+                // TODO why does it fail occasionally and is it possible to prevent such errors?
+                CameraException cameraException = new CameraConfigurationFailedException("Failed to " +
+                        "reset auto focus.", e);
+                mCameraCallbacks.onError(cameraException);
             }
         }
     };
