@@ -7,7 +7,8 @@
 
 # CameraView
 
-CameraView is a well documented, high-level library that makes capturing pictures and videos easy, addressing most of the common issues and needs, and still leaving you with flexibility where needed.
+CameraView is a well documented, high-level library that makes capturing pictures and videos easy,
+addressing most of the common issues and needs, and still leaving you with flexibility where needed.
 
 ```groovy
 compile 'com.otaliastudios:cameraview:1.2.3'
@@ -19,7 +20,10 @@ compile 'com.otaliastudios:cameraview:1.2.3'
   <img src="art/screen3.jpg" width="250" vspace="20" hspace="5">
 </p>
 
-*This was a fork of [CameraKit-Android](https://github.com/gogopop/CameraKit-Android), originally a fork of [Google's CameraView](https://github.com/google/cameraview), but has been [completely rewritten](https://github.com/natario1/CameraView/graphs/contributors?type=d). See [below](#roadmap) for a list of what was done. Feel free to contribute - this is under active development.*
+*This was a fork of [CameraKit-Android](https://github.com/gogopop/CameraKit-Android), originally a
+fork of [Google's CameraView](https://github.com/google/cameraview), but has been
+[completely rewritten](https://github.com/natario1/CameraView/graphs/contributors?type=d).
+See below for a [list of what was done](#roadmap) and [licensing info](#contributing-and-licenses).*
 
 ### Features
 
@@ -533,5 +537,19 @@ These are still things that need to be done, off the top of my head:
 There are a couple of known issues if you are working with certain devices. The emulator is one of
 the most tricky in this sense.
 
-- Devices, or activities, with hardware acceleration turned off: this can be the case with emulators. In this case we will use SurfaceView as our surface provider. That is intrinsically flawed and can't deal with all we want to do here (runtime layout changes, scaling, etc.). So, nothing to do in this case.
-- Devices with no support for MediaRecorder: the emulator does not support it, officially. This means that video/audio recording is flawed. Again, not our fault.
+- Devices, or activities, with hardware acceleration turned off: this can be the case with emulators.
+  In this case we will use SurfaceView as our surface provider. That is intrinsically flawed and can't
+  deal with all we want to do here (runtime layout changes, scaling, etc.). So, nothing to do in this case.
+- Devices with no support for MediaRecorder: the emulator does not support it, officially. This means
+  that video/audio recording is flawed. Again, not our fault.
+
+# Contributing and licenses
+
+The original project which served as a starting point for this library,
+[CameraKit-Android](https://github.com/wonderkiln/CameraKit-Android), is licensed under the
+[MIT](https://github.com/wonderkiln/CameraKit-Android/blob/master/LICENSE) license.
+Additional work is now licensed under the [MIT](https://github.com/natario1/CameraView/blob/master/LICENSE)
+license as well.
+
+You are welcome to contribute with suggestions or pull requests, this is under active development.
+To contact me, <a href="mailto:mat.iavarone@gmail.com">send an email.</a>
