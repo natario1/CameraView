@@ -60,6 +60,7 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - [Other APIs](#other-apis)  
 - [Permissions Behavior](#permissions-behavior)
 - [Manifest file](#manifest-file)
+- [Logging](#logging)
 - [Roadmap](#roadmap)
 - [Device-specific issues](#device-specific-issues)
 
@@ -490,6 +491,26 @@ The library manifest file is not strict and only asks for camera permissions. Th
 ```
 
 If you don't request this feature, you can use `CameraUtils.hasCameras()` to detect if current device has cameras, and then start the camera view.
+
+## Logging
+
+`CameraView` will log a lot of interesting events related to the camera lifecycle. These are important
+to identify bugs. The default logger will simply use Android `Log` methods posting to logcat.
+
+You can attach and detach external loggers using `CameraLogger.registerLogger()`:
+
+```java
+CameraLogger.registerLogger(new Logger() {
+    @Override
+    public void log(@LogLevel int level, String tag, String message, @Nullable Throwable throwable) {
+        // For example...
+        Crashlytics.log(message);
+    }
+});
+```
+
+Make sure you enable the logger using `CameraLogger.setLogLevel(@LogLevel int)`. The default will only
+log error events.
 
 ## Roadmap
 
