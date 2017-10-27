@@ -43,8 +43,8 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - **Metadata** support for pictures and videos
   - Automatically detected orientation tags
   - Plug in location tags with `setLocation()` API
-- `CameraUtils` to help with Bitmaps and orientations
-- Lightweight, no dependencies, just support `ExifInterface`
+- **`CameraUtils`** to help with Bitmaps and orientations
+- **Lightweight**, no dependencies, just support `ExifInterface`
 - Works down to API level 15
 
 # Docs
@@ -61,7 +61,6 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - [Frame Processing](#frame-processing)
 - [Other APIs](#other-apis)  
 - [Permissions Behavior](#permissions-behavior)
-- [Manifest file](#manifest-file)
 - [Logging](#logging)
 - [Roadmap](#roadmap)
 - [Device-specific issues](#device-specific-issues)
@@ -507,13 +506,13 @@ Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProp
 - `android.permission.CAMERA` : required for capturing pictures and videos
 - `android.permission.RECORD_AUDIO` : required for capturing videos with `Audio.ON` (the default)
 
-You can handle permissions yourself and then call `CameraView.start()` once they are acquired. If they are not, `CameraView` will request permissions to the user based on whether they are needed. In that case, you can restart the camera if you have a successful response from `onRequestPermissionResults()`.
+### Declaration
 
-## Manifest file
+The library manifest file declares the `android.permission.CAMERA` permission, but not the audio one.
+This means that:
 
-The library manifest file is not strict and only asks for camera permissions. This means that:
-
-- If you wish to record videos with `Audio.ON` (the default), you should also add `android.permission.RECORD_AUDIO` to required permissions
+- If you wish to record videos with `Audio.ON` (the default), you should also add
+  `android.permission.RECORD_AUDIO` to required permissions
 
 ```xml
 <uses-permission android:name="android.permission.RECORD_AUDIO"/>
@@ -527,7 +526,18 @@ The library manifest file is not strict and only asks for camera permissions. Th
     android:required="true"/>
 ```
 
-If you don't request this feature, you can use `CameraUtils.hasCameras()` to detect if current device has cameras, and then start the camera view.
+If you don't request this feature, you can use `CameraUtils.hasCameras()` to detect if current
+device has cameras, and then start the camera view.
+
+### Handling
+
+On Marshmallow+, the user must explicitly approve our permissions. You can
+
+- handle permissions yourself and then call `cameraView.start()` once they are acquired
+- or call `cameraView.start()` anyway: `CameraView` will present a permission request to the user based on
+  whether they are needed or not with the current configuration.
+
+In the second case, you should restart the camera if you have a successful response from `onRequestPermissionResults()`.
 
 ## Logging
 
@@ -551,7 +561,8 @@ log error events.
 
 ## Roadmap
 
-This is what was done since the library was forked. I have kept the original structure, but practically all the code was changed.
+This is what was done since the library was forked. I have kept the original structure, but practically
+all the code was changed.
 
 - *a huge number of serious bugs fixed*
 - *decent orientation support for both pictures and videos*
@@ -579,11 +590,12 @@ This is what was done since the library was forked. I have kept the original str
 - *Tests!*
 - *`CameraLogger` APIs for logging and bug reports*
 - *Better threading, start() in worker thread and callbacks in UI*
+- *Frame processor support*
+- *inject external loggers*
 
 These are still things that need to be done, off the top of my head:
 
 - [ ] `Camera2` integration
-- [ ] check onPause / onStop / onSaveInstanceState consistency
 - [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
 - [ ] add onRequestPermissionResults for easy permission callback
