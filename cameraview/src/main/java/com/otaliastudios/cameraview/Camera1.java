@@ -143,6 +143,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         );
         synchronized (mLock) {
             Camera.Parameters params = mCamera.getParameters();
+            mPreviewFormat = params.getPreviewFormat();
             params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight()); // <- not allowed during preview
             params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
             mCamera.setParameters(params);
@@ -478,7 +479,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                 // Got to rotate the preview frame, since byte[] data here does not include
                 // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
                 // Adding EXIF to a byte array, unfortunately, is hard.
-                Camera.Parameters params = mCamera.getParameters();
                 final int sensorToDevice = computeExifRotation();
                 final int sensorToDisplay = computeSensorToDisplayOffset();
                 final boolean exifFlip = computeExifFlip();
@@ -487,7 +487,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                 final int preHeight = mPreviewSize.getHeight();
                 final int postWidth = flip ? preHeight : preWidth;
                 final int postHeight = flip ? preWidth : preHeight;
-                final int format = params.getPreviewFormat();
+                final int format = mPreviewFormat;
                 WorkerHandler.run(new Runnable() {
                     @Override
                     public void run() {
@@ -509,7 +509,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
     public void onPreviewFrame(byte[] data, Camera camera) {
         mCameraCallbacks.dispatchFrame(data,
                 System.currentTimeMillis(),
-                computeExifRotation());
+                computeExifRotation(),
+                mPreviewSize,
+                mPreviewFormat);
     }
 
     @Override

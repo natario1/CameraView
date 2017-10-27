@@ -7,7 +7,7 @@ public class Size implements Comparable<Size> {
     private final int mWidth;
     private final int mHeight;
 
-    public Size(int width, int height) {
+    Size(int width, int height) {
         mWidth = width;
         mHeight = height;
     }

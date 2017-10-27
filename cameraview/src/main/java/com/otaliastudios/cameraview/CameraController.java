@@ -32,6 +32,7 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
 
     protected Size mCaptureSize;
     protected Size mPreviewSize;
+    protected int mPreviewFormat;
 
     protected ExtraProperties mExtraProperties;
     protected CameraOptions mOptions;

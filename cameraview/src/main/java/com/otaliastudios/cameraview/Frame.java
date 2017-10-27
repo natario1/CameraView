@@ -8,13 +8,17 @@ public class Frame {
     private byte[] mData = null;
     private long mTime = -1;
     private int mRotation = 0;
+    private Size mSize = null;
+    private int mFormat = -1;
 
     Frame() {}
 
-    void set(byte[] data, long time, int rotation) {
+    void set(byte[] data, long time, int rotation, Size size, int format) {
         this.mData = data;
         this.mTime = time;
         this.mRotation = rotation;
+        this.mSize = size;
+        this.mFormat = format;
     }
 
     @Override
@@ -33,10 +37,8 @@ public class Frame {
     public Frame freeze() {
         byte[] data = new byte[mData.length];
         System.arraycopy(mData, 0, data, 0, mData.length);
-        long time = mTime;
-        int rotation = mRotation;
         Frame other = new Frame();
-        other.set(data, time, rotation);
+        other.set(data, mTime, mRotation, mSize, mFormat);
         return other;
     }
 
@@ -48,6 +50,8 @@ public class Frame {
         mData = null;
         mRotation = 0;
         mTime = -1;
+        mSize = null;
+        mFormat = -1;
     }
 
     /**
@@ -77,5 +81,25 @@ public class Frame {
      */
     public int getRotation() {
         return mRotation;
+    }
+
+    /**
+     * Returns the frame size.
+     *
+     * @return frame size
+     */
+    public Size getSize() {
+        return mSize;
+    }
+
+    /**
+     * Returns the data format, in one of the
+     * {@link android.graphics.ImageFormat} constants.
+     *
+     * @return the data format
+     * @see android.graphics.ImageFormat
+     */
+    public int getFormat() {
+        return mFormat;
     }
 }

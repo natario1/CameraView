@@ -468,6 +468,8 @@ apply new data to it. So:
 |`frame.getData()`|`byte[]`|The current preview frame, in its original orientation.|
 |`frame.getTime()`|`long`|The preview timestamp, in `System.currentTimeMillis()` reference.|
 |`frame.getRotation()`|`int`|The rotation that should be applied to the byte array in order to see what the user sees.|
+|`frame.getSize()`|`Size`|The frame size, before any rotation is applied, to access data.|
+|`frame.getFormat()`|`int`|The frame `ImageFormat`. This will always be `ImageFormat.NV_21` for now.|
 |`frame.freeze()`|`Frame`|Clones this frame and makes it immutable. Can be expensive because requires copying the byte array.|
 |`frame.release()`|`-`|Disposes the content of this frame. Should be used on frozen frames to release memory.|
 

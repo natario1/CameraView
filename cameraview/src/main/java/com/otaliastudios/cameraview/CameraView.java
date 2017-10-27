@@ -1352,7 +1352,7 @@ public class CameraView extends FrameLayout {
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, PointF where);
         void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
         void dispatchOnExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers);
-        void dispatchFrame(byte[] frame, long time, int rotation);
+        void dispatchFrame(byte[] frame, long time, int rotation, Size size, int previewFormat);
     }
 
     private class Callbacks implements CameraCallbacks {
@@ -1605,14 +1605,15 @@ public class CameraView extends FrameLayout {
         }
 
         @Override
-        public void dispatchFrame(final byte[] frame, final long time, final int rotation) {
+        public void dispatchFrame(final byte[] frame, final long time, final int rotation,
+                                  final Size size, final int previewFormat) {
             mLogger.i("dispatchFrame", time, rotation, "processors:", mFrameProcessors.size());
             if (mFrameProcessors.isEmpty()) return;
             if (mFrame == null) mFrame = new Frame();
             mFrameProcessorsHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    mFrame.set(frame, time, rotation);
+                    mFrame.set(frame, time, rotation, size, previewFormat);
                     for (FrameProcessor processor : mFrameProcessors) {
                         processor.process(mFrame);
                     }
