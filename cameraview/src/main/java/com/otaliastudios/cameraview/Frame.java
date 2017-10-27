@@ -95,6 +95,7 @@ public class Frame {
     /**
      * Returns the data format, in one of the
      * {@link android.graphics.ImageFormat} constants.
+     * This will always be {@link android.graphics.ImageFormat#NV21} for now.
      *
      * @return the data format
      * @see android.graphics.ImageFormat
