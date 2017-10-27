@@ -580,9 +580,14 @@ public class CameraView extends FrameLayout {
         mCameraController.stop();
     }
 
+
+    /**
+     * Destroys this instance, releasing immediately
+     * the camera resource.
+     */
     public void destroy() {
-        // TODO: this is not strictly needed
-        clearCameraListeners(); // Release
+        clearCameraListeners();
+        clearFrameProcessors();
         mCameraController.stopImmediately();
     }
 
