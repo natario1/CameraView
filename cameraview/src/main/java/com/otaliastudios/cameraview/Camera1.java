@@ -21,7 +21,7 @@ import java.util.List;
 
 
 @SuppressWarnings("deprecation")
-class Camera1 extends CameraController {
+class Camera1 extends CameraController implements Camera.PreviewCallback {
 
     private static final String TAG = Camera1.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -147,6 +147,9 @@ class Camera1 extends CameraController {
             params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
             mCamera.setParameters(params);
         }
+
+        mCamera.setPreviewCallback(this); // Frame processing
+
         LOG.i("setup:", "Starting preview with startPreview().");
         mCamera.startPreview();
         LOG.i("setup:", "Started preview with startPreview().");
@@ -496,9 +499,17 @@ class Camera1 extends CameraController {
                         mIsCapturingImage = false;
                     }
                 });
+                mCamera.setPreviewCallback(Camera1.this);
             }
         });
         return true;
+    }
+
+    @Override
+    public void onPreviewFrame(byte[] data, Camera camera) {
+        mCameraCallbacks.dispatchFrame(data,
+                System.currentTimeMillis(),
+                computeExifRotation());
     }
 
     @Override
