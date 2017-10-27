@@ -504,4 +504,24 @@ public class IntegrationTest extends BaseTest {
         assertTrue(b.getHeight() == size.getHeight() || b.getHeight() == size.getWidth());
     }
 
+    //endregion
+
+    //region Frame Processing
+
+    @Test
+    public void testFrameProcessing() throws Exception {
+        FrameProcessor processor = mock(FrameProcessor.class);
+        camera.addFrameProcessor(processor);
+
+        camera.start();
+        waitForOpen(true);
+
+        // Expect 30 frames
+        CountDownLatch latch = new CountDownLatch(30);
+        doCountDown(latch).when(processor).process(any(Frame.class));
+        boolean did = latch.await(4, TimeUnit.SECONDS);
+        assertTrue(did);
+    }
+
+    //endregion
 }

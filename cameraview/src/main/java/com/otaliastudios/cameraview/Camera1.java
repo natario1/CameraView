@@ -21,7 +21,7 @@ import java.util.List;
 
 
 @SuppressWarnings("deprecation")
-class Camera1 extends CameraController {
+class Camera1 extends CameraController implements Camera.PreviewCallback {
 
     private static final String TAG = Camera1.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -143,10 +143,14 @@ class Camera1 extends CameraController {
         );
         synchronized (mLock) {
             Camera.Parameters params = mCamera.getParameters();
+            mPreviewFormat = params.getPreviewFormat();
             params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight()); // <- not allowed during preview
             params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
             mCamera.setParameters(params);
         }
+
+        mCamera.setPreviewCallback(this); // Frame processing
+
         LOG.i("setup:", "Starting preview with startPreview().");
         mCamera.startPreview();
         LOG.i("setup:", "Started preview with startPreview().");
@@ -475,7 +479,6 @@ class Camera1 extends CameraController {
                 // Got to rotate the preview frame, since byte[] data here does not include
                 // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
                 // Adding EXIF to a byte array, unfortunately, is hard.
-                Camera.Parameters params = mCamera.getParameters();
                 final int sensorToDevice = computeExifRotation();
                 final int sensorToDisplay = computeSensorToDisplayOffset();
                 final boolean exifFlip = computeExifFlip();
@@ -484,7 +487,7 @@ class Camera1 extends CameraController {
                 final int preHeight = mPreviewSize.getHeight();
                 final int postWidth = flip ? preHeight : preWidth;
                 final int postHeight = flip ? preWidth : preHeight;
-                final int format = params.getPreviewFormat();
+                final int format = mPreviewFormat;
                 WorkerHandler.run(new Runnable() {
                     @Override
                     public void run() {
@@ -496,9 +499,19 @@ class Camera1 extends CameraController {
                         mIsCapturingImage = false;
                     }
                 });
+                mCamera.setPreviewCallback(Camera1.this);
             }
         });
         return true;
+    }
+
+    @Override
+    public void onPreviewFrame(byte[] data, Camera camera) {
+        mCameraCallbacks.dispatchFrame(data,
+                System.currentTimeMillis(),
+                computeExifRotation(),
+                mPreviewSize,
+                mPreviewFormat);
     }
 
     @Override
