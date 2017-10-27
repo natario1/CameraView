@@ -39,6 +39,7 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
   - Take high-resolution pictures with `capturePicture`
   - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to Snapchat and Instagram)
 - Control HDR, flash, zoom, white balance, exposure correction and more
+- **Frame processing** support
 - **Metadata** support for pictures and videos
   - Automatically detected orientation tags
   - Plug in location tags with `setLocation()` API
@@ -57,6 +58,7 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
   - [Center Inside](#center-inside)
   - [Center Crop](#center-crop)
 - [Camera Controls](#camera-controls)
+- [Frame Processing](#frame-processing)
 - [Other APIs](#other-apis)  
 - [Permissions Behavior](#permissions-behavior)
 - [Manifest file](#manifest-file)
@@ -436,6 +438,41 @@ Please note that:
 cameraView.setPlaySounds(true);
 cameraView.setPlaySounds(false);
 ```
+
+## Frame Processing
+
+We support frame processors that will receive data from the camera preview stream:
+
+```java
+cameraView.addFrameProcessor(new FrameProcessor() {
+
+    @Override
+    @WorkerThread
+    public void process(Frame frame) {
+        byte[] data = frame.getData();
+        int rotation = frame.getRotation();
+        long time = frame.getTime();
+        // Process..
+    }
+
+}
+```
+
+For your convenience, the `FrameProcessor` method is run in a background thread so you can do your job
+in a synchronous fashion. Once the process method returns, internally we will re-use the `Frame` instance and
+apply new data to it. So:
+
+- you can do your job synchronously in the `process()` method
+- if you must hold the `Frame` instance longer, use `frame = frame.freeze()` to get a frozen instance
+  that will not be affected
+
+|Frame API|Type|Description|
+|---------|----|-----------|
+|`frame.getData()`|`byte[]`|The current preview frame, in its original orientation.|
+|`frame.getTime()`|`long`|The preview timestamp, in `System.currentTimeMillis()` reference.|
+|`frame.getRotation()`|`int`|The rotation that should be applied to the byte array in order to see what the user sees.|
+|`frame.freeze()`|`Frame`|Clones this frame and makes it immutable. Can be expensive because requires copying the byte array.|
+|`frame.clear()`|`-`|Disposes the content of this frame. Should be used on frozen frames to release memory.|
 
 ## Other APIs
 
