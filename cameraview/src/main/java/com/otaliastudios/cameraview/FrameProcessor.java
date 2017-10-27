@@ -15,7 +15,7 @@ public interface FrameProcessor {
      *
      * To keep working with the Frame in an async manner, please use {@link Frame#freeze()},
      * which will return an immutable Frame. In that case you can pass / hold the frame for
-     * as long as you want, and then release its contents using {@link Frame#clear()}.
+     * as long as you want, and then release its contents using {@link Frame#release()}.
      *
      * @param frame the new frame
      */

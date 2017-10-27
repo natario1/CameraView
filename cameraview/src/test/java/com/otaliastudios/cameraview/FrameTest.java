@@ -33,10 +33,10 @@ public class FrameTest {
     }
 
     @Test
-    public void testClear() {
+    public void testRelease() {
         Frame frame = new Frame();
         frame.set(new byte[2], 1000, 90);
-        frame.clear();
+        frame.release();
 
         assertEquals(frame.getTime(), -1);
         assertEquals(frame.getRotation(), 0);

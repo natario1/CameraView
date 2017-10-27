@@ -43,7 +43,7 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - **Metadata** support for pictures and videos
   - Automatically detected orientation tags
   - Plug in location tags with `setLocation()` API
-- **`CameraUtils`** to help with Bitmaps and orientations
+- `CameraUtils` to help with Bitmaps and orientations
 - **Lightweight**, no dependencies, just support `ExifInterface`
 - Works down to API level 15
 
@@ -62,8 +62,8 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - [Other APIs](#other-apis)  
 - [Permissions Behavior](#permissions-behavior)
 - [Logging](#logging)
-- [Roadmap](#roadmap)
 - [Device-specific issues](#device-specific-issues)
+- [Roadmap](#roadmap)
 
 ## Usage
 
@@ -444,16 +444,14 @@ We support frame processors that will receive data from the camera preview strea
 
 ```java
 cameraView.addFrameProcessor(new FrameProcessor() {
-
     @Override
     @WorkerThread
     public void process(Frame frame) {
         byte[] data = frame.getData();
         int rotation = frame.getRotation();
         long time = frame.getTime();
-        // Process..
+        // Process...
     }
-
 }
 ```
 
@@ -471,7 +469,7 @@ apply new data to it. So:
 |`frame.getTime()`|`long`|The preview timestamp, in `System.currentTimeMillis()` reference.|
 |`frame.getRotation()`|`int`|The rotation that should be applied to the byte array in order to see what the user sees.|
 |`frame.freeze()`|`Frame`|Clones this frame and makes it immutable. Can be expensive because requires copying the byte array.|
-|`frame.clear()`|`-`|Disposes the content of this frame. Should be used on frozen frames to release memory.|
+|`frame.release()`|`-`|Disposes the content of this frame. Should be used on frozen frames to release memory.|
 
 ## Other APIs
 
@@ -497,7 +495,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|
 |`getPictureSize()`|Returns the size of the output picture. The aspect ratio is consistent with `getPreviewSize()`.|
 
-Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProperties`, `CameraLogger`.
+Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProperties`.
 
 ## Permissions behavior
 
@@ -559,6 +557,17 @@ CameraLogger.registerLogger(new Logger() {
 Make sure you enable the logger using `CameraLogger.setLogLevel(@LogLevel int)`. The default will only
 log error events.
 
+## Device-specific issues
+
+There are a couple of known issues if you are working with certain devices. The emulator is one of
+the most tricky in this sense.
+
+- Devices, or activities, with hardware acceleration turned off: this can be the case with emulators.
+  In this case we will use SurfaceView as our surface provider. That is intrinsically flawed and can't
+  deal with all we want to do here (runtime layout changes, scaling, etc.). So, nothing to do in this case.
+- Devices with no support for MediaRecorder: the emulator does not support it, officially. This means
+  that video/audio recording is flawed. Again, not our fault.
+
 ## Roadmap
 
 This is what was done since the library was forked. I have kept the original structure, but practically
@@ -601,17 +610,6 @@ These are still things that need to be done, off the top of my head:
 - [ ] add onRequestPermissionResults for easy permission callback
 - [ ] better error handling, maybe with a onError(e) method in the public listener, or have each public method return a boolean
 - [ ] decent code coverage
-
-## Device-specific issues
-
-There are a couple of known issues if you are working with certain devices. The emulator is one of
-the most tricky in this sense.
-
-- Devices, or activities, with hardware acceleration turned off: this can be the case with emulators.
-  In this case we will use SurfaceView as our surface provider. That is intrinsically flawed and can't
-  deal with all we want to do here (runtime layout changes, scaling, etc.). So, nothing to do in this case.
-- Devices with no support for MediaRecorder: the emulator does not support it, officially. This means
-  that video/audio recording is flawed. Again, not our fault.
 
 # Contributing and licenses
 

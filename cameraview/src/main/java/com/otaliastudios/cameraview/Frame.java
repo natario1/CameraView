@@ -26,7 +26,7 @@ public class Frame {
     /**
      * Clones the frame, returning a frozen content that will not be overwritten.
      * This can be kept or safely passed to other threads.
-     * Using freeze without clearing with {@link #clear()} can result in memory leaks.
+     * Using freeze without clearing with {@link #release()} can result in memory leaks.
      *
      * @return a frozen Frame
      */
@@ -44,7 +44,7 @@ public class Frame {
      * Disposes the contents of this frame. Can be useful for frozen frames
      * that are not useful anymore.
      */
-    public void clear() {
+    public void release() {
         mData = null;
         mRotation = 0;
         mTime = -1;
