@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static android.hardware.Camera.CAMERA_ERROR_SERVER_DIED;
+import static android.hardware.Camera.CAMERA_ERROR_UNKNOWN;
+
 
 @SuppressWarnings("deprecation")
 class Camera1 extends CameraController {
@@ -37,14 +40,24 @@ class Camera1 extends CameraController {
     private Runnable mPostFocusResetRunnable = new Runnable() {
         @Override
         public void run() {
-            if (!isCameraAvailable()) return;
-            mCamera.cancelAutoFocus();
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                params.setFocusAreas(null);
-                params.setMeteringAreas(null);
-                applyDefaultFocus(params); // Revert to internal focus.
-                mCamera.setParameters(params);
+            try {
+                if (!isCameraAvailable()) return;
+                mCamera.cancelAutoFocus();
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    params.setFocusAreas(null);
+                    params.setMeteringAreas(null);
+                    applyDefaultFocus(params); // Revert to internal focus.
+                    mCamera.setParameters(params);
+                }
+            }
+            catch (Exception e) {
+                // at least setParameters may fail.
+                // problem may be device-specific to the Samsung Galaxy J5
+                // TODO why does it fail occasionally and is it possible to prevent such errors?
+                CameraException cameraException = new CameraConfigurationFailedException("Failed to " +
+                        "reset auto focus.", e);
+                mCameraCallbacks.onError(cameraException);
             }
         }
     };
@@ -75,8 +88,9 @@ class Camera1 extends CameraController {
                 try {
                     setup();
                 } catch (Exception e) {
-                    LOG.w("onSurfaceAvailable:", "Exception while binding camera to preview.", e);
-                    throw new RuntimeException(e);
+                    CameraException cameraException = new CameraUnavailableException(
+                            "onSurfaceAvailable: Exception while binding camera to preview.", e);
+                    mCameraCallbacks.onError(cameraException);
                 }
             }
         });
@@ -164,6 +178,38 @@ class Camera1 extends CameraController {
         if (collectCameraId()) {
             mCamera = Camera.open(mCameraId);
 
+            /**
+             * attach Android native error listener for the Camera1 API
+             * TODO it's not yet sure how the caught errors interact with the exceptions caught
+             * outside of the following handler. Furthermore, for most errors it's not known whether
+             * they are crucial or not. Therefore, such errors are handled as low-priority
+             * CameraConfigurationFailedExceptions for now.
+             */
+            mCamera.setErrorCallback(new Camera.ErrorCallback() {
+                @Override
+                public void onError(int errorCode, Camera camera) {
+
+                    // extend error information by known error codes
+                    CameraException cameraException;
+                    if (errorCode == CAMERA_ERROR_SERVER_DIED) {
+                        cameraException = new CameraUnavailableException(
+                                "Media server died. In this case, the application must release the" +
+                                        " Camera object and instantiate a new one.");
+                    }
+                    else if (errorCode == CAMERA_ERROR_UNKNOWN) {
+                        cameraException = new CameraConfigurationFailedException(
+                                "Unspecified camera error.");
+                    }
+                    else {
+                        cameraException = new CameraConfigurationFailedException(
+                                "Received camera error code: " + errorCode);
+                    }
+
+                    // redirect error
+                    mCameraCallbacks.onError(cameraException);
+                }
+            });
+
             // Set parameters that might have been set before the camera was opened.
             synchronized (mLock) {
                 LOG.i("onStart:", "Applying default parameters.");
@@ -250,13 +296,20 @@ class Camera1 extends CameraController {
 
     @Override
     void setLocation(Location location) {
-        Location oldLocation = mLocation;
-        mLocation = location;
-        if (isCameraAvailable()) {
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                if (mergeLocation(params, oldLocation)) mCamera.setParameters(params);
+        try {
+            Location oldLocation = mLocation;
+            mLocation = location;
+            if (isCameraAvailable()) {
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (mergeLocation(params, oldLocation)) mCamera.setParameters(params);
+                }
             }
+        }
+        catch (Exception e) {
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set the location.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -288,13 +341,21 @@ class Camera1 extends CameraController {
 
     @Override
     void setWhiteBalance(WhiteBalance whiteBalance) {
-        WhiteBalance old = mWhiteBalance;
-        mWhiteBalance = whiteBalance;
-        if (isCameraAvailable()) {
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                if (mergeWhiteBalance(params, old)) mCamera.setParameters(params);
+        try {
+            WhiteBalance old = mWhiteBalance;
+            mWhiteBalance = whiteBalance;
+            if (isCameraAvailable()) {
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (mergeWhiteBalance(params, old)) mCamera.setParameters(params);
+                }
             }
+        }
+        catch (Exception e) {
+            // TODO handle, !mergeWhiteBalance, too?
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set the white balance.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -309,13 +370,21 @@ class Camera1 extends CameraController {
 
     @Override
     void setHdr(Hdr hdr) {
-        Hdr old = mHdr;
-        mHdr = hdr;
-        if (isCameraAvailable()) {
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                if (mergeHdr(params, old)) mCamera.setParameters(params);
+        try {
+            Hdr old = mHdr;
+            mHdr = hdr;
+            if (isCameraAvailable()) {
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (mergeHdr(params, old)) mCamera.setParameters(params);
+                }
             }
+        }
+        catch (Exception e) {
+            // TODO handle, !mergeHdr, too?
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set hdr.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -341,13 +410,21 @@ class Camera1 extends CameraController {
 
     @Override
     void setFlash(Flash flash) {
-        Flash old = mFlash;
-        mFlash = flash;
-        if (isCameraAvailable()) {
-            synchronized (mLock) {
-                Camera.Parameters params = mCamera.getParameters();
-                if (mergeFlash(params, old)) mCamera.setParameters(params);
+        try {
+            Flash old = mFlash;
+            mFlash = flash;
+            if (isCameraAvailable()) {
+                synchronized (mLock) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (mergeFlash(params, old)) mCamera.setParameters(params);
+                }
             }
+        }
+        catch (Exception e) {
+            // TODO handle, !mergeFlash, too?
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set flash.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -391,29 +468,37 @@ class Camera1 extends CameraController {
 
     @Override
     void setVideoQuality(VideoQuality videoQuality) {
-        if (mIsCapturingVideo) {
-            // TODO: actually any call to getParameters() could fail while recording a video.
-            // See. https://stackoverflow.com/questions/14941625/correct-handling-of-exception-getparameters-failed-empty-parameters
-            throw new IllegalStateException("Can't change video quality while recording a video.");
-        }
 
-        mVideoQuality = videoQuality;
-        if (isCameraAvailable() && mSessionType == SessionType.VIDEO) {
-            // Change capture size to a size that fits the video aspect ratio.
-            Size oldSize = mCaptureSize;
-            mCaptureSize = computeCaptureSize();
-            if (!mCaptureSize.equals(oldSize)) {
-                // New video quality triggers a new aspect ratio.
-                // Go on and see if preview size should change also.
-                synchronized (mLock) {
-                    Camera.Parameters params = mCamera.getParameters();
-                    params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
-                    mCamera.setParameters(params);
-                }
-                onSurfaceChanged();
+        try {
+            if (mIsCapturingVideo) {
+                // TODO: actually any call to getParameters() could fail while recording a video.
+                // See. https://stackoverflow.com/questions/14941625/correct-handling-of-exception-getparameters-failed-empty-parameters
+                throw new IllegalStateException("Can't change video quality while recording a video.");
             }
-            LOG.i("setVideoQuality:", "captureSize:", mCaptureSize);
-            LOG.i("setVideoQuality:", "previewSize:", mPreviewSize);
+
+            mVideoQuality = videoQuality;
+            if (isCameraAvailable() && mSessionType == SessionType.VIDEO) {
+                // Change capture size to a size that fits the video aspect ratio.
+                Size oldSize = mCaptureSize;
+                mCaptureSize = computeCaptureSize();
+                if (!mCaptureSize.equals(oldSize)) {
+                    // New video quality triggers a new aspect ratio.
+                    // Go on and see if preview size should change also.
+                    synchronized (mLock) {
+                        Camera.Parameters params = mCamera.getParameters();
+                        params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+                        mCamera.setParameters(params);
+                    }
+                    onSurfaceChanged();
+                }
+                LOG.i("setVideoQuality:", "captureSize:", mCaptureSize);
+                LOG.i("setVideoQuality:", "previewSize:", mPreviewSize);
+            }
+        }
+        catch (Exception e) {
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set video quality.", e);
+            mCameraCallbacks.onError(cameraException);
         }
     }
 
@@ -425,36 +510,43 @@ class Camera1 extends CameraController {
             if (!mOptions.isVideoSnapshotSupported()) return false;
         }
 
-        // Set boolean to wait for image callback
-        mIsCapturingImage = true;
-        final int exifRotation = computeExifRotation();
-        final boolean exifFlip = computeExifFlip();
-        final int sensorToDisplay = computeSensorToDisplayOffset();
-        synchronized (mLock) {
-            Camera.Parameters params = mCamera.getParameters();
-            params.setRotation(exifRotation);
-            mCamera.setParameters(params);
+        try {
+            // Set boolean to wait for image callback
+            mIsCapturingImage = true;
+            final int exifRotation = computeExifRotation();
+            final boolean exifFlip = computeExifFlip();
+            final int sensorToDisplay = computeSensorToDisplayOffset();
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                params.setRotation(exifRotation);
+                mCamera.setParameters(params);
+            }
+            // Is the final picture (decoded respecting EXIF) consistent with CameraView orientation?
+            // We must consider exifOrientation to bring back the picture in the sensor world.
+            // Then use sensorToDisplay to move to the display world, where CameraView lives.
+            final boolean consistentWithView = (exifRotation + sensorToDisplay + 180) % 180 == 0;
+            mCamera.takePicture(null, null, null,
+                    new Camera.PictureCallback() {
+                        @Override
+                        public void onPictureTaken(byte[] data, final Camera camera) {
+                            mIsCapturingImage = false;
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // This is needed, read somewhere in the docs.
+                                    camera.startPreview();
+                                }
+                            });
+                            mCameraCallbacks.processImage(data, consistentWithView, exifFlip);
+                        }
+                    });
+            return true;
         }
-        // Is the final picture (decoded respecting EXIF) consistent with CameraView orientation?
-        // We must consider exifOrientation to bring back the picture in the sensor world.
-        // Then use sensorToDisplay to move to the display world, where CameraView lives.
-        final boolean consistentWithView = (exifRotation + sensorToDisplay + 180) % 180 == 0;
-        mCamera.takePicture(null, null, null,
-                new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, final Camera camera) {
-                        mIsCapturingImage = false;
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                // This is needed, read somewhere in the docs.
-                                camera.startPreview();
-                            }
-                        });
-                        mCameraCallbacks.processImage(data, consistentWithView, exifFlip);
-                    }
-                });
-        return true;
+        catch (Exception e) {
+            CameraException cameraException = new CapturingPictureFailedException("Capturing a picture failed.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
     }
 
 
@@ -468,37 +560,45 @@ class Camera1 extends CameraController {
             capturePicture();
             return false;
         }
-        mIsCapturingImage = true;
-        mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
-            @Override
-            public void onPreviewFrame(final byte[] data, Camera camera) {
-                // Got to rotate the preview frame, since byte[] data here does not include
-                // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
-                // Adding EXIF to a byte array, unfortunately, is hard.
-                Camera.Parameters params = mCamera.getParameters();
-                final int sensorToDevice = computeExifRotation();
-                final int sensorToDisplay = computeSensorToDisplayOffset();
-                final boolean exifFlip = computeExifFlip();
-                final boolean flip = sensorToDevice % 180 != 0;
-                final int preWidth = mPreviewSize.getWidth();
-                final int preHeight = mPreviewSize.getHeight();
-                final int postWidth = flip ? preHeight : preWidth;
-                final int postHeight = flip ? preWidth : preHeight;
-                final int format = params.getPreviewFormat();
-                WorkerHandler.run(new Runnable() {
-                    @Override
-                    public void run() {
 
-                        final boolean consistentWithView = (sensorToDevice + sensorToDisplay + 180) % 180 == 0;
-                        byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToDevice);
-                        YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
-                        mCameraCallbacks.processSnapshot(yuv, consistentWithView, exifFlip);
-                        mIsCapturingImage = false;
-                    }
-                });
-            }
-        });
-        return true;
+        try {
+            mIsCapturingImage = true;
+            mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
+                @Override
+                public void onPreviewFrame(final byte[] data, Camera camera) {
+                    // Got to rotate the preview frame, since byte[] data here does not include
+                    // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
+                    // Adding EXIF to a byte array, unfortunately, is hard.
+                    Camera.Parameters params = mCamera.getParameters();
+                    final int sensorToDevice = computeExifRotation();
+                    final int sensorToDisplay = computeSensorToDisplayOffset();
+                    final boolean exifFlip = computeExifFlip();
+                    final boolean flip = sensorToDevice % 180 != 0;
+                    final int preWidth = mPreviewSize.getWidth();
+                    final int preHeight = mPreviewSize.getHeight();
+                    final int postWidth = flip ? preHeight : preWidth;
+                    final int postHeight = flip ? preWidth : preHeight;
+                    final int format = params.getPreviewFormat();
+                    WorkerHandler.run(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            final boolean consistentWithView = (sensorToDevice + sensorToDisplay + 180) % 180 == 0;
+                            byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToDevice);
+                            YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
+                            mCameraCallbacks.processSnapshot(yuv, consistentWithView, exifFlip);
+                            mIsCapturingImage = false;
+                        }
+                    });
+                }
+            });
+            return true;
+        }
+        catch (Exception e) {
+            CameraException cameraException = new CapturingSnapshotFailedException("Capturing a snapshot failed.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
     }
 
     @Override
@@ -619,14 +719,20 @@ class Camera1 extends CameraController {
                 mMediaRecorder.start();
                 return true;
             } catch (Exception e) {
-                LOG.e("Error while starting MediaRecorder. Swallowing.", e);
+                CameraException cameraException =
+                        new CapturingVideoFailedException("Error while starting MediaRecorder. " +
+                                "Swallowing.", e);
+                mCameraCallbacks.onError(cameraException);
                 mVideoFile = null;
                 mCamera.lock();
                 endVideo();
                 return false;
             }
         } else {
-            throw new IllegalStateException("Can't record video while session type is picture");
+            CameraException cameraException =
+                    new CapturingVideoFailedException("Can't record video while session type is picture");
+            mCameraCallbacks.onError(cameraException);
+            return false;
         }
     }
 
@@ -736,32 +842,50 @@ class Camera1 extends CameraController {
 
     @Override
     boolean setZoom(float zoom) {
-        if (!isCameraAvailable()) return false;
-        if (!mOptions.isZoomSupported()) return false;
-        synchronized (mLock) {
-            Camera.Parameters params = mCamera.getParameters();
-            float max = params.getMaxZoom();
-            params.setZoom((int) (zoom * max));
-            mCamera.setParameters(params);
+        try {
+            if (!isCameraAvailable()) return false;
+            if (!mOptions.isZoomSupported()) return false;
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                float max = params.getMaxZoom();
+                params.setZoom((int) (zoom * max));
+                mCamera.setParameters(params);
+            }
+            return true;
         }
-        return true;
+        catch (Exception e) {
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set zoom.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
+
     }
 
 
     @Override
     boolean setExposureCorrection(float EVvalue) {
-        if (!isCameraAvailable()) return false;
-        if (!mOptions.isExposureCorrectionSupported()) return false;
-        float max = mOptions.getExposureCorrectionMaxValue();
-        float min = mOptions.getExposureCorrectionMinValue();
-        EVvalue = EVvalue < min ? min : EVvalue > max ? max : EVvalue; // cap
-        synchronized (mLock) {
-            Camera.Parameters params = mCamera.getParameters();
-            int indexValue = (int) (EVvalue / params.getExposureCompensationStep());
-            params.setExposureCompensation(indexValue);
-            mCamera.setParameters(params);
+        try {
+            if (!isCameraAvailable()) return false;
+            if (!mOptions.isExposureCorrectionSupported()) return false;
+            float max = mOptions.getExposureCorrectionMaxValue();
+            float min = mOptions.getExposureCorrectionMinValue();
+            EVvalue = EVvalue < min ? min : EVvalue > max ? max : EVvalue; // cap
+            synchronized (mLock) {
+                Camera.Parameters params = mCamera.getParameters();
+                int indexValue = (int) (EVvalue / params.getExposureCompensationStep());
+                params.setExposureCompensation(indexValue);
+                mCamera.setParameters(params);
+            }
+            return true;
         }
-        return true;
+        catch (Exception e) {
+            CameraException cameraException =
+                    new CameraConfigurationFailedException("Failed to set exposure correction.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
+
     }
 
     // -----------------
@@ -772,31 +896,42 @@ class Camera1 extends CameraController {
     boolean startAutoFocus(@Nullable final Gesture gesture, PointF point) {
         if (!isCameraAvailable()) return false;
         if (!mOptions.isAutoFocusSupported()) return false;
-        final PointF p = new PointF(point.x, point.y); // copy.
-        List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y);
-        List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
-        synchronized (mLock) {
-            // At this point we are sure that camera supports auto focus... right? Look at CameraView.onTouchEvent().
-            Camera.Parameters params = mCamera.getParameters();
-            int maxAF = params.getMaxNumFocusAreas();
-            int maxAE = params.getMaxNumMeteringAreas();
-            if (maxAF > 0) params.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
-            if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-            mCamera.setParameters(params);
-            mCameraCallbacks.dispatchOnFocusStart(gesture, p);
-            // TODO this is not guaranteed to be called... Fix.
-            mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                @Override
-                public void onAutoFocus(boolean success, Camera camera) {
-                    // TODO lock auto exposure and white balance for a while
-                    mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
-                    mHandler.get().removeCallbacks(mPostFocusResetRunnable);
-                    mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
-                }
-            });
+
+        try {
+            final PointF p = new PointF(point.x, point.y); // copy.
+            List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y);
+            List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
+            synchronized (mLock) {
+                // At this point we are sure that camera supports auto focus... right? Look at CameraView.onTouchEvent().
+                Camera.Parameters params = mCamera.getParameters();
+                int maxAF = params.getMaxNumFocusAreas();
+                int maxAE = params.getMaxNumMeteringAreas();
+                if (maxAF > 0) params.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
+                if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                mCamera.setParameters(params);
+                mCameraCallbacks.dispatchOnFocusStart(gesture, p);
+                // TODO this is not guaranteed to be called... Fix.
+                mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean success, Camera camera) {
+                        // TODO lock auto exposure and white balance for a while
+                        mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
+                        mHandler.get().removeCallbacks(mPostFocusResetRunnable);
+                        mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
+                    }
+                });
+            }
+            return true;
         }
-        return true;
+        catch (Exception e) {
+            // at least getParameters and setParameters may fail.
+            // TODO why do they fail and is it possible to prevent such errors?
+            CameraException cameraException = new CameraConfigurationFailedException("Failed to " +
+                    "start auto focus.", e);
+            mCameraCallbacks.onError(cameraException);
+            return false;
+        }
     }
 
 

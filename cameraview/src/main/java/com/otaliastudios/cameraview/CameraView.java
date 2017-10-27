@@ -559,9 +559,10 @@ public class CameraView extends FrameLayout {
                         return;
                     }
                 }
-                LOG.e("Permission error:", "When the session type is set to video,",
-                        "the RECORD_AUDIO permission should be added to the app manifest file.");
-                throw new IllegalStateException(CameraLogger.lastMessage);
+                CameraException cameraException = new CameraUnavailableException("Permission " +
+                        "error: When the session type is set to video, the RECORD_AUDIO " +
+                        "permission should be added to the app manifest file.");
+                mCameraCallbacks.onError(cameraException);
             } catch (PackageManager.NameNotFoundException e) {
                 // Not possible.
             }
@@ -1004,7 +1005,11 @@ public class CameraView extends FrameLayout {
      */
     public void setJpegQuality(int jpegQuality) {
         if (jpegQuality <= 0 || jpegQuality > 100) {
-            throw new IllegalArgumentException("JPEG quality should be > 0 and <= 100");
+            IllegalArgumentException illegalArgumentException = new
+                    IllegalArgumentException("JPEG quality should be > 0 and <= 100");
+            CameraException cameraException = new CameraConfigurationFailedException("Could not" +
+                    " set JpegQuality", illegalArgumentException);
+            mCameraCallbacks.onError(cameraException);
         }
         mJpegQuality = jpegQuality;
     }
@@ -1167,15 +1172,16 @@ public class CameraView extends FrameLayout {
      * so callers should ensure they have appropriate permissions to write to the file.
      * Recording will be automatically stopped after durationMillis, unless
      * {@link #stopCapturingVideo()} is not called meanwhile.
+     * Triggers error handler, if durationMillis is less than 500 milliseconds.
      *
      * @param file a file where the video will be saved
      * @param durationMillis video max duration
-     *
-     * @throws IllegalArgumentException if durationMillis is less than 500 milliseconds
      */
     public void startCapturingVideo(File file, long durationMillis) {
         if (durationMillis < 500) {
-            throw new IllegalArgumentException("Video duration can't be < 500 milliseconds");
+            CameraException cameraException = new CapturingVideoFailedException("Video duration" +
+                    " can't be < 500 milliseconds");
+            mCameraCallbacks.onError(cameraException);
         }
         startCapturingVideo(file);
         mUiHandler.postDelayed(new Runnable() {
@@ -1310,6 +1316,7 @@ public class CameraView extends FrameLayout {
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, PointF where);
         void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
         void dispatchOnExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers);
+        void onError(CameraException exception);
     }
 
     private class Callbacks implements CameraCallbacks {
@@ -1553,6 +1560,47 @@ public class CameraView extends FrameLayout {
                 public void run() {
                     for (CameraListener listener : mListeners) {
                         listener.onExposureCorrectionChanged(newValue, bounds, fingers);
+                    }
+                }
+            });
+        }
+
+        /**
+         * Log and redirect the given error information to the CameraListeners.
+         *
+         * @param exception the error cause
+         */
+        @Override
+        public void onError(final CameraException exception) {
+            // log
+            LOG.e(exception.getMessage(), exception.getCause());
+
+            // redirect
+            mUiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+
+                    // all error listeners will be called, but at most one of them should actually
+                    // throw an exception
+                    int count = 0;
+                    for (CameraListener listener : mListeners) {
+                        try {
+                            listener.onError(exception);
+                        } catch (CameraException ce) {
+                            // if a custom error handler caused a new exception, we throw the new
+                            // one instead of the original one
+                            if (ce == exception) {
+                                count++;
+                            }
+                            else {
+                                throw ce;
+                            }
+                        }
+                    }
+
+                    // the original exception is only thrown, if all existing listeners threw it
+                    if (count == mListeners.size()) {
+                        throw exception;
                     }
                 }
             });
