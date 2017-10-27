@@ -61,8 +61,9 @@ public class CameraView extends FrameLayout {
     private CameraPreview mCameraPreview;
     private OrientationHelper mOrientationHelper;
     private CameraController mCameraController;
-    private ArrayList<CameraListener> mListeners = new ArrayList<>(2);
     private MediaActionSound mSound;
+    /* for tests */ ArrayList<CameraListener> mListeners = new ArrayList<>(2);
+    /* for tests */ ArrayList<FrameProcessor> mFrameProcessors = new ArrayList<>(1);
 
     // Views
     GridLinesLayout mGridLinesLayout;
@@ -74,6 +75,7 @@ public class CameraView extends FrameLayout {
     // Threading
     private Handler mUiHandler;
     private WorkerHandler mWorkerHandler;
+    private WorkerHandler mFrameProcessorsHandler;
 
     public CameraView(@NonNull Context context) {
         super(context, null);
@@ -119,6 +121,7 @@ public class CameraView extends FrameLayout {
         mCameraController = instantiateCameraController(mCameraCallbacks);
         mUiHandler = new Handler(Looper.getMainLooper());
         mWorkerHandler = WorkerHandler.get("CameraViewWorker");
+        mFrameProcessorsHandler = WorkerHandler.get("FrameProcessorsWorker");
 
         // Views
         mGridLinesLayout = new GridLinesLayout(context);
@@ -1093,6 +1096,40 @@ public class CameraView extends FrameLayout {
 
 
     /**
+     * Adds a {@link FrameProcessor} instance to be notified of
+     * new frames in the preview stream.
+     *
+     * @param processor a frame processor.
+     */
+    public void addFrameProcessor(FrameProcessor processor) {
+        if (processor != null) {
+            mFrameProcessors.add(processor);
+        }
+    }
+
+
+    /**
+     * Remove a {@link FrameProcessor} that was previously registered.
+     *
+     * @param processor a frame processor
+     */
+    public void removeFrameProcessor(FrameProcessor processor) {
+        if (processor != null) {
+            mFrameProcessors.remove(processor);
+        }
+    }
+
+
+    /**
+     * Clears the list of {@link FrameProcessor} that have been registered
+     * to preview frames.
+     */
+    public void clearFrameProcessors() {
+        mFrameProcessors.clear();
+    }
+
+
+    /**
      * Asks the camera to capture an image of the current scene.
      * This will trigger {@link CameraListener#onPictureTaken(byte[])} if a listener
      * was registered.
@@ -1310,6 +1347,7 @@ public class CameraView extends FrameLayout {
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, PointF where);
         void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
         void dispatchOnExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers);
+        void dispatchFrame(byte[] frame, long time, int rotation);
     }
 
     private class Callbacks implements CameraCallbacks {
@@ -1320,6 +1358,9 @@ public class CameraView extends FrameLayout {
         // Orientation TODO: move this logic into OrientationHelper
         private Integer mDisplayOffset;
         private Integer mDeviceOrientation;
+
+        // Frame processing
+        private Frame mFrame;
 
         Callbacks() {}
 
@@ -1556,6 +1597,23 @@ public class CameraView extends FrameLayout {
                     }
                 }
             });
+        }
+
+        @Override
+        public void dispatchFrame(final byte[] frame, final long time, final int rotation) {
+            mLogger.i("dispatchFrame", time, rotation, "processors:", mFrameProcessors.size());
+            if (mFrameProcessors.isEmpty()) return;
+            if (mFrame == null) mFrame = new Frame();
+            mFrameProcessorsHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mFrame.set(frame, time, rotation);
+                    for (FrameProcessor processor : mFrameProcessors) {
+                        processor.process(mFrame);
+                    }
+                }
+            });
+
         }
     }
 

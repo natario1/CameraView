@@ -38,6 +38,7 @@ public class CameraCallbacksTest extends BaseTest {
 
     private CameraView camera;
     private CameraListener listener;
+    private FrameProcessor processor;
     private MockCameraController mockController;
     private MockCameraPreview mockPreview;
     private Task<Boolean> task;
@@ -50,6 +51,7 @@ public class CameraCallbacksTest extends BaseTest {
             public void run() {
                 Context context = context();
                 listener = mock(CameraListener.class);
+                processor = mock(FrameProcessor.class);
                 camera = new CameraView(context) {
                     @Override
                     protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
@@ -70,6 +72,7 @@ public class CameraCallbacksTest extends BaseTest {
                 };
                 camera.instantiatePreview();
                 camera.addCameraListener(listener);
+                camera.addFrameProcessor(processor);
                 task = new Task<>();
                 task.listen();
             }
@@ -293,5 +296,14 @@ public class CameraCallbacksTest extends BaseTest {
         assertNotNull("Image was processed", result);
         Bitmap bitmap = BitmapFactory.decodeByteArray(result, 0, result.length);
         return new int[]{ bitmap.getWidth(), bitmap.getHeight() };
+    }
+
+    @Test
+    public void testProcessFrame() {
+        completeTask().when(processor).process(any(Frame.class));
+        camera.mCameraCallbacks.dispatchFrame(new byte[]{0, 1, 2, 3}, 1000, 90);
+
+        assertNotNull(task.await(200));
+        verify(processor, times(1)).process(any(Frame.class));
     }
 }

@@ -5,7 +5,7 @@ import android.support.annotation.WorkerThread;
 
 /**
  * A FrameProcessor will process {@link Frame}s coming from the camera preview.
- * It must be passed to {@link Cameraview#setFrameProcessor(FrameProcessor)}.
+ * It must be passed to {@link CameraView#addFrameProcessor(FrameProcessor)}.
  */
 public interface FrameProcessor {
 
