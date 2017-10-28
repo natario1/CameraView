@@ -459,7 +459,7 @@ public class IntegrationTest extends BaseTest {
         Size size = camera.getCaptureSize();
         camera.capturePicture();
         byte[] jpeg = waitForPicture(true);
-        Bitmap b = CameraUtils.decodeBitmap(jpeg);
+        Bitmap b = CameraUtils.decodeBitmap(jpeg, Integer.MAX_VALUE, Integer.MAX_VALUE);
         // Result can actually have swapped dimensions
         // Which one, depends on factors including device physical orientation
         assertTrue(b.getWidth() == size.getHeight() || b.getWidth() == size.getWidth());
@@ -497,7 +497,7 @@ public class IntegrationTest extends BaseTest {
         Size size = camera.getPreviewSize();
         camera.captureSnapshot();
         byte[] jpeg = waitForPicture(true);
-        Bitmap b = CameraUtils.decodeBitmap(jpeg);
+        Bitmap b = CameraUtils.decodeBitmap(jpeg, Integer.MAX_VALUE, Integer.MAX_VALUE);
         // Result can actually have swapped dimensions
         // Which one, depends on factors including device physical orientation
         assertTrue(b.getWidth() == size.getHeight() || b.getWidth() == size.getWidth());

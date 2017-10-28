@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Static utilities for dealing with camera I/O, orientation, etc.
+ * Static utilities for dealing with camera I/O, orientations, etc.
  */
 public class CameraUtils {
 
@@ -27,6 +27,7 @@ public class CameraUtils {
      * @param context a valid Context
      * @return whether device has cameras
      */
+    @SuppressWarnings("WeakerAccess")
     public static boolean hasCameras(Context context) {
         PackageManager manager = context.getPackageManager();
         // There's also FEATURE_CAMERA_EXTERNAL , should we support it?
@@ -60,18 +61,34 @@ public class CameraUtils {
      * is that this cares about orientation, reading it from the EXIF header.
      * This is executed in a background thread, and returns the result to the original thread.
      *
-     * This ignores flipping at the moment.
-     * TODO care about flipping using Matrix.scale()
-     *
      * @param source a JPEG byte array
      * @param callback a callback to be notified
      */
+    @SuppressWarnings("WeakerAccess")
     public static void decodeBitmap(final byte[] source, final BitmapCallback callback) {
+        decodeBitmap(source, Integer.MAX_VALUE, Integer.MAX_VALUE, callback);
+    }
+
+    /**
+     * Decodes an input byte array and outputs a Bitmap that is ready to be displayed.
+     * The difference with {@link android.graphics.BitmapFactory#decodeByteArray(byte[], int, int)}
+     * is that this cares about orientation, reading it from the EXIF header.
+     * This is executed in a background thread, and returns the result to the original thread.
+     *
+     * The image is also downscaled taking care of the maxWidth and maxHeight arguments.
+     *
+     * @param source a JPEG byte array
+     * @param maxWidth the max allowed width
+     * @param maxHeight the max allowed height
+     * @param callback a callback to be notified
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static void decodeBitmap(final byte[] source, final int maxWidth, final int maxHeight, final BitmapCallback callback) {
         final Handler ui = new Handler();
         WorkerHandler.run(new Runnable() {
             @Override
             public void run() {
-                final Bitmap bitmap = decodeBitmap(source);
+                final Bitmap bitmap = decodeBitmap(source, maxWidth, maxHeight);
                 ui.post(new Runnable() {
                     @Override
                     public void run() {
@@ -83,7 +100,11 @@ public class CameraUtils {
     }
 
 
-    static Bitmap decodeBitmap(byte[] source) {
+    // TODO ignores flipping
+    @SuppressWarnings({"SuspiciousNameCombination", "WeakerAccess"})
+    /* for tests */ static Bitmap decodeBitmap(byte[] source, int maxWidth, int maxHeight) {
+        if (maxWidth <= 0) maxWidth = Integer.MAX_VALUE;
+        if (maxHeight <= 0) maxHeight = Integer.MAX_VALUE;
         int orientation;
         boolean flip;
         InputStream stream = null;
@@ -123,12 +144,30 @@ public class CameraUtils {
             flip = false;
         } finally {
             if (stream != null) {
-                try { stream.close(); } catch (Exception e) {}
+                try { stream.close(); } catch (Exception ignored) {}
             }
         }
 
+        Bitmap bitmap;
+        if (maxWidth < Integer.MAX_VALUE || maxHeight < Integer.MAX_VALUE) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeByteArray(source, 0, source.length, options);
 
-        Bitmap bitmap = BitmapFactory.decodeByteArray(source, 0, source.length);
+            int outHeight = options.outHeight;
+            int outWidth = options.outWidth;
+            if (orientation % 180 != 0) {
+                outHeight = options.outWidth;
+                outWidth = options.outHeight;
+            }
+
+            options.inSampleSize = computeSampleSize(outWidth, outHeight, maxWidth, maxHeight);
+            options.inJustDecodeBounds = false;
+            bitmap = BitmapFactory.decodeByteArray(source, 0, source.length, options);
+        } else {
+            bitmap = BitmapFactory.decodeByteArray(source, 0, source.length);
+        }
+
         if (orientation != 0 || flip) {
             Matrix matrix = new Matrix();
             matrix.setRotate(orientation);
@@ -141,7 +180,30 @@ public class CameraUtils {
     }
 
 
+    private static int computeSampleSize(int width, int height, int maxWidth, int maxHeight) {
+        // https://developer.android.com/topic/performance/graphics/load-bitmap.html
+        int inSampleSize = 1;
+        if (height > maxHeight || width > maxWidth) {
+            while ((height / inSampleSize) >= maxHeight
+                    || (width / inSampleSize) >= maxWidth) {
+                inSampleSize *= 2;
+            }
+        }
+        return inSampleSize;
+    }
+
+
+    /**
+     * Receives callbacks about a bitmap decoding operation.
+     */
     public interface BitmapCallback {
+
+        /**
+         * Notifies that the bitmap was succesfully decoded.
+         * This is run on the UI thread.
+         *
+         * @param bitmap decoded bitmap
+         */
         @UiThread void onBitmapReady(Bitmap bitmap);
     }
 }

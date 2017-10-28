@@ -27,8 +27,8 @@ public class PicturePreviewActivity extends Activity {
         setContentView(R.layout.activity_picture_preview);
         final ImageView imageView = findViewById(R.id.image);
         final MessageView nativeCaptureResolution = findViewById(R.id.nativeCaptureResolution);
-        final MessageView actualResolution = findViewById(R.id.actualResolution);
-        final MessageView approxUncompressedSize = findViewById(R.id.approxUncompressedSize);
+        // final MessageView actualResolution = findViewById(R.id.actualResolution);
+        // final MessageView approxUncompressedSize = findViewById(R.id.approxUncompressedSize);
         final MessageView captureLatency = findViewById(R.id.captureLatency);
 
         final long delay = getIntent().getLongExtra("delay", 0);
@@ -40,25 +40,25 @@ public class PicturePreviewActivity extends Activity {
             return;
         }
 
-        CameraUtils.decodeBitmap(b, new CameraUtils.BitmapCallback() {
+        CameraUtils.decodeBitmap(b, 1000, 1000, new CameraUtils.BitmapCallback() {
             @Override
             public void onBitmapReady(Bitmap bitmap) {
                 imageView.setImageBitmap(bitmap);
 
-                approxUncompressedSize.setTitle("Approx. uncompressed size");
-                approxUncompressedSize.setMessage(getApproximateFileMegabytes(bitmap) + "MB");
+                // approxUncompressedSize.setTitle("Approx. uncompressed size");
+                // approxUncompressedSize.setMessage(getApproximateFileMegabytes(bitmap) + "MB");
 
-                captureLatency.setTitle("Capture latency");
+                captureLatency.setTitle("Approx. capture latency");
                 captureLatency.setMessage(delay + " milliseconds");
 
                 // ncr and ar might be different when cropOutput is true.
                 AspectRatio nativeRatio = AspectRatio.of(nativeWidth, nativeHeight);
-                AspectRatio finalRatio = AspectRatio.of(bitmap.getWidth(), bitmap.getHeight());
                 nativeCaptureResolution.setTitle("Native capture resolution");
                 nativeCaptureResolution.setMessage(nativeWidth + "x" + nativeHeight + " (" + nativeRatio + ")");
 
-                actualResolution.setTitle("Actual resolution");
-                actualResolution.setMessage(bitmap.getWidth() + "x" + bitmap.getHeight() + " (" + finalRatio + ")");
+                // AspectRatio finalRatio = AspectRatio.of(bitmap.getWidth(), bitmap.getHeight());
+                // actualResolution.setTitle("Actual resolution");
+                // actualResolution.setMessage(bitmap.getWidth() + "x" + bitmap.getHeight() + " (" + finalRatio + ")");
             }
         });
 

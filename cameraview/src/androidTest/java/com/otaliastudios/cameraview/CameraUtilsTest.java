@@ -36,15 +36,17 @@ public class CameraUtilsTest extends BaseTest {
         assertFalse(CameraUtils.hasCameras(context));
     }
 
-    @Test
-    public void testDecodeBitmap() {
-        int w = 100, h = 200, color = Color.WHITE;
-        Bitmap source = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        source.setPixel(0, 0, color);
-        final ByteArrayOutputStream os = new ByteArrayOutputStream();
+    // Encodes bitmap and decodes again using our utility.
+    private Task<Bitmap> encodeDecodeTask(Bitmap source) {
+        return encodeDecodeTask(source, 0, 0);
+    }
 
+    // Encodes bitmap and decodes again using our utility.
+    private Task<Bitmap> encodeDecodeTask(Bitmap source, final int maxWidth, final int maxHeight) {
+        final ByteArrayOutputStream os = new ByteArrayOutputStream();
         // Using lossy JPG we can't have strict comparison of values after compression.
         source.compress(Bitmap.CompressFormat.PNG, 100, os);
+        final byte[] data = os.toByteArray();
 
         final Task<Bitmap> decode = new Task<>();
         decode.listen();
@@ -59,9 +61,23 @@ public class CameraUtilsTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                CameraUtils.decodeBitmap(os.toByteArray(), callback);
+                if (maxWidth > 0 && maxHeight > 0) {
+                    CameraUtils.decodeBitmap(data, maxWidth, maxHeight, callback);
+                } else {
+                    CameraUtils.decodeBitmap(data, callback);
+                }
             }
         });
+        return decode;
+    }
+
+    @Test
+    public void testDecodeBitmap() {
+        int w = 100, h = 200, color = Color.WHITE;
+        Bitmap source = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        source.setPixel(0, 0, color);
+
+        Task<Bitmap> decode = encodeDecodeTask(source);
         Bitmap other = decode.await(800);
         assertNotNull(other);
         assertEquals(100, w);
@@ -72,5 +88,32 @@ public class CameraUtilsTest extends BaseTest {
         assertEquals(0, other.getPixel(w-1, h-1));
 
         // TODO: improve when we add EXIF writing to byte arrays
+    }
+
+
+    @Test
+    public void testDecodeDownscaledBitmap() {
+        int width = 1000, height = 2000;
+        Bitmap source = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Task<Bitmap> task;
+        Bitmap other;
+
+        task = encodeDecodeTask(source, 100, 100);
+        other = task.await(800);
+        assertNotNull(other);
+        assertTrue(other.getWidth() <= 100);
+        assertTrue(other.getHeight() <= 100);
+
+        task = encodeDecodeTask(source, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        other = task.await(800);
+        assertNotNull(other);
+        assertTrue(other.getWidth() == width);
+        assertTrue(other.getHeight() == height);
+
+        task = encodeDecodeTask(source, 6000, 6000);
+        other = task.await(800);
+        assertNotNull(other);
+        assertTrue(other.getWidth() == width);
+        assertTrue(other.getHeight() == height);
     }
 }
