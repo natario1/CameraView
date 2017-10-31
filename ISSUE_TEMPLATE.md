@@ -7,19 +7,19 @@ Prerequisites:*
 - [ ] *I can reproduce the bug in the demo app, and if not...*
 - [ ] *I have tried to reproduce the bug in the demo app*
 
-##### Detailed steps to reproduce the issue:
+#### Detailed steps to reproduce the issue:
 
 1.
 2.
 3.
 
-##### Expected behavior:
+#### Expected behavior:
 
-##### Actual behavior:
+#### Actual behavior:
 
-##### Screenshots:
+#### Screenshots:
 
-##### Interesting logs:
+#### Interesting logs:
 
 *You can use `CameraLogger.setLogLevel(LEVEL_VERBOSE)`
 to add logs to logcat, and `CameraLogger.registerLogger()`

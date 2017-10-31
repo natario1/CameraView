@@ -196,12 +196,14 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         LOG.i("onStop:", "About to clean up.");
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
         if (mCamera != null) {
+
             LOG.i("onStop:", "Clean up.", "Ending video?", mIsCapturingVideo);
             if (mIsCapturingVideo) endVideo();
 
             try {
                 LOG.i("onStop:", "Clean up.", "Stopping preview.");
                 mCamera.stopPreview();
+                mCamera.setPreviewCallback(null);
                 LOG.i("onStop:", "Clean up.", "Stopped preview.");
             } catch (Exception e) {
                 LOG.w("onStop:", "Clean up.", "Exception while stopping preview.");
