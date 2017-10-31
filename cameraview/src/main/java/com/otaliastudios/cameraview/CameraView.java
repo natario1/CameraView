@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static android.view.View.MeasureSpec.AT_MOST;
 import static android.view.View.MeasureSpec.EXACTLY;
@@ -62,8 +63,8 @@ public class CameraView extends FrameLayout {
     private OrientationHelper mOrientationHelper;
     private CameraController mCameraController;
     private MediaActionSound mSound;
-    /* for tests */ ArrayList<CameraListener> mListeners = new ArrayList<>(2);
-    /* for tests */ ArrayList<FrameProcessor> mFrameProcessors = new ArrayList<>(1);
+    /* for tests */ List<CameraListener> mListeners = new CopyOnWriteArrayList<>();
+    /* for tests */ List<FrameProcessor> mFrameProcessors = new CopyOnWriteArrayList<>();
 
     // Views
     GridLinesLayout mGridLinesLayout;
