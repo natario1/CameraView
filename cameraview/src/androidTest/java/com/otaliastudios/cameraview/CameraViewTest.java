@@ -382,6 +382,7 @@ public class CameraViewTest extends BaseTest {
 
     //region testLocation
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void testSetLocation() {
         cameraView.setLocation(50d, -50d);
@@ -554,6 +555,7 @@ public class CameraViewTest extends BaseTest {
 
     //region Lists of listeners and processors
 
+    @SuppressWarnings("UseBulkOperation")
     @Test
     public void testCameraListenerList() {
         assertTrue(cameraView.mListeners.isEmpty());
@@ -571,8 +573,17 @@ public class CameraViewTest extends BaseTest {
 
         cameraView.clearCameraListeners();
         assertTrue(cameraView.mListeners.isEmpty());
+
+        // Ensure this does not throw a ConcurrentModificationException
+        cameraView.addCameraListener(new CameraListener() {});
+        cameraView.addCameraListener(new CameraListener() {});
+        cameraView.addCameraListener(new CameraListener() {});
+        for (CameraListener test : cameraView.mListeners) {
+            cameraView.mListeners.remove(test);
+        }
     }
 
+    @SuppressWarnings({"NullableProblems", "UseBulkOperation"})
     @Test
     public void testFrameProcessorsList() {
         assertTrue(cameraView.mFrameProcessors.isEmpty());
@@ -592,6 +603,14 @@ public class CameraViewTest extends BaseTest {
 
         cameraView.clearFrameProcessors();
         assertTrue(cameraView.mFrameProcessors.isEmpty());
+
+        // Ensure this does not throw a ConcurrentModificationException
+        cameraView.addFrameProcessor(new FrameProcessor() { public void process(Frame f) {} });
+        cameraView.addFrameProcessor(new FrameProcessor() { public void process(Frame f) {} });
+        cameraView.addFrameProcessor(new FrameProcessor() { public void process(Frame f) {} });
+        for (FrameProcessor test : cameraView.mFrameProcessors) {
+            cameraView.mFrameProcessors.remove(test);
+        }
     }
 
     //endregion
