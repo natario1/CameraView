@@ -1607,8 +1607,8 @@ public class CameraView extends FrameLayout {
         @Override
         public void dispatchFrame(final byte[] frame, final long time, final int rotation,
                                   final Size size, final int previewFormat) {
-            mLogger.i("dispatchFrame", time, rotation, "processors:", mFrameProcessors.size());
             if (mFrameProcessors.isEmpty()) return;
+            mLogger.v("dispatchFrame", time, rotation, "processors:", mFrameProcessors.size());
             if (mFrame == null) mFrame = new Frame();
             mFrameProcessorsHandler.post(new Runnable() {
                 @Override
