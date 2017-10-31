@@ -8,7 +8,7 @@
 # CameraView
 
 CameraView is a well documented, high-level library that makes capturing pictures and videos easy,
-addressing most of the common issues and needs, and still leaving you with flexibility where needed.
+addressing most of the common issues and needs, and still leaving you with flexibility where needed. See [CHANGELOG](https://github.com/natario1/CameraView/blob/master/CHANGELOG.md).
 
 ```groovy
 compile 'com.otaliastudios:cameraview:1.3.1'
