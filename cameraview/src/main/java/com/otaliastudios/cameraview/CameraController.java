@@ -145,6 +145,8 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
             LOG.i("Stop immediately. State was:", ss());
             mState = STATE_STOPPING;
             onStop();
+            // Prevent leaking CameraController.
+            mHandler.getThread().setUncaughtExceptionHandler(null);
             mState = STATE_STOPPED;
             LOG.i("Stop immediately. Stopped. State is:", ss());
         } catch (Exception e) {
