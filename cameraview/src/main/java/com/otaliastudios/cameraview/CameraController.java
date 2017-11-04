@@ -8,7 +8,7 @@ import android.support.annotation.WorkerThread;
 
 import java.io.File;
 
-abstract class CameraController implements CameraPreview.SurfaceCallback {
+abstract class CameraController implements CameraPreview.SurfaceCallback, FrameManager.BufferCallback {
 
     private static final String TAG = CameraController.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -36,6 +36,7 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
 
     protected ExtraProperties mExtraProperties;
     protected CameraOptions mOptions;
+    protected FrameManager mFrameManager;
 
     protected int mDisplayOffset;
     protected int mDeviceOrientation;
@@ -67,6 +68,7 @@ abstract class CameraController implements CameraPreview.SurfaceCallback {
                 });
             }
         });
+        mFrameManager = new FrameManager(2, this);
     }
 
     void setPreview(CameraPreview cameraPreview) {

@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview;
 
+import android.graphics.ImageFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -109,6 +110,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                         invertPreviewSizes ? mPreviewSize.getHeight() : mPreviewSize.getWidth(),
                         invertPreviewSizes ? mPreviewSize.getWidth() : mPreviewSize.getHeight()
                 );
+
+                mCamera.setPreviewCallbackWithBuffer(null); // This clears the buffers
+                mCamera.setPreviewCallbackWithBuffer(this); // Reset
+                mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewSize);
+
                 LOG.i("onSurfaceChanged:", "Restarting preview.");
                 mCamera.startPreview();
                 LOG.i("onSurfaceChanged:", "Restarted preview.");
@@ -149,7 +155,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
             mCamera.setParameters(params);
         }
 
-        mCamera.setPreviewCallback(this); // Frame processing
+        mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
+        mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
+        mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewSize);
 
         LOG.i("setup:", "Starting preview with startPreview().");
         mCamera.startPreview();
@@ -195,6 +203,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         Exception error = null;
         LOG.i("onStop:", "About to clean up.");
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
+        mFrameManager.release();
+
         if (mCamera != null) {
 
             LOG.i("onStop:", "Clean up.", "Ending video?", mIsCapturingVideo);
@@ -203,7 +213,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
             try {
                 LOG.i("onStop:", "Clean up.", "Stopping preview.");
                 mCamera.stopPreview();
-                mCamera.setPreviewCallback(null);
+                mCamera.setPreviewCallbackWithBuffer(null);
                 LOG.i("onStop:", "Clean up.", "Stopped preview.");
             } catch (Exception e) {
                 LOG.w("onStop:", "Clean up.", "Exception while stopping preview.");
@@ -243,6 +253,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         return false;
     }
 
+    @Override
+    public void onBufferAvailable(byte[] buffer) {
+        if (isCameraAvailable()) {
+            mCamera.addCallbackBuffer(buffer);
+        }
+    }
 
     @Override
     void setSessionType(SessionType sessionType) {
@@ -501,7 +517,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                         mIsCapturingImage = false;
                     }
                 });
-                mCamera.setPreviewCallback(Camera1.this);
+
+                // It seems that the buffers are already cleared here, so we need to allocate again.
+                mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
+                mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
+                mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewSize);                mCamera.setPreviewCallbackWithBuffer(Camera1.this);
             }
         });
         return true;
@@ -509,11 +529,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
-        mCameraCallbacks.dispatchFrame(data,
+        Frame frame = mFrameManager.getFrame(data,
                 System.currentTimeMillis(),
                 computeExifRotation(),
                 mPreviewSize,
                 mPreviewFormat);
+        mCameraCallbacks.dispatchFrame(frame);
     }
 
     @Override

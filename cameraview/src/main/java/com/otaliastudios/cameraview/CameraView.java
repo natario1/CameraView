@@ -1353,7 +1353,7 @@ public class CameraView extends FrameLayout {
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, PointF where);
         void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
         void dispatchOnExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers);
-        void dispatchFrame(byte[] frame, long time, int rotation, Size size, int previewFormat);
+        void dispatchFrame(Frame frame);
     }
 
     private class Callbacks implements CameraCallbacks {
@@ -1364,9 +1364,6 @@ public class CameraView extends FrameLayout {
         // Orientation TODO: move this logic into OrientationHelper
         private Integer mDisplayOffset;
         private Integer mDeviceOrientation;
-
-        // Frame processing
-        private Frame mFrame;
 
         Callbacks() {}
 
@@ -1606,21 +1603,22 @@ public class CameraView extends FrameLayout {
         }
 
         @Override
-        public void dispatchFrame(final byte[] frame, final long time, final int rotation,
-                                  final Size size, final int previewFormat) {
-            if (mFrameProcessors.isEmpty()) return;
-            mLogger.v("dispatchFrame", time, rotation, "processors:", mFrameProcessors.size());
-            if (mFrame == null) mFrame = new Frame();
-            mFrameProcessorsHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mFrame.set(frame, time, rotation, size, previewFormat);
-                    for (FrameProcessor processor : mFrameProcessors) {
-                        processor.process(mFrame);
+        public void dispatchFrame(final Frame frame) {
+            if (mFrameProcessors.isEmpty()) {
+                // Mark as released. This instance will be reused.
+                frame.release();
+            } else {
+                mLogger.v("dispatchFrame:", frame.getTime(), "processors:", mFrameProcessors.size());
+                mFrameProcessorsHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (FrameProcessor processor : mFrameProcessors) {
+                            processor.process(frame);
+                        }
+                        frame.release();
                     }
-                }
-            });
-
+                });
+            }
         }
     }
 

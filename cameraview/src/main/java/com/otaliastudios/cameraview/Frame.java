@@ -1,9 +1,13 @@
 package com.otaliastudios.cameraview;
 
+import android.support.annotation.NonNull;
+
 /**
  * A preview frame to be processed by {@link FrameProcessor}s.
  */
 public class Frame {
+
+    /* for tests */ FrameManager mManager;
 
     private byte[] mData = null;
     private long mTime = -1;
@@ -11,7 +15,9 @@ public class Frame {
     private Size mSize = null;
     private int mFormat = -1;
 
-    Frame() {}
+    Frame(@NonNull FrameManager manager) {
+        mManager = manager;
+    }
 
     void set(byte[] data, long time, int rotation, Size size, int format) {
         this.mData = data;
@@ -37,7 +43,7 @@ public class Frame {
     public Frame freeze() {
         byte[] data = new byte[mData.length];
         System.arraycopy(mData, 0, data, 0, mData.length);
-        Frame other = new Frame();
+        Frame other = new Frame(mManager);
         other.set(data, mTime, mRotation, mSize, mFormat);
         return other;
     }
@@ -47,11 +53,21 @@ public class Frame {
      * that are not useful anymore.
      */
     public void release() {
+        if (mManager != null) {
+            // If needed, the manager will call releaseManager on us.
+            mManager.onFrameReleased(this);
+        }
+
         mData = null;
         mRotation = 0;
         mTime = -1;
         mSize = null;
         mFormat = -1;
+    }
+
+    // Once this is called, this instance is not usable anymore.
+    void releaseManager() {
+        mManager = null;
     }
 
     /**
