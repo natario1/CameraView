@@ -1,7 +1,7 @@
 ### v1.3.2
 
-- Fixed a memory leak thanks to [@andrewmunn](andrewmunn) ([#92][92])
-- Reduced memory usage when using cropOutput thanks to [@RobertoMorelos](RobertoMorelos) ([#93][93])
+- Fixed a memory leak thanks to [@andrewmunn][andrewmunn] ([#92][92])
+- Reduced memory usage when using cropOutput thanks to [@RobertoMorelos][RobertoMorelos] ([#93][93])
 - Improved efficiency for Frame processors, recycle buffers and Frames ([#94][94])
 
 https://github.com/natario1/CameraView/compare/v1.3.1...v1.3.2
