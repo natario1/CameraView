@@ -27,6 +27,7 @@ class CropHelper {
         image.recycle();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         crop.compress(Bitmap.CompressFormat.JPEG, jpegCompression, out);
+        crop.recycle();
         return out.toByteArray();
     }
 
