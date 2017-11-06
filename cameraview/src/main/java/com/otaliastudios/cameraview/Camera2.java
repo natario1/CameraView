@@ -125,4 +125,9 @@ class Camera2 extends CameraController {
     boolean startAutoFocus(@Nullable Gesture gesture, PointF point) {
         return false;
     }
+
+    @Override
+    public void onBufferAvailable(byte[] buffer) {
+
+    }
 }

@@ -508,19 +508,51 @@ public class IntegrationTest extends BaseTest {
 
     //region Frame Processing
 
+    private void assert30Frames(FrameProcessor mock) throws Exception {
+        // Expect 30 frames
+        CountDownLatch latch = new CountDownLatch(30);
+        doCountDown(latch).when(mock).process(any(Frame.class));
+        boolean did = latch.await(4, TimeUnit.SECONDS);
+        assertTrue(did);
+    }
+
     @Test
-    public void testFrameProcessing() throws Exception {
+    public void testFrameProcessing_simple() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
-
         camera.start();
         waitForOpen(true);
 
-        // Expect 30 frames
-        CountDownLatch latch = new CountDownLatch(30);
-        doCountDown(latch).when(processor).process(any(Frame.class));
-        boolean did = latch.await(4, TimeUnit.SECONDS);
-        assertTrue(did);
+        assert30Frames(processor);
+    }
+
+    @Test
+    public void testFrameProcessing_afterSnapshot() throws Exception {
+        FrameProcessor processor = mock(FrameProcessor.class);
+        camera.addFrameProcessor(processor);
+        camera.start();
+        waitForOpen(true);
+
+        // In Camera1, snapshots will clear the preview callback
+        // Ensure we restore correctly
+        camera.captureSnapshot();
+        waitForPicture(true);
+
+        assert30Frames(processor);
+    }
+
+    @Test
+    public void testFrameProcessing_afterRestart() throws Exception {
+        FrameProcessor processor = mock(FrameProcessor.class);
+        camera.addFrameProcessor(processor);
+        camera.start();
+        waitForOpen(true);
+        camera.stop();
+        waitForClose(true);
+        camera.start();
+        waitForOpen(true);
+
+        assert30Frames(processor);
     }
 
     //endregion

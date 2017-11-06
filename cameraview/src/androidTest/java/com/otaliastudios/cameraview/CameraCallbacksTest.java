@@ -300,10 +300,11 @@ public class CameraCallbacksTest extends BaseTest {
 
     @Test
     public void testProcessFrame() {
-        completeTask().when(processor).process(any(Frame.class));
-        camera.mCameraCallbacks.dispatchFrame(new byte[]{0, 1, 2, 3}, 1000, 90, new Size(1, 1), 0);
+        Frame mock = mock(Frame.class);
+        completeTask().when(processor).process(mock);
+        camera.mCameraCallbacks.dispatchFrame(mock);
 
         assertNotNull(task.await(200));
-        verify(processor, times(1)).process(any(Frame.class));
+        verify(processor, times(1)).process(mock);
     }
 }

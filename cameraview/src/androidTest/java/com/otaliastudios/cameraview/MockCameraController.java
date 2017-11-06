@@ -134,4 +134,9 @@ public class MockCameraController extends CameraController {
     public void onSurfaceAvailable() {
 
     }
+
+    @Override
+    public void onBufferAvailable(byte[] buffer) {
+
+    }
 }
