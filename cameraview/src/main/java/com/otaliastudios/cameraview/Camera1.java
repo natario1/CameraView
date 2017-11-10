@@ -195,6 +195,22 @@ class Camera1 extends CameraController {
                         cameraException = new CameraUnavailableException(
                                 "Media server died. In this case, the application must release the" +
                                         " Camera object and instantiate a new one.");
+
+                        // if we were taking a video, it failed, too.
+                        if (mIsCapturingVideo) {
+                            if (mVideoFile != null) {
+                                // delete potentially-broken video file
+                                if (mVideoFile.exists()) {
+                                    mVideoFile.delete();
+                                }
+
+                                // ensure that endVideo() will not trigger the onVideoTaken listener
+                                mVideoFile = null;
+                            }
+                            // tidy up a bit
+                            endVideo();
+                        }
+
                     }
                     else if (errorCode == CAMERA_ERROR_UNKNOWN) {
                         cameraException = new CameraConfigurationFailedException(
