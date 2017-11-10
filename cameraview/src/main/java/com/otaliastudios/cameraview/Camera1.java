@@ -269,6 +269,11 @@ class Camera1 extends CameraController {
         if (error != null) throw error;
     }
 
+    /**
+     *
+     * @throws RuntimeException if Android failed to get the camera info.
+     * @return
+     */
     private boolean collectCameraId() {
         int internalFacing = mMapper.map(mFacing);
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
@@ -332,9 +337,21 @@ class Camera1 extends CameraController {
     @Override
     void setFacing(Facing facing) {
         if (facing != mFacing) {
-            mFacing = facing;
-            if (collectCameraId() && isCameraAvailable()) {
-                restart();
+
+            // call these methods before actually changing the attribute's value, because
+            // collectCameraId may raise an exception that prevents us from changing anything here
+            try {
+                boolean restart = collectCameraId() && isCameraAvailable();
+
+                mFacing = facing;
+                if (restart) {
+                    restart();
+                }
+            }
+            catch (Exception e) {
+                CameraException cameraException =
+                        new CameraConfigurationFailedException("Failed to set the camera facing.", e);
+                mCameraCallbacks.onError(cameraException);
             }
         }
     }
