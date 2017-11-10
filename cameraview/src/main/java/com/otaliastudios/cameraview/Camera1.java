@@ -338,17 +338,19 @@ class Camera1 extends CameraController {
     void setFacing(Facing facing) {
         if (facing != mFacing) {
 
-            // call these methods before actually changing the attribute's value, because
-            // collectCameraId may raise an exception that prevents us from changing anything here
+            Facing oldFacing = mFacing;
             try {
-                boolean restart = collectCameraId() && isCameraAvailable();
-
+                // this value must be set before calling collectCameraId()
                 mFacing = facing;
-                if (restart) {
+
+                if (collectCameraId() && isCameraAvailable()) {
                     restart();
                 }
             }
             catch (Exception e) {
+                // collectCameraId may raise an exception that prevents us from changing anything here
+                // -> undo failed configuration change
+                mFacing = oldFacing;
                 CameraException cameraException =
                         new CameraConfigurationFailedException("Failed to set the camera facing.", e);
                 mCameraCallbacks.onError(cameraException);
