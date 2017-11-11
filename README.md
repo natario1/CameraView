@@ -162,6 +162,29 @@ camera.addCameraListener(new CameraListener() {
 });
 ```
 
+
+Some rare exceptions can occur during initialization of the camera. This prevents any further camera
+ usage and occurs before you can attach your custom error handler.
+So you should additionally wrap the camera initialization in a try-catch-block:
+```java
+try {
+    cameraView = new CameraView(context);
+}
+catch (CameraException e) {
+    // camera is (temporary) unavailable
+}
+```
+
+Or if you created the CameraView by adding it to your XML layout:
+```java
+try {
+    inflater.inflate(R.layout.camera, mainContainer, false);
+}
+catch (CameraException e) {
+    // camera is (temporary) unavailable
+}
+```
+
 #### Advanced Custom Handler
 Furthermore, you can distinguish different error types. E.g. some of them imply that the
 CameraView should be disabled or restarted while others may be ignored in some use cases.

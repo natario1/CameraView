@@ -75,11 +75,22 @@ public class CameraView extends FrameLayout {
     private Handler mUiHandler;
     private WorkerHandler mWorkerHandler;
 
+    /**
+     *
+     * @param context
+     * @throws CameraUnavailableException if the initialization failed for any (camera-related) reason.
+     */
     public CameraView(@NonNull Context context) {
         super(context, null);
         init(context, null);
     }
 
+    /**
+     *
+     * @param context
+     * @param attrs
+     * @throws CameraUnavailableException if the initialization failed for any (camera-related) reason.
+     */
     public CameraView(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
@@ -87,74 +98,89 @@ public class CameraView extends FrameLayout {
 
     //region Init
 
+    /**
+     *
+     * @param context
+     * @param attrs
+     * @throws CameraUnavailableException if the initialization failed for any (camera-related) reason.
+     */
     @SuppressWarnings("WrongConstant")
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
-        setWillNotDraw(false);
-        TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
-        // Self managed
-        int jpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, DEFAULT_JPEG_QUALITY);
-        boolean cropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, DEFAULT_CROP_OUTPUT);
-        boolean playSounds = a.getBoolean(R.styleable.CameraView_cameraPlaySounds, DEFAULT_PLAY_SOUNDS);
+        try {
+            setWillNotDraw(false);
+            TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
+            // Self managed
+            int jpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, DEFAULT_JPEG_QUALITY);
+            boolean cropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, DEFAULT_CROP_OUTPUT);
+            boolean playSounds = a.getBoolean(R.styleable.CameraView_cameraPlaySounds, DEFAULT_PLAY_SOUNDS);
 
-        // Camera controller params
-        Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
-        Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
-        Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
-        WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
-        VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
-        SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
-        Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
-        Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
+            // Camera controller params
+            Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
+            Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
+            Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
+            WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
+            VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
+            SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
+            Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
+            Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
 
-        // Gestures
-        GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
-        GestureAction longTapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureLongTap, GestureAction.DEFAULT_LONG_TAP.value()));
-        GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, GestureAction.DEFAULT_PINCH.value()));
-        GestureAction scrollHorizontalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollHorizontal, GestureAction.DEFAULT_SCROLL_HORIZONTAL.value()));
-        GestureAction scrollVerticalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollVertical, GestureAction.DEFAULT_SCROLL_VERTICAL.value()));
-        a.recycle();
+            // Gestures
+            GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
+            GestureAction longTapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureLongTap, GestureAction.DEFAULT_LONG_TAP.value()));
+            GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, GestureAction.DEFAULT_PINCH.value()));
+            GestureAction scrollHorizontalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollHorizontal, GestureAction.DEFAULT_SCROLL_HORIZONTAL.value()));
+            GestureAction scrollVerticalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollVertical, GestureAction.DEFAULT_SCROLL_VERTICAL.value()));
+            a.recycle();
 
-        // Components
-        mCameraCallbacks = new Callbacks();
-        mCameraController = instantiateCameraController(mCameraCallbacks);
-        mUiHandler = new Handler(Looper.getMainLooper());
-        mWorkerHandler = WorkerHandler.get("CameraViewWorker");
+            // Components
+            mCameraCallbacks = new Callbacks();
+            mCameraController = instantiateCameraController(mCameraCallbacks);
+            mUiHandler = new Handler(Looper.getMainLooper());
+            mWorkerHandler = WorkerHandler.get("CameraViewWorker");
 
-        // Views
-        mGridLinesLayout = new GridLinesLayout(context);
-        mPinchGestureLayout = new PinchGestureLayout(context);
-        mTapGestureLayout = new TapGestureLayout(context);
-        mScrollGestureLayout = new ScrollGestureLayout(context);
-        addView(mGridLinesLayout);
-        addView(mPinchGestureLayout);
-        addView(mTapGestureLayout);
-        addView(mScrollGestureLayout);
+            // Views
+            mGridLinesLayout = new GridLinesLayout(context);
+            mPinchGestureLayout = new PinchGestureLayout(context);
+            mTapGestureLayout = new TapGestureLayout(context);
+            mScrollGestureLayout = new ScrollGestureLayout(context);
+            addView(mGridLinesLayout);
+            addView(mPinchGestureLayout);
+            addView(mTapGestureLayout);
+            addView(mScrollGestureLayout);
 
-        // Apply self managed
-        setCropOutput(cropOutput);
-        setJpegQuality(jpegQuality);
-        setPlaySounds(playSounds);
+            // Apply self managed
+            setCropOutput(cropOutput);
+            setJpegQuality(jpegQuality);
+            setPlaySounds(playSounds);
 
-        // Apply camera controller params
-        setFacing(facing);
-        setFlash(flash);
-        setSessionType(sessionType);
-        setVideoQuality(videoQuality);
-        setWhiteBalance(whiteBalance);
-        setGrid(grid);
-        setHdr(hdr);
-        setAudio(audio);
+            // Apply camera controller params
+            setFacing(facing);
+            setFlash(flash);
+            setSessionType(sessionType);
+            setVideoQuality(videoQuality);
+            setWhiteBalance(whiteBalance);
+            setGrid(grid);
+            setHdr(hdr);
+            setAudio(audio);
 
-        // Apply gestures
-        mapGesture(Gesture.TAP, tapGesture);
-        // mapGesture(Gesture.DOUBLE_TAP, doubleTapGesture);
-        mapGesture(Gesture.LONG_TAP, longTapGesture);
-        mapGesture(Gesture.PINCH, pinchGesture);
-        mapGesture(Gesture.SCROLL_HORIZONTAL, scrollHorizontalGesture);
-        mapGesture(Gesture.SCROLL_VERTICAL, scrollVerticalGesture);
+            // Apply gestures
+            mapGesture(Gesture.TAP, tapGesture);
+            // mapGesture(Gesture.DOUBLE_TAP, doubleTapGesture);
+            mapGesture(Gesture.LONG_TAP, longTapGesture);
+            mapGesture(Gesture.PINCH, pinchGesture);
+            mapGesture(Gesture.SCROLL_HORIZONTAL, scrollHorizontalGesture);
+            mapGesture(Gesture.SCROLL_VERTICAL, scrollVerticalGesture);
 
-        if (!isInEditMode()) {
-            mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
+            if (!isInEditMode()) {
+                mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
+            }
+        }
+        catch (CameraException e) {
+            // Some rare exceptions can occur during the camera initialization.
+            // For instance, Camera.getCameraInfo() may fail for inevitable hardware reasons.
+            // If the initialization failed for any (camera-related) reason, the camera gets
+            // completely unavailable.
+            throw new CameraUnavailableException("Failed to initialize the camera.", e);
         }
     }
 
