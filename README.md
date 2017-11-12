@@ -200,7 +200,13 @@ camera.addCameraListener(new CameraListener() {
         }
         else if (exception instanceof CameraConfigurationFailedException) {
             // The previously started setting change failed,
-            // but the camera should be still available.
+            // but the camera should be still available.                      
+            if (exception.getConfiguration() == CONFIGURATION_FACING) {
+                // change GUI to reflect failed changes
+            }
+            else if (exception.getConfiguration() == CONFIGURATION_WHITE_BALANCE) {
+                // I don't care
+            }
         }
         else if (exception instanceof CapturingFailedException) {
             // The previously started capturing (of any kind) failed, but the camera
@@ -224,6 +230,7 @@ camera.addCameraListener(new CameraListener() {
             else if (exception instanceof CapturingVideoFailedException) {
                 // The previously started video capturing failed, but the camera
                 // should be still available.
+                Video failedVideoFile = exception.getVideo();
             }
         }
         else {

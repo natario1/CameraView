@@ -24,6 +24,17 @@ import static android.hardware.Camera.CAMERA_ERROR_SERVER_DIED;
 import static android.hardware.Camera.CAMERA_ERROR_UNKNOWN;
 import static android.media.MediaRecorder.MEDIA_ERROR_SERVER_DIED;
 import static android.media.MediaRecorder.MEDIA_RECORDER_ERROR_UNKNOWN;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_EXPOSURE_CORRECTION;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_FACING;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_FLASH;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_FOCUS;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_HDR;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_LOCATION;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_OTHER;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_UNKNOWN;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_VIDEO_QUALITY;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_WHITE_BALANCE;
+import static com.otaliastudios.cameraview.CameraConfigurationFailedException.CONFIGURATION_ZOOM;
 
 
 @SuppressWarnings("deprecation")
@@ -59,7 +70,7 @@ class Camera1 extends CameraController {
                 // problem may be device-specific to the Samsung Galaxy J5
                 // TODO why does it fail occasionally and is it possible to prevent such errors?
                 CameraException cameraException = new CameraConfigurationFailedException("Failed to " +
-                        "reset auto focus.", e);
+                        "reset auto focus.", CONFIGURATION_FOCUS, e);
                 mCameraCallbacks.onError(cameraException);
             }
         }
@@ -205,11 +216,11 @@ class Camera1 extends CameraController {
                     }
                     else if (errorCode == CAMERA_ERROR_UNKNOWN) {
                         cameraException = new CameraConfigurationFailedException(
-                                "Unspecified camera error.");
+                                "Unspecified camera error.", CONFIGURATION_UNKNOWN);
                     }
                     else {
                         cameraException = new CameraConfigurationFailedException(
-                                "Received camera error code: " + errorCode);
+                                "Received camera error code: " + errorCode, CONFIGURATION_OTHER);
                     }
 
                     // redirect error
@@ -320,7 +331,8 @@ class Camera1 extends CameraController {
         }
         catch (Exception e) {
             CameraException cameraException =
-                    new CameraConfigurationFailedException("Failed to set the location.", e);
+                    new CameraConfigurationFailedException("Failed to set the location.",
+                            CONFIGURATION_LOCATION, e);
             mCameraCallbacks.onError(cameraException);
         }
     }
@@ -359,7 +371,8 @@ class Camera1 extends CameraController {
                 // -> undo failed configuration change
                 mFacing = oldFacing;
                 CameraException cameraException =
-                        new CameraConfigurationFailedException("Failed to set the camera facing.", e);
+                        new CameraConfigurationFailedException("Failed to set the camera facing.",
+                                CONFIGURATION_FACING, e);
                 mCameraCallbacks.onError(cameraException);
             }
         }
@@ -380,7 +393,8 @@ class Camera1 extends CameraController {
         catch (Exception e) {
             // TODO handle, !mergeWhiteBalance, too?
             CameraException cameraException =
-                    new CameraConfigurationFailedException("Failed to set the white balance.", e);
+                    new CameraConfigurationFailedException("Failed to set the white balance.",
+                            CONFIGURATION_WHITE_BALANCE, e);
             mCameraCallbacks.onError(cameraException);
         }
     }
@@ -409,7 +423,8 @@ class Camera1 extends CameraController {
         catch (Exception e) {
             // TODO handle, !mergeHdr, too?
             CameraException cameraException =
-                    new CameraConfigurationFailedException("Failed to set hdr.", e);
+                    new CameraConfigurationFailedException("Failed to set hdr.", CONFIGURATION_HDR,
+                            e);
             mCameraCallbacks.onError(cameraException);
         }
     }
@@ -449,7 +464,8 @@ class Camera1 extends CameraController {
         catch (Exception e) {
             // TODO handle, !mergeFlash, too?
             CameraException cameraException =
-                    new CameraConfigurationFailedException("Failed to set flash.", e);
+                    new CameraConfigurationFailedException("Failed to set flash.",
+                            CONFIGURATION_FLASH, e);
             mCameraCallbacks.onError(cameraException);
         }
     }
@@ -523,7 +539,8 @@ class Camera1 extends CameraController {
         }
         catch (Exception e) {
             CameraException cameraException =
-                    new CameraConfigurationFailedException("Failed to set video quality.", e);
+                    new CameraConfigurationFailedException("Failed to set video quality.",
+                            CONFIGURATION_VIDEO_QUALITY, e);
             mCameraCallbacks.onError(cameraException);
         }
     }
@@ -734,7 +751,7 @@ class Camera1 extends CameraController {
             } catch (Exception e) {
                 CameraException cameraException =
                         new CapturingVideoFailedException("Error while starting MediaRecorder. " +
-                                "Swallowing.", e);
+                                "Swallowing.", videoFile, e);
                 mCameraCallbacks.onError(cameraException);
                 mVideoFile = null;
                 mCamera.lock();
@@ -743,7 +760,8 @@ class Camera1 extends CameraController {
             }
         } else {
             CameraException cameraException =
-                    new CapturingVideoFailedException("Can't record video while session type is picture");
+                    new CapturingVideoFailedException("Can't record video while session type is " +
+                            "picture", videoFile);
             mCameraCallbacks.onError(cameraException);
             return false;
         }
@@ -816,7 +834,7 @@ class Camera1 extends CameraController {
                         cameraException = new CapturingVideoFailedException(
                                 "Media server died while capturing a video. In this case, the" +
                                         "application must release the MediaRecorder object and " +
-                                        "instantiate a new one." + extraInfo);
+                                        "instantiate a new one." + extraInfo, mVideoFile);
                     }
                     else {
                         cameraException = new CameraUnavailableException(
@@ -828,12 +846,13 @@ class Camera1 extends CameraController {
                 else if (what == MEDIA_RECORDER_ERROR_UNKNOWN) {
                     // TODO may we need a CapturingVideoFailedException or CameraUnavailableException here, too?
                     cameraException = new CameraConfigurationFailedException(
-                            "Unspecified media recorder error." + extraInfo);
+                            "Unspecified media recorder error." + extraInfo, CONFIGURATION_UNKNOWN);
                 }
                 else {
                     // TODO may we need a CapturingVideoFailedException or CameraUnavailableException here, too?
                     cameraException = new CameraConfigurationFailedException(
-                            "Received media recorder error code: " + what + "." + extraInfo);
+                            "Received media recorder error code: " + what + "." + extraInfo,
+                            CONFIGURATION_OTHER);
                 }
 
                 // redirect error
@@ -941,7 +960,8 @@ class Camera1 extends CameraController {
         }
         catch (Exception e) {
             CameraException cameraException =
-                    new CameraConfigurationFailedException("Failed to set zoom.", e);
+                    new CameraConfigurationFailedException("Failed to set zoom.",
+                            CONFIGURATION_ZOOM, e);
             mCameraCallbacks.onError(cameraException);
             return false;
         }
@@ -967,7 +987,8 @@ class Camera1 extends CameraController {
         }
         catch (Exception e) {
             CameraException cameraException =
-                    new CameraConfigurationFailedException("Failed to set exposure correction.", e);
+                    new CameraConfigurationFailedException("Failed to set exposure correction.",
+                            CONFIGURATION_EXPOSURE_CORRECTION, e);
             mCameraCallbacks.onError(cameraException);
             return false;
         }
@@ -1014,7 +1035,7 @@ class Camera1 extends CameraController {
             // at least getParameters and setParameters may fail.
             // TODO why do they fail and is it possible to prevent such errors?
             CameraException cameraException = new CameraConfigurationFailedException("Failed to " +
-                    "start auto focus.", e);
+                    "start auto focus.", CONFIGURATION_FOCUS, e);
             mCameraCallbacks.onError(cameraException);
             return false;
         }

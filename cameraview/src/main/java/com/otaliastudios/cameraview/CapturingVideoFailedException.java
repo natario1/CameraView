@@ -1,4 +1,7 @@
 package com.otaliastudios.cameraview;
+import android.support.annotation.NonNull;
+
+import java.io.File;
 
 /**
  * An object of this class describes an error that occurred during the normal runtime of the camera.
@@ -6,11 +9,38 @@ package com.otaliastudios.cameraview;
  */
 public class CapturingVideoFailedException extends CapturingFailedException {
 
-    CapturingVideoFailedException(String message) {
+    @NonNull
+    private File video;
+
+    /**
+     *
+     * @param message
+     * @param video The video file that was meant to store the captured video.
+     */
+    CapturingVideoFailedException(String message, @NonNull File video) {
         super(message);
+        this.video = video;
     }
 
-    CapturingVideoFailedException(String message, Throwable cause) {
+    /**
+     *
+     * @param message
+     * @param video The video file that was meant to store the captured video.
+     * @param cause
+     */
+    CapturingVideoFailedException(String message, @NonNull File video, Throwable cause) {
         super(message, cause);
+        this.video = video;
+    }
+
+    /**
+     * Get the video file that was meant to store the captured video.
+     * The physical file itself will usually not exist (anymore), but you can use the file object
+     * information for further processing.
+     * @return
+     */
+    @NonNull
+    public File getVideo() {
+        return video;
     }
 }
