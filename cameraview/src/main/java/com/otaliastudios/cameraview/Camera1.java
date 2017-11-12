@@ -12,6 +12,7 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.File;
@@ -21,6 +22,8 @@ import java.util.List;
 
 import static android.hardware.Camera.CAMERA_ERROR_SERVER_DIED;
 import static android.hardware.Camera.CAMERA_ERROR_UNKNOWN;
+import static android.media.MediaRecorder.MEDIA_ERROR_SERVER_DIED;
+import static android.media.MediaRecorder.MEDIA_RECORDER_ERROR_UNKNOWN;
 
 
 @SuppressWarnings("deprecation")
@@ -197,19 +200,7 @@ class Camera1 extends CameraController {
                                         " Camera object and instantiate a new one.");
 
                         // if we were taking a video, it failed, too.
-                        if (mIsCapturingVideo) {
-                            if (mVideoFile != null) {
-                                // delete potentially-broken video file
-                                if (mVideoFile.exists()) {
-                                    mVideoFile.delete();
-                                }
-
-                                // ensure that endVideo() will not trigger the onVideoTaken listener
-                                mVideoFile = null;
-                            }
-                            // tidy up a bit
-                            endVideo();
-                        }
+                        onCapturingVideoFailed();
 
                     }
                     else if (errorCode == CAMERA_ERROR_UNKNOWN) {
@@ -782,9 +773,82 @@ class Camera1 extends CameraController {
         return false;
     }
 
+    /**
+     * Call this whenever a currently captured video seems to have failed.
+     */
+    private void onCapturingVideoFailed() {
+        // if we were taking a video, it failed, too.
+        if (mIsCapturingVideo) {
+            if (mVideoFile != null) {
+                // delete potentially-broken video file
+                if (mVideoFile.exists()) {
+                    mVideoFile.delete();
+                }
+
+                // ensure that endVideo() will not trigger the onVideoTaken listener
+                mVideoFile = null;
+            }
+            // tidy up a bit
+            endVideo();
+        }
+    }
 
     private void initMediaRecorder() {
         mMediaRecorder = new MediaRecorder();
+
+        mMediaRecorder.setOnErrorListener(new MediaRecorder.OnErrorListener() {
+            /**
+             *
+             * @param mediaRecorder the MediaRecorder that encountered the error
+             * @param what the type of error that has occurred
+             * @param extra an extra code, specific to the error type
+             */
+            @Override
+            public void onError(MediaRecorder mediaRecorder, int what, int extra) {
+
+                // extend error information by known error codes
+                CameraException cameraException;
+                String extraInfo = " Extra code: " + extra + ".";
+                if (what == MEDIA_ERROR_SERVER_DIED) {
+                    // this should happen only while recording a video
+                    if (mIsCapturingVideo) {
+                        onCapturingVideoFailed();
+                        cameraException = new CapturingVideoFailedException(
+                                "Media server died while capturing a video. In this case, the" +
+                                        "application must release the MediaRecorder object and " +
+                                        "instantiate a new one." + extraInfo);
+                    }
+                    else {
+                        cameraException = new CameraUnavailableException(
+                                "Media server died, although video capturing was not active. " +
+                                        "This should not happen. So the camera needs to restart." +
+                                        extraInfo);
+                    }
+                }
+                else if (what == MEDIA_RECORDER_ERROR_UNKNOWN) {
+                    // TODO may we need a CapturingVideoFailedException or CameraUnavailableException here, too?
+                    cameraException = new CameraConfigurationFailedException(
+                            "Unspecified media recorder error." + extraInfo);
+                }
+                else {
+                    // TODO may we need a CapturingVideoFailedException or CameraUnavailableException here, too?
+                    cameraException = new CameraConfigurationFailedException(
+                            "Received media recorder error code: " + what + "." + extraInfo);
+                }
+
+                // redirect error
+                mCameraCallbacks.onError(cameraException);
+            }
+        });
+
+        mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
+            @Override
+            public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
+                LOG.i("MediaRecorder info code: " + what + ". Extra code: " + extra + ".");
+            }
+        });
+
+
         mCamera.unlock();
         mMediaRecorder.setCamera(mCamera);
 
