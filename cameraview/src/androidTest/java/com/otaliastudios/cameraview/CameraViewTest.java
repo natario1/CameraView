@@ -92,10 +92,10 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getAudio(), Audio.DEFAULT);
         assertEquals(cameraView.getVideoQuality(), VideoQuality.DEFAULT);
         assertEquals(cameraView.getLocation(), null);
-
-        // Self managed
         assertEquals(cameraView.getExposureCorrection(), 0f, 0f);
         assertEquals(cameraView.getZoom(), 0f, 0f);
+
+        // Self managed
         assertEquals(cameraView.getPlaySounds(), CameraView.DEFAULT_PLAY_SOUNDS);
         assertEquals(cameraView.getCropOutput(), CameraView.DEFAULT_CROP_OUTPUT);
         assertEquals(cameraView.getJpegQuality(), CameraView.DEFAULT_JPEG_QUALITY);

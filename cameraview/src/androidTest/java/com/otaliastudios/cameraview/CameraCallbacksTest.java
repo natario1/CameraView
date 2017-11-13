@@ -225,6 +225,8 @@ public class CameraCallbacksTest extends BaseTest {
         verify(listener, times(1)).onOrientationChanged(anyInt());
     }
 
+    // TODO: test onShutter, here or elsewhere
+
 
     @Test
     public void testProcessJpeg() {

@@ -30,6 +30,9 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     protected Location mLocation;
     protected Audio mAudio;
 
+    protected float mZoomValue;
+    protected float mExposureCorrectionValue;
+
     protected Size mCaptureSize;
     protected Size mPreviewSize;
     protected int mPreviewFormat;
@@ -45,6 +48,7 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     protected boolean mScheduledForStop = false;
     protected boolean mScheduledForRestart = false;
     protected int mState = STATE_STOPPED;
+    protected final Object mLock = new Object();
 
     protected WorkerHandler mHandler;
 
@@ -231,11 +235,11 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     // Should restart the session if active.
     abstract void setFacing(Facing facing);
 
-    // If opened and supported, apply and return true.
-    abstract boolean setZoom(float zoom);
+    // If closed, no-op. If opened, check supported and apply.
+    abstract void setZoom(float zoom, PointF[] points, boolean notify);
 
-    // If opened and supported, apply and return true.
-    abstract boolean setExposureCorrection(float EVvalue);
+    // If closed, no-op. If opened, check supported and apply.
+    abstract void setExposureCorrection(float EVvalue, float[] bounds, PointF[] points, boolean notify);
 
     // If closed, keep. If opened, check supported and apply.
     abstract void setFlash(Flash flash);
@@ -260,17 +264,17 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
 
     //region APIs
 
-    abstract boolean capturePicture();
+    abstract void capturePicture();
 
-    abstract boolean captureSnapshot();
+    abstract void captureSnapshot();
 
-    abstract boolean startVideo(@NonNull File file);
+    abstract void startVideo(@NonNull File file);
 
-    abstract boolean endVideo();
+    abstract void endVideo();
 
     abstract boolean shouldFlipSizes(); // Wheter the Sizes should be flipped to match the view orientation.
 
-    abstract boolean startAutoFocus(@Nullable Gesture gesture, PointF point);
+    abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);
 
     //endregion
 
@@ -316,6 +320,14 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
 
     final Audio getAudio() {
         return mAudio;
+    }
+
+    final float getZoomValue() {
+        return mZoomValue;
+    }
+
+    final float getExposureCorrectionValue() {
+        return mExposureCorrectionValue;
     }
 
     final Size getCaptureSize() {

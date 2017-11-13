@@ -38,9 +38,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
     private Runnable mPostFocusResetRunnable = new Runnable() {
         @Override
         public void run() {
-            if (!isCameraAvailable()) return;
-            mCamera.cancelAutoFocus();
             synchronized (mLock) {
+                if (!isCameraAvailable()) return;
+                mCamera.cancelAutoFocus();
                 Camera.Parameters params = mCamera.getParameters();
                 params.setFocusAreas(null);
                 params.setMeteringAreas(null);
@@ -54,7 +54,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
     private boolean mIsSetup = false;
     private boolean mIsCapturingImage = false;
     private boolean mIsCapturingVideo = false;
-    private final Object mLock = new Object();
 
 
     Camera1(CameraView.CameraCallbacks callback) {
@@ -90,7 +89,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
     @Override
     public void onSurfaceChanged() {
         LOG.i("onSurfaceChanged, size is", mPreview.getSurfaceSize());
-        if (mIsSetup) {
+        if (mIsSetup && isCameraAvailable()) {
             // Compute a new camera preview size.
             Size newSize = computePreviewSize();
             if (!newSize.equals(mPreviewSize)) {
@@ -440,11 +439,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
     }
 
     @Override
-    boolean capturePicture() {
-        if (mIsCapturingImage) return false;
-        if (!isCameraAvailable()) return false;
+    void capturePicture() {
+        if (mIsCapturingImage) return;
+        if (!isCameraAvailable()) return;
         if (mSessionType == SessionType.VIDEO && mIsCapturingVideo) {
-            if (!mOptions.isVideoSnapshotSupported()) return false;
+            if (!mOptions.isVideoSnapshotSupported()) return;
         }
 
         // Set boolean to wait for image callback
@@ -461,7 +460,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         // We must consider exifOrientation to bring back the picture in the sensor world.
         // Then use sensorToDisplay to move to the display world, where CameraView lives.
         final boolean consistentWithView = (exifRotation + sensorToDisplay + 180) % 180 == 0;
-        mCamera.takePicture(null, null, null,
+        mCamera.takePicture(
+                new Camera.ShutterCallback() {
+                    @Override
+                    public void onShutter() {
+                         mCameraCallbacks.onShutter(false);
+                    }
+                },
+                null,
+                null,
                 new Camera.PictureCallback() {
                     @Override
                     public void onPictureTaken(byte[] data, final Camera camera) {
@@ -476,24 +483,25 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                         mCameraCallbacks.processImage(data, consistentWithView, exifFlip);
                     }
                 });
-        return true;
     }
 
 
     @Override
-    boolean captureSnapshot() {
-        if (!isCameraAvailable()) return false;
-        if (mIsCapturingImage) return false;
+    void captureSnapshot() {
+        if (!isCameraAvailable()) return;
+        if (mIsCapturingImage) return;
         // This won't work while capturing a video.
         // Switch to capturePicture.
         if (mIsCapturingVideo) {
             capturePicture();
-            return false;
+            return;
         }
         mIsCapturingImage = true;
         mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
             @Override
             public void onPreviewFrame(final byte[] data, Camera camera) {
+                mCameraCallbacks.onShutter(true);
+
                 // Got to rotate the preview frame, since byte[] data here does not include
                 // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
                 // Adding EXIF to a byte array, unfortunately, is hard.
@@ -520,11 +528,10 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
                 // It seems that the buffers are already cleared here, so we need to allocate again.
                 mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
-                mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
-                mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewSize);                mCamera.setPreviewCallbackWithBuffer(Camera1.this);
+                mCamera.setPreviewCallbackWithBuffer(Camera1.this); // Add ourselves
+                mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewSize);
             }
         });
-        return true;
     }
 
     @Override
@@ -643,9 +650,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
 
     @Override
-    boolean startVideo(@NonNull File videoFile) {
-        if (mIsCapturingVideo) return false;
-        if (!isCameraAvailable()) return false;
+    void startVideo(@NonNull File videoFile) {
+        if (mIsCapturingVideo) return;
+        if (!isCameraAvailable()) return;
         if (mSessionType == SessionType.VIDEO) {
             mVideoFile = videoFile;
             mIsCapturingVideo = true;
@@ -653,13 +660,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
             try {
                 mMediaRecorder.prepare();
                 mMediaRecorder.start();
-                return true;
             } catch (Exception e) {
                 LOG.e("Error while starting MediaRecorder. Swallowing.", e);
                 mVideoFile = null;
                 mCamera.lock();
                 endVideo();
-                return false;
             }
         } else {
             throw new IllegalStateException("Can't record video while session type is picture");
@@ -667,7 +672,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
     }
 
     @Override
-    boolean endVideo() {
+    void endVideo() {
         if (mIsCapturingVideo) {
             mIsCapturingVideo = false;
             if (mMediaRecorder != null) {
@@ -685,9 +690,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                 mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
                 mVideoFile = null;
             }
-            return true;
         }
-        return false;
     }
 
 
@@ -771,33 +774,42 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
 
     @Override
-    boolean setZoom(float zoom) {
-        if (!isCameraAvailable()) return false;
-        if (!mOptions.isZoomSupported()) return false;
+    void setZoom(float zoom, PointF[] points, boolean notify) {
+        if (!isCameraAvailable()) return;
+        if (!mOptions.isZoomSupported()) return;
+
+        mZoomValue = zoom;
         synchronized (mLock) {
             Camera.Parameters params = mCamera.getParameters();
             float max = params.getMaxZoom();
             params.setZoom((int) (zoom * max));
             mCamera.setParameters(params);
         }
-        return true;
+
+        if (notify) {
+            mCameraCallbacks.dispatchOnZoomChanged(zoom, points);
+        }
     }
 
-
     @Override
-    boolean setExposureCorrection(float EVvalue) {
-        if (!isCameraAvailable()) return false;
-        if (!mOptions.isExposureCorrectionSupported()) return false;
+    void setExposureCorrection(float EVvalue, float[] bounds, PointF[] points, boolean notify) {
+        if (!isCameraAvailable()) return;
+        if (!mOptions.isExposureCorrectionSupported()) return;
+
         float max = mOptions.getExposureCorrectionMaxValue();
         float min = mOptions.getExposureCorrectionMinValue();
         EVvalue = EVvalue < min ? min : EVvalue > max ? max : EVvalue; // cap
+        mExposureCorrectionValue = EVvalue;
         synchronized (mLock) {
             Camera.Parameters params = mCamera.getParameters();
             int indexValue = (int) (EVvalue / params.getExposureCompensationStep());
             params.setExposureCompensation(indexValue);
             mCamera.setParameters(params);
         }
-        return true;
+
+        if (notify) {
+            mCameraCallbacks.dispatchOnExposureCorrectionChanged(EVvalue, bounds, points);
+        }
     }
 
     // -----------------
@@ -805,9 +817,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
 
     @Override
-    boolean startAutoFocus(@Nullable final Gesture gesture, PointF point) {
-        if (!isCameraAvailable()) return false;
-        if (!mOptions.isAutoFocusSupported()) return false;
+    void startAutoFocus(@Nullable final Gesture gesture, PointF point) {
+        if (!isCameraAvailable()) return;
+        if (!mOptions.isAutoFocusSupported()) return;
         final PointF p = new PointF(point.x, point.y); // copy.
         List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y);
         List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
@@ -832,7 +844,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                 }
             });
         }
-        return true;
     }
 
 
@@ -924,22 +935,14 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         LOG.i("size:", "matchSize:", "found consistent:", consistent.size());
         LOG.i("size:", "matchSize:", "found big enough and consistent:", bigEnoughAndConsistent.size());
         Size result;
-        if (biggestPossible) {
-            if (bigEnoughAndConsistent.size() > 0) {
-                result = Collections.max(bigEnoughAndConsistent);
-            } else if (consistent.size() > 0) {
-                result = Collections.max(consistent);
-            } else {
-                result = Collections.max(sizes);
-            }
+        if (bigEnoughAndConsistent.size() > 0) {
+            result = biggestPossible ?
+                    Collections.max(bigEnoughAndConsistent) :
+                    Collections.min(bigEnoughAndConsistent);
+        } else if (consistent.size() > 0) {
+            result = Collections.max(consistent);
         } else {
-            if (bigEnoughAndConsistent.size() > 0) {
-                result = Collections.min(bigEnoughAndConsistent);
-            } else if (consistent.size() > 0) {
-                result = Collections.max(consistent);
-            } else {
-                result = Collections.max(sizes);
-            }
+            result = Collections.max(sizes);
         }
         LOG.i("size", "matchSize:", "returning result", result);
         return result;
