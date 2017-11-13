@@ -475,15 +475,14 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     @Override
     void capturePicture() {
+        LOG.v("capturePicture: scheduling");
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
+                LOG.v("capturePicture: performing.", mIsCapturingImage);
                 if (mIsCapturingImage) return;
-                if (mSessionType == SessionType.VIDEO && mIsCapturingVideo) {
-                    if (!mOptions.isVideoSnapshotSupported()) return;
-                }
+                if (mIsCapturingVideo && !mOptions.isVideoSnapshotSupported()) return;
 
-                // Set boolean to wait for image callback
                 mIsCapturingImage = true;
                 final int exifRotation = computeExifRotation();
                 final boolean exifFlip = computeExifFlip();
@@ -521,11 +520,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     @Override
     void captureSnapshot() {
-        LOG.i("captureSnapshot: scheduling");
+        LOG.v("captureSnapshot: scheduling");
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
-                LOG.i("captureSnapshot: performing.", mIsCapturingImage);
+                LOG.v("captureSnapshot: performing.", mIsCapturingImage);
                 if (mIsCapturingImage) return;
                 // This won't work while capturing a video.
                 // Switch to capturePicture.
@@ -534,11 +533,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                     return;
                 }
                 mIsCapturingImage = true;
-                LOG.i("captureSnapshot: add preview callback.");
                 mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
                     @Override
                     public void onPreviewFrame(final byte[] data, Camera camera) {
-                        LOG.i("captureSnapshot: onShutter.");
                         mCameraCallbacks.onShutter(true);
 
                         // Got to rotate the preview frame, since byte[] data here does not include
@@ -553,17 +550,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                         final int postWidth = flip ? preHeight : preWidth;
                         final int postHeight = flip ? preWidth : preHeight;
                         final int format = mPreviewFormat;
-                        LOG.i("captureSnapshot: to worker handler.");
                         WorkerHandler.run(new Runnable() {
                             @Override
                             public void run() {
 
-                                LOG.i("captureSnapshot: rotating.");
+                                LOG.v("captureSnapshot: rotating.");
                                 final boolean consistentWithView = (sensorToDevice + sensorToDisplay + 180) % 180 == 0;
                                 byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToDevice);
-                                LOG.i("captureSnapshot: rotated.");
+                                LOG.v("captureSnapshot: rotated.");
                                 YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
-                                LOG.i("captureSnapshot: dispatching to listeners.");
                                 mCameraCallbacks.processSnapshot(yuv, consistentWithView, exifFlip);
                                 mIsCapturingImage = false;
                             }
