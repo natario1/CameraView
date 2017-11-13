@@ -31,8 +31,7 @@ public abstract class PreviewTest extends BaseTest {
 
     @Before
     public void setUp() {
-        availability = new Task<>();
-        availability.listen();
+        availability = new Task<>(true);
 
         ui(new Runnable() {
             @Override

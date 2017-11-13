@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
  */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-@Ignore
+// @Ignore
 public class IntegrationTest extends BaseTest {
 
     @Rule
@@ -77,8 +77,7 @@ public class IntegrationTest extends BaseTest {
     }
 
     private CameraOptions waitForOpen(boolean expectSuccess) {
-        final Task<CameraOptions> open = new Task<>();
-        open.listen();
+        final Task<CameraOptions> open = new Task<>(true);
         doEndTask(open, 0).when(listener).onCameraOpened(any(CameraOptions.class));
         CameraOptions result = open.await(4000);
         if (expectSuccess) {
@@ -89,9 +88,8 @@ public class IntegrationTest extends BaseTest {
         return result;
     }
 
-    private Boolean waitForClose(boolean expectSuccess) {
-        final Task<Boolean> close = new Task<>();
-        close.listen();
+    private void waitForClose(boolean expectSuccess) {
+        final Task<Boolean> close = new Task<>(true);
         doEndTask(close, true).when(listener).onCameraClosed();
         Boolean result = close.await(4000);
         if (expectSuccess) {
@@ -99,12 +97,10 @@ public class IntegrationTest extends BaseTest {
         } else {
             assertNull("Should not close", result);
         }
-        return result;
     }
 
-    private Boolean waitForVideo(boolean expectSuccess) {
-        final Task<Boolean> video = new Task<>();
-        video.listen();
+    private void waitForVideo(boolean expectSuccess) {
+        final Task<Boolean> video = new Task<>(true);
         doEndTask(video, true).when(listener).onVideoTaken(any(File.class));
         Boolean result = video.await(2000);
         if (expectSuccess) {
@@ -112,12 +108,10 @@ public class IntegrationTest extends BaseTest {
         } else {
             assertNull("Should not take video", result);
         }
-        return result;
     }
 
     private byte[] waitForPicture(boolean expectSuccess) {
-        final Task<byte[]> pic = new Task<>();
-        pic.listen();
+        final Task<byte[]> pic = new Task<>(true);
         doEndTask(pic, 0).when(listener).onPictureTaken(any(byte[].class));
         byte[] result = pic.await(5000);
         if (expectSuccess) {
@@ -130,7 +124,7 @@ public class IntegrationTest extends BaseTest {
 
     //region test open/close
 
-    //-@Test
+    @Test
     public void testOpenClose() throws Exception {
         // Starting and stopping are hard to get since they happen on another thread.
         assertEquals(controller.getState(), CameraController.STATE_STOPPED);
@@ -144,7 +138,7 @@ public class IntegrationTest extends BaseTest {
         assertEquals(controller.getState(), CameraController.STATE_STOPPED);
     }
 
-    //-@Test
+    @Test
     public void testOpenTwice() {
         camera.start();
         waitForOpen(true);
@@ -152,7 +146,7 @@ public class IntegrationTest extends BaseTest {
         waitForOpen(false);
     }
 
-    //-@Test
+    @Test
     public void testCloseTwice() {
         camera.stop();
         waitForClose(false);
@@ -236,22 +230,36 @@ public class IntegrationTest extends BaseTest {
     public void testSetZoom() {
         camera.start();
         CameraOptions options = waitForOpen(true);
-        boolean can = options.isZoomSupported();
+
+        controller.mZoomTask.listen();
         float oldValue = camera.getZoom();
         float newValue = 0.65f;
         camera.setZoom(newValue);
-        assertEquals(can ? newValue : oldValue, camera.getZoom(), 0f);
+        controller.mZoomTask.await(500);
+
+        if (options.isZoomSupported()) {
+            assertEquals(newValue, camera.getZoom(), 0f);
+        } else {
+            assertEquals(oldValue, camera.getZoom(), 0f);
+        }
     }
 
     @Test
     public void testSetExposureCorrection() {
         camera.start();
         CameraOptions options = waitForOpen(true);
-        boolean can = options.isExposureCorrectionSupported();
+
+        controller.mExposureCorrectionTask.listen();
         float oldValue = camera.getExposureCorrection();
         float newValue = options.getExposureCorrectionMaxValue();
         camera.setExposureCorrection(newValue);
-        assertEquals(can ? newValue : oldValue, camera.getExposureCorrection(), 0f);
+        controller.mExposureCorrectionTask.await(300);
+
+        if (options.isExposureCorrectionSupported()) {
+            assertEquals(newValue, camera.getExposureCorrection(), 0f);
+        } else {
+            assertEquals(oldValue, camera.getExposureCorrection(), 0f);
+        }
     }
 
     @Test
@@ -261,7 +269,9 @@ public class IntegrationTest extends BaseTest {
         Flash[] values = Flash.values();
         Flash oldValue = camera.getFlash();
         for (Flash value : values) {
+            controller.mFlashTask.listen();
             camera.setFlash(value);
+            controller.mFlashTask.await(300);
             if (options.supports(value)) {
                 assertEquals(camera.getFlash(), value);
                 oldValue = value;
@@ -278,7 +288,9 @@ public class IntegrationTest extends BaseTest {
         WhiteBalance[] values = WhiteBalance.values();
         WhiteBalance oldValue = camera.getWhiteBalance();
         for (WhiteBalance value : values) {
+            controller.mWhiteBalanceTask.listen();
             camera.setWhiteBalance(value);
+            controller.mWhiteBalanceTask.await(300);
             if (options.supports(value)) {
                 assertEquals(camera.getWhiteBalance(), value);
                 oldValue = value;
@@ -295,7 +307,9 @@ public class IntegrationTest extends BaseTest {
         Hdr[] values = Hdr.values();
         Hdr oldValue = camera.getHdr();
         for (Hdr value : values) {
+            controller.mHdrTask.listen();
             camera.setHdr(value);
+            controller.mHdrTask.await(300);
             if (options.supports(value)) {
                 assertEquals(camera.getHdr(), value);
                 oldValue = value;
@@ -321,7 +335,9 @@ public class IntegrationTest extends BaseTest {
     public void testSetLocation() {
         camera.start();
         waitForOpen(true);
+        controller.mLocationTask.listen();
         camera.setLocation(10d, 2d);
+        controller.mLocationTask.await(300);
         assertNotNull(camera.getLocation());
         assertEquals(camera.getLocation().getLatitude(), 10d, 0d);
         assertEquals(camera.getLocation().getLongitude(), 2d, 0d);
@@ -333,16 +349,18 @@ public class IntegrationTest extends BaseTest {
     //region testSetVideoQuality
     // This can be tricky because can trigger layout changes.
 
-    // TODO: @Test(expected = IllegalStateException.class)
-    // Can't run on Travis, MediaRecorder not supported.
-    // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
+    // TODO: the exception is swallowed. @Test(expected = IllegalStateException.class)
     public void testSetVideoQuality_whileRecording() {
+        // Can't run on Travis, MediaRecorder not supported.
+        // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
         camera.setSessionType(SessionType.VIDEO);
         camera.setVideoQuality(VideoQuality.HIGHEST);
         camera.start();
         waitForOpen(true);
         camera.startCapturingVideo(null);
+        controller.mVideoQualityTask.listen();
         camera.setVideoQuality(VideoQuality.LOWEST);
+        controller.mVideoQualityTask.await(300);
     }
 
     @Test
@@ -351,20 +369,28 @@ public class IntegrationTest extends BaseTest {
         camera.setVideoQuality(VideoQuality.HIGHEST);
         camera.start();
         waitForOpen(true);
+        controller.mVideoQualityTask.listen();
         camera.setVideoQuality(VideoQuality.LOWEST);
+        controller.mVideoQualityTask.await(300);
         assertEquals(camera.getVideoQuality(), VideoQuality.LOWEST);
     }
 
     @Test
     public void testSetVideoQuality_whileNotStarted() {
+        controller.mVideoQualityTask.listen();
         camera.setVideoQuality(VideoQuality.HIGHEST);
+        controller.mVideoQualityTask.await(300);
         assertEquals(camera.getVideoQuality(), VideoQuality.HIGHEST);
+
+        controller.mVideoQualityTask.listen();
         camera.setVideoQuality(VideoQuality.LOWEST);
+        controller.mVideoQualityTask.await(300);
         assertEquals(camera.getVideoQuality(), VideoQuality.LOWEST);
     }
 
     @Test
     public void testSetVideoQuality_shouldRecompute() {
+        // TODO:
         // If video quality changes bring to a new capture size,
         // this might bring to a new aspect ratio,
         // which might bring to a new preview size. No idea how to test.
@@ -416,11 +442,17 @@ public class IntegrationTest extends BaseTest {
     public void testStartAutoFocus() {
         camera.start();
         CameraOptions o = waitForOpen(true);
+
+        final Task<PointF> focus = new Task<>(true);
+        doEndTask(focus, 0).when(listener).onFocusStart(any(PointF.class));
+
         camera.startAutoFocus(1, 1);
+        PointF point = focus.await(300);
         if (o.isAutoFocusSupported()) {
-            verify(listener, times(1)).onFocusStart(new PointF(1, 1));
+            assertNotNull(point);
+            assertEquals(point, new PointF(1, 1));
         } else {
-            verify(listener, never()).onFocusStart(any(PointF.class));
+            assertNull(point);
         }
     }
 

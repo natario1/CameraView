@@ -73,8 +73,7 @@ public class CameraCallbacksTest extends BaseTest {
                 camera.instantiatePreview();
                 camera.addCameraListener(listener);
                 camera.addFrameProcessor(processor);
-                task = new Task<>();
-                task.listen();
+                task = new Task<>(true);
             }
         });
     }
@@ -266,8 +265,7 @@ public class CameraCallbacksTest extends BaseTest {
 
     private int[] testProcessImage(boolean jpeg, boolean crop, int[] viewDim, int[] imageDim) {
         // End our task when onPictureTaken is called. Take note of the result.
-        final Task<byte[]> jpegTask = new Task<>();
-        jpegTask.listen();
+        final Task<byte[]> jpegTask = new Task<>(true);
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
