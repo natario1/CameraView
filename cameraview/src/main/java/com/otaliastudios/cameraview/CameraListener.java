@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
+import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 
 import java.io.File;
@@ -25,6 +26,25 @@ public abstract class CameraListener {
      */
     @UiThread
     public void onCameraClosed() {
+
+    }
+
+
+    /**
+     * Notifies about an error during the camera setup or configuration.
+     * At the moment, errors that are passed here are unrecoverable. When this is called,
+     * the camera has been released and is presumably showing a black preview.
+     *
+     * This is the right moment to show an error dialog to the user.
+     * You can try calling start() again, but that is not guaranteed to work - if it doesn't,
+     * this callback will be invoked again.
+     *
+     * In the future, more information will be passed through the {@link CameraException} instance.
+     *
+     * @param exception the error
+     */
+    @UiThread
+    public void onCameraError(@NonNull CameraException exception) {
 
     }
 

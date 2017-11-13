@@ -44,6 +44,7 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
   - Automatically detected orientation tags
   - Plug in location tags with `setLocation()` API
 - `CameraUtils` to help with Bitmaps and orientations
+- Error handling
 - **Lightweight**, no dependencies, just support `ExifInterface`
 - Works down to API level 15
 
@@ -168,6 +169,16 @@ camera.addCameraListener(new CameraListener() {
      */
     @Override
     public void onCameraClosed() {}
+
+    /**
+     * Notifies about an error during the camera setup or configuration.
+     * At the moment, errors that are passed here are unrecoverable. When this is called,
+     * the camera has been released and is presumably showing a black preview.
+     *
+     * This is the right moment to show an error dialog to the user.
+     */
+    @Override
+    public void onCameraError(CameraException error) {}
 
     /**
      * Notifies that a picture previously captured with capturePicture()
@@ -605,6 +616,7 @@ all the code was changed.
 - *Better threading, start() in worker thread and callbacks in UI*
 - *Frame processor support*
 - *inject external loggers*
+- *error handling*
 
 These are still things that need to be done, off the top of my head:
 
@@ -612,7 +624,6 @@ These are still things that need to be done, off the top of my head:
 - [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
 - [ ] add onRequestPermissionResults for easy permission callback
-- [ ] better error handling, maybe with a onError(e) method in the public listener, or have each public method return a boolean
 - [ ] decent code coverage
 
 # Contributing and licenses

@@ -580,7 +580,7 @@ public class CameraView extends FrameLayout {
     public void destroy() {
         clearCameraListeners();
         clearFrameProcessors();
-        mCameraController.stopImmediately();
+        mCameraController.destroy();
     }
 
     //endregion
@@ -1335,6 +1335,7 @@ public class CameraView extends FrameLayout {
         void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
         void dispatchOnExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers);
         void dispatchFrame(Frame frame);
+        void dispatchError(CameraException exception);
     }
 
     private class Callbacks implements CameraCallbacks {
@@ -1608,11 +1609,20 @@ public class CameraView extends FrameLayout {
                 });
             }
         }
+
+        @Override
+        public void dispatchError(final CameraException exception) {
+            mLogger.i("dispatchError", exception);
+            mUiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onCameraError(exception);
+                    }
+                }
+            });
+        }
     }
-
-    //endregion
-
-    //region Deprecated
 
     //endregion
 }

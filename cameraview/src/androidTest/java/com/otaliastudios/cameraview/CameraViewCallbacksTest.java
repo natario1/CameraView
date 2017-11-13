@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verify;
 
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-public class CameraCallbacksTest extends BaseTest {
+public class CameraViewCallbacksTest extends BaseTest {
 
     private CameraView camera;
     private CameraListener listener;
@@ -226,6 +226,15 @@ public class CameraCallbacksTest extends BaseTest {
 
     // TODO: test onShutter, here or elsewhere
 
+    @Test
+    public void testCameraError() {
+        CameraException error = new CameraException(new RuntimeException("Error"));
+        completeTask().when(listener).onCameraError(error);
+
+        camera.mCameraCallbacks.dispatchError(error);
+        assertNotNull(task.await(200));
+        verify(listener, times(1)).onCameraError(error);
+    }
 
     @Test
     public void testProcessJpeg() {

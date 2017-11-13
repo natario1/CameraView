@@ -37,12 +37,12 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void onStart() throws Exception {
+    void onStart() {
 
     }
 
     @Override
-    void onStop() throws Exception {
+    void onStop() {
 
     }
 

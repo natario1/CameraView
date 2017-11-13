@@ -16,13 +16,14 @@ import android.support.annotation.WorkerThread;
 import android.view.SurfaceHolder;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 
 @SuppressWarnings("deprecation")
-class Camera1 extends CameraController implements Camera.PreviewCallback {
+class Camera1 extends CameraController implements Camera.PreviewCallback, Camera.ErrorCallback {
 
     private static final String TAG = Camera1.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -48,7 +49,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         }
     };
 
-    private ScheduleRunnable mScheduleRunnable;
     private Mapper mMapper;
     private boolean mIsBound = false;
     private boolean mIsCapturingImage = false;
@@ -56,31 +56,21 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
     Camera1(CameraView.CameraCallbacks callback) {
         super(callback);
-        mScheduleRunnable = new ScheduleRunnable();
         mMapper = new Mapper.Mapper1();
     }
 
-    private class ScheduleRunnable implements Runnable {
-        private Task<Void> mTask;
-        private Runnable mAction;
-        private boolean mEnsureAvailable;
-
-        @Override
-        public void run() {
-            if (mEnsureAvailable && !isCameraAvailable()) {
-                if (mTask != null) mTask.end(null);
-            } else {
-                mAction.run();
-                if (mTask != null) mTask.end(null);
+    private void schedule(@Nullable final Task<Void> task, final boolean ensureAvailable, final Runnable action) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (ensureAvailable && !isCameraAvailable()) {
+                    if (task != null) task.end(null);
+                } else {
+                    action.run();
+                    if (task != null) task.end(null);
+                }
             }
-        }
-    }
-
-    private void schedule(@Nullable Task<Void> task, boolean ensureAvailable, Runnable action) {
-        mScheduleRunnable.mEnsureAvailable = ensureAvailable;
-        mScheduleRunnable.mAction = action;
-        mScheduleRunnable.mTask = task;
-        mHandler.post(mScheduleRunnable);
+        });
     }
 
     // Preview surface is now available. If camera is open, set up.
@@ -96,7 +86,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                         bindToSurface();
                     } catch (Exception e) {
                         LOG.e("onSurfaceAvailable:", "Exception while binding camera to preview.", e);
-                        throw new RuntimeException(e);
+                        throw new CameraException(e);
                     }
                 }
             }
@@ -133,13 +123,17 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
     // The act of binding an "open" camera to a "ready" preview.
     // These can happen at different times but we want to end up here.
     @WorkerThread
-    private void bindToSurface() throws Exception {
+    private void bindToSurface() {
         LOG.i("bindToSurface:", "Started");
         Object output = mPreview.getOutput();
-        if (mPreview.getOutputClass() == SurfaceHolder.class) {
-            mCamera.setPreviewDisplay((SurfaceHolder) output);
-        } else {
-            mCamera.setPreviewTexture((SurfaceTexture) output);
+        try {
+            if (mPreview.getOutputClass() == SurfaceHolder.class) {
+                mCamera.setPreviewDisplay((SurfaceHolder) output);
+            } else {
+                mCamera.setPreviewTexture((SurfaceTexture) output);
+            }
+        } catch (IOException e) {
+            throw new CameraException(e);
         }
 
         mCaptureSize = computeCaptureSize();
@@ -176,13 +170,14 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
     @WorkerThread
     @Override
-    void onStart() throws Exception {
+    void onStart() {
         if (isCameraAvailable()) {
             LOG.w("onStart:", "Camera not available. Should not happen.");
             onStop(); // Should not happen.
         }
         if (collectCameraId()) {
             mCamera = Camera.open(mCameraId);
+            mCamera.setErrorCallback(this);
 
             // Set parameters that might have been set before the camera was opened.
             LOG.i("onStart:", "Applying default parameters.");
@@ -206,15 +201,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
     @WorkerThread
     @Override
-    void onStop() throws Exception {
+    void onStop() {
         Exception error = null;
         LOG.i("onStop:", "About to clean up.");
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
         mFrameManager.release();
 
         if (mCamera != null) {
-            LOG.i("onStop:", "Clean up.", "Ending video?", mIsCapturingVideo);
-            if (mIsCapturingVideo) endVideo();
+            LOG.i("onStop:", "Clean up.", "Ending video.");
+            endVideoImmediately();
 
             try {
                 LOG.i("onStop:", "Clean up.", "Stopping preview.");
@@ -222,7 +217,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                 mCamera.setPreviewCallbackWithBuffer(null);
                 LOG.i("onStop:", "Clean up.", "Stopped preview.");
             } catch (Exception e) {
-                LOG.w("onStop:", "Clean up.", "Exception while stopping preview.");
+                LOG.w("onStop:", "Clean up.", "Exception while stopping preview.", e);
                 error = e;
             }
 
@@ -231,7 +226,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                 mCamera.release();
                 LOG.i("onStop:", "Clean up.", "Released camera.");
             } catch (Exception e) {
-                LOG.w("onStop:", "Clean up.", "Exception while releasing camera.");
+                LOG.w("onStop:", "Clean up.", "Exception while releasing camera.", e);
                 error = e;
             }
         }
@@ -242,7 +237,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         mCaptureSize = null;
         mIsBound = false;
 
-        if (error != null) throw error;
+        if (error != null) throw new CameraException(error);
     }
 
     private boolean collectCameraId() {
@@ -265,6 +260,20 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         if (isCameraAvailable()) {
             mCamera.addCallbackBuffer(buffer);
         }
+    }
+
+    @Override
+    public void onError(int error, Camera camera) {
+        if (error == Camera.CAMERA_ERROR_SERVER_DIED) {
+            // Looks like this is recoverable.
+            LOG.w("Recoverable error inside the onError callback.", "CAMERA_ERROR_SERVER_DIED");
+            stopImmediately();
+            start();
+            return;
+        }
+
+        LOG.e("Error inside the onError callback.", error);
+        throw new CameraException(new RuntimeException(CameraLogger.lastMessage));
     }
 
     @Override
@@ -512,9 +521,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
     @Override
     void captureSnapshot() {
+        LOG.i("captureSnapshot: scheduling");
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
+                LOG.i("captureSnapshot: performing.", mIsCapturingImage);
                 if (mIsCapturingImage) return;
                 // This won't work while capturing a video.
                 // Switch to capturePicture.
@@ -523,9 +534,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                     return;
                 }
                 mIsCapturingImage = true;
+                LOG.i("captureSnapshot: add preview callback.");
                 mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
                     @Override
                     public void onPreviewFrame(final byte[] data, Camera camera) {
+                        LOG.i("captureSnapshot: onShutter.");
                         mCameraCallbacks.onShutter(true);
 
                         // Got to rotate the preview frame, since byte[] data here does not include
@@ -540,13 +553,17 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                         final int postWidth = flip ? preHeight : preWidth;
                         final int postHeight = flip ? preWidth : preHeight;
                         final int format = mPreviewFormat;
+                        LOG.i("captureSnapshot: to worker handler.");
                         WorkerHandler.run(new Runnable() {
                             @Override
                             public void run() {
 
+                                LOG.i("captureSnapshot: rotating.");
                                 final boolean consistentWithView = (sensorToDevice + sensorToDisplay + 180) % 180 == 0;
                                 byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToDevice);
+                                LOG.i("captureSnapshot: rotated.");
                                 YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
+                                LOG.i("captureSnapshot: dispatching to listeners.");
                                 mCameraCallbacks.processSnapshot(yuv, consistentWithView, exifFlip);
                                 mIsCapturingImage = false;
                             }
@@ -678,7 +695,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
 
     @Override
     void startVideo(@NonNull final File videoFile) {
-        schedule(null, true, new Runnable() {
+        schedule(mStartVideoTask, true, new Runnable() {
             @Override
             public void run() {
                 if (mIsCapturingVideo) return;
@@ -693,7 +710,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
                         LOG.e("Error while starting MediaRecorder. Swallowing.", e);
                         mVideoFile = null;
                         mCamera.lock();
-                        endVideoNow();
+                        endVideoImmediately();
                     }
                 } else {
                     throw new IllegalStateException("Can't record video while session type is picture");
@@ -707,30 +724,28 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         schedule(null, false, new Runnable() {
             @Override
             public void run() {
-                endVideoNow();
+                endVideoImmediately();
             }
         });
     }
 
     @WorkerThread
-    private void endVideoNow() {
-        if (mIsCapturingVideo) {
-            mIsCapturingVideo = false;
-            if (mMediaRecorder != null) {
-                try {
-                    mMediaRecorder.stop();
-                    mMediaRecorder.release();
-                } catch (Exception e) {
-                    // This can happen if endVideo() is called right after startVideo().
-                    // We don't care.
-                    LOG.w("Error while closing media recorder. Swallowing", e);
-                }
-                mMediaRecorder = null;
+    private void endVideoImmediately() {
+        LOG.i("endVideoImmediately:", "is capturing:", mIsCapturingVideo);
+        mIsCapturingVideo = false;
+        if (mMediaRecorder != null) {
+            try {
+                mMediaRecorder.stop();
+            } catch (Exception e) {
+                // This can happen if endVideo() is called right after startVideo(). We don't care.
+                LOG.w("endVideoImmediately:", "Error while closing media recorder. Swallowing", e);
             }
-            if (mVideoFile != null) {
-                mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
-                mVideoFile = null;
-            }
+            mMediaRecorder.release();
+            mMediaRecorder = null;
+        }
+        if (mVideoFile != null) {
+            mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
+            mVideoFile = null;
         }
     }
 
@@ -741,18 +756,21 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         mMediaRecorder.setCamera(mCamera);
 
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-
-        CamcorderProfile profile = getCamcorderProfile(mCameraId, mVideoQuality);
         if (mAudio == Audio.ON) {
-            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-            mMediaRecorder.setProfile(profile);
-        } else {
-            // Set all values contained in profile except audio settings
-            mMediaRecorder.setOutputFormat(profile.fileFormat);
-            mMediaRecorder.setVideoEncoder(profile.videoCodec);
-            mMediaRecorder.setVideoEncodingBitRate(profile.videoBitRate);
-            mMediaRecorder.setVideoFrameRate(profile.videoFrameRate);
-            mMediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
+            // Must be called before setOutputFormat.
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+        }
+        CamcorderProfile profile = getCamcorderProfile(mCameraId, mVideoQuality);
+        mMediaRecorder.setOutputFormat(profile.fileFormat);
+        mMediaRecorder.setVideoFrameRate(profile.videoFrameRate);
+        mMediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
+        mMediaRecorder.setVideoEncoder(profile.videoCodec);
+        mMediaRecorder.setVideoEncodingBitRate(profile.videoBitRate);
+        if (mAudio == Audio.ON) {
+            mMediaRecorder.setAudioChannels(profile.audioChannels);
+            mMediaRecorder.setAudioSamplingRate(profile.audioSampleRate);
+            mMediaRecorder.setAudioEncoder(profile.audioCodec);
+            mMediaRecorder.setAudioEncodingBitRate(profile.audioBitRate);
         }
 
         if (mLocation != null) {

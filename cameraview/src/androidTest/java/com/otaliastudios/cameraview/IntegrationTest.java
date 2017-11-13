@@ -1,13 +1,12 @@
 package com.otaliastudios.cameraview;
 
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
+import android.media.MediaRecorder;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.ViewGroup;
 
 import org.junit.After;
 import org.junit.Before;
@@ -42,6 +41,7 @@ public class IntegrationTest extends BaseTest {
     private CameraView camera;
     private Camera1 controller;
     private CameraListener listener;
+    private Task<Throwable> uiExceptionTask;
 
     @BeforeClass
     public static void grant() {
@@ -51,6 +51,7 @@ public class IntegrationTest extends BaseTest {
     @Before
     public void setUp() {
         WorkerHandler.destroy();
+
         ui(new Runnable() {
             @Override
             public void run() {
@@ -67,6 +68,17 @@ public class IntegrationTest extends BaseTest {
                 rule.getActivity().inflate(camera);
             }
         });
+
+        // Ensure that controller exceptions are thrown on this thread (not on the UI thread).
+        uiExceptionTask = new Task<>(true);
+        WorkerHandler crashThread = WorkerHandler.get("CrashThread");
+        crashThread.getThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                uiExceptionTask.end(e);
+            }
+        });
+        controller.mCrashHandler = crashThread.get();
     }
 
     @After
@@ -76,7 +88,13 @@ public class IntegrationTest extends BaseTest {
         WorkerHandler.destroy();
     }
 
+    private void waitForUiException() throws Throwable {
+        Throwable throwable = uiExceptionTask.await(2500);
+        if (throwable != null) throw throwable;
+    }
+
     private CameraOptions waitForOpen(boolean expectSuccess) {
+        camera.start();
         final Task<CameraOptions> open = new Task<>(true);
         doEndTask(open, 0).when(listener).onCameraOpened(any(CameraOptions.class));
         CameraOptions result = open.await(4000);
@@ -89,6 +107,7 @@ public class IntegrationTest extends BaseTest {
     }
 
     private void waitForClose(boolean expectSuccess) {
+        camera.stop();
         final Task<Boolean> close = new Task<>(true);
         doEndTask(close, true).when(listener).onCameraClosed();
         Boolean result = close.await(4000);
@@ -99,10 +118,10 @@ public class IntegrationTest extends BaseTest {
         }
     }
 
-    private void waitForVideo(boolean expectSuccess) {
+    private void waitForVideoEnd(boolean expectSuccess) {
         final Task<Boolean> video = new Task<>(true);
         doEndTask(video, true).when(listener).onVideoTaken(any(File.class));
-        Boolean result = video.await(2000);
+        Boolean result = video.await(8000);
         if (expectSuccess) {
             assertNotNull("Can take video", result);
         } else {
@@ -122,6 +141,18 @@ public class IntegrationTest extends BaseTest {
         return result;
     }
 
+    private void waitForVideoStart() {
+        controller.mStartVideoTask.listen();
+        camera.startCapturingVideo(null);
+        controller.mStartVideoTask.await(400);
+    }
+
+    private void waitForVideoQuality(VideoQuality quality) {
+        controller.mVideoQualityTask.listen();
+        camera.setVideoQuality(quality);
+        controller.mVideoQualityTask.await(400);
+    }
+
     //region test open/close
 
     @Test
@@ -129,26 +160,21 @@ public class IntegrationTest extends BaseTest {
         // Starting and stopping are hard to get since they happen on another thread.
         assertEquals(controller.getState(), CameraController.STATE_STOPPED);
 
-        camera.start();
         waitForOpen(true);
         assertEquals(controller.getState(), CameraController.STATE_STARTED);
 
-        camera.stop();
         waitForClose(true);
         assertEquals(controller.getState(), CameraController.STATE_STOPPED);
     }
 
     @Test
     public void testOpenTwice() {
-        camera.start();
         waitForOpen(true);
-        camera.start();
         waitForOpen(false);
     }
 
     @Test
     public void testCloseTwice() {
-        camera.stop();
         waitForClose(false);
     }
 
@@ -174,7 +200,6 @@ public class IntegrationTest extends BaseTest {
     public void testStartInitializesOptions() {
         assertNull(camera.getCameraOptions());
         assertNull(camera.getExtraProperties());
-        camera.start();
         waitForOpen(true);
         assertNotNull(camera.getCameraOptions());
         assertNotNull(camera.getExtraProperties());
@@ -187,7 +212,6 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testSetFacing() throws Exception {
-        camera.start();
         CameraOptions o = waitForOpen(true);
         int size = o.getSupportedFacing().size();
         if (size > 1) {
@@ -206,7 +230,6 @@ public class IntegrationTest extends BaseTest {
     @Test
     public void testSetSessionType() throws Exception {
         camera.setSessionType(SessionType.PICTURE);
-        camera.start();
         waitForOpen(true);
 
         // set session type should call stop and start again.
@@ -228,7 +251,6 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testSetZoom() {
-        camera.start();
         CameraOptions options = waitForOpen(true);
 
         controller.mZoomTask.listen();
@@ -246,7 +268,6 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testSetExposureCorrection() {
-        camera.start();
         CameraOptions options = waitForOpen(true);
 
         controller.mExposureCorrectionTask.listen();
@@ -264,7 +285,6 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testSetFlash() {
-        camera.start();
         CameraOptions options = waitForOpen(true);
         Flash[] values = Flash.values();
         Flash oldValue = camera.getFlash();
@@ -283,7 +303,6 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testSetWhiteBalance() {
-        camera.start();
         CameraOptions options = waitForOpen(true);
         WhiteBalance[] values = WhiteBalance.values();
         WhiteBalance oldValue = camera.getWhiteBalance();
@@ -302,7 +321,6 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testSetHdr() {
-        camera.start();
         CameraOptions options = waitForOpen(true);
         Hdr[] values = Hdr.values();
         Hdr oldValue = camera.getHdr();
@@ -322,7 +340,6 @@ public class IntegrationTest extends BaseTest {
     @Test
     public void testSetAudio() {
         // TODO: when permissions are managed, check that Audio.ON triggers the audio permission
-        camera.start();
         waitForOpen(true);
         Audio[] values = Audio.values();
         for (Audio value : values) {
@@ -333,7 +350,6 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testSetLocation() {
-        camera.start();
         waitForOpen(true);
         controller.mLocationTask.listen();
         camera.setLocation(10d, 2d);
@@ -349,42 +365,33 @@ public class IntegrationTest extends BaseTest {
     //region testSetVideoQuality
     // This can be tricky because can trigger layout changes.
 
-    // TODO: the exception is swallowed. @Test(expected = IllegalStateException.class)
-    public void testSetVideoQuality_whileRecording() {
+    @Test(expected = RuntimeException.class)
+    public void testSetVideoQuality_whileRecording() throws Throwable {
         // Can't run on Travis, MediaRecorder not supported.
         // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
         camera.setSessionType(SessionType.VIDEO);
-        camera.setVideoQuality(VideoQuality.HIGHEST);
-        camera.start();
+        waitForVideoQuality(VideoQuality.HIGHEST);
         waitForOpen(true);
-        camera.startCapturingVideo(null);
-        controller.mVideoQualityTask.listen();
-        camera.setVideoQuality(VideoQuality.LOWEST);
-        controller.mVideoQualityTask.await(300);
+        waitForVideoStart();
+        waitForVideoQuality(VideoQuality.LOWEST);
+        waitForUiException();
     }
 
     @Test
     public void testSetVideoQuality_whileInPictureSessionType() {
         camera.setSessionType(SessionType.PICTURE);
-        camera.setVideoQuality(VideoQuality.HIGHEST);
-        camera.start();
+        waitForVideoQuality(VideoQuality.HIGHEST);
         waitForOpen(true);
-        controller.mVideoQualityTask.listen();
-        camera.setVideoQuality(VideoQuality.LOWEST);
-        controller.mVideoQualityTask.await(300);
+        waitForVideoQuality(VideoQuality.LOWEST);
         assertEquals(camera.getVideoQuality(), VideoQuality.LOWEST);
     }
 
     @Test
     public void testSetVideoQuality_whileNotStarted() {
-        controller.mVideoQualityTask.listen();
-        camera.setVideoQuality(VideoQuality.HIGHEST);
-        controller.mVideoQualityTask.await(300);
+        waitForVideoQuality(VideoQuality.HIGHEST);
         assertEquals(camera.getVideoQuality(), VideoQuality.HIGHEST);
 
-        controller.mVideoQualityTask.listen();
-        camera.setVideoQuality(VideoQuality.LOWEST);
-        controller.mVideoQualityTask.await(300);
+        waitForVideoQuality(VideoQuality.LOWEST);
         assertEquals(camera.getVideoQuality(), VideoQuality.LOWEST);
     }
 
@@ -401,36 +408,34 @@ public class IntegrationTest extends BaseTest {
 
     //region test startVideo
 
-    // TODO: @Test(expected = IllegalStateException.class)
-    // Fails on Travis. Some emulators can't deal with MediaRecorder
-    // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
-    // as documented. This works locally though.
-    public void testStartVideo_whileInPictureMode() {
+    @Test(expected = RuntimeException.class)
+    public void testStartVideo_whileInPictureMode() throws Throwable {
+        // Fails on Travis. Some emulators can't deal with MediaRecorder
+        // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
+        // as documented. This works locally though.
         camera.setSessionType(SessionType.PICTURE);
-        camera.start();
         waitForOpen(true);
-        camera.startCapturingVideo(null);
+        waitForVideoStart();
+        waitForUiException();
     }
 
-    // TODO: @Test
-    // Fails on Travis. Some emulators can't deal with MediaRecorder,
-    // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
-    // as documented. This works locally though.
+    @Test
     public void testStartEndVideo() {
+        // Fails on Travis. Some emulators can't deal with MediaRecorder,
+        // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
+        // as documented. This works locally though.
         camera.setSessionType(SessionType.VIDEO);
-        camera.start();
         waitForOpen(true);
-        camera.startCapturingVideo(null, 1000);
-        waitForVideo(true); // waits 2000
+        camera.startCapturingVideo(null, 4000);
+        waitForVideoEnd(true);
     }
 
     @Test
     public void testEndVideo_withoutStarting() {
         camera.setSessionType(SessionType.VIDEO);
-        camera.start();
         waitForOpen(true);
         camera.stopCapturingVideo();
-        waitForVideo(false);
+        waitForVideoEnd(false);
     }
 
     //endregion
@@ -440,7 +445,6 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testStartAutoFocus() {
-        camera.start();
         CameraOptions o = waitForOpen(true);
 
         final Task<PointF> focus = new Task<>(true);
@@ -469,7 +473,6 @@ public class IntegrationTest extends BaseTest {
     @Test
     public void testCapturePicture_concurrentCalls() throws Exception {
         // Second take should fail.
-        camera.start();
         waitForOpen(true);
 
         CountDownLatch latch = new CountDownLatch(2);
@@ -485,7 +488,6 @@ public class IntegrationTest extends BaseTest {
     @Test
     public void testCapturePicture_size() throws Exception {
         camera.setCropOutput(false);
-        camera.start();
         waitForOpen(true);
 
         Size size = camera.getCaptureSize();
@@ -507,7 +509,6 @@ public class IntegrationTest extends BaseTest {
     @Test
     public void testCaptureSnapshot_concurrentCalls() throws Exception {
         // Second take should fail.
-        camera.start();
         waitForOpen(true);
 
         CountDownLatch latch = new CountDownLatch(2);
@@ -515,15 +516,14 @@ public class IntegrationTest extends BaseTest {
 
         camera.captureSnapshot();
         camera.captureSnapshot();
-        boolean did = latch.await(4, TimeUnit.SECONDS);
+        boolean did = latch.await(6, TimeUnit.SECONDS);
         assertFalse(did);
-        assertEquals(latch.getCount(), 1);
+        assertEquals(1, latch.getCount());
     }
 
     @Test
     public void testCaptureSnapshot_size() throws Exception {
         camera.setCropOutput(false);
-        camera.start();
         waitForOpen(true);
 
         Size size = camera.getPreviewSize();
@@ -552,7 +552,6 @@ public class IntegrationTest extends BaseTest {
     public void testFrameProcessing_simple() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
-        camera.start();
         waitForOpen(true);
 
         assert30Frames(processor);
@@ -562,7 +561,6 @@ public class IntegrationTest extends BaseTest {
     public void testFrameProcessing_afterSnapshot() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
-        camera.start();
         waitForOpen(true);
 
         // In Camera1, snapshots will clear the preview callback
@@ -577,11 +575,8 @@ public class IntegrationTest extends BaseTest {
     public void testFrameProcessing_afterRestart() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
-        camera.start();
         waitForOpen(true);
-        camera.stop();
         waitForClose(true);
-        camera.start();
         waitForOpen(true);
 
         assert30Frames(processor);
