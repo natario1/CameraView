@@ -181,7 +181,6 @@ public class CameraView extends FrameLayout {
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
-        // mapGesture(Gesture.DOUBLE_TAP, doubleTapGesture);
         mapGesture(Gesture.LONG_TAP, longTapGesture);
         mapGesture(Gesture.PINCH, pinchGesture);
         mapGesture(Gesture.SCROLL_HORIZONTAL, scrollHorizontalGesture);

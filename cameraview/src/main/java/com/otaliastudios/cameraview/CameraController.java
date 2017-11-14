@@ -389,6 +389,16 @@ abstract class CameraController implements
      */
     protected Size computePictureSize(List<Size> captureSizes) {
         SizeSelector selector;
+
+        // The external selector is expecting stuff in the view world, not in the sensor world.
+        // Flip before starting, and then flip again.
+        boolean flip = shouldFlipSizes();
+        if (flip) {
+            for (Size size : captureSizes) {
+                size.flip();
+            }
+        }
+
         if (mSessionType == SessionType.PICTURE) {
             selector = SizeSelectors.or(
                     mPictureSizeSelector,
@@ -396,10 +406,11 @@ abstract class CameraController implements
             );
         } else {
             // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.
-            // We want the picture size to be the max picture consistent with the video aspect ratio.
+            // And we want the picture size to be the max picture consistent with the video aspect ratio.
             // -> Use the external picture selector, but enforce the ratio constraint.
             CamcorderProfile profile = getCamcorderProfile();
             AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
+            if (flip) targetRatio = targetRatio.inverse();
             LOG.i("size:", "computeCaptureSize:", "videoQuality:", mVideoQuality, "targetRatio:", targetRatio);
             SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
             selector = SizeSelectors.or(
@@ -408,7 +419,10 @@ abstract class CameraController implements
                     mPictureSizeSelector
             );
         }
-        return selector.select(captureSizes).get(0);
+
+        Size result = selector.select(captureSizes).get(0);
+        if (flip) result.flip();
+        return result;
     }
 
     protected Size computePreviewSize(List<Size> previewSizes) {

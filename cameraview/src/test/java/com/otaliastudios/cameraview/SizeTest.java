@@ -11,9 +11,17 @@ public class SizeTest {
     @Test
     public void testDimensions() {
         Size size = new Size(10, 20);
-        assertEquals(size.getWidth(), 10f, 0f);
-        assertEquals(size.getHeight(), 20f, 0f);
+        assertEquals(size.getWidth(), 10);
+        assertEquals(size.getHeight(), 20);
         assertEquals("10x20", size.toString());
+    }
+
+    @Test
+    public void testFlip() {
+        Size size = new Size(10, 20);
+        size.flip();
+        assertEquals(size.getWidth(), 20);
+        assertEquals(size.getHeight(), 10);
     }
 
     @Test

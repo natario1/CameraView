@@ -2,10 +2,13 @@ package com.otaliastudios.cameraview;
 
 import android.support.annotation.NonNull;
 
+/**
+ * A simple class representing a size, with width and height values.
+ */
 public class Size implements Comparable<Size> {
 
-    private final int mWidth;
-    private final int mHeight;
+    private int mWidth;
+    private int mHeight;
 
     Size(int width, int height) {
         mWidth = width;
@@ -18,6 +21,16 @@ public class Size implements Comparable<Size> {
 
     public int getHeight() {
         return mHeight;
+    }
+
+    /**
+     * Flips width and height altogether.
+     */
+    @SuppressWarnings("SuspiciousNameCombination")
+    public void flip() {
+        int temp = mWidth;
+        mWidth = mHeight;
+        mHeight = temp;
     }
 
     @Override
