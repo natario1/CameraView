@@ -707,7 +707,6 @@ all the code was changed.
 These are still things that need to be done, off the top of my head:
 
 - [ ] `Camera2` integration
-- [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
 - [ ] add onRequestPermissionResults for easy permission callback
 - [ ] decent code coverage

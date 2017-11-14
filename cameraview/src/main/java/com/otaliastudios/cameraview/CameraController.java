@@ -425,8 +425,12 @@ abstract class CameraController implements
     }
 
     protected Size computePreviewSize(List<Size> previewSizes) {
+        // instead of flipping everything to the view world, we can just flip the
+        // surface size to the sensor world
+        boolean flip = shouldFlipSizes();
         AspectRatio targetRatio = AspectRatio.of(mPictureSize.getWidth(), mPictureSize.getHeight());
         Size targetMinSize = mPreview.getSurfaceSize();
+        if (flip) targetMinSize.flip();
         LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
         SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
         SizeSelector matchSize = SizeSelectors.and(
@@ -437,7 +441,11 @@ abstract class CameraController implements
                 matchRatio, // If couldn't match both, match ratio.
                 SizeSelectors.biggest() // If couldn't match any, take the biggest.
         );
-        return matchAll.select(previewSizes).get(0);
+        Size result = matchAll.select(previewSizes).get(0);
+        LOG.i("computePreviewSize:", "result:", result);
+        // Flip back what we flipped.
+        if (flip) targetMinSize.flip();
+        return result;
     }
 
     @NonNull
