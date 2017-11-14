@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
+import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 
 import java.io.File;
@@ -25,6 +26,25 @@ public abstract class CameraListener {
      */
     @UiThread
     public void onCameraClosed() {
+
+    }
+
+
+    /**
+     * Notifies about an error during the camera setup or configuration.
+     * At the moment, errors that are passed here are unrecoverable. When this is called,
+     * the camera has been released and is presumably showing a black preview.
+     *
+     * This is the right moment to show an error dialog to the user.
+     * You can try calling start() again, but that is not guaranteed to work - if it doesn't,
+     * this callback will be invoked again.
+     *
+     * In the future, more information will be passed through the {@link CameraException} instance.
+     *
+     * @param exception the error
+     */
+    @UiThread
+    public void onCameraError(@NonNull CameraException exception) {
 
     }
 
@@ -78,8 +98,8 @@ public abstract class CameraListener {
 
     /**
      * Notifies that user interacted with the screen and started focus with a gesture,
-     * and the autofocus is trying to focus around that area.
-     * This can be used to draw things on screen.
+     * and the autofocus is trying to focus around that area. This can be used to draw things on screen.
+     * Can also be triggered by {@link CameraView#startAutoFocus(float, float)}.
      *
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
@@ -93,6 +113,7 @@ public abstract class CameraListener {
      * Notifies that a gesture focus event just ended, and the camera converged
      * to a new focus (and possibly exposure and white balance).
      * This might succeed or not.
+     * Can also be triggered by {@link CameraView#startAutoFocus(float, float)}.
      *
      * @param successful whether camera succeeded
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()

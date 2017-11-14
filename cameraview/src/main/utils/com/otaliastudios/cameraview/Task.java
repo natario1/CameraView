@@ -18,6 +18,10 @@ class Task<T> {
     Task() {
     }
 
+    Task(boolean startListening) {
+        if (startListening) listen();
+    }
+
     private boolean listening() {
         return mLatch != null;
     }

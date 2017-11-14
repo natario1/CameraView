@@ -3,7 +3,10 @@ package com.otaliastudios.cameraview;
 import android.graphics.PointF;
 import android.hardware.Camera;
 import android.location.Location;
-import android.media.CamcorderProfile;
+
+
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -12,7 +15,10 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-abstract class CameraController implements CameraPreview.SurfaceCallback, FrameManager.BufferCallback {
+abstract class CameraController implements
+        CameraPreview.SurfaceCallback,
+        FrameManager.BufferCallback,
+        Thread.UncaughtExceptionHandler {
 
     private static final String TAG = CameraController.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -24,6 +30,8 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
 
     protected final CameraView.CameraCallbacks mCameraCallbacks;
     protected CameraPreview mPreview;
+    protected WorkerHandler mHandler;
+    /* for tests */ Handler mCrashHandler;
 
     protected Facing mFacing;
     protected Flash mFlash;
@@ -33,6 +41,9 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     protected Hdr mHdr;
     protected Location mLocation;
     protected Audio mAudio;
+
+    protected float mZoomValue;
+    protected float mExposureCorrectionValue;
 
     protected Size mCaptureSize;
     protected Size mPreviewSize;
@@ -45,34 +56,23 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
 
     protected int mDisplayOffset;
     protected int mDeviceOrientation;
-
-    protected boolean mScheduledForStart = false;
-    protected boolean mScheduledForStop = false;
-    protected boolean mScheduledForRestart = false;
     protected int mState = STATE_STOPPED;
 
-    protected WorkerHandler mHandler;
+    // Used for testing.
+    Task<Void> mZoomTask = new Task<>();
+    Task<Void> mExposureCorrectionTask = new Task<>();
+    Task<Void> mFlashTask = new Task<>();
+    Task<Void> mWhiteBalanceTask = new Task<>();
+    Task<Void> mHdrTask = new Task<>();
+    Task<Void> mLocationTask = new Task<>();
+    Task<Void> mVideoQualityTask = new Task<>();
+    Task<Void> mStartVideoTask = new Task<>();
 
     CameraController(CameraView.CameraCallbacks callback) {
         mCameraCallbacks = callback;
+        mCrashHandler = new Handler(Looper.getMainLooper());
         mHandler = WorkerHandler.get("CameraViewController");
-        mHandler.getThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable throwable) {
-                // Something went wrong. Thread is terminated (about to?).
-                // Move to other thread and stop resources.
-                LOG.w("Interrupting thread, due to exception.", throwable);
-                thread.interrupt();
-                LOG.w("Interrupted thread. Posting a stopImmediately.", ss());
-                mHandler = WorkerHandler.get("CameraViewController");
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        stopImmediately();
-                    }
-                });
-            }
-        });
+        mHandler.getThread().setUncaughtExceptionHandler(this);
         mFrameManager = new FrameManager(2, this);
     }
 
@@ -80,6 +80,58 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
         mPreview = cameraPreview;
         mPreview.setSurfaceCallback(this);
     }
+
+    //region Error handling
+
+    @Override
+    public void uncaughtException(final Thread thread, final Throwable throwable) {
+        // Something went wrong. Thread is terminated (about to?).
+        // Move to other thread and release resources.
+        if (!(throwable instanceof CameraException)) {
+            // This is unexpected, either a bug or something the developer should know.
+            // Release and crash the UI thread so we get bug reports.
+            LOG.e("uncaughtException:", "Unexpected exception:", throwable);
+            destroy();
+            mCrashHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    RuntimeException exception;
+                    if (throwable instanceof RuntimeException) {
+                        exception = (RuntimeException) throwable;
+                    } else {
+                        exception = new RuntimeException(throwable);
+                    }
+                    throw exception;
+                }
+            });
+        } else {
+            // At the moment all CameraExceptions are unrecoverable, there was something
+            // wrong when starting, stopping, or binding the camera to the preview.
+            final CameraException error = (CameraException) throwable;
+            LOG.e("uncaughtException:", "Interrupting thread with state:", ss(), "due to CameraException:", error);
+            thread.interrupt();
+            mHandler = WorkerHandler.get("CameraViewController");
+            mHandler.getThread().setUncaughtExceptionHandler(this);
+            LOG.i("uncaughtException:", "Calling stopImmediately and notifying.");
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    stopImmediately();
+                    mCameraCallbacks.dispatchError(error);
+                }
+            });
+        }
+    }
+
+    final void destroy() {
+        LOG.i("destroy:", "state:", ss());
+        // Prevent CameraController leaks.
+        mHandler.getThread().setUncaughtExceptionHandler(null);
+        // Stop if needed.
+        stopImmediately();
+    }
+
+    //endregion
 
     //region Start&Stop
 
@@ -96,25 +148,17 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     // Starts the preview asynchronously.
     final void start() {
         LOG.i("Start:", "posting runnable. State:", ss());
-        mScheduledForStart = true;
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                try {
-                    LOG.i("Start:", "executing. State:", ss());
-                    mScheduledForStart = false;
-                    if (mState >= STATE_STARTING) return;
-                    mState = STATE_STARTING;
-                    LOG.i("Start:", "about to call onStart()", ss());
-                    onStart();
-                    LOG.i("Start:", "returned from onStart().", "Dispatching.", ss());
-                    mState = STATE_STARTED;
-                    mCameraCallbacks.dispatchOnCameraOpened(mOptions);
-
-                } catch (Exception e) {
-                    LOG.e("Error while starting the camera engine.", e);
-                    throw new RuntimeException(e);
-                }
+                LOG.i("Start:", "executing. State:", ss());
+                if (mState >= STATE_STARTING) return;
+                mState = STATE_STARTING;
+                LOG.i("Start:", "about to call onStart()", ss());
+                onStart();
+                LOG.i("Start:", "returned from onStart().", "Dispatching.", ss());
+                mState = STATE_STARTED;
+                mCameraCallbacks.dispatchOnCameraOpened(mOptions);
             }
         });
     }
@@ -122,43 +166,34 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     // Stops the preview asynchronously.
     final void stop() {
         LOG.i("Stop:", "posting runnable. State:", ss());
-        mScheduledForStop = true;
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                try {
-                    LOG.i("Stop:", "executing. State:", ss());
-                    mScheduledForStop = false;
-                    if (mState <= STATE_STOPPED) return;
-                    mState = STATE_STOPPING;
-                    LOG.i("Stop:", "about to call onStop()");
-                    onStop();
-                    LOG.i("Stop:", "returned from onStop().", "Dispatching.");
-                    mState = STATE_STOPPED;
-                    mCameraCallbacks.dispatchOnCameraClosed();
-
-                } catch (Exception e) {
-                    LOG.e("Error while stopping the camera engine.", e);
-                    throw new RuntimeException(e);
-                }
+                LOG.i("Stop:", "executing. State:", ss());
+                if (mState <= STATE_STOPPED) return;
+                mState = STATE_STOPPING;
+                LOG.i("Stop:", "about to call onStop()");
+                onStop();
+                LOG.i("Stop:", "returned from onStop().", "Dispatching.");
+                mState = STATE_STOPPED;
+                mCameraCallbacks.dispatchOnCameraClosed();
             }
         });
     }
 
     // Stops the preview synchronously, ensuring no exceptions are thrown.
-    void stopImmediately() {
+    final void stopImmediately() {
         try {
             // Don't check, try stop again.
-            LOG.i("Stop immediately. State was:", ss());
+            LOG.i("stopImmediately:", "State was:", ss());
+            if (mState == STATE_STOPPED) return;
             mState = STATE_STOPPING;
-            // Prevent leaking CameraController.
-            mHandler.getThread().setUncaughtExceptionHandler(null);
             onStop();
             mState = STATE_STOPPED;
-            LOG.i("Stop immediately. Stopped. State is:", ss());
+            LOG.i("stopImmediately:", "Stopped. State is:", ss());
         } catch (Exception e) {
             // Do nothing.
-            LOG.i("Stop immediately. Exception while stopping.", e);
+            LOG.i("stopImmediately:", "Swallowing exception while stopping.", e);
             mState = STATE_STOPPED;
         }
     }
@@ -166,34 +201,25 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     // Forces a restart.
     protected final void restart() {
         LOG.i("Restart:", "posting runnable");
-        mScheduledForRestart = true;
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                try {
-                    LOG.i("Restart:", "executing. Needs stopping:", mState > STATE_STOPPED, ss());
-                    mScheduledForRestart = false;
-                    // Don't stop if stopped.
-                    if (mState > STATE_STOPPED) {
-                        mState = STATE_STOPPING;
-                        onStop();
-                        mState = STATE_STOPPED;
-                        LOG.i("Restart:", "stopped. Dispatching.", ss());
-                        mCameraCallbacks.dispatchOnCameraClosed();
-                    }
-
-                    LOG.i("Restart: about to start. State:", ss());
-                    mState = STATE_STARTING;
-                    onStart();
-                    mState = STATE_STARTED;
-                    LOG.i("Restart: returned from start. Dispatching. State:", ss());
-                    mCameraCallbacks.dispatchOnCameraOpened(mOptions);
-
-                } catch (Exception e) {
-                    LOG.e("Error while restarting the camera engine.", e);
-                    throw new RuntimeException(e);
-
+                LOG.i("Restart:", "executing. Needs stopping:", mState > STATE_STOPPED, ss());
+                // Don't stop if stopped.
+                if (mState > STATE_STOPPED) {
+                    mState = STATE_STOPPING;
+                    onStop();
+                    mState = STATE_STOPPED;
+                    LOG.i("Restart:", "stopped. Dispatching.", ss());
+                    mCameraCallbacks.dispatchOnCameraClosed();
                 }
+
+                LOG.i("Restart: about to start. State:", ss());
+                mState = STATE_STARTING;
+                onStart();
+                mState = STATE_STARTED;
+                LOG.i("Restart: returned from start. Dispatching. State:", ss());
+                mCameraCallbacks.dispatchOnCameraOpened(mOptions);
             }
         });
     }
@@ -201,11 +227,11 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     // Starts the preview.
     // At the end of this method camera must be available, e.g. for setting parameters.
     @WorkerThread
-    abstract void onStart() throws Exception;
+    abstract void onStart();
 
     // Stops the preview.
     @WorkerThread
-    abstract void onStop() throws Exception;
+    abstract void onStop();
 
     // Returns current state.
     final int getState() {
@@ -239,11 +265,11 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     // Should restart the session if active.
     abstract void setFacing(Facing facing);
 
-    // If opened and supported, apply and return true.
-    abstract boolean setZoom(float zoom);
+    // If closed, no-op. If opened, check supported and apply.
+    abstract void setZoom(float zoom, PointF[] points, boolean notify);
 
-    // If opened and supported, apply and return true.
-    abstract boolean setExposureCorrection(float EVvalue);
+    // If closed, no-op. If opened, check supported and apply.
+    abstract void setExposureCorrection(float EVvalue, float[] bounds, PointF[] points, boolean notify);
 
     // If closed, keep. If opened, check supported and apply.
     abstract void setFlash(Flash flash);
@@ -268,17 +294,17 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
 
     //region APIs
 
-    abstract boolean capturePicture();
+    abstract void capturePicture();
 
-    abstract boolean captureSnapshot();
+    abstract void captureSnapshot();
 
-    abstract boolean startVideo(@NonNull File file);
+    abstract void startVideo(@NonNull File file);
 
-    abstract boolean endVideo();
+    abstract void endVideo();
 
     abstract boolean shouldFlipSizes(); // Wheter the Sizes should be flipped to match the view orientation.
 
-    abstract boolean startAutoFocus(@Nullable Gesture gesture, PointF point);
+    abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);
 
     //endregion
 
@@ -332,6 +358,14 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
 
     final Size getPictureSize() {
         return mCaptureSize;
+    }
+
+    final float getZoomValue() {
+        return mZoomValue;
+    }
+
+    final float getExposureCorrectionValue() {
+        return mExposureCorrectionValue;
     }
 
     final Size getPreviewSize() {
