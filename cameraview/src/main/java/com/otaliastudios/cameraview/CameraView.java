@@ -975,10 +975,7 @@ public class CameraView extends FrameLayout {
      * @param selector a size selector
      */
     public void setPictureSize(@NonNull SizeSelector selector) {
-        // Add a max fallback.
-        mCameraController.setPictureSizeSelector(
-                SizeSelectors.or(selector, SizeSelectors.max())
-        );
+        mCameraController.setPictureSizeSelector(selector);
     }
 
 

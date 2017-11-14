@@ -558,11 +558,8 @@ public class CameraViewTest extends BaseTest {
         SizeSelector source = SizeSelectors.minHeight(50);
         cameraView.setPictureSize(source);
         SizeSelector result = mockController.getPictureSizeSelector();
-
-        // Ensure we wrapped the selector in a OrSelector to have fallbacks.
         assertNotNull(result);
-        assertNotEquals(result, source);
-        assertTrue(result instanceof SizeSelectors.OrSelector);
+        assertEquals(result, source);
     }
 
     //endregion

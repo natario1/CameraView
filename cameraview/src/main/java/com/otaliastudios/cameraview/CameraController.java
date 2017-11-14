@@ -5,6 +5,8 @@ import android.hardware.Camera;
 import android.location.Location;
 
 
+import android.media.CamcorderProfile;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -12,6 +14,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +35,7 @@ abstract class CameraController implements
     protected CameraPreview mPreview;
     protected WorkerHandler mHandler;
     /* for tests */ Handler mCrashHandler;
+    protected int mCameraId;
 
     protected Facing mFacing;
     protected Flash mFlash;
@@ -45,7 +49,7 @@ abstract class CameraController implements
     protected float mZoomValue;
     protected float mExposureCorrectionValue;
 
-    protected Size mCaptureSize;
+    protected Size mPictureSize;
     protected Size mPreviewSize;
     protected int mPreviewFormat;
 
@@ -357,7 +361,7 @@ abstract class CameraController implements
     }
 
     final Size getPictureSize() {
-        return mCaptureSize;
+        return mPictureSize;
     }
 
     final float getZoomValue() {
@@ -376,6 +380,96 @@ abstract class CameraController implements
 
     //region Size utils
 
+    /**
+     * This is called either on cameraView.start(), or when the underlying surface changes.
+     * It is possible that in the first call the preview surface has not already computed its
+     * dimensions.
+     * But when it does, the {@link CameraPreview.SurfaceCallback} should be called,
+     * and this should be refreshed.
+     */
+    protected Size computePictureSize(List<Size> captureSizes) {
+        SizeSelector selector;
+        if (mSessionType == SessionType.PICTURE) {
+            selector = SizeSelectors.or(
+                    mPictureSizeSelector,
+                    SizeSelectors.max() // Fallback to max.
+            );
+        } else {
+            // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.
+            // We want the picture size to be the max picture consistent with the video aspect ratio.
+            // -> Use the external picture selector, but enforce the ratio constraint.
+            CamcorderProfile profile = getCamcorderProfile();
+            AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
+            LOG.i("size:", "computeCaptureSize:", "videoQuality:", mVideoQuality, "targetRatio:", targetRatio);
+            SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
+            selector = SizeSelectors.or(
+                    SizeSelectors.and(matchRatio, mPictureSizeSelector),
+                    SizeSelectors.and(matchRatio),
+                    mPictureSizeSelector
+            );
+        }
+        return selector.select(captureSizes).get(0);
+    }
+
+    protected Size computePreviewSize(List<Size> previewSizes) {
+        AspectRatio targetRatio = AspectRatio.of(mPictureSize.getWidth(), mPictureSize.getHeight());
+        Size targetMinSize = mPreview.getSurfaceSize();
+        LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
+        SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
+        SizeSelector matchSize = SizeSelectors.and(
+                SizeSelectors.minHeight(targetMinSize.getHeight()),
+                SizeSelectors.minWidth(targetMinSize.getWidth()));
+        SizeSelector matchAll = SizeSelectors.or(
+                SizeSelectors.and(matchRatio, matchSize),
+                matchRatio, // If couldn't match both, match ratio.
+                SizeSelectors.max() // If couldn't match any, take the biggest.
+        );
+        return matchAll.select(previewSizes).get(0);
+    }
+
+    @NonNull
+    protected CamcorderProfile getCamcorderProfile() {
+        switch (mVideoQuality) {
+            case HIGHEST:
+                return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
+
+            case MAX_2160P:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                        CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2160P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_2160P);
+                }
+                // Don't break.
+
+            case MAX_1080P:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_1080P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_1080P);
+                }
+                // Don't break.
+
+            case MAX_720P:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_720P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_720P);
+                }
+                // Don't break.
+
+            case MAX_480P:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_480P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_480P);
+                }
+                // Don't break.
+
+            case MAX_QVGA:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_QVGA);
+                }
+                // Don't break.
+
+            case LOWEST:
+            default:
+                // Fallback to lowest.
+                return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_LOW);
+        }
+    }
 
     //endregion
 }

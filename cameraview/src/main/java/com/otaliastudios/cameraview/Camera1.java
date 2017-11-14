@@ -28,7 +28,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     private static final String TAG = Camera1.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    private int mCameraId;
     private Camera mCamera;
     private MediaRecorder mMediaRecorder;
     private File mVideoFile;
@@ -104,7 +103,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 if (!mIsBound) return;
 
                 // Compute a new camera preview size.
-                Size newSize = computePreviewSize();
+                Size newSize = computePreviewSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
                 if (newSize.equals(mPreviewSize)) return;
 
                 // Apply.
@@ -136,8 +135,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             throw new CameraException(e);
         }
 
-        mCaptureSize = computeCaptureSize();
-        mPreviewSize = computePreviewSize();
+        mPictureSize = computePictureSize(sizesFromList(mCamera.getParameters().getSupportedPictureSizes()));
+        mPreviewSize = computePreviewSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
         applySizesAndStartPreview("bindToSurface:");
         mIsBound = true;
     }
@@ -156,7 +155,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         Camera.Parameters params = mCamera.getParameters();
         mPreviewFormat = params.getPreviewFormat();
         params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight()); // <- not allowed during preview
-        params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
+        params.setPictureSize(mPictureSize.getWidth(), mPictureSize.getHeight()); // <- allowed
         mCamera.setParameters(params);
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
@@ -234,7 +233,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mOptions = null;
         mCamera = null;
         mPreviewSize = null;
-        mCaptureSize = null;
+        mPictureSize = null;
         mIsBound = false;
 
         if (error != null) throw new CameraException(error);
@@ -456,17 +455,17 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
                 if (mSessionType == SessionType.VIDEO) {
                     // Change capture size to a size that fits the video aspect ratio.
-                    Size oldSize = mCaptureSize;
-                    mCaptureSize = computeCaptureSize();
-                    if (!mCaptureSize.equals(oldSize)) {
+                    Size oldSize = mPictureSize;
+                    mPictureSize = computePictureSize(sizesFromList(mCamera.getParameters().getSupportedPictureSizes()));
+                    if (!mPictureSize.equals(oldSize)) {
                         // New video quality triggers a new aspect ratio.
                         // Go on and see if preview size should change also.
                         Camera.Parameters params = mCamera.getParameters();
-                        params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+                        params.setPictureSize(mPictureSize.getWidth(), mPictureSize.getHeight());
                         mCamera.setParameters(params);
                         onSurfaceChanged();
                     }
-                    LOG.i("setVideoQuality:", "captureSize:", mCaptureSize);
+                    LOG.i("setVideoQuality:", "captureSize:", mPictureSize);
                     LOG.i("setVideoQuality:", "previewSize:", mPreviewSize);
                 }
             }
@@ -638,49 +637,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
     }
 
-
     /**
      * Whether the exif tag should include a 'flip' operation.
      */
     private boolean computeExifFlip() {
         return mFacing == Facing.FRONT;
-    }
-
-
-    /**
-     * This is called either on cameraView.start(), or when the underlying surface changes.
-     * It is possible that in the first call the preview surface has not already computed its
-     * dimensions.
-     * But when it does, the {@link CameraPreview.SurfaceCallback} should be called,
-     * and this should be refreshed.
-     */
-    private Size computeCaptureSize() {
-        Camera.Parameters params = mCamera.getParameters();
-        if (mSessionType == SessionType.PICTURE) {
-            // Choose the max size.
-            List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
-            Size maxSize = Collections.max(captureSizes);
-            LOG.i("size:", "computeCaptureSize:", "computed", maxSize);
-            return Collections.max(captureSizes);
-        } else {
-            // Choose according to developer choice in setVideoQuality.
-            // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.
-            // We want the picture size to be the max picture consistent with the video aspect ratio.
-            List<Size> captureSizes = sizesFromList(params.getSupportedPictureSizes());
-            CamcorderProfile profile = getCamcorderProfile(mCameraId, mVideoQuality);
-            AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
-            LOG.i("size:", "computeCaptureSize:", "videoQuality:", mVideoQuality, "targetRatio:", targetRatio);
-            return matchSize(captureSizes, targetRatio, new Size(0, 0), true);
-        }
-    }
-
-    private Size computePreviewSize() {
-        Camera.Parameters params = mCamera.getParameters();
-        List<Size> previewSizes = sizesFromList(params.getSupportedPreviewSizes());
-        AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
-        Size biggerThan = mPreview.getSurfaceSize();
-        LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "surface size:", biggerThan);
-        return matchSize(previewSizes, targetRatio, biggerThan, false);
     }
 
 
@@ -755,7 +716,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             // Must be called before setOutputFormat.
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         }
-        CamcorderProfile profile = getCamcorderProfile(mCameraId, mVideoQuality);
+        CamcorderProfile profile = getCamcorderProfile();
         mMediaRecorder.setOutputFormat(profile.fileFormat);
         mMediaRecorder.setVideoFrameRate(profile.videoFrameRate);
         mMediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
@@ -776,50 +737,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
         mMediaRecorder.setOrientationHint(computeExifRotation());
         // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
-    }
-
-    @NonNull
-    private static CamcorderProfile getCamcorderProfile(int cameraId, VideoQuality videoQuality) {
-        switch (videoQuality) {
-            case HIGHEST:
-                return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_HIGH);
-
-            case MAX_2160P:
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
-                        CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2160P)) {
-                    return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_2160P);
-                }
-                // Don't break.
-
-            case MAX_1080P:
-                if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_1080P)) {
-                    return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_1080P);
-                }
-                // Don't break.
-
-            case MAX_720P:
-                if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_720P)) {
-                    return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_720P);
-                }
-                // Don't break.
-
-            case MAX_480P:
-                if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_480P)) {
-                    return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_480P);
-                }
-                // Don't break.
-
-            case MAX_QVGA:
-                if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_QVGA)) {
-                    return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_QVGA);
-                }
-                // Don't break.
-
-            case LOWEST:
-            default:
-                // Fallback to lowest.
-                return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_LOW);
-        }
     }
 
     // -----------------
@@ -962,62 +879,17 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     // -----------------
-    // Size static stuff.
+    // Size stuff.
 
 
-    /**
-     * Returns a list of {@link Size} out of Camera.Sizes.
-     */
     @Nullable
-    private static List<Size> sizesFromList(List<Camera.Size> sizes) {
+    private List<Size> sizesFromList(List<Camera.Size> sizes) {
         if (sizes == null) return null;
         List<Size> result = new ArrayList<>(sizes.size());
         for (Camera.Size size : sizes) {
             result.add(new Size(size.width, size.height));
         }
-        LOG.i("size:", "sizesFromList:", result);
-        return result;
-    }
-
-
-    /**
-     * Policy here is to return a size that is big enough to fit the surface size,
-     * and possibly consistent with the target aspect ratio.
-     * @param sizes list of possible sizes
-     * @param targetRatio aspect ratio
-     * @param biggerThan size representing the current surface size
-     * @return chosen size
-     */
-    private static Size matchSize(List<Size> sizes, AspectRatio targetRatio, Size biggerThan, boolean biggestPossible) {
-        if (sizes == null) return null;
-
-        List<Size> consistent = new ArrayList<>(5);
-        List<Size> bigEnoughAndConsistent = new ArrayList<>(5);
-
-        final Size targetSize = biggerThan;
-        for (Size size : sizes) {
-            AspectRatio ratio = AspectRatio.of(size.getWidth(), size.getHeight());
-            if (ratio.equals(targetRatio)) {
-                consistent.add(size);
-                if (size.getHeight() >= targetSize.getHeight() && size.getWidth() >= targetSize.getWidth()) {
-                    bigEnoughAndConsistent.add(size);
-                }
-            }
-        }
-
-        LOG.i("size:", "matchSize:", "found consistent:", consistent.size());
-        LOG.i("size:", "matchSize:", "found big enough and consistent:", bigEnoughAndConsistent.size());
-        Size result;
-        if (bigEnoughAndConsistent.size() > 0) {
-            result = biggestPossible ?
-                    Collections.max(bigEnoughAndConsistent) :
-                    Collections.min(bigEnoughAndConsistent);
-        } else if (consistent.size() > 0) {
-            result = Collections.max(consistent);
-        } else {
-            result = Collections.max(sizes);
-        }
-        LOG.i("size", "matchSize:", "returning result", result);
+        LOG.i("size:", "previewSizes:", result);
         return result;
     }
 }

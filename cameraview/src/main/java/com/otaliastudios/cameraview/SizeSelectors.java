@@ -210,7 +210,7 @@ public class SizeSelectors {
 
     //region private utilities
 
-    static class FilterSelector implements SizeSelector {
+    private static class FilterSelector implements SizeSelector {
 
         private Filter constraint;
 
@@ -231,9 +231,9 @@ public class SizeSelectors {
         }
     }
 
-    static class AndSelector implements SizeSelector {
+    private static class AndSelector implements SizeSelector {
 
-        SizeSelector[] values;
+        private SizeSelector[] values;
 
         private AndSelector(@NonNull SizeSelector... values) {
             this.values = values;
@@ -250,9 +250,9 @@ public class SizeSelectors {
         }
     }
 
-    static class OrSelector implements SizeSelector {
+    private static class OrSelector implements SizeSelector {
 
-        SizeSelector[] values;
+        private SizeSelector[] values;
 
         private OrSelector(@NonNull SizeSelector... values) {
             this.values = values;
