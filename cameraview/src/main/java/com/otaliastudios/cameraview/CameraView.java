@@ -132,11 +132,11 @@ public class CameraView extends FrameLayout {
             //noinspection ConstantConditions
             constraints.add(SizeSelectors.aspectRatio(AspectRatio.parse(a.getString(R.styleable.CameraView_cameraPictureSizeAspectRatio)), 0));
         }
-        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeMin, false)) constraints.add(SizeSelectors.min());
-        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeMax, false)) constraints.add(SizeSelectors.max());
+        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeSmallest, false)) constraints.add(SizeSelectors.smallest());
+        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeBiggest, false)) constraints.add(SizeSelectors.biggest());
         SizeSelector selector = !constraints.isEmpty() ?
                 SizeSelectors.and(constraints.toArray(new SizeSelector[constraints.size()])) :
-                SizeSelectors.max();
+                SizeSelectors.biggest();
 
         // Gestures
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));

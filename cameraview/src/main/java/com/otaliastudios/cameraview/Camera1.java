@@ -887,9 +887,10 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         if (sizes == null) return null;
         List<Size> result = new ArrayList<>(sizes.size());
         for (Camera.Size size : sizes) {
-            result.add(new Size(size.width, size.height));
+            Size add = new Size(size.width, size.height);
+            if (!result.contains(add)) result.add(add);
         }
-        LOG.i("size:", "previewSizes:", result);
+        LOG.i("size:", "sizesFromList:", result);
         return result;
     }
 }

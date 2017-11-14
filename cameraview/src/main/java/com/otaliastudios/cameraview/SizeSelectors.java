@@ -120,7 +120,7 @@ public class SizeSelectors {
      *
      * @return a new selector
      */
-    public static SizeSelector max() {
+    public static SizeSelector biggest() {
         return new SizeSelector() {
             @NonNull
             @Override
@@ -138,7 +138,7 @@ public class SizeSelectors {
      *
      * @return a new selector
      */
-    public static SizeSelector min() {
+    public static SizeSelector smallest() {
         return new SizeSelector() {
             @NonNull
             @Override

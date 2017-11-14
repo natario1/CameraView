@@ -3,7 +3,6 @@ package com.otaliastudios.cameraview;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.List;
@@ -96,7 +95,7 @@ public class SizeSelectorsTest {
 
     @Test
     public void testMax() {
-        SizeSelector selector = SizeSelectors.max();
+        SizeSelector selector = SizeSelectors.biggest();
         List<Size> list = selector.select(input);
         assertEquals(list.size(), input.size());
         assertEquals(list.get(0), new Size(2000, 4000));
@@ -104,7 +103,7 @@ public class SizeSelectorsTest {
 
     @Test
     public void testMin() {
-        SizeSelector selector = SizeSelectors.min();
+        SizeSelector selector = SizeSelectors.smallest();
         List<Size> list = selector.select(input);
         assertEquals(list.size(), input.size());
         assertTrue(list.get(0).equals(new Size(30, 40)) || list.get(0).equals(new Size(40, 30)));

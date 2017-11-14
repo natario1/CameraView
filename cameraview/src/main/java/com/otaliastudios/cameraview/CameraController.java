@@ -1,7 +1,6 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
-import android.hardware.Camera;
 import android.location.Location;
 
 
@@ -14,8 +13,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 abstract class CameraController implements
@@ -393,6 +390,7 @@ abstract class CameraController implements
         // The external selector is expecting stuff in the view world, not in the sensor world.
         // Flip before starting, and then flip again.
         boolean flip = shouldFlipSizes();
+        LOG.i("computePictureSize:", "flip:", flip);
         if (flip) {
             for (Size size : captureSizes) {
                 size.flip();
@@ -402,11 +400,11 @@ abstract class CameraController implements
         if (mSessionType == SessionType.PICTURE) {
             selector = SizeSelectors.or(
                     mPictureSizeSelector,
-                    SizeSelectors.max() // Fallback to max.
+                    SizeSelectors.biggest() // Fallback to biggest.
             );
         } else {
             // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.
-            // And we want the picture size to be the max picture consistent with the video aspect ratio.
+            // And we want the picture size to be the biggest picture consistent with the video aspect ratio.
             // -> Use the external picture selector, but enforce the ratio constraint.
             CamcorderProfile profile = getCamcorderProfile();
             AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
@@ -421,6 +419,7 @@ abstract class CameraController implements
         }
 
         Size result = selector.select(captureSizes).get(0);
+        LOG.i("computePictureSize:", "result:", result);
         if (flip) result.flip();
         return result;
     }
@@ -436,7 +435,7 @@ abstract class CameraController implements
         SizeSelector matchAll = SizeSelectors.or(
                 SizeSelectors.and(matchRatio, matchSize),
                 matchRatio, // If couldn't match both, match ratio.
-                SizeSelectors.max() // If couldn't match any, take the biggest.
+                SizeSelectors.biggest() // If couldn't match any, take the biggest.
         );
         return matchAll.select(previewSizes).get(0);
     }

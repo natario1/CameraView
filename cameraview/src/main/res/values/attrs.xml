@@ -14,9 +14,9 @@
 
         <attr name="cameraPictureSizeMaxArea" format="integer|reference" />
 
-        <attr name="cameraPictureSizeMin" format="boolean"/>
+        <attr name="cameraPictureSizeSmallest" format="boolean"/>
 
-        <attr name="cameraPictureSizeMax" format="boolean"/>
+        <attr name="cameraPictureSizeBiggest" format="boolean"/>
 
         <attr name="cameraPictureSizeAspectRatio" format="string|reference"/>
 
