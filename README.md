@@ -31,7 +31,7 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - Seamless image and video capturing
 - **Gestures** support (tap to focus, pinch to zoom and much more)
 - System permission handling
-- Smart sizing behavior
+- **Smart sizing** behavior
   - Preview: Create a `CameraView` of **any size**
   - Preview: Center inside or center crop behaviors
   - Output: Handy utilities to set the output size
@@ -39,14 +39,15 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - Built-in **grid drawing**
 - Multiple capture methods
   - Take high-resolution pictures with `capturePicture`
-  - Take quick snapshots as a freeze frame of the preview with `captureSnapshot` (similar to Snapchat and Instagram)
+  - Take **quick snapshots** as a freeze frame of the preview with `captureSnapshot`
 - Control HDR, flash, zoom, white balance, exposure correction and more
 - **Frame processing** support
 - **Metadata** support for pictures and videos
   - Automatically detected orientation tags
-  - Plug in location tags with `setLocation()` API
+  - Plug in **location tags** with `setLocation()` API
 - `CameraUtils` to help with Bitmaps and orientations
 - Error handling
+- Thread safe, **well tested**
 - **Lightweight**, no dependencies, just support `ExifInterface`
 - Works down to API level 15
 
