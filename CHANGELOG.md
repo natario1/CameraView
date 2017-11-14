@@ -1,3 +1,22 @@
+## v1.4.0
+
+- CameraView is now completely thread-safe. All actions are asynchronous. ([#97][97])
+  This has some breaking drawbacks. Specifically, the `get` methods (e.g., `getWhiteBalance`) might
+  not return the correct value while it is being changed. So don't trust them right after you have changed the value.
+  Instead, always check the `CameraOptions` to see if the value you want is supported.
+- Added error handling ([#97][97]) in `CameraListener.onCameraError(CameraException)`.
+  At the moment, all exceptions there are unrecoverable. When the method is called, the camera is showing
+  a black preview. This is a good moment to show an error dialog to the user.
+  You can also try to `start()` again but that is not guaranteed to work.
+- Long requested ability to set the picture output size ([#99][99]). Can be done through
+  `CameraView.setPictureSize()` or through new XML attributes starting with `cameraPictureSize`.
+  Please refer to docs about it.
+- Deprecated `toggleFacing`. It was unreliable and will be removed.
+- Deprecated `getCaptureSize`. Use `getPictureSize` instead.
+- Fixed bugs.
+
+https://github.com/natario1/CameraView/compare/v1.3.2...v1.4.0
+
 ### v1.3.2
 
 - Fixed a memory leak thanks to [@andrewmunn][andrewmunn] ([#92][92])
@@ -35,3 +54,5 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [92]: https://github.com/natario1/CameraView/pull/92
 [93]: https://github.com/natario1/CameraView/pull/93
 [94]: https://github.com/natario1/CameraView/pull/94
+[97]: https://github.com/natario1/CameraView/pull/97
+[99]: https://github.com/natario1/CameraView/pull/99
