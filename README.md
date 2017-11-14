@@ -8,7 +8,8 @@
 # CameraView
 
 CameraView is a well documented, high-level library that makes capturing pictures and videos easy,
-addressing most of the common issues and needs, and still leaving you with flexibility where needed. See [CHANGELOG](https://github.com/natario1/CameraView/blob/master/CHANGELOG.md).
+addressing most of the common issues and needs, and still leaving you with flexibility where needed.
+See [CHANGELOG](https://github.com/natario1/CameraView/blob/master/CHANGELOG.md).
 
 ```groovy
 compile 'com.otaliastudios:cameraview:1.3.2'
@@ -30,10 +31,11 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - Seamless image and video capturing
 - **Gestures** support (tap to focus, pinch to zoom and much more)
 - System permission handling
-- Dynamic sizing behavior
-  - Create a `CameraView` of **any size**
-  - Center inside or center crop behaviors
-  - Automatic output cropping to match your `CameraView` bounds
+- Smart sizing behavior
+  - Preview: Create a `CameraView` of **any size**
+  - Preview: Center inside or center crop behaviors
+  - Output: Handy utilities to set the output size
+  - Output: Automatic cropping to match your `CameraView` preview bounds
 - Built-in **grid drawing**
 - Multiple capture methods
   - Take high-resolution pictures with `capturePicture`
@@ -55,9 +57,9 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
   - [Capturing Video](#capturing-video)
   - [Other camera events](#other-camera-events)
 - [Gestures](#gestures)  
-- [Dynamic Sizing Behavior](#dynamic-sizing-behavior)
-  - [Center Inside](#center-inside)
-  - [Center Crop](#center-crop)
+- [Sizing Behavior](#sizing-behavior)
+  - [Preview Size](#preview-size)
+  - [Picture Size](#picture-size)
 - [Camera Controls](#camera-controls)
 - [Frame Processing](#frame-processing)
 - [Other APIs](#other-apis)  
@@ -78,7 +80,9 @@ To use the CameraView engine, simply add a `CameraView` to your layout:
     android:layout_height="wrap_content" />
 ```
 
-`CameraView` has lots of XML attributes, so keep reading. Make sure you override `onResume`, `onPause` and  `onDestroy` in your activity or fragment, and call `CameraView.start()`, `stop()` and `destroy()`.
+`CameraView` has lots of XML attributes, so keep reading. Make sure you override `onResume`,
+`onPause` and  `onDestroy` in your activity or fragment, and call `CameraView.start()`, `stop()`
+and `destroy()`.
 
 ```java
 @Override
@@ -102,7 +106,8 @@ protected void onDestroy() {
 
 ### Capturing Images
 
-To capture an image just call `CameraView.capturePicture()`. Make sure you setup a `CameraListener` to handle the image callback.
+To capture an image just call `CameraView.capturePicture()`. Make sure you setup a `CameraListener`
+to handle the image callback.
 
 ```java
 camera.addCameraListener(new CameraListener() {
@@ -117,11 +122,14 @@ camera.addCameraListener(new CameraListener() {
 camera.capturePicture();
 ```
 
-You can also use `camera.captureSnapshot()` to capture a preview frame. This is faster, though will ensure lower quality output.
+You can also use `camera.captureSnapshot()` to capture a preview frame. This is faster, though will
+ensure lower quality output.
 
 ### Capturing Video
 
-To capture video just call `CameraView.startRecordingVideo(file)` to start, and `CameraView.stopRecordingVideo()` to finish. Make sure you setup a `CameraListener` to handle the video callback.
+To capture video just call `CameraView.startRecordingVideo(file)` to start, and
+`CameraView.stopRecordingVideo()` to finish. Make sure you setup a `CameraListener` to handle
+the video callback.
 
 ```java
 camera.addCameraListener(new CameraListener() {
@@ -152,7 +160,8 @@ camera.postDelayed(new Runnable() {
 
 ### Other camera events
 
-Make sure you can react to different camera events by setting up one or more `CameraListener` instances. All these are executed on the UI thread.
+Make sure you can react to different camera events by setting up one or more `CameraListener`
+instances. All these are executed on the UI thread.
 
 ```java
 camera.addCameraListener(new CameraListener() {
@@ -239,7 +248,9 @@ camera.addCameraListener(new CameraListener() {
 
 ## Gestures
 
-`CameraView` listen to lots of different gestures inside its bounds. You have the chance to map these gestures to particular actions or camera controls, using `mapGesture()`. This lets you emulate typical behaviors in a single line:
+`CameraView` listen to lots of different gestures inside its bounds. You have the chance to map
+these gestures to particular actions or camera controls, using `mapGesture()`.
+This lets you emulate typical behaviors in a single line:
 
 ```java
 cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM); // Pinch to zoom!
@@ -261,19 +272,25 @@ Simple as that. More gestures are coming. There are two things to be noted:
 |`SCROLL_VERTICAL` (`cameraGestureScrollVertical`)|Vertical movement gesture.|`zoom` `exposureCorrection` `none`|
 
 
-## Dynamic Sizing Behavior
+## Sizing Behavior
 
-`CameraView` has a smart measuring behavior that will let you do what you want with a few flags. Measuring is controlled simply by `layout_width` and `layout_height` attributes, with this meaning:
+### Preview Size
+
+`CameraView` has a smart measuring behavior that will let you do what you want with a few flags.
+Measuring is controlled simply by `layout_width` and `layout_height` attributes, with this meaning:
 
 - `WRAP_CONTENT` : try to stretch this dimension to respect the preview aspect ratio.
 - `MATCH_PARENT` : fill this dimension, even if this means ignoring the aspect ratio.
 - Fixed values (e.g. `500dp`) : respect this dimension.
 
-You can have previews of all sizes, not just the supported presets. Whaterever you do, the preview will never be distorted. 
+You can have previews of all sizes, not just the supported presets. Whaterever you do,
+the preview will never be distorted.
 
-### Center inside
+#### Center Inside
 
-You can emulate a **center inside** behavior (like the `ImageView` scaletype) by setting both dimensions to `wrap_content`. The camera will get the biggest possible size that fits into your bounds, just like what happens with image views.
+You can emulate a **center inside** behavior (like the `ImageView` scaletype) by setting
+both dimensions to `wrap_content`. The camera will get the biggest possible size that fits
+into your bounds, just like what happens with image views.
 
 
 ```xml
@@ -282,11 +299,15 @@ You can emulate a **center inside** behavior (like the `ImageView` scaletype) by
     android:layout_height="wrap_content" />
 ```
 
-This means that the whole preview is visible, and the image output matches what was visible during the capture.
+This means that the whole preview is visible, and the image output matches what was visible
+during the capture.
 
-### Center crop
+#### Center Crop
 
-You can emulate a **center crop** behavior by setting both dimensions to fixed values or to `MATCH_PARENT`. The camera view will fill the rect. If your dimensions don't match the aspect ratio of the internal preview surface, the surface will be cropped to fill the view, just like `android:scaleType="centerCrop"` on an `ImageView`.
+You can emulate a **center crop** behavior by setting both dimensions to fixed values or to
+`MATCH_PARENT`. The camera view will fill the rect. If your dimensions don't match the aspect ratio
+of the internal preview surface, the surface will be cropped to fill the view,
+just like `android:scaleType="centerCrop"` on an `ImageView`.
 
 ```xml
 <com.otaliastudios.cameraview.CameraView
@@ -294,7 +315,64 @@ You can emulate a **center crop** behavior by setting both dimensions to fixed v
     android:layout_height="match_parent" />
 ```
 
-This means that part of the preview is hidden, and the image output will contain parts of the scene that were not visible during the capture. If this is a problem, see [cameraCropOutput](#cameracropoutput).
+This means that part of the preview is hidden, and the image output will contain parts of the scene
+that were not visible during the capture. If this is a problem, see [cameraCropOutput](#cameracropoutput).
+
+### Picture Size
+
+On top of this, you can control the actual size of the output picture, among the list of available sizes.
+It is the size of the final JPEG picture. This can be achieved directly through XML, or
+using the `SizeSelector` class:
+
+```java
+cameraView.setPictureSize(new SizeSelector() {
+    @Override
+    public List<Size> select(List<Size> source) {
+        // Receives a list of available sizes.
+        // Must return a list of acceptable sizes.
+    }
+});
+```
+
+In practice, this is way easier using XML attributes or leveraging the `SizeSelectors` utilities:
+
+|Constraint|XML attr|SizeSelector|
+|----------|--------|------------|
+|min. width|`app:cameraPictureSizeMinWidth="100"`|`SizeSelectors.minWidth(100)`|
+|min. height|`app:cameraPictureSizeMinHeight="100"`|`SizeSelectors.minHeight(100)`|
+|max. width|`app:cameraPictureSizeMaxWidth="3000"`|`SizeSelectors.maxWidth(3000)`|
+|max. height|`app:cameraPictureSizeMaxHeight="3000"`|`SizeSelectors.maxHeight(3000)`|
+|min. area|`app:cameraPictureSizeMinArea="1000000"`|`SizeSelectors.minArea(1000000)`|
+|max. area|`app:cameraPictureSizeMaxArea="5000000"`|`SizeSelectors.maxArea(5000000)`|
+|aspect ratio|`app:cameraPictureSizeAspectRatio="1:1"`|`SizeSelectors.aspectRatio(AspectRatio.of(1,1), 0)`|
+|smallest|`app:cameraPictureSizeSmallest="true"`|`SizeSelectors.smallest()`|
+|biggest (**default**)|`app:cameraPictureSizeBiggest="true"`|`SizeSelectors.biggest()`|
+
+If you declare more than one XML constraint, the resulting selector will try to match **all** the
+constraints. Be careful - it is very likely that applying lots of constraints will give
+empty results.
+
+#### SizeSelectors utilities
+
+For more versatility, or to address selection issues with multiple constraints,
+we encourage you to use `SizeSelectors` utilities, that will let you merge different selectors.
+
+This selector will try to find square sizes bigger than 1000x2000. If none is found, it falls back
+to just square sizes:
+
+```java
+SizeSelector width = SizeSelectors.minWidth(1000);
+SizeSelector height = SizeSelectors.minWidth(2000);
+SizeSelector dimensions = SizeSelectors.and(width, height); // Matches sizes bigger than 1000x2000.
+SizeSelector ratio = SizeSelectors.aspectRatio(AspectRatio.of(1, 1), 0); // Matches 1:1 sizes.
+
+SizeSelector result = SizeSelectors.or(
+    SizeSelectors.and(ratio, dimensions), // Try to match both constraints
+    ratio, // If none is found, at least try to match the aspect ratio
+    SizeSelectors.biggest() // If none is found, take the biggest
+);
+camera.setPictureSize(result);
+```
 
 ## Camera controls
 
@@ -337,10 +415,16 @@ Most camera parameters can be controlled through XML attributes or linked method
 
 What to capture - either picture or video. This has a couple of consequences:
 
-- Sizing: capture and preview size are chosen among the available picture or video sizes, depending on the flag. When `picture`, we choose the max possible picture size and adapt the preview. When `video`, we respect the `videoQuality` choice and adapt the picture and the preview size.
-- Picture capturing: due to sizing behavior, capturing pictures in `video` mode might lead to inconsistent results. In this case it is encouraged to use `captureSnapshot` instead, which will capture preview frames. This is fast and thus works well with slower camera sensors.
-- Picture capturing: while recording a video, image capturing might work, but it is not guaranteed (it's device dependent)
-- Permission behavior: when requesting a `video` session, the record audio permission will be requested. If this is needed, the audio permission should be added to your manifest or the app will crash.
+- Sizing: picture and preview size are chosen among the available picture or video sizes,
+  depending on the flag. The picture size is chosen according to the given [size selector](#picture-size).
+  When `video`, in addition, we try to match the `videoQuality` aspect ratio.
+- Picture capturing: due to sizing behavior, capturing pictures in `video` mode might lead to
+  inconsistent results. In this case it is encouraged to use `captureSnapshot` instead, which will
+  capture preview frames. This is fast and thus works well with slower camera sensors.
+- Picture capturing: while recording a video, image capturing might work, but it is not guaranteed
+  (it's device dependent)
+- Permission behavior: when requesting a `video` session, the record audio permission will be requested.
+  If this is needed, the audio permission should be added to your manifest or the app will crash.
 
 ```java
 cameraView.setSessionType(SessionType.PICTURE);
@@ -369,7 +453,8 @@ cameraView.setFlash(Flash.TORCH);
 
 #### cameraGrid
 
-Lets you draw grids over the camera preview. Supported values are `off`, `draw3x3` and `draw4x4` for regular grids, and `drawPhi` for a grid based on the golden ratio constant, often used in photography.
+Lets you draw grids over the camera preview. Supported values are `off`, `draw3x3` and `draw4x4`
+for regular grids, and `drawPhi` for a grid based on the golden ratio constant, often used in photography.
 
 ```java
 cameraView.setGrid(Grid.OFF);
@@ -381,7 +466,8 @@ cameraView.setGrid(Grid.DRAW_PHI);
 #### cameraCropOutput
 
 Whether the output picture should be cropped to fit the aspect ratio of the preview surface.
-This can guarantee consistency between what the user sees and the final output, if you fixed the camera view dimensions. This does not support videos.
+This can guarantee consistency between what the user sees and the final output, if you fixed
+the camera view dimensions. This does not support videos.
 
 #### cameraJpegQuality
 
@@ -438,8 +524,8 @@ cameraView.setAudio(Audio.ON);
 
 #### cameraPlaySounds
 
-Controls whether we should play platform-provided sounds during certain events (shutter click, focus completed).
-Please note that:
+Controls whether we should play platform-provided sounds during certain events
+(shutter click, focus completed). Please note that:
 
 - on API < 16, this flag is always set to `false`
 - the Camera1 engine will always play shutter sounds regardless of this flag
@@ -501,7 +587,6 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`setZoom(float)`, `getZoom()`|Sets a zoom value, where 0 means camera zoomed out and 1 means zoomed in. No-op if zoom is not supported, or camera not started.|
 |`setExposureCorrection(float)`, `getExposureCorrection()`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
 |`toggleFacing()`|Toggles the facing value between `Facing.FRONT` and `Facing.BACK`.|
-|`toggleFlash()`|Toggles the flash value between `Flash.OFF`, `Flash.ON`, and `Flash.AUTO`.|
 |`setLocation(Location)`|Sets location data to be appended to picture/video metadata.|
 |`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
 |`getLocation()`|Retrieves location data previously applied with setLocation().|
@@ -617,11 +702,11 @@ all the code was changed.
 - *Frame processor support*
 - *inject external loggers*
 - *error handling*
+- *capture size selectors*
 
 These are still things that need to be done, off the top of my head:
 
 - [ ] `Camera2` integration
-- [ ] add a `setPreferredAspectRatio` API to choose the capture size. Preview size will adapt, and then, if let free, the CameraView will adapt as well
 - [ ] animate grid lines similar to stock camera app
 - [ ] add onRequestPermissionResults for easy permission callback
 - [ ] decent code coverage

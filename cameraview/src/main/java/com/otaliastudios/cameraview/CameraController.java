@@ -2,6 +2,10 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
 import android.location.Location;
+
+
+import android.media.CamcorderProfile;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -9,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
 import java.io.File;
+import java.util.List;
 
 abstract class CameraController implements
         CameraPreview.SurfaceCallback,
@@ -27,6 +32,7 @@ abstract class CameraController implements
     protected CameraPreview mPreview;
     protected WorkerHandler mHandler;
     /* for tests */ Handler mCrashHandler;
+    protected int mCameraId;
 
     protected Facing mFacing;
     protected Flash mFlash;
@@ -40,13 +46,14 @@ abstract class CameraController implements
     protected float mZoomValue;
     protected float mExposureCorrectionValue;
 
-    protected Size mCaptureSize;
+    protected Size mPictureSize;
     protected Size mPreviewSize;
     protected int mPreviewFormat;
 
     protected ExtraProperties mExtraProperties;
     protected CameraOptions mOptions;
     protected FrameManager mFrameManager;
+    protected SizeSelector mPictureSizeSelector;
 
     protected int mDisplayOffset;
     protected int mDeviceOrientation;
@@ -76,6 +83,13 @@ abstract class CameraController implements
     }
 
     //region Error handling
+
+    private static class NoOpExceptionHandler implements Thread.UncaughtExceptionHandler {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            // No-op.
+        }
+    }
 
     @Override
     public void uncaughtException(final Thread thread, final Throwable throwable) {
@@ -119,8 +133,9 @@ abstract class CameraController implements
 
     final void destroy() {
         LOG.i("destroy:", "state:", ss());
-        // Prevent CameraController leaks.
-        mHandler.getThread().setUncaughtExceptionHandler(null);
+        // Prevent CameraController leaks. Don't set to null, or exceptions
+        // inside the standard stop() method might crash the main thread.
+        mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
         // Stop if needed.
         stopImmediately();
     }
@@ -232,10 +247,9 @@ abstract class CameraController implements
         return mState;
     }
 
-
     //endregion
 
-    //region Rotation callbacks
+    //region Simple setters
 
     void onDisplayOffset(int displayOrientation) {
         // I doubt this will ever change.
@@ -246,9 +260,13 @@ abstract class CameraController implements
         mDeviceOrientation = deviceOrientation;
     }
 
+    void setPictureSizeSelector(SizeSelector selector) {
+        mPictureSizeSelector = selector;
+    }
+
     //endregion
 
-    //region Abstract setParameters
+    //region Abstract setters
 
     // Should restart the session if active.
     abstract void setSessionType(SessionType sessionType);
@@ -343,6 +361,14 @@ abstract class CameraController implements
         return mAudio;
     }
 
+    final SizeSelector getPictureSizeSelector() {
+        return mPictureSizeSelector;
+    }
+
+    final Size getPictureSize() {
+        return mPictureSize;
+    }
+
     final float getZoomValue() {
         return mZoomValue;
     }
@@ -351,12 +377,127 @@ abstract class CameraController implements
         return mExposureCorrectionValue;
     }
 
-    final Size getCaptureSize() {
-        return mCaptureSize;
-    }
-
     final Size getPreviewSize() {
         return mPreviewSize;
+    }
+
+    //endregion
+
+    //region Size utils
+
+    /**
+     * This is called either on cameraView.start(), or when the underlying surface changes.
+     * It is possible that in the first call the preview surface has not already computed its
+     * dimensions.
+     * But when it does, the {@link CameraPreview.SurfaceCallback} should be called,
+     * and this should be refreshed.
+     */
+    protected Size computePictureSize(List<Size> captureSizes) {
+        SizeSelector selector;
+
+        // The external selector is expecting stuff in the view world, not in the sensor world.
+        // Flip before starting, and then flip again.
+        boolean flip = shouldFlipSizes();
+        LOG.i("computePictureSize:", "flip:", flip);
+        if (flip) {
+            for (Size size : captureSizes) {
+                size.flip();
+            }
+        }
+
+        if (mSessionType == SessionType.PICTURE) {
+            selector = SizeSelectors.or(
+                    mPictureSizeSelector,
+                    SizeSelectors.biggest() // Fallback to biggest.
+            );
+        } else {
+            // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.
+            // And we want the picture size to be the biggest picture consistent with the video aspect ratio.
+            // -> Use the external picture selector, but enforce the ratio constraint.
+            CamcorderProfile profile = getCamcorderProfile();
+            AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
+            if (flip) targetRatio = targetRatio.inverse();
+            LOG.i("size:", "computeCaptureSize:", "videoQuality:", mVideoQuality, "targetRatio:", targetRatio);
+            SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
+            selector = SizeSelectors.or(
+                    SizeSelectors.and(matchRatio, mPictureSizeSelector),
+                    SizeSelectors.and(matchRatio),
+                    mPictureSizeSelector
+            );
+        }
+
+        Size result = selector.select(captureSizes).get(0);
+        LOG.i("computePictureSize:", "result:", result);
+        if (flip) result.flip();
+        return result;
+    }
+
+    protected Size computePreviewSize(List<Size> previewSizes) {
+        // instead of flipping everything to the view world, we can just flip the
+        // surface size to the sensor world
+        boolean flip = shouldFlipSizes();
+        AspectRatio targetRatio = AspectRatio.of(mPictureSize.getWidth(), mPictureSize.getHeight());
+        Size targetMinSize = mPreview.getSurfaceSize();
+        if (flip) targetMinSize.flip();
+        LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
+        SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
+        SizeSelector matchSize = SizeSelectors.and(
+                SizeSelectors.minHeight(targetMinSize.getHeight()),
+                SizeSelectors.minWidth(targetMinSize.getWidth()));
+        SizeSelector matchAll = SizeSelectors.or(
+                SizeSelectors.and(matchRatio, matchSize),
+                matchRatio, // If couldn't match both, match ratio.
+                SizeSelectors.biggest() // If couldn't match any, take the biggest.
+        );
+        Size result = matchAll.select(previewSizes).get(0);
+        LOG.i("computePreviewSize:", "result:", result);
+        // Flip back what we flipped.
+        if (flip) targetMinSize.flip();
+        return result;
+    }
+
+    @NonNull
+    protected CamcorderProfile getCamcorderProfile() {
+        switch (mVideoQuality) {
+            case HIGHEST:
+                return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
+
+            case MAX_2160P:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                        CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2160P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_2160P);
+                }
+                // Don't break.
+
+            case MAX_1080P:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_1080P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_1080P);
+                }
+                // Don't break.
+
+            case MAX_720P:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_720P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_720P);
+                }
+                // Don't break.
+
+            case MAX_480P:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_480P)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_480P);
+                }
+                // Don't break.
+
+            case MAX_QVGA:
+                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
+                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_QVGA);
+                }
+                // Don't break.
+
+            case LOWEST:
+            default:
+                // Fallback to lowest.
+                return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_LOW);
+        }
     }
 
     //endregion

@@ -15,6 +15,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:keepScreenOn="true"
+        app:cameraPlaySounds="true"
         app:cameraGrid="off"
         app:cameraCropOutput="false"
         app:cameraFacing="back"

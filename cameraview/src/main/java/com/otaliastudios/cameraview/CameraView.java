@@ -92,6 +92,7 @@ public class CameraView extends FrameLayout {
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         setWillNotDraw(false);
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
+
         // Self managed
         int jpegQuality = a.getInteger(R.styleable.CameraView_cameraJpegQuality, DEFAULT_JPEG_QUALITY);
         boolean cropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, DEFAULT_CROP_OUTPUT);
@@ -106,6 +107,36 @@ public class CameraView extends FrameLayout {
         SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
         Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
         Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
+
+        // Size selectors
+        List<SizeSelector> constraints = new ArrayList<>(3);
+        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMinWidth)) {
+            constraints.add(SizeSelectors.minWidth(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinWidth, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMaxWidth)) {
+            constraints.add(SizeSelectors.maxWidth(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxWidth, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMinHeight)) {
+            constraints.add(SizeSelectors.minHeight(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinHeight, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMaxHeight)) {
+            constraints.add(SizeSelectors.maxHeight(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxHeight, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMinArea)) {
+            constraints.add(SizeSelectors.minArea(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinArea, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMaxArea)) {
+            constraints.add(SizeSelectors.maxArea(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxArea, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeAspectRatio)) {
+            //noinspection ConstantConditions
+            constraints.add(SizeSelectors.aspectRatio(AspectRatio.parse(a.getString(R.styleable.CameraView_cameraPictureSizeAspectRatio)), 0));
+        }
+        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeSmallest, false)) constraints.add(SizeSelectors.smallest());
+        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeBiggest, false)) constraints.add(SizeSelectors.biggest());
+        SizeSelector selector = !constraints.isEmpty() ?
+                SizeSelectors.and(constraints.toArray(new SizeSelector[constraints.size()])) :
+                SizeSelectors.biggest();
 
         // Gestures
         GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
@@ -146,10 +177,10 @@ public class CameraView extends FrameLayout {
         setGrid(grid);
         setHdr(hdr);
         setAudio(audio);
+        setPictureSize(selector);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
-        // mapGesture(Gesture.DOUBLE_TAP, doubleTapGesture);
         mapGesture(Gesture.LONG_TAP, longTapGesture);
         mapGesture(Gesture.PINCH, pinchGesture);
         mapGesture(Gesture.SCROLL_HORIZONTAL, scrollHorizontalGesture);
@@ -514,8 +545,8 @@ public class CameraView extends FrameLayout {
     /**
      * Checks that we have appropriate permissions for this session type.
      * Throws if session = audio and manifest did not add the microphone permissions.     
-     * @param sessionType
-     * @param audio
+     * @param sessionType the sessionType to be checked
+     * @param audio the audio setting to be checked
      * @return true if we can go on, false otherwise.
      */
     @SuppressLint("NewApi")
@@ -848,33 +879,6 @@ public class CameraView extends FrameLayout {
 
 
     /**
-     * Toggles the flash mode between {@link Flash#OFF},
-     * {@link Flash#ON} and {@link Flash#AUTO}, in this order.
-     *
-     * @return the new flash value
-     */
-    public Flash toggleFlash() {
-        Flash flash = mCameraController.getFlash();
-        switch (flash) {
-            case OFF:
-                setFlash(Flash.ON);
-                break;
-
-            case ON:
-                setFlash(Flash.AUTO);
-                break;
-
-            case AUTO:
-            case TORCH:
-                setFlash(Flash.OFF);
-                break;
-        }
-
-        return mCameraController.getFlash();
-    }
-
-
-    /**
      * Controls the audio mode.
      *
      * @see Audio#OFF
@@ -962,6 +966,18 @@ public class CameraView extends FrameLayout {
      */
     public SessionType getSessionType() {
         return mCameraController.getSessionType();
+    }
+
+
+    /**
+     * Sets picture capture size. The {@link SizeSelector} will be invoked with the list of available
+     * size, and the first acceptable size will be accepted and passed to the internal engine.
+     * See the {@link SizeSelectors} class for handy utilities for creating selectors.
+     *
+     * @param selector a size selector
+     */
+    public void setPictureSize(@NonNull SizeSelector selector) {
+        mCameraController.setPictureSizeSelector(selector);
     }
 
 
@@ -1246,8 +1262,8 @@ public class CameraView extends FrameLayout {
      * @return a Size
      */
     @Nullable
-    public Size getCaptureSize() {
-        return mCameraController != null ? mCameraController.getCaptureSize() : null;
+    public Size getPictureSize() {
+        return mCameraController != null ? mCameraController.getPictureSize() : null;
     }
 
 
@@ -1622,6 +1638,39 @@ public class CameraView extends FrameLayout {
                 }
             });
         }
+    }
+
+    //endregion
+
+    //region deprecated APIs
+
+    /**
+     * @deprecated use {@link #getPictureSize()} instead.
+     */
+    @Deprecated
+    @Nullable
+    public Size getCaptureSize() {
+        return getPictureSize();
+    }
+
+    /**
+     * Toggles the flash mode between {@link Flash#OFF},
+     * {@link Flash#ON} and {@link Flash#AUTO}, in this order.
+     *
+     * @deprecated Don't use this. Flash values might not be supported,
+     *             and the return value is unreliable.
+     *
+     * @return the new flash value
+     */
+    @Deprecated
+    public Flash toggleFlash() {
+        Flash flash = mCameraController.getFlash();
+        switch (flash) {
+            case OFF: setFlash(Flash.ON); break;
+            case ON: setFlash(Flash.AUTO); break;
+            case AUTO: case TORCH: setFlash(Flash.OFF); break;
+        }
+        return mCameraController.getFlash();
     }
 
     //endregion

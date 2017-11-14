@@ -1,12 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="CameraView">
-        <!-- WIP attr name="cameraGestureDoubleTap" format="enum">
-            <enum name="none" value="0" />
-            <enum name="focus" value="1" />
-            <enum name="focusWithMarker" value="2" />
-            <enum name="capture" value="3" />
-        </attr-->
+
+        <attr name="cameraPictureSizeMinWidth" format="integer|reference"/>
+
+        <attr name="cameraPictureSizeMaxWidth" format="integer|reference"/>
+
+        <attr name="cameraPictureSizeMinHeight" format="integer|reference"/>
+
+        <attr name="cameraPictureSizeMaxHeight" format="integer|reference"/>
+
+        <attr name="cameraPictureSizeMinArea" format="integer|reference" />
+
+        <attr name="cameraPictureSizeMaxArea" format="integer|reference" />
+
+        <attr name="cameraPictureSizeSmallest" format="boolean"/>
+
+        <attr name="cameraPictureSizeBiggest" format="boolean"/>
+
+        <attr name="cameraPictureSizeAspectRatio" format="string|reference"/>
 
         <attr name="cameraGestureTap" format="enum">
             <enum name="none" value="0" />

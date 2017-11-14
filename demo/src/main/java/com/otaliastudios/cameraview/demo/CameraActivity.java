@@ -102,7 +102,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
         // This can happen if picture was taken with a gesture.
         if (mCaptureTime == 0) mCaptureTime = callbackTime - 300;
-        if (mCaptureNativeSize == null) mCaptureNativeSize = camera.getCaptureSize();
+        if (mCaptureNativeSize == null) mCaptureNativeSize = camera.getPictureSize();
 
         PicturePreviewActivity.setImage(jpeg);
         Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
@@ -151,7 +151,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         if (mCapturingPicture) return;
         mCapturingPicture = true;
         mCaptureTime = System.currentTimeMillis();
-        mCaptureNativeSize = camera.getCaptureSize();
+        mCaptureNativeSize = camera.getPictureSize();
         message("Capturing picture...", false);
         camera.capturePicture();
     }

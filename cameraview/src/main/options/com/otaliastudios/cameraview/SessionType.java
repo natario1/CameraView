@@ -16,7 +16,7 @@ public enum SessionType {
      *
      * - Trying to take videos in this session will throw an exception
      * - Only the camera permission is requested
-     * - Preview and capture size is chosen as the max available size
+     * - Capture size is chosen according to the current picture size selector
      */
     PICTURE(0),
 
@@ -26,7 +26,7 @@ public enum SessionType {
      * - Trying to take pictures in this session will work, though with lower quality
      * - Trying to take pictures while recording a video will work if supported
      * - Camera and audio record permissions are requested
-     * - Preview and capture size are chosen to respect the {@link VideoQuality} aspect ratio
+     * - Capture size is chosen trying to respect the {@link VideoQuality} aspect ratio
      *
      * @see CameraOptions#isVideoSnapshotSupported()
      */
