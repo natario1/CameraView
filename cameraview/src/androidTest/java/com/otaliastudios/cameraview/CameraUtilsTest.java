@@ -48,8 +48,7 @@ public class CameraUtilsTest extends BaseTest {
         source.compress(Bitmap.CompressFormat.PNG, 100, os);
         final byte[] data = os.toByteArray();
 
-        final Task<Bitmap> decode = new Task<>();
-        decode.listen();
+        final Task<Bitmap> decode = new Task<>(true);
         final CameraUtils.BitmapCallback callback = new CameraUtils.BitmapCallback() {
             @Override
             public void onBitmapReady(Bitmap bitmap) {

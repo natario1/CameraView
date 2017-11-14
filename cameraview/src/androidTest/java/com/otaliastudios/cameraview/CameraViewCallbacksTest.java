@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verify;
 
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-public class CameraCallbacksTest extends BaseTest {
+public class CameraViewCallbacksTest extends BaseTest {
 
     private CameraView camera;
     private CameraListener listener;
@@ -73,8 +73,7 @@ public class CameraCallbacksTest extends BaseTest {
                 camera.instantiatePreview();
                 camera.addCameraListener(listener);
                 camera.addFrameProcessor(processor);
-                task = new Task<>();
-                task.listen();
+                task = new Task<>(true);
             }
         });
     }
@@ -225,6 +224,17 @@ public class CameraCallbacksTest extends BaseTest {
         verify(listener, times(1)).onOrientationChanged(anyInt());
     }
 
+    // TODO: test onShutter, here or elsewhere
+
+    @Test
+    public void testCameraError() {
+        CameraException error = new CameraException(new RuntimeException("Error"));
+        completeTask().when(listener).onCameraError(error);
+
+        camera.mCameraCallbacks.dispatchError(error);
+        assertNotNull(task.await(200));
+        verify(listener, times(1)).onCameraError(error);
+    }
 
     @Test
     public void testProcessJpeg() {
@@ -264,8 +274,7 @@ public class CameraCallbacksTest extends BaseTest {
 
     private int[] testProcessImage(boolean jpeg, boolean crop, int[] viewDim, int[] imageDim) {
         // End our task when onPictureTaken is called. Take note of the result.
-        final Task<byte[]> jpegTask = new Task<>();
-        jpegTask.listen();
+        final Task<byte[]> jpegTask = new Task<>(true);
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {

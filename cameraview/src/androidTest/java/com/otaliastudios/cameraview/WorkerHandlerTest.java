@@ -24,8 +24,7 @@ public class WorkerHandlerTest extends BaseTest {
 
     @Test
     public void testStaticRun() {
-        final Task<Boolean> task = new Task<>();
-        task.listen();
+        final Task<Boolean> task = new Task<>(true);
         Runnable action = new Runnable() {
             @Override
             public void run() {

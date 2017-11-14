@@ -32,23 +32,23 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void onStart() throws Exception {
+    void onStart() {
     }
 
     @Override
-    void onStop() throws Exception {
+    void onStop() {
     }
 
     @Override
-    boolean setZoom(float zoom) {
+    void setZoom(float zoom, PointF[] points, boolean notify) {
+        mZoomValue = zoom;
         mZoomChanged = true;
-        return true;
     }
 
     @Override
-    boolean setExposureCorrection(float EVvalue) {
+    void setExposureCorrection(float EVvalue, float[] bounds, PointF[] points, boolean notify) {
+        mExposureCorrectionValue = EVvalue;
         mExposureCorrectionChanged = true;
-        return true;
     }
 
     @Override
@@ -92,24 +92,20 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    boolean capturePicture() {
+    void capturePicture() {
         mPictureCaptured = true;
-        return true;
     }
 
     @Override
-    boolean captureSnapshot() {
-        return true;
+    void captureSnapshot() {
     }
 
     @Override
-    boolean startVideo(@NonNull File file) {
-        return true;
+    void startVideo(@NonNull File file) {
     }
 
     @Override
-    boolean endVideo() {
-        return true;
+    void endVideo() {
     }
 
     @Override
@@ -120,23 +116,19 @@ public class MockCameraController extends CameraController {
 
 
     @Override
-    boolean startAutoFocus(@Nullable Gesture gesture, PointF point) {
+    void startAutoFocus(@Nullable Gesture gesture, PointF point) {
         mFocusStarted = true;
-        return true;
     }
 
     @Override
     public void onSurfaceChanged() {
-
     }
 
     @Override
     public void onSurfaceAvailable() {
-
     }
 
     @Override
     public void onBufferAvailable(byte[] buffer) {
-
     }
 }
