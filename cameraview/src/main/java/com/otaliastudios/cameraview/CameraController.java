@@ -84,6 +84,13 @@ abstract class CameraController implements
 
     //region Error handling
 
+    private static class NoOpExceptionHandler implements Thread.UncaughtExceptionHandler {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            // No-op.
+        }
+    }
+
     @Override
     public void uncaughtException(final Thread thread, final Throwable throwable) {
         // Something went wrong. Thread is terminated (about to?).
@@ -126,8 +133,9 @@ abstract class CameraController implements
 
     final void destroy() {
         LOG.i("destroy:", "state:", ss());
-        // Prevent CameraController leaks.
-        mHandler.getThread().setUncaughtExceptionHandler(null);
+        // Prevent CameraController leaks. Don't set to null, or exceptions
+        // inside the standard stop() method might crash the main thread.
+        mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
         // Stop if needed.
         stopImmediately();
     }
