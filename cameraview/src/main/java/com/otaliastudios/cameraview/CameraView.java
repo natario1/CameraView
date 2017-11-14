@@ -148,6 +148,8 @@ public class CameraView extends FrameLayout {
         setGrid(grid);
         setHdr(hdr);
         setAudio(audio);
+        // TODO: add from XML
+        setPictureSize(SizeSelectors.max());
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -979,6 +981,21 @@ public class CameraView extends FrameLayout {
 
 
     /**
+     * Sets picture capture size. The {@link SizeSelector} will be invoked with the list of available
+     * size, and the first acceptable size will be accepted and passed to the internal engine.
+     * See the {@link SizeSelectors} class for handy utilities for creating selectors.
+     *
+     * @param selector a size selector
+     */
+    public void setPictureSize(@NonNull SizeSelector selector) {
+        // Add a max fallback.
+        mCameraController.setPictureSizeSelector(
+                SizeSelectors.or(selector, SizeSelectors.max())
+        );
+    }
+
+
+    /**
      * Sets video recording quality. This is not guaranteed to be supported by current device.
      * If it's not, a lower quality will be chosen, until a supported one is found.
      * If sessionType is video, this might trigger a camera restart and a change in preview size.
@@ -1266,8 +1283,8 @@ public class CameraView extends FrameLayout {
      * @return a Size
      */
     @Nullable
-    public Size getCaptureSize() {
-        return mCameraController != null ? mCameraController.getCaptureSize() : null;
+    public Size getPictureSize() {
+        return mCameraController != null ? mCameraController.getPictureSize() : null;
     }
 
 
@@ -1625,6 +1642,15 @@ public class CameraView extends FrameLayout {
     //endregion
 
     //region Deprecated
+
+    /**
+     * @deprecated use {@link #getPictureSize()} instead.
+     */
+    @Deprecated
+    @Nullable
+    public Size getCaptureSize() {
+        return getPictureSize();
+    }
 
     //endregion
 }

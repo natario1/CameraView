@@ -5,9 +5,11 @@ import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.util.SparseArray;
 
-public class AspectRatio implements Comparable<AspectRatio>, Parcelable {
+import java.util.HashMap;
 
-    final static SparseArray<SparseArray<AspectRatio>> sCache = new SparseArray<>(16);
+public class AspectRatio implements Comparable<AspectRatio> {
+
+    final static HashMap<String, AspectRatio> sCache = new HashMap<>(16);
 
     private final int mX;
     private final int mY;
@@ -71,6 +73,7 @@ public class AspectRatio implements Comparable<AspectRatio>, Parcelable {
         return -1;
     }
 
+    @SuppressWarnings("SuspiciousNameCombination")
     public AspectRatio inverse() {
         return AspectRatio.of(mY, mX);
     }
@@ -79,21 +82,13 @@ public class AspectRatio implements Comparable<AspectRatio>, Parcelable {
         int gcd = gcd(x, y);
         x /= gcd;
         y /= gcd;
-        SparseArray<AspectRatio> arrayX = sCache.get(x);
-        if (arrayX == null) {
-            AspectRatio ratio = new AspectRatio(x, y);
-            arrayX = new SparseArray<>();
-            arrayX.put(y, ratio);
-            sCache.put(x, arrayX);
-            return ratio;
-        } else {
-            AspectRatio ratio = arrayX.get(y);
-            if (ratio == null) {
-                ratio = new AspectRatio(x, y);
-                arrayX.put(y, ratio);
-            }
-            return ratio;
+        String key = x + ":" + y;
+        AspectRatio cached = sCache.get(key);
+        if (cached == null) {
+            cached = new AspectRatio(x, y);
+            sCache.put(key, cached);
         }
+        return cached;
     }
 
     private static int gcd(int a, int b) {
@@ -104,32 +99,4 @@ public class AspectRatio implements Comparable<AspectRatio>, Parcelable {
         }
         return a;
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(mX);
-        dest.writeInt(mY);
-    }
-
-    public static final Parcelable.Creator<AspectRatio> CREATOR = new Parcelable.Creator<AspectRatio>() {
-
-        @Override
-        public AspectRatio createFromParcel(Parcel source) {
-            int x = source.readInt();
-            int y = source.readInt();
-            return AspectRatio.of(x, y);
-        }
-
-        @Override
-        public AspectRatio[] newArray(int size) {
-            return new AspectRatio[size];
-        }
-
-    };
-
 }

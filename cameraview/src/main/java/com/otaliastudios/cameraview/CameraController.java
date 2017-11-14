@@ -1,12 +1,16 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
+import android.hardware.Camera;
 import android.location.Location;
+import android.media.CamcorderProfile;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 abstract class CameraController implements CameraPreview.SurfaceCallback, FrameManager.BufferCallback {
 
@@ -37,6 +41,7 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
     protected ExtraProperties mExtraProperties;
     protected CameraOptions mOptions;
     protected FrameManager mFrameManager;
+    protected SizeSelector mPictureSizeSelector;
 
     protected int mDisplayOffset;
     protected int mDeviceOrientation;
@@ -207,10 +212,9 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
         return mState;
     }
 
-
     //endregion
 
-    //region Rotation callbacks
+    //region Simple setters
 
     void onDisplayOffset(int displayOrientation) {
         // I doubt this will ever change.
@@ -221,9 +225,13 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
         mDeviceOrientation = deviceOrientation;
     }
 
+    void setPictureSizeSelector(SizeSelector selector) {
+        mPictureSizeSelector = selector;
+    }
+
     //endregion
 
-    //region Abstract setParameters
+    //region Abstract setters
 
     // Should restart the session if active.
     abstract void setSessionType(SessionType sessionType);
@@ -318,13 +326,22 @@ abstract class CameraController implements CameraPreview.SurfaceCallback, FrameM
         return mAudio;
     }
 
-    final Size getCaptureSize() {
+    final SizeSelector getPictureSizeSelector() {
+        return mPictureSizeSelector;
+    }
+
+    final Size getPictureSize() {
         return mCaptureSize;
     }
 
     final Size getPreviewSize() {
         return mPreviewSize;
     }
+
+    //endregion
+
+    //region Size utils
+
 
     //endregion
 }

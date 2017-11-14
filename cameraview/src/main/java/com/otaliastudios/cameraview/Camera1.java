@@ -944,6 +944,4 @@ class Camera1 extends CameraController implements Camera.PreviewCallback {
         LOG.i("size", "matchSize:", "returning result", result);
         return result;
     }
-
-
 }

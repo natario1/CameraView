@@ -456,7 +456,7 @@ public class IntegrationTest extends BaseTest {
         camera.start();
         waitForOpen(true);
 
-        Size size = camera.getCaptureSize();
+        Size size = camera.getPictureSize();
         camera.capturePicture();
         byte[] jpeg = waitForPicture(true);
         Bitmap b = CameraUtils.decodeBitmap(jpeg, Integer.MAX_VALUE, Integer.MAX_VALUE);
