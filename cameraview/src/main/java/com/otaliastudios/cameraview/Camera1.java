@@ -9,7 +9,6 @@ import android.hardware.Camera;
 import android.location.Location;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -18,7 +17,6 @@ import android.view.SurfaceHolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -29,10 +27,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private Camera mCamera;
-    private MediaRecorder mMediaRecorder;
-    private File mVideoFile;
-
-    private int mSensorOffset;
+    private boolean mIsBound = false;
 
     private final int mPostFocusResetDelay = 3000;
     private Runnable mPostFocusResetRunnable = new Runnable() {
@@ -47,11 +42,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mCamera.setParameters(params);
         }
     };
-
-    private Mapper mMapper;
-    private boolean mIsBound = false;
-    private boolean mIsCapturingImage = false;
-    private boolean mIsCapturingVideo = false;
 
     Camera1(CameraView.CameraCallbacks callback) {
         super(callback);
@@ -135,7 +125,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             throw new CameraException(e);
         }
 
-        mPictureSize = computePictureSize(sizesFromList(mCamera.getParameters().getSupportedPictureSizes()));
+        mPictureSize = computePictureSize();
         mPreviewSize = computePreviewSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
         applySizesAndStartPreview("bindToSurface:");
         mIsBound = true;
@@ -182,7 +172,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             LOG.i("onStart:", "Applying default parameters.");
             Camera.Parameters params = mCamera.getParameters();
             mExtraProperties = new ExtraProperties(params);
-            mOptions = new CameraOptions(params);
+            mCameraOptions = new CameraOptions(params, shouldFlipSizes());
             applyDefaultFocus(params);
             mergeFlash(params, Flash.DEFAULT);
             mergeLocation(params, null);
@@ -192,7 +182,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mCamera.setParameters(params);
 
             // Try starting preview.
-            mCamera.setDisplayOrientation(computeSensorToDisplayOffset()); // <- not allowed during preview
+            mCamera.setDisplayOrientation(computeSensorToViewOffset()); // <- not allowed during preview
             if (shouldBindToSurface()) bindToSurface();
             LOG.i("onStart:", "Ended");
         }
@@ -230,7 +220,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             }
         }
         mExtraProperties = null;
-        mOptions = null;
+        mCameraOptions = null;
         mCamera = null;
         mPreviewSize = null;
         mPictureSize = null;
@@ -346,7 +336,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     private boolean mergeWhiteBalance(Camera.Parameters params, WhiteBalance oldWhiteBalance) {
-        if (mOptions.supports(mWhiteBalance)) {
+        if (mCameraOptions.supports(mWhiteBalance)) {
             params.setWhiteBalance((String) mMapper.map(mWhiteBalance));
             return true;
         }
@@ -368,7 +358,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     private boolean mergeHdr(Camera.Parameters params, Hdr oldHdr) {
-        if (mOptions.supports(mHdr)) {
+        if (mCameraOptions.supports(mHdr)) {
             params.setSceneMode((String) mMapper.map(mHdr));
             return true;
         }
@@ -403,7 +393,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     private boolean mergeFlash(Camera.Parameters params, Flash oldFlash) {
-        if (mOptions.supports(mFlash)) {
+        if (mCameraOptions.supports(mFlash)) {
             params.setFlashMode((String) mMapper.map(mFlash));
             return true;
         }
@@ -456,7 +446,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 if (mSessionType == SessionType.VIDEO) {
                     // Change capture size to a size that fits the video aspect ratio.
                     Size oldSize = mPictureSize;
-                    mPictureSize = computePictureSize(sizesFromList(mCamera.getParameters().getSupportedPictureSizes()));
+                    mPictureSize = computePictureSize();
                     if (!mPictureSize.equals(oldSize)) {
                         // New video quality triggers a new aspect ratio.
                         // Go on and see if preview size should change also.
@@ -480,20 +470,16 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             public void run() {
                 LOG.v("capturePicture: performing.", mIsCapturingImage);
                 if (mIsCapturingImage) return;
-                if (mIsCapturingVideo && !mOptions.isVideoSnapshotSupported()) return;
+                if (mIsCapturingVideo && !mCameraOptions.isVideoSnapshotSupported()) return;
 
                 mIsCapturingImage = true;
-                final int exifRotation = computeExifRotation();
-                final boolean exifFlip = computeExifFlip();
-                final int sensorToDisplay = computeSensorToDisplayOffset();
+                final int sensorToOutput = computeSensorToOutputOffset();
+                final int sensorToView = computeSensorToViewOffset();
+                final boolean outputMatchesView = (sensorToOutput + sensorToView + 180) % 180 == 0;
+                final boolean outputFlip = mFacing == Facing.FRONT;
                 Camera.Parameters params = mCamera.getParameters();
-                params.setRotation(exifRotation);
+                params.setRotation(sensorToOutput);
                 mCamera.setParameters(params);
-
-                // Is the final picture (decoded respecting EXIF) consistent with CameraView orientation?
-                // We must consider exifOrientation to bring back the picture in the sensor world.
-                // Then use sensorToDisplay to move to the display world, where CameraView lives.
-                final boolean consistentWithView = (exifRotation + sensorToDisplay + 180) % 180 == 0;
                 mCamera.takePicture(
                         new Camera.ShutterCallback() {
                             @Override
@@ -507,7 +493,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                             @Override
                             public void onPictureTaken(byte[] data, final Camera camera) {
                                 mIsCapturingImage = false;
-                                mCameraCallbacks.processImage(data, consistentWithView, exifFlip);
+                                mCameraCallbacks.processImage(data, outputMatchesView, outputFlip);
                                 camera.startPreview(); // This is needed, read somewhere in the docs.
                             }
                         }
@@ -540,10 +526,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                         // Got to rotate the preview frame, since byte[] data here does not include
                         // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
                         // Adding EXIF to a byte array, unfortunately, is hard.
-                        final int sensorToDevice = computeExifRotation();
-                        final int sensorToDisplay = computeSensorToDisplayOffset();
-                        final boolean exifFlip = computeExifFlip();
-                        final boolean flip = sensorToDevice % 180 != 0;
+                        final int sensorToOutput = computeSensorToOutputOffset();
+                        final int sensorToView = computeSensorToViewOffset();
+                        final boolean outputMatchesView = (sensorToOutput + sensorToView + 180) % 180 == 0;
+                        final boolean outputFlip = mFacing == Facing.FRONT;
+                        final boolean flip = sensorToOutput % 180 != 0;
                         final int preWidth = mPreviewSize.getWidth();
                         final int preHeight = mPreviewSize.getHeight();
                         final int postWidth = flip ? preHeight : preWidth;
@@ -554,11 +541,10 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                             public void run() {
 
                                 LOG.v("captureSnapshot: rotating.");
-                                final boolean consistentWithView = (sensorToDevice + sensorToDisplay + 180) % 180 == 0;
-                                byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToDevice);
+                                byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToOutput);
                                 LOG.v("captureSnapshot: rotated.");
                                 YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
-                                mCameraCallbacks.processSnapshot(yuv, consistentWithView, exifFlip);
+                                mCameraCallbacks.processSnapshot(yuv, outputMatchesView, outputFlip);
                                 mIsCapturingImage = false;
                             }
                         });
@@ -577,18 +563,10 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     public void onPreviewFrame(byte[] data, Camera camera) {
         Frame frame = mFrameManager.getFrame(data,
                 System.currentTimeMillis(),
-                computeExifRotation(),
+                computeSensorToOutputOffset(),
                 mPreviewSize,
                 mPreviewFormat);
         mCameraCallbacks.dispatchFrame(frame);
-    }
-
-    @Override
-    boolean shouldFlipSizes() {
-        int offset = computeSensorToDisplayOffset();
-        LOG.i("shouldFlipSizes:", "mDeviceOrientation=", mDeviceOrientation, "mSensorOffset=", mSensorOffset);
-        LOG.i("shouldFlipSizes:", "sensorToDisplay=", offset);
-        return offset % 180 != 0;
     }
 
     private boolean isCameraAvailable() {
@@ -606,44 +584,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
         return false;
     }
-
-
-    // Internal:
-
-
-    /**
-     * Returns how much should the sensor image be rotated before being shown.
-     * It is meant to be fed to Camera.setDisplayOrientation().
-     */
-    private int computeSensorToDisplayOffset() {
-        if (mFacing == Facing.FRONT) {
-            // or: (360 - ((mSensorOffset + mDisplayOffset) % 360)) % 360;
-            return ((mSensorOffset - mDisplayOffset) + 360 + 180) % 360;
-        } else {
-            return (mSensorOffset - mDisplayOffset + 360) % 360;
-        }
-    }
-
-    /**
-     * Returns the orientation to be set as a exif tag. This is already managed by
-     * the camera APIs as long as you call {@link Camera.Parameters#setRotation(int)}.
-     * This ignores flipping for facing camera.
-     */
-    private int computeExifRotation() {
-        if (mFacing == Facing.FRONT) {
-            return (mSensorOffset - mDeviceOrientation + 360) % 360;
-        } else {
-            return (mSensorOffset + mDeviceOrientation) % 360;
-        }
-    }
-
-    /**
-     * Whether the exif tag should include a 'flip' operation.
-     */
-    private boolean computeExifFlip() {
-        return mFacing == Facing.FRONT;
-    }
-
 
     // -----------------
     // Video recording stuff.
@@ -735,7 +675,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
 
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
-        mMediaRecorder.setOrientationHint(computeExifRotation());
+        mMediaRecorder.setOrientationHint(computeSensorToOutputOffset());
         // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
     }
 
@@ -748,7 +688,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(mZoomTask, true, new Runnable() {
             @Override
             public void run() {
-                if (!mOptions.isZoomSupported()) return;
+                if (!mCameraOptions.isZoomSupported()) return;
 
                 mZoomValue = zoom;
                 Camera.Parameters params = mCamera.getParameters();
@@ -769,11 +709,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(mExposureCorrectionTask, true, new Runnable() {
             @Override
             public void run() {
-                if (!mOptions.isExposureCorrectionSupported()) return;
+                if (!mCameraOptions.isExposureCorrectionSupported()) return;
 
                 float value = EVvalue;
-                float max = mOptions.getExposureCorrectionMaxValue();
-                float min = mOptions.getExposureCorrectionMinValue();
+                float max = mCameraOptions.getExposureCorrectionMaxValue();
+                float min = mCameraOptions.getExposureCorrectionMinValue();
                 value = value < min ? min : value > max ? max : value; // cap
                 mExposureCorrectionValue = value;
                 Camera.Parameters params = mCamera.getParameters();
@@ -806,10 +746,10 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
-                if (!mOptions.isAutoFocusSupported()) return;
+                if (!mCameraOptions.isAutoFocusSupported()) return;
                 final PointF p = new PointF(point.x, point.y); // copy.
                 List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y,
-                        viewWidthF, viewHeightF, computeSensorToDisplayOffset());
+                        viewWidthF, viewHeightF, computeSensorToViewOffset());
                 List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
 
                 // At this point we are sure that camera supports auto focus... right? Look at CameraView.onTouchEvent().

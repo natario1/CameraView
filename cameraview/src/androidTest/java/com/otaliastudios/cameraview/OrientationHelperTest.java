@@ -1,10 +1,6 @@
 package com.otaliastudios.cameraview;
 
 
-import android.annotation.TargetApi;
-import android.app.Instrumentation;
-import android.app.UiAutomation;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.OrientationEventListener;
@@ -22,44 +18,44 @@ import static org.mockito.Mockito.*;
 public class OrientationHelperTest extends BaseTest {
 
     private OrientationHelper helper;
-    private OrientationHelper.Callbacks callbacks;
+    private OrientationHelper.Callback callback;
 
     @Before
     public void setUp() {
         ui(new Runnable() {
             @Override
             public void run() {
-                callbacks = mock(OrientationHelper.Callbacks.class);
-                helper = new OrientationHelper(context(), callbacks);
+                callback = mock(OrientationHelper.Callback.class);
+                helper = new OrientationHelper(context(), callback);
             }
         });
     }
 
     @After
     public void tearDown() {
-        callbacks = null;
+        callback = null;
         helper = null;
     }
 
     @Test
     public void testEnable() {
         assertNotNull(helper.mListener);
-        assertNull(helper.mDisplay);
+        assertEquals(helper.getDisplayOffset(), -1);
+        assertEquals(helper.getDeviceOrientation(), -1);
 
         helper.enable(context());
         assertNotNull(helper.mListener);
-        assertNotNull(helper.mDisplay);
+        assertNotEquals(helper.getDisplayOffset(), -1); // Don't know about device orientation.
 
         // Ensure nothing bad if called twice.
         helper.enable(context());
         assertNotNull(helper.mListener);
-        assertNotNull(helper.mDisplay);
+        assertNotEquals(helper.getDisplayOffset(), -1);
 
         helper.disable();
         assertNotNull(helper.mListener);
-        assertNull(helper.mDisplay);
-
-        verify(callbacks, atLeastOnce()).onDisplayOffsetChanged(anyInt());
+        assertEquals(helper.getDisplayOffset(), -1);
+        assertEquals(helper.getDeviceOrientation(), -1);
     }
 
     @Test
@@ -69,30 +65,30 @@ public class OrientationHelperTest extends BaseTest {
         // right after enabling. But that's fine for us, times(1) will be OK either way.
         helper.enable(context());
         helper.mListener.onOrientationChanged(OrientationEventListener.ORIENTATION_UNKNOWN);
-        assertEquals(helper.mLastOrientation, 0);
+        assertEquals(helper.getDeviceOrientation(), 0);
         helper.mListener.onOrientationChanged(10);
-        assertEquals(helper.mLastOrientation, 0);
+        assertEquals(helper.getDeviceOrientation(), 0);
         helper.mListener.onOrientationChanged(-10);
-        assertEquals(helper.mLastOrientation, 0);
+        assertEquals(helper.getDeviceOrientation(), 0);
         helper.mListener.onOrientationChanged(44);
-        assertEquals(helper.mLastOrientation, 0);
+        assertEquals(helper.getDeviceOrientation(), 0);
         helper.mListener.onOrientationChanged(360);
-        assertEquals(helper.mLastOrientation, 0);
+        assertEquals(helper.getDeviceOrientation(), 0);
 
         // Callback called just once.
-        verify(callbacks, times(1)).onDeviceOrientationChanged(0);
+        verify(callback, times(1)).onDeviceOrientationChanged(0);
 
         helper.mListener.onOrientationChanged(90);
         helper.mListener.onOrientationChanged(91);
-        assertEquals(helper.mLastOrientation, 90);
-        verify(callbacks, times(1)).onDeviceOrientationChanged(90);
+        assertEquals(helper.getDeviceOrientation(), 90);
+        verify(callback, times(1)).onDeviceOrientationChanged(90);
 
         helper.mListener.onOrientationChanged(180);
-        assertEquals(helper.mLastOrientation, 180);
-        verify(callbacks, times(1)).onDeviceOrientationChanged(180);
+        assertEquals(helper.getDeviceOrientation(), 180);
+        verify(callback, times(1)).onDeviceOrientationChanged(180);
 
         helper.mListener.onOrientationChanged(270);
-        assertEquals(helper.mLastOrientation, 270);
-        verify(callbacks, times(1)).onDeviceOrientationChanged(270);
+        assertEquals(helper.getDeviceOrientation(), 270);
+        verify(callback, times(1)).onDeviceOrientationChanged(270);
     }
 }

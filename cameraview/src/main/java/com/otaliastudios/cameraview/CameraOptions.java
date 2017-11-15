@@ -20,6 +20,8 @@ public class CameraOptions {
     private Set<Facing> supportedFacing = new HashSet<>(2);
     private Set<Flash> supportedFlash = new HashSet<>(4);
     private Set<Hdr> supportedHdr = new HashSet<>(2);
+    private Set<Size> supportedPictureSizes = new HashSet<>(15);
+    private Set<AspectRatio> supportedPictureAspectRatio = new HashSet<>(4);
 
     private boolean zoomSupported;
     private boolean videoSnapshotSupported;
@@ -31,7 +33,7 @@ public class CameraOptions {
 
     // Camera1 constructor.
     @SuppressWarnings("deprecation")
-    CameraOptions(Camera.Parameters params) {
+    CameraOptions(Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
         Mapper mapper = new Mapper.Mapper1();
 
@@ -80,12 +82,43 @@ public class CameraOptions {
         exposureCorrectionMaxValue = (float) params.getMaxExposureCompensation() * step;
         exposureCorrectionSupported = params.getMinExposureCompensation() != 0
                 || params.getMaxExposureCompensation() != 0;
+
+        // Sizes
+        List<Camera.Size> sizes = params.getSupportedPictureSizes();
+        for (Camera.Size size : sizes) {
+            int width = flipSizes ? size.height : size.width;
+            int height = flipSizes ? size.width : size.height;
+            supportedPictureSizes.add(new Size(width, height));
+            supportedPictureAspectRatio.add(AspectRatio.of(width, height));
+        }
     }
 
 
     // Camera2 constructor.
     @TargetApi(21)
     CameraOptions(CameraCharacteristics params) {}
+
+
+    /**
+     * Shorthand for getSupportedPictureSizes().contains(value).
+     *
+     * @param size value
+     * @return whether it's supported
+     */
+    public boolean supports(Size size) {
+        return getSupportedPictureSizes().contains(size);
+    }
+
+
+    /**
+     * Shorthand for getSupportedPictureAspectRatios().contains(value).
+     *
+     * @param ratio value
+     * @return whether it's supported
+     */
+    public boolean supports(AspectRatio ratio) {
+        return getSupportedPictureAspectRatios().contains(ratio);
+    }
 
 
     /**
@@ -155,6 +188,25 @@ public class CameraOptions {
         return false;
     }
 
+    /**
+     * Set of supported picture sizes for the currently opened camera.
+     *
+     * @return a set of supported values.
+     */
+    @NonNull
+    public Set<Size> getSupportedPictureSizes() {
+        return Collections.unmodifiableSet(supportedPictureSizes);
+    }
+
+    /**
+     * Set of supported picture aspect ratios for the currently opened camera.
+     *
+     * @return a set of supported values.
+     */
+    @NonNull
+    public Set<AspectRatio> getSupportedPictureAspectRatios() {
+        return Collections.unmodifiableSet(supportedPictureAspectRatio);
+    }
 
     /**
      * Set of supported facing values.

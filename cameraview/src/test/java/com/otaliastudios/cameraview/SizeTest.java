@@ -19,9 +19,9 @@ public class SizeTest {
     @Test
     public void testFlip() {
         Size size = new Size(10, 20);
-        size.flip();
-        assertEquals(size.getWidth(), 20);
-        assertEquals(size.getHeight(), 10);
+        Size flipped = size.flip();
+        assertEquals(size.getWidth(), flipped.getHeight());
+        assertEquals(size.getHeight(), flipped.getWidth());
     }
 
     @Test
