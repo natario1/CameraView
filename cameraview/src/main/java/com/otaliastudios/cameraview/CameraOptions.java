@@ -100,28 +100,6 @@ public class CameraOptions {
 
 
     /**
-     * Shorthand for getSupportedPictureSizes().contains(value).
-     *
-     * @param size value
-     * @return whether it's supported
-     */
-    public boolean supports(Size size) {
-        return getSupportedPictureSizes().contains(size);
-    }
-
-
-    /**
-     * Shorthand for getSupportedPictureAspectRatios().contains(value).
-     *
-     * @param ratio value
-     * @return whether it's supported
-     */
-    public boolean supports(AspectRatio ratio) {
-        return getSupportedPictureAspectRatios().contains(ratio);
-    }
-
-
-    /**
      * Shorthand for getSupportedFacing().contains(value).
      *
      * @param facing value

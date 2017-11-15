@@ -14,8 +14,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
@@ -60,7 +63,6 @@ public class CameraOptions1Test extends BaseTest {
         for (Camera.Size size : sizes) {
             Size internalSize = new Size(size.width, size.height);
             assertTrue(supportedSizes.contains(internalSize));
-            assertTrue(o.supports(internalSize));
         }
     }
 
@@ -80,7 +82,6 @@ public class CameraOptions1Test extends BaseTest {
         for (Camera.Size size : sizes) {
             Size internalSize = new Size(size.width, size.height).flip();
             assertTrue(supportedSizes.contains(internalSize));
-            assertTrue(o.supports(internalSize));
         }
     }
 
@@ -105,7 +106,6 @@ public class CameraOptions1Test extends BaseTest {
         assertEquals(supportedRatios.size(), expected.size());
         for (AspectRatio ratio : expected) {
             assertTrue(supportedRatios.contains(ratio));
-            assertTrue(o.supports(ratio));
         }
     }
 
