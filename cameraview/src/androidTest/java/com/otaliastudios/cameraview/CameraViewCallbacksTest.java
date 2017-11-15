@@ -19,16 +19,13 @@ import org.mockito.stubbing.Stubber;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -137,11 +134,11 @@ public class CameraViewCallbacksTest extends BaseTest {
 
     @Test
     public void testDispatchOnVideoTaken() {
-        completeTask().when(listener).onVideoTaken(null);
-        camera.mCameraCallbacks.dispatchOnVideoTaken(null);
+        completeTask().when(listener).onVideoTaken(null, false);
+        camera.mCameraCallbacks.dispatchOnVideoTaken(null, false);
 
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onVideoTaken(null);
+        verify(listener, times(1)).onVideoTaken(null, false);
     }
 
     @Test

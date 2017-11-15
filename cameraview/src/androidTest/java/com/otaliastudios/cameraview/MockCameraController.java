@@ -131,4 +131,14 @@ public class MockCameraController extends CameraController {
     @Override
     public void onBufferAvailable(byte[] buffer) {
     }
+
+    @Override
+    void setMaxFileSize(long maxFileSizeInBytes) {
+
+    }
+
+    @Override
+    boolean isRecordingVideo() {
+        return false;
+    }
 }

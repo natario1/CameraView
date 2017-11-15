@@ -315,6 +315,10 @@ abstract class CameraController implements
 
     abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);
 
+    abstract void setMaxFileSize(long maxFileSizeInBytes);
+
+    abstract boolean isRecordingVideo();
+
     //endregion
 
     //region final getters

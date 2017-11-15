@@ -9,7 +9,6 @@ import android.hardware.Camera;
 import android.location.Location;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -18,7 +17,6 @@ import android.view.SurfaceHolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -52,6 +50,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     private boolean mIsBound = false;
     private boolean mIsCapturingImage = false;
     private boolean mIsCapturingVideo = false;
+    private long mMaxFileSizeInBytes = 0;
+    private boolean mHasReachedMaxSize = false;
 
     Camera1(CameraView.CameraCallbacks callback) {
         super(callback);
@@ -700,9 +700,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mMediaRecorder = null;
         }
         if (mVideoFile != null) {
-            mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
+            mCameraCallbacks.dispatchOnVideoTaken(mVideoFile, mHasReachedMaxSize);
             mVideoFile = null;
         }
+
+        mHasReachedMaxSize = false;
     }
 
     @WorkerThread
@@ -736,6 +738,26 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
         mMediaRecorder.setOrientationHint(computeExifRotation());
+
+        //If the user sets a max file size, set it to the max file size
+        if(mMaxFileSizeInBytes > 0) {
+            mMediaRecorder.setMaxFileSize(mMaxFileSizeInBytes);
+
+            //Attach a listener to the media recorder to listen for file size notifications
+            mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
+                @Override
+                public void onInfo(MediaRecorder mediaRecorder, int i, int i1) {
+                    switch (i){
+                        case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:{
+                            mHasReachedMaxSize = true;
+                            endVideo();
+                            break;
+                        }
+                    }
+
+                }
+            });
+        }
         // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
     }
 
@@ -893,4 +915,18 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         LOG.i("size:", "sizesFromList:", result);
         return result;
     }
+
+    @Override
+    void setMaxFileSize(long maxFileSizeInBytes) {
+        mMaxFileSizeInBytes = maxFileSizeInBytes;
+    }
+
+    // -----------------
+    // Additional helper info
+
+    @Override
+    boolean isRecordingVideo() {
+        return mIsCapturingVideo;
+    }
 }
+

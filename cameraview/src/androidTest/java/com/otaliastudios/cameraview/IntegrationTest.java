@@ -3,7 +3,6 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.Bitmap;
 import android.graphics.PointF;
-import android.media.MediaRecorder;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -20,8 +19,13 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
 
 
 /**
@@ -120,7 +124,7 @@ public class IntegrationTest extends BaseTest {
 
     private void waitForVideoEnd(boolean expectSuccess) {
         final Task<Boolean> video = new Task<>(true);
-        doEndTask(video, true).when(listener).onVideoTaken(any(File.class));
+        doEndTask(video, true).when(listener).onVideoTaken(any(File.class), false);
         Boolean result = video.await(8000);
         if (expectSuccess) {
             assertNotNull("Can take video", result);
