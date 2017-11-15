@@ -7,8 +7,8 @@ import android.support.annotation.NonNull;
  */
 public class Size implements Comparable<Size> {
 
-    private int mWidth;
-    private int mHeight;
+    private final int mWidth;
+    private final int mHeight;
 
     Size(int width, int height) {
         mWidth = width;
@@ -23,14 +23,9 @@ public class Size implements Comparable<Size> {
         return mHeight;
     }
 
-    /**
-     * Flips width and height altogether.
-     */
     @SuppressWarnings("SuspiciousNameCombination")
-    public void flip() {
-        int temp = mWidth;
-        mWidth = mHeight;
-        mHeight = temp;
+    Size flip() {
+        return new Size(mHeight, mWidth);
     }
 
     @Override

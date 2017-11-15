@@ -191,31 +191,8 @@ public class CameraViewCallbacksTest extends BaseTest {
     }
 
     @Test
-    public void testOrientationCallbacks_deviceOnly() {
+    public void testOrientationCallbacks() {
         completeTask().when(listener).onOrientationChanged(anyInt());
-
-        // Assert not called. Both methods must be called.
-        camera.mCameraCallbacks.onDeviceOrientationChanged(0);
-        assertNull(task.await(200));
-        verify(listener, never()).onOrientationChanged(anyInt());
-    }
-
-    @Test
-    public void testOrientationCallbacks_displayOnly() {
-        completeTask().when(listener).onOrientationChanged(anyInt());
-
-        // Assert not called. Both methods must be called.
-        camera.mCameraCallbacks.onDisplayOffsetChanged(0);
-        assertNull(task.await(200));
-        verify(listener, never()).onOrientationChanged(anyInt());
-    }
-
-    @Test
-    public void testOrientationCallbacks_both() {
-        completeTask().when(listener).onOrientationChanged(anyInt());
-
-        // Assert called.
-        camera.mCameraCallbacks.onDisplayOffsetChanged(0);
         camera.mCameraCallbacks.onDeviceOrientationChanged(90);
         assertNotNull(task.await(200));
         verify(listener, times(1)).onOrientationChanged(anyInt());

@@ -537,6 +537,7 @@ public class CameraView extends FrameLayout {
         if (checkPermissions(getSessionType(), getAudio())) {
             // Update display orientation for current CameraController
             mOrientationHelper.enable(getContext());
+            mCameraController.setDisplayOffset(mOrientationHelper.getDisplayOffset());
             mCameraController.start();
         }
     }
@@ -1356,7 +1357,7 @@ public class CameraView extends FrameLayout {
 
     //region Callbacks and dispatching
 
-    interface CameraCallbacks extends OrientationHelper.Callbacks {
+    interface CameraCallbacks extends OrientationHelper.Callback {
         void dispatchOnCameraOpened(CameraOptions options);
         void dispatchOnCameraClosed();
         void onCameraPreviewSizeChanged();
@@ -1374,12 +1375,7 @@ public class CameraView extends FrameLayout {
 
     private class Callbacks implements CameraCallbacks {
 
-        // Outer listeners
         private CameraLogger mLogger = CameraLogger.create(CameraCallbacks.class.getSimpleName());
-
-        // Orientation TODO: move this logic into OrientationHelper
-        private Integer mDisplayOffset;
-        private Integer mDeviceOrientation;
 
         Callbacks() {}
 
@@ -1495,7 +1491,6 @@ public class CameraView extends FrameLayout {
             });
         }
 
-
         private void dispatchOnPictureTaken(byte[] jpeg) {
             mLogger.i("dispatchOnPictureTaken");
             final byte[] data = jpeg;
@@ -1563,30 +1558,11 @@ public class CameraView extends FrameLayout {
         }
 
         @Override
-        public void onDisplayOffsetChanged(int displayOffset) {
-            mLogger.i("onDisplayOffsetChanged", displayOffset);
-            mCameraController.onDisplayOffset(displayOffset);
-            mDisplayOffset = displayOffset;
-            if (mDeviceOrientation != null) {
-                int value = (mDeviceOrientation + mDisplayOffset) % 360;
-                dispatchOnOrientationChanged(value);
-            }
-        }
-
-        @Override
         public void onDeviceOrientationChanged(int deviceOrientation) {
             mLogger.i("onDeviceOrientationChanged", deviceOrientation);
-            mCameraController.onDeviceOrientation(deviceOrientation);
-            mDeviceOrientation = deviceOrientation;
-            if (mDisplayOffset != null) {
-                int value = (mDeviceOrientation + mDisplayOffset) % 360;
-                dispatchOnOrientationChanged(value);
-            }
-        }
-
-
-        private void dispatchOnOrientationChanged(final int value) {
-            mLogger.i("dispatchOnOrientationChanged", value);
+            mCameraController.setDeviceOrientation(deviceOrientation);
+            int displayOffset = mOrientationHelper.getDisplayOffset();
+            final int value = (deviceOrientation + displayOffset) % 360;
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {

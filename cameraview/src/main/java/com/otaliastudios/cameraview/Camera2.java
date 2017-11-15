@@ -106,11 +106,6 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    boolean shouldFlipSizes() {
-        return false;
-    }
-
-    @Override
     void startAutoFocus(@Nullable Gesture gesture, PointF point) {
 
     }
