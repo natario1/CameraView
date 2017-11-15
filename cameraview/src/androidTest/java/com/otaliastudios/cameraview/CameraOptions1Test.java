@@ -65,6 +65,26 @@ public class CameraOptions1Test extends BaseTest {
     }
 
     @Test
+    public void testPictureSizesFlip() {
+        List<Camera.Size> sizes = Arrays.asList(
+                mockCameraSize(100, 200),
+                mockCameraSize(50, 50),
+                mockCameraSize(1600, 900),
+                mockCameraSize(1000, 2000)
+        );
+        Camera.Parameters params = mock(Camera.Parameters.class);
+        when(params.getSupportedPictureSizes()).thenReturn(sizes);
+        CameraOptions o = new CameraOptions(params, true);
+        Set<Size> supportedSizes = o.getSupportedPictureSizes();
+        assertEquals(supportedSizes.size(), sizes.size());
+        for (Camera.Size size : sizes) {
+            Size internalSize = new Size(size.width, size.height).flip();
+            assertTrue(supportedSizes.contains(internalSize));
+            assertTrue(o.supports(internalSize));
+        }
+    }
+
+    @Test
     public void testPictureAspectRatio() {
         List<Camera.Size> sizes = Arrays.asList(
                 mockCameraSize(100, 200),
