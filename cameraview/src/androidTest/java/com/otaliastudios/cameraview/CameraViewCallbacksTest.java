@@ -134,11 +134,11 @@ public class CameraViewCallbacksTest extends BaseTest {
 
     @Test
     public void testDispatchOnVideoTaken() {
-        completeTask().when(listener).onVideoTaken(null, false);
-        camera.mCameraCallbacks.dispatchOnVideoTaken(null, false);
+        completeTask().when(listener).onVideoTaken(null);
+        camera.mCameraCallbacks.dispatchOnVideoTaken(null);
 
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onVideoTaken(null, false);
+        verify(listener, times(1)).onVideoTaken(null);
     }
 
     @Test

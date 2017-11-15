@@ -116,12 +116,7 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setMaxFileSize(long maxFileSizeInBytes) {
+    void setVideoMaxSize(long videoMaxSizeInBytes) {
 
-    }
-
-    @Override
-    boolean isRecordingVideo() {
-        return false;
     }
 }

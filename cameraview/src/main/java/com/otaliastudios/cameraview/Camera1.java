@@ -640,11 +640,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mMediaRecorder = null;
         }
         if (mVideoFile != null) {
-            mCameraCallbacks.dispatchOnVideoTaken(mVideoFile, mHasReachedMaxSize);
+            mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
             mVideoFile = null;
         }
-
-        mHasReachedMaxSize = false;
     }
 
     @WorkerThread
@@ -680,8 +678,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mMediaRecorder.setOrientationHint(computeSensorToOutputOffset());
 
         //If the user sets a max file size, set it to the max file size
-        if(mMaxFileSizeInBytes > 0) {
-            mMediaRecorder.setMaxFileSize(mMaxFileSizeInBytes);
+        if(mVideoMaxSizeInBytes > 0) {
+            mMediaRecorder.setMaxFileSize(mVideoMaxSizeInBytes);
 
             //Attach a listener to the media recorder to listen for file size notifications
             mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
@@ -689,8 +687,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 public void onInfo(MediaRecorder mediaRecorder, int i, int i1) {
                     switch (i){
                         case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:{
-                            mHasReachedMaxSize = true;
-                            endVideo();
+                            endVideoImmediately();
                             break;
                         }
                     }
@@ -857,16 +854,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setMaxFileSize(long maxFileSizeInBytes) {
-        mMaxFileSizeInBytes = maxFileSizeInBytes;
+    void setVideoMaxSize(long videoMaxSizeInBytes) {
+        mVideoMaxSizeInBytes = videoMaxSizeInBytes;
     }
 
     // -----------------
     // Additional helper info
-
-    @Override
-    boolean isRecordingVideo() {
-        return mIsCapturingVideo;
-    }
 }
 

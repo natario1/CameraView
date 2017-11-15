@@ -49,8 +49,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             public void onPictureTaken(byte[] jpeg) { onPicture(jpeg); }
 
             @Override
-            public void onVideoTaken(File video, boolean hasReachedMaxFileSize) {
-                super.onVideoTaken(video, hasReachedMaxFileSize);
+            public void onVideoTaken(File video) {
+                super.onVideoTaken(video);
                 onVideo(video);
             }
         });

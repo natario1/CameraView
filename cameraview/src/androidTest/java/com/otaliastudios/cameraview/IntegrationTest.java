@@ -124,7 +124,7 @@ public class IntegrationTest extends BaseTest {
 
     private void waitForVideoEnd(boolean expectSuccess) {
         final Task<Boolean> video = new Task<>(true);
-        doEndTask(video, true).when(listener).onVideoTaken(any(File.class), false);
+        doEndTask(video, true).when(listener).onVideoTaken(any(File.class));
         Boolean result = video.await(8000);
         if (expectSuccess) {
             assertNotNull("Can take video", result);

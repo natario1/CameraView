@@ -64,10 +64,9 @@ abstract class CameraController implements
 
     protected boolean mIsCapturingImage = false;
     protected boolean mIsCapturingVideo = false;
-    protected boolean mHasReachedMaxSize = false;
 
     protected int mState = STATE_STOPPED;
-    protected long mMaxFileSizeInBytes = 0;
+    protected long mVideoMaxSizeInBytes = 0;
 
     // Used for testing.
     Task<Void> mZoomTask = new Task<>();
@@ -319,9 +318,7 @@ abstract class CameraController implements
 
     abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);
 
-    abstract void setMaxFileSize(long maxFileSizeInBytes);
-
-    abstract boolean isRecordingVideo();
+    abstract void setVideoMaxSize(long videoMaxSizeInBytes);
 
     //endregion
 
@@ -387,6 +384,10 @@ abstract class CameraController implements
 
     final Size getPreviewSize() {
         return mPreviewSize;
+    }
+
+    final boolean isRecordingVideo() {
+        return mIsCapturingVideo;
     }
 
     //endregion

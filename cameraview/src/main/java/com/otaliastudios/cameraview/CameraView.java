@@ -1233,7 +1233,7 @@ public class CameraView extends FrameLayout {
 
     /**
      * Stops capturing video, if there was a video record going on.
-     * This will fire {@link CameraListener#onVideoTaken(File, boolean)}.
+     * This will fire {@link CameraListener#onVideoTaken(File)}.
      */
     public void stopCapturingVideo() {
         mCameraController.endVideo();
@@ -1339,10 +1339,10 @@ public class CameraView extends FrameLayout {
      * Set a max file size (in bytes) for a video recording.  There is no file size limit by default
      * unless set by the user.
      *
-     * @param maxFileSizeInBytes The maximum size of videos in bytes
+     * @param videoMaxSizeInBytes The maximum size of videos in bytes
      */
-    public void setMaxFileSize(long maxFileSizeInBytes){
-        mCameraController.setMaxFileSize(maxFileSizeInBytes);
+    public void setVideoMaxSize(long videoMaxSizeInBytes){
+        mCameraController.setVideoMaxSize(videoMaxSizeInBytes);
     }
 
     /**
@@ -1364,7 +1364,7 @@ public class CameraView extends FrameLayout {
         void onShutter(boolean shouldPlaySound);
         void processImage(byte[] jpeg, boolean consistentWithView, boolean flipHorizontally);
         void processSnapshot(YuvImage image, boolean consistentWithView, boolean flipHorizontally);
-        void dispatchOnVideoTaken(File file, boolean hasReachedMaxFileSize);
+        void dispatchOnVideoTaken(File file);
         void dispatchOnFocusStart(@Nullable Gesture trigger, PointF where);
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, PointF where);
         void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
@@ -1505,13 +1505,13 @@ public class CameraView extends FrameLayout {
         }
 
         @Override
-        public void dispatchOnVideoTaken(final File video, final boolean hasReachedMaxFileSize) {
+        public void dispatchOnVideoTaken(final File video) {
             mLogger.i("dispatchOnVideoTaken", video);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     for (CameraListener listener : mListeners) {
-                        listener.onVideoTaken(video, hasReachedMaxFileSize);
+                        listener.onVideoTaken(video);
                     }
                 }
             });

@@ -126,12 +126,7 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void setMaxFileSize(long maxFileSizeInBytes) {
+    void setVideoMaxSize(long videoMaxSizeInBytes) {
 
-    }
-
-    @Override
-    boolean isRecordingVideo() {
-        return false;
     }
 }

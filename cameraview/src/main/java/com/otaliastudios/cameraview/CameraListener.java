@@ -73,11 +73,9 @@ public abstract class CameraListener {
      * </code>
      *
      * @param video file hosting the mp4 video
-     * @param hasReachedMaxFileSize returns true if the user has set a max file size for videos and
-     *                                if the video ended because of the file size limit.
      */
     @UiThread
-    public void onVideoTaken(File video, boolean hasReachedMaxFileSize) {
+    public void onVideoTaken(File video) {
 
     }
 
