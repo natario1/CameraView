@@ -20,7 +20,7 @@ public class MockCameraController extends CameraController {
     }
 
     void setMockCameraOptions(CameraOptions options) {
-        mOptions = options;
+        mCameraOptions = options;
     }
 
     void setMockPreviewSize(Size size) {
@@ -107,13 +107,6 @@ public class MockCameraController extends CameraController {
     @Override
     void endVideo() {
     }
-
-    @Override
-    boolean shouldFlipSizes() {
-        return false;
-    }
-
-
 
     @Override
     void startAutoFocus(@Nullable Gesture gesture, PointF point) {
