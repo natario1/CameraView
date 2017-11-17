@@ -6,7 +6,7 @@ package com.otaliastudios.cameraview;
  *
  * @see CameraView#setAudio(Audio)
  */
-public enum Audio {
+public enum Audio implements Control {
 
     /**
      * No Audio.

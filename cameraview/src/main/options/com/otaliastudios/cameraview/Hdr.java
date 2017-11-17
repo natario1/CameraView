@@ -6,7 +6,7 @@ package com.otaliastudios.cameraview;
  *
  * @see CameraView#setHdr(Hdr)
  */
-public enum Hdr {
+public enum Hdr implements Control {
 
     /**
      * No HDR.

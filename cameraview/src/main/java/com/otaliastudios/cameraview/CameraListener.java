@@ -60,7 +60,7 @@ public abstract class CameraListener {
      */
     @UiThread
     public void onPictureTaken(byte[] jpeg) {
-
+        // TODO v2: use a PictureResult.
     }
 
 
@@ -76,7 +76,7 @@ public abstract class CameraListener {
      */
     @UiThread
     public void onVideoTaken(File video) {
-
+        // TODO v2: use a VideoResult.
     }
 
 
