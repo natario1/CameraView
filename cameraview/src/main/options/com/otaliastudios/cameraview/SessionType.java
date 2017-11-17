@@ -9,7 +9,7 @@ package com.otaliastudios.cameraview;
  *
  * @see CameraView#setSessionType(SessionType)
  */
-public enum SessionType {
+public enum SessionType implements Control {
 
     /**
      * Session optimized to capture pictures.

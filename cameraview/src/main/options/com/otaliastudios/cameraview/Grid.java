@@ -6,7 +6,7 @@ package com.otaliastudios.cameraview;
  *
  * @see CameraView#setGrid(Grid)
  */
-public enum Grid {
+public enum Grid implements Control {
 
 
     /**

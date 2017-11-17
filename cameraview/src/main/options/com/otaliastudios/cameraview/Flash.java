@@ -6,7 +6,7 @@ package com.otaliastudios.cameraview;
  *
  * @see CameraView#setFlash(Flash)
  */
-public enum Flash {
+public enum Flash implements Control {
 
     /**
      * Flash is always off.

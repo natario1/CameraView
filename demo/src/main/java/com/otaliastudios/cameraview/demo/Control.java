@@ -10,6 +10,7 @@ import com.otaliastudios.cameraview.Flash;
 import com.otaliastudios.cameraview.Gesture;
 import com.otaliastudios.cameraview.GestureAction;
 import com.otaliastudios.cameraview.Grid;
+import com.otaliastudios.cameraview.Hdr;
 import com.otaliastudios.cameraview.SessionType;
 import com.otaliastudios.cameraview.VideoQuality;
 import com.otaliastudios.cameraview.WhiteBalance;
@@ -32,6 +33,7 @@ public enum Control {
     WHITE_BALANCE("White balance", false),
     GRID("Grid", true),
     VIDEO_QUALITY("Video quality", false),
+    HDR("Hdr", false),
     AUDIO("Audio", true),
     PINCH("Pinch gesture", false),
     HSCROLL("Horizontal scroll gesture", false),
@@ -71,13 +73,14 @@ public enum Control {
                     list.add(i);
                 }
                 return list;
-            case SESSION: return Arrays.asList(SessionType.values());
             case CROP_OUTPUT: return Arrays.asList(true, false);
-            case FLASH: return options.getSupportedFlash();
-            case WHITE_BALANCE: return options.getSupportedWhiteBalance();
-            case GRID: return Arrays.asList(Grid.values());
-            case VIDEO_QUALITY: return Arrays.asList(VideoQuality.values());
-            case AUDIO: return Arrays.asList(Audio.values());
+            case SESSION: return options.getSupportedControls(SessionType.class);
+            case FLASH: return options.getSupportedControls(Flash.class);
+            case WHITE_BALANCE: return options.getSupportedControls(WhiteBalance.class);
+            case HDR: return options.getSupportedControls(Hdr.class);
+            case GRID: return options.getSupportedControls(Grid.class);
+            case VIDEO_QUALITY: return options.getSupportedControls(VideoQuality.class);
+            case AUDIO: return options.getSupportedControls(Audio.class);
             case PINCH:
             case HSCROLL:
             case VSCROLL:
@@ -114,6 +117,7 @@ public enum Control {
             case GRID: return view.getGrid();
             case VIDEO_QUALITY: return view.getVideoQuality();
             case AUDIO: return view.getAudio();
+            case HDR: return view.getHdr();
             case PINCH: return view.getGestureAction(Gesture.PINCH);
             case HSCROLL: return view.getGestureAction(Gesture.SCROLL_HORIZONTAL);
             case VSCROLL: return view.getGestureAction(Gesture.SCROLL_VERTICAL);
@@ -134,25 +138,16 @@ public enum Control {
                 camera.setLayoutParams(camera.getLayoutParams());
                 break;
             case SESSION:
-                camera.setSessionType((SessionType) value);
+            case FLASH:
+            case WHITE_BALANCE:
+            case GRID:
+            case VIDEO_QUALITY:
+            case AUDIO:
+            case HDR:
+                camera.set((com.otaliastudios.cameraview.Control) value);
                 break;
             case CROP_OUTPUT:
                 camera.setCropOutput((boolean) value);
-                break;
-            case FLASH:
-                camera.setFlash((Flash) value);
-                break;
-            case WHITE_BALANCE:
-                camera.setWhiteBalance((WhiteBalance) value);
-                break;
-            case GRID:
-                camera.setGrid((Grid) value);
-                break;
-            case VIDEO_QUALITY:
-                camera.setVideoQuality((VideoQuality) value);
-                break;
-            case AUDIO:
-                camera.setAudio((Audio) value);
                 break;
             case PINCH:
                 camera.mapGesture(Gesture.PINCH, (GestureAction) value);

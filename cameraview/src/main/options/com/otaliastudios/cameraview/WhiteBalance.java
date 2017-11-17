@@ -7,7 +7,7 @@ package com.otaliastudios.cameraview;
  *
  * @see CameraView#setWhiteBalance(WhiteBalance)
  */
-public enum WhiteBalance {
+public enum WhiteBalance implements Control {
 
     /**
      * Automatic white balance selection (AWB).

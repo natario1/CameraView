@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -110,25 +111,6 @@ public class CameraOptions1Test extends BaseTest {
     }
 
     @Test
-    public void testFacing() {
-        Set<Integer> supported = new HashSet<>();
-        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-        for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
-            Camera.getCameraInfo(i, cameraInfo);
-            supported.add(cameraInfo.facing);
-        }
-
-        CameraOptions o = new CameraOptions(mock(Camera.Parameters.class), false);
-        Mapper m = new Mapper.Mapper1();
-        Set<Facing> s = o.getSupportedFacing();
-        assertEquals(o.getSupportedFacing().size(), supported.size());
-        for (Facing facing : s) {
-            assertTrue(supported.contains(m.<Integer>map(facing)));
-            assertTrue(o.supports(facing));
-        }
-    }
-
-    @Test
     public void testGestureActions() {
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedFocusModes()).thenReturn(Collections.<String>emptyList());
@@ -146,6 +128,41 @@ public class CameraOptions1Test extends BaseTest {
     }
 
     @Test
+    public void testAlwaysSupportedControls() {
+        // Grid, VideoQuality, SessionType and Audio are always supported.
+        Camera.Parameters params = mock(Camera.Parameters.class);
+        CameraOptions o = new CameraOptions(params, false);
+
+        Collection<Grid> grids = o.getSupportedControls(Grid.class);
+        Collection<VideoQuality> video = o.getSupportedControls(VideoQuality.class);
+        Collection<SessionType> sessions = o.getSupportedControls(SessionType.class);
+        Collection<Audio> audio = o.getSupportedControls(Audio.class);
+        assertEquals(grids.size(), Grid.values().length);
+        assertEquals(video.size(), VideoQuality.values().length);
+        assertEquals(sessions.size(), SessionType.values().length);
+        assertEquals(audio.size(), Audio.values().length);
+    }
+
+    @Test
+    public void testFacing() {
+        Set<Integer> supported = new HashSet<>();
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
+            Camera.getCameraInfo(i, cameraInfo);
+            supported.add(cameraInfo.facing);
+        }
+
+        CameraOptions o = new CameraOptions(mock(Camera.Parameters.class), false);
+        Mapper m = new Mapper.Mapper1();
+        Collection<Facing> s = o.getSupportedControls(Facing.class);
+        assertEquals(s.size(), supported.size());
+        for (Facing facing : s) {
+            assertTrue(supported.contains(m.<Integer>map(facing)));
+            assertTrue(o.supports(facing));
+        }
+    }
+
+    @Test
     public void testWhiteBalance() {
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedWhiteBalance()).thenReturn(Arrays.asList(
@@ -155,9 +172,10 @@ public class CameraOptions1Test extends BaseTest {
         ));
 
         CameraOptions o = new CameraOptions(params, false);
-        assertEquals(o.getSupportedWhiteBalance().size(), 2);
-        assertTrue(o.getSupportedWhiteBalance().contains(WhiteBalance.AUTO));
-        assertTrue(o.getSupportedWhiteBalance().contains(WhiteBalance.CLOUDY));
+        Collection<WhiteBalance> w = o.getSupportedControls(WhiteBalance.class);
+        assertEquals(w.size(), 2);
+        assertTrue(w.contains(WhiteBalance.AUTO));
+        assertTrue(w.contains(WhiteBalance.CLOUDY));
         assertTrue(o.supports(WhiteBalance.AUTO));
         assertTrue(o.supports(WhiteBalance.CLOUDY));
     }
@@ -172,9 +190,10 @@ public class CameraOptions1Test extends BaseTest {
         ));
 
         CameraOptions o = new CameraOptions(params, false);
-        assertEquals(o.getSupportedFlash().size(), 2);
-        assertTrue(o.getSupportedFlash().contains(Flash.AUTO));
-        assertTrue(o.getSupportedFlash().contains(Flash.TORCH));
+        Collection<Flash> f = o.getSupportedControls(Flash.class);
+        assertEquals(f.size(), 2);
+        assertTrue(f.contains(Flash.AUTO));
+        assertTrue(f.contains(Flash.TORCH));
         assertTrue(o.supports(Flash.AUTO));
         assertTrue(o.supports(Flash.TORCH));
     }
@@ -189,9 +208,10 @@ public class CameraOptions1Test extends BaseTest {
         ));
 
         CameraOptions o = new CameraOptions(params, false);
-        assertEquals(o.getSupportedHdr().size(), 2);
-        assertTrue(o.getSupportedHdr().contains(Hdr.OFF));
-        assertTrue(o.getSupportedHdr().contains(Hdr.ON));
+        Collection<Hdr> h = o.getSupportedControls(Hdr.class);
+        assertEquals(h.size(), 2);
+        assertTrue(h.contains(Hdr.OFF));
+        assertTrue(h.contains(Hdr.ON));
         assertTrue(o.supports(Hdr.OFF));
         assertTrue(o.supports(Hdr.ON));
     }
