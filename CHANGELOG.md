@@ -1,4 +1,4 @@
-## v1.4.1
+### v1.4.1
 
 - Fixed a bug that would flip the front camera preview on some devices ([#112][112])
 - Two new `CameraOptions` APIs: `o.getSupportedPictureSizes()` and `o.getSupportedPictureAspectRatios()` ([#101][101])
