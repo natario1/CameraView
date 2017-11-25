@@ -1,3 +1,16 @@
+## v1.4.1
+
+- Fixed a bug that would flip the front camera preview on some devices ([#112][112])
+- Two new `CameraOptions` APIs: `o.getSupportedPictureSizes()` and `o.getSupportedPictureAspectRatios()` ([#101][101])
+- Most controls (video quality, hdr, grid, session type, audio, white balance, flash, facing) now inherit
+  from a base `Control` class ([#105][105]). This let us add new APIs:
+
+  - `CameraView.set(Control)`: sets the control to the given value, e.g. `set(Flash.AUTO)`
+  - `CameraOptions.supports(Control)`: returns true if the control is supported
+  - `CameraOptions.getSupportedControls(Class<? extends Control>)`: returns list of supported controls of a given kind
+
+https://github.com/natario1/CameraView/compare/v1.4.0...v1.4.1
+
 ## v1.4.0
 
 - CameraView is now completely thread-safe. All actions are asynchronous. ([#97][97])
@@ -56,3 +69,6 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [94]: https://github.com/natario1/CameraView/pull/94
 [97]: https://github.com/natario1/CameraView/pull/97
 [99]: https://github.com/natario1/CameraView/pull/99
+[101]: https://github.com/natario1/CameraView/pull/101
+[105]: https://github.com/natario1/CameraView/pull/105
+[112]: https://github.com/natario1/CameraView/pull/112
