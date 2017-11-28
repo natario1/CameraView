@@ -595,6 +595,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`getPreviewSize()`|Returns the size of the preview surface. If CameraView was not constrained in its layout phase (e.g. it was `wrap_content`), this will return the same aspect ratio of CameraView.|
 |`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|
 |`getPictureSize()`|Returns the size of the output picture. The aspect ratio is consistent with `getPreviewSize()`.|
+|`setVideoMaxSize(long)`|Set a max file size (in bytes) for a video recording. There is no file size limit by default unless set by the user.|
 
 Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProperties`.
 

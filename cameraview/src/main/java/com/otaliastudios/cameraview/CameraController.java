@@ -386,7 +386,7 @@ abstract class CameraController implements
         return mPreviewSize;
     }
 
-    final boolean isRecordingVideo() {
+    final boolean isCapturingVideo() {
         return mIsCapturingVideo;
     }
 
