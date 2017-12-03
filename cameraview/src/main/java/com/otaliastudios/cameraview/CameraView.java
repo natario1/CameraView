@@ -144,6 +144,10 @@ public class CameraView extends FrameLayout {
         GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, GestureAction.DEFAULT_PINCH.value()));
         GestureAction scrollHorizontalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollHorizontal, GestureAction.DEFAULT_SCROLL_HORIZONTAL.value()));
         GestureAction scrollVerticalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollVertical, GestureAction.DEFAULT_SCROLL_VERTICAL.value()));
+
+        //Get max size
+        float cameraVideoMaxSize = a.getFloat(R.styleable.CameraView_cameraVideoMaxSize, -1);
+
         a.recycle();
 
         // Components
@@ -185,6 +189,11 @@ public class CameraView extends FrameLayout {
         mapGesture(Gesture.PINCH, pinchGesture);
         mapGesture(Gesture.SCROLL_HORIZONTAL, scrollHorizontalGesture);
         mapGesture(Gesture.SCROLL_VERTICAL, scrollVerticalGesture);
+
+        //Set camera video maxSize
+        if(cameraVideoMaxSize > 0) {
+            setVideoMaxSize((long)cameraVideoMaxSize);
+        }
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
@@ -1362,6 +1371,24 @@ public class CameraView extends FrameLayout {
      */
     public boolean getPlaySounds() {
         return mPlaySounds;
+    }
+
+    /**
+     * Set a max file size (in bytes) for a video recording.  There is no file size limit by default
+     * unless set by the user.
+     *
+     * @param videoMaxSizeInBytes The maximum size of videos in bytes
+     */
+    public void setVideoMaxSize(long videoMaxSizeInBytes){
+        mCameraController.setVideoMaxSize(videoMaxSizeInBytes);
+    }
+
+    /**
+     * Returns true if the camera is currently recording a video
+     * @return boolean indicating if the camera is recording a video
+     */
+    public boolean isCapturingVideo(){
+        return mCameraController.isCapturingVideo();
     }
 
     //endregion

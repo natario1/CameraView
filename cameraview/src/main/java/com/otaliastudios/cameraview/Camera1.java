@@ -676,6 +676,25 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
         mMediaRecorder.setOrientationHint(computeSensorToOutputOffset());
+
+        //If the user sets a max file size, set it to the max file size
+        if(mVideoMaxSizeInBytes > 0) {
+            mMediaRecorder.setMaxFileSize(mVideoMaxSizeInBytes);
+
+            //Attach a listener to the media recorder to listen for file size notifications
+            mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
+                @Override
+                public void onInfo(MediaRecorder mediaRecorder, int i, int i1) {
+                    switch (i){
+                        case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:{
+                            endVideoImmediately();
+                            break;
+                        }
+                    }
+
+                }
+            });
+        }
         // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
     }
 
@@ -833,4 +852,13 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         LOG.i("size:", "sizesFromList:", result);
         return result;
     }
+
+    @Override
+    void setVideoMaxSize(long videoMaxSizeInBytes) {
+        mVideoMaxSizeInBytes = videoMaxSizeInBytes;
+    }
+
+    // -----------------
+    // Additional helper info
 }
+

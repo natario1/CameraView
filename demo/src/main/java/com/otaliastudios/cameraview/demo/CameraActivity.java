@@ -7,24 +7,18 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.otaliastudios.cameraview.Audio;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
-import com.otaliastudios.cameraview.Flash;
-import com.otaliastudios.cameraview.Grid;
 import com.otaliastudios.cameraview.SessionType;
 import com.otaliastudios.cameraview.Size;
-import com.otaliastudios.cameraview.VideoQuality;
-import com.otaliastudios.cameraview.WhiteBalance;
 
 import java.io.File;
 
@@ -53,7 +47,12 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera.addCameraListener(new CameraListener() {
             public void onCameraOpened(CameraOptions options) { onOpened(); }
             public void onPictureTaken(byte[] jpeg) { onPicture(jpeg); }
-            public void onVideoTaken(File video) { onVideo(video); }
+
+            @Override
+            public void onVideoTaken(File video) {
+                super.onVideoTaken(video);
+                onVideo(video);
+            }
         });
 
         findViewById(R.id.edit).setOnClickListener(this);

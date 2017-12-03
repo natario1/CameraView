@@ -110,6 +110,8 @@
 
         <attr name="cameraPlaySounds" format="boolean" />
 
+        <attr name="cameraVideoMaxSize" format="float" />
+
         <!-- deprecated attr name="cameraZoomMode" format="enum">
             <enum name="off" value="0" />
             <enum name="pinch" value="1" />
