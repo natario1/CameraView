@@ -6,7 +6,7 @@ package com.otaliastudios.cameraview;
  *
  * @see CameraView#setFacing(Facing)
  */
-public enum Facing {
+public enum Facing implements Control {
 
     /**
      * Back-facing camera sensor.

@@ -6,7 +6,7 @@ package com.otaliastudios.cameraview;
  *
  * @see CameraView#setVideoQuality(VideoQuality)
  */
-public enum VideoQuality {
+public enum VideoQuality implements Control {
 
 
     /**

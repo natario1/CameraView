@@ -413,8 +413,9 @@ abstract class CameraController implements
      */
     protected final int computeSensorToViewOffset() {
         if (mFacing == Facing.FRONT) {
-            // or: (360 - ((mSensorOffset + mDisplayOffset) % 360)) % 360;
-            return ((mSensorOffset - mDisplayOffset) + 360 + 180) % 360;
+            // Here we had ((mSensorOffset - mDisplayOffset) + 360 + 180) % 360
+            // And it seemed to give the same results for various combinations, but not for all (e.g. 0 - 270).
+            return (360 - ((mSensorOffset + mDisplayOffset) % 360)) % 360;
         } else {
             return (mSensorOffset - mDisplayOffset + 360) % 360;
         }

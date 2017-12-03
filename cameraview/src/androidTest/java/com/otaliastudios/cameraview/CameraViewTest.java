@@ -471,34 +471,23 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testSetFlash() {
-        cameraView.setFlash(Flash.TORCH);
+        cameraView.set(Flash.TORCH);
         assertEquals(cameraView.getFlash(), Flash.TORCH);
-        cameraView.setFlash(Flash.OFF);
-        assertEquals(cameraView.getFlash(), Flash.OFF);
-    }
-
-    @Test
-    public void testToggleFlash() {
-        cameraView.setFlash(Flash.OFF);
-        cameraView.toggleFlash();
-        assertEquals(cameraView.getFlash(), Flash.ON);
-        cameraView.toggleFlash();
-        assertEquals(cameraView.getFlash(), Flash.AUTO);
-        cameraView.toggleFlash();
+        cameraView.set(Flash.OFF);
         assertEquals(cameraView.getFlash(), Flash.OFF);
     }
 
     @Test
     public void testSetFacing() {
-        cameraView.setFacing(Facing.FRONT);
+        cameraView.set(Facing.FRONT);
         assertEquals(cameraView.getFacing(), Facing.FRONT);
-        cameraView.setFacing(Facing.BACK);
+        cameraView.set(Facing.BACK);
         assertEquals(cameraView.getFacing(), Facing.BACK);
     }
 
     @Test
     public void testToggleFacing() {
-        cameraView.setFacing(Facing.FRONT);
+        cameraView.set(Facing.FRONT);
         cameraView.toggleFacing();
         assertEquals(cameraView.getFacing(), Facing.BACK);
         cameraView.toggleFacing();
@@ -507,49 +496,49 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testSetGrid() {
-        cameraView.setGrid(Grid.DRAW_3X3);
+        cameraView.set(Grid.DRAW_3X3);
         assertEquals(cameraView.getGrid(), Grid.DRAW_3X3);
-        cameraView.setGrid(Grid.OFF);
+        cameraView.set(Grid.OFF);
         assertEquals(cameraView.getGrid(), Grid.OFF);
     }
 
     @Test
     public void testSetWhiteBalance() {
-        cameraView.setWhiteBalance(WhiteBalance.CLOUDY);
+        cameraView.set(WhiteBalance.CLOUDY);
         assertEquals(cameraView.getWhiteBalance(), WhiteBalance.CLOUDY);
-        cameraView.setWhiteBalance(WhiteBalance.AUTO);
+        cameraView.set(WhiteBalance.AUTO);
         assertEquals(cameraView.getWhiteBalance(), WhiteBalance.AUTO);
     }
 
     @Test
     public void testSessionType() {
-        cameraView.setSessionType(SessionType.VIDEO);
+        cameraView.set(SessionType.VIDEO);
         assertEquals(cameraView.getSessionType(), SessionType.VIDEO);
-        cameraView.setSessionType(SessionType.PICTURE);
+        cameraView.set(SessionType.PICTURE);
         assertEquals(cameraView.getSessionType(), SessionType.PICTURE);
     }
 
     @Test
     public void testHdr() {
-        cameraView.setHdr(Hdr.ON);
+        cameraView.set(Hdr.ON);
         assertEquals(cameraView.getHdr(), Hdr.ON);
-        cameraView.setHdr(Hdr.OFF);
+        cameraView.set(Hdr.OFF);
         assertEquals(cameraView.getHdr(), Hdr.OFF);
     }
 
     @Test
     public void testAudio() {
-        cameraView.setAudio(Audio.ON);
+        cameraView.set(Audio.ON);
         assertEquals(cameraView.getAudio(), Audio.ON);
-        cameraView.setAudio(Audio.OFF);
+        cameraView.set(Audio.OFF);
         assertEquals(cameraView.getAudio(), Audio.OFF);
     }
 
     @Test
     public void testVideoQuality() {
-        cameraView.setVideoQuality(VideoQuality.MAX_1080P);
+        cameraView.set(VideoQuality.MAX_1080P);
         assertEquals(cameraView.getVideoQuality(), VideoQuality.MAX_1080P);
-        cameraView.setVideoQuality(VideoQuality.LOWEST);
+        cameraView.set(VideoQuality.LOWEST);
         assertEquals(cameraView.getVideoQuality(), VideoQuality.LOWEST);
     }
 

@@ -628,6 +628,34 @@ public class CameraView extends FrameLayout {
 
     //region Public APIs for controls
 
+
+    /**
+     * Shorthand for the appropriate set* method.
+     * For example, if control is a {@link Grid}, this calls {@link #setGrid(Grid)}.
+     *
+     * @param control desired value
+     */
+    public void set(Control control) {
+        if (control instanceof Audio) {
+            setAudio((Audio) control);
+        } else if (control instanceof Facing) {
+            setFacing((Facing) control);
+        } else if (control instanceof Flash) {
+            setFlash((Flash) control);
+        } else if (control instanceof Grid) {
+            setGrid((Grid) control);
+        } else if (control instanceof Hdr) {
+            setHdr((Hdr) control);
+        } else if (control instanceof SessionType) {
+            setSessionType((SessionType) control);
+        } else if (control instanceof VideoQuality) {
+            setVideoQuality((VideoQuality) control);
+        } else if (control instanceof WhiteBalance) {
+            setWhiteBalance((WhiteBalance) control);
+        }
+    }
+
+
     /**
      * Returns a {@link CameraOptions} instance holding supported options for this camera
      * session. This might change over time. It's better to hold a reference from
@@ -795,6 +823,7 @@ public class CameraView extends FrameLayout {
         return mCameraController.getLocation();
     }
 
+
     /**
      * Sets desired white balance to current camera session.
      *
@@ -828,7 +857,7 @@ public class CameraView extends FrameLayout {
      *
      * @param facing a facing value.
      */
-    public void setFacing(final Facing facing) {
+    public void setFacing(Facing facing) {
         mCameraController.setFacing(facing);
     }
 
