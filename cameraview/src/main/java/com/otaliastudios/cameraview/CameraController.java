@@ -488,7 +488,7 @@ abstract class CameraController implements
                 SizeSelectors.minWidth(targetMinSize.getWidth()));
         SizeSelector matchAll = SizeSelectors.or(
                 SizeSelectors.and(matchRatio, matchSize),
-                matchRatio, // If couldn't match both, match ratio.
+                SizeSelectors.and(matchRatio, SizeSelectors.biggest()), // If couldn't match both, match ratio and biggest.
                 SizeSelectors.biggest() // If couldn't match any, take the biggest.
         );
         Size result = matchAll.select(previewSizes).get(0);
