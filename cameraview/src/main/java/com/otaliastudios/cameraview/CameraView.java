@@ -27,6 +27,7 @@ import android.widget.FrameLayout;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -109,33 +110,68 @@ public class CameraView extends FrameLayout {
         Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
 
         // Size selectors
-        List<SizeSelector> constraints = new ArrayList<>(3);
+        List<SizeSelector> previewSizeSelectors = new ArrayList<>(3);
+        if (a.hasValue(R.styleable.CameraView_cameraPreviewSizeMinWidth)) {
+            previewSizeSelectors.add(SizeSelectors.minWidth(a.getInteger(R.styleable.CameraView_cameraPreviewSizeMinWidth, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPreviewSizeMaxWidth)) {
+            previewSizeSelectors.add(SizeSelectors.maxWidth(a.getInteger(R.styleable.CameraView_cameraPreviewSizeMaxWidth, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPreviewSizeMinHeight)) {
+            previewSizeSelectors.add(SizeSelectors.minHeight(a.getInteger(R.styleable.CameraView_cameraPreviewSizeMinHeight, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPreviewSizeMaxHeight)) {
+            previewSizeSelectors.add(SizeSelectors.maxHeight(a.getInteger(R.styleable.CameraView_cameraPreviewSizeMaxHeight, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPreviewSizeMinArea)) {
+            previewSizeSelectors.add(SizeSelectors.minArea(a.getInteger(R.styleable.CameraView_cameraPreviewSizeMinArea, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPreviewSizeMaxArea)) {
+            previewSizeSelectors.add(SizeSelectors.maxArea(a.getInteger(R.styleable.CameraView_cameraPreviewSizeMaxArea, 0)));
+        }
+        if (a.hasValue(R.styleable.CameraView_cameraPreviewSizeAspectRatio)) {
+            //noinspection ConstantConditions
+            previewSizeSelectors.add(SizeSelectors.aspectRatio(AspectRatio.parse(a.getString(R.styleable.CameraView_cameraPreviewSizeAspectRatio)), 0));
+        }
+        if (a.getBoolean(R.styleable.CameraView_cameraPreviewSizeSmallest, false)) previewSizeSelectors.add(SizeSelectors.smallest());
+        if (a.getBoolean(R.styleable.CameraView_cameraPreviewSizeBiggest, false)) previewSizeSelectors.add(SizeSelectors.biggest());
+        SizeSelector previewSizeSelector = !previewSizeSelectors.isEmpty() ?
+                SizeSelectors.and(previewSizeSelectors.toArray(new SizeSelector[previewSizeSelectors.size()])) :
+                new SizeSelector() {
+                    @NonNull
+                    @Override
+                    public List<Size> select(@NonNull List<Size> source) {
+                        return Collections.emptyList();
+                    }
+                };
+        
+        List<SizeSelector> pictureSizeSelectors = new ArrayList<>(3);
         if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMinWidth)) {
-            constraints.add(SizeSelectors.minWidth(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinWidth, 0)));
+            pictureSizeSelectors.add(SizeSelectors.minWidth(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinWidth, 0)));
         }
         if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMaxWidth)) {
-            constraints.add(SizeSelectors.maxWidth(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxWidth, 0)));
+            pictureSizeSelectors.add(SizeSelectors.maxWidth(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxWidth, 0)));
         }
         if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMinHeight)) {
-            constraints.add(SizeSelectors.minHeight(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinHeight, 0)));
+            pictureSizeSelectors.add(SizeSelectors.minHeight(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinHeight, 0)));
         }
         if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMaxHeight)) {
-            constraints.add(SizeSelectors.maxHeight(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxHeight, 0)));
+            pictureSizeSelectors.add(SizeSelectors.maxHeight(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxHeight, 0)));
         }
         if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMinArea)) {
-            constraints.add(SizeSelectors.minArea(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinArea, 0)));
+            pictureSizeSelectors.add(SizeSelectors.minArea(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinArea, 0)));
         }
         if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMaxArea)) {
-            constraints.add(SizeSelectors.maxArea(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxArea, 0)));
+            pictureSizeSelectors.add(SizeSelectors.maxArea(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxArea, 0)));
         }
         if (a.hasValue(R.styleable.CameraView_cameraPictureSizeAspectRatio)) {
             //noinspection ConstantConditions
-            constraints.add(SizeSelectors.aspectRatio(AspectRatio.parse(a.getString(R.styleable.CameraView_cameraPictureSizeAspectRatio)), 0));
+            pictureSizeSelectors.add(SizeSelectors.aspectRatio(AspectRatio.parse(a.getString(R.styleable.CameraView_cameraPictureSizeAspectRatio)), 0));
         }
-        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeSmallest, false)) constraints.add(SizeSelectors.smallest());
-        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeBiggest, false)) constraints.add(SizeSelectors.biggest());
-        SizeSelector selector = !constraints.isEmpty() ?
-                SizeSelectors.and(constraints.toArray(new SizeSelector[constraints.size()])) :
+        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeSmallest, false)) pictureSizeSelectors.add(SizeSelectors.smallest());
+        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeBiggest, false)) pictureSizeSelectors.add(SizeSelectors.biggest());
+        SizeSelector pictureSizeSelector = !pictureSizeSelectors.isEmpty() ?
+                SizeSelectors.and(pictureSizeSelectors.toArray(new SizeSelector[pictureSizeSelectors.size()])) :
                 SizeSelectors.biggest();
 
         // Gestures
@@ -181,7 +217,8 @@ public class CameraView extends FrameLayout {
         setGrid(grid);
         setHdr(hdr);
         setAudio(audio);
-        setPictureSize(selector);
+        setPreviewSize(previewSizeSelector);
+        setPictureSize(pictureSizeSelector);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -1007,6 +1044,17 @@ public class CameraView extends FrameLayout {
         return mCameraController.getSessionType();
     }
 
+
+    /**
+     * Sets preview size. The {@link SizeSelector} will be invoked with the list of available
+     * size, and the first acceptable size will be accepted and passed to the internal engine.
+     * See the {@link SizeSelectors} class for handy utilities for creating selectors.
+     *
+     * @param selector a size selector
+     */
+    public void setPreviewSize(@NonNull SizeSelector selector) {
+        mCameraController.setPreviewSizeSelector(selector);
+    }
 
     /**
      * Sets picture capture size. The {@link SizeSelector} will be invoked with the list of available

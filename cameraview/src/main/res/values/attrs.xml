@@ -2,6 +2,24 @@
 <resources>
     <declare-styleable name="CameraView">
 
+        <attr name="cameraPreviewSizeMinWidth" format="integer|reference"/>
+
+        <attr name="cameraPreviewSizeMaxWidth" format="integer|reference"/>
+
+        <attr name="cameraPreviewSizeMinHeight" format="integer|reference"/>
+
+        <attr name="cameraPreviewSizeMaxHeight" format="integer|reference"/>
+
+        <attr name="cameraPreviewSizeMinArea" format="integer|reference" />
+
+        <attr name="cameraPreviewSizeMaxArea" format="integer|reference" />
+
+        <attr name="cameraPreviewSizeSmallest" format="boolean"/>
+
+        <attr name="cameraPreviewSizeBiggest" format="boolean"/>
+
+        <attr name="cameraPreviewSizeAspectRatio" format="string|reference"/>
+
         <attr name="cameraPictureSizeMinWidth" format="integer|reference"/>
 
         <attr name="cameraPictureSizeMaxWidth" format="integer|reference"/>

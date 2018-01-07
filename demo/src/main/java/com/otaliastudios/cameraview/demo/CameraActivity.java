@@ -55,6 +55,12 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             }
         });
 
+        // You can control preview size
+//        camera.setPreviewSize(SizeSelectors.and(
+//                SizeSelectors.maxWidth(getWindowManager().getDefaultDisplay().getWidth() / 2),
+//                SizeSelectors.biggest()
+//        ));
+
         findViewById(R.id.edit).setOnClickListener(this);
         findViewById(R.id.capturePhoto).setOnClickListener(this);
         findViewById(R.id.captureVideo).setOnClickListener(this);

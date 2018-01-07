@@ -51,6 +51,7 @@ abstract class CameraController implements
     protected CameraOptions mCameraOptions;
     protected Mapper mMapper;
     protected FrameManager mFrameManager;
+    protected SizeSelector mPreviewSizeSelector;
     protected SizeSelector mPictureSizeSelector;
     protected MediaRecorder mMediaRecorder;
     protected File mVideoFile;
@@ -270,8 +271,12 @@ abstract class CameraController implements
         mDeviceOrientation = deviceOrientation;
     }
 
-    final void setPictureSizeSelector(SizeSelector selector) {
-        mPictureSizeSelector = selector;
+    final void setPreviewSizeSelector(SizeSelector previewSizeSelector) {
+        mPreviewSizeSelector = previewSizeSelector;
+    }
+
+    final void setPictureSizeSelector(SizeSelector pictureSizeSelector) {
+        mPictureSizeSelector = pictureSizeSelector;
     }
 
     //endregion
@@ -364,6 +369,10 @@ abstract class CameraController implements
 
     final Audio getAudio() {
         return mAudio;
+    }
+
+    public SizeSelector getPreviewSizeSelector() {
+        return mPreviewSizeSelector;
     }
 
     final SizeSelector getPictureSizeSelector() {
@@ -480,19 +489,28 @@ abstract class CameraController implements
         boolean flip = shouldFlipSizes();
         AspectRatio targetRatio = AspectRatio.of(mPictureSize.getWidth(), mPictureSize.getHeight());
         Size targetMinSize = mPreview.getSurfaceSize();
-        if (flip) targetMinSize = targetMinSize.flip();
+        if (flip) {
+            ArrayList<Size> temp = new ArrayList<>(previewSizes.size());
+            for (Size previewSize : previewSizes) {
+                temp.add(previewSize.flip());
+            }
+
+            previewSizes = temp;
+        }
         LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
         SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
         SizeSelector matchSize = SizeSelectors.and(
                 SizeSelectors.minHeight(targetMinSize.getHeight()),
                 SizeSelectors.minWidth(targetMinSize.getWidth()));
         SizeSelector matchAll = SizeSelectors.or(
+                mPreviewSizeSelector,
                 SizeSelectors.and(matchRatio, matchSize),
                 SizeSelectors.and(matchRatio, SizeSelectors.biggest()), // If couldn't match both, match ratio and biggest.
                 SizeSelectors.biggest() // If couldn't match any, take the biggest.
         );
         Size result = matchAll.select(previewSizes).get(0);
         LOG.i("computePreviewSize:", "result:", result, "flip:", flip);
+        if (flip) result = result.flip();
         return result;
     }
 
