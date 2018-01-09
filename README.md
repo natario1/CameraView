@@ -14,7 +14,15 @@ See [CHANGELOG](https://github.com/natario1/CameraView/blob/master/CHANGELOG.md)
 ```groovy
 compile 'com.otaliastudios:cameraview:1.4.1'
 ```
-
+```groovy
+allprojects {
+  repositories {
+    jcenter()
+    maven { url "https://jitpack.io" }
+    maven { url "https://maven.google.com" }
+  }
+}
+```
 <p>
   <img src="art/screen1.jpg" width="250" vspace="20" hspace="5">
   <img src="art/screen2.jpg" width="250" vspace="20" hspace="5">
