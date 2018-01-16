@@ -129,4 +129,9 @@ public class MockCameraController extends CameraController {
     void setVideoMaxSize(long videoMaxSizeInBytes) {
 
     }
+
+    @Override
+    void setPlaySounds(boolean playSounds) {
+
+    }
 }
