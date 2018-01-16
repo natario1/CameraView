@@ -371,11 +371,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     @TargetApi(17)
     private void applyPlaySound() {
-        if (!mPlaySounds && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             Camera.CameraInfo info = new Camera.CameraInfo();
             Camera.getCameraInfo(mCameraId, info);
-            if (isCameraAvailable() && info.canDisableShutterSound) {
-                mCamera.enableShutterSound(false);
+            if (info.canDisableShutterSound && isCameraAvailable()) {
+                mCamera.enableShutterSound(mPlaySounds);
             }
         }
     }
