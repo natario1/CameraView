@@ -178,9 +178,7 @@ apply plugin: 'jacoco'
 
 def reportsDirectory = "$buildDir/reports/"
 jacoco {
-    // Using a different version might get 0 coverage reports.
-    // No time to investigate now.
-    toolVersion = "0.7.6.201602180812"
+    toolVersion = "0.7.4+"
     reportsDir = file(reportsDirectory)
 }
 
