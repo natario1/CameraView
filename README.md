@@ -14,6 +14,15 @@ See [CHANGELOG](https://github.com/natario1/CameraView/blob/master/CHANGELOG.md)
 ```groovy
 compile 'com.otaliastudios:cameraview:1.4.1'
 ```
+If you're facing gradle issues while installing it, make sure your project dependencies have the jcenter() repository correctly confgured:
+```groovy
+allprojects {
+ +  repositories {
+ +    jcenter()
+ +  }
+ +}
+ ```
+
 
 <p>
   <img src="art/screen1.jpg" width="250" vspace="20" hspace="5">
