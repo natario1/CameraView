@@ -21,7 +21,7 @@ android {
 }
 
 dependencies {
-    compile project(':cameraview')
-    compile "com.android.support:appcompat-v7:$supportLibVersion"
-    compile "com.android.support:design:$supportLibVersion"
+    implementation project(':cameraview')
+    implementation "com.android.support:appcompat-v7:$supportLibVersion"
+    implementation "com.android.support:design:$supportLibVersion"
 }
