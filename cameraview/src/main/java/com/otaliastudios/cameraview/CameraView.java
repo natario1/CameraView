@@ -1361,6 +1361,7 @@ public class CameraView extends FrameLayout {
      */
     public void setPlaySounds(boolean playSounds) {
         mPlaySounds = playSounds && Build.VERSION.SDK_INT >= 16;
+        mCameraController.setPlaySounds(playSounds);
     }
 
     /**
