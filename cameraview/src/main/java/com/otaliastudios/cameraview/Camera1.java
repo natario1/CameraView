@@ -180,7 +180,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mergeLocation(params, null);
             mergeWhiteBalance(params, WhiteBalance.DEFAULT);
             mergeHdr(params, Hdr.DEFAULT);
-            mergePlaySound(true);
+            mergePlaySound(mPlaySounds);
             params.setRecordingHint(mSessionType == SessionType.VIDEO);
             mCamera.setParameters(params);
 
@@ -374,10 +374,13 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             Camera.CameraInfo info = new Camera.CameraInfo();
             Camera.getCameraInfo(mCameraId, info);
-            if (info.canDisableShutterSound && isCameraAvailable()) {
+            if (info.canDisableShutterSound) {
                 mCamera.enableShutterSound(mPlaySounds);
                 return true;
             }
+        }
+        if (mPlaySounds) {
+            return true;
         }
         mPlaySounds = oldPlaySound;
         return false;
@@ -886,9 +889,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
-                if (!mergePlaySound(old)) {
-                    mPlaySounds = old;
-                }
+                mergePlaySound(old);
             }
         });
     }
