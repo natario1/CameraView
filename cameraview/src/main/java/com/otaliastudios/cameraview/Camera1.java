@@ -886,7 +886,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     void setPlaySounds(boolean playSounds) {
         final boolean old = mPlaySounds;
         mPlaySounds = playSounds;
-        schedule(null, true, new Runnable() {
+        schedule(mPlaySoundsTask, true, new Runnable() {
             @Override
             public void run() {
                 mergePlaySound(old);
