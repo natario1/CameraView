@@ -1706,5 +1706,10 @@ public class CameraView extends FrameLayout {
         return mCameraController.getFlash();
     }
 
+
+    /* for tests */int getCameraId(){
+        return mCameraController.mCameraId;
+    }
+
     //endregion
 }

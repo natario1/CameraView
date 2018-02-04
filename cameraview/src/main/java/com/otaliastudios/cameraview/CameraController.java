@@ -78,6 +78,7 @@ abstract class CameraController implements
     Task<Void> mLocationTask = new Task<>();
     Task<Void> mVideoQualityTask = new Task<>();
     Task<Void> mStartVideoTask = new Task<>();
+    Task<Void> mPlaySoundsTask = new Task<>();
 
     CameraController(CameraView.CameraCallbacks callback) {
         mCameraCallbacks = callback;
