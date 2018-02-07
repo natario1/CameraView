@@ -3,6 +3,8 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.Bitmap;
 import android.graphics.PointF;
+import android.hardware.Camera;
+import android.os.Build;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -362,6 +364,25 @@ public class IntegrationTest extends BaseTest {
         assertEquals(camera.getLocation().getLatitude(), 10d, 0d);
         assertEquals(camera.getLocation().getLongitude(), 2d, 0d);
         // This also ensures there are no crashes when attaching it to camera parameters.
+    }
+
+    @Test
+    public void testSetPlaySounds() {
+        controller.mPlaySoundsTask.listen();
+        boolean oldValue = camera.getPlaySounds();
+        boolean newValue = !oldValue;
+        camera.setPlaySounds(newValue);
+        controller.mPlaySoundsTask.await(300);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            Camera.getCameraInfo(camera.getCameraId(), info);
+            if (info.canDisableShutterSound) {
+                assertEquals(newValue, camera.getPlaySounds());
+            }
+        } else {
+            assertEquals(oldValue, camera.getPlaySounds());
+        }
     }
 
     //endregion

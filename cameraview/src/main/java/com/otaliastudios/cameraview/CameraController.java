@@ -45,6 +45,7 @@ abstract class CameraController implements
     protected Audio mAudio;
     protected float mZoomValue;
     protected float mExposureCorrectionValue;
+    protected boolean mPlaySounds;
 
     protected int mCameraId;
     protected ExtraProperties mExtraProperties;
@@ -77,6 +78,7 @@ abstract class CameraController implements
     Task<Void> mLocationTask = new Task<>();
     Task<Void> mVideoQualityTask = new Task<>();
     Task<Void> mStartVideoTask = new Task<>();
+    Task<Void> mPlaySoundsTask = new Task<>();
 
     CameraController(CameraView.CameraCallbacks callback) {
         mCameraCallbacks = callback;
@@ -319,6 +321,8 @@ abstract class CameraController implements
     abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);
 
     abstract void setVideoMaxSize(long videoMaxSizeInBytes);
+
+    abstract void setPlaySounds(boolean playSounds);
 
     //endregion
 

@@ -119,4 +119,9 @@ class Camera2 extends CameraController {
     void setVideoMaxSize(long videoMaxSizeInBytes) {
 
     }
+
+    @Override
+    void setPlaySounds(boolean playSounds) {
+
+    }
 }

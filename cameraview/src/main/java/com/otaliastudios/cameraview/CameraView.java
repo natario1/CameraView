@@ -1361,6 +1361,7 @@ public class CameraView extends FrameLayout {
      */
     public void setPlaySounds(boolean playSounds) {
         mPlaySounds = playSounds && Build.VERSION.SDK_INT >= 16;
+        mCameraController.setPlaySounds(playSounds);
     }
 
     /**
@@ -1703,6 +1704,11 @@ public class CameraView extends FrameLayout {
             case AUTO: case TORCH: setFlash(Flash.OFF); break;
         }
         return mCameraController.getFlash();
+    }
+
+
+    /* for tests */int getCameraId(){
+        return mCameraController.mCameraId;
     }
 
     //endregion
