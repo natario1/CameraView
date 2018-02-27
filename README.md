@@ -12,16 +12,18 @@ addressing most of the common issues and needs, and still leaving you with flexi
 See [CHANGELOG](https://github.com/natario1/CameraView/blob/master/CHANGELOG.md).
 
 ```groovy
-compile 'com.otaliastudios:cameraview:1.4.1'
+compile 'com.otaliastudios:cameraview:1.4.2'
 ```
-If you're facing gradle issues while installing it, make sure your project dependencies have the jcenter() repository correctly confgured:
+
+Make sure your project repositories include the `jcenter()`:
+
 ```groovy
 allprojects {
- +  repositories {
- +    jcenter()
- +  }
- +}
- ```
+  repositories {
+    jcenter()
+  }
+}
+```
 
 
 <p>

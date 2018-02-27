@@ -1,3 +1,12 @@
+### v1.4.2
+
+- Add prefix to XML resources so they don't collide, thanks to [@RocketRider][RocketRider] ([#162][162])
+- Add `videoMaxSize` API and XML attribute, to set max size video in bytes, thanks to [@chaitanyaraghav][chaitanyaraghav] ([#104][104])
+- Improved the preview size selection, thanks to [@YeungKC][YeungKC] ([#133][133])
+- Improved the playSounds attribute, was playing incorrectly, thanks to [@xp-vit][xp-vit] ([#143][143])
+
+https://github.com/natario1/CameraView/compare/v1.4.1...v1.4.2
+
 ### v1.4.1
 
 - Fixed a bug that would flip the front camera preview on some devices ([#112][112])
@@ -56,7 +65,11 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 
 [v-gar]: https://github.com/v-gar
 [andrewmunn]: https://github.com/andrewmunn
+[chaitanyaraghav]: https://github.com/chaitanyaraghav
+[YeungKC]: https://github.com/YeungKC
 [RobertoMorelos]: https://github.com/RobertoMorelos
+[RocketRider]: https://github.com/RocketRider
+[xp-vit]: https://github.com/xp-vit
 
 [73]: https://github.com/natario1/CameraView/pull/73
 [80]: https://github.com/natario1/CameraView/pull/80
@@ -70,5 +83,9 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [97]: https://github.com/natario1/CameraView/pull/97
 [99]: https://github.com/natario1/CameraView/pull/99
 [101]: https://github.com/natario1/CameraView/pull/101
+[104]: https://github.com/natario1/CameraView/pull/104
 [105]: https://github.com/natario1/CameraView/pull/105
 [112]: https://github.com/natario1/CameraView/pull/112
+[133]: https://github.com/natario1/CameraView/pull/133
+[143]: https://github.com/natario1/CameraView/pull/143
+[162]: https://github.com/natario1/CameraView/pull/162
