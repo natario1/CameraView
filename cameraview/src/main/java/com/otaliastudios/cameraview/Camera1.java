@@ -38,8 +38,10 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             if (!isCameraAvailable()) return;
             mCamera.cancelAutoFocus();
             Camera.Parameters params = mCamera.getParameters();
-            params.setFocusAreas(null);
-            params.setMeteringAreas(null);
+            int maxAF = params.getMaxNumFocusAreas();
+            int maxAE = params.getMaxNumMeteringAreas();
+            if (maxAF > 0) params.setFocusAreas(null);
+            if (maxAE > 0) params.setMeteringAreas(null);
             applyDefaultFocus(params); // Revert to internal focus.
             mCamera.setParameters(params);
         }
