@@ -206,6 +206,7 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testGestureAction_zoom() {
         mockController.mockStarted(true);
+        mockController.mZoomChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -214,12 +215,18 @@ public class CameraViewTest extends BaseTest {
                     public boolean onTouchEvent(MotionEvent event) { return true; }
                 };
                 cameraView.mPinchGestureLayout.setGestureType(Gesture.PINCH);
+                cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
+
             }
         });
-        // Need to set a strange value first, because we don't dispatch if oldValue = newValue.
-        mockController.mZoomValue = -1;
-        mockController.mZoomChanged = false;
-        cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
+
+        // If factor is 0, we return the same value. The controller should not be notified.
+        cameraView.mPinchGestureLayout.mFactor = 0f;
+        cameraView.dispatchTouchEvent(event);
+        assertFalse(mockController.mZoomChanged);
+
+        // For larger factors, the value is scaled. The controller should be notified.
+        cameraView.mPinchGestureLayout.mFactor = 1f;
         cameraView.dispatchTouchEvent(event);
         assertTrue(mockController.mZoomChanged);
     }
@@ -232,7 +239,7 @@ public class CameraViewTest extends BaseTest {
         when(o.getExposureCorrectionMaxValue()).thenReturn(10f);
         mockController.setMockCameraOptions(o);
         mockController.mockStarted(true);
-
+        mockController.mExposureCorrectionChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -241,12 +248,17 @@ public class CameraViewTest extends BaseTest {
                     public boolean onTouchEvent(MotionEvent event) { return true; }
                 };
                 cameraView.mScrollGestureLayout.setGestureType(Gesture.SCROLL_HORIZONTAL);
+                cameraView.mapGesture(Gesture.SCROLL_HORIZONTAL, GestureAction.EXPOSURE_CORRECTION);
             }
         });
-        // Need to set a strange value first, because we don't dispatch if oldValue = newValue.
-        mockController.mExposureCorrectionValue = -50f;
-        mockController.mExposureCorrectionChanged = false;
-        cameraView.mapGesture(Gesture.SCROLL_HORIZONTAL, GestureAction.EXPOSURE_CORRECTION);
+
+        // If factor is 0, we return the same value. The controller should not be notified.
+        cameraView.mScrollGestureLayout.mFactor = 0f;
+        cameraView.dispatchTouchEvent(event);
+        assertFalse(mockController.mExposureCorrectionChanged);
+
+        // For larger factors, the value is scaled. The controller should be notified.
+        cameraView.mScrollGestureLayout.mFactor = 1f;
         cameraView.dispatchTouchEvent(event);
         assertTrue(mockController.mExposureCorrectionChanged);
     }
