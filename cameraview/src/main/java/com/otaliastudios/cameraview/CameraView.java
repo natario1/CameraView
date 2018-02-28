@@ -505,7 +505,9 @@ public class CameraView extends FrameLayout {
             case ZOOM:
                 oldValue = mCameraController.getZoomValue();
                 newValue = source.scaleValue(oldValue, 0, 1);
-                mCameraController.setZoom(newValue, points, true);
+                if (newValue != oldValue) {
+                    mCameraController.setZoom(newValue, points, true);
+                }
                 break;
 
             case EXPOSURE_CORRECTION:
@@ -513,8 +515,10 @@ public class CameraView extends FrameLayout {
                 float minValue = options.getExposureCorrectionMinValue();
                 float maxValue = options.getExposureCorrectionMaxValue();
                 newValue = source.scaleValue(oldValue, minValue, maxValue);
-                float[] bounds = new float[]{minValue, maxValue};
-                mCameraController.setExposureCorrection(newValue, bounds, points, true);
+                if (newValue != oldValue) {
+                    float[] bounds = new float[]{minValue, maxValue};
+                    mCameraController.setExposureCorrection(newValue, bounds, points, true);
+                }
                 break;
         }
     }
