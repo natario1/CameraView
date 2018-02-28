@@ -7,11 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-/**
- * Using Views to address the need to draw stuff, but think about it.
- * Simple classes could be enough.
- */
 abstract class GestureLayout extends FrameLayout {
+
+    // The number of possible values between minValue and maxValue, for the scaleValue method.
+    // We could make this non-static (e.g. larger granularity for exposure correction).
+    private final static int GRANULARITY = 50;
 
     protected boolean mEnabled;
     protected Gesture mType;
@@ -48,5 +48,22 @@ abstract class GestureLayout extends FrameLayout {
         return mPoints;
     }
 
+    // Implementors should call capValue at the end.
     public abstract float scaleValue(float currValue, float minValue, float maxValue);
+
+    // Checks for newValue to be between minValue and maxValue,
+    // and checks that it is 'far enough' from the oldValue, in order
+    // to reduce useless updates.
+    protected static float capValue(float oldValue, float newValue, float minValue, float maxValue) {
+        if (newValue < minValue) newValue = minValue;
+        if (newValue > maxValue) newValue = maxValue;
+
+        float distance = (maxValue - minValue) / (float) GRANULARITY;
+        float half = distance / 2;
+        if (newValue >= oldValue - half && newValue <= oldValue + half) {
+            // Too close! Return the oldValue.
+            return oldValue;
+        }
+        return newValue;
+    }
 }

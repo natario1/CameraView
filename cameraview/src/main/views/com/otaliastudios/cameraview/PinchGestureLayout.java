@@ -87,10 +87,6 @@ class PinchGestureLayout extends GestureLayout {
         } else if (add < 0) {
             add *= (currValue - minValue);
         } Nope, I don't like this, it slows everything down. */
-
-        float newValue = currValue + add;
-        if (newValue < minValue) newValue = minValue;
-        if (newValue > maxValue) newValue = maxValue;
-        return newValue;
+        return capValue(currValue, currValue + add, minValue, maxValue);
     }
 }

@@ -85,16 +85,9 @@ class ScrollGestureLayout extends GestureLayout {
         // ^ This works well if minValue = 0, maxValue = 1.
         // Account for the different range:
         delta *= (maxValue - minValue); // -(max-min) ... (max-min)
+        delta *= 2; // Add some sensitivity.
 
-        // Add some sensitivity.
-        delta *= 2;
-
-        // Cap
-        float newValue = currValue + delta;
-        if (newValue < minValue) newValue = minValue;
-        if (newValue > maxValue) newValue = maxValue;
-        LOG.i("curr="+currValue, "min="+minValue, "max="+maxValue, "out="+newValue);
-        return newValue;
+        return capValue(currValue, currValue + delta, minValue, maxValue);
     }
 
 }

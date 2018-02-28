@@ -216,6 +216,8 @@ public class CameraViewTest extends BaseTest {
                 cameraView.mPinchGestureLayout.setGestureType(Gesture.PINCH);
             }
         });
+        // Need to set a strange value first, because we don't dispatch if oldValue = newValue.
+        mockController.mZoomValue = -1;
         mockController.mZoomChanged = false;
         cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
         cameraView.dispatchTouchEvent(event);
@@ -241,6 +243,8 @@ public class CameraViewTest extends BaseTest {
                 cameraView.mScrollGestureLayout.setGestureType(Gesture.SCROLL_HORIZONTAL);
             }
         });
+        // Need to set a strange value first, because we don't dispatch if oldValue = newValue.
+        mockController.mExposureCorrectionValue = -50f;
         mockController.mExposureCorrectionChanged = false;
         cameraView.mapGesture(Gesture.SCROLL_HORIZONTAL, GestureAction.EXPOSURE_CORRECTION);
         cameraView.dispatchTouchEvent(event);
