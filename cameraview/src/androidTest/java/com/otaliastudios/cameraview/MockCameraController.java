@@ -131,6 +131,11 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
+    void setVideoMaxDuration(int videoMaxDurationMillis) {
+
+    }
+
+    @Override
     void setPlaySounds(boolean playSounds) {
 
     }
