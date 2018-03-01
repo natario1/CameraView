@@ -877,16 +877,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setVideoMaxSize(long videoMaxSizeInBytes) {
-        mVideoMaxSize = videoMaxSizeInBytes;
-    }
-
-    @Override
-    void setVideoMaxDuration(int videoMaxDurationMillis) {
-        mVideoMaxDuration = videoMaxDurationMillis;
-    }
-
-    @Override
     void setPlaySounds(boolean playSounds) {
         final boolean old = mPlaySounds;
         mPlaySounds = playSounds;

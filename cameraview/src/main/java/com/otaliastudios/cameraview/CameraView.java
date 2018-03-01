@@ -1208,8 +1208,7 @@ public class CameraView extends FrameLayout {
 
 
     /**
-     * Starts recording a video with selected options, in a file called
-     * "video.mp4" in the default folder.
+     * Starts recording a video, in a file called "video.mp4" in the default folder.
      * This is discouraged, please use {@link #startCapturingVideo(File)} instead.
      *
      * @deprecated see {@link #startCapturingVideo(File)}
@@ -1221,7 +1220,7 @@ public class CameraView extends FrameLayout {
 
 
     /**
-     * Starts recording a video with selected options. Video will be written to the given file,
+     * Starts recording a video. Video will be written to the given file,
      * so callers should ensure they have appropriate permissions to write to the file.
      *
      * @param file a file where the video will be saved
@@ -1242,29 +1241,29 @@ public class CameraView extends FrameLayout {
 
 
     /**
-     * Starts recording a video with selected options. Video will be written to the given file,
+     * Starts recording a video. Video will be written to the given file,
      * so callers should ensure they have appropriate permissions to write to the file.
-     * Recording will be automatically stopped after durationMillis, unless
-     * {@link #stopCapturingVideo()} is not called meanwhile.
+     * Recording will be automatically stopped after the given duration, overriding
+     * temporarily any duration limit set by {@link #setVideoMaxDuration(int)}.
      *
      * @param file a file where the video will be saved
-     * @param durationMillis video max duration
-     * @throws IllegalArgumentException if durationMillis is less than 500 milliseconds
+     * @param durationMillis recording max duration
      *
-     * @deprecated This is not reliable. Please use {@link #setVideoMaxDuration(int)}.
+     * @deprecated use {@link #setVideoMaxDuration(int)} instead.
      */
     @Deprecated
     public void startCapturingVideo(File file, long durationMillis) {
-        if (durationMillis < 500) {
-            throw new IllegalArgumentException("Video duration can't be < 500 milliseconds");
-        }
-        startCapturingVideo(file);
-        mUiHandler.postDelayed(new Runnable() {
+        // TODO: v2: change signature to int, or remove (better).
+        final int old = getVideoMaxDuration();
+        addCameraListener(new CameraListener() {
             @Override
-            public void run() {
-                stopCapturingVideo();
+            public void onVideoTaken(File video) {
+                setVideoMaxDuration(old);
+                removeCameraListener(this);
             }
-        }, durationMillis);
+        });
+        setVideoMaxDuration((int) durationMillis);
+        startCapturingVideo(file);
     }
 
 
@@ -1341,9 +1340,6 @@ public class CameraView extends FrameLayout {
         }
     }
 
-    //endregion
-
-    //region Sounds
 
     @SuppressLint("NewApi")
     private void playSound(int soundType) {
@@ -1352,6 +1348,7 @@ public class CameraView extends FrameLayout {
             mSound.play(soundType);
         }
     }
+
 
     /**
      * Controls whether CameraView should play sound effects on certain
@@ -1366,6 +1363,7 @@ public class CameraView extends FrameLayout {
         mCameraController.setPlaySounds(playSounds);
     }
 
+
     /**
      * Gets the current sound effect behavior.
      *
@@ -1375,6 +1373,7 @@ public class CameraView extends FrameLayout {
     public boolean getPlaySounds() {
         return mPlaySounds;
     }
+
 
     /**
      * Sets the maximum size in bytes for recorded video files.
@@ -1387,6 +1386,19 @@ public class CameraView extends FrameLayout {
         mCameraController.setVideoMaxSize(videoMaxSizeInBytes);
     }
 
+
+    /**
+     * Returns the maximum size in bytes for recorded video files, or 0
+     * if no size was set.
+     *
+     * @see #setVideoMaxSize(long)
+     * @return the maximum size in bytes
+     */
+    public long getVideoMaxSize() {
+        return mCameraController.getVideoMaxSize();
+    }
+
+
     /**
      * Sets the maximum duration in milliseconds for video recordings.
      * Once this duration is reached, the recording will automatically stop.
@@ -1397,6 +1409,19 @@ public class CameraView extends FrameLayout {
     public void setVideoMaxDuration(int videoMaxDurationMillis) {
         mCameraController.setVideoMaxDuration(videoMaxDurationMillis);
     }
+
+
+    /**
+     * Returns the maximum duration in milliseconds for video recordings, or 0
+     * if no limit was set.
+     *
+     * @see #setVideoMaxDuration(int)
+     * @return the maximum duration in milliseconds
+     */
+    public int getVideoMaxDuration() {
+        return mCameraController.getVideoMaxDuration();
+    }
+
 
     /**
      * Returns true if the camera is currently recording a video

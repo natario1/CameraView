@@ -126,16 +126,6 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void setVideoMaxSize(long videoMaxSizeInBytes) {
-
-    }
-
-    @Override
-    void setVideoMaxDuration(int videoMaxDurationMillis) {
-
-    }
-
-    @Override
     void setPlaySounds(boolean playSounds) {
 
     }

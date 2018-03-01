@@ -277,6 +277,15 @@ abstract class CameraController implements
         mPictureSizeSelector = selector;
     }
 
+    final void setVideoMaxSize(long videoMaxSizeBytes) {
+        mVideoMaxSize = videoMaxSizeBytes;
+    }
+
+    final void setVideoMaxDuration(int videoMaxDurationMillis) {
+        mVideoMaxDuration = videoMaxDurationMillis;
+    }
+
+
     //endregion
 
     //region Abstract setters and APIs
@@ -321,10 +330,6 @@ abstract class CameraController implements
 
     abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);
 
-    abstract void setVideoMaxSize(long videoMaxSizeInBytes);
-
-    abstract void setVideoMaxDuration(int videoMaxDurationMillis);
-
     abstract void setPlaySounds(boolean playSounds);
 
     //endregion
@@ -355,6 +360,14 @@ abstract class CameraController implements
 
     final VideoQuality getVideoQuality() {
         return mVideoQuality;
+    }
+
+    final long getVideoMaxSize() {
+        return mVideoMaxSize;
+    }
+
+    final int getVideoMaxDuration() {
+        return mVideoMaxDuration;
     }
 
     final SessionType getSessionType() {
