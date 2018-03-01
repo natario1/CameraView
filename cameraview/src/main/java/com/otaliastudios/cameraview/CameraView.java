@@ -107,6 +107,8 @@ public class CameraView extends FrameLayout {
         SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
         Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
         Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
+        long videoMaxSize = (long) a.getFloat(R.styleable.CameraView_cameraVideoMaxSize, 0);
+        int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
 
         // Size selectors
         List<SizeSelector> constraints = new ArrayList<>(3);
@@ -145,9 +147,6 @@ public class CameraView extends FrameLayout {
         GestureAction scrollHorizontalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollHorizontal, GestureAction.DEFAULT_SCROLL_HORIZONTAL.value()));
         GestureAction scrollVerticalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollVertical, GestureAction.DEFAULT_SCROLL_VERTICAL.value()));
 
-        //Get max size
-        float cameraVideoMaxSize = a.getFloat(R.styleable.CameraView_cameraVideoMaxSize, -1);
-
         a.recycle();
 
         // Components
@@ -182,6 +181,8 @@ public class CameraView extends FrameLayout {
         setHdr(hdr);
         setAudio(audio);
         setPictureSize(selector);
+        setVideoMaxSize(videoMaxSize);
+        setVideoMaxDuration(videoMaxDuration);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -189,11 +190,6 @@ public class CameraView extends FrameLayout {
         mapGesture(Gesture.PINCH, pinchGesture);
         mapGesture(Gesture.SCROLL_HORIZONTAL, scrollHorizontalGesture);
         mapGesture(Gesture.SCROLL_VERTICAL, scrollVerticalGesture);
-
-        //Set camera video maxSize
-        if(cameraVideoMaxSize > 0) {
-            setVideoMaxSize((long)cameraVideoMaxSize);
-        }
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
@@ -1212,8 +1208,7 @@ public class CameraView extends FrameLayout {
 
 
     /**
-     * Starts recording a video with selected options, in a file called
-     * "video.mp4" in the default folder.
+     * Starts recording a video, in a file called "video.mp4" in the default folder.
      * This is discouraged, please use {@link #startCapturingVideo(File)} instead.
      *
      * @deprecated see {@link #startCapturingVideo(File)}
@@ -1225,7 +1220,7 @@ public class CameraView extends FrameLayout {
 
 
     /**
-     * Starts recording a video with selected options. Video will be written to the given file,
+     * Starts recording a video. Video will be written to the given file,
      * so callers should ensure they have appropriate permissions to write to the file.
      *
      * @param file a file where the video will be saved
@@ -1246,27 +1241,29 @@ public class CameraView extends FrameLayout {
 
 
     /**
-     * Starts recording a video with selected options. Video will be written to the given file,
+     * Starts recording a video. Video will be written to the given file,
      * so callers should ensure they have appropriate permissions to write to the file.
-     * Recording will be automatically stopped after durationMillis, unless
-     * {@link #stopCapturingVideo()} is not called meanwhile.
+     * Recording will be automatically stopped after the given duration, overriding
+     * temporarily any duration limit set by {@link #setVideoMaxDuration(int)}.
      *
      * @param file a file where the video will be saved
-     * @param durationMillis video max duration
+     * @param durationMillis recording max duration
      *
-     * @throws IllegalArgumentException if durationMillis is less than 500 milliseconds
+     * @deprecated use {@link #setVideoMaxDuration(int)} instead.
      */
+    @Deprecated
     public void startCapturingVideo(File file, long durationMillis) {
-        if (durationMillis < 500) {
-            throw new IllegalArgumentException("Video duration can't be < 500 milliseconds");
-        }
-        startCapturingVideo(file);
-        mUiHandler.postDelayed(new Runnable() {
+        // TODO: v2: change signature to int, or remove (better).
+        final int old = getVideoMaxDuration();
+        addCameraListener(new CameraListener() {
             @Override
-            public void run() {
-                stopCapturingVideo();
+            public void onVideoTaken(File video) {
+                setVideoMaxDuration(old);
+                removeCameraListener(this);
             }
-        }, durationMillis);
+        });
+        setVideoMaxDuration((int) durationMillis);
+        startCapturingVideo(file);
     }
 
 
@@ -1343,9 +1340,6 @@ public class CameraView extends FrameLayout {
         }
     }
 
-    //endregion
-
-    //region Sounds
 
     @SuppressLint("NewApi")
     private void playSound(int soundType) {
@@ -1354,6 +1348,7 @@ public class CameraView extends FrameLayout {
             mSound.play(soundType);
         }
     }
+
 
     /**
      * Controls whether CameraView should play sound effects on certain
@@ -1368,6 +1363,7 @@ public class CameraView extends FrameLayout {
         mCameraController.setPlaySounds(playSounds);
     }
 
+
     /**
      * Gets the current sound effect behavior.
      *
@@ -1378,15 +1374,54 @@ public class CameraView extends FrameLayout {
         return mPlaySounds;
     }
 
+
     /**
-     * Set a max file size (in bytes) for a video recording.  There is no file size limit by default
-     * unless set by the user.
+     * Sets the maximum size in bytes for recorded video files.
+     * Once this size is reached, the recording will automatically stop.
+     * Defaults to unlimited size. Use 0 or negatives to disable.
      *
-     * @param videoMaxSizeInBytes The maximum size of videos in bytes
+     * @param videoMaxSizeInBytes The maximum video size in bytes
      */
-    public void setVideoMaxSize(long videoMaxSizeInBytes){
+    public void setVideoMaxSize(long videoMaxSizeInBytes) {
         mCameraController.setVideoMaxSize(videoMaxSizeInBytes);
     }
+
+
+    /**
+     * Returns the maximum size in bytes for recorded video files, or 0
+     * if no size was set.
+     *
+     * @see #setVideoMaxSize(long)
+     * @return the maximum size in bytes
+     */
+    public long getVideoMaxSize() {
+        return mCameraController.getVideoMaxSize();
+    }
+
+
+    /**
+     * Sets the maximum duration in milliseconds for video recordings.
+     * Once this duration is reached, the recording will automatically stop.
+     * Defaults to unlimited duration. Use 0 or negatives to disable.
+     *
+     * @param videoMaxDurationMillis The maximum video duration in milliseconds
+     */
+    public void setVideoMaxDuration(int videoMaxDurationMillis) {
+        mCameraController.setVideoMaxDuration(videoMaxDurationMillis);
+    }
+
+
+    /**
+     * Returns the maximum duration in milliseconds for video recordings, or 0
+     * if no limit was set.
+     *
+     * @see #setVideoMaxDuration(int)
+     * @return the maximum duration in milliseconds
+     */
+    public int getVideoMaxDuration() {
+        return mCameraController.getVideoMaxDuration();
+    }
+
 
     /**
      * Returns true if the camera is currently recording a video

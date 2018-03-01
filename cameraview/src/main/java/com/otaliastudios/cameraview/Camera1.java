@@ -696,31 +696,28 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
 
         if (mLocation != null) {
-            mMediaRecorder.setLocation((float) mLocation.getLatitude(),
+            mMediaRecorder.setLocation(
+                    (float) mLocation.getLatitude(),
                     (float) mLocation.getLongitude());
         }
 
         mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
         mMediaRecorder.setOrientationHint(computeSensorToOutputOffset());
 
-        //If the user sets a max file size, set it to the max file size
-        if (mVideoMaxSizeInBytes > 0) {
-            mMediaRecorder.setMaxFileSize(mVideoMaxSizeInBytes);
+        mMediaRecorder.setMaxFileSize(mVideoMaxSize);
+        mMediaRecorder.setMaxDuration(mVideoMaxDuration);
 
-            //Attach a listener to the media recorder to listen for file size notifications
-            mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
-                @Override
-                public void onInfo(MediaRecorder mediaRecorder, int i, int i1) {
-                    switch (i) {
-                        case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED: {
-                            endVideoImmediately();
-                            break;
-                        }
-                    }
-
+        mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
+            @Override
+            public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
+                switch (what) {
+                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
+                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
+                        endVideoImmediately();
+                        break;
                 }
-            });
-        }
+            }
+        });
         // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
     }
 
@@ -877,11 +874,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
         LOG.i("size:", "sizesFromList:", result);
         return result;
-    }
-
-    @Override
-    void setVideoMaxSize(long videoMaxSizeInBytes) {
-        mVideoMaxSizeInBytes = videoMaxSizeInBytes;
     }
 
     @Override

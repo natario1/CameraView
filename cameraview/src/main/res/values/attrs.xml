@@ -112,6 +112,8 @@
 
         <attr name="cameraVideoMaxSize" format="float" />
 
+        <attr name="cameraVideoMaxDuration" format="integer" />
+
         <!-- deprecated attr name="cameraZoomMode" format="enum">
             <enum name="off" value="0" />
             <enum name="pinch" value="1" />
