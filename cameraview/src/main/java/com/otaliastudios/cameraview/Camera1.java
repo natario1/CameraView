@@ -230,6 +230,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mPreviewSize = null;
         mPictureSize = null;
         mIsBound = false;
+        mIsCapturingImage = false;
+        mIsCapturingVideo = false;
         LOG.w("onStop:", "Clean up.", "Returning.");
         if (error != null) throw new CameraException(error);
     }
