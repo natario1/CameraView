@@ -99,8 +99,6 @@
             <enum name="max2160p" value="6" />
         </attr>
 
-        <attr name="cameraCropOutput" format="boolean" />
-
         <attr name="cameraAudio" format="enum">
             <enum name="off" value="0" />
             <enum name="on" value="1" />

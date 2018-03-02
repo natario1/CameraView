@@ -54,7 +54,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     final static boolean DEFAULT_PLAY_SOUNDS = true;
 
     // Self managed parameters
-    private boolean mCropOutput;
     private boolean mPlaySounds;
     private HashMap<Gesture, GestureAction> mGestureMap = new HashMap<>(4);
 
@@ -98,7 +97,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
 
         // Self managed
-        boolean cropOutput = a.getBoolean(R.styleable.CameraView_cameraCropOutput, DEFAULT_CROP_OUTPUT);
         boolean playSounds = a.getBoolean(R.styleable.CameraView_cameraPlaySounds, DEFAULT_PLAY_SOUNDS);
 
         // Camera controller params
@@ -171,7 +169,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         addView(mScrollGestureLayout);
 
         // Apply self managed
-        setCropOutput(cropOutput);
         setPlaySounds(playSounds);
 
         // Apply camera controller params
@@ -1071,31 +1068,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Whether we should crop the picture output to match CameraView aspect ratio.
-     * This is only relevant if CameraView dimensions were somehow constrained
-     * (e.g. by fixed value or MATCH_PARENT) and do not match internal aspect ratio.
-     *
-     * Please note that this requires additional computations after the picture is taken.
-     *
-     * @param cropOutput whether to crop
-     */
-    public void setCropOutput(boolean cropOutput) {
-        this.mCropOutput = cropOutput;
-    }
-
-
-    /**
-     * Returns whether we should crop the picture output to match CameraView aspect ratio.
-     *
-     * @see #setCropOutput(boolean)
-     * @return whether we crop
-     */
-    public boolean getCropOutput() {
-        return mCropOutput;
-    }
-
-
-    /**
      * Sets a {@link CameraListener} instance to be notified of all
      * interesting events that will happen during the camera lifecycle.
      *
@@ -1550,23 +1522,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         @Override
         public void processImage(final byte[] jpeg, final boolean consistentWithView, final boolean flipHorizontally) {
             mLogger.i("processImage");
-            mWorkerHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    byte[] jpeg2 = jpeg;
-                    if (mCropOutput && mCameraPreview.isCropping()) {
-                        // If consistent, dimensions of the jpeg Bitmap and dimensions of getWidth(), getHeight()
-                        // Live in the same reference system.
-                        int w = consistentWithView ? getWidth() : getHeight();
-                        int h = consistentWithView ? getHeight() : getWidth();
-                        AspectRatio targetRatio = AspectRatio.of(w, h);
-                        mLogger.i("processImage", "is consistent?", consistentWithView);
-                        mLogger.i("processImage", "viewWidth?", getWidth(), "viewHeight?", getHeight());
-                        jpeg2 = CropHelper.cropToJpeg(jpeg, targetRatio, 100);
-                    }
-                    dispatchOnPictureTaken(jpeg2);
-                }
-            });
+            dispatchOnPictureTaken(jpeg);
+            // TODO: remove.
         }
 
         @Override
@@ -1576,16 +1533,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 @Override
                 public void run() {
                     byte[] jpeg;
-                    if (mCropOutput && mCameraPreview.isCropping()) {
+                    if (mCameraPreview.isCropping()) {
                         int w = consistentWithView ? getWidth() : getHeight();
                         int h = consistentWithView ? getHeight() : getWidth();
                         AspectRatio targetRatio = AspectRatio.of(w, h);
                         mLogger.i("processSnapshot", "is consistent?", consistentWithView);
                         mLogger.i("processSnapshot", "viewWidth?", getWidth(), "viewHeight?", getHeight());
-                        jpeg = CropHelper.cropToJpeg(yuv, targetRatio, 100);
+                        jpeg = CropHelper.cropToJpeg(yuv, targetRatio, 90);
                     } else {
                         ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        yuv.compressToJpeg(new Rect(0, 0, yuv.getWidth(), yuv.getHeight()), 100, out);
+                        yuv.compressToJpeg(new Rect(0, 0, yuv.getWidth(), yuv.getHeight()), 90, out);
                         jpeg = out.toByteArray();
                     }
                     dispatchOnPictureTaken(jpeg);
