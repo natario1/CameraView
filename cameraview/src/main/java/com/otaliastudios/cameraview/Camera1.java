@@ -225,7 +225,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 LOG.w("onStop:", "Clean up.", "Exception while releasing camera.", e);
             }
         }
-        mExtraProperties = null;
         mCameraOptions = null;
         mCamera = null;
         mPreviewSize = null;
@@ -636,15 +635,67 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             public void run() {
                 if (mIsCapturingVideo) return;
                 if (mSessionType == SessionType.VIDEO) {
-                    mVideoFile = videoFile;
                     mIsCapturingVideo = true;
-                    initMediaRecorder();
+
+                    // Create the video result
+                    CamcorderProfile profile = getCamcorderProfile();
+                    Size videoSize = new Size(profile.videoFrameWidth, profile.videoFrameHeight);
+                    mVideoResult = new VideoResult();
+                    mVideoResult.file = videoFile;
+                    mVideoResult.isSnapshot = false;
+                    mVideoResult.codec = mVideoCodec;
+                    mVideoResult.location = mLocation;
+                    mVideoResult.rotation = computeSensorToOutputOffset();
+                    mVideoResult.size = mVideoResult.rotation % 180 == 0 ? videoSize : videoSize.flip();
+
+                    // Initialize the media recorder
+                    mCamera.unlock();
+                    mMediaRecorder = new MediaRecorder();
+                    mMediaRecorder.setCamera(mCamera);
+                    mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+                    if (mAudio == Audio.ON) {
+                        // Must be called before setOutputFormat.
+                        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+                    }
+                    mMediaRecorder.setOutputFormat(profile.fileFormat);
+                    mMediaRecorder.setVideoFrameRate(profile.videoFrameRate);
+                    mMediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
+                    mMediaRecorder.setVideoEncoder(mMapper.map(mVideoCodec));
+                    mMediaRecorder.setVideoEncodingBitRate(profile.videoBitRate);
+                    if (mAudio == Audio.ON) {
+                        mMediaRecorder.setAudioChannels(profile.audioChannels);
+                        mMediaRecorder.setAudioSamplingRate(profile.audioSampleRate);
+                        mMediaRecorder.setAudioEncoder(profile.audioCodec);
+                        mMediaRecorder.setAudioEncodingBitRate(profile.audioBitRate);
+                    }
+                    if (mLocation != null) {
+                        mMediaRecorder.setLocation(
+                                (float) mLocation.getLatitude(),
+                                (float) mLocation.getLongitude());
+                    }
+                    mMediaRecorder.setOutputFile(mVideoResult.getFile().getAbsolutePath());
+                    mMediaRecorder.setOrientationHint(mVideoResult.getRotation());
+                    mMediaRecorder.setMaxFileSize(mVideoMaxSize);
+                    mMediaRecorder.setMaxDuration(mVideoMaxDuration);
+                    mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
+                        @Override
+                        public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
+                            switch (what) {
+                                case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
+                                case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
+                                    stopVideoImmediately();
+                                    break;
+                            }
+                        }
+                    });
+                    // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
+
                     try {
                         mMediaRecorder.prepare();
                         mMediaRecorder.start();
                     } catch (Exception e) {
                         LOG.e("Error while starting MediaRecorder. Swallowing.", e);
-                        mVideoFile = null;
+                        mVideoResult = null;
                         mCamera.lock();
                         stopVideoImmediately();
                     }
@@ -679,9 +730,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mMediaRecorder.release();
             mMediaRecorder = null;
         }
-        if (mVideoFile != null) {
-            mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
-            mVideoFile = null;
+        if (mVideoResult != null) {
+            mCameraCallbacks.dispatchOnVideoTaken(mVideoResult);
+            mVideoResult = null;
         }
         if (mCamera != null) {
             // This is needed to restore FrameProcessor. No re-allocation needed though.
@@ -716,31 +767,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mMediaRecorder.setAudioEncoder(profile.audioCodec);
             mMediaRecorder.setAudioEncodingBitRate(profile.audioBitRate);
         }
-
-        if (mLocation != null) {
-            mMediaRecorder.setLocation(
-                    (float) mLocation.getLatitude(),
-                    (float) mLocation.getLongitude());
-        }
-
-        mMediaRecorder.setOutputFile(mVideoFile.getAbsolutePath());
-        mMediaRecorder.setOrientationHint(computeSensorToOutputOffset());
-
-        mMediaRecorder.setMaxFileSize(mVideoMaxSize);
-        mMediaRecorder.setMaxDuration(mVideoMaxDuration);
-
-        mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
-            @Override
-            public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
-                switch (what) {
-                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
-                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
-                        stopVideoImmediately();
-                        break;
-                }
-            }
-        });
-        // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
     }
 
     // -----------------

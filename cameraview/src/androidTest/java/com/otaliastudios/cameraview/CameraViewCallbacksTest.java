@@ -264,7 +264,6 @@ public class CameraViewCallbacksTest extends BaseTest {
         camera.setRight(viewDim[0]);
 
         // Ensure the image will (not) be cropped.
-        camera.setCropOutput(crop);
         mockPreview.setIsCropping(crop);
 
         // Create fake JPEG array and trigger the process.

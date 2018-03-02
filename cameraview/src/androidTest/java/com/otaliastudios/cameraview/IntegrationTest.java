@@ -126,7 +126,7 @@ public class IntegrationTest extends BaseTest {
 
     private void waitForVideoEnd(boolean expectSuccess) {
         final Task<Boolean> video = new Task<>(true);
-        doEndTask(video, true).when(listener).onVideoTaken(any(File.class));
+        doEndTask(video, true).when(listener).onVideoTaken(any(VideoResult.class));
         Boolean result = video.await(8000);
         if (expectSuccess) {
             assertNotNull("Should end video", result);
@@ -205,10 +205,8 @@ public class IntegrationTest extends BaseTest {
     @Test
     public void testStartInitializesOptions() {
         assertNull(camera.getCameraOptions());
-        assertNull(camera.getExtraProperties());
         waitForOpen(true);
         assertNotNull(camera.getCameraOptions());
-        assertNotNull(camera.getExtraProperties());
     }
 
     //endregion
@@ -530,7 +528,7 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testCapturePicture_size() throws Exception {
-        camera.setCropOutput(false);
+        // TODO v2: might have to change this
         waitForOpen(true);
 
         Size size = camera.getPictureSize();
@@ -566,7 +564,7 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testCaptureSnapshot_size() throws Exception {
-        camera.setCropOutput(false);
+        // TODO v2: might have to change this
         waitForOpen(true);
 
         Size size = camera.getPreviewSize();

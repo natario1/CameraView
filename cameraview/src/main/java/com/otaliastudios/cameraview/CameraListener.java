@@ -4,8 +4,6 @@ import android.graphics.PointF;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 
-import java.io.File;
-
 public abstract class CameraListener {
 
 
@@ -65,18 +63,13 @@ public abstract class CameraListener {
 
 
     /**
-     * Notifies that a video capture has just ended. The file parameter is the one that
-     * was passed to {@link CameraView#takeVideo(File)}, if any.
-     * If not, the camera fallsback to:
-     * <code>
-     *     new File(getContext().getExternalFilesDir(null), "video.mp4");
-     * </code>
+     * Notifies that a video capture has just ended.
      *
-     * @param video file hosting the mp4 video
+     * @param result the video result
      */
     @UiThread
-    public void onVideoTaken(File video) {
-        // TODO v2: use a VideoResult.
+    public void onVideoTaken(VideoResult result) {
+
     }
 
 
