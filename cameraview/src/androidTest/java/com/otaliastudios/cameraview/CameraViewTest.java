@@ -102,7 +102,6 @@ public class CameraViewTest extends BaseTest {
 
         // Self managed
         assertEquals(cameraView.getPlaySounds(), CameraView.DEFAULT_PLAY_SOUNDS);
-        assertEquals(cameraView.getCropOutput(), CameraView.DEFAULT_CROP_OUTPUT);
         assertEquals(cameraView.getGestureAction(Gesture.TAP), GestureAction.DEFAULT_TAP);
         assertEquals(cameraView.getGestureAction(Gesture.LONG_TAP), GestureAction.DEFAULT_LONG_TAP);
         assertEquals(cameraView.getGestureAction(Gesture.PINCH), GestureAction.DEFAULT_PINCH);
@@ -457,14 +456,6 @@ public class CameraViewTest extends BaseTest {
     //endregion
 
     //region test setParameters
-
-    @Test
-    public void testSetCropOutput() {
-        cameraView.setCropOutput(true);
-        assertTrue(cameraView.getCropOutput());
-        cameraView.setCropOutput(false);
-        assertFalse(cameraView.getCropOutput());
-    }
 
     @Test
     public void testSetPlaySounds() {
