@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 @SmallTest
 public class Mapper1Test extends BaseTest {
 
-    private Mapper mapper = new Mapper.Mapper1();
+    private Mapper mapper = new Mapper1();
 
     @Test
     public void testMap() {

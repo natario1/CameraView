@@ -6,7 +6,6 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.support.annotation.NonNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,7 +37,7 @@ public class CameraOptions {
     @SuppressWarnings("deprecation")
     CameraOptions(Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
-        Mapper mapper = new Mapper.Mapper1();
+        Mapper mapper = new Mapper1();
 
         // Facing
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
