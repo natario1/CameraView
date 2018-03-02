@@ -269,7 +269,7 @@ public class CameraViewCallbacksTest extends BaseTest {
 
         // Create fake JPEG array and trigger the process.
         if (jpeg) {
-            camera.mCameraCallbacks.processImage(mockJpeg(imageDim[0], imageDim[1]), true, false);
+            camera.mCameraCallbacks.processPicture(mockJpeg(imageDim[0], imageDim[1]), true, false);
         } else {
             camera.mCameraCallbacks.processSnapshot(mockYuv(imageDim[0], imageDim[1]), true, false);
         }

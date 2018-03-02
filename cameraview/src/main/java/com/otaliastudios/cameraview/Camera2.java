@@ -86,22 +86,22 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void capturePicture() {
+    void takePicture() {
 
     }
 
     @Override
-    void captureSnapshot() {
+    void takePictureSnapshot() {
 
     }
 
     @Override
-    void startVideo(@NonNull File file) {
+    void takeVideo(@NonNull File file) {
 
     }
 
     @Override
-    void endVideo() {
+    void stopVideo() {
 
     }
 

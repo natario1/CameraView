@@ -92,20 +92,20 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void capturePicture() {
+    void takePicture() {
         mPictureCaptured = true;
     }
 
     @Override
-    void captureSnapshot() {
+    void takePictureSnapshot() {
     }
 
     @Override
-    void startVideo(@NonNull File file) {
+    void takeVideo(@NonNull File file) {
     }
 
     @Override
-    void endVideo() {
+    void stopVideo() {
     }
 
     @Override

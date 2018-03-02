@@ -325,13 +325,13 @@ abstract class CameraController implements
     // Throw if capturing. If in video session, recompute capture size, and, if needed, preview size.
     abstract void setVideoQuality(VideoQuality videoQuality);
 
-    abstract void capturePicture();
+    abstract void takePicture();
 
-    abstract void captureSnapshot();
+    abstract void takePictureSnapshot();
 
-    abstract void startVideo(@NonNull File file);
+    abstract void takeVideo(@NonNull File file);
 
-    abstract void endVideo();
+    abstract void stopVideo();
 
     abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);
 
