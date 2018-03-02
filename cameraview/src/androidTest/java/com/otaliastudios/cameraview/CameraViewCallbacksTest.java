@@ -216,6 +216,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         verify(listener, times(1)).onCameraError(error);
     }
 
+    @Test
     public void testProcessFrame() {
         Frame mock = mock(Frame.class);
         completeTask().when(processor).process(mock);

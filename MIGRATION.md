@@ -32,4 +32,4 @@
 - VideoSizeSelector: added. It is needed to choose the capture size in VIDEO mode.
   Defaults to SizeSelectors.biggest(), but you can choose by aspect ratio or whatever.
 - isTakingPicture(): added on top of isTakingVideo().
-  
+ 
