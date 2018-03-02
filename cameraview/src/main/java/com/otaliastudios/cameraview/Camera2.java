@@ -91,7 +91,7 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void takePictureSnapshot() {
+    void takePictureSnapshot(boolean shouldCrop, AspectRatio viewAspectRatio) {
 
     }
 

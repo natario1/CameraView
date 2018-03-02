@@ -1,13 +1,40 @@
 package com.otaliastudios.cameraview;
 
-class RotationHelper {
+import android.graphics.Rect;
 
+class YuvHelper {
 
-    static byte[] rotate(final byte[] yuv, final int width, final int height, final int rotation) {
+    static Rect computeCrop(Size currentSize, AspectRatio targetRatio) {
+        int currentWidth = currentSize.getWidth();
+        int currentHeight = currentSize.getHeight();
+        if (targetRatio.matches(currentSize)) {
+            return new Rect(0, 0, currentWidth, currentHeight);
+        }
+
+        // They are not equal. Compute.
+        AspectRatio currentRatio = AspectRatio.of(currentWidth, currentHeight);
+        int x, y, width, height;
+        if (currentRatio.toFloat() > targetRatio.toFloat()) {
+            height = currentHeight;
+            width = (int) (height * targetRatio.toFloat());
+            y = 0;
+            x = (currentWidth - width) / 2;
+        } else {
+            width = currentWidth;
+            height = (int) (width / targetRatio.toFloat());
+            y = (currentHeight - height) / 2;
+            x = 0;
+        }
+        return new Rect(x, y, x + width, y + height);
+    }
+
+    static byte[] rotate(final byte[] yuv, final Size size, final int rotation) {
         if (rotation == 0) return yuv;
         if (rotation % 90 != 0 || rotation < 0 || rotation > 270) {
             throw new IllegalArgumentException("0 <= rotation < 360, rotation % 90 == 0");
         }
+        final int width = size.getWidth();
+        final int height = size.getHeight();
         final byte[] output = new byte[yuv.length];
         final int frameSize = width * height;
         final boolean swap = rotation % 180 != 0;

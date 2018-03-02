@@ -137,10 +137,13 @@ to handle the image callback.
 ```java
 camera.addCameraListener(new CameraListener() {
     @Override
-    public void onPictureTaken(byte[] picture) {
-        // Create a bitmap or a file...
-        // CameraUtils will read EXIF orientation for you, in a worker thread.
-        CameraUtils.decodeBitmap(picture, ...);
+    public void onPictureTaken(PictureResult result) {
+        // If planning to save a file, just get the jpeg array.
+        byte[] jpeg = result.getJpeg();
+        
+        // If planning to show a Bitmap, we will take care of
+        // EXIF rotation and background threading for you...
+        result.asBitmap(maxWidth, maxHeight, callback);
     }
 });
 
@@ -218,14 +221,13 @@ camera.addCameraListener(new CameraListener() {
      * to decode the byte array taking care about orientation.
      */
     @Override
-    public void onPictureTaken(byte[] picture) {}
+    public void onPictureTaken(PictureResult result) {}
 
     /**
-     * Notifies that a video capture has just ended. The file parameter is the one that
-     * was passed to takeVideo(File), or a fallback video file.
+     * Notifies that a video capture has just ended.
      */
     @Override
-    public void onVideoTaken(File video) {}
+    public void onVideoTaken(VideoResult result) {}
     
     /**
      * Notifies that the device was tilted or the window offset changed.

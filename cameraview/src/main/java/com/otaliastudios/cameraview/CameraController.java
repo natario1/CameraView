@@ -326,7 +326,7 @@ abstract class CameraController implements
 
     abstract void takePicture();
 
-    abstract void takePictureSnapshot();
+    abstract void takePictureSnapshot(boolean shouldCrop, AspectRatio viewAspectRatio);
 
     abstract void takeVideo(@NonNull File file);
 
@@ -409,7 +409,7 @@ abstract class CameraController implements
         return mPreviewSize;
     }
 
-    final boolean isCapturingVideo() {
+    final boolean isTakingVideo() {
         return mIsCapturingVideo;
     }
 

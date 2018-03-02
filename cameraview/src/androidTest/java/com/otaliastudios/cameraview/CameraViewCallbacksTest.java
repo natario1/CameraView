@@ -255,7 +255,7 @@ public class CameraViewCallbacksTest extends BaseTest {
                 jpegTask.end((byte[]) invocation.getArguments()[0]);
                 return null;
             }
-        }).when(listener).onPictureTaken(any(byte[].class));
+        }).when(listener).onPictureTaken(any(PictureResult.class));
 
         // Fake our own dimensions.
         camera.setTop(0);

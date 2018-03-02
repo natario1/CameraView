@@ -137,7 +137,7 @@ public class IntegrationTest extends BaseTest {
 
     private byte[] waitForPicture(boolean expectSuccess) {
         final Task<byte[]> pic = new Task<>(true);
-        doEndTask(pic, 0).when(listener).onPictureTaken(any(byte[].class));
+        doEndTask(pic, 0).when(listener).onPictureTaken(any(PictureResult.class));
         byte[] result = pic.await(5000);
         if (expectSuccess) {
             assertNotNull("Can take picture", result);
@@ -517,7 +517,7 @@ public class IntegrationTest extends BaseTest {
         waitForOpen(true);
 
         CountDownLatch latch = new CountDownLatch(2);
-        doCountDown(latch).when(listener).onPictureTaken(any(byte[].class));
+        doCountDown(latch).when(listener).onPictureTaken(any(PictureResult.class));
 
         camera.takePicture();
         camera.takePicture();
@@ -553,7 +553,7 @@ public class IntegrationTest extends BaseTest {
         waitForOpen(true);
 
         CountDownLatch latch = new CountDownLatch(2);
-        doCountDown(latch).when(listener).onPictureTaken(any(byte[].class));
+        doCountDown(latch).when(listener).onPictureTaken(any(PictureResult.class));
 
         camera.takePictureSnapshot();
         camera.takePictureSnapshot();
