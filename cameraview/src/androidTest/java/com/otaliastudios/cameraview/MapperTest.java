@@ -30,7 +30,7 @@ public class MapperTest extends BaseTest {
     @Test
     public void testMap() {
         assertEquals(mapper.map(VideoCodec.DEVICE_DEFAULT), MediaRecorder.VideoEncoder.DEFAULT);
-        assertEquals(mapper.map(VideoCodec.DEVICE_DEFAULT), MediaRecorder.VideoEncoder.DEFAULT);
-        assertEquals(mapper.map(VideoCodec.DEVICE_DEFAULT), MediaRecorder.VideoEncoder.DEFAULT);
+        assertEquals(mapper.map(VideoCodec.H_263), MediaRecorder.VideoEncoder.H263);
+        assertEquals(mapper.map(VideoCodec.H_264), MediaRecorder.VideoEncoder.H264);
     }
 }
