@@ -89,8 +89,6 @@
             <enum name="video" value="1" />
         </attr>
 
-        <attr name="cameraJpegQuality" format="integer" />
-
         <attr name="cameraVideoQuality" format="enum">
             <enum name="lowest" value="0" />
             <enum name="highest" value="1" />
