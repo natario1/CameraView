@@ -39,6 +39,7 @@ abstract class CameraController implements
     protected Flash mFlash;
     protected WhiteBalance mWhiteBalance;
     protected VideoQuality mVideoQuality;
+    protected VideoCodec mVideoCodec;
     protected SessionType mSessionType;
     protected Hdr mHdr;
     protected Location mLocation;
@@ -285,6 +286,10 @@ abstract class CameraController implements
         mVideoMaxDuration = videoMaxDurationMillis;
     }
 
+    final void setVideoCodec(VideoCodec codec) {
+        mVideoCodec = codec;
+    }
+
 
     //endregion
 
@@ -360,6 +365,10 @@ abstract class CameraController implements
 
     final VideoQuality getVideoQuality() {
         return mVideoQuality;
+    }
+
+    final VideoCodec getVideoCodec() {
+        return mVideoCodec;
     }
 
     final long getVideoMaxSize() {

@@ -107,6 +107,7 @@ public class CameraView extends FrameLayout {
         SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
         Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
         Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
+        VideoCodec codec = VideoCodec.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoCodec, VideoCodec.DEFAULT.value()));
         long videoMaxSize = (long) a.getFloat(R.styleable.CameraView_cameraVideoMaxSize, 0);
         int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
 
@@ -181,6 +182,7 @@ public class CameraView extends FrameLayout {
         setHdr(hdr);
         setAudio(audio);
         setPictureSize(selector);
+        setVideoCodec(codec);
         setVideoMaxSize(videoMaxSize);
         setVideoMaxDuration(videoMaxDuration);
 
@@ -652,6 +654,8 @@ public class CameraView extends FrameLayout {
             setVideoQuality((VideoQuality) control);
         } else if (control instanceof WhiteBalance) {
             setWhiteBalance((WhiteBalance) control);
+        } else if (control instanceof VideoCodec) {
+            setVideoCodec((VideoCodec) control);
         }
     }
 
@@ -1372,6 +1376,30 @@ public class CameraView extends FrameLayout {
      */
     public boolean getPlaySounds() {
         return mPlaySounds;
+    }
+
+
+    /**
+     * Sets the encoder for video recordings.
+     * Defaults to {@link VideoCodec#DEVICE_DEFAULT}.
+     *
+     * @see VideoCodec#DEVICE_DEFAULT
+     * @see VideoCodec#H_263
+     * @see VideoCodec#H_264
+     *
+     * @param codec requested video codec
+     */
+    public void setVideoCodec(VideoCodec codec) {
+        mCameraController.setVideoCodec(codec);
+    }
+
+
+    /**
+     * Gets the current encoder for video recordings.
+     * @return the current video codec
+     */
+    public VideoCodec getVideoCodec() {
+        return mCameraController.getVideoCodec();
     }
 
 

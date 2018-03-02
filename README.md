@@ -399,6 +399,7 @@ Most camera parameters can be controlled through XML attributes or linked method
     app:cameraCropOutput="false"  
     app:cameraJpegQuality="100"
     app:cameraVideoQuality="480p"
+    app:cameraVideoCodec="deviceDefault"
     app:cameraWhiteBalance="auto"
     app:cameraHdr="off"
     app:cameraAudio="on"
@@ -416,6 +417,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 < n <= 100`|`100`|
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`lowest` `highest` `maxQvga` `max480p` `max720p` `max1080p` `max2160p`|`max480p`|
+|[`cameraVideoCodec`](#cameravideocodec)|`setVideoCodec()`|`deviceDefault` `h263` `h264`|`deviceDefault`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 |[`cameraHdr`](#camerahdr)|`setHdr()`|`off` `on`|`off`|
 |[`cameraAudio`](#cameraaudio)|`setAudio()`|`off` `on`|`on`|
@@ -502,6 +504,16 @@ cameraView.setVideoQuality(VideoQuality.MAX_480P);
 cameraView.setVideoQuality(VideoQuality.MAX_720P);
 cameraView.setVideoQuality(VideoQuality.MAX_1080P);
 cameraView.setVideoQuality(VideoQuality.MAX_2160P);
+```
+
+#### cameraVideoCodec
+
+Sets the encoder for video recordings.
+
+```java
+cameraView.setVideoCodec(VideoCodec.DEVICE_DEFAULT);
+cameraView.setVideoCodec(VideoCodec.H_263);
+cameraView.setVideoCodec(VideoCodec.H_264);
 ```
 
 #### cameraWhiteBalance
