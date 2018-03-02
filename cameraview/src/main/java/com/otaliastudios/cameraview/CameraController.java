@@ -49,7 +49,6 @@ abstract class CameraController implements
     protected boolean mPlaySounds;
 
     protected int mCameraId;
-    protected ExtraProperties mExtraProperties;
     protected CameraOptions mCameraOptions;
     protected Mapper mMapper;
     protected FrameManager mFrameManager;
@@ -340,11 +339,6 @@ abstract class CameraController implements
     //endregion
 
     //region final getters
-
-    @Nullable
-    final ExtraProperties getExtraProperties() {
-        return mExtraProperties;
-    }
 
     @Nullable
     final CameraOptions getCameraOptions() {

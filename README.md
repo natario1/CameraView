@@ -623,7 +623,6 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`getGestureAction(Gesture)`|Returns the action currently mapped to the given gesture.|
 |`clearGesture(Gesture)`|Clears any action mapped to the given gesture.|
 |`getCameraOptions()`|If camera was started, returns non-null object with information about what is supported.|
-|`getExtraProperties()`|If camera was started, returns non-null object with extra information about the camera sensor. Not very useful at the moment.|
 |`setZoom(float)`, `getZoom()`|Sets a zoom value, where 0 means camera zoomed out and 1 means zoomed in. No-op if zoom is not supported, or camera not started.|
 |`setExposureCorrection(float)`, `getExposureCorrection()`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
 |`toggleFacing()`|Toggles the facing value between `Facing.FRONT` and `Facing.BACK`.|
@@ -635,7 +634,7 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|
 |`getPictureSize()`|Returns the size of the output picture. The aspect ratio is consistent with `getPreviewSize()`.|
 
-Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProperties`.
+Take also a look at public methods in `CameraUtils`, `CameraOptions`.
 
 ## Permissions behavior
 

@@ -180,7 +180,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             // Set parameters that might have been set before the camera was opened.
             LOG.i("onStart:", "Applying default parameters.");
             Camera.Parameters params = mCamera.getParameters();
-            mExtraProperties = new ExtraProperties(params);
             mCameraOptions = new CameraOptions(params, shouldFlipSizes());
             applyDefaultFocus(params);
             mergeFlash(params, Flash.DEFAULT);

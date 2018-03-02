@@ -688,17 +688,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * If present, returns a collection of extra properties from the current camera
-     * session.
-     * @return an ExtraProperties object.
-     */
-    @Nullable
-    public ExtraProperties getExtraProperties() {
-        return mCameraController.getExtraProperties();
-    }
-
-
-    /**
      * Sets exposure adjustment, in EV stops. A positive value will mean brighter picture.
      *
      * If camera is not opened, this will have no effect.
