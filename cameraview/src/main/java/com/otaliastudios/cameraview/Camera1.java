@@ -616,6 +616,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     // -----------------
     // Video recording stuff.
 
+    @Override
+    public void onVideoResult(@Nullable VideoResult result) {
+        if (result != null) {
+            mCameraCallbacks.dispatchOnVideoTaken(result);
+        } else {
+            // Something went wrong, lock the camera again.
+            mCamera.lock();
+        }
+    }
 
     @Override
     void takeVideo(@NonNull final File videoFile) {
@@ -671,10 +680,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         } else {
             // Something went wrong, lock the camera again.
             mCamera.lock();
-        }
-        if (mCamera != null) {
-            // This is needed to restore FrameProcessor. No re-allocation needed though.
-            mCamera.setPreviewCallbackWithBuffer(this);
         }
     }
 
