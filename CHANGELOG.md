@@ -1,3 +1,13 @@
+## v1.5.0
+
+- New: set encoder for video recordings with `cameraVideoCodec` ([#174][174])
+- New: set max duration for videos with `cameraVideoMaxDuration` ([#172][172])
+- Enhancement: reduced lag with continuous gestures (ev, zoom) ([#170][170])
+- Bug: tap to focus was crashing on some devices ([#167][167])
+- Bug: capturePicture was breaking if followed by another event soon after ([#173][173])
+
+https://github.com/natario1/CameraView/compare/v1.4.2...v1.5.0
+
 ### v1.4.2
 
 - Add prefix to XML resources so they don't collide, thanks to [@RocketRider][RocketRider] ([#162][162])
@@ -89,3 +99,8 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [133]: https://github.com/natario1/CameraView/pull/133
 [143]: https://github.com/natario1/CameraView/pull/143
 [162]: https://github.com/natario1/CameraView/pull/162
+[167]: https://github.com/natario1/CameraView/pull/167
+[170]: https://github.com/natario1/CameraView/pull/170
+[172]: https://github.com/natario1/CameraView/pull/172
+[173]: https://github.com/natario1/CameraView/pull/173
+[174]: https://github.com/natario1/CameraView/pull/174
