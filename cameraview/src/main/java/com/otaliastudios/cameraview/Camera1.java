@@ -50,7 +50,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     Camera1(CameraView.CameraCallbacks callback) {
         super(callback);
-        mMapper = new Mapper.Mapper1();
+        mMapper = new Mapper1();
     }
 
     private void schedule(@Nullable final Task<Void> task, final boolean ensureAvailable, final Runnable action) {

@@ -46,7 +46,7 @@ public class CameraUtils {
      * @return true if such sensor exists
      */
     public static boolean hasCameraFacing(Context context, Facing facing) {
-        int internal = new Mapper.Mapper1().map(facing);
+        int internal = new Mapper1().map(facing);
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);

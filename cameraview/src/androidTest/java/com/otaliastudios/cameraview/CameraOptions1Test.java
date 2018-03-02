@@ -153,7 +153,7 @@ public class CameraOptions1Test extends BaseTest {
         }
 
         CameraOptions o = new CameraOptions(mock(Camera.Parameters.class), false);
-        Mapper m = new Mapper.Mapper1();
+        Mapper m = new Mapper1();
         Collection<Facing> s = o.getSupportedControls(Facing.class);
         assertEquals(s.size(), supported.size());
         for (Facing facing : s) {
