@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
-import android.os.Handler;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -90,7 +89,7 @@ public class IntegrationTest extends BaseTest {
 
     @After
     public void tearDown() throws Exception {
-        camera.stopCapturingVideo();
+        camera.stopVideo();
         camera.destroy();
         WorkerHandler.destroy();
     }
@@ -150,7 +149,7 @@ public class IntegrationTest extends BaseTest {
 
     private void waitForVideoStart() {
         controller.mStartVideoTask.listen();
-        camera.startCapturingVideo(null);
+        camera.takeVideo(null);
         controller.mStartVideoTask.await(400);
     }
 
@@ -432,7 +431,7 @@ public class IntegrationTest extends BaseTest {
 
     //endregion
 
-    //region test startVideo
+    //region test takeVideo
 
     @Test(expected = RuntimeException.class)
     public void testStartVideo_whileInPictureMode() throws Throwable {
@@ -452,7 +451,7 @@ public class IntegrationTest extends BaseTest {
         // as documented. This works locally though.
         camera.setSessionType(SessionType.VIDEO);
         waitForOpen(true);
-        camera.startCapturingVideo(null, 4000);
+        camera.takeVideo(null, 4000);
         waitForVideoEnd(true);
     }
 
@@ -460,7 +459,7 @@ public class IntegrationTest extends BaseTest {
     public void testEndVideo_withoutStarting() {
         camera.setSessionType(SessionType.VIDEO);
         waitForOpen(true);
-        camera.stopCapturingVideo();
+        camera.stopVideo();
         waitForVideoEnd(false);
     }
 
@@ -510,7 +509,7 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testCapturePicture_beforeStarted() {
-        camera.capturePicture();
+        camera.takePicture();
         waitForPicture(false);
     }
 
@@ -522,8 +521,8 @@ public class IntegrationTest extends BaseTest {
         CountDownLatch latch = new CountDownLatch(2);
         doCountDown(latch).when(listener).onPictureTaken(any(byte[].class));
 
-        camera.capturePicture();
-        camera.capturePicture();
+        camera.takePicture();
+        camera.takePicture();
         boolean did = latch.await(4, TimeUnit.SECONDS);
         assertFalse(did);
         assertEquals(latch.getCount(), 1);
@@ -535,7 +534,7 @@ public class IntegrationTest extends BaseTest {
         waitForOpen(true);
 
         Size size = camera.getPictureSize();
-        camera.capturePicture();
+        camera.takePicture();
         byte[] jpeg = waitForPicture(true);
         Bitmap b = CameraUtils.decodeBitmap(jpeg, Integer.MAX_VALUE, Integer.MAX_VALUE);
         // Result can actually have swapped dimensions
@@ -546,7 +545,7 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testCaptureSnapshot_beforeStarted() {
-        camera.captureSnapshot();
+        camera.takePictureSnapshot();
         waitForPicture(false);
     }
 
@@ -558,8 +557,8 @@ public class IntegrationTest extends BaseTest {
         CountDownLatch latch = new CountDownLatch(2);
         doCountDown(latch).when(listener).onPictureTaken(any(byte[].class));
 
-        camera.captureSnapshot();
-        camera.captureSnapshot();
+        camera.takePictureSnapshot();
+        camera.takePictureSnapshot();
         boolean did = latch.await(6, TimeUnit.SECONDS);
         assertFalse(did);
         assertEquals(1, latch.getCount());
@@ -571,7 +570,7 @@ public class IntegrationTest extends BaseTest {
         waitForOpen(true);
 
         Size size = camera.getPreviewSize();
-        camera.captureSnapshot();
+        camera.takePictureSnapshot();
         byte[] jpeg = waitForPicture(true);
         Bitmap b = CameraUtils.decodeBitmap(jpeg, Integer.MAX_VALUE, Integer.MAX_VALUE);
         // Result can actually have swapped dimensions
@@ -609,7 +608,7 @@ public class IntegrationTest extends BaseTest {
 
         // In Camera1, snapshots will clear the preview callback
         // Ensure we restore correctly
-        camera.captureSnapshot();
+        camera.takePictureSnapshot();
         waitForPicture(true);
 
         assert30Frames(processor);

@@ -50,8 +50,8 @@ public abstract class CameraListener {
 
 
     /**
-     * Notifies that a picture previously captured with {@link CameraView#capturePicture()}
-     * or {@link CameraView#captureSnapshot()} is ready to be shown or saved.
+     * Notifies that a picture previously captured with {@link CameraView#takePicture()}
+     * or {@link CameraView#takePictureSnapshot()} is ready to be shown or saved.
      *
      * If planning to get a bitmap, you can use {@link CameraUtils#decodeBitmap(byte[], CameraUtils.BitmapCallback)}
      * to decode the byte array taking care about orientation.
@@ -66,7 +66,7 @@ public abstract class CameraListener {
 
     /**
      * Notifies that a video capture has just ended. The file parameter is the one that
-     * was passed to {@link CameraView#startCapturingVideo(File)}, if any.
+     * was passed to {@link CameraView#takeVideo(File)}, if any.
      * If not, the camera fallsback to:
      * <code>
      *     new File(getContext().getExternalFilesDir(null), "video.mp4");

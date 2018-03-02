@@ -207,7 +207,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
         if (mCamera != null) {
             LOG.i("onStop:", "Clean up.", "Ending video.");
-            endVideoImmediately();
+            stopVideoImmediately();
 
             try {
                 LOG.i("onStop:", "Clean up.", "Stopping preview.");
@@ -500,12 +500,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void capturePicture() {
-        LOG.v("capturePicture: scheduling");
+    void takePicture() {
+        LOG.v("takePicture: scheduling");
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
-                LOG.v("capturePicture: performing.", mIsCapturingImage);
+                LOG.v("takePicture: performing.", mIsCapturingImage);
                 if (mIsCapturingImage) return;
                 if (mIsCapturingVideo && !mCameraOptions.isVideoSnapshotSupported()) return;
 
@@ -530,7 +530,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                             @Override
                             public void onPictureTaken(byte[] data, final Camera camera) {
                                 mIsCapturingImage = false;
-                                mCameraCallbacks.processImage(data, outputMatchesView, outputFlip);
+                                mCameraCallbacks.processPicture(data, outputMatchesView, outputFlip);
                                 camera.startPreview(); // This is needed, read somewhere in the docs.
                             }
                         }
@@ -541,17 +541,17 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Override
-    void captureSnapshot() {
-        LOG.v("captureSnapshot: scheduling");
+    void takePictureSnapshot() {
+        LOG.v("takePictureSnapshot: scheduling");
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
-                LOG.v("captureSnapshot: performing.", mIsCapturingImage);
+                LOG.v("takePictureSnapshot: performing.", mIsCapturingImage);
                 if (mIsCapturingImage) return;
                 // This won't work while capturing a video.
-                // Switch to capturePicture.
+                // Switch to takePicture.
                 if (mIsCapturingVideo) {
-                    capturePicture();
+                    takePicture();
                     return;
                 }
                 mIsCapturingImage = true;
@@ -577,9 +577,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                             @Override
                             public void run() {
 
-                                LOG.v("captureSnapshot: rotating.");
+                                LOG.v("takePictureSnapshot: rotating.");
                                 byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToOutput);
-                                LOG.v("captureSnapshot: rotated.");
+                                LOG.v("takePictureSnapshot: rotated.");
                                 YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
                                 mCameraCallbacks.processSnapshot(yuv, outputMatchesView, outputFlip);
                                 mIsCapturingImage = false;
@@ -631,7 +631,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Override
-    void startVideo(@NonNull final File videoFile) {
+    void takeVideo(@NonNull final File videoFile) {
         schedule(mStartVideoTask, true, new Runnable() {
             @Override
             public void run() {
@@ -647,7 +647,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                         LOG.e("Error while starting MediaRecorder. Swallowing.", e);
                         mVideoFile = null;
                         mCamera.lock();
-                        endVideoImmediately();
+                        stopVideoImmediately();
                     }
                 } else {
                     throw new IllegalStateException("Can't record video while session type is picture");
@@ -657,25 +657,25 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void endVideo() {
+    void stopVideo() {
         schedule(null, false, new Runnable() {
             @Override
             public void run() {
-                endVideoImmediately();
+                stopVideoImmediately();
             }
         });
     }
 
     @WorkerThread
-    private void endVideoImmediately() {
-        LOG.i("endVideoImmediately:", "is capturing:", mIsCapturingVideo);
+    private void stopVideoImmediately() {
+        LOG.i("stopVideoImmediately:", "is capturing:", mIsCapturingVideo);
         mIsCapturingVideo = false;
         if (mMediaRecorder != null) {
             try {
                 mMediaRecorder.stop();
             } catch (Exception e) {
-                // This can happen if endVideo() is called right after startVideo(). We don't care.
-                LOG.w("endVideoImmediately:", "Error while closing media recorder. Swallowing", e);
+                // This can happen if stopVideo() is called right after takeVideo(). We don't care.
+                LOG.w("stopVideoImmediately:", "Error while closing media recorder. Swallowing", e);
             }
             mMediaRecorder.release();
             mMediaRecorder = null;
@@ -736,7 +736,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 switch (what) {
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
-                        endVideoImmediately();
+                        stopVideoImmediately();
                         break;
                 }
             }

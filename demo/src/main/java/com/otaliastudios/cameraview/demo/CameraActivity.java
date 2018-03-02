@@ -153,7 +153,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         mCaptureTime = System.currentTimeMillis();
         mCaptureNativeSize = camera.getPictureSize();
         message("Capturing picture...", false);
-        camera.capturePicture();
+        camera.takePicture();
     }
 
     private void captureVideo() {
@@ -164,7 +164,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         if (mCapturingPicture || mCapturingVideo) return;
         mCapturingVideo = true;
         message("Recording for 8 seconds...", true);
-        camera.startCapturingVideo(null, 8000);
+        camera.takeVideo(null, 8000);
     }
 
     private void toggleCamera() {
