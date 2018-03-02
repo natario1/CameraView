@@ -57,8 +57,6 @@ abstract class CameraController implements
     protected FrameManager mFrameManager;
     protected SizeSelector mPictureSizeSelector;
     protected SizeSelector mVideoSizeSelector;
-    // protected MediaRecorder mMediaRecorder;
-    // protected VideoResult mVideoResult;
     protected VideoRecorder mVideoRecorder;
     protected long mVideoMaxSize;
     protected int mVideoMaxDuration;

@@ -35,7 +35,11 @@ class MediaRecorderVideoRecorder extends VideoRecorder {
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
         mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
         mMediaRecorder.setVideoSize(size.getWidth(), size.getHeight());
-        mMediaRecorder.setVideoEncoder(new Mapper1().map(mResult.getCodec()));
+        if (mResult.getCodec() == VideoCodec.DEFAULT) {
+            mMediaRecorder.setVideoEncoder(mProfile.videoCodec);
+        } else {
+            mMediaRecorder.setVideoEncoder(new Mapper1().map(mResult.getCodec()));
+        }
         mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
         if (mResult.getAudio() == Audio.ON) {
             mMediaRecorder.setAudioChannels(mProfile.audioChannels);
