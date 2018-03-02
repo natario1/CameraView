@@ -15,8 +15,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
+import android.support.media.ExifInterface;
 import android.view.SurfaceHolder;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -509,9 +512,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
                 mIsCapturingImage = true;
                 final int sensorToOutput = computeSensorToOutputOffset();
-                final int sensorToView = computeSensorToViewOffset();
-                final boolean outputMatchesView = (sensorToOutput + sensorToView + 180) % 180 == 0;
-                final boolean outputFlip = mFacing == Facing.FRONT;
+                int outputWidth = mPictureSize.getWidth();
+                int outputHeight = mPictureSize.getHeight();
+                //noinspection SuspiciousNameCombination
+                final Size outputSize = sensorToOutput % 180 == 0 ?
+                        new Size(outputWidth, outputHeight) :
+                        new Size(outputHeight, outputWidth);
                 Camera.Parameters params = mCamera.getParameters();
                 params.setRotation(sensorToOutput);
                 mCamera.setParameters(params);
@@ -528,7 +534,21 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                             @Override
                             public void onPictureTaken(byte[] data, final Camera camera) {
                                 mIsCapturingImage = false;
-                                mCameraCallbacks.processPicture(data, outputMatchesView, outputFlip);
+                                int exifRotation;
+                                try {
+                                    ExifInterface exif = new ExifInterface(new ByteArrayInputStream(data));
+                                    int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                                    exifRotation = CameraUtils.decodeExifOrientation(exifOrientation);
+                                } catch (IOException e) {
+                                    exifRotation = 0;
+                                }
+                                PictureResult result = new PictureResult();
+                                result.jpeg = data;
+                                result.isSnapshot = false;
+                                result.location = mLocation;
+                                result.rotation = exifRotation;
+                                result.size = outputSize;
+                                mCameraCallbacks.dispatchOnPictureTaken(result);
                                 camera.startPreview(); // This is needed, read somewhere in the docs.
                             }
                         }
@@ -539,7 +559,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Override
-    void takePictureSnapshot() {
+    void takePictureSnapshot(final boolean shouldCrop, final AspectRatio viewAspectRatio) {
         LOG.v("takePictureSnapshot: scheduling");
         schedule(null, true, new Runnable() {
             @Override
@@ -548,6 +568,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 if (mIsCapturingImage) return;
                 // This won't work while capturing a video.
                 // Switch to takePicture.
+                // TODO v2: what to do here?
                 if (mIsCapturingVideo) {
                     takePicture();
                     return;
@@ -555,7 +576,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 mIsCapturingImage = true;
                 mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
                     @Override
-                    public void onPreviewFrame(final byte[] data, Camera camera) {
+                    public void onPreviewFrame(final byte[] yuv, Camera camera) {
                         mCameraCallbacks.onShutter(true);
 
                         // Got to rotate the preview frame, since byte[] data here does not include
@@ -564,22 +585,33 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                         final int sensorToOutput = computeSensorToOutputOffset();
                         final int sensorToView = computeSensorToViewOffset();
                         final boolean outputMatchesView = (sensorToOutput + sensorToView + 180) % 180 == 0;
-                        final boolean outputFlip = mFacing == Facing.FRONT;
-                        final boolean flip = sensorToOutput % 180 != 0;
-                        final int preWidth = mPreviewSize.getWidth();
-                        final int preHeight = mPreviewSize.getHeight();
-                        final int postWidth = flip ? preHeight : preWidth;
-                        final int postHeight = flip ? preWidth : preHeight;
+                        final Size originalSize = new Size(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+                        final Size outputSize = sensorToOutput % 180 == 0 ? originalSize : originalSize.flip();
+                        final AspectRatio outputRatio = outputMatchesView ? viewAspectRatio : viewAspectRatio.inverse();
                         final int format = mPreviewFormat;
                         WorkerHandler.run(new Runnable() {
                             @Override
                             public void run() {
+                                // Rotate the picture, because no one will write EXIF data,
+                                // then crop if needed. In both cases, transform yuv to jpeg.
+                                LOG.v("takePictureSnapshot:", "rotating.");
+                                byte[] data = YuvHelper.rotate(yuv, originalSize, sensorToOutput);
+                                YuvImage yuv = new YuvImage(data, format, outputSize.getWidth(), outputSize.getHeight(), null);
 
-                                LOG.v("takePictureSnapshot: rotating.");
-                                byte[] rotatedData = RotationHelper.rotate(data, preWidth, preHeight, sensorToOutput);
-                                LOG.v("takePictureSnapshot: rotated.");
-                                YuvImage yuv = new YuvImage(rotatedData, format, postWidth, postHeight, null);
-                                mCameraCallbacks.processSnapshot(yuv, outputMatchesView, outputFlip);
+                                LOG.v("takePictureSnapshot:", "rotated. Cropping and transforming to jpeg.");
+                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                Rect outputRect = YuvHelper.computeCrop(outputSize, outputRatio);
+                                yuv.compressToJpeg(outputRect, 90, stream);
+                                data = stream.toByteArray();
+
+                                LOG.v("takePictureSnapshot:", "cropped. Dispatching.");
+                                PictureResult result = new PictureResult();
+                                result.jpeg = data;
+                                result.size = new Size(outputRect.width(), outputRect.height());
+                                result.rotation = 0;
+                                result.location = mLocation;
+                                result.isSnapshot = true;
+                                mCameraCallbacks.dispatchOnPictureTaken(result);
                                 mIsCapturingImage = false;
                             }
                         });

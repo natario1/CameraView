@@ -15,8 +15,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
 import android.graphics.PointF;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.location.Location;
 import android.media.MediaActionSound;
 import android.os.Build;
@@ -29,7 +27,6 @@ import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1126,7 +1123,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     /**
      * Asks the camera to capture an image of the current scene.
-     * This will trigger {@link CameraListener#onPictureTaken(byte[])} if a listener
+     * This will trigger {@link CameraListener#onPictureTaken(PictureResult)} if a listener
      * was registered.
      *
      * Note that if sessionType is {@link SessionType#VIDEO}, this
@@ -1141,7 +1138,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     /**
      * Asks the camera to capture a snapshot of the current preview.
-     * This eventually triggers {@link CameraListener#onPictureTaken(byte[])} if a listener
+     * This eventually triggers {@link CameraListener#onPictureTaken(PictureResult)} if a listener
      * was registered.
      *
      * The difference with {@link #takePicture()} is that this capture is faster, so it might be
@@ -1150,7 +1147,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @see #takePicture()
      */
     public void takePictureSnapshot() {
-        mCameraController.takePictureSnapshot();
+        mCameraController.takePictureSnapshot(
+                mCameraPreview.isCropping(),
+                AspectRatio.of(getWidth(), getHeight()));
     }
 
 
@@ -1374,8 +1373,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Returns true if the camera is currently recording a video
      * @return boolean indicating if the camera is recording a video
      */
-    public boolean isCapturingVideo(){
-        return mCameraController.isCapturingVideo();
+    public boolean isTakingVideo(){
+        return mCameraController.isTakingVideo();
     }
 
     //endregion
@@ -1387,9 +1386,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         void dispatchOnCameraClosed();
         void onCameraPreviewSizeChanged();
         void onShutter(boolean shouldPlaySound);
-        void processPicture(byte[] jpeg, boolean consistentWithView, boolean flipHorizontally);
-        void processSnapshot(YuvImage image, boolean consistentWithView, boolean flipHorizontally);
         void dispatchOnVideoTaken(VideoResult result);
+        void dispatchOnPictureTaken(PictureResult result);
         void dispatchOnFocusStart(@Nullable Gesture trigger, PointF where);
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, PointF where);
         void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
@@ -1453,62 +1451,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
         }
 
-        /**
-         * What would be great here is to ensure the EXIF tag in the jpeg is consistent with what we expect,
-         * and maybe add flipping when we have been using the front camera.
-         * Unfortunately this is not easy, because
-         * - You can't write EXIF data to a byte[] array, not with support library at least
-         * - You don't know what byte[] is, see {@link android.hardware.Camera.Parameters#setRotation(int)}.
-         *   Sometimes our rotation is encoded in the byte array, sometimes a rotated byte[] is returned.
-         *   Depends on the hardware.
-         *
-         * So for now we ignore flipping.
-         *
-         * @param consistentWithView is the final image (decoded respecting EXIF data) consistent with
-         *                           the view width and height? Or should we flip dimensions to have a
-         *                           consistent measure?
-         * @param flipHorizontally whether this picture should be flipped horizontally after decoding,
-         *                         because it was taken with the front camera.
-         */
         @Override
-        public void processPicture(final byte[] jpeg, final boolean consistentWithView, final boolean flipHorizontally) {
-            mLogger.i("processPicture");
-            dispatchOnPictureTaken(jpeg);
-            // TODO: remove.
-        }
-
-        @Override
-        public void processSnapshot(final YuvImage yuv, final boolean consistentWithView, boolean flipHorizontally) {
-            mLogger.i("processSnapshot");
-            mWorkerHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    byte[] jpeg;
-                    if (mCameraPreview.isCropping()) {
-                        int w = consistentWithView ? getWidth() : getHeight();
-                        int h = consistentWithView ? getHeight() : getWidth();
-                        AspectRatio targetRatio = AspectRatio.of(w, h);
-                        mLogger.i("processSnapshot", "is consistent?", consistentWithView);
-                        mLogger.i("processSnapshot", "viewWidth?", getWidth(), "viewHeight?", getHeight());
-                        jpeg = CropHelper.cropToJpeg(yuv, targetRatio, 90);
-                    } else {
-                        ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        yuv.compressToJpeg(new Rect(0, 0, yuv.getWidth(), yuv.getHeight()), 90, out);
-                        jpeg = out.toByteArray();
-                    }
-                    dispatchOnPictureTaken(jpeg);
-                }
-            });
-        }
-
-        private void dispatchOnPictureTaken(byte[] jpeg) {
+        public void dispatchOnPictureTaken(final PictureResult result) {
             mLogger.i("dispatchOnPictureTaken");
-            final byte[] data = jpeg;
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     for (CameraListener listener : mListeners) {
-                        listener.onPictureTaken(data);
+                        listener.onPictureTaken(result);
                     }
                 }
             });

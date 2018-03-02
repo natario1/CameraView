@@ -49,16 +49,16 @@ public abstract class CameraListener {
 
     /**
      * Notifies that a picture previously captured with {@link CameraView#takePicture()}
-     * or {@link CameraView#takePictureSnapshot()} is ready to be shown or saved.
+     * or {@link CameraView#takePictureSnapshot()} is ready to be shown or saved to file.
      *
-     * If planning to get a bitmap, you can use {@link CameraUtils#decodeBitmap(byte[], CameraUtils.BitmapCallback)}
-     * to decode the byte array taking care about orientation.
+     * If planning to show a bitmap, you can use {@link PictureResult#asBitmap(int, int, BitmapCallback)}
+     * to decode the byte array taking care about orientation and threading.
      *
-     * @param jpeg captured picture
+     * @param result captured picture
      */
     @UiThread
-    public void onPictureTaken(byte[] jpeg) {
-        // TODO v2: use a PictureResult.
+    public void onPictureTaken(PictureResult result) {
+
     }
 
 

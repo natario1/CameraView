@@ -17,6 +17,7 @@ import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.SessionType;
 import com.otaliastudios.cameraview.Size;
 import com.otaliastudios.cameraview.VideoResult;
@@ -48,7 +49,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera.setLifecycleOwner(this);
         camera.addCameraListener(new CameraListener() {
             public void onCameraOpened(CameraOptions options) { onOpened(); }
-            public void onPictureTaken(byte[] jpeg) { onPicture(jpeg); }
+            public void onPictureTaken(PictureResult result) { onPicture(result); }
 
             @Override
             public void onVideoTaken(VideoResult result) {

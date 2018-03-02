@@ -5,9 +5,9 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.otaliastudios.cameraview.AspectRatio;
+import com.otaliastudios.cameraview.BitmapCallback;
 import com.otaliastudios.cameraview.CameraUtils;
 
 import java.lang.ref.WeakReference;
@@ -40,7 +40,7 @@ public class PicturePreviewActivity extends Activity {
             return;
         }
 
-        CameraUtils.decodeBitmap(b, 1000, 1000, new CameraUtils.BitmapCallback() {
+        CameraUtils.decodeBitmap(b, 1000, 1000, new BitmapCallback() {
             @Override
             public void onBitmapReady(Bitmap bitmap) {
                 imageView.setImageBitmap(bitmap);
