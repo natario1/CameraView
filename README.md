@@ -49,8 +49,8 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
   - Output: Automatic cropping to match your `CameraView` preview bounds
 - Built-in **grid drawing**
 - Multiple capture methods
-  - Take high-resolution pictures with `capturePicture`
-  - Take **quick snapshots** as a freeze frame of the preview with `captureSnapshot`
+  - Take high-resolution pictures with `takePicture`
+  - Take **quick snapshots** as a freeze frame of the preview with `takePictureSnapshot`
 - Control HDR, flash, zoom, white balance, exposure correction and more
 - **Frame processing** support
 - **Metadata** support for pictures and videos
@@ -131,7 +131,7 @@ protected void onDestroy() {
 
 ### Capturing Images
 
-To capture an image just call `CameraView.capturePicture()`. Make sure you setup a `CameraListener`
+To capture an image just call `CameraView.takePicture()`. Make sure you setup a `CameraListener`
 to handle the image callback.
 
 ```java
@@ -144,39 +144,39 @@ camera.addCameraListener(new CameraListener() {
     }
 });
 
-camera.capturePicture();
+camera.takePicture();
 ```
 
-You can also use `camera.captureSnapshot()` to capture a preview frame. This is faster, though will
+You can also use `camera.takePictureSnapshot()` to capture a preview frame. This is faster, though will
 ensure lower quality output.
 
 ### Capturing Video
 
-To capture video just call `CameraView.startCapturingVideo(file)` to start, and
-`CameraView.stopCapturingVideo()` to finish. Make sure you setup a `CameraListener` to handle
+To capture video just call `CameraView.takeVideo(file)` to start, and
+`CameraView.stopVideo()` to finish. Make sure you setup a `CameraListener` to handle
 the video callback.
 
 ```java
 camera.addCameraListener(new CameraListener() {
     @Override
-    public void onVideoTaken(File video) {
-        // The File is the same you passed before.
-        // Now it holds a MP4 video.
+    public void onVideoTaken(VideoResult result) {
+        // Use result.getFile() to access a file holding
+        // the recorded video.
     }
 });
 
 // Select output file. Make sure you have write permissions.
 File file = ...;
-camera.startCapturingVideo(file);
+camera.takeVideo(file);
 
 // Later... stop recording. This will trigger onVideoTaken().
-camera.stopCapturingVideo();
+camera.stopVideo();
 
 // You can also use one of the video constraints:
 // videoMaxSize and videoMaxDuration will automatically stop recording when satisfied.
 camera.setVideoMaxSize(100000);
 camera.setVideoMaxDuration(5000);
-camera.startCapturingVideo(file);
+camera.takeVideo(file);
 ```
 
 ### Other camera events
@@ -211,8 +211,8 @@ camera.addCameraListener(new CameraListener() {
     public void onCameraError(CameraException error) {}
 
     /**
-     * Notifies that a picture previously captured with capturePicture()
-     * or captureSnapshot() is ready to be shown or saved.
+     * Notifies that a picture previously captured with takePicture()
+     * or takePictureSnapshot() is ready to be shown or saved.
      *
      * If planning to get a bitmap, you can use CameraUtils.decodeBitmap()
      * to decode the byte array taking care about orientation.
@@ -222,7 +222,7 @@ camera.addCameraListener(new CameraListener() {
 
     /**
      * Notifies that a video capture has just ended. The file parameter is the one that
-     * was passed to startCapturingVideo(File), or a fallback video file.
+     * was passed to takeVideo(File), or a fallback video file.
      */
     @Override
     public void onVideoTaken(File video) {}
@@ -442,7 +442,7 @@ What to capture - either picture or video. This has a couple of consequences:
   depending on the flag. The picture size is chosen according to the given [size selector](#picture-size).
   When `video`, in addition, we try to match the `videoQuality` aspect ratio.
 - Picture capturing: due to sizing behavior, capturing pictures in `video` mode might lead to
-  inconsistent results. In this case it is encouraged to use `captureSnapshot` instead, which will
+  inconsistent results. In this case it is encouraged to use `takePictureSnapshot` instead, which will
   capture preview frames. This is fast and thus works well with slower camera sensors.
 - Picture capturing: while recording a video, image capturing might work, but it is not guaranteed
   (it's device dependent)
