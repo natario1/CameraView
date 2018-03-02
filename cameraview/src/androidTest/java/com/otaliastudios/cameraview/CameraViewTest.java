@@ -76,7 +76,6 @@ public class CameraViewTest extends BaseTest {
     public void testNullBeforeStart() {
         assertFalse(cameraView.isStarted());
         assertNull(cameraView.getCameraOptions());
-        assertNull(cameraView.getExtraProperties());
         assertNull(cameraView.getPreviewSize());
         assertNull(cameraView.getPictureSize());
     }

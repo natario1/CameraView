@@ -19,6 +19,7 @@ import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.SessionType;
 import com.otaliastudios.cameraview.Size;
+import com.otaliastudios.cameraview.VideoResult;
 
 import java.io.File;
 
@@ -50,9 +51,9 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             public void onPictureTaken(byte[] jpeg) { onPicture(jpeg); }
 
             @Override
-            public void onVideoTaken(File video) {
-                super.onVideoTaken(video);
-                onVideo(video);
+            public void onVideoTaken(VideoResult result) {
+                super.onVideoTaken(result);
+                onVideo(result.getFile());
             }
         });
 
