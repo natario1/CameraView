@@ -68,11 +68,14 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
   - [Capturing Video](#capturing-video)
   - [Other camera events](#other-camera-events)
 - [Gestures](#gestures)  
+  - [Gesture APIs](#gesture-apis)
 - [Sizing Behavior](#sizing-behavior)
   - [Preview Size](#preview-size)
   - [Capture Size](#capture-size)
+  - [Size APIs](#size-apis)
 - [Camera Controls](#camera-controls)
 - [Frame Processing](#frame-processing)
+  - [Frame Processing APIs](#frame-processing-apis)
 - [Other APIs](#other-apis)  
 - [Permissions Behavior](#permissions-behavior)
 - [Logging](#logging)
@@ -295,6 +298,13 @@ Simple as that. More gestures are coming. There are two things to be noted:
 |`SCROLL_HORIZONTAL` (`cameraGestureScrollHorizontal`)|Horizontal movement gesture.|`zoom` `exposureCorrection` `none`|
 |`SCROLL_VERTICAL` (`cameraGestureScrollVertical`)|Vertical movement gesture.|`zoom` `exposureCorrection` `none`|
 
+### Gesture APIs
+
+|Method|Description|
+|------|-----------|
+|`mapGesture(Gesture, GestureAction)`|Maps a certain gesture to a certain action. No-op if the action is not supported.|
+|`getGestureAction(Gesture)`|Returns the action currently mapped to the given gesture.|
+|`clearGesture(Gesture)`|Clears any action mapped to the given gesture.|
 
 ## Sizing Behavior
 
@@ -413,6 +423,16 @@ SizeSelector result = SizeSelectors.or(
 camera.setPictureSize(result);
 camera.setVideoSize(result);
 ```
+
+### Size APIs
+
+|Method|Description|
+|------|-----------|
+|`setPictureSize(SizeSelector)`|Provides a size selector for the capture size in `PICTURE` mode.|
+|`setVideoSize(SizeSelector)`|Provides a size selector for the capture size in `VIDEO` mode.|
+|`getPictureSize()`|Returns the size of the output picture, including any rotation. Returns null in `VIDEO` mode.|
+|`getVideoSize()`|Returns the size of the output video, including any rotation. Returns null in `PICTURE` mode.|
+|`getSnapshotSize()`|Returns the size of snapshots (pictures or video), including any rotation and cropping.|
 
 ## Camera controls
 
@@ -601,9 +621,12 @@ apply new data to it. So:
 - you can do your job synchronously in the `process()` method
 - if you must hold the `Frame` instance longer, use `frame = frame.freeze()` to get a frozen instance
   that will not be affected
+  
+### Frame Processing APIs
 
 |Frame API|Type|Description|
 |---------|----|-----------|
+|`camera.addFrameProcessor(FrameProcessor)`|`-`|Register a `FrameProcessor`.|
 |`frame.getData()`|`byte[]`|The current preview frame, in its original orientation.|
 |`frame.getTime()`|`long`|The preview timestamp, in `System.currentTimeMillis()` reference.|
 |`frame.getRotation()`|`int`|The rotation that should be applied to the byte array in order to see what the user sees.|
@@ -619,9 +642,6 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |Method|Description|
 |------|-----------|
 |`isStarted()`|Returns true if `start()` was called succesfully. This does not mean that camera is open or showing preview.|
-|`mapGesture(Gesture, GestureAction)`|Maps a certain gesture to a certain action. No-op if the action is not supported.|
-|`getGestureAction(Gesture)`|Returns the action currently mapped to the given gesture.|
-|`clearGesture(Gesture)`|Clears any action mapped to the given gesture.|
 |`getCameraOptions()`|If camera was started, returns non-null object with information about what is supported.|
 |`setZoom(float)`, `getZoom()`|Sets a zoom value, where 0 means camera zoomed out and 1 means zoomed in. No-op if zoom is not supported, or camera not started.|
 |`setExposureCorrection(float)`, `getExposureCorrection()`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
@@ -630,8 +650,6 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
 |`getLocation()`|Retrieves location data previously applied with setLocation().|
 |`startAutoFocus(float, float)`|Starts an autofocus process at the given coordinates, with respect to the view dimensions.|
-|`getSnapshotSize()`|Returns the size of snapshots (pictures or video), including any rotation and cropping.|
-|`getPictureSize()`|Returns the size of the output picture, including any rotation.|
 
 Take also a look at public methods in `CameraUtils`, `CameraOptions`.
 
