@@ -72,8 +72,8 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void setSessionType(SessionType sessionType) {
-        mSessionType = sessionType;
+    void setMode(Mode mode) {
+        mMode = mode;
     }
 
     @Override

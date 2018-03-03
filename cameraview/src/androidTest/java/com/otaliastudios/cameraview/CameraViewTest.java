@@ -50,7 +50,7 @@ public class CameraViewTest extends BaseTest {
                     }
 
                     @Override
-                    protected boolean checkPermissions(SessionType sessionType, Audio audio) {
+                    protected boolean checkPermissions(Mode mode, Audio audio) {
                         return hasPermissions;
                     }
                 };
@@ -85,7 +85,7 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getFacing(), Facing.DEFAULT);
         assertEquals(cameraView.getGrid(), Grid.DEFAULT);
         assertEquals(cameraView.getWhiteBalance(), WhiteBalance.DEFAULT);
-        assertEquals(cameraView.getSessionType(), SessionType.DEFAULT);
+        assertEquals(cameraView.getMode(), Mode.DEFAULT);
         assertEquals(cameraView.getHdr(), Hdr.DEFAULT);
         assertEquals(cameraView.getAudio(), Audio.DEFAULT);
         assertEquals(cameraView.getVideoQuality(), VideoQuality.DEFAULT);
@@ -503,11 +503,11 @@ public class CameraViewTest extends BaseTest {
     }
 
     @Test
-    public void testSessionType() {
-        cameraView.set(SessionType.VIDEO);
-        assertEquals(cameraView.getSessionType(), SessionType.VIDEO);
-        cameraView.set(SessionType.PICTURE);
-        assertEquals(cameraView.getSessionType(), SessionType.PICTURE);
+    public void testMode() {
+        cameraView.set(Mode.VIDEO);
+        assertEquals(cameraView.getMode(), Mode.VIDEO);
+        cameraView.set(Mode.PICTURE);
+        assertEquals(cameraView.getMode(), Mode.PICTURE);
     }
 
     @Test

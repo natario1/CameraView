@@ -2,8 +2,6 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -63,7 +61,7 @@ public class CameraViewCallbacksTest extends BaseTest {
                     }
 
                     @Override
-                    protected boolean checkPermissions(SessionType sessionType, Audio audio) {
+                    protected boolean checkPermissions(Mode mode, Audio audio) {
                         return true;
                     }
                 };

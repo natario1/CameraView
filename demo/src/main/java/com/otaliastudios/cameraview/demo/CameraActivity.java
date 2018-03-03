@@ -18,7 +18,7 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.SessionType;
+import com.otaliastudios.cameraview.Mode;
 import com.otaliastudios.cameraview.VideoResult;
 
 import java.io.File;
@@ -163,7 +163,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     private void captureVideo() {
-        if (camera.getSessionType() != SessionType.VIDEO) {
+        if (camera.getMode() != Mode.VIDEO) {
             message("Can't record video while session type is 'picture'.", false);
             return;
         }

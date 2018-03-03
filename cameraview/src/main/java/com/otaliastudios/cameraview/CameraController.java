@@ -44,7 +44,7 @@ abstract class CameraController implements
     protected WhiteBalance mWhiteBalance;
     protected VideoQuality mVideoQuality;
     protected VideoCodec mVideoCodec;
-    protected SessionType mSessionType;
+    protected Mode mMode;
     protected Hdr mHdr;
     protected Location mLocation;
     protected Audio mAudio;
@@ -299,7 +299,7 @@ abstract class CameraController implements
     //region Abstract setters and APIs
 
     // Should restart the session if active.
-    abstract void setSessionType(SessionType sessionType);
+    abstract void setMode(Mode mode);
 
     // Should restart the session if active.
     abstract void setFacing(Facing facing);
@@ -377,8 +377,8 @@ abstract class CameraController implements
         return mVideoMaxDuration;
     }
 
-    final SessionType getSessionType() {
-        return mSessionType;
+    final Mode getMode() {
+        return mMode;
     }
 
     final Hdr getHdr() {
@@ -479,7 +479,7 @@ abstract class CameraController implements
         boolean flip = flip(REF_SENSOR, REF_VIEW);
         SizeSelector selector;
 
-        if (mSessionType == SessionType.PICTURE) {
+        if (mMode == Mode.PICTURE) {
             selector = SizeSelectors.or(mPictureSizeSelector, SizeSelectors.biggest());
         } else {
             // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.

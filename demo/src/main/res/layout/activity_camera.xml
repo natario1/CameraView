@@ -25,7 +25,7 @@
         app:cameraGesturePinch="zoom"
         app:cameraGestureScrollHorizontal="exposureCorrection"
         app:cameraGestureScrollVertical="none"
-        app:cameraSessionType="picture" />
+        app:cameraMode="picture" />
 
 
     <ImageButton
