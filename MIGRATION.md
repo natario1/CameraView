@@ -12,5 +12,6 @@
 - getSnapshotSize(): removed. The size of snapshots (pictures and videos) is equal to
   the preview size as returned by getPreviewSize().
 - onVideoTaken(): now passing a VideoResult. Use VideoResult.getFile() to access the video file.
+- onPictureTaken(): now passing a PictureResult. Use PictureResult.getJpeg() to access the jpeg stream.
 - CameraUtils.BitmapCallback: has been moved in a separate BitmapCallback class.
 - isCapturingVideo(): renamed to isTakingVideo().

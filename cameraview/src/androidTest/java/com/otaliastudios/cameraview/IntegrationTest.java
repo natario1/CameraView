@@ -38,7 +38,7 @@ import static org.mockito.Mockito.mock;
  */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-@Ignore
+// @Ignore
 public class IntegrationTest extends BaseTest {
 
     @Rule
@@ -135,10 +135,10 @@ public class IntegrationTest extends BaseTest {
         }
     }
 
-    private byte[] waitForPicture(boolean expectSuccess) {
-        final Task<byte[]> pic = new Task<>(true);
+    private PictureResult waitForPicture(boolean expectSuccess) {
+        final Task<PictureResult> pic = new Task<>(true);
         doEndTask(pic, 0).when(listener).onPictureTaken(any(PictureResult.class));
-        byte[] result = pic.await(5000);
+        PictureResult result = pic.await(5000);
         if (expectSuccess) {
             assertNotNull("Can take picture", result);
         } else {
@@ -528,17 +528,17 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testCapturePicture_size() throws Exception {
-        // TODO v2: might have to change this
         waitForOpen(true);
-
         Size size = camera.getPictureSize();
         camera.takePicture();
-        byte[] jpeg = waitForPicture(true);
-        Bitmap b = CameraUtils.decodeBitmap(jpeg, Integer.MAX_VALUE, Integer.MAX_VALUE);
-        // Result can actually have swapped dimensions
-        // Which one, depends on factors including device physical orientation
-        assertTrue(b.getWidth() == size.getHeight() || b.getWidth() == size.getWidth());
-        assertTrue(b.getHeight() == size.getHeight() || b.getHeight() == size.getWidth());
+        PictureResult result = waitForPicture(true);
+        Bitmap bitmap = CameraUtils.decodeBitmap(result.getJpeg(), Integer.MAX_VALUE, Integer.MAX_VALUE);
+        assertEquals(result.getSize(), size);
+        assertEquals(bitmap.getWidth(), size.getWidth());
+        assertEquals(bitmap.getHeight(), size.getHeight());
+        assertNotNull(result.getJpeg());
+        assertNull(result.getLocation());
+        assertFalse(result.isSnapshot());
     }
 
     @Test
@@ -564,17 +564,18 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testCaptureSnapshot_size() throws Exception {
-        // TODO v2: might have to change this
         waitForOpen(true);
-
         Size size = camera.getPreviewSize();
         camera.takePictureSnapshot();
-        byte[] jpeg = waitForPicture(true);
-        Bitmap b = CameraUtils.decodeBitmap(jpeg, Integer.MAX_VALUE, Integer.MAX_VALUE);
-        // Result can actually have swapped dimensions
-        // Which one, depends on factors including device physical orientation
-        assertTrue(b.getWidth() == size.getHeight() || b.getWidth() == size.getWidth());
-        assertTrue(b.getHeight() == size.getHeight() || b.getHeight() == size.getWidth());
+
+        PictureResult result = waitForPicture(true);
+        Bitmap bitmap = CameraUtils.decodeBitmap(result.getJpeg(), Integer.MAX_VALUE, Integer.MAX_VALUE);
+        assertEquals(result.getSize(), size);
+        assertEquals(bitmap.getWidth(), size.getWidth());
+        assertEquals(bitmap.getHeight(), size.getHeight());
+        assertNotNull(result.getJpeg());
+        assertNull(result.getLocation());
+        assertTrue(result.isSnapshot());
     }
 
     //endregion
