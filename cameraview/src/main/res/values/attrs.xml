@@ -3,22 +3,24 @@
     <declare-styleable name="CameraView">
 
         <attr name="cameraPictureSizeMinWidth" format="integer|reference"/>
-
         <attr name="cameraPictureSizeMaxWidth" format="integer|reference"/>
-
         <attr name="cameraPictureSizeMinHeight" format="integer|reference"/>
-
         <attr name="cameraPictureSizeMaxHeight" format="integer|reference"/>
-
         <attr name="cameraPictureSizeMinArea" format="integer|reference" />
-
         <attr name="cameraPictureSizeMaxArea" format="integer|reference" />
-
         <attr name="cameraPictureSizeSmallest" format="boolean"/>
-
         <attr name="cameraPictureSizeBiggest" format="boolean"/>
-
         <attr name="cameraPictureSizeAspectRatio" format="string|reference"/>
+
+        <attr name="cameraVideoSizeMinWidth" format="integer|reference"/>
+        <attr name="cameraVideoSizeMaxWidth" format="integer|reference"/>
+        <attr name="cameraVideoSizeMinHeight" format="integer|reference"/>
+        <attr name="cameraVideoSizeMaxHeight" format="integer|reference"/>
+        <attr name="cameraVideoSizeMinArea" format="integer|reference" />
+        <attr name="cameraVideoSizeMaxArea" format="integer|reference" />
+        <attr name="cameraVideoSizeSmallest" format="boolean"/>
+        <attr name="cameraVideoSizeBiggest" format="boolean"/>
+        <attr name="cameraVideoSizeAspectRatio" format="string|reference"/>
 
         <attr name="cameraGestureTap" format="enum">
             <enum name="none" value="0" />
@@ -116,27 +118,5 @@
             <enum name="h264" value="2" />
         </attr>
 
-        <!-- deprecated attr name="cameraZoomMode" format="enum">
-            <enum name="off" value="0" />
-            <enum name="pinch" value="1" />
-        </attr -->
-
-        <!-- deprecated attr name="cameraCaptureMethod" format="enum">
-            <enum name="standard" value="0" />
-            <enum name="frame" value="1" />
-        </attr -->
-
-        <!-- deprecated attr name="cameraPermissionPolicy" format="enum">
-            <enum name="video" value="0" />
-            <enum name="picture" value="1" />
-        </attr -->
-
-        <!-- deprecated attr name="cameraFocus" format="enum">
-            <enum name="fixed" value="0" />
-            <enum name="continuous" value="1" />
-            <enum name="tap" value="2" />
-            <enum name="tapWithMarker" value="3" />
-        </attr -->
     </declare-styleable>
-
 </resources>

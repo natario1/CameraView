@@ -58,7 +58,7 @@ public class CameraOptions1Test extends BaseTest {
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedPictureSizes()).thenReturn(sizes);
         CameraOptions o = new CameraOptions(params, false);
-        Set<Size> supportedSizes = o.getSupportedPictureSizes();
+        Collection<Size> supportedSizes = o.getSupportedPictureSizes();
         assertEquals(supportedSizes.size(), sizes.size());
         for (Camera.Size size : sizes) {
             Size internalSize = new Size(size.width, size.height);
@@ -77,7 +77,7 @@ public class CameraOptions1Test extends BaseTest {
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedPictureSizes()).thenReturn(sizes);
         CameraOptions o = new CameraOptions(params, true);
-        Set<Size> supportedSizes = o.getSupportedPictureSizes();
+        Collection<Size> supportedSizes = o.getSupportedPictureSizes();
         assertEquals(supportedSizes.size(), sizes.size());
         for (Camera.Size size : sizes) {
             Size internalSize = new Size(size.width, size.height).flip();
@@ -102,7 +102,70 @@ public class CameraOptions1Test extends BaseTest {
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedPictureSizes()).thenReturn(sizes);
         CameraOptions o = new CameraOptions(params, false);
-        Set<AspectRatio> supportedRatios = o.getSupportedPictureAspectRatios();
+        Collection<AspectRatio> supportedRatios = o.getSupportedPictureAspectRatios();
+        assertEquals(supportedRatios.size(), expected.size());
+        for (AspectRatio ratio : expected) {
+            assertTrue(supportedRatios.contains(ratio));
+        }
+    }
+
+
+    @Test
+    public void testVideoSizes() {
+        List<Camera.Size> sizes = Arrays.asList(
+                mockCameraSize(100, 200),
+                mockCameraSize(50, 50),
+                mockCameraSize(1600, 900),
+                mockCameraSize(1000, 2000)
+        );
+        Camera.Parameters params = mock(Camera.Parameters.class);
+        when(params.getSupportedVideoSizes()).thenReturn(sizes);
+        CameraOptions o = new CameraOptions(params, false);
+        Collection<Size> supportedSizes = o.getSupportedVideoSizes();
+        assertEquals(supportedSizes.size(), sizes.size());
+        for (Camera.Size size : sizes) {
+            Size internalSize = new Size(size.width, size.height);
+            assertTrue(supportedSizes.contains(internalSize));
+        }
+    }
+
+    @Test
+    public void testVideoSizesFlip() {
+        List<Camera.Size> sizes = Arrays.asList(
+                mockCameraSize(100, 200),
+                mockCameraSize(50, 50),
+                mockCameraSize(1600, 900),
+                mockCameraSize(1000, 2000)
+        );
+        Camera.Parameters params = mock(Camera.Parameters.class);
+        when(params.getSupportedVideoSizes()).thenReturn(sizes);
+        CameraOptions o = new CameraOptions(params, true);
+        Collection<Size> supportedSizes = o.getSupportedVideoSizes();
+        assertEquals(supportedSizes.size(), sizes.size());
+        for (Camera.Size size : sizes) {
+            Size internalSize = new Size(size.width, size.height).flip();
+            assertTrue(supportedSizes.contains(internalSize));
+        }
+    }
+
+    @Test
+    public void testVideoAspectRatio() {
+        List<Camera.Size> sizes = Arrays.asList(
+                mockCameraSize(100, 200),
+                mockCameraSize(50, 50),
+                mockCameraSize(1600, 900),
+                mockCameraSize(1000, 2000)
+        );
+
+        Set<AspectRatio> expected = new HashSet<>();
+        expected.add(AspectRatio.of(1, 2));
+        expected.add(AspectRatio.of(1, 1));
+        expected.add(AspectRatio.of(16, 9));
+
+        Camera.Parameters params = mock(Camera.Parameters.class);
+        when(params.getSupportedVideoSizes()).thenReturn(sizes);
+        CameraOptions o = new CameraOptions(params, false);
+        Collection<AspectRatio> supportedRatios = o.getSupportedVideoAspectRatios();
         assertEquals(supportedRatios.size(), expected.size());
         for (AspectRatio ratio : expected) {
             assertTrue(supportedRatios.contains(ratio));

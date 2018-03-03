@@ -23,3 +23,12 @@
   mode, you can only use takePictureSnapshot(), not takePicture().
 - takePicture(): will now throw an exception if called when Mode == Mode.VIDEO. You can only take snapshots.
 - VideoQuality: this has been removed.
+- CameraOptions: methods returning a Set now return a Collection.
+- CameraOptions: in addition to getSupportedPictureSizes and getSupportedPictureAspectRatio,
+  now there are video mode equivalents too.
+- getPictureSize(): now it returns null when mode == Mode.VIDEO.
+- getVideoSize(): added. Returns the size of the capture in video mode. Returns null when 
+  mode == Mode.PICTURE.
+- VideoSizeSelector: added. It is needed to choose the capture size in VIDEO mode.
+  Defaults to SizeSelectors.biggest(), but you can choose by aspect ratio or whatever.
+  
