@@ -45,11 +45,10 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - **Smart sizing** behavior
   - Preview: Create a `CameraView` of **any size**
   - Preview: Center inside or center crop behaviors
-  - Output: Handy utilities to set the output size
-  - Output: Automatic cropping to match your `CameraView` preview bounds
+  - Output: Handy SizeSelectors to set the output size
 - Built-in **grid drawing**
 - Multiple capture methods
-  - Take high-resolution pictures with `takePicture`
+  - Capture high-quality content with `takePicture` and `takeVideo`
   - Take **quick snapshots** as a freeze frame of the preview with `takePictureSnapshot`
 - Control HDR, flash, zoom, white balance, exposure correction and more
 - **Frame processing** support
@@ -71,7 +70,7 @@ See below for a [list of what was done](#roadmap) and [licensing info](#contribu
 - [Gestures](#gestures)  
 - [Sizing Behavior](#sizing-behavior)
   - [Preview Size](#preview-size)
-  - [Picture Size](#picture-size)
+  - [Capture Size](#capture-size)
 - [Camera Controls](#camera-controls)
 - [Frame Processing](#frame-processing)
 - [Other APIs](#other-apis)  
@@ -304,18 +303,20 @@ Simple as that. More gestures are coming. There are two things to be noted:
 `CameraView` has a smart measuring behavior that will let you do what you want with a few flags.
 Measuring is controlled simply by `layout_width` and `layout_height` attributes, with this meaning:
 
-- `WRAP_CONTENT` : try to stretch this dimension to respect the preview aspect ratio.
-- `MATCH_PARENT` : fill this dimension, even if this means ignoring the aspect ratio.
-- Fixed values (e.g. `500dp`) : respect this dimension.
+|Value|Meaning|
+|-----|-------|
+|`WRAP_CONTENT`|CameraView will choose this dimension, in order to show the whole preview without cropping. The aspect ratio will be respected.|
+|`MATCH_PARENT`|CameraView will fill this dimension. Part of the content *might* be cropped.
+|Fixed values (e.g. `500dp`)|Same as `MATCH_PARENT`|
 
-You can have previews of all sizes, not just the supported presets. Whaterever you do,
-the preview will never be distorted.
+This means that your visible preview can be of any size, not just the presets.
+Whatever you do, the preview will never be distorted - it can only be cropped
+if needed.
 
 #### Center Inside
 
-You can emulate a **center inside** behavior (like the `ImageView` scaletype) by setting
-both dimensions to `wrap_content`. The camera will get the biggest possible size that fits
-into your bounds, just like what happens with image views.
+By setting both dimensions to `WRAP_CONTENT`, you can emulate a **center inside** behavior.
+The view will try to fill the available space, but respecting the stream aspect ratio.
 
 
 ```xml
@@ -325,14 +326,13 @@ into your bounds, just like what happens with image views.
 ```
 
 This means that the whole preview is visible, and the image output matches what was visible
-during the capture.
+during the preview.
 
 #### Center Crop
 
-You can emulate a **center crop** behavior by setting both dimensions to fixed values or to
-`MATCH_PARENT`. The camera view will fill the rect. If your dimensions don't match the aspect ratio
-of the internal preview surface, the surface will be cropped to fill the view,
-just like `android:scaleType="centerCrop"` on an `ImageView`.
+By setting both dimensions to `MATCH_PARENT` or fixed values, you can emulate a **center crop** 
+behavior. The camera view will fill the rect. If your dimensions don't match the aspect ratio
+of the internal preview surface, the surface will be cropped to fill the view.
 
 ```xml
 <com.otaliastudios.cameraview.CameraView
@@ -340,16 +340,19 @@ just like `android:scaleType="centerCrop"` on an `ImageView`.
     android:layout_height="match_parent" />
 ```
 
-This means that part of the preview is hidden, and the image output will contain parts of the scene
+This means that part of the preview might be hidden, and the output might contain parts of the scene
 that were not visible during the capture (unless it is taken as a **snapshot**).
 
-### Picture Size
+### Capture Size
 
-On top of this, you can control the actual size of the output picture, among the list of available sizes.
-It is the size of the final JPEG picture. This can be achieved directly through XML, or
-using the `SizeSelector` class:
+On top of the view size, you can control the actual size of the output.
+This is (not considering rotations) the size of the final JPEG picture or video, and it must be chosen
+among the available sizes provided by the sensor. This can be achieved directly using the `SizeSelector` class:
 
 ```java
+
+// Set size for PICTURE mode.
+// It will be the size of pictures taken with takePicture().
 cameraView.setPictureSize(new SizeSelector() {
     @Override
     public List<Size> select(List<Size> source) {
@@ -357,6 +360,17 @@ cameraView.setPictureSize(new SizeSelector() {
         // Must return a list of acceptable sizes.
     }
 });
+
+// Set size for VIDEO mode.
+// It will be the size of videos taken with takeVideo().
+cameraView.setVideoSize(new SizeSelector() {
+    @Override
+    public List<Size> select(List<Size> source) {
+        // Same here.
+    }
+});
+
+// See SizeSelectors below for handy utilities.
 ```
 
 In practice, this is way easier using XML attributes or leveraging the `SizeSelectors` utilities:
@@ -373,9 +387,9 @@ In practice, this is way easier using XML attributes or leveraging the `SizeSele
 |smallest|`app:cameraPictureSizeSmallest="true"`|`SizeSelectors.smallest()`|
 |biggest (**default**)|`app:cameraPictureSizeBiggest="true"`|`SizeSelectors.biggest()`|
 
-If you declare more than one XML constraint, the resulting selector will try to match **all** the
-constraints. Be careful - it is very likely that applying lots of constraints will give
-empty results.
+Similar attributes are declared for `VIDEO` mode sizing. If you declare more than one XML constraint,
+the resulting selector will try to match **all** the constraints. Be careful - it is very likely that
+applying lots of constraints will give empty results.
 
 #### SizeSelectors utilities
 
@@ -397,6 +411,7 @@ SizeSelector result = SizeSelectors.or(
     SizeSelectors.biggest() // If none is found, take the biggest
 );
 camera.setPictureSize(result);
+camera.setVideoSize(result);
 ```
 
 ## Camera controls
@@ -442,7 +457,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 What to capture - either picture or video. This has a couple of consequences:
 
 - Sizing: the capture size is chosen among the available picture or video sizes,
-  depending on the flag. The picture size is chosen according to the given [picture size selector](#picture-size).
+  depending on the flag, according to the given [size selector](#capture-size).
 - Capturing: while in picture mode, `takeVideo` will throw an exception.
 - Capturing: while in video mode, `takePicture` will throw an exception, but picture snapshots are supported.
 - Permission behavior: when requesting a `video` session, the record audio permission will be requested.
