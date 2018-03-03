@@ -23,10 +23,11 @@ public class CameraOptions {
     private Set<Flash> supportedFlash = new HashSet<>(4);
     private Set<Hdr> supportedHdr = new HashSet<>(2);
     private Set<Size> supportedPictureSizes = new HashSet<>(15);
+    private Set<Size> supportedVideoSizes = new HashSet<>(5);
     private Set<AspectRatio> supportedPictureAspectRatio = new HashSet<>(4);
+    private Set<AspectRatio> supportedVideoAspectRatio = new HashSet<>(3);
 
     private boolean zoomSupported;
-    private boolean videoSnapshotSupported;
     private boolean exposureCorrectionSupported;
     private float exposureCorrectionMinValue;
     private float exposureCorrectionMaxValue;
@@ -75,7 +76,6 @@ public class CameraOptions {
         }
 
         zoomSupported = params.isZoomSupported();
-        videoSnapshotSupported = params.isVideoSnapshotSupported();
         autoFocusSupported = params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
 
         // Exposure correction
@@ -92,6 +92,15 @@ public class CameraOptions {
             int height = flipSizes ? size.width : size.height;
             supportedPictureSizes.add(new Size(width, height));
             supportedPictureAspectRatio.add(AspectRatio.of(width, height));
+        }
+        List<Camera.Size> vsizes = params.getSupportedVideoSizes();
+        if (vsizes != null) {
+            for (Camera.Size size : vsizes) {
+                int width = flipSizes ? size.height : size.width;
+                int height = flipSizes ? size.width : size.height;
+                supportedVideoSizes.add(new Size(width, height));
+                supportedVideoAspectRatio.add(AspectRatio.of(width, height));
+            }
         }
     }
 
@@ -163,12 +172,33 @@ public class CameraOptions {
     /**
      * Set of supported picture sizes for the currently opened camera.
      *
-     * @return a set of supported values.
+     * @return a collection of supported values.
      */
     @NonNull
-    public Set<Size> getSupportedPictureSizes() {
-        // TODO v2: return a Collection
+    public Collection<Size> getSupportedPictureSizes() {
         return Collections.unmodifiableSet(supportedPictureSizes);
+    }
+
+
+    /**
+     * Set of supported picture aspect ratios for the currently opened camera.
+     *
+     * @return a collection of supported values.
+     */
+    @NonNull
+    public Collection<AspectRatio> getSupportedPictureAspectRatios() {
+        return Collections.unmodifiableSet(supportedPictureAspectRatio);
+    }
+
+
+    /**
+     * Set of supported video sizes for the currently opened camera.
+     *
+     * @return a collection of supported values.
+     */
+    @NonNull
+    public Collection<Size> getSupportedVideoSizes() {
+        return Collections.unmodifiableSet(supportedVideoSizes);
     }
 
 
@@ -178,9 +208,8 @@ public class CameraOptions {
      * @return a set of supported values.
      */
     @NonNull
-    public Set<AspectRatio> getSupportedPictureAspectRatios() {
-        // TODO v2: return a Collection
-        return Collections.unmodifiableSet(supportedPictureAspectRatio);
+    public Collection<AspectRatio> getSupportedVideoAspectRatios() {
+        return Collections.unmodifiableSet(supportedVideoAspectRatio);
     }
 
 
@@ -189,11 +218,10 @@ public class CameraOptions {
      *
      * @see Facing#BACK
      * @see Facing#FRONT
-     * @return a set of supported values.
+     * @return a collection of supported values.
      */
     @NonNull
-    public Set<Facing> getSupportedFacing() {
-        // TODO v2: return a Collection
+    public Collection<Facing> getSupportedFacing() {
         return Collections.unmodifiableSet(supportedFacing);
     }
 
@@ -205,11 +233,10 @@ public class CameraOptions {
      * @see Flash#OFF
      * @see Flash#ON
      * @see Flash#TORCH
-     * @return a set of supported values.
+     * @return a collection of supported values.
      */
     @NonNull
-    public Set<Flash> getSupportedFlash() {
-        // TODO v2: return a Collection
+    public Collection<Flash> getSupportedFlash() {
         return Collections.unmodifiableSet(supportedFlash);
     }
 
@@ -222,11 +249,10 @@ public class CameraOptions {
      * @see WhiteBalance#FLUORESCENT
      * @see WhiteBalance#DAYLIGHT
      * @see WhiteBalance#CLOUDY
-     * @return a set of supported values.
+     * @return a collection of supported values.
      */
     @NonNull
-    public Set<WhiteBalance> getSupportedWhiteBalance() {
-        // TODO v2: return a Collection
+    public Collection<WhiteBalance> getSupportedWhiteBalance() {
         return Collections.unmodifiableSet(supportedWhiteBalance);
     }
 
@@ -236,11 +262,10 @@ public class CameraOptions {
      *
      * @see Hdr#OFF
      * @see Hdr#ON
-     * @return a set of supported values.
+     * @return a collection of supported values.
      */
     @NonNull
-    public Set<Hdr> getSupportedHdr() {
-        // TODO v2: return a Collection
+    public Collection<Hdr> getSupportedHdr() {
         return Collections.unmodifiableSet(supportedHdr);
     }
 

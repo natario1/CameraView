@@ -76,6 +76,7 @@ public class CameraViewTest extends BaseTest {
         assertNull(cameraView.getCameraOptions());
         assertNull(cameraView.getSnapshotSize());
         assertNull(cameraView.getPictureSize());
+        assertNull(cameraView.getVideoSize());
     }
 
     @Test
@@ -538,6 +539,15 @@ public class CameraViewTest extends BaseTest {
         SizeSelector source = SizeSelectors.minHeight(50);
         cameraView.setPictureSize(source);
         SizeSelector result = mockController.getPictureSizeSelector();
+        assertNotNull(result);
+        assertEquals(result, source);
+    }
+
+    @Test
+    public void testVideoSizeSelector() {
+        SizeSelector source = SizeSelectors.minHeight(50);
+        cameraView.setVideoSize(source);
+        SizeSelector result = mockController.getVideoSizeSelector();
         assertNotNull(result);
         assertEquals(result, source);
     }

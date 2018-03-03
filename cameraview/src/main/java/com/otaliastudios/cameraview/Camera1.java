@@ -127,7 +127,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
         }
 
-        mPictureSize = computePictureSize();
+        mCaptureSize = computeCaptureSize();
         mPreviewSize = computePreviewSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
         applySizesAndStartPreview("bindToSurface:");
         mIsBound = true;
@@ -144,7 +144,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         Camera.Parameters params = mCamera.getParameters();
         mPreviewFormat = params.getPreviewFormat();
         params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight()); // <- not allowed during preview
-        params.setPictureSize(mPictureSize.getWidth(), mPictureSize.getHeight()); // <- allowed
+        params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
         mCamera.setParameters(params);
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
@@ -228,7 +228,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mCameraOptions = null;
         mCamera = null;
         mPreviewSize = null;
-        mPictureSize = null;
+        mCaptureSize = null;
         mIsBound = false;
         mIsCapturingImage = false;
         mIsTakingVideo = false;
@@ -632,8 +632,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 mIsTakingVideo = true;
 
                 // Create the video result
-                CamcorderProfile profile = getCamcorderProfile();
-                Size videoSize = new Size(profile.videoFrameWidth, profile.videoFrameHeight);
+                final Size videoSize = mCaptureSize;
                 mVideoResult = new VideoResult();
                 mVideoResult.file = videoFile;
                 mVideoResult.isSnapshot = false;
@@ -651,9 +650,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                     // Must be called before setOutputFormat.
                     mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
                 }
+
+                // TODO: should get a profile of a quality compatible with the chosen size.
+                final CamcorderProfile profile = CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
                 mMediaRecorder.setOutputFormat(profile.fileFormat);
                 mMediaRecorder.setVideoFrameRate(profile.videoFrameRate);
-                mMediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
+                mMediaRecorder.setVideoSize(videoSize.getWidth(), videoSize.getHeight());
                 mMediaRecorder.setVideoEncoder(mMapper.map(mVideoCodec));
                 mMediaRecorder.setVideoEncodingBitRate(profile.videoBitRate);
                 if (mAudio == Audio.ON) {

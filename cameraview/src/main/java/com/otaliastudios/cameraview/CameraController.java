@@ -6,7 +6,6 @@ import android.location.Location;
 
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -15,6 +14,7 @@ import android.support.annotation.WorkerThread;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 abstract class CameraController implements
@@ -56,11 +56,12 @@ abstract class CameraController implements
     protected Mapper mMapper;
     protected FrameManager mFrameManager;
     protected SizeSelector mPictureSizeSelector;
+    protected SizeSelector mVideoSizeSelector;
     protected MediaRecorder mMediaRecorder;
     protected VideoResult mVideoResult;
     protected long mVideoMaxSize;
     protected int mVideoMaxDuration;
-    protected Size mPictureSize;
+    protected Size mCaptureSize;
     protected Size mPreviewSize;
     protected int mPreviewFormat;
 
@@ -280,6 +281,10 @@ abstract class CameraController implements
         mPictureSizeSelector = selector;
     }
 
+    final void setVideoSizeSelector(SizeSelector selector) {
+        mVideoSizeSelector = selector;
+    }
+
     final void setVideoMaxSize(long videoMaxSizeBytes) {
         mVideoMaxSize = videoMaxSizeBytes;
     }
@@ -385,8 +390,12 @@ abstract class CameraController implements
         return mAudio;
     }
 
-    final SizeSelector getPictureSizeSelector() {
+    /* for tests */ final SizeSelector getPictureSizeSelector() {
         return mPictureSizeSelector;
+    }
+
+    /* for tests */ final SizeSelector getVideoSizeSelector() {
+        return mVideoSizeSelector;
     }
 
     final float getZoomValue() {
@@ -444,8 +453,13 @@ abstract class CameraController implements
     }
 
     final Size getPictureSize(int reference) {
-        if (mPictureSize == null) return null;
-        return flip(REF_SENSOR, reference) ? mPictureSize.flip() : mPictureSize;
+        if (mCaptureSize == null || mMode == Mode.VIDEO) return null;
+        return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
+    }
+
+    final Size getVideoSize(int reference) {
+        if (mCaptureSize == null || mMode == Mode.PICTURE) return null;
+        return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
     final Size getPreviewSize(int reference) {
@@ -465,43 +479,33 @@ abstract class CameraController implements
      * But when it does, the {@link CameraPreview.SurfaceCallback} should be called,
      * and this should be refreshed.
      */
-    protected final Size computePictureSize() {
-        // The external selector is expecting stuff in the view world, not in the sensor world.
-        // Use the list in the camera options, then flip the result if needed.
+    protected final Size computeCaptureSize() {
+        // We want to pass stuff into the REF_VIEW reference, not the sensor one.
+        // This is already managed by CameraOptions, so we just flip again at the end.
         boolean flip = flip(REF_SENSOR, REF_VIEW);
         SizeSelector selector;
-
+        Collection<Size> sizes;
         if (mMode == Mode.PICTURE) {
-            selector = SizeSelectors.or(mPictureSizeSelector, SizeSelectors.biggest());
+            selector = mPictureSizeSelector;
+            sizes = mCameraOptions.getSupportedPictureSizes();
         } else {
-            // The Camcorder internally checks for cameraParameters.getSupportedVideoSizes() etc.
-            // And we want the picture size to be the biggest picture consistent with the video aspect ratio.
-            // -> Use the external picture selector, but enforce the ratio constraint.
-            CamcorderProfile profile = getCamcorderProfile();
-            AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
-            if (flip) targetRatio = targetRatio.inverse();
-            LOG.i("size:", "computeCaptureSize:", "targetRatio:", targetRatio);
-            SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
-            selector = SizeSelectors.or(
-                    SizeSelectors.and(matchRatio, mPictureSizeSelector),
-                    SizeSelectors.and(matchRatio),
-                    mPictureSizeSelector
-            );
+            selector = mVideoSizeSelector;
+            sizes = mCameraOptions.getSupportedVideoSizes();
         }
-
-        List<Size> list = new ArrayList<>(mCameraOptions.getSupportedPictureSizes());
+        selector = SizeSelectors.or(selector, SizeSelectors.biggest());
+        List<Size> list = new ArrayList<>(sizes);
         Size result = selector.select(list).get(0);
-        LOG.i("computePictureSize:", "result:", result, "flip:", flip);
-        if (flip) result = result.flip();
+        LOG.i("computeCaptureSize:", "result:", result, "flip:", flip);
+        if (flip) result = result.flip(); // Go back to REF_SENSOR
         return result;
     }
 
     protected final Size computePreviewSize(List<Size> previewSizes) {
-        // instead of flipping everything to the view world, we can just flip the
-        // surface size to the sensor world
-        AspectRatio targetRatio = AspectRatio.of(mPictureSize.getWidth(), mPictureSize.getHeight());
+        // instead of flipping everything to REF_VIEW, we can just flip the
+        // surface size from REF_VIEW to REF_SENSOR, and reflip at the end.
+        AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         Size targetMinSize = mPreview.getSurfaceSize();
-        boolean flip = flip(REF_SENSOR, REF_VIEW);
+        boolean flip = flip(REF_VIEW, REF_SENSOR);
         if (flip) targetMinSize = targetMinSize.flip();
         LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
         SizeSelector matchRatio = SizeSelectors.and( // Match this aspect ratio and sort by biggest
@@ -520,11 +524,6 @@ abstract class CameraController implements
         Size result = matchAll.select(previewSizes).get(0);
         LOG.i("computePreviewSize:", "result:", result, "flip:", flip);
         return result;
-    }
-
-    @NonNull
-    protected final CamcorderProfile getCamcorderProfile() {
-        return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
     }
 
     //endregion
