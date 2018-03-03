@@ -21,11 +21,16 @@ abstract class VideoRecorder {
 
     abstract void start();
 
-    void stop() {
-        mListener.onVideoResult(mResult);
-        mListener = null;
-        mResult = null;
+    final void stop() {
+        if (mListener != null) {
+            close();
+            mListener.onVideoResult(mResult);
+            mListener = null;
+            mResult = null;
+        }
     }
+
+    abstract void close();
 
     interface VideoResultListener {
         void onVideoResult(@Nullable VideoResult result);
