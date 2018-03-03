@@ -14,8 +14,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
-
 import static org.junit.Assert.*;
 
 import static org.mockito.Mockito.*;
@@ -76,7 +74,7 @@ public class CameraViewTest extends BaseTest {
     public void testNullBeforeStart() {
         assertFalse(cameraView.isStarted());
         assertNull(cameraView.getCameraOptions());
-        assertNull(cameraView.getPreviewSize());
+        assertNull(cameraView.getSnapshotSize());
         assertNull(cameraView.getPictureSize());
     }
 

@@ -70,7 +70,7 @@ abstract class CameraController implements
     private int mDeviceOrientation;
 
     protected boolean mIsCapturingImage = false;
-    protected boolean mIsCapturingVideo = false;
+    protected boolean mIsTakingVideo = false;
 
     protected int mState = STATE_STOPPED;
 
@@ -406,7 +406,7 @@ abstract class CameraController implements
     }
 
     final boolean isTakingVideo() {
-        return mIsCapturingVideo;
+        return mIsTakingVideo;
     }
 
     //endregion

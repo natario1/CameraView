@@ -9,8 +9,10 @@
 - capturePicture(): renamed to takePicture().
 - captureSnapshot(): renamed to takePictureSnapshot().
 - startCapturingVideo(): renamed to takeVideo(). Signature changed from long to int.
-- getSnapshotSize(): removed. The size of snapshots (pictures and videos) is equal to
-  the preview size as returned by getPreviewSize().
+- getPreviewSize(): removed.
+- getPictureSize(): the size is now equal to the output picture size (includes rotation).
+- getSnapshotSize(): this is the size of pictures taken with takePictureSnapshot() and videos taken
+  with takeVideoSnapshot(). It includes rotation and cropping.
 - onVideoTaken(): now passing a VideoResult. Use VideoResult.getFile() to access the video file.
 - onPictureTaken(): now passing a PictureResult. Use PictureResult.getJpeg() to access the jpeg stream.
 - CameraUtils.BitmapCallback: has been moved in a separate BitmapCallback class.
