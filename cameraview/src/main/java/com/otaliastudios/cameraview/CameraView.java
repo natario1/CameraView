@@ -1606,9 +1606,5 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     //region deprecated APIs
 
-    /* for tests */int getCameraId(){
-        return mCameraController.mCameraId;
-    }
-
     //endregion
 }

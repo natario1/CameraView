@@ -38,7 +38,7 @@ import static org.mockito.Mockito.mock;
  */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-// @Ignore
+@Ignore
 public class IntegrationTest extends BaseTest {
 
     @Rule
@@ -374,7 +374,7 @@ public class IntegrationTest extends BaseTest {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             Camera.CameraInfo info = new Camera.CameraInfo();
-            Camera.getCameraInfo(camera.getCameraId(), info);
+            Camera.getCameraInfo(controller.mCameraId, info);
             if (info.canDisableShutterSound) {
                 assertEquals(newValue, camera.getPlaySounds());
             }
