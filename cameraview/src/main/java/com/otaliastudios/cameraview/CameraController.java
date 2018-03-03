@@ -42,7 +42,6 @@ abstract class CameraController implements
     protected Facing mFacing;
     protected Flash mFlash;
     protected WhiteBalance mWhiteBalance;
-    protected VideoQuality mVideoQuality;
     protected VideoCodec mVideoCodec;
     protected Mode mMode;
     protected Hdr mHdr;
@@ -325,9 +324,6 @@ abstract class CameraController implements
     // Just set.
     abstract void setAudio(Audio audio);
 
-    // Throw if capturing. If in video session, recompute capture size, and, if needed, preview size.
-    abstract void setVideoQuality(VideoQuality videoQuality);
-
     abstract void takePicture();
 
     abstract void takePictureSnapshot(AspectRatio viewAspectRatio);
@@ -359,10 +355,6 @@ abstract class CameraController implements
 
     final WhiteBalance getWhiteBalance() {
         return mWhiteBalance;
-    }
-
-    final VideoQuality getVideoQuality() {
-        return mVideoQuality;
     }
 
     final VideoCodec getVideoCodec() {
@@ -488,7 +480,7 @@ abstract class CameraController implements
             CamcorderProfile profile = getCamcorderProfile();
             AspectRatio targetRatio = AspectRatio.of(profile.videoFrameWidth, profile.videoFrameHeight);
             if (flip) targetRatio = targetRatio.inverse();
-            LOG.i("size:", "computeCaptureSize:", "videoQuality:", mVideoQuality, "targetRatio:", targetRatio);
+            LOG.i("size:", "computeCaptureSize:", "targetRatio:", targetRatio);
             SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
             selector = SizeSelectors.or(
                     SizeSelectors.and(matchRatio, mPictureSizeSelector),
@@ -532,46 +524,7 @@ abstract class CameraController implements
 
     @NonNull
     protected final CamcorderProfile getCamcorderProfile() {
-        switch (mVideoQuality) {
-            case HIGHEST:
-                return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
-
-            case MAX_2160P:
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
-                        CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2160P)) {
-                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_2160P);
-                }
-                // Don't break.
-
-            case MAX_1080P:
-                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_1080P)) {
-                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_1080P);
-                }
-                // Don't break.
-
-            case MAX_720P:
-                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_720P)) {
-                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_720P);
-                }
-                // Don't break.
-
-            case MAX_480P:
-                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_480P)) {
-                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_480P);
-                }
-                // Don't break.
-
-            case MAX_QVGA:
-                if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
-                    return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_QVGA);
-                }
-                // Don't break.
-
-            case LOWEST:
-            default:
-                // Fallback to lowest.
-                return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_LOW);
-        }
+        return CamcorderProfile.get(mCameraId, CamcorderProfile.QUALITY_HIGH);
     }
 
     //endregion

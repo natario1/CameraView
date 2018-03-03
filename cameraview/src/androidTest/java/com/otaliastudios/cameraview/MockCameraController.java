@@ -67,11 +67,6 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void setVideoQuality(VideoQuality videoQuality) {
-        mVideoQuality = videoQuality;
-    }
-
-    @Override
     void setMode(Mode mode) {
         mMode = mode;
     }

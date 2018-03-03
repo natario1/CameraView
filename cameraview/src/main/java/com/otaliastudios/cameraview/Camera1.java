@@ -465,39 +465,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Override
-    void setVideoQuality(VideoQuality videoQuality) {
-        final VideoQuality old = mVideoQuality;
-        mVideoQuality = videoQuality;
-        schedule(mVideoQualityTask, true, new Runnable() {
-            @Override
-            public void run() {
-                if (mIsTakingVideo) {
-                    // TODO: actually any call to getParameters() could fail while recording a video.
-                    // See. https://stackoverflow.com/questions/14941625/
-                    mVideoQuality = old;
-                    throw new IllegalStateException("Can't change video quality while recording a video.");
-                }
-
-                if (mMode == Mode.VIDEO) {
-                    // Change capture size to a size that fits the video aspect ratio.
-                    Size oldSize = mPictureSize;
-                    mPictureSize = computePictureSize();
-                    if (!mPictureSize.equals(oldSize)) {
-                        // New video quality triggers a new aspect ratio.
-                        // Go on and see if preview size should change also.
-                        Camera.Parameters params = mCamera.getParameters();
-                        params.setPictureSize(mPictureSize.getWidth(), mPictureSize.getHeight());
-                        mCamera.setParameters(params);
-                        onSurfaceChanged();
-                    }
-                    LOG.i("setVideoQuality:", "captureSize:", mPictureSize);
-                    LOG.i("setVideoQuality:", "previewSize:", mPreviewSize);
-                }
-            }
-        });
-    }
-
-    @Override
     void takePicture() {
         LOG.v("takePicture: scheduling");
         schedule(null, true, new Runnable() {

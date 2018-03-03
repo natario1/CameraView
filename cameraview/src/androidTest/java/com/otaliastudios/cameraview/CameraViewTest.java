@@ -88,7 +88,6 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getMode(), Mode.DEFAULT);
         assertEquals(cameraView.getHdr(), Hdr.DEFAULT);
         assertEquals(cameraView.getAudio(), Audio.DEFAULT);
-        assertEquals(cameraView.getVideoQuality(), VideoQuality.DEFAULT);
         assertEquals(cameraView.getVideoCodec(), VideoCodec.DEFAULT);
         assertEquals(cameraView.getLocation(), null);
         assertEquals(cameraView.getExposureCorrection(), 0f, 0f);
@@ -524,14 +523,6 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getAudio(), Audio.ON);
         cameraView.set(Audio.OFF);
         assertEquals(cameraView.getAudio(), Audio.OFF);
-    }
-
-    @Test
-    public void testVideoQuality() {
-        cameraView.set(VideoQuality.MAX_1080P);
-        assertEquals(cameraView.getVideoQuality(), VideoQuality.MAX_1080P);
-        cameraView.set(VideoQuality.LOWEST);
-        assertEquals(cameraView.getVideoQuality(), VideoQuality.LOWEST);
     }
 
     @Test

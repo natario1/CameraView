@@ -152,12 +152,6 @@ public class IntegrationTest extends BaseTest {
         controller.mStartVideoTask.await(400);
     }
 
-    private void waitForVideoQuality(VideoQuality quality) {
-        controller.mVideoQualityTask.listen();
-        camera.setVideoQuality(quality);
-        controller.mVideoQualityTask.await(400);
-    }
-
     //region test open/close
 
     @Test
@@ -380,50 +374,6 @@ public class IntegrationTest extends BaseTest {
         } else {
             assertEquals(oldValue, camera.getPlaySounds());
         }
-    }
-
-    //endregion
-
-    //region testSetVideoQuality
-    // This can be tricky because can trigger layout changes.
-
-    @Test(expected = RuntimeException.class)
-    public void testSetVideoQuality_whileRecording() throws Throwable {
-        // Can't run on Travis, MediaRecorder not supported.
-        // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
-        camera.setMode(Mode.VIDEO);
-        waitForVideoQuality(VideoQuality.HIGHEST);
-        waitForOpen(true);
-        waitForVideoStart();
-        waitForVideoQuality(VideoQuality.LOWEST);
-        waitForUiException();
-    }
-
-    @Test
-    public void testSetVideoQuality_whileInPictureMode() {
-        camera.setMode(Mode.PICTURE);
-        waitForVideoQuality(VideoQuality.HIGHEST);
-        waitForOpen(true);
-        waitForVideoQuality(VideoQuality.LOWEST);
-        assertEquals(camera.getVideoQuality(), VideoQuality.LOWEST);
-    }
-
-    @Test
-    public void testSetVideoQuality_whileNotStarted() {
-        waitForVideoQuality(VideoQuality.HIGHEST);
-        assertEquals(camera.getVideoQuality(), VideoQuality.HIGHEST);
-
-        waitForVideoQuality(VideoQuality.LOWEST);
-        assertEquals(camera.getVideoQuality(), VideoQuality.LOWEST);
-    }
-
-    @Test
-    public void testSetVideoQuality_shouldRecompute() {
-        // TODO:
-        // If video quality changes bring to a new capture size,
-        // this might bring to a new aspect ratio,
-        // which might bring to a new preview size. No idea how to test.
-        assertTrue(true);
     }
 
     //endregion

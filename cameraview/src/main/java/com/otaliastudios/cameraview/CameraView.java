@@ -100,7 +100,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
         Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
         WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
-        VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
         Mode mode = Mode.fromValue(a.getInteger(R.styleable.CameraView_cameraMode, Mode.DEFAULT.value()));
         Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
         Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
@@ -170,7 +169,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFacing(facing);
         setFlash(flash);
         setMode(mode);
-        setVideoQuality(videoQuality);
         setWhiteBalance(whiteBalance);
         setGrid(grid);
         setHdr(hdr);
@@ -658,8 +656,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             setHdr((Hdr) control);
         } else if (control instanceof Mode) {
             setMode((Mode) control);
-        } else if (control instanceof VideoQuality) {
-            setVideoQuality((VideoQuality) control);
         } else if (control instanceof WhiteBalance) {
             setWhiteBalance((WhiteBalance) control);
         } else if (control instanceof VideoCodec) {
@@ -1007,43 +1003,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Sets picture capture size. The {@link SizeSelector} will be invoked with the list of available
-     * size, and the first acceptable size will be accepted and passed to the internal engine.
+     * Sets picture capture size for picture mode.
+     * The {@link SizeSelector} will be invoked with the list of available size, and the first
+     * acceptable size will be accepted and passed to the internal engine.
      * See the {@link SizeSelectors} class for handy utilities for creating selectors.
      *
      * @param selector a size selector
      */
     public void setPictureSize(@NonNull SizeSelector selector) {
         mCameraController.setPictureSizeSelector(selector);
-    }
-
-
-    /**
-     * Sets video recording quality. This is not guaranteed to be supported by current device.
-     * If it's not, a lower quality will be chosen, until a supported one is found.
-     * If sessionType is video, this might trigger a camera restart and a change in preview size.
-     *
-     * @see VideoQuality#LOWEST
-     * @see VideoQuality#HIGHEST
-     * @see VideoQuality#MAX_QVGA
-     * @see VideoQuality#MAX_480P
-     * @see VideoQuality#MAX_720P
-     * @see VideoQuality#MAX_1080P
-     * @see VideoQuality#MAX_2160P
-     *
-     * @param videoQuality requested video quality
-     */
-    public void setVideoQuality(VideoQuality videoQuality) {
-        mCameraController.setVideoQuality(videoQuality);
-    }
-
-
-    /**
-     * Gets the current video quality.
-     * @return the current video quality
-     */
-    public VideoQuality getVideoQuality() {
-        return mCameraController.getVideoQuality();
     }
 
 
@@ -1235,8 +1203,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Returns the size used for the capture, or null if it hasn't been computed
-     * (for example if the surface is not ready). The size is rotated to match the output orientation.
+     * Returns the size used for pictures taken with {@link #takePicture()},
+     * or null if it hasn't been computed (for example if the surface is not ready).
+     * The size is rotated to match the output orientation.
      *
      * @return the size of pictures
      */

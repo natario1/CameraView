@@ -133,11 +133,11 @@ public class CameraOptions1Test extends BaseTest {
         CameraOptions o = new CameraOptions(params, false);
 
         Collection<Grid> grids = o.getSupportedControls(Grid.class);
-        Collection<VideoQuality> video = o.getSupportedControls(VideoQuality.class);
+        Collection<VideoCodec> video = o.getSupportedControls(VideoCodec.class);
         Collection<Mode> sessions = o.getSupportedControls(Mode.class);
         Collection<Audio> audio = o.getSupportedControls(Audio.class);
         assertEquals(grids.size(), Grid.values().length);
-        assertEquals(video.size(), VideoQuality.values().length);
+        assertEquals(video.size(), VideoCodec.values().length);
         assertEquals(sessions.size(), Mode.values().length);
         assertEquals(audio.size(), Audio.values().length);
     }

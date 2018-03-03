@@ -81,11 +81,6 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setVideoQuality(VideoQuality videoQuality) {
-
-    }
-
-    @Override
     void takePicture() {
 
     }

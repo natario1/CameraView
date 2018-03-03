@@ -22,3 +22,4 @@
 - CameraOptions.isVideoSnapshotSupported(): removed, this would be ambiguous now. While in video
   mode, you can only use takePictureSnapshot(), not takePicture().
 - takePicture(): will now throw an exception if called when Mode == Mode.VIDEO. You can only take snapshots.
+- VideoQuality: this has been removed.
