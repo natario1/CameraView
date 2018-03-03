@@ -32,6 +32,7 @@ abstract class VideoRecorder {
 
     abstract void close();
 
+
     interface VideoResultListener {
         void onVideoResult(@Nullable VideoResult result);
     }
