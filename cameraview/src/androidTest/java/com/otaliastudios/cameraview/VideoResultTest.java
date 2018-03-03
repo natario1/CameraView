@@ -29,6 +29,8 @@ public class VideoResultTest extends BaseTest {
         VideoCodec codec = VideoCodec.H_263;
         Location location = Mockito.mock(Location.class);
         boolean isSnapshot = true;
+        int maxDuration = 1234;
+        long maxFileSize = 500000;
 
         result.file = file;
         result.rotation = rotation;
@@ -36,6 +38,8 @@ public class VideoResultTest extends BaseTest {
         result.codec = codec;
         result.location = location;
         result.isSnapshot = isSnapshot;
+        result.maxDuration = maxDuration;
+        result.maxSize = maxFileSize;
 
         assertEquals(result.getFile(), file);
         assertEquals(result.getRotation(), rotation);
@@ -43,5 +47,7 @@ public class VideoResultTest extends BaseTest {
         assertEquals(result.getCodec(), codec);
         assertEquals(result.getLocation(), location);
         assertEquals(result.isSnapshot(), isSnapshot);
+        assertEquals(result.getMaxSize(), maxFileSize);
+        assertEquals(result.getMaxDuration(), maxDuration);
     }
 }

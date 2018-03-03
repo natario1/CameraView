@@ -57,8 +57,9 @@ abstract class CameraController implements
     protected FrameManager mFrameManager;
     protected SizeSelector mPictureSizeSelector;
     protected SizeSelector mVideoSizeSelector;
-    protected MediaRecorder mMediaRecorder;
-    protected VideoResult mVideoResult;
+    // protected MediaRecorder mMediaRecorder;
+    // protected VideoResult mVideoResult;
+    protected VideoRecorder mVideoRecorder;
     protected long mVideoMaxSize;
     protected int mVideoMaxDuration;
     protected Size mCaptureSize;
@@ -69,7 +70,7 @@ abstract class CameraController implements
     private int mDisplayOffset;
     private int mDeviceOrientation;
 
-    protected boolean mIsCapturingImage = false;
+    protected boolean mIsTakingImage = false;
     protected boolean mIsTakingVideo = false;
 
     protected int mState = STATE_STOPPED;
@@ -81,7 +82,6 @@ abstract class CameraController implements
     Task<Void> mWhiteBalanceTask = new Task<>();
     Task<Void> mHdrTask = new Task<>();
     Task<Void> mLocationTask = new Task<>();
-    Task<Void> mVideoQualityTask = new Task<>();
     Task<Void> mStartVideoTask = new Task<>();
     Task<Void> mPlaySoundsTask = new Task<>();
 

@@ -17,6 +17,9 @@ public class VideoResult {
     Size size;
     File file;
     VideoCodec codec;
+    Audio audio;
+    long maxSize;
+    int maxDuration;
 
     VideoResult() {}
 
@@ -79,5 +82,35 @@ public class VideoResult {
     @NonNull
     public VideoCodec getCodec() {
         return codec;
+    }
+
+    /**
+     * Returns the max file size in bytes that was set before recording,
+     * or 0 if no constraint was set.
+     *
+     * @return the max file size in bytes
+     */
+    public long getMaxSize() {
+        return maxSize;
+    }
+
+    /**
+     * Returns the max video duration in milliseconds that was set before recording,
+     * or 0 if no constraint was set.
+     *
+     * @return the max duration in milliseconds
+     */
+    public int getMaxDuration() {
+        return maxDuration;
+    }
+
+    /**
+     * Returns the {@link Audio} setting for this video.
+     *
+     * @return the audio setting for this video
+     */
+    @NonNull
+    public Audio getAudio() {
+        return audio;
     }
 }
