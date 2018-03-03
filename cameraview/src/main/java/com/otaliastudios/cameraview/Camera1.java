@@ -187,7 +187,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mergeWhiteBalance(params, WhiteBalance.DEFAULT);
             mergeHdr(params, Hdr.DEFAULT);
             mergePlaySound(mPlaySounds);
-            params.setRecordingHint(mSessionType == SessionType.VIDEO);
+            params.setRecordingHint(mMode == Mode.VIDEO);
             mCamera.setParameters(params);
 
             // Try starting preview.
@@ -284,9 +284,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setSessionType(SessionType sessionType) {
-        if (sessionType != mSessionType) {
-            mSessionType = sessionType;
+    void setMode(Mode mode) {
+        if (mode != mMode) {
+            mMode = mode;
             schedule(null, true, new Runnable() {
                 @Override
                 public void run() {
@@ -441,7 +441,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     private void applyDefaultFocus(Camera.Parameters params) {
         List<String> modes = params.getSupportedFocusModes();
 
-        if (mSessionType == SessionType.VIDEO &&
+        if (mMode == Mode.VIDEO &&
                 modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
             params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
             return;
@@ -478,7 +478,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                     throw new IllegalStateException("Can't change video quality while recording a video.");
                 }
 
-                if (mSessionType == SessionType.VIDEO) {
+                if (mMode == Mode.VIDEO) {
                     // Change capture size to a size that fits the video aspect ratio.
                     Size oldSize = mPictureSize;
                     mPictureSize = computePictureSize();
@@ -503,11 +503,14 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
+                if (mMode == Mode.VIDEO) {
+                    throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
+                }
+
                 LOG.v("takePicture: performing.", mIsCapturingImage);
                 if (mIsCapturingImage) return;
-                if (mIsTakingVideo && !mCameraOptions.isVideoSnapshotSupported()) return;
-
                 mIsCapturingImage = true;
+
                 final int sensorToOutput = offset(REF_SENSOR, REF_OUTPUT);
                 final Size outputSize = getPictureSize(REF_OUTPUT);
                 Camera.Parameters params = mCamera.getParameters();
@@ -556,15 +559,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
-                LOG.v("takePictureSnapshot: performing.", mIsCapturingImage);
-                if (mIsCapturingImage) return;
-                // This won't work while capturing a video.
-                // Switch to takePicture.
-                // TODO v2: what to do here?
                 if (mIsTakingVideo) {
-                    takePicture();
+                    // TODO v2: what to do here?
+                    // This won't work while capturing a video.
+                    // But we want it to work.
                     return;
                 }
+
+                LOG.v("takePictureSnapshot: performing.", mIsCapturingImage);
+                if (mIsCapturingImage) return;
                 mIsCapturingImage = true;
                 mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
                     @Override
@@ -654,74 +657,74 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(mStartVideoTask, true, new Runnable() {
             @Override
             public void run() {
+                if (mMode == Mode.PICTURE) {
+                    throw new IllegalStateException("Can't record video while in PICTURE mode");
+                }
+
                 if (mIsTakingVideo) return;
-                if (mSessionType == SessionType.VIDEO) {
-                    mIsTakingVideo = true;
+                mIsTakingVideo = true;
 
-                    // Create the video result
-                    CamcorderProfile profile = getCamcorderProfile();
-                    Size videoSize = new Size(profile.videoFrameWidth, profile.videoFrameHeight);
-                    mVideoResult = new VideoResult();
-                    mVideoResult.file = videoFile;
-                    mVideoResult.isSnapshot = false;
-                    mVideoResult.codec = mVideoCodec;
-                    mVideoResult.location = mLocation;
-                    mVideoResult.rotation = offset(REF_SENSOR, REF_OUTPUT);
-                    mVideoResult.size = flip(REF_SENSOR, REF_OUTPUT) ? videoSize.flip() : videoSize;
+                // Create the video result
+                CamcorderProfile profile = getCamcorderProfile();
+                Size videoSize = new Size(profile.videoFrameWidth, profile.videoFrameHeight);
+                mVideoResult = new VideoResult();
+                mVideoResult.file = videoFile;
+                mVideoResult.isSnapshot = false;
+                mVideoResult.codec = mVideoCodec;
+                mVideoResult.location = mLocation;
+                mVideoResult.rotation = offset(REF_SENSOR, REF_OUTPUT);
+                mVideoResult.size = flip(REF_SENSOR, REF_OUTPUT) ? videoSize.flip() : videoSize;
 
-                    // Initialize the media recorder
-                    mCamera.unlock();
-                    mMediaRecorder = new MediaRecorder();
-                    mMediaRecorder.setCamera(mCamera);
-                    mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-                    if (mAudio == Audio.ON) {
-                        // Must be called before setOutputFormat.
-                        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
-                    }
-                    mMediaRecorder.setOutputFormat(profile.fileFormat);
-                    mMediaRecorder.setVideoFrameRate(profile.videoFrameRate);
-                    mMediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
-                    mMediaRecorder.setVideoEncoder(mMapper.map(mVideoCodec));
-                    mMediaRecorder.setVideoEncodingBitRate(profile.videoBitRate);
-                    if (mAudio == Audio.ON) {
-                        mMediaRecorder.setAudioChannels(profile.audioChannels);
-                        mMediaRecorder.setAudioSamplingRate(profile.audioSampleRate);
-                        mMediaRecorder.setAudioEncoder(profile.audioCodec);
-                        mMediaRecorder.setAudioEncodingBitRate(profile.audioBitRate);
-                    }
-                    if (mLocation != null) {
-                        mMediaRecorder.setLocation(
-                                (float) mLocation.getLatitude(),
-                                (float) mLocation.getLongitude());
-                    }
-                    mMediaRecorder.setOutputFile(mVideoResult.getFile().getAbsolutePath());
-                    mMediaRecorder.setOrientationHint(mVideoResult.getRotation());
-                    mMediaRecorder.setMaxFileSize(mVideoMaxSize);
-                    mMediaRecorder.setMaxDuration(mVideoMaxDuration);
-                    mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
-                        @Override
-                        public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
-                            switch (what) {
-                                case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
-                                case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
-                                    stopVideoImmediately();
-                                    break;
-                            }
+                // Initialize the media recorder
+                mCamera.unlock();
+                mMediaRecorder = new MediaRecorder();
+                mMediaRecorder.setCamera(mCamera);
+                mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+                if (mAudio == Audio.ON) {
+                    // Must be called before setOutputFormat.
+                    mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+                }
+                mMediaRecorder.setOutputFormat(profile.fileFormat);
+                mMediaRecorder.setVideoFrameRate(profile.videoFrameRate);
+                mMediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
+                mMediaRecorder.setVideoEncoder(mMapper.map(mVideoCodec));
+                mMediaRecorder.setVideoEncodingBitRate(profile.videoBitRate);
+                if (mAudio == Audio.ON) {
+                    mMediaRecorder.setAudioChannels(profile.audioChannels);
+                    mMediaRecorder.setAudioSamplingRate(profile.audioSampleRate);
+                    mMediaRecorder.setAudioEncoder(profile.audioCodec);
+                    mMediaRecorder.setAudioEncodingBitRate(profile.audioBitRate);
+                }
+                if (mLocation != null) {
+                    mMediaRecorder.setLocation(
+                            (float) mLocation.getLatitude(),
+                            (float) mLocation.getLongitude());
+                }
+                mMediaRecorder.setOutputFile(mVideoResult.getFile().getAbsolutePath());
+                mMediaRecorder.setOrientationHint(mVideoResult.getRotation());
+                mMediaRecorder.setMaxFileSize(mVideoMaxSize);
+                mMediaRecorder.setMaxDuration(mVideoMaxDuration);
+                mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
+                    @Override
+                    public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
+                        switch (what) {
+                            case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
+                            case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
+                                stopVideoImmediately();
+                                break;
                         }
-                    });
-                    // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
-
-                    try {
-                        mMediaRecorder.prepare();
-                        mMediaRecorder.start();
-                    } catch (Exception e) {
-                        LOG.e("Error while starting MediaRecorder. Swallowing.", e);
-                        mVideoResult = null;
-                        mCamera.lock();
-                        stopVideoImmediately();
                     }
-                } else {
-                    throw new IllegalStateException("Can't record video while session type is picture");
+                });
+                // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
+
+                try {
+                    mMediaRecorder.prepare();
+                    mMediaRecorder.start();
+                } catch (Exception e) {
+                    LOG.e("Error while starting MediaRecorder. Swallowing.", e);
+                    mVideoResult = null;
+                    mCamera.lock();
+                    stopVideoImmediately();
                 }
             }
         });

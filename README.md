@@ -410,8 +410,8 @@ Most camera parameters can be controlled through XML attributes or linked method
     app:cameraFacing="back"
     app:cameraFlash="off"
     app:cameraGrid="off"
-    app:cameraSessionType="picture"
     app:cameraVideoQuality="max480p"
+    app:cameraMode="picture"
     app:cameraVideoCodec="deviceDefault"
     app:cameraWhiteBalance="auto"
     app:cameraHdr="off"
@@ -423,7 +423,7 @@ Most camera parameters can be controlled through XML attributes or linked method
 
 |XML Attribute|Method|Values|Default Value|
 |-------------|------|------|-------------|
-|[`cameraSessionType`](#camerasessiontype)|`setSessionType()`|`picture` `video`|`picture`|
+|[`cameraMode`](#cameramode)|`setMode()`|`picture` `video`|`picture`|
 |[`cameraFacing`](#camerafacing)|`setFacing()`|`back` `front`|`back`|
 |[`cameraFlash`](#cameraflash)|`setFlash()`|`off` `on` `auto` `torch`|`off`|
 |[`cameraGrid`](#cameragrid)|`setGrid()`|`off` `draw3x3` `draw4x4` `drawPhi`|`off`|
@@ -436,21 +436,21 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraVideoMaxSize`](#cameravideomaxsize)|`setVideoMaxSize()`|number|`0`|
 |[`cameraVideoMaxDuration`](#cameravideomaxduration)|`setVideoMaxDuration()`|number|`0`|
 
-#### cameraSessionType
+#### cameraMode
 
 What to capture - either picture or video. This has a couple of consequences:
 
 - Sizing: picture and preview size are chosen among the available picture or video sizes,
   depending on the flag. The picture size is chosen according to the given [size selector](#picture-size).
   When `video`, in addition, we try to match the `videoQuality` aspect ratio.
-- Picture capturing: while recording a video, image capturing might work, but it is not guaranteed
-  (it's device dependent)
+- Capturing: while in picture mode, `takeVideo` will throw an exception.
+- Capturing: while in video mode, `takePicture` will throw an exception, but picture snapshots are supported.
 - Permission behavior: when requesting a `video` session, the record audio permission will be requested.
   If this is needed, the audio permission should be added to your manifest or the app will crash.
 
 ```java
-cameraView.setSessionType(SessionType.PICTURE);
-cameraView.setSessionType(SessionType.VIDEO);
+cameraView.setMode(Mode.PICTURE);
+cameraView.setMode(Mode.VIDEO);
 ```
 
 #### cameraFacing

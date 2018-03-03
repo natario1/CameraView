@@ -101,7 +101,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
         WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
         VideoQuality videoQuality = VideoQuality.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoQuality, VideoQuality.DEFAULT.value()));
-        SessionType sessionType = SessionType.fromValue(a.getInteger(R.styleable.CameraView_cameraSessionType, SessionType.DEFAULT.value()));
+        Mode mode = Mode.fromValue(a.getInteger(R.styleable.CameraView_cameraMode, Mode.DEFAULT.value()));
         Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
         Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
         VideoCodec codec = VideoCodec.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoCodec, VideoCodec.DEFAULT.value()));
@@ -169,7 +169,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // Apply camera controller params
         setFacing(facing);
         setFlash(flash);
-        setSessionType(sessionType);
+        setMode(mode);
         setVideoQuality(videoQuality);
         setWhiteBalance(whiteBalance);
         setGrid(grid);
@@ -551,7 +551,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void start() {
         if (!isEnabled()) return;
 
-        if (checkPermissions(getSessionType(), getAudio())) {
+        if (checkPermissions(getMode(), getAudio())) {
             // Update display orientation for current CameraController
             mOrientationHelper.enable(getContext());
             mCameraController.setDisplayOffset(mOrientationHelper.getDisplayOffset());
@@ -563,19 +563,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     /**
      * Checks that we have appropriate permissions for this session type.
      * Throws if session = audio and manifest did not add the microphone permissions.     
-     * @param sessionType the sessionType to be checked
+     * @param mode the sessionType to be checked
      * @param audio the audio setting to be checked
      * @return true if we can go on, false otherwise.
      */
     @SuppressLint("NewApi")
-    protected boolean checkPermissions(SessionType sessionType, Audio audio) {
-        checkPermissionsManifestOrThrow(sessionType, audio);
+    protected boolean checkPermissions(Mode mode, Audio audio) {
+        checkPermissionsManifestOrThrow(mode, audio);
         // Manifest is OK at this point. Let's check runtime permissions.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
 
         Context c = getContext();
         boolean needsCamera = true;
-        boolean needsAudio = sessionType == SessionType.VIDEO && audio == Audio.ON;
+        boolean needsAudio = mode == Mode.VIDEO && audio == Audio.ON;
 
         needsCamera = needsCamera && c.checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED;
         needsAudio = needsAudio && c.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED;
@@ -593,8 +593,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * If the developer did not add this to its manifest, throw and fire warnings.
      * (Hoping this is not caught elsewhere... we should test).
      */
-    private void checkPermissionsManifestOrThrow(SessionType sessionType, Audio audio) {
-        if (sessionType == SessionType.VIDEO && audio == Audio.ON) {
+    private void checkPermissionsManifestOrThrow(Mode mode, Audio audio) {
+        if (mode == Mode.VIDEO && audio == Audio.ON) {
             try {
                 PackageManager manager = getContext().getPackageManager();
                 PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
@@ -656,8 +656,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             setGrid((Grid) control);
         } else if (control instanceof Hdr) {
             setHdr((Hdr) control);
-        } else if (control instanceof SessionType) {
-            setSessionType((SessionType) control);
+        } else if (control instanceof Mode) {
+            setMode((Mode) control);
         } else if (control instanceof VideoQuality) {
             setVideoQuality((VideoQuality) control);
         } else if (control instanceof WhiteBalance) {
@@ -932,7 +932,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // Check did took place, or will happen on start().
             mCameraController.setAudio(audio);
 
-        } else if (checkPermissions(getSessionType(), audio)) {
+        } else if (checkPermissions(getMode(), audio)) {
             // Camera is running. Pass.
             mCameraController.setAudio(audio);
 
@@ -971,24 +971,21 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     /**
      * Set the current session type to either picture or video.
-     * When sessionType is video,
-     * - {@link #takeVideo(File)} will not throw any exception
-     * - {@link #takePicture()} might fallback to {@link #takePictureSnapshot()} or might not work
      *
-     * @see SessionType#PICTURE
-     * @see SessionType#VIDEO
+     * @see Mode#PICTURE
+     * @see Mode#VIDEO
      *
-     * @param sessionType desired session type.
+     * @param mode desired session type.
      */
-    public void setSessionType(SessionType sessionType) {
+    public void setMode(Mode mode) {
 
-        if (sessionType == getSessionType() || isStopped()) {
+        if (mode == getMode() || isStopped()) {
             // Check did took place, or will happen on start().
-            mCameraController.setSessionType(sessionType);
+            mCameraController.setMode(mode);
 
-        } else if (checkPermissions(sessionType, getAudio())) {
-            // Camera is running. CameraImpl setSessionType will do the trick.
-            mCameraController.setSessionType(sessionType);
+        } else if (checkPermissions(mode, getAudio())) {
+            // Camera is running. CameraImpl setMode will do the trick.
+            mCameraController.setMode(mode);
 
         } else {
             // This means that the audio permission is being asked.
@@ -1001,11 +998,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Gets the current session type.
-     * @return the current session type
+     * Gets the current mode.
+     * @return the current mode
      */
-    public SessionType getSessionType() {
-        return mCameraController.getSessionType();
+    public Mode getMode() {
+        return mCameraController.getMode();
     }
 
 
@@ -1123,7 +1120,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * This will trigger {@link CameraListener#onPictureTaken(PictureResult)} if a listener
      * was registered.
      *
-     * Note that if sessionType is {@link SessionType#VIDEO}, this
+     * Note that if sessionType is {@link Mode#VIDEO}, this
      * might fall back to {@link #takePictureSnapshot()} (that is, we might capture a preview frame).
      *
      * @see #takePictureSnapshot()

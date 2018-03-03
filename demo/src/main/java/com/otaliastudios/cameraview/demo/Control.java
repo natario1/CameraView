@@ -11,12 +11,11 @@ import com.otaliastudios.cameraview.Gesture;
 import com.otaliastudios.cameraview.GestureAction;
 import com.otaliastudios.cameraview.Grid;
 import com.otaliastudios.cameraview.Hdr;
-import com.otaliastudios.cameraview.SessionType;
+import com.otaliastudios.cameraview.Mode;
 import com.otaliastudios.cameraview.VideoQuality;
 import com.otaliastudios.cameraview.WhiteBalance;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -27,7 +26,7 @@ public enum Control {
 
     WIDTH("Width", false),
     HEIGHT("Height", true),
-    SESSION("Session type", false),
+    MODE("Mode", false),
     FLASH("Flash", false),
     WHITE_BALANCE("White balance", false),
     GRID("Grid", true),
@@ -72,7 +71,7 @@ public enum Control {
                     list.add(i);
                 }
                 return list;
-            case SESSION: return options.getSupportedControls(SessionType.class);
+            case MODE: return options.getSupportedControls(Mode.class);
             case FLASH: return options.getSupportedControls(Flash.class);
             case WHITE_BALANCE: return options.getSupportedControls(WhiteBalance.class);
             case HDR: return options.getSupportedControls(Hdr.class);
@@ -108,7 +107,7 @@ public enum Control {
         switch (this) {
             case WIDTH: return view.getLayoutParams().width;
             case HEIGHT: return view.getLayoutParams().height;
-            case SESSION: return view.getSessionType();
+            case MODE: return view.getMode();
             case FLASH: return view.getFlash();
             case WHITE_BALANCE: return view.getWhiteBalance();
             case GRID: return view.getGrid();
@@ -134,7 +133,7 @@ public enum Control {
                 camera.getLayoutParams().height = (int) value;
                 camera.setLayoutParams(camera.getLayoutParams());
                 break;
-            case SESSION:
+            case MODE:
             case FLASH:
             case WHITE_BALANCE:
             case GRID:

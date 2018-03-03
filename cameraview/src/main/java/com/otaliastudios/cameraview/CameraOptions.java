@@ -148,8 +148,8 @@ public class CameraOptions {
             return (Collection<T>) Arrays.asList(Grid.values());
         } else if (controlClass.equals(Hdr.class)) {
             return (Collection<T>) getSupportedHdr();
-        } else if (controlClass.equals(SessionType.class)) {
-            return (Collection<T>) Arrays.asList(SessionType.values());
+        } else if (controlClass.equals(Mode.class)) {
+            return (Collection<T>) Arrays.asList(Mode.values());
         } else if (controlClass.equals(VideoQuality.class)) {
             return (Collection<T>) Arrays.asList(VideoQuality.values());
         } else if (controlClass.equals(WhiteBalance.class)) {
@@ -252,17 +252,6 @@ public class CameraOptions {
      */
     public boolean isZoomSupported() {
         return zoomSupported;
-    }
-
-
-    /**
-     * Whether video snapshots are supported. If this is false, taking pictures
-     * while recording a video will have no effect.
-     *
-     * @return whether video snapshot is supported.
-     */
-    public boolean isVideoSnapshotSupported() {
-        return videoSnapshotSupported;
     }
 
 

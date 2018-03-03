@@ -17,3 +17,8 @@
 - onPictureTaken(): now passing a PictureResult. Use PictureResult.getJpeg() to access the jpeg stream.
 - CameraUtils.BitmapCallback: has been moved in a separate BitmapCallback class.
 - isCapturingVideo(): renamed to isTakingVideo().
+- SessionType: renamed to Mode. This means that setSessionType() and cameraSessionType are renamed to
+  setMode() and cameraMode.
+- CameraOptions.isVideoSnapshotSupported(): removed, this would be ambiguous now. While in video
+  mode, you can only use takePictureSnapshot(), not takePicture().
+- takePicture(): will now throw an exception if called when Mode == Mode.VIDEO. You can only take snapshots.

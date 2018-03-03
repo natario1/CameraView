@@ -35,7 +35,6 @@ public class CameraOptions1Test extends BaseTest {
         assertTrue(o.getSupportedHdr().isEmpty());
         assertFalse(o.isAutoFocusSupported());
         assertFalse(o.isExposureCorrectionSupported());
-        assertFalse(o.isVideoSnapshotSupported());
         assertFalse(o.isZoomSupported());
         assertEquals(o.getExposureCorrectionMaxValue(), 0f, 0);
         assertEquals(o.getExposureCorrectionMinValue(), 0f, 0);
@@ -135,11 +134,11 @@ public class CameraOptions1Test extends BaseTest {
 
         Collection<Grid> grids = o.getSupportedControls(Grid.class);
         Collection<VideoQuality> video = o.getSupportedControls(VideoQuality.class);
-        Collection<SessionType> sessions = o.getSupportedControls(SessionType.class);
+        Collection<Mode> sessions = o.getSupportedControls(Mode.class);
         Collection<Audio> audio = o.getSupportedControls(Audio.class);
         assertEquals(grids.size(), Grid.values().length);
         assertEquals(video.size(), VideoQuality.values().length);
-        assertEquals(sessions.size(), SessionType.values().length);
+        assertEquals(sessions.size(), Mode.values().length);
         assertEquals(audio.size(), Audio.values().length);
     }
 
@@ -223,7 +222,6 @@ public class CameraOptions1Test extends BaseTest {
         when(params.isZoomSupported()).thenReturn(true);
         when(params.getSupportedFocusModes()).thenReturn(Arrays.asList(Camera.Parameters.FOCUS_MODE_AUTO));
         CameraOptions o = new CameraOptions(params, false);
-        assertTrue(o.isVideoSnapshotSupported());
         assertTrue(o.isZoomSupported());
         assertTrue(o.isAutoFocusSupported());
     }

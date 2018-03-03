@@ -36,7 +36,7 @@ class Camera2 extends CameraController {
     }
 
     @Override
-    void setSessionType(SessionType sessionType) {
+    void setMode(Mode mode) {
 
     }
 

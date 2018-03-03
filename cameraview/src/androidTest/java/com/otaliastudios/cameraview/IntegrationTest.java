@@ -37,7 +37,7 @@ import static org.mockito.Mockito.mock;
  */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-@Ignore
+// @Ignore
 public class IntegrationTest extends BaseTest {
 
     @Rule
@@ -231,8 +231,8 @@ public class IntegrationTest extends BaseTest {
     }
 
     @Test
-    public void testSetSessionType() throws Exception {
-        camera.setSessionType(SessionType.PICTURE);
+    public void testSetMode() throws Exception {
+        camera.setMode(Mode.PICTURE);
         waitForOpen(true);
 
         // set session type should call stop and start again.
@@ -240,11 +240,11 @@ public class IntegrationTest extends BaseTest {
         doCountDown(latch).when(listener).onCameraOpened(any(CameraOptions.class));
         doCountDown(latch).when(listener).onCameraClosed();
 
-        camera.setSessionType(SessionType.VIDEO);
+        camera.setMode(Mode.VIDEO);
 
         boolean did = latch.await(2, TimeUnit.SECONDS);
-        assertTrue("Handles setSessionType while active", did);
-        assertEquals(camera.getSessionType(), SessionType.VIDEO);
+        assertTrue("Handles setMode while active", did);
+        assertEquals(camera.getMode(), Mode.VIDEO);
     }
 
     //endregion
@@ -391,7 +391,7 @@ public class IntegrationTest extends BaseTest {
     public void testSetVideoQuality_whileRecording() throws Throwable {
         // Can't run on Travis, MediaRecorder not supported.
         // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
-        camera.setSessionType(SessionType.VIDEO);
+        camera.setMode(Mode.VIDEO);
         waitForVideoQuality(VideoQuality.HIGHEST);
         waitForOpen(true);
         waitForVideoStart();
@@ -400,8 +400,8 @@ public class IntegrationTest extends BaseTest {
     }
 
     @Test
-    public void testSetVideoQuality_whileInPictureSessionType() {
-        camera.setSessionType(SessionType.PICTURE);
+    public void testSetVideoQuality_whileInPictureMode() {
+        camera.setMode(Mode.PICTURE);
         waitForVideoQuality(VideoQuality.HIGHEST);
         waitForOpen(true);
         waitForVideoQuality(VideoQuality.LOWEST);
@@ -435,7 +435,7 @@ public class IntegrationTest extends BaseTest {
         // Fails on Travis. Some emulators can't deal with MediaRecorder
         // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
         // as documented. This works locally though.
-        camera.setSessionType(SessionType.PICTURE);
+        camera.setMode(Mode.PICTURE);
         waitForOpen(true);
         waitForVideoStart();
         waitForUiException();
@@ -446,7 +446,7 @@ public class IntegrationTest extends BaseTest {
         // Fails on Travis. Some emulators can't deal with MediaRecorder,
         // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
         // as documented. This works locally though.
-        camera.setSessionType(SessionType.VIDEO);
+        camera.setMode(Mode.VIDEO);
         waitForOpen(true);
         camera.takeVideo(null, 4000);
         waitForVideoEnd(true);
@@ -454,7 +454,7 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testEndVideo_withoutStarting() {
-        camera.setSessionType(SessionType.VIDEO);
+        camera.setMode(Mode.VIDEO);
         waitForOpen(true);
         camera.stopVideo();
         waitForVideoEnd(false);
@@ -462,7 +462,7 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testEndVideo_withMaxSize() {
-        camera.setSessionType(SessionType.VIDEO);
+        camera.setMode(Mode.VIDEO);
         camera.setVideoMaxSize(500*1000); // 0.5 mb
         waitForOpen(true);
         waitForVideoStart();
@@ -471,7 +471,7 @@ public class IntegrationTest extends BaseTest {
 
     @Test
     public void testEndVideo_withMaxDuration() {
-        camera.setSessionType(SessionType.VIDEO);
+        camera.setMode(Mode.VIDEO);
         camera.setVideoMaxDuration(4000);
         waitForOpen(true);
         waitForVideoStart();
@@ -538,6 +538,14 @@ public class IntegrationTest extends BaseTest {
         assertNotNull(result.getJpeg());
         assertNull(result.getLocation());
         assertFalse(result.isSnapshot());
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testCapturePicture_whileInVideoMode() throws Throwable {
+        camera.setMode(Mode.VIDEO);
+        waitForOpen(true);
+        camera.takePicture();
+        waitForUiException();
     }
 
     @Test

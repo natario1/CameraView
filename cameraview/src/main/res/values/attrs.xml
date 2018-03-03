@@ -84,7 +84,7 @@
             <enum name="drawPhi" value="3" />
         </attr>
 
-        <attr name="cameraSessionType" format="enum">
+        <attr name="cameraMode" format="enum">
             <enum name="picture" value="0" />
             <enum name="video" value="1" />
         </attr>
