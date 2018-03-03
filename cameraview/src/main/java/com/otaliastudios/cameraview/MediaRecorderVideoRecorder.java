@@ -75,7 +75,7 @@ class MediaRecorderVideoRecorder extends VideoRecorder {
     }
 
     @Override
-    void stop() {
+    void close() {
         if (mMediaRecorder != null) {
             try {
                 mMediaRecorder.stop();
@@ -85,8 +85,6 @@ class MediaRecorderVideoRecorder extends VideoRecorder {
             }
             mMediaRecorder.release();
         }
-
-        super.stop();
         mProfile = null;
         mMediaRecorder = null;
     }

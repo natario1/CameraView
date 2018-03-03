@@ -205,7 +205,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mFrameManager.release();
 
         if (mCamera != null) {
-            LOG.i("onStop:", "Clean up.", "Ending video.");
+            LOG.i("onStop:", "Clean up.", "Ending video. mVideoRecorder is null?", mVideoRecorder == null);
             if (mVideoRecorder != null) {
                 mVideoRecorder.stop();
                 mVideoRecorder = null;
@@ -655,6 +655,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             @Override
             public void run() {
                 mIsTakingVideo = false;
+                LOG.i("stopVideo", "mVideoRecorder is null?", mVideoRecorder == null);
                 if (mVideoRecorder != null) {
                     mVideoRecorder.stop();
                     mVideoRecorder = null;
