@@ -150,8 +150,8 @@ camera.addCameraListener(new CameraListener() {
 camera.takePicture();
 ```
 
-You can also use `camera.takePictureSnapshot()` to capture a preview frame. This is faster, though will
-ensure lower quality output.
+You can also use `camera.takePictureSnapshot()` to capture a preview frame. This can be faster,
+but the output is lower quality of course.
 
 ### Capturing Video
 
@@ -339,7 +339,7 @@ just like `android:scaleType="centerCrop"` on an `ImageView`.
 ```
 
 This means that part of the preview is hidden, and the image output will contain parts of the scene
-that were not visible during the capture.
+that were not visible during the capture (unless it is taken as a **snapshot**).
 
 ### Picture Size
 
@@ -443,9 +443,6 @@ What to capture - either picture or video. This has a couple of consequences:
 - Sizing: picture and preview size are chosen among the available picture or video sizes,
   depending on the flag. The picture size is chosen according to the given [size selector](#picture-size).
   When `video`, in addition, we try to match the `videoQuality` aspect ratio.
-- Picture capturing: due to sizing behavior, capturing pictures in `video` mode might lead to
-  inconsistent results. In this case it is encouraged to use `takePictureSnapshot` instead, which will
-  capture preview frames. This is fast and thus works well with slower camera sensors.
 - Picture capturing: while recording a video, image capturing might work, but it is not guaranteed
   (it's device dependent)
 - Permission behavior: when requesting a `video` session, the record audio permission will be requested.
@@ -632,9 +629,8 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`setLocation(double, double)`|Sets latitude and longitude to be appended to picture/video metadata.|
 |`getLocation()`|Retrieves location data previously applied with setLocation().|
 |`startAutoFocus(float, float)`|Starts an autofocus process at the given coordinates, with respect to the view dimensions.|
-|`getPreviewSize()`|Returns the size of the preview surface. If CameraView was not constrained in its layout phase (e.g. it was `wrap_content`), this will return the same aspect ratio of CameraView.|
-|`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|
-|`getPictureSize()`|Returns the size of the output picture. The aspect ratio is consistent with `getPreviewSize()`.|
+|`getSnapshotSize()`|Returns the size of snapshots (pictures or video), including any rotation and cropping.|
+|`getPictureSize()`|Returns the size of the output picture, including any rotation.|
 
 Take also a look at public methods in `CameraUtils`, `CameraOptions`.
 

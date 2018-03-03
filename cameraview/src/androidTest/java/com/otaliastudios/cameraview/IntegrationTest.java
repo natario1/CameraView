@@ -17,7 +17,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -565,7 +564,7 @@ public class IntegrationTest extends BaseTest {
     @Test
     public void testCaptureSnapshot_size() throws Exception {
         waitForOpen(true);
-        Size size = camera.getPreviewSize();
+        Size size = camera.getSnapshotSize();
         camera.takePictureSnapshot();
 
         PictureResult result = waitForPicture(true);

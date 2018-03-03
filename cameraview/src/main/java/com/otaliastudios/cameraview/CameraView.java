@@ -1213,14 +1213,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Returns the size used for the preview,
-     * or null if it hasn't been computed (for example if the surface is not ready).
-     * This is the size of snapshots.
+     * Returns the size used for snapshots, or null if it hasn't been computed
+     * (for example if the surface is not ready). This is the preview size, rotated to match
+     * the output orientation, and cropped to the visible part.
      *
-     * @return a Size
+     * @return the size of snapshots
      */
     @Nullable
-    public Size getPreviewSize() {
+    public Size getSnapshotSize() {
         if (getWidth() == 0 || getHeight() == 0) return null;
 
         // Get the preview size and crop according to the current view size.
@@ -1238,10 +1238,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Returns the size used for the capture,
-     * or null if it hasn't been computed yet (for example if the surface is not ready).
+     * Returns the size used for the capture, or null if it hasn't been computed
+     * (for example if the surface is not ready). The size is rotated to match the output orientation.
      *
-     * @return a Size
+     * @return the size of pictures
      */
     @Nullable
     public Size getPictureSize() {
@@ -1439,7 +1439,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         @Override
         public void onCameraPreviewSizeChanged() {
             mLogger.i("onCameraPreviewSizeChanged");
-            // Camera preview size, as returned by getPreviewSize(), has changed.
+            // Camera preview size has changed.
             // Request a layout pass for onMeasure() to do its stuff.
             // Potentially this will change CameraView size, which changes Surface size,
             // which triggers a new Preview size. But hopefully it will converge.
