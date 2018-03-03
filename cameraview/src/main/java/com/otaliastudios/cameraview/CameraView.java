@@ -15,6 +15,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.location.Location;
 import android.media.MediaActionSound;
 import android.os.Build;
@@ -260,7 +261,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Size previewSize = getPreviewSize();
+        Size previewSize = mCameraController.getPreviewSize(CameraController.REF_VIEW);
         if (previewSize == null) {
             LOG.w("onMeasure:", "surface is not ready. Calling default behavior.");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -272,9 +273,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         final int widthValue = MeasureSpec.getSize(widthMeasureSpec);
         final int heightValue = MeasureSpec.getSize(heightMeasureSpec);
-        final boolean flip = mCameraController.shouldFlipSizes();
-        final float previewWidth = flip ? previewSize.getHeight() : previewSize.getWidth();
-        final float previewHeight = flip ? previewSize.getWidth() : previewSize.getHeight();
+        final float previewWidth = previewSize.getWidth();
+        final float previewHeight = previewSize.getHeight();
 
         // Pre-process specs
         final ViewGroup.LayoutParams lp = getLayoutParams();
@@ -1144,9 +1144,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @see #takePicture()
      */
     public void takePictureSnapshot() {
-        mCameraController.takePictureSnapshot(
-                mCameraPreview.isCropping(),
-                AspectRatio.of(getWidth(), getHeight()));
+        if (getWidth() == 0 || getHeight() == 0) return;
+        mCameraController.takePictureSnapshot(AspectRatio.of(getWidth(), getHeight()));
     }
 
 
@@ -1222,7 +1221,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Nullable
     public Size getPreviewSize() {
-        return mCameraController != null ? mCameraController.getPreviewSize() : null;
+        if (getWidth() == 0 || getHeight() == 0) return null;
+
+        // Get the preview size and crop according to the current view size.
+        // It's better to do calculations in the REF_VIEW reference, and then flip if needed.
+        Size preview = mCameraController.getPreviewSize(CameraController.REF_VIEW);
+        AspectRatio viewRatio = AspectRatio.of(getWidth(), getHeight());
+        Rect crop = CropHelper.computeCrop(preview, viewRatio);
+        Size cropSize = new Size(crop.width(), crop.height());
+        if (mCameraController.flip(CameraController.REF_VIEW, CameraController.REF_OUTPUT)) {
+            return cropSize.flip();
+        } else {
+            return cropSize;
+        }
     }
 
 
@@ -1234,7 +1245,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Nullable
     public Size getPictureSize() {
-        return mCameraController != null ? mCameraController.getPictureSize() : null;
+        return mCameraController.getPictureSize(CameraController.REF_OUTPUT);
     }
 
 
