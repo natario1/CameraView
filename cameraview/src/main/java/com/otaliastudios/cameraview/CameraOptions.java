@@ -150,8 +150,8 @@ public class CameraOptions {
             return (Collection<T>) getSupportedHdr();
         } else if (controlClass.equals(Mode.class)) {
             return (Collection<T>) Arrays.asList(Mode.values());
-        } else if (controlClass.equals(VideoQuality.class)) {
-            return (Collection<T>) Arrays.asList(VideoQuality.values());
+        } else if (controlClass.equals(VideoCodec.class)) {
+            return (Collection<T>) Arrays.asList(VideoCodec.values());
         } else if (controlClass.equals(WhiteBalance.class)) {
             return (Collection<T>) getSupportedWhiteBalance();
         }

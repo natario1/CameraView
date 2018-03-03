@@ -4,6 +4,7 @@ import android.graphics.Rect;
 
 class CropHelper {
 
+    // It's important that size and aspect ratio belong to the same reference.
     static Rect computeCrop(Size currentSize, AspectRatio targetRatio) {
         int currentWidth = currentSize.getWidth();
         int currentHeight = currentSize.getHeight();

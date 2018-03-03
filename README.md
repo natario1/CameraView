@@ -135,6 +135,7 @@ To capture an image just call `CameraView.takePicture()`. Make sure you setup a 
 to handle the image callback.
 
 ```java
+camera.setMode(Mode.PICTURE);
 camera.addCameraListener(new CameraListener() {
     @Override
     public void onPictureTaken(PictureResult result) {
@@ -160,6 +161,7 @@ To capture video just call `CameraView.takeVideo(file)` to start, and
 the video callback.
 
 ```java
+camera.setMode(Mode.VIDEO);
 camera.addCameraListener(new CameraListener() {
     @Override
     public void onVideoTaken(VideoResult result) {
@@ -427,7 +429,6 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraFacing`](#camerafacing)|`setFacing()`|`back` `front`|`back`|
 |[`cameraFlash`](#cameraflash)|`setFlash()`|`off` `on` `auto` `torch`|`off`|
 |[`cameraGrid`](#cameragrid)|`setGrid()`|`off` `draw3x3` `draw4x4` `drawPhi`|`off`|
-|[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`lowest` `highest` `maxQvga` `max480p` `max720p` `max1080p` `max2160p`|`max480p`|
 |[`cameraVideoCodec`](#cameravideocodec)|`setVideoCodec()`|`deviceDefault` `h263` `h264`|`deviceDefault`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 |[`cameraHdr`](#camerahdr)|`setHdr()`|`off` `on`|`off`|
@@ -440,9 +441,8 @@ Most camera parameters can be controlled through XML attributes or linked method
 
 What to capture - either picture or video. This has a couple of consequences:
 
-- Sizing: picture and preview size are chosen among the available picture or video sizes,
-  depending on the flag. The picture size is chosen according to the given [size selector](#picture-size).
-  When `video`, in addition, we try to match the `videoQuality` aspect ratio.
+- Sizing: the capture size is chosen among the available picture or video sizes,
+  depending on the flag. The picture size is chosen according to the given [picture size selector](#picture-size).
 - Capturing: while in picture mode, `takeVideo` will throw an exception.
 - Capturing: while in video mode, `takePicture` will throw an exception, but picture snapshots are supported.
 - Permission behavior: when requesting a `video` session, the record audio permission will be requested.
@@ -483,20 +483,6 @@ cameraView.setGrid(Grid.OFF);
 cameraView.setGrid(Grid.DRAW_3X3);
 cameraView.setGrid(Grid.DRAW_4X4);
 cameraView.setGrid(Grid.DRAW_PHI);
-```
-
-#### cameraVideoQuality
-
-Sets the desired video quality.
-
-```java
-cameraView.setVideoQuality(VideoQuality.LOWEST);
-cameraView.setVideoQuality(VideoQuality.HIGHEST);
-cameraView.setVideoQuality(VideoQuality.MAX_QVGA);
-cameraView.setVideoQuality(VideoQuality.MAX_480P);
-cameraView.setVideoQuality(VideoQuality.MAX_720P);
-cameraView.setVideoQuality(VideoQuality.MAX_1080P);
-cameraView.setVideoQuality(VideoQuality.MAX_2160P);
 ```
 
 #### cameraVideoCodec

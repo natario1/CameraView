@@ -12,7 +12,6 @@ import com.otaliastudios.cameraview.GestureAction;
 import com.otaliastudios.cameraview.Grid;
 import com.otaliastudios.cameraview.Hdr;
 import com.otaliastudios.cameraview.Mode;
-import com.otaliastudios.cameraview.VideoQuality;
 import com.otaliastudios.cameraview.WhiteBalance;
 
 import java.util.ArrayList;
@@ -30,7 +29,6 @@ public enum Control {
     FLASH("Flash", false),
     WHITE_BALANCE("White balance", false),
     GRID("Grid", true),
-    VIDEO_QUALITY("Video quality", false),
     HDR("Hdr", false),
     AUDIO("Audio", true),
     PINCH("Pinch gesture", false),
@@ -76,7 +74,6 @@ public enum Control {
             case WHITE_BALANCE: return options.getSupportedControls(WhiteBalance.class);
             case HDR: return options.getSupportedControls(Hdr.class);
             case GRID: return options.getSupportedControls(Grid.class);
-            case VIDEO_QUALITY: return options.getSupportedControls(VideoQuality.class);
             case AUDIO: return options.getSupportedControls(Audio.class);
             case PINCH:
             case HSCROLL:
@@ -111,7 +108,6 @@ public enum Control {
             case FLASH: return view.getFlash();
             case WHITE_BALANCE: return view.getWhiteBalance();
             case GRID: return view.getGrid();
-            case VIDEO_QUALITY: return view.getVideoQuality();
             case AUDIO: return view.getAudio();
             case HDR: return view.getHdr();
             case PINCH: return view.getGestureAction(Gesture.PINCH);
@@ -137,7 +133,6 @@ public enum Control {
             case FLASH:
             case WHITE_BALANCE:
             case GRID:
-            case VIDEO_QUALITY:
             case AUDIO:
             case HDR:
                 camera.set((com.otaliastudios.cameraview.Control) value);
