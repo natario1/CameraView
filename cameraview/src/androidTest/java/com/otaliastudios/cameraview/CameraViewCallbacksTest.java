@@ -142,6 +142,14 @@ public class CameraViewCallbacksTest extends BaseTest {
     }
 
     @Test
+    public void testDispatchOnPictureTaken() {
+        completeTask().when(listener).onPictureTaken(null);
+        camera.mCameraCallbacks.dispatchOnPictureTaken(null);
+        assertNotNull(task.await(200));
+        verify(listener, times(1)).onPictureTaken(null);
+    }
+
+    @Test
     public void testDispatchOnZoomChanged() {
         completeTask().when(listener).onZoomChanged(anyFloat(), any(float[].class), any(PointF[].class));
         camera.mCameraCallbacks.dispatchOnZoomChanged(0f, null);
@@ -208,76 +216,6 @@ public class CameraViewCallbacksTest extends BaseTest {
         camera.mCameraCallbacks.dispatchError(error);
         assertNotNull(task.await(200));
         verify(listener, times(1)).onCameraError(error);
-    }
-
-    @Test
-    public void testProcessJpeg() {
-        int[] viewDim = new int[]{ 200, 200 };
-        int[] imageDim = new int[]{ 1000, 1600 };
-
-        // With crop flag: expect a 1:1 ratio.
-        int[] output = testProcessImage(true, true, viewDim, imageDim);
-        LOG.i("testProcessJpeg", output);
-        assertEquals(output[0], 1000);
-        assertEquals(output[1], 1000);
-
-        // Without crop flag: expect original ratio.
-        output = testProcessImage(true, false, viewDim, imageDim);
-        LOG.i("testProcessJpeg", output);
-        assertEquals(output[0], imageDim[0]);
-        assertEquals(output[1], imageDim[1]);
-    }
-
-    @Test
-    public void testProcessYuv() {
-        int[] viewDim = new int[]{ 200, 200 };
-        int[] imageDim = new int[]{ 1000, 1600 };
-
-        // With crop flag: expect a 1:1 ratio.
-        int[] output = testProcessImage(false, true, viewDim, imageDim);
-        LOG.i("testProcessYuv", output);
-        assertEquals(output[0], 1000);
-        assertEquals(output[1], 1000);
-
-        // Without crop flag: expect original ratio.
-        output = testProcessImage(false, false, viewDim, imageDim);
-        LOG.i("testProcessYuv", output);
-        assertEquals(output[0], imageDim[0]);
-        assertEquals(output[1], imageDim[1]);
-    }
-
-    private int[] testProcessImage(boolean jpeg, boolean crop, int[] viewDim, int[] imageDim) {
-        // End our task when onPictureTaken is called. Take note of the result.
-        final Task<byte[]> jpegTask = new Task<>(true);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                jpegTask.end((byte[]) invocation.getArguments()[0]);
-                return null;
-            }
-        }).when(listener).onPictureTaken(any(PictureResult.class));
-
-        // Fake our own dimensions.
-        camera.setTop(0);
-        camera.setBottom(viewDim[1]);
-        camera.setLeft(0);
-        camera.setRight(viewDim[0]);
-
-        // Ensure the image will (not) be cropped.
-        mockPreview.setIsCropping(crop);
-
-        // Create fake JPEG array and trigger the process.
-        if (jpeg) {
-            camera.mCameraCallbacks.processPicture(mockJpeg(imageDim[0], imageDim[1]), true, false);
-        } else {
-            camera.mCameraCallbacks.processSnapshot(mockYuv(imageDim[0], imageDim[1]), true, false);
-        }
-
-        // Wait for result and get out dimensions.
-        byte[] result = jpegTask.await(3000);
-        assertNotNull("Image was processed", result);
-        Bitmap bitmap = BitmapFactory.decodeByteArray(result, 0, result.length);
-        return new int[]{ bitmap.getWidth(), bitmap.getHeight() };
     }
 
     @Test
