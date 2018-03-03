@@ -27,6 +27,16 @@
         app:cameraGestureScrollVertical="none"
         app:cameraSessionType="picture" />
 
+
+    <ImageButton
+        android:id="@+id/toggleCamera"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_margin="16dp"
+        android:layout_gravity="top|end"
+        android:background="@drawable/background"
+        app:srcCompat="@drawable/ic_switch" />
+
     <!-- Controls -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -34,7 +44,7 @@
         android:layout_gravity="bottom"
         android:padding="16dp"
         android:orientation="horizontal"
-        android:weightSum="3">
+        android:weightSum="4">
 
         <ImageButton
             android:id="@+id/edit"
@@ -49,11 +59,36 @@
             android:layout_weight="1" />
 
         <ImageButton
-            android:id="@+id/capturePhoto"
+            android:id="@+id/capturePicture"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:background="@drawable/background"
             app:srcCompat="@drawable/ic_photo" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:id="@+id/capturePictureSnapshot"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/background" >
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_photo"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="10sp"
+                android:text="SNAP"/>
+        </LinearLayout>
 
         <Space
             android:layout_width="0dp"
@@ -72,12 +107,26 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <ImageButton
-            android:id="@+id/toggleCamera"
+
+        <LinearLayout
+            android:id="@+id/captureVideoSnapshot"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:background="@drawable/background"
-            app:srcCompat="@drawable/ic_switch" />
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/background" >
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_video"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="10sp"
+                android:text="SNAP"/>
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Edit -->

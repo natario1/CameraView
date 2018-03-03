@@ -19,7 +19,6 @@ import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.SessionType;
-import com.otaliastudios.cameraview.Size;
 import com.otaliastudios.cameraview.VideoResult;
 
 import java.io.File;
@@ -58,7 +57,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         });
 
         findViewById(R.id.edit).setOnClickListener(this);
-        findViewById(R.id.capturePhoto).setOnClickListener(this);
+        findViewById(R.id.capturePicture).setOnClickListener(this);
+        findViewById(R.id.capturePictureSnapshot).setOnClickListener(this);
         findViewById(R.id.captureVideo).setOnClickListener(this);
         findViewById(R.id.toggleCamera).setOnClickListener(this);
 
@@ -124,7 +124,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.edit: edit(); break;
-            case R.id.capturePhoto: capturePhoto(); break;
+            case R.id.capturePicture: capturePicture(); break;
+            case R.id.capturePictureSnapshot: capturePictureSnapshot(); break;
             case R.id.captureVideo: captureVideo(); break;
             case R.id.toggleCamera: toggleCamera(); break;
         }
@@ -145,12 +146,20 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         b.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
-    private void capturePhoto() {
+    private void capturePicture() {
         if (mCapturingPicture) return;
         mCapturingPicture = true;
         mCaptureTime = System.currentTimeMillis();
         message("Capturing picture...", false);
         camera.takePicture();
+    }
+
+    private void capturePictureSnapshot() {
+        if (mCapturingPicture) return;
+        mCapturingPicture = true;
+        mCaptureTime = System.currentTimeMillis();
+        message("Capturing picture snapshot...", false);
+        camera.takePictureSnapshot();
     }
 
     private void captureVideo() {
