@@ -507,18 +507,22 @@ abstract class CameraController implements
     protected final Size computePreviewSize(List<Size> previewSizes) {
         // instead of flipping everything to the view world, we can just flip the
         // surface size to the sensor world
-        boolean flip = flip(REF_SENSOR, REF_VIEW);
         AspectRatio targetRatio = AspectRatio.of(mPictureSize.getWidth(), mPictureSize.getHeight());
         Size targetMinSize = mPreview.getSurfaceSize();
+        boolean flip = flip(REF_SENSOR, REF_VIEW);
         if (flip) targetMinSize = targetMinSize.flip();
         LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
-        SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
-        SizeSelector matchSize = SizeSelectors.and(
+        SizeSelector matchRatio = SizeSelectors.and( // Match this aspect ratio and sort by biggest
+                SizeSelectors.aspectRatio(targetRatio, 0),
+                SizeSelectors.biggest());
+        SizeSelector matchSize = SizeSelectors.and( // Bigger than this size, and sort by smallest
                 SizeSelectors.minHeight(targetMinSize.getHeight()),
-                SizeSelectors.minWidth(targetMinSize.getWidth()));
+                SizeSelectors.minWidth(targetMinSize.getWidth()),
+                SizeSelectors.smallest());
         SizeSelector matchAll = SizeSelectors.or(
-                SizeSelectors.and(matchRatio, matchSize),
-                SizeSelectors.and(matchRatio, SizeSelectors.biggest()), // If couldn't match both, match ratio and biggest.
+                SizeSelectors.and(matchRatio, matchSize), // Try to respect both constraints.
+                matchSize, // If couldn't match aspect ratio, at least respect the size
+                matchRatio, // If couldn't respect size, at least match aspect ratio
                 SizeSelectors.biggest() // If couldn't match any, take the biggest.
         );
         Size result = matchAll.select(previewSizes).get(0);

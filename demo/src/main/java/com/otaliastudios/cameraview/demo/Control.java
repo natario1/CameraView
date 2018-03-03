@@ -28,7 +28,6 @@ public enum Control {
     WIDTH("Width", false),
     HEIGHT("Height", true),
     SESSION("Session type", false),
-    CROP_OUTPUT("Crop output", true),
     FLASH("Flash", false),
     WHITE_BALANCE("White balance", false),
     GRID("Grid", true),
@@ -73,7 +72,6 @@ public enum Control {
                     list.add(i);
                 }
                 return list;
-            case CROP_OUTPUT: return Arrays.asList(true, false);
             case SESSION: return options.getSupportedControls(SessionType.class);
             case FLASH: return options.getSupportedControls(Flash.class);
             case WHITE_BALANCE: return options.getSupportedControls(WhiteBalance.class);
@@ -111,7 +109,6 @@ public enum Control {
             case WIDTH: return view.getLayoutParams().width;
             case HEIGHT: return view.getLayoutParams().height;
             case SESSION: return view.getSessionType();
-            case CROP_OUTPUT: return view.getCropOutput();
             case FLASH: return view.getFlash();
             case WHITE_BALANCE: return view.getWhiteBalance();
             case GRID: return view.getGrid();
@@ -145,9 +142,6 @@ public enum Control {
             case AUDIO:
             case HDR:
                 camera.set((com.otaliastudios.cameraview.Control) value);
-                break;
-            case CROP_OUTPUT:
-                camera.setCropOutput((boolean) value);
                 break;
             case PINCH:
                 camera.mapGesture(Gesture.PINCH, (GestureAction) value);
