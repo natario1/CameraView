@@ -30,6 +30,10 @@ abstract class CameraController implements
     static final int STATE_STARTING = 1; // Camera is about to start.
     static final int STATE_STARTED = 2; // Camera is available and we can set parameters.
 
+    static final int REF_SENSOR = 0;
+    static final int REF_VIEW = 1;
+    static final int REF_OUTPUT = 2;
+
     protected final CameraView.CameraCallbacks mCameraCallbacks;
     protected CameraPreview mPreview;
     protected WorkerHandler mHandler;
@@ -326,7 +330,7 @@ abstract class CameraController implements
 
     abstract void takePicture();
 
-    abstract void takePictureSnapshot(boolean shouldCrop, AspectRatio viewAspectRatio);
+    abstract void takePictureSnapshot(AspectRatio viewAspectRatio);
 
     abstract void takeVideo(@NonNull File file);
 
@@ -393,20 +397,12 @@ abstract class CameraController implements
         return mPictureSizeSelector;
     }
 
-    final Size getPictureSize() {
-        return mPictureSize;
-    }
-
     final float getZoomValue() {
         return mZoomValue;
     }
 
     final float getExposureCorrectionValue() {
         return mExposureCorrectionValue;
-    }
-
-    final Size getPreviewSize() {
-        return mPreviewSize;
     }
 
     final boolean isTakingVideo() {
@@ -417,43 +413,54 @@ abstract class CameraController implements
 
     //region Orientation utils
 
-    /**
-     * The result of this should not change after start() is called: the sensor offset is the same,
-     * and the display offset does not change.
-     */
-    final boolean shouldFlipSizes() {
-        int offset = computeSensorToViewOffset();
-        LOG.i("shouldFlipSizes:", "displayOffset=", mDisplayOffset, "sensorOffset=", mSensorOffset);
-        LOG.i("shouldFlipSizes:", "sensorToDisplay=", offset);
-        return offset % 180 != 0;
-    }
-
-    /**
-     * Returns how much should the sensor image be rotated before being shown.
-     * It is meant to be fed to Camera.setDisplayOrientation().
-     * The result of this should not change after start() is called: the sensor offset is the same,
-     * and the display offset does not change.
-     */
-    protected final int computeSensorToViewOffset() {
+    private int computeSensorToViewOffset() {
         if (mFacing == Facing.FRONT) {
-            // Here we had ((mSensorOffset - mDisplayOffset) + 360 + 180) % 360
-            // And it seemed to give the same results for various combinations, but not for all (e.g. 0 - 270).
             return (360 - ((mSensorOffset + mDisplayOffset) % 360)) % 360;
         } else {
             return (mSensorOffset - mDisplayOffset + 360) % 360;
         }
     }
 
-    /**
-     * Returns the orientation to be set as a exif tag.
-     */
-    protected final int computeSensorToOutputOffset() {
+    private int computeSensorToOutputOffset() {
         if (mFacing == Facing.FRONT) {
             return (mSensorOffset - mDeviceOrientation + 360) % 360;
         } else {
             return (mSensorOffset + mDeviceOrientation) % 360;
         }
     }
+
+    // Returns the offset between two reference systems.
+    final int offset(int fromReference, int toReference) {
+        if (fromReference == toReference) return 0;
+        // We only know how to compute offsets with respect to REF_SENSOR.
+        // That's why we separate the two cases.
+        if (fromReference == REF_SENSOR) {
+            return toReference == REF_VIEW ?
+                    computeSensorToViewOffset() :
+                    computeSensorToOutputOffset();
+        }
+        // Maybe the sensor is the other.
+        if (toReference == REF_SENSOR) {
+            return -offset(toReference, fromReference) + 360;
+        }
+        // None of them is the sensor. Use a difference.
+        return (offset(REF_SENSOR, toReference) - offset(REF_SENSOR, fromReference) + 360) % 360;
+    }
+
+    final boolean flip(int reference1, int reference2) {
+        return offset(reference1, reference2) % 180 != 0;
+    }
+
+    final Size getPictureSize(int reference) {
+        if (mPictureSize == null) return null;
+        return flip(REF_SENSOR, reference) ? mPictureSize.flip() : mPictureSize;
+    }
+
+    final Size getPreviewSize(int reference) {
+        if (mPreviewSize == null) return null;
+        return flip(REF_SENSOR, reference) ? mPreviewSize.flip() : mPreviewSize;
+    }
+
 
     //endregion
 
@@ -469,7 +476,7 @@ abstract class CameraController implements
     protected final Size computePictureSize() {
         // The external selector is expecting stuff in the view world, not in the sensor world.
         // Use the list in the camera options, then flip the result if needed.
-        boolean flip = shouldFlipSizes();
+        boolean flip = flip(REF_SENSOR, REF_VIEW);
         SizeSelector selector;
 
         if (mSessionType == SessionType.PICTURE) {
@@ -500,7 +507,7 @@ abstract class CameraController implements
     protected final Size computePreviewSize(List<Size> previewSizes) {
         // instead of flipping everything to the view world, we can just flip the
         // surface size to the sensor world
-        boolean flip = shouldFlipSizes();
+        boolean flip = flip(REF_SENSOR, REF_VIEW);
         AspectRatio targetRatio = AspectRatio.of(mPictureSize.getWidth(), mPictureSize.getHeight());
         Size targetMinSize = mPreview.getSurfaceSize();
         if (flip) targetMinSize = targetMinSize.flip();

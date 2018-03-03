@@ -97,7 +97,7 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void takePictureSnapshot(boolean shouldCrop, AspectRatio viewAspectRatio) {
+    void takePictureSnapshot(AspectRatio viewAspectRatio) {
     }
 
     @Override
