@@ -17,7 +17,7 @@ import static org.junit.Assert.*;
 
 import static org.mockito.Mockito.*;
 
-public abstract class PreviewTest extends BaseTest {
+public abstract class CameraPreviewTest extends BaseTest {
 
     protected abstract CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback);
 

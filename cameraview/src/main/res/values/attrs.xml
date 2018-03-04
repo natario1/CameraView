@@ -118,5 +118,7 @@
             <enum name="h264" value="2" />
         </attr>
 
+        <attr name="cameraExperimental" format="boolean" />
+
     </declare-styleable>
 </resources>
