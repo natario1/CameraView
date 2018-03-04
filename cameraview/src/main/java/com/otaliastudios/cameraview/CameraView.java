@@ -70,6 +70,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     TapGestureLayout mTapGestureLayout;
     ScrollGestureLayout mScrollGestureLayout;
     private boolean mKeepScreenOn;
+    private boolean mExperimental;
 
     // Threading
     private Handler mUiHandler;
@@ -94,6 +95,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Self managed
         boolean playSounds = a.getBoolean(R.styleable.CameraView_cameraPlaySounds, DEFAULT_PLAY_SOUNDS);
+        mExperimental = a.getBoolean(R.styleable.CameraView_cameraExperimental, false);
 
         // Camera controller params
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
@@ -229,6 +231,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
         // TextureView is not supported without hardware acceleration.
         LOG.w("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
+        if (mExperimental) return new GLCameraPreview(context, container, null);
         return isHardwareAccelerated() ?
                 new TextureCameraPreview(context, container, null) :
                 new SurfaceCameraPreview(context, container, null);
@@ -580,6 +583,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     public void start() {
         if (!isEnabled()) return;
+        if (mCameraPreview != null) mCameraPreview.onResume();
 
         if (checkPermissions(getMode(), getAudio())) {
             // Update display orientation for current CameraController
@@ -650,6 +654,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     public void stop() {
         mCameraController.stop();
+        if (mCameraPreview != null) mCameraPreview.onPause();
     }
 
 
@@ -662,6 +667,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         clearCameraListeners();
         clearFrameProcessors();
         mCameraController.destroy();
+        if (mCameraPreview != null) mCameraPreview.onDestroy();
     }
 
     //endregion

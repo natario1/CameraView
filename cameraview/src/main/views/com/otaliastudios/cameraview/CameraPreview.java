@@ -102,6 +102,12 @@ abstract class CameraPreview<T extends View, Output> {
         mSurfaceHeight = 0;
     }
 
+    void onResume() {}
+
+    void onPause() {}
+
+    void onDestroy() {}
+
     final boolean isReady() {
         return mSurfaceWidth > 0 && mSurfaceHeight > 0;
     }

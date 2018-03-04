@@ -68,6 +68,30 @@ public class CameraViewTest extends BaseTest {
         hasPermissions = false;
     }
 
+    //region testLifecycle
+
+    @Test
+    public void testStart() {
+        cameraView.start();
+        verify(mockPreview, times(1)).onResume();
+        // Can't verify controller, depends on permissions.
+        // See to-do at the end.
+    }
+
+    @Test
+    public void testStop() {
+        cameraView.stop();
+        verify(mockPreview, times(1)).onPause();
+        verify(mockController, times(1)).stop();
+    }
+
+    @Test
+    public void testDestroy() {
+        cameraView.destroy();
+        verify(mockPreview, times(1)).onDestroy();
+        verify(mockController, times(1)).destroy();
+    }
+
     //region testDefaults
 
     @Test
