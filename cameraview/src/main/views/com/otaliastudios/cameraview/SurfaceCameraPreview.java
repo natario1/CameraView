@@ -64,11 +64,6 @@ class SurfaceCameraPreview extends CameraPreview<View, SurfaceHolder> {
     }
 
     @Override
-    Surface getSurface() {
-        return getOutput().getSurface();
-    }
-
-    @Override
     SurfaceHolder getOutput() {
         return mSurfaceView.getHolder();
     }
@@ -78,12 +73,6 @@ class SurfaceCameraPreview extends CameraPreview<View, SurfaceHolder> {
         return SurfaceHolder.class;
     }
 
-    @Override
-    boolean supportsCropping() {
-        return false;
-    }
-
-    @Override
     protected void applyCrop(float scaleX, float scaleY) {
         /* float currWidth = getView().getWidth();
         float currHeight = getView().getHeight();

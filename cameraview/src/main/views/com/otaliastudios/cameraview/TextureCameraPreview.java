@@ -12,8 +12,6 @@ import android.view.ViewGroup;
 
 class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
-    private Surface mSurface;
-
     TextureCameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         super(context, parent, callback);
     }
@@ -50,14 +48,6 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
     }
 
     @Override
-    Surface getSurface() {
-        if (mSurface == null) { // Check if valid?
-            mSurface = new Surface(getOutput());
-        }
-        return mSurface;
-    }
-
-    @Override
     Class<SurfaceTexture> getOutputClass() {
         return SurfaceTexture.class;
     }
@@ -76,4 +66,41 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
         }
     }
 
+    @Override
+    boolean supportsCropping() {
+        return true;
+    }
+
+    @Override
+    protected void crop() {
+        mCropTask.start();
+        getView().post(new Runnable() {
+            @Override
+            public void run() {
+                if (mDesiredHeight == 0 || mDesiredWidth == 0 ||
+                        mSurfaceHeight == 0 || mSurfaceWidth == 0) {
+                    mCropTask.end(null);
+                    return;
+                }
+                float scaleX = 1f, scaleY = 1f;
+                AspectRatio current = AspectRatio.of(mSurfaceWidth, mSurfaceHeight);
+                AspectRatio target = AspectRatio.of(mDesiredWidth, mDesiredHeight);
+                if (current.toFloat() >= target.toFloat()) {
+                    // We are too short. Must increase height.
+                    scaleY = current.toFloat() / target.toFloat();
+                } else {
+                    // We must increase width.
+                    scaleX = target.toFloat() / current.toFloat();
+                }
+
+                getView().setScaleX(scaleX);
+                getView().setScaleY(scaleY);
+
+                mCropping = scaleX > 1.02f || scaleY > 1.02f;
+                LOG.i("crop:", "applied scaleX=", scaleX);
+                LOG.i("crop:", "applied scaleY=", scaleY);
+                mCropTask.end(null);
+            }
+        });
+    }
 }
