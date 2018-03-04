@@ -8,12 +8,12 @@ import android.view.ViewGroup;
 
 abstract class CameraPreview<T extends View, Output> {
 
-    private final static CameraLogger LOG = CameraLogger.create(CameraPreview.class.getSimpleName());
+    protected final static CameraLogger LOG = CameraLogger.create(CameraPreview.class.getSimpleName());
 
     // Used for testing.
     Task<Void> mCropTask = new Task<>();
 
-    // This is used to notify CameraImpl to recompute its camera Preview size.
+    // This is used to notify CameraController to recompute its camera Preview size.
     // After that, CameraView will need a new layout pass to adapt to the Preview size.
     interface SurfaceCallback {
         void onSurfaceAvailable();
@@ -22,16 +22,15 @@ abstract class CameraPreview<T extends View, Output> {
 
     private SurfaceCallback mSurfaceCallback;
     private T mView;
-    private boolean mCropping;
+    protected boolean mCropping;
 
-    // As far as I can see, these are the view/surface dimensions.
-    // This live in the 'View' orientation.
-    private int mSurfaceWidth;
-    private int mSurfaceHeight;
+    // These are the surface dimensions in REF_VIEW.
+    protected int mSurfaceWidth;
+    protected int mSurfaceHeight;
 
-    // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
-    private int mDesiredWidth;
-    private int mDesiredHeight;
+    // These are the preview stream dimensions, in REF_VIEW.
+    protected int mDesiredWidth;
+    protected int mDesiredHeight;
 
     CameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         mView = onCreateView(context, parent);
@@ -40,8 +39,6 @@ abstract class CameraPreview<T extends View, Output> {
 
     @NonNull
     protected abstract T onCreateView(Context context, ViewGroup parent);
-
-    abstract Surface getSurface();
 
     @NonNull
     final T getView() {
@@ -57,8 +54,8 @@ abstract class CameraPreview<T extends View, Output> {
     // These must be alredy rotated, if needed, to be consistent with surface/view sizes.
     void setDesiredSize(int width, int height) {
         LOG.i("setDesiredSize:", "desiredW=", width, "desiredH=", height);
-        this.mDesiredWidth = width;
-        this.mDesiredHeight = height;
+        mDesiredWidth = width;
+        mDesiredHeight = height;
         crop();
     }
 
@@ -117,49 +114,14 @@ abstract class CameraPreview<T extends View, Output> {
      * There might still be some absolute difference (e.g. same ratio but bigger / smaller).
      * However that should be already managed by the framework.
      */
-    private final void crop() {
+    protected void crop() {
+        // The base implementation does not support cropping.
         mCropTask.start();
-
-        if (!supportsCropping()) {
-            mCropTask.end(null);
-            return;
-        };
-
-        getView().post(new Runnable() {
-            @Override
-            public void run() {
-                if (mDesiredHeight == 0 || mDesiredWidth == 0 ||
-                        mSurfaceHeight == 0 || mSurfaceWidth == 0) {
-                    mCropTask.end(null);
-                    return;
-                }
-
-                float scaleX = 1f, scaleY = 1f;
-                AspectRatio current = AspectRatio.of(mSurfaceWidth, mSurfaceHeight);
-                AspectRatio target = AspectRatio.of(mDesiredWidth, mDesiredHeight);
-                if (current.toFloat() >= target.toFloat()) {
-                    // We are too short. Must increase height.
-                    scaleY = current.toFloat() / target.toFloat();
-                } else {
-                    // We must increase width.
-                    scaleX = target.toFloat() / current.toFloat();
-                }
-                applyCrop(scaleX, scaleY);
-                mCropping = scaleX > 1.02f || scaleY > 1.02f;
-                LOG.i("crop:", "applied scaleX=", scaleX);
-                LOG.i("crop:", "applied scaleY=", scaleY);
-                mCropTask.end(null);
-            }
-        });
-    }
-
-    protected void applyCrop(float scaleX, float scaleY) {
-        getView().setScaleX(scaleX);
-        getView().setScaleY(scaleY);
+        mCropTask.end(null);
     }
 
     boolean supportsCropping() {
-        return true;
+        return false;
     }
 
     /**

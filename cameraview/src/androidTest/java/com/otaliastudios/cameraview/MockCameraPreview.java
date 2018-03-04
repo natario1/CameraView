@@ -31,11 +31,6 @@ public class MockCameraPreview extends CameraPreview<View, Void> {
     }
 
     @Override
-    Surface getSurface() {
-        return null;
-    }
-
-    @Override
     Class<Void> getOutputClass() {
         return null;
     }
