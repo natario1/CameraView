@@ -1409,8 +1409,17 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Returns true if the camera is currently recording a video
      * @return boolean indicating if the camera is recording a video
      */
-    public boolean isTakingVideo(){
+    public boolean isTakingVideo() {
         return mCameraController.isTakingVideo();
+    }
+
+
+    /**
+     * Returns true if the camera is currently capturing a picture
+     * @return boolean indicating if the camera is capturing a picture
+     */
+    public boolean isTakingPicture() {
+        return mCameraController.isTakingPicture();
     }
 
     //endregion
