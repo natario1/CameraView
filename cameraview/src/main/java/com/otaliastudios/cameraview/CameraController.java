@@ -410,6 +410,10 @@ abstract class CameraController implements
         return mIsTakingVideo;
     }
 
+    final boolean isTakingPicture() {
+        return mIsTakingImage;
+    }
+
     //endregion
 
     //region Orientation utils

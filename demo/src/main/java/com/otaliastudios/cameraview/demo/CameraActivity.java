@@ -29,9 +29,6 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private CameraView camera;
     private ViewGroup controlPanel;
 
-    private boolean mCapturingPicture;
-    private boolean mCapturingVideo;
-
     // To show stuff in the callback
     private long mCaptureTime;
 
@@ -94,14 +91,13 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     private void onPicture(PictureResult result) {
-        mCapturingPicture = false;
-        long callbackTime = System.currentTimeMillis();
-        if (mCapturingVideo) {
+        if (camera.isTakingVideo()) {
             message("Captured while taking video. Size=" + result.getSize(), false);
             return;
         }
 
         // This can happen if picture was taken with a gesture.
+        long callbackTime = System.currentTimeMillis();
         if (mCaptureTime == 0) mCaptureTime = callbackTime - 300;
         PicturePreviewActivity.setImage(result.getJpeg());
         Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
@@ -109,12 +105,10 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         intent.putExtra("nativeWidth", result.getSize().getWidth());
         intent.putExtra("nativeHeight", result.getSize().getHeight());
         startActivity(intent);
-
         mCaptureTime = 0;
     }
 
     private void onVideo(File video) {
-        mCapturingVideo = false;
         Intent intent = new Intent(CameraActivity.this, VideoPreviewActivity.class);
         intent.putExtra("video", Uri.fromFile(video));
         startActivity(intent);
@@ -151,16 +145,14 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             message("Can't take HQ pictures while in VIDEO mode.", false);
             return;
         }
-        if (mCapturingPicture) return;
-        mCapturingPicture = true;
+        if (camera.isTakingPicture()) return;
         mCaptureTime = System.currentTimeMillis();
         message("Capturing picture...", false);
         camera.takePicture();
     }
 
     private void capturePictureSnapshot() {
-        if (mCapturingPicture) return;
-        mCapturingPicture = true;
+        if (camera.isTakingPicture()) return;
         mCaptureTime = System.currentTimeMillis();
         message("Capturing picture snapshot...", false);
         camera.takePictureSnapshot();
@@ -171,14 +163,13 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             message("Can't record HQ videos while in PICTURE mode.", false);
             return;
         }
-        if (mCapturingPicture || mCapturingVideo) return;
-        mCapturingVideo = true;
-        message("Recording for 8 seconds...", true);
-        camera.takeVideo(null, 8000);
+        if (camera.isTakingPicture() || camera.isTakingVideo()) return;
+        message("Recording for 5 seconds...", true);
+        camera.takeVideo(null, 5000);
     }
 
     private void toggleCamera() {
-        if (mCapturingPicture) return;
+        if (camera.isTakingPicture() || camera.isTakingVideo()) return;
         switch (camera.toggleFacing()) {
             case BACK:
                 message("Switched to back camera!", false);

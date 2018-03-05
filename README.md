@@ -642,6 +642,8 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |Method|Description|
 |------|-----------|
 |`isStarted()`|Returns true if `start()` was called succesfully. This does not mean that camera is open or showing preview.|
+|`isTakingVideo()`|Returns true if the camera is currently recording a video.|
+|`isTakingPicture()`|Returns true if the camera is currently capturing a picture.|
 |`getCameraOptions()`|If camera was started, returns non-null object with information about what is supported.|
 |`setZoom(float)`, `getZoom()`|Sets a zoom value, where 0 means camera zoomed out and 1 means zoomed in. No-op if zoom is not supported, or camera not started.|
 |`setExposureCorrection(float)`, `getExposureCorrection()`|Sets exposure compensation EV value, in camera stops. No-op if this is not supported. Should be between the bounds returned by CameraOptions.|
