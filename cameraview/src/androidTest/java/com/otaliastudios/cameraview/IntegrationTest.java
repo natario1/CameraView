@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
+import android.os.Handler;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -129,9 +130,9 @@ public class IntegrationTest extends BaseTest {
         doEndTask(video, true).when(listener).onVideoTaken(any(File.class));
         Boolean result = video.await(8000);
         if (expectSuccess) {
-            assertNotNull("Can take video", result);
+            assertNotNull("Should end video", result);
         } else {
-            assertNull("Should not take video", result);
+            assertNull("Should not end video", result);
         }
     }
 
@@ -461,6 +462,24 @@ public class IntegrationTest extends BaseTest {
         waitForOpen(true);
         camera.stopCapturingVideo();
         waitForVideoEnd(false);
+    }
+
+    @Test
+    public void testEndVideo_withMaxSize() {
+        camera.setSessionType(SessionType.VIDEO);
+        camera.setVideoMaxSize(500*1000); // 0.5 mb
+        waitForOpen(true);
+        waitForVideoStart();
+        waitForVideoEnd(true);
+    }
+
+    @Test
+    public void testEndVideo_withMaxDuration() {
+        camera.setSessionType(SessionType.VIDEO);
+        camera.setVideoMaxDuration(4000);
+        waitForOpen(true);
+        waitForVideoStart();
+        waitForVideoEnd(true);
     }
 
     //endregion

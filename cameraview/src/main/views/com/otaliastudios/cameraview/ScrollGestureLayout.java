@@ -1,16 +1,9 @@
 package com.otaliastudios.cameraview;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.graphics.PointF;
-import android.util.Log;
 import android.view.GestureDetector;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 
 class ScrollGestureLayout extends GestureLayout {
 
@@ -19,7 +12,7 @@ class ScrollGestureLayout extends GestureLayout {
 
     private GestureDetector mDetector;
     private boolean mNotify;
-    private float mDistance;
+    /* tests */ float mFactor;
 
 
     public ScrollGestureLayout(Context context) {
@@ -47,8 +40,8 @@ class ScrollGestureLayout extends GestureLayout {
                     horizontal = mType == Gesture.SCROLL_HORIZONTAL;
                 }
                 mPoints[1].set(e2.getX(), e2.getY());
-                mDistance = horizontal ? (distanceX / getWidth()) : (distanceY / getHeight());
-                mDistance = horizontal ? -mDistance : mDistance; // When vertical, up = positive
+                mFactor = horizontal ? (distanceX / getWidth()) : (distanceY / getHeight());
+                mFactor = horizontal ? -mFactor : mFactor; // When vertical, up = positive
                 mNotify = true;
                 return true;
             }
@@ -80,21 +73,14 @@ class ScrollGestureLayout extends GestureLayout {
 
     @Override
     public float scaleValue(float currValue, float minValue, float maxValue) {
-        float delta = mDistance; // -1 ... 1
+        float delta = mFactor; // -1 ... 1
 
         // ^ This works well if minValue = 0, maxValue = 1.
         // Account for the different range:
         delta *= (maxValue - minValue); // -(max-min) ... (max-min)
+        delta *= 2; // Add some sensitivity.
 
-        // Add some sensitivity.
-        delta *= 2;
-
-        // Cap
-        float newValue = currValue + delta;
-        if (newValue < minValue) newValue = minValue;
-        if (newValue > maxValue) newValue = maxValue;
-        LOG.i("curr="+currValue, "min="+minValue, "max="+maxValue, "out="+newValue);
-        return newValue;
+        return capValue(currValue, currValue + delta, minValue, maxValue);
     }
 
 }

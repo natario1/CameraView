@@ -12,16 +12,18 @@ addressing most of the common issues and needs, and still leaving you with flexi
 See [CHANGELOG](https://github.com/natario1/CameraView/blob/master/CHANGELOG.md).
 
 ```groovy
-compile 'com.otaliastudios:cameraview:1.4.1'
+compile 'com.otaliastudios:cameraview:1.5.0'
 ```
-If you're facing gradle issues while installing it, make sure your project dependencies have the jcenter() repository correctly confgured:
+
+Make sure your project repositories include the `jcenter()`:
+
 ```groovy
 allprojects {
- +  repositories {
- +    jcenter()
- +  }
- +}
- ```
+  repositories {
+    jcenter()
+  }
+}
+```
 
 
 <p>
@@ -137,8 +139,8 @@ ensure lower quality output.
 
 ### Capturing Video
 
-To capture video just call `CameraView.startRecordingVideo(file)` to start, and
-`CameraView.stopRecordingVideo()` to finish. Make sure you setup a `CameraListener` to handle
+To capture video just call `CameraView.startCapturingVideo(file)` to start, and
+`CameraView.stopCapturingVideo()` to finish. Make sure you setup a `CameraListener` to handle
 the video callback.
 
 ```java
@@ -152,20 +154,16 @@ camera.addCameraListener(new CameraListener() {
 
 // Select output file. Make sure you have write permissions.
 File file = ...;
+camera.startCapturingVideo(file);
 
-// Record a 2500 ms video:
-camera.startRecordingVideo(file, 2500);
+// Later... stop recording. This will trigger onVideoTaken().
+camera.stopCapturingVideo();
 
-// Full version
-camera.startRecordingVideo(file);
-camera.postDelayed(new Runnable() {
-    @Override
-    public void run() {
-        // This will trigger onVideoTaken().
-        camera.stopRecordingVideo();
-    }
-}, 2500);
-
+// You can also use one of the video constraints:
+// videoMaxSize and videoMaxDuration will automatically stop recording when satisfied.
+camera.setVideoMaxSize(100000);
+camera.setVideoMaxDuration(5000);
+camera.startCapturingVideo(file);
 ```
 
 ### Other camera events
@@ -401,10 +399,13 @@ Most camera parameters can be controlled through XML attributes or linked method
     app:cameraCropOutput="false"  
     app:cameraJpegQuality="100"
     app:cameraVideoQuality="480p"
+    app:cameraVideoCodec="deviceDefault"
     app:cameraWhiteBalance="auto"
     app:cameraHdr="off"
     app:cameraAudio="on"
-    app:cameraPlaySounds="true"/>
+    app:cameraPlaySounds="true"
+    app:cameraVideoMaxSize="0"
+    app:cameraVideoMaxDuration="0"/>
 ```
 
 |XML Attribute|Method|Values|Default Value|
@@ -416,10 +417,13 @@ Most camera parameters can be controlled through XML attributes or linked method
 |[`cameraCropOutput`](#cameracropoutput)|`setCropOutput()`|`true` `false`|`false`|
 |[`cameraJpegQuality`](#camerajpegquality)|`setJpegQuality()`|`0 < n <= 100`|`100`|
 |[`cameraVideoQuality`](#cameravideoquality)|`setVideoQuality()`|`lowest` `highest` `maxQvga` `max480p` `max720p` `max1080p` `max2160p`|`max480p`|
+|[`cameraVideoCodec`](#cameravideocodec)|`setVideoCodec()`|`deviceDefault` `h263` `h264`|`deviceDefault`|
 |[`cameraWhiteBalance`](#camerawhitebalance)|`setWhiteBalance()`|`auto` `incandescent` `fluorescent` `daylight` `cloudy`|`auto`|
 |[`cameraHdr`](#camerahdr)|`setHdr()`|`off` `on`|`off`|
 |[`cameraAudio`](#cameraaudio)|`setAudio()`|`off` `on`|`on`|
 |[`cameraPlaySounds`](#cameraplaysounds)|`setPlaySounds()`|`true` `false`|`true`|
+|[`cameraVideoMaxSize`](#cameravideomaxsize)|`setVideoMaxSize()`|number|`0`|
+|[`cameraVideoMaxDuration`](#cameravideomaxduration)|`setVideoMaxDuration()`|number|`0`|
 
 #### cameraSessionType
 
@@ -502,6 +506,16 @@ cameraView.setVideoQuality(VideoQuality.MAX_1080P);
 cameraView.setVideoQuality(VideoQuality.MAX_2160P);
 ```
 
+#### cameraVideoCodec
+
+Sets the encoder for video recordings.
+
+```java
+cameraView.setVideoCodec(VideoCodec.DEVICE_DEFAULT);
+cameraView.setVideoCodec(VideoCodec.H_263);
+cameraView.setVideoCodec(VideoCodec.H_264);
+```
+
 #### cameraWhiteBalance
 
 Sets the desired white balance for the current session.
@@ -543,6 +557,28 @@ Controls whether we should play platform-provided sounds during certain events
 ```java
 cameraView.setPlaySounds(true);
 cameraView.setPlaySounds(false);
+```
+
+#### cameraVideoMaxSize
+
+Defines the maximum size in bytes for recorded video files.
+Once this size is reached, the recording will automatically stop.
+Defaults to unlimited size. Use 0 or negatives to disable.
+
+```java
+cameraView.setVideoMaxSize(100000);
+cameraView.setVideoMaxSize(0); // Disable
+```
+
+#### cameraVideoMaxDuration
+
+Defines the maximum duration in milliseconds for video recordings.
+Once this duration is reached, the recording will automatically stop.
+Defaults to unlimited duration. Use 0 or negatives to disable.
+
+```java
+cameraView.setVideoMaxDuration(100000);
+cameraView.setVideoMaxDuration(0); // Disable
 ```
 
 ## Frame Processing
@@ -604,7 +640,6 @@ Other APIs not mentioned above are provided, and are well documented and comment
 |`getPreviewSize()`|Returns the size of the preview surface. If CameraView was not constrained in its layout phase (e.g. it was `wrap_content`), this will return the same aspect ratio of CameraView.|
 |`getSnapshotSize()`|Returns `getPreviewSize()`, since a snapshot is a preview frame.|
 |`getPictureSize()`|Returns the size of the output picture. The aspect ratio is consistent with `getPreviewSize()`.|
-|`setVideoMaxSize(long)`|Set a max file size (in bytes) for a video recording. There is no file size limit by default unless set by the user.|
 
 Take also a look at public methods in `CameraUtils`, `CameraOptions`, `ExtraProperties`.
 

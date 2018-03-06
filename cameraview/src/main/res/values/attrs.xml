@@ -112,6 +112,14 @@
 
         <attr name="cameraVideoMaxSize" format="float" />
 
+        <attr name="cameraVideoMaxDuration" format="integer" />
+
+        <attr name="cameraVideoCodec" format="enum">
+            <enum name="deviceDefault" value="0" />
+            <enum name="h263" value="1" />
+            <enum name="h264" value="2" />
+        </attr>
+
         <!-- deprecated attr name="cameraZoomMode" format="enum">
             <enum name="off" value="0" />
             <enum name="pinch" value="1" />

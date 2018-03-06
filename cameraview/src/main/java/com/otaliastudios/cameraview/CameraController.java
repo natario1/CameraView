@@ -39,6 +39,7 @@ abstract class CameraController implements
     protected Flash mFlash;
     protected WhiteBalance mWhiteBalance;
     protected VideoQuality mVideoQuality;
+    protected VideoCodec mVideoCodec;
     protected SessionType mSessionType;
     protected Hdr mHdr;
     protected Location mLocation;
@@ -55,6 +56,8 @@ abstract class CameraController implements
     protected SizeSelector mPictureSizeSelector;
     protected MediaRecorder mMediaRecorder;
     protected File mVideoFile;
+    protected long mVideoMaxSize;
+    protected int mVideoMaxDuration;
     protected Size mPictureSize;
     protected Size mPreviewSize;
     protected int mPreviewFormat;
@@ -67,7 +70,6 @@ abstract class CameraController implements
     protected boolean mIsCapturingVideo = false;
 
     protected int mState = STATE_STOPPED;
-    protected long mVideoMaxSizeInBytes = 0;
 
     // Used for testing.
     Task<Void> mZoomTask = new Task<>();
@@ -276,6 +278,19 @@ abstract class CameraController implements
         mPictureSizeSelector = selector;
     }
 
+    final void setVideoMaxSize(long videoMaxSizeBytes) {
+        mVideoMaxSize = videoMaxSizeBytes;
+    }
+
+    final void setVideoMaxDuration(int videoMaxDurationMillis) {
+        mVideoMaxDuration = videoMaxDurationMillis;
+    }
+
+    final void setVideoCodec(VideoCodec codec) {
+        mVideoCodec = codec;
+    }
+
+
     //endregion
 
     //region Abstract setters and APIs
@@ -320,8 +335,6 @@ abstract class CameraController implements
 
     abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);
 
-    abstract void setVideoMaxSize(long videoMaxSizeInBytes);
-
     abstract void setPlaySounds(boolean playSounds);
 
     //endregion
@@ -352,6 +365,18 @@ abstract class CameraController implements
 
     final VideoQuality getVideoQuality() {
         return mVideoQuality;
+    }
+
+    final VideoCodec getVideoCodec() {
+        return mVideoCodec;
+    }
+
+    final long getVideoMaxSize() {
+        return mVideoMaxSize;
+    }
+
+    final int getVideoMaxDuration() {
+        return mVideoMaxDuration;
     }
 
     final SessionType getSessionType() {

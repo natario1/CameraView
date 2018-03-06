@@ -3,12 +3,8 @@ package com.otaliastudios.cameraview;
 import android.content.Context;
 import android.graphics.PointF;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.View;
 
 class PinchGestureLayout extends GestureLayout {
 
@@ -16,7 +12,7 @@ class PinchGestureLayout extends GestureLayout {
 
     ScaleGestureDetector mDetector;
     private boolean mNotify;
-    private float mAdditionFactor = 0;
+    /* tests */ float mFactor = 0;
 
 
     public PinchGestureLayout(Context context) {
@@ -32,7 +28,7 @@ class PinchGestureLayout extends GestureLayout {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
                 mNotify = true;
-                mAdditionFactor = ((detector.getScaleFactor() - 1) * ADD_SENSITIVITY);
+                mFactor = ((detector.getScaleFactor() - 1) * ADD_SENSITIVITY);
                 return true;
             }
         });
@@ -75,7 +71,7 @@ class PinchGestureLayout extends GestureLayout {
 
     @Override
     public float scaleValue(float currValue, float minValue, float maxValue) {
-        float add = mAdditionFactor;
+        float add = mFactor;
         // ^ This works well if minValue = 0, maxValue = 1.
         // Account for the different range:
         add *= (maxValue - minValue);
@@ -87,10 +83,6 @@ class PinchGestureLayout extends GestureLayout {
         } else if (add < 0) {
             add *= (currValue - minValue);
         } Nope, I don't like this, it slows everything down. */
-
-        float newValue = currValue + add;
-        if (newValue < minValue) newValue = minValue;
-        if (newValue > maxValue) newValue = maxValue;
-        return newValue;
+        return capValue(currValue, currValue + add, minValue, maxValue);
     }
 }
