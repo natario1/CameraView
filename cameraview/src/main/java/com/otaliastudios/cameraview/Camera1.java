@@ -30,12 +30,17 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     private Camera mCamera;
     private boolean mIsBound = false;
+    private boolean mDelayRunnable = false;
 
     private final int mPostFocusResetDelay = 3000;
     private Runnable mPostFocusResetRunnable = new Runnable() {
         @Override
         public void run() {
             if (!isCameraAvailable()) return;
+            if (mDelayRunnable) {
+                mDelayRunnable = false; // Delay focus further - fixes Samsung devices
+                return;
+            }
             mCamera.cancelAutoFocus();
             Camera.Parameters params = mCamera.getParameters();
             int maxAF = params.getMaxNumFocusAreas();
@@ -497,6 +502,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 if (mIsCapturingVideo && !mCameraOptions.isVideoSnapshotSupported()) return;
 
                 mIsCapturingImage = true;
+                mDelayRunnable = true; // delaying focus (fixes crash on samsung)
                 final int sensorToOutput = computeSensorToOutputOffset();
                 final int sensorToView = computeSensorToViewOffset();
                 final boolean outputMatchesView = (sensorToOutput + sensorToView + 180) % 180 == 0;
@@ -806,6 +812,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 mCamera.setParameters(params);
                 mCameraCallbacks.dispatchOnFocusStart(gesture, p);
                 // TODO this is not guaranteed to be called... Fix.
+                // TODO Updated: Kind of fixed with mDelayRunnable on image capture
                 mCamera.autoFocus(new Camera.AutoFocusCallback() {
                     @Override
                     public void onAutoFocus(boolean success, Camera camera) {
