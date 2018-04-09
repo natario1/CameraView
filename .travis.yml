@@ -24,9 +24,9 @@ android:
   components:
     - tools
     - platform-tools
-    - build-tools-26.0.1
-    - android-26
-    - doc-26
+    - build-tools-27.0.3
+    - android-27
+    - doc-27
 
 install:
   # Setup
