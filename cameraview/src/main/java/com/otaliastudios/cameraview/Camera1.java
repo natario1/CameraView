@@ -663,6 +663,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             } catch (Exception e) {
                 // This can happen if endVideo() is called right after startVideo(). We don't care.
                 LOG.w("endVideoImmediately:", "Error while closing media recorder. Swallowing", e);
+                mCameraCallbacks.dispatchError(new CameraException(e));
             }
             mMediaRecorder.release();
             mMediaRecorder = null;
