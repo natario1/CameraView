@@ -88,6 +88,6 @@ class FrameManager {
 
     private int getBufferSize(int bitsPerPixel, Size previewSize) {
         long sizeInBits = previewSize.getHeight() * previewSize.getWidth() * bitsPerPixel;
-        return (int) Math.ceil(sizeInBits / 8.0d) + 1;
+        return (int) Math.ceil(sizeInBits / 8.0d);
     }
 }
