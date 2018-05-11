@@ -181,9 +181,9 @@ abstract class CameraController implements
                     onStart();
                 } catch (Exception e) {
                     mCameraCallbacks.dispatchError(new CameraException(e));
-                } finally {
                     LOG.e("Error:", "returned from onStart() with Exception.", "Dispatching.", ss());
                     mState = STATE_STOPPED;
+                    return;
                 }
                 LOG.i("Start:", "returned from onStart().", "Dispatching.", ss());
                 mState = STATE_STARTED;
@@ -249,9 +249,9 @@ abstract class CameraController implements
                     onStart();
                 } catch (Exception e) {
                     mCameraCallbacks.dispatchError(new CameraException(e));
-                } finally {
                     LOG.e("Error Restart:", "returned from onStart() with Exception.", "Dispatching.", ss());
                     mState = STATE_STOPPED;
+                    return;
                 }
                 mState = STATE_STARTED;
                 LOG.i("Restart: returned from start. Dispatching. State:", ss());
