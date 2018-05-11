@@ -269,8 +269,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
 
         LOG.e("Error inside the onError callback.", error);
-//        throw new CameraException(new RuntimeException(CameraLogger.lastMessage));
-        mCameraCallbacks.dispatchError(new CameraException(new RuntimeException(CameraLogger.lastMessage)));
+        throw new CameraException(new RuntimeException(CameraLogger.lastMessage));
     }
 
     @Override
