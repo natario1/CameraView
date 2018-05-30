@@ -12,7 +12,7 @@ addressing most of the common issues and needs, and still leaving you with flexi
 See [CHANGELOG](https://github.com/natario1/CameraView/blob/master/CHANGELOG.md).
 
 ```groovy
-compile 'com.otaliastudios:cameraview:1.5.0'
+compile 'com.otaliastudios:cameraview:1.5.1'
 ```
 
 Make sure your project repositories include the `jcenter()`:
