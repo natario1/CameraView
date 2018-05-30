@@ -35,7 +35,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         setContentView(R.layout.activity_camera);
         CameraLogger.setLogLevel(CameraLogger.LEVEL_VERBOSE);
@@ -45,12 +46,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera.addCameraListener(new CameraListener() {
             public void onCameraOpened(CameraOptions options) { onOpened(); }
             public void onPictureTaken(PictureResult result) { onPicture(result); }
-
-            @Override
-            public void onVideoTaken(VideoResult result) {
-                super.onVideoTaken(result);
-                onVideo(result.getFile());
-            }
+            public void onVideoTaken(VideoResult result) { onVideo(result.getFile()); }
         });
 
         findViewById(R.id.edit).setOnClickListener(this);
@@ -64,7 +60,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         Control[] controls = Control.values();
         for (Control control : controls) {
             ControlView view = new ControlView(this, control, this);
-            group.addView(view, ViewGroup.LayoutParams.MATCH_PARENT,
+            group.addView(view,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
         }
 
