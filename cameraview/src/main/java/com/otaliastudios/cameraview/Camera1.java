@@ -630,6 +630,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                     try {
                         mMediaRecorder.prepare();
                         mMediaRecorder.start();
+                        mCameraCallbacks.dispatchOnMediaRecorderChanged(mMediaRecorder);
                     } catch (Exception e) {
                         LOG.e("Error while starting MediaRecorder. Swallowing.", e);
                         mVideoFile = null;
@@ -658,6 +659,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         LOG.i("endVideoImmediately:", "is capturing:", mIsCapturingVideo);
         mIsCapturingVideo = false;
         if (mMediaRecorder != null) {
+            mCameraCallbacks.dispatchOnMediaRecorderChanged(null);
             try {
                 mMediaRecorder.stop();
             } catch (Exception e) {

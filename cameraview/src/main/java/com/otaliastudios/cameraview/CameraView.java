@@ -14,6 +14,7 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.location.Location;
 import android.media.MediaActionSound;
+import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -1475,6 +1476,7 @@ public class CameraView extends FrameLayout {
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, PointF where);
         void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
         void dispatchOnExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers);
+        void dispatchOnMediaRecorderChanged(@Nullable MediaRecorder mediaRecorder);
         void dispatchFrame(Frame frame);
         void dispatchError(CameraException exception);
     }
@@ -1734,6 +1736,19 @@ public class CameraView extends FrameLayout {
                 public void run() {
                     for (CameraListener listener : mListeners) {
                         listener.onCameraError(exception);
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void dispatchOnMediaRecorderChanged(@Nullable final MediaRecorder mediaRecorder) {
+            mLogger.i("dispatchOnMediaRecorderChanged");
+            mUiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onMediaRecorderChanged(mediaRecorder);
                     }
                 }
             });
