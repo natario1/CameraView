@@ -8,6 +8,7 @@ import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.support.annotation.UiThread;
+import android.support.annotation.WorkerThread;
 import android.support.media.ExifInterface;
 
 import java.io.ByteArrayInputStream;
@@ -59,6 +60,19 @@ public class CameraUtils {
      * Decodes an input byte array and outputs a Bitmap that is ready to be displayed.
      * The difference with {@link android.graphics.BitmapFactory#decodeByteArray(byte[], int, int)}
      * is that this cares about orientation, reading it from the EXIF header.
+     *
+     * @param source a JPEG byte array
+     */
+    @SuppressWarnings("WeakerAccess")
+    @WorkerThread
+    public static void decodeBitmap(final byte[] source) {
+        decodeBitmap(source, Integer.MAX_VALUE, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Decodes an input byte array and outputs a Bitmap that is ready to be displayed.
+     * The difference with {@link android.graphics.BitmapFactory#decodeByteArray(byte[], int, int)}
+     * is that this cares about orientation, reading it from the EXIF header.
      * This is executed in a background thread, and returns the result to the original thread.
      *
      * @param source a JPEG byte array
@@ -100,9 +114,21 @@ public class CameraUtils {
     }
 
 
+    /**
+     * Decodes an input byte array and outputs a Bitmap that is ready to be displayed.
+     * The difference with {@link android.graphics.BitmapFactory#decodeByteArray(byte[], int, int)}
+     * is that this cares about orientation, reading it from the EXIF header.
+     *
+     * The image is also downscaled taking care of the maxWidth and maxHeight arguments.
+     *
+     * @param source a JPEG byte array
+     * @param maxWidth the max allowed width
+     * @param maxHeight the max allowed height
+     */
     // TODO ignores flipping
     @SuppressWarnings({"SuspiciousNameCombination", "WeakerAccess"})
-    /* for tests */ static Bitmap decodeBitmap(byte[] source, int maxWidth, int maxHeight) {
+    @WorkerThread
+    public static Bitmap decodeBitmap(byte[] source, int maxWidth, int maxHeight) {
         if (maxWidth <= 0) maxWidth = Integer.MAX_VALUE;
         if (maxHeight <= 0) maxHeight = Integer.MAX_VALUE;
         int orientation;
