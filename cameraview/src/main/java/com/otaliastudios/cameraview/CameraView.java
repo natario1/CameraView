@@ -1288,6 +1288,14 @@ public class CameraView extends FrameLayout {
         });
     }
 
+    /**
+     * Returns the orientation of the camera.
+     * This is available after {@link CameraListener#onCameraOpened(CameraOptions)} has been called.
+     * @return Returns a value of 0, 90, 180 or 270.
+     */
+    public int getCameraOrientation() {
+        return (mCameraController.getDeviceOrientation() + mOrientationHelper.getDisplayOffset()) % 360;
+    }
 
     /**
      * Returns the size used for the preview,

@@ -269,6 +269,10 @@ abstract class CameraController implements
         mDisplayOffset = displayOffset;
     }
 
+    final int getDeviceOrientation() {
+        return mDeviceOrientation;
+    }
+
     // This can be called multiple times.
     final void setDeviceOrientation(int deviceOrientation) {
         mDeviceOrientation = deviceOrientation;
