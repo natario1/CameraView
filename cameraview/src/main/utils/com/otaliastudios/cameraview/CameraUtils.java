@@ -175,32 +175,38 @@ public class CameraUtils {
         }
 
         Bitmap bitmap;
-        if (maxWidth < Integer.MAX_VALUE || maxHeight < Integer.MAX_VALUE) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeByteArray(source, 0, source.length, options);
+        try {
+            if (maxWidth < Integer.MAX_VALUE || maxHeight < Integer.MAX_VALUE) {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeByteArray(source, 0, source.length, options);
 
-            int outHeight = options.outHeight;
-            int outWidth = options.outWidth;
-            if (orientation % 180 != 0) {
-                outHeight = options.outWidth;
-                outWidth = options.outHeight;
+                int outHeight = options.outHeight;
+                int outWidth = options.outWidth;
+                if (orientation % 180 != 0) {
+                    outHeight = options.outWidth;
+                    outWidth = options.outHeight;
+                }
+
+                options.inSampleSize = computeSampleSize(outWidth, outHeight, maxWidth, maxHeight);
+                options.inJustDecodeBounds = false;
+                bitmap = BitmapFactory.decodeByteArray(source, 0, source.length, options);
+            } else {
+                bitmap = BitmapFactory.decodeByteArray(source, 0, source.length);
             }
 
-            options.inSampleSize = computeSampleSize(outWidth, outHeight, maxWidth, maxHeight);
-            options.inJustDecodeBounds = false;
-            bitmap = BitmapFactory.decodeByteArray(source, 0, source.length, options);
-        } else {
-            bitmap = BitmapFactory.decodeByteArray(source, 0, source.length);
-        }
-
-        if (orientation != 0 || flip) {
-            Matrix matrix = new Matrix();
-            matrix.setRotate(orientation);
-            // matrix.postScale(1, -1) Flip... needs testing.
-            Bitmap temp = bitmap;
-            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-            temp.recycle();
+            if (orientation != 0 || flip) {
+                Matrix matrix = new Matrix();
+                matrix.setRotate(orientation);
+                // matrix.postScale(1, -1) Flip... needs testing.
+                Bitmap temp = bitmap;
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                temp.recycle();
+            }
+        } catch (OutOfMemoryError e) {
+            // Create blank bitmap if out of memory to avoid crash
+            int dummySize = 100;
+            bitmap = Bitmap.createBitmap(dummySize, dummySize, Bitmap.Config.ARGB_8888); // this creates a MUTABLE bitmap
         }
         return bitmap;
     }
