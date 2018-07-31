@@ -29,6 +29,7 @@ class ScrollGestureLayout extends GestureLayout {
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                 boolean horizontal;
                 LOG.i("onScroll:", "distanceX="+distanceX, "distanceY="+distanceY);
+                if (e1 == null || e2 == null) return false; // Got some crashes about this.
                 if (e1.getX() != mPoints[0].x || e1.getY() != mPoints[0].y) {
                     // First step. We choose now if it's a vertical or horizontal scroll, and
                     // stick to it for the whole gesture.

@@ -1,3 +1,10 @@
+### v1.5.1
+
+- Bug: byte array length for Frames was incorrect thanks to [@ssakhavi][ssakhavi] ([#205][205])
+- Bug: gestures were crashing in some conditions ([#222][222])
+- Bug: import correctly the ExifInterface library ([#222][222])
+- Updated dependencies thanks to [@caleb-allen][caleb-allen] ([#190][190])
+
 ## v1.5.0
 
 - New: set encoder for video recordings with `cameraVideoCodec` ([#174][174])
@@ -80,6 +87,8 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [RobertoMorelos]: https://github.com/RobertoMorelos
 [RocketRider]: https://github.com/RocketRider
 [xp-vit]: https://github.com/xp-vit
+[caleb-allen]: https://github.com/caleb-allen
+[ssakhavi]: https://github.com/ssakhavi
 
 [73]: https://github.com/natario1/CameraView/pull/73
 [80]: https://github.com/natario1/CameraView/pull/80
@@ -104,3 +113,6 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [172]: https://github.com/natario1/CameraView/pull/172
 [173]: https://github.com/natario1/CameraView/pull/173
 [174]: https://github.com/natario1/CameraView/pull/174
+[190]: https://github.com/natario1/CameraView/pull/190
+[205]: https://github.com/natario1/CameraView/pull/205
+[222]: https://github.com/natario1/CameraView/pull/222

@@ -12,7 +12,7 @@ addressing most of the common issues and needs, and still leaving you with flexi
 See [CHANGELOG](https://github.com/natario1/CameraView/blob/master/CHANGELOG.md).
 
 ```groovy
-compile 'com.otaliastudios:cameraview:1.5.0'
+compile 'com.otaliastudios:cameraview:1.5.1'
 ```
 
 Make sure your project repositories include the `jcenter()`:
@@ -370,7 +370,7 @@ to just square sizes:
 
 ```java
 SizeSelector width = SizeSelectors.minWidth(1000);
-SizeSelector height = SizeSelectors.minWidth(2000);
+SizeSelector height = SizeSelectors.minHeight(2000);
 SizeSelector dimensions = SizeSelectors.and(width, height); // Matches sizes bigger than 1000x2000.
 SizeSelector ratio = SizeSelectors.aspectRatio(AspectRatio.of(1, 1), 0); // Matches 1:1 sizes.
 
