@@ -22,7 +22,7 @@ class OrientationHelper {
 
     OrientationHelper(Context context, @NonNull Callback callback) {
         mCallback = callback;
-        mListener = new OrientationEventListener(context, SensorManager.SENSOR_DELAY_NORMAL) {
+        mListener = new OrientationEventListener(context.getApplicationContext(), SensorManager.SENSOR_DELAY_NORMAL) {
 
             @Override
             public void onOrientationChanged(int orientation) {

@@ -370,7 +370,7 @@ to just square sizes:
 
 ```java
 SizeSelector width = SizeSelectors.minWidth(1000);
-SizeSelector height = SizeSelectors.minWidth(2000);
+SizeSelector height = SizeSelectors.minHeight(2000);
 SizeSelector dimensions = SizeSelectors.and(width, height); // Matches sizes bigger than 1000x2000.
 SizeSelector ratio = SizeSelectors.aspectRatio(AspectRatio.of(1, 1), 0); // Matches 1:1 sizes.
 
