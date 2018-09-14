@@ -1,9 +1,22 @@
+## v1.6.0
+
+- Lifecycle support. Use `setLifecycleOwner` instead of calling start, stop and destroy ([#265][265])
+- Enhancement: provide synchronous version of CameraUtils.decodeBitmap thanks to [@athornz][athornz] ([#224][224])
+- Enhancement: prevent possible context leak thanks to [@MatFl][MatFl] ([#245][245])
+- Bug: fix crash when using default VideoCodec thanks to [@Namazed][Namazed] ([#264][264])
+- Enhancement: CameraException.getReason() gives some insight about the error ([#265][265])
+- Enhancement: Common crashes are now being posted to the error callback instead of crashing the app ([#265][265])
+
+https://github.com/natario1/CameraView/compare/v1.5.1...v1.6.0
+
 ### v1.5.1
 
 - Bug: byte array length for Frames was incorrect thanks to [@ssakhavi][ssakhavi] ([#205][205])
 - Bug: gestures were crashing in some conditions ([#222][222])
 - Bug: import correctly the ExifInterface library ([#222][222])
 - Updated dependencies thanks to [@caleb-allen][caleb-allen] ([#190][190])
+
+https://github.com/natario1/CameraView/compare/v1.5.0...v1.5.1
 
 ## v1.5.0
 
@@ -80,6 +93,7 @@ https://github.com/natario1/CameraView/compare/v1.3.0...v1.3.1
 
 https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 
+[athornz]: https://github.com/athornz
 [v-gar]: https://github.com/v-gar
 [andrewmunn]: https://github.com/andrewmunn
 [chaitanyaraghav]: https://github.com/chaitanyaraghav
@@ -89,6 +103,8 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [xp-vit]: https://github.com/xp-vit
 [caleb-allen]: https://github.com/caleb-allen
 [ssakhavi]: https://github.com/ssakhavi
+[MatFl]: https://github.com/MatFl
+[Namazed]: https://github.com/Namazed
 
 [73]: https://github.com/natario1/CameraView/pull/73
 [80]: https://github.com/natario1/CameraView/pull/80
@@ -116,3 +132,7 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [190]: https://github.com/natario1/CameraView/pull/190
 [205]: https://github.com/natario1/CameraView/pull/205
 [222]: https://github.com/natario1/CameraView/pull/222
+[224]: https://github.com/natario1/CameraView/pull/224
+[245]: https://github.com/natario1/CameraView/pull/245
+[264]: https://github.com/natario1/CameraView/pull/264
+[265]: https://github.com/natario1/CameraView/pull/265
