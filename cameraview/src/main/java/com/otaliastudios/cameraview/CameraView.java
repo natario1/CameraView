@@ -4,6 +4,11 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.Lifecycling;
+import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageInfo;
@@ -38,7 +43,7 @@ import static android.view.View.MeasureSpec.UNSPECIFIED;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 
-public class CameraView extends FrameLayout {
+public class CameraView extends FrameLayout implements LifecycleObserver {
 
     private final static String TAG = CameraView.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -63,6 +68,7 @@ public class CameraView extends FrameLayout {
     private MediaActionSound mSound;
     /* for tests */ List<CameraListener> mListeners = new CopyOnWriteArrayList<>();
     /* for tests */ List<FrameProcessor> mFrameProcessors = new CopyOnWriteArrayList<>();
+    private Lifecycle mLifecycle;
 
     // Views
     GridLinesLayout mGridLinesLayout;
@@ -138,7 +144,7 @@ public class CameraView extends FrameLayout {
         if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeSmallest, false)) constraints.add(SizeSelectors.smallest());
         if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeBiggest, false)) constraints.add(SizeSelectors.biggest());
         SizeSelector selector = !constraints.isEmpty() ?
-                SizeSelectors.and(constraints.toArray(new SizeSelector[constraints.size()])) :
+                SizeSelectors.and(constraints.toArray(new SizeSelector[0])) :
                 SizeSelectors.biggest();
 
         // Gestures
@@ -537,11 +543,24 @@ public class CameraView extends FrameLayout {
         return mCameraController.getState() == CameraController.STATE_STOPPED;
     }
 
+    /**
+     * Sets the lifecycle owner for this view. This means you don't need
+     * to call {@link #start()}, {@link #stop()} or {@link #destroy()} at all.
+     *
+     * @param owner the owner activity or fragment
+     */
+    public void setLifecycleOwner(LifecycleOwner owner) {
+        if (mLifecycle != null) mLifecycle.removeObserver(this);
+        mLifecycle = owner.getLifecycle();
+        mLifecycle.addObserver(this);
+    }
+
 
     /**
      * Starts the camera preview, if not started already.
      * This should be called onResume(), or when you are ready with permissions.
      */
+    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     public void start() {
         if (!isEnabled()) return;
 
@@ -611,6 +630,7 @@ public class CameraView extends FrameLayout {
      * Stops the current preview, if any was started.
      * This should be called onPause().
      */
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     public void stop() {
         mCameraController.stop();
     }
@@ -620,6 +640,7 @@ public class CameraView extends FrameLayout {
      * Destroys this instance, releasing immediately
      * the camera resource.
      */
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     public void destroy() {
         clearCameraListeners();
         clearFrameProcessors();

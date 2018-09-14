@@ -49,6 +49,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     api "com.android.support:exifinterface:$supportLibVersion"
+    api "android.arch.lifecycle:common:$lifecycleVersion"
     implementation "com.android.support:support-annotations:$supportLibVersion"
 }
 
