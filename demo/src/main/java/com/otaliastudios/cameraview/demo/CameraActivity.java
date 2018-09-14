@@ -44,6 +44,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         CameraLogger.setLogLevel(CameraLogger.LEVEL_VERBOSE);
 
         camera = findViewById(R.id.camera);
+        camera.setLifecycleOwner(this);
         camera.addCameraListener(new CameraListener() {
             public void onCameraOpened(CameraOptions options) { onOpened(); }
             public void onPictureTaken(byte[] jpeg) { onPicture(jpeg); }
@@ -196,25 +197,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         return true;
     }
 
-    //region Boilerplate
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        camera.start();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        camera.stop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        camera.destroy();
-    }
+    //region Permissions
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
