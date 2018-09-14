@@ -2,7 +2,8 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    // buildToolsVersion rootProject.ext.buildToolsVersion
+
     defaultConfig {
         applicationId "com.otaliastudios.cameraview.demo"
         minSdkVersion rootProject.ext.minSdkVersion

@@ -14,6 +14,7 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.File;
@@ -73,15 +74,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(null, false, new Runnable() {
             @Override
             public void run() {
-                if (shouldBindToSurface()) {
-                    LOG.i("onSurfaceAvailable:", "Inside handler. About to bind.");
-                    try {
-                        bindToSurface();
-                    } catch (Exception e) {
-                        LOG.e("onSurfaceAvailable:", "Exception while binding camera to preview.", e);
-                        throw new CameraException(e);
-                    }
-                }
+                LOG.i("onSurfaceAvailable:", "Inside handler. About to bind.");
+                if (shouldBindToSurface()) bindToSurface();
             }
         });
     }
@@ -126,7 +120,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 mCamera.setPreviewTexture((SurfaceTexture) output);
             }
         } catch (IOException e) {
-            throw new CameraException(e);
+            Log.e("bindToSurface:", "Failed to bind.", e);
+            throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
         }
 
         mPictureSize = computePictureSize();
@@ -157,7 +152,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewSize);
 
         LOG.i(log, "Starting preview with startPreview().");
-        mCamera.startPreview();
+        try {
+            mCamera.startPreview();
+        } catch (Exception e) {
+            LOG.e(log, "Failed to start preview.", e);
+            throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
+        }
         LOG.i(log, "Started preview.");
     }
 
@@ -169,7 +169,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             onStop(); // Should not happen.
         }
         if (collectCameraId()) {
-            mCamera = Camera.open(mCameraId);
+            try {
+                mCamera = Camera.open(mCameraId);
+            } catch (Exception e) {
+                LOG.e("onStart:", "Failed to connect. Maybe in use by another app?");
+                throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
+            }
             mCamera.setErrorCallback(this);
 
             // Set parameters that might have been set before the camera was opened.
@@ -196,7 +201,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     @WorkerThread
     @Override
     void onStop() {
-        Exception error = null;
         LOG.i("onStop:", "About to clean up.");
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
         mFrameManager.release();
@@ -212,7 +216,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 LOG.i("onStop:", "Clean up.", "Stopped preview.");
             } catch (Exception e) {
                 LOG.w("onStop:", "Clean up.", "Exception while stopping preview.", e);
-                error = e;
             }
 
             try {
@@ -221,7 +224,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 LOG.i("onStop:", "Clean up.", "Released camera.");
             } catch (Exception e) {
                 LOG.w("onStop:", "Clean up.", "Exception while releasing camera.", e);
-                error = e;
             }
         }
         mExtraProperties = null;
@@ -233,7 +235,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mIsCapturingImage = false;
         mIsCapturingVideo = false;
         LOG.w("onStop:", "Clean up.", "Returning.");
-        if (error != null) throw new CameraException(error);
+
+        // We were saving a reference to the exception here and throwing to the user.
+        // I don't think it's correct. We are closing and have already done our best
+        // to clean up resources. No need to throw.
+        // if (error != null) throw new CameraException(error);
     }
 
     private boolean collectCameraId() {
@@ -269,7 +275,14 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
 
         LOG.e("Error inside the onError callback.", error);
-        throw new CameraException(new RuntimeException(CameraLogger.lastMessage));
+        Exception runtime = new RuntimeException(CameraLogger.lastMessage);
+        int reason;
+        switch (error) {
+            case Camera.CAMERA_ERROR_EVICTED: reason = CameraException.REASON_DISCONNECTED; break;
+            case Camera.CAMERA_ERROR_UNKNOWN: reason = CameraException.REASON_UNKNOWN; break;
+            default: reason = CameraException.REASON_UNKNOWN;
+        }
+        throw new CameraException(runtime, reason);
     }
 
     @Override
