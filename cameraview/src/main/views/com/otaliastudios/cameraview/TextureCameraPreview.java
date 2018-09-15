@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
-import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,8 +58,8 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
     @TargetApi(15)
     @Override
-    void setDesiredSize(int width, int height) {
-        super.setDesiredSize(width, height);
+    void setInputStreamSize(int width, int height) {
+        super.setInputStreamSize(width, height);
         if (getView().getSurfaceTexture() != null) {
             getView().getSurfaceTexture().setDefaultBufferSize(width, height);
         }
@@ -77,14 +76,14 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
         getView().post(new Runnable() {
             @Override
             public void run() {
-                if (mDesiredHeight == 0 || mDesiredWidth == 0 ||
-                        mSurfaceHeight == 0 || mSurfaceWidth == 0) {
+                if (mInputStreamHeight == 0 || mInputStreamWidth == 0 ||
+                        mOutputSurfaceHeight == 0 || mOutputSurfaceWidth == 0) {
                     mCropTask.end(null);
                     return;
                 }
                 float scaleX = 1f, scaleY = 1f;
-                AspectRatio current = AspectRatio.of(mSurfaceWidth, mSurfaceHeight);
-                AspectRatio target = AspectRatio.of(mDesiredWidth, mDesiredHeight);
+                AspectRatio current = AspectRatio.of(mOutputSurfaceWidth, mOutputSurfaceHeight);
+                AspectRatio target = AspectRatio.of(mInputStreamWidth, mInputStreamHeight);
                 if (current.toFloat() >= target.toFloat()) {
                     // We are too short. Must increase height.
                     scaleY = current.toFloat() / target.toFloat();

@@ -2,7 +2,6 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -25,12 +24,12 @@ abstract class CameraPreview<T extends View, Output> {
     protected boolean mCropping;
 
     // These are the surface dimensions in REF_VIEW.
-    protected int mSurfaceWidth;
-    protected int mSurfaceHeight;
+    protected int mOutputSurfaceWidth;
+    protected int mOutputSurfaceHeight;
 
     // These are the preview stream dimensions, in REF_VIEW.
-    protected int mDesiredWidth;
-    protected int mDesiredHeight;
+    protected int mInputStreamWidth;
+    protected int mInputStreamHeight;
 
     CameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         mView = onCreateView(context, parent);
@@ -52,25 +51,25 @@ abstract class CameraPreview<T extends View, Output> {
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
     // This is called by the CameraImpl.
     // These must be alredy rotated, if needed, to be consistent with surface/view sizes.
-    void setDesiredSize(int width, int height) {
-        LOG.i("setDesiredSize:", "desiredW=", width, "desiredH=", height);
-        mDesiredWidth = width;
-        mDesiredHeight = height;
+    void setInputStreamSize(int width, int height) {
+        LOG.i("setInputStreamSize:", "desiredW=", width, "desiredH=", height);
+        mInputStreamWidth = width;
+        mInputStreamHeight = height;
         crop();
     }
 
-    final Size getDesiredSize() {
-        return new Size(mDesiredWidth, mDesiredHeight);
+    final Size getInputStreamSize() {
+        return new Size(mInputStreamWidth, mInputStreamHeight);
     }
 
-    final Size getSurfaceSize() {
-        return new Size(mSurfaceWidth, mSurfaceHeight);
+    final Size getOutputSurfaceSize() {
+        return new Size(mOutputSurfaceWidth, mOutputSurfaceHeight);
     }
 
     final void setSurfaceCallback(SurfaceCallback callback) {
         mSurfaceCallback = callback;
         // If surface already available, dispatch.
-        if (mSurfaceWidth != 0 || mSurfaceHeight != 0) {
+        if (mOutputSurfaceWidth != 0 || mOutputSurfaceHeight != 0) {
             mSurfaceCallback.onSurfaceAvailable();
         }
     }
@@ -78,8 +77,8 @@ abstract class CameraPreview<T extends View, Output> {
 
     protected final void onSurfaceAvailable(int width, int height) {
         LOG.i("onSurfaceAvailable:", "w=", width, "h=", height);
-        mSurfaceWidth = width;
-        mSurfaceHeight = height;
+        mOutputSurfaceWidth = width;
+        mOutputSurfaceHeight = height;
         crop();
         mSurfaceCallback.onSurfaceAvailable();
     }
@@ -89,17 +88,17 @@ abstract class CameraPreview<T extends View, Output> {
     // This is called by subclasses.
     protected final void onSurfaceSizeChanged(int width, int height) {
         LOG.i("onSurfaceSizeChanged:", "w=", width, "h=", height);
-        if (width != mSurfaceWidth || height != mSurfaceHeight) {
-            mSurfaceWidth = width;
-            mSurfaceHeight = height;
+        if (width != mOutputSurfaceWidth || height != mOutputSurfaceHeight) {
+            mOutputSurfaceWidth = width;
+            mOutputSurfaceHeight = height;
             crop();
             mSurfaceCallback.onSurfaceChanged();
         }
     }
 
     protected final void onSurfaceDestroyed() {
-        mSurfaceWidth = 0;
-        mSurfaceHeight = 0;
+        mOutputSurfaceWidth = 0;
+        mOutputSurfaceHeight = 0;
     }
 
     void onResume() {}
@@ -109,13 +108,13 @@ abstract class CameraPreview<T extends View, Output> {
     void onDestroy() {}
 
     final boolean isReady() {
-        return mSurfaceWidth > 0 && mSurfaceHeight > 0;
+        return mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0;
     }
 
     /**
      * Here we must crop the visible part by applying a > 1 scale to one of our
-     * dimensions. This way our internal aspect ratio (mSurfaceWidth / mSurfaceHeight)
-     * will match the preview size aspect ratio (mDesiredWidth / mDesiredHeight).
+     * dimensions. This way our internal aspect ratio (mOutputSurfaceWidth / mOutputSurfaceHeight)
+     * will match the preview size aspect ratio (mInputStreamWidth / mInputStreamHeight).
      *
      * There might still be some absolute difference (e.g. same ratio but bigger / smaller).
      * However that should be already managed by the framework.
