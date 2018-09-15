@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.graphics.ImageFormat;
 import android.graphics.PointF;
@@ -11,6 +12,7 @@ import android.location.Location;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.WorkerThread;
 import android.support.media.ExifInterface;
 import android.view.SurfaceHolder;
@@ -696,9 +698,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         });
     }
 
+    @SuppressLint("NewApi")
     @Override
     void takeVideoSnapshot(@NonNull final File file) {
-        // TODO check api level and Preview instance
+        if (!(mPreview instanceof GLCameraPreview)) {
+            throw new IllegalStateException("Video snapshots are only supported with GLCameraPreview.");
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            throw new IllegalStateException("Video snapshots are only supported starting from API 18.");
+        }
         schedule(mStartVideoTask, true, new Runnable() {
             @Override
             public void run() {
