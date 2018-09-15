@@ -4,8 +4,6 @@ import android.graphics.PointF;
 import android.location.Location;
 
 
-import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -506,7 +504,7 @@ abstract class CameraController implements
         // instead of flipping everything to REF_VIEW, we can just flip the
         // surface size from REF_VIEW to REF_SENSOR, and reflip at the end.
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
-        Size targetMinSize = mPreview.getSurfaceSize();
+        Size targetMinSize = mPreview.getOutputSurfaceSize();
         boolean flip = flip(REF_VIEW, REF_SENSOR);
         if (flip) targetMinSize = targetMinSize.flip();
         LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);

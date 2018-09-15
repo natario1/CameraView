@@ -63,6 +63,7 @@ public enum Control {
                 int boundary = this == WIDTH ? root.getWidth() : root.getHeight();
                 if (boundary == 0) boundary = 1000;
                 int step = boundary / 10;
+                list.add(this == WIDTH ? 300 : 600);
                 list.add(ViewGroup.LayoutParams.WRAP_CONTENT);
                 list.add(ViewGroup.LayoutParams.MATCH_PARENT);
                 for (int i = step; i < boundary; i += step) {

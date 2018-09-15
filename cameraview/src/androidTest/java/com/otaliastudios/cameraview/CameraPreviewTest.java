@@ -86,25 +86,25 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     @Test
     public void testDesiredSize() {
-        preview.setDesiredSize(160, 90);
-        assertEquals(160, preview.getDesiredSize().getWidth());
-        assertEquals(90, preview.getDesiredSize().getHeight());
+        preview.setInputStreamSize(160, 90);
+        assertEquals(160, preview.getInputStreamSize().getWidth());
+        assertEquals(90, preview.getInputStreamSize().getHeight());
     }
 
     @Test
     public void testSurfaceAvailable() {
         ensureAvailable();
         verify(callback, times(1)).onSurfaceAvailable();
-        assertEquals(surfaceSize.getWidth(), preview.getSurfaceSize().getWidth());
-        assertEquals(surfaceSize.getHeight(), preview.getSurfaceSize().getHeight());
+        assertEquals(surfaceSize.getWidth(), preview.getOutputSurfaceSize().getWidth());
+        assertEquals(surfaceSize.getHeight(), preview.getOutputSurfaceSize().getHeight());
     }
 
     @Test
     public void testSurfaceDestroyed() {
         ensureAvailable();
         ensureDestroyed();
-        assertEquals(0, preview.getSurfaceSize().getWidth());
-        assertEquals(0, preview.getSurfaceSize().getHeight());
+        assertEquals(0, preview.getOutputSurfaceSize().getWidth());
+        assertEquals(0, preview.getOutputSurfaceSize().getHeight());
     }
 
     @Test
@@ -136,19 +136,19 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     private void setDesiredAspectRatio(float desiredAspectRatio) {
         preview.mCropTask.listen();
-        preview.setDesiredSize((int) (10f * desiredAspectRatio), 10); // Wait...
+        preview.setInputStreamSize((int) (10f * desiredAspectRatio), 10); // Wait...
         preview.mCropTask.await();
         assertEquals(desiredAspectRatio, getViewAspectRatioWithScale(), 0.01f);
 
     }
 
     private float getViewAspectRatio() {
-        Size size = preview.getSurfaceSize();
+        Size size = preview.getOutputSurfaceSize();
         return AspectRatio.of(size.getWidth(), size.getHeight()).toFloat();
     }
 
     private float getViewAspectRatioWithScale() {
-        Size size = preview.getSurfaceSize();
+        Size size = preview.getOutputSurfaceSize();
         int newWidth = (int) (((float) size.getWidth()) * preview.getView().getScaleX());
         int newHeight = (int) (((float) size.getHeight()) * preview.getView().getScaleY());
         return AspectRatio.of(newWidth, newHeight).toFloat();

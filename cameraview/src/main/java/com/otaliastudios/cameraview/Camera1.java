@@ -8,8 +8,6 @@ import android.graphics.SurfaceTexture;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.location.Location;
-import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -73,7 +71,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     // Preview surface is now available. If camera is open, set up.
     @Override
     public void onSurfaceAvailable() {
-        LOG.i("onSurfaceAvailable:", "Size is", mPreview.getSurfaceSize());
+        LOG.i("onSurfaceAvailable:", "Size is", mPreview.getOutputSurfaceSize());
         schedule(null, false, new Runnable() {
             @Override
             public void run() {
@@ -87,7 +85,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     // This requires stopping and restarting the preview.
     @Override
     public void onSurfaceChanged() {
-        LOG.i("onSurfaceChanged, size is", mPreview.getSurfaceSize());
+        LOG.i("onSurfaceChanged, size is", mPreview.getOutputSurfaceSize());
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
@@ -139,7 +137,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mCameraCallbacks.onCameraPreviewSizeChanged();
 
         Size previewSize = getPreviewSize(REF_VIEW);
-        mPreview.setDesiredSize(previewSize.getWidth(), previewSize.getHeight());
+        mPreview.setInputStreamSize(previewSize.getWidth(), previewSize.getHeight());
 
         Camera.Parameters params = mCamera.getParameters();
         mPreviewFormat = params.getPreviewFormat();
