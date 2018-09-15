@@ -31,6 +31,7 @@ public class VideoResultTest extends BaseTest {
         boolean isSnapshot = true;
         int maxDuration = 1234;
         long maxFileSize = 500000;
+        int reason = VideoResult.REASON_MAX_DURATION_REACHED;
 
         result.file = file;
         result.rotation = rotation;
@@ -40,6 +41,7 @@ public class VideoResultTest extends BaseTest {
         result.isSnapshot = isSnapshot;
         result.maxDuration = maxDuration;
         result.maxSize = maxFileSize;
+        result.endReason = reason;
 
         assertEquals(result.getFile(), file);
         assertEquals(result.getRotation(), rotation);
@@ -49,5 +51,6 @@ public class VideoResultTest extends BaseTest {
         assertEquals(result.isSnapshot(), isSnapshot);
         assertEquals(result.getMaxSize(), maxFileSize);
         assertEquals(result.getMaxDuration(), maxDuration);
+        assertEquals(result.getTerminationReason(), reason);
     }
 }

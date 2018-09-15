@@ -11,6 +11,10 @@ import java.io.File;
  */
 public class VideoResult {
 
+    public static final int REASON_USER = 0;
+    public static final int REASON_MAX_SIZE_REACHED = 1;
+    public static final int REASON_MAX_DURATION_REACHED = 2;
+
     boolean isSnapshot;
     Location location;
     int rotation;
@@ -20,6 +24,7 @@ public class VideoResult {
     Audio audio;
     long maxSize;
     int maxDuration;
+    int endReason;
 
     VideoResult() {}
 
@@ -112,5 +117,13 @@ public class VideoResult {
     @NonNull
     public Audio getAudio() {
         return audio;
+    }
+
+    /**
+     * Returns the reason why the recording was stopped.
+     * @return one of {@link #REASON_USER}, {@link #REASON_MAX_DURATION_REACHED} or {@link #REASON_MAX_SIZE_REACHED}.
+     */
+    public int getTerminationReason() {
+        return endReason;
     }
 }

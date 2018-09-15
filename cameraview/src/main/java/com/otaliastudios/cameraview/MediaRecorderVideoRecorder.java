@@ -14,15 +14,19 @@ class MediaRecorderVideoRecorder extends VideoRecorder {
 
     private MediaRecorder mMediaRecorder;
     private CamcorderProfile mProfile;
+    private Mapper mMapper;
 
     MediaRecorderVideoRecorder(VideoResult stub, VideoResultListener listener, Camera camera, int cameraId) {
         super(stub, listener);
+        mMapper = new Mapper1();
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setCamera(camera);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         mProfile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_HIGH);
         // TODO: should get a profile of a quality compatible with the chosen size.
     }
+
+    // Camera2 constructor here...
 
     @Override
     void start() {
@@ -38,7 +42,7 @@ class MediaRecorderVideoRecorder extends VideoRecorder {
         if (mResult.getCodec() == VideoCodec.DEFAULT) {
             mMediaRecorder.setVideoEncoder(mProfile.videoCodec);
         } else {
-            mMediaRecorder.setVideoEncoder(new Mapper1().map(mResult.getCodec()));
+            mMediaRecorder.setVideoEncoder(mMapper.map(mResult.getCodec()));
         }
         mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
         if (mResult.getAudio() == Audio.ON) {
@@ -61,7 +65,11 @@ class MediaRecorderVideoRecorder extends VideoRecorder {
             public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
                 switch (what) {
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
+                        mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
+                        stop();
+                        break;
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
+                        mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
                         stop();
                         break;
                 }
@@ -91,5 +99,6 @@ class MediaRecorderVideoRecorder extends VideoRecorder {
         }
         mProfile = null;
         mMediaRecorder = null;
+        mMapper = null;
     }
 }
