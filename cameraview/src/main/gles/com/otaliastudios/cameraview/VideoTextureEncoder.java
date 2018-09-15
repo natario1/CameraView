@@ -17,7 +17,6 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.SurfaceTexture;
 import android.opengl.EGLContext;
-import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -48,7 +47,7 @@ import java.lang.ref.WeakReference;
  * To use:
  * <ul>
  * <li>create TextureMovieEncoder object
- * <li>create an EncoderConfig
+ * <li>create an Config
  * <li>call TextureMovieEncoder#startRecording() with the config
  * <li>call TextureMovieEncoder#setTextureId() with the texture object that receives frames
  * <li>for each frame, after latching it with SurfaceTexture#updateTexImage(),
@@ -65,8 +64,7 @@ class VideoTextureEncoder implements Runnable {
     private static final int MSG_STOP_RECORDING = 1;
     private static final int MSG_FRAME_AVAILABLE = 2;
     private static final int MSG_SET_TEXTURE_ID = 3;
-    private static final int MSG_UPDATE_SHARED_CONTEXT = 4;
-    private static final int MSG_QUIT = 5;
+    private static final int MSG_QUIT = 4;
 
     // ----- accessed exclusively by encoder thread -----
     private EglWindowSurface mInputWindowSurface;
@@ -83,7 +81,6 @@ class VideoTextureEncoder implements Runnable {
     private boolean mReady;
     private boolean mRunning;
 
-
     /**
      * Encoder configuration.
      * <p>
@@ -93,15 +90,15 @@ class VideoTextureEncoder implements Runnable {
      * <p>
      * TODO: make frame rate and iframe interval configurable?
      */
-    public static class EncoderConfig {
+    public static class Config {
         final File mOutputFile;
         final int mWidth;
         final int mHeight;
         final int mBitRate;
         final EGLContext mEglContext;
 
-        public EncoderConfig(File outputFile, int width, int height, int bitRate,
-                             EGLContext sharedEglContext) {
+        public Config(File outputFile, int width, int height, int bitRate,
+                      EGLContext sharedEglContext) {
             mOutputFile = outputFile;
             mWidth = width;
             mHeight = height;
@@ -111,8 +108,38 @@ class VideoTextureEncoder implements Runnable {
 
         @Override
         public String toString() {
-            return "EncoderConfig: " + mWidth + "x" + mHeight + " @" + mBitRate +
+            return "Config: " + mWidth + "x" + mHeight + " @" + mBitRate +
                     " to '" + mOutputFile.toString() + "' ctxt=" + mEglContext;
+        }
+    }
+
+    private void prepareEncoder(EGLContext sharedContext, int width, int height, int bitRate,
+                                File outputFile) {
+        try {
+            mVideoEncoder = new VideoCoreEncoder(width, height, bitRate, outputFile);
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+        mEglCore = new EglCore(sharedContext, EglCore.FLAG_RECORDABLE);
+        mInputWindowSurface = new EglWindowSurface(mEglCore, mVideoEncoder.getInputSurface(), true);
+        mInputWindowSurface.makeCurrent();
+
+        mFullScreen = new EglViewport();
+    }
+
+    private void releaseEncoder() {
+        mVideoEncoder.release();
+        if (mInputWindowSurface != null) {
+            mInputWindowSurface.release();
+            mInputWindowSurface = null;
+        }
+        if (mFullScreen != null) {
+            mFullScreen.release(false);
+            mFullScreen = null;
+        }
+        if (mEglCore != null) {
+            mEglCore.release();
+            mEglCore = null;
         }
     }
 
@@ -124,7 +151,7 @@ class VideoTextureEncoder implements Runnable {
      * Returns after the recorder thread has started and is ready to accept Messages.  The
      * encoder may not yet be fully configured.
      */
-    public void startRecording(EncoderConfig config) {
+    public void startRecording(Config config) {
         Log.d(TAG, "Encoder: startRecording()");
         synchronized (mReadyFence) {
             if (mRunning) {
@@ -150,9 +177,6 @@ class VideoTextureEncoder implements Runnable {
      * <p>
      * Returns immediately; the encoder/muxer may not yet be finished creating the movie.
      * <p>
-     * TODO: have the encoder thread invoke a callback on the UI thread just before it shuts down
-     * so we can provide reasonable status UI (and let the caller know that movie encoding
-     * has completed).
      */
     public void stopRecording(Runnable onStop) {
         mHandler.sendMessage(mHandler.obtainMessage(MSG_STOP_RECORDING, onStop));
@@ -168,13 +192,6 @@ class VideoTextureEncoder implements Runnable {
         synchronized (mReadyFence) {
             return mRunning;
         }
-    }
-
-    /**
-     * Tells the video recorder to refresh its EGL surface.  (Call from non-encoder thread.)
-     */
-    public void updateSharedContext(EGLContext sharedContext) {
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_UPDATE_SHARED_CONTEXT, sharedContext));
     }
 
     /**
@@ -197,7 +214,7 @@ class VideoTextureEncoder implements Runnable {
             }
         }
 
-        float[] transform = new float[16];      // TODO - avoid alloc every frame
+        float[] transform = new float[16]; // TODO - avoid alloc every frame. Not easy, need a pool
         st.getTransformMatrix(transform);
         long timestamp = st.getTimestamp();
         if (timestamp == 0) {
@@ -249,7 +266,6 @@ class VideoTextureEncoder implements Runnable {
         }
     }
 
-
     /**
      * Handles encoder state change requests.  The handler is created on the encoder thread.
      */
@@ -273,21 +289,29 @@ class VideoTextureEncoder implements Runnable {
 
             switch (what) {
                 case MSG_START_RECORDING:
-                    encoder.handleStartRecording((EncoderConfig) obj);
+                    encoder.mFrameNum = 0;
+                    Config config = (Config) obj;
+                    encoder.prepareEncoder(config.mEglContext,
+                            config.mWidth, config.mHeight,
+                            config.mBitRate,
+                            config.mOutputFile);
                     break;
                 case MSG_STOP_RECORDING:
-                    encoder.handleStopRecording((Runnable) inputMessage.obj);
+                    encoder.mVideoEncoder.drainEncoder(true);
+                    encoder.releaseEncoder();
+                    ((Runnable) obj).run();
                     break;
                 case MSG_FRAME_AVAILABLE:
-                    long timestamp = (((long) inputMessage.arg1) << 32) |
-                            (((long) inputMessage.arg2) & 0xffffffffL);
-                    encoder.handleFrameAvailable((float[]) obj, timestamp);
+                    encoder.mFrameNum++;
+                    long timestamp = (((long) inputMessage.arg1) << 32) | (((long) inputMessage.arg2) & 0xffffffffL);
+                    float[] transform = (float[]) obj;
+                    encoder.mVideoEncoder.drainEncoder(false);
+                    encoder.mFullScreen.drawFrame(encoder.mTextureId, transform);
+                    encoder.mInputWindowSurface.setPresentationTime(timestamp);
+                    encoder.mInputWindowSurface.swapBuffers();
                     break;
                 case MSG_SET_TEXTURE_ID:
-                    encoder.handleSetTexture(inputMessage.arg1);
-                    break;
-                case MSG_UPDATE_SHARED_CONTEXT:
-                    encoder.handleUpdateSharedContext((EGLContext) inputMessage.obj);
+                    encoder.mTextureId = inputMessage.arg1;
                     break;
                 case MSG_QUIT:
                     Looper.myLooper().quit();
@@ -298,100 +322,4 @@ class VideoTextureEncoder implements Runnable {
         }
     }
 
-    /**
-     * Starts recording.
-     */
-    private void handleStartRecording(EncoderConfig config) {
-        Log.d(TAG, "handleStartRecording " + config);
-        mFrameNum = 0;
-        prepareEncoder(config.mEglContext, config.mWidth, config.mHeight, config.mBitRate,
-                config.mOutputFile);
-    }
-
-    /**
-     * Handles notification of an available frame.
-     * <p>
-     * The texture is rendered onto the encoder's input surface, along with a moving
-     * box (just because we can).
-     * <p>
-     * @param transform The texture transform, from SurfaceTexture.
-     * @param timestampNanos The frame's timestamp, from SurfaceTexture.
-     */
-    private void handleFrameAvailable(float[] transform, long timestampNanos) {
-        mVideoEncoder.drainEncoder(false);
-        mFullScreen.drawFrame(mTextureId, transform);
-        mInputWindowSurface.setPresentationTime(timestampNanos);
-        mInputWindowSurface.swapBuffers();
-    }
-
-    /**
-     * Handles a request to stop encoding.
-     */
-    private void handleStopRecording(Runnable onStop) {
-        Log.d(TAG, "handleStopRecording");
-        mVideoEncoder.drainEncoder(true);
-        releaseEncoder();
-        onStop.run();
-    }
-
-    /**
-     * Sets the texture name that SurfaceTexture will use when frames are received.
-     */
-    private void handleSetTexture(int id) {
-        mTextureId = id;
-    }
-
-    /**
-     * Tears down the EGL surface and context we've been using to feed the MediaCodec input
-     * surface, and replaces it with a new one that shares with the new context.
-     * <p>
-     * This is useful if the old context we were sharing with went away (maybe a GLSurfaceView
-     * that got torn down) and we need to hook up with the new one.
-     */
-    private void handleUpdateSharedContext(EGLContext newSharedContext) {
-        Log.d(TAG, "handleUpdatedSharedContext " + newSharedContext);
-
-        // Release the EGLSurface and EGLContext.
-        mInputWindowSurface.releaseEglSurface();
-        mFullScreen.release(false);
-        mEglCore.release();
-
-        // Create a new EGLContext and recreate the window surface.
-        mEglCore = new EglCore(newSharedContext, EglCore.FLAG_RECORDABLE);
-        mInputWindowSurface.recreate(mEglCore);
-        mInputWindowSurface.makeCurrent();
-
-        // Create new programs and such for the new context.
-        mFullScreen = new EglViewport();
-    }
-
-    private void prepareEncoder(EGLContext sharedContext, int width, int height, int bitRate,
-                                File outputFile) {
-        try {
-            mVideoEncoder = new VideoCoreEncoder(width, height, bitRate, outputFile);
-        } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
-        mEglCore = new EglCore(sharedContext, EglCore.FLAG_RECORDABLE);
-        mInputWindowSurface = new EglWindowSurface(mEglCore, mVideoEncoder.getInputSurface(), true);
-        mInputWindowSurface.makeCurrent();
-
-        mFullScreen = new EglViewport();
-    }
-
-    private void releaseEncoder() {
-        mVideoEncoder.release();
-        if (mInputWindowSurface != null) {
-            mInputWindowSurface.release();
-            mInputWindowSurface = null;
-        }
-        if (mFullScreen != null) {
-            mFullScreen.release(false);
-            mFullScreen = null;
-        }
-        if (mEglCore != null) {
-            mEglCore.release();
-            mEglCore = null;
-        }
-    }
 }
