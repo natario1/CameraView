@@ -16,4 +16,14 @@ public class GLCameraPreviewTest extends CameraPreviewTest {
     protected CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback) {
         return new GLCameraPreview(context, parent, callback);
     }
+
+    @Override
+    protected float getCropScaleY() {
+        return 1F / ((GLCameraPreview) preview).mScaleY;
+    }
+
+    @Override
+    protected float getCropScaleX() {
+        return 1F / ((GLCameraPreview) preview).mScaleX;
+    }
 }

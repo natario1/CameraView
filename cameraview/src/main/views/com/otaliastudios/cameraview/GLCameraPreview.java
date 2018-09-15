@@ -192,8 +192,8 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         return true;
     }
 
-    private float mScaleX = 1F;
-    private float mScaleY = 1F;
+    /* for tests */ float mScaleX = 1F;
+    /* for tests */ float mScaleY = 1F;
 
     /**
      * To crop in GL, we could actually use view.setScaleX and setScaleY, but only from Android N onward.

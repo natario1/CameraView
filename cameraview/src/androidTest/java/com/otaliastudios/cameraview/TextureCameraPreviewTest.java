@@ -40,4 +40,14 @@ public class TextureCameraPreviewTest extends CameraPreviewTest {
     private boolean isHardwareAccelerated() {
         return preview.getView().isHardwareAccelerated();
     }
+
+    @Override
+    protected float getCropScaleX() {
+        return preview.getView().getScaleX();
+    }
+
+    @Override
+    protected float getCropScaleY() {
+        return preview.getView().getScaleY();
+    }
 }

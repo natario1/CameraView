@@ -24,6 +24,9 @@ class MediaRecorderVideoRecorder extends VideoRecorder {
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         mProfile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_HIGH);
         // TODO: should get a profile of a quality compatible with the chosen size.
+        // Might do this by inspecting mResult.getSize(). However, it is not super important.
+        // We are only bound to respect the video size passed by the VideoSizeSelector, and
+        // we are doing that below.
     }
 
     // Camera2 constructor here...
