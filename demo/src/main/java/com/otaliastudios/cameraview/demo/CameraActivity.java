@@ -53,6 +53,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         findViewById(R.id.capturePicture).setOnClickListener(this);
         findViewById(R.id.capturePictureSnapshot).setOnClickListener(this);
         findViewById(R.id.captureVideo).setOnClickListener(this);
+        findViewById(R.id.captureVideoSnapshot).setOnClickListener(this);
         findViewById(R.id.toggleCamera).setOnClickListener(this);
 
         controlPanel = findViewById(R.id.controls);
@@ -118,6 +119,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             case R.id.capturePicture: capturePicture(); break;
             case R.id.capturePictureSnapshot: capturePictureSnapshot(); break;
             case R.id.captureVideo: captureVideo(); break;
+            case R.id.captureVideoSnapshot: captureVideoSnapshot(); break;
             case R.id.toggleCamera: toggleCamera(); break;
         }
     }
@@ -163,6 +165,15 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         if (camera.isTakingPicture() || camera.isTakingVideo()) return;
         message("Recording for 5 seconds...", true);
         camera.takeVideo(null, 5000);
+    }
+
+    private void captureVideoSnapshot() {
+        if (camera.isTakingVideo()) {
+            message("Already taking video.", false);
+            return;
+        }
+        message("Recording snapshot for 5 seconds...", true);
+        camera.takeVideoSnapshot(null, 5000);
     }
 
     private void toggleCamera() {

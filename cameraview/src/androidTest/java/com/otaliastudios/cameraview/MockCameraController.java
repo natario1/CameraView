@@ -100,6 +100,11 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
+    void takeVideoSnapshot(@NonNull File file) {
+
+    }
+
+    @Override
     void stopVideo() {
     }
 
@@ -114,6 +119,11 @@ public class MockCameraController extends CameraController {
 
     @Override
     public void onSurfaceAvailable() {
+    }
+
+    @Override
+    public void onSurfaceDestroyed() {
+
     }
 
     @Override

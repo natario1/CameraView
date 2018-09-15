@@ -5,7 +5,7 @@ import android.graphics.SurfaceTexture;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.support.annotation.NonNull;
-import android.util.Log;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.View;
@@ -53,7 +53,8 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     private final float[] mTransformMatrix = new float[16];
     private int mOutputTextureId = -1;
     private SurfaceTexture mInputSurfaceTexture;
-    private GLViewport mOutputViewport;
+    private EglViewport mOutputViewport;
+    private RendererFrameCallback mRendererFrameCallback;
 
     GLCameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         super(context, parent, callback);
@@ -104,6 +105,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             mInputSurfaceTexture.release();
             mInputSurfaceTexture = null;
         }
+        mOutputTextureId = 0;
         if (mOutputViewport != null) {
             mOutputViewport.release();
             mOutputViewport = null;
@@ -111,7 +113,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     }
 
     private void createInputSurfaceTexture() {
-        mOutputViewport = new GLViewport();
+        mOutputViewport = new EglViewport();
         mOutputTextureId = mOutputViewport.createTexture();
         mInputSurfaceTexture = new SurfaceTexture(mOutputTextureId);
 
@@ -167,6 +169,10 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         if (mInputStreamWidth <= 0 || mInputStreamHeight <= 0) {
             // Skip drawing. Camera was not opened.
             return;
+        }
+
+        if (mRendererFrameCallback != null) {
+            mRendererFrameCallback.onRendererFrame(mInputSurfaceTexture);
         }
 
         // Draw the video frame.
@@ -323,5 +329,20 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
                 dispatchOnOutputSurfaceAvailable(width, height);
             }
         });
+    }
+
+    interface RendererFrameCallback {
+        // Renderer thread.
+        void onRendererTextureCreated(int textureId);
+
+        // Renderer thread.
+        void onRendererFrame(SurfaceTexture surfaceTexture);
+    }
+
+    void setRendererFrameCallback(@Nullable RendererFrameCallback callback) {
+        mRendererFrameCallback = callback;
+        if (mRendererFrameCallback != null && mOutputTextureId != 0) {
+            mRendererFrameCallback.onRendererTextureCreated(mOutputTextureId);
+        }
     }
 }

@@ -697,6 +697,39 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
+    void takeVideoSnapshot(@NonNull final File file) {
+        // TODO check api level and Preview instance
+        schedule(mStartVideoTask, true, new Runnable() {
+            @Override
+            public void run() {
+                if (mIsTakingVideo) return;
+                mIsTakingVideo = true;
+
+                // Create the video result stub
+                VideoResult videoResult = new VideoResult();
+                videoResult.file = file;
+                videoResult.isSnapshot = true;
+                videoResult.codec = mVideoCodec;
+                videoResult.location = mLocation;
+                videoResult.rotation = offset(REF_SENSOR, REF_OUTPUT);
+                Size preview = getPreviewSize(REF_VIEW); // The preview stream size in REF_VIEW
+                Size view = mPreview.getOutputSurfaceSize(); // The view size in REF_VIEW
+                Rect crop = CropHelper.computeCrop(preview, AspectRatio.of(view.getWidth(), view.getHeight()));
+                Size cropSize = new Size(crop.width(), crop.height()); // The visible size in REF_VIEW
+                // Move the REF_VIEW size to REF_OUTPUT
+                videoResult.size = flip(REF_VIEW, REF_OUTPUT) ? cropSize.flip() : cropSize;
+                videoResult.audio = mAudio;
+                videoResult.maxSize = mVideoMaxSize;
+                videoResult.maxDuration = mVideoMaxDuration;
+
+                GLCameraPreview cameraPreview = (GLCameraPreview) mPreview;
+                mVideoRecorder = new MediaCodecVideoRecorder(videoResult, Camera1.this, cameraPreview, mCameraId);
+                mVideoRecorder.start();
+            }
+        });
+    }
+
+    @Override
     void stopVideo() {
         schedule(null, false, new Runnable() {
             @Override
