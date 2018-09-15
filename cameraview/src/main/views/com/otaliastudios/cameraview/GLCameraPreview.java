@@ -43,9 +43,8 @@ import javax.microedition.khronos.opengles.GL10;
  *
  * TODO
  * CROPPING: Managed to do this using Matrix transformation.
- * UPDATING: Still bugged: if you change the surface size on the go, the stream is not updated.
- *           I guess we should create a new texture...
- * TAKING PICTURES: Sometime the snapshot takes ages...
+ * UPDATING: Managed to work using view.onPause and onResume.
+ * TAKING PICTURES: Sometime the snapshot takes ages... Can't reproduce anymore. Cool.
  * TAKING VIDEOS: Still have not tried...
  */
 class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> implements GLSurfaceView.Renderer {
@@ -71,9 +70,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         glView.getHolder().addCallback(new SurfaceHolder.Callback() {
             public void surfaceCreated(SurfaceHolder holder) {}
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                Log.e("GlCameraPreview", "width: " + width + ", height: " + height);
-            }
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) { }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
@@ -136,46 +133,33 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     }
 
     // Renderer thread
+    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public void onSurfaceChanged(GL10 gl, final int width, final int height) {
         if (!mDispatched) {
             dispatchOnOutputSurfaceAvailable(width, height);
             mDispatched = true;
-        } else if (mOutputSurfaceWidth != width || mOutputSurfaceHeight != height) {
-            // It did actually change. (Got some cases where onSurfaceChanged is called with same values). Go on.
-            // Since surface size changed does not work, we try to destroy and recreate.
-            // dispatchOnOutputSurfaceSizeChanged(width, height);
-
-            // Recreate the texture...
-            releaseInputSurfaceTexture();
-
-            // Tell the controller that the output surface was destroyed..
-            // And recreated.
-            dispatchOnOutputSurfaceDestroyed();
-            getView().post(new Runnable() {
-                @Override
-                public void run() {
-                    // getView().setPreserveEGLContextOnPause(true);
-                    getView().onPause();
-                    getView().onResume();
-                    // getView().setPreserveEGLContextOnPause(false);
-                    getView().queueEvent(new Runnable() {
-                        @Override
-                        public void run() {
-                            createInputSurfaceTexture();
-                            dispatchOnOutputSurfaceAvailable(width, height);
-                        }
-                    });
-                }
-            });
-
+        } else if (mOutputSurfaceWidth == width && mOutputSurfaceHeight == height) {
+                // This change can be triggered by ourselves (see below). Ignore.
+        } else {
+            // With other CameraPreview implementation we could just dispatch the 'size changed' event
+            // to the controller and everything would go straight. In case of GL, apparently we have to:
+            // - create a new texture (release the old)
+            // - unbind camera and surface
+            // - stop camera preview
+            // - recreate the GL context using view.onPause() and onResume()
+            // ...
+            onSizeChangeImplementation4(width, height);
         }
     }
 
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        if (mInputSurfaceTexture == null) return;
+        // This are only needed with some implementations,
+        // and implementation4 seems to work well without them.
+        // if (mInputSurfaceTexture == null) return;
+        // if (mOutputViewport == null) return;
 
         // Latch the latest frame.  If there isn't anything new,
         // we'll just re-use whatever was there before.
@@ -190,14 +174,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         if (isCropping()) {
             Matrix.scaleM(mTransformMatrix, 0, mScaleX, mScaleY, 1);
         }
-        if (mOutputViewport == null) return;
         mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
-    }
-
-    @Override
-    void setInputStreamSize(int width, int height) {
-        // mInputSurfaceTexture.setDefaultBufferSize(width, height);
-        super.setInputStreamSize(width, height);
     }
 
     @Override
@@ -250,5 +227,101 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             getView().requestRender();
         }
         mCropTask.end(null);
+    }
+
+
+    // This does work but looks like a lot of stuff.
+    private void onSizeChangeImplementation1(final int width, final int height) {
+        releaseInputSurfaceTexture();
+        dispatchOnOutputSurfaceDestroyed();
+        getView().post(new Runnable() {
+            @Override
+            public void run() {
+                getView().onPause();
+                getView().onResume();
+                getView().queueEvent(new Runnable() {
+                    @Override
+                    public void run() {
+                        createInputSurfaceTexture();
+                        dispatchOnOutputSurfaceAvailable(width, height);
+                    }
+                });
+            }
+        });
+    }
+
+    // This does not work. We get: startPreview failed.
+    private void onSizeChangeImplementation2(final int width, final int height) {
+        releaseInputSurfaceTexture();
+        getView().post(new Runnable() {
+            @Override
+            public void run() {
+                getView().onPause();
+                getView().onResume();
+                getView().queueEvent(new Runnable() {
+                    @Override
+                    public void run() {
+                        createInputSurfaceTexture();
+                        dispatchOnOutputSurfaceSizeChanged(width, height);
+                    }
+                });
+            }
+        });
+    }
+
+    // Works! So we don't need to recreate the GL texture.
+    private void onSizeChangeImplementation3(final int width, final int height) {
+        dispatchOnOutputSurfaceDestroyed();
+        getView().post(new Runnable() {
+            @Override
+            public void run() {
+                getView().onPause();
+                getView().onResume();
+                getView().queueEvent(new Runnable() {
+                    @Override
+                    public void run() {
+                        dispatchOnOutputSurfaceAvailable(width, height);
+                    }
+                });
+            }
+        });
+    }
+
+    // Works! This is getting easy.
+    private void onSizeChangeImplementation4(final int width, final int height) {
+        dispatchOnOutputSurfaceDestroyed();
+        getView().post(new Runnable() {
+            @Override
+            public void run() {
+                getView().onPause();
+                getView().onResume();
+                dispatchOnOutputSurfaceAvailable(width, height);
+            }
+        });
+    }
+
+    // Does not work. onPause and onResume must be called on the UI thread.
+    // This make sense.
+    private void onSizeChangeImplementation5(final int width, final int height) {
+        dispatchOnOutputSurfaceDestroyed();
+        getView().onPause();
+        getView().onResume();
+        dispatchOnOutputSurfaceAvailable(width, height);
+    }
+
+    // Does NOT work. The EGL context must be recreated
+    // for this to work out.
+    private void onSizeChangeImplementation6(final int width, final int height) {
+        dispatchOnOutputSurfaceDestroyed();
+        getView().post(new Runnable() {
+            @Override
+            public void run() {
+                getView().setPreserveEGLContextOnPause(true);
+                getView().onPause();
+                getView().onResume();
+                getView().setPreserveEGLContextOnPause(false);
+                dispatchOnOutputSurfaceAvailable(width, height);
+            }
+        });
     }
 }

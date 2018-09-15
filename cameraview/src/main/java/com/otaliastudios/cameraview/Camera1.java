@@ -98,7 +98,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 // Apply.
                 LOG.i("onSurfaceChanged:", "Computed a new preview size. Going on.");
                 mPreviewSize = newSize;
-                mCamera.stopPreview();
+                stopPreview();
                 startPreview("onSurfaceChanged:");
             }
         });
