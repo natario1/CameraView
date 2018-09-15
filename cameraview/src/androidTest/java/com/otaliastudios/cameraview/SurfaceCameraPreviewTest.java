@@ -16,4 +16,14 @@ public class SurfaceCameraPreviewTest extends CameraPreviewTest {
     protected CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback) {
         return new SurfaceCameraPreview(context, parent, callback);
     }
+
+    @Override
+    protected float getCropScaleX() {
+        return 1F;
+    }
+
+    @Override
+    protected float getCropScaleY() {
+        return 1F;
+    }
 }

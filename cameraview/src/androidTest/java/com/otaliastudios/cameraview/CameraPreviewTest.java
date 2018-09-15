@@ -149,8 +149,12 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     private float getViewAspectRatioWithScale() {
         Size size = preview.getOutputSurfaceSize();
-        int newWidth = (int) (((float) size.getWidth()) * preview.getView().getScaleX());
-        int newHeight = (int) (((float) size.getHeight()) * preview.getView().getScaleY());
+        int newWidth = (int) (((float) size.getWidth()) * getCropScaleX());
+        int newHeight = (int) (((float) size.getHeight()) * getCropScaleY());
         return AspectRatio.of(newWidth, newHeight).toFloat();
     }
+
+    abstract protected float getCropScaleX();
+
+    abstract protected float getCropScaleY();
 }
