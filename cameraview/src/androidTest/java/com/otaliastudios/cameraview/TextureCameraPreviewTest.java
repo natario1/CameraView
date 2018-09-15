@@ -22,7 +22,7 @@ public class TextureCameraPreviewTest extends CameraPreviewTest {
         if (isHardwareAccelerated()) {
             super.ensureAvailable();
         } else {
-            preview.onSurfaceAvailable(
+            preview.dispatchOnOutputSurfaceAvailable(
                     surfaceSize.getWidth(),
                     surfaceSize.getHeight());
         }
@@ -33,7 +33,7 @@ public class TextureCameraPreviewTest extends CameraPreviewTest {
         super.ensureDestroyed();
         if (!isHardwareAccelerated()) {
             // Ensure it is called.
-            preview.onSurfaceDestroyed();
+            preview.dispatchOnOutputSurfaceDestroyed();
         }
     }
 

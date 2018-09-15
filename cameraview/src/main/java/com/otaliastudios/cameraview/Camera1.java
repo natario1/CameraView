@@ -12,7 +12,6 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
-import android.util.Log;
 import android.support.media.ExifInterface;
 import android.view.SurfaceHolder;
 
@@ -77,6 +76,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             public void run() {
                 LOG.i("onSurfaceAvailable:", "Inside handler. About to bind.");
                 if (shouldBindToSurface()) bindToSurface();
+                if (shouldStartPreview()) startPreview("onSurfaceAvailable");
             }
         });
     }
@@ -99,13 +99,25 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 LOG.i("onSurfaceChanged:", "Computed a new preview size. Going on.");
                 mPreviewSize = newSize;
                 mCamera.stopPreview();
-                applySizesAndStartPreview("onSurfaceChanged:");
+                startPreview("onSurfaceChanged:");
+            }
+        });
+    }
+
+    @Override
+    public void onSurfaceDestroyed() {
+        LOG.i("onSurfaceDestroyed");
+        schedule(null, true, new Runnable() {
+            @Override
+            public void run() {
+                stopPreview();
+                if (mIsBound) unbindFromSurface();
             }
         });
     }
 
     private boolean shouldBindToSurface() {
-        return isCameraAvailable() && mPreview != null && mPreview.isReady() && !mIsBound;
+        return isCameraAvailable() && mPreview != null && mPreview.hasSurface() && !mIsBound;
     }
 
     // The act of binding an "open" camera to a "ready" preview.
@@ -121,18 +133,37 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 mCamera.setPreviewTexture((SurfaceTexture) output);
             }
         } catch (IOException e) {
-            Log.e("bindToSurface:", "Failed to bind.", e);
+            LOG.e("bindToSurface:", "Failed to bind.", e);
             throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
         }
 
         mCaptureSize = computeCaptureSize();
         mPreviewSize = computePreviewSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
-        applySizesAndStartPreview("bindToSurface:");
         mIsBound = true;
     }
 
+    @WorkerThread
+    private void unbindFromSurface() {
+        mIsBound = false;
+        mPreviewSize = null;
+        mCaptureSize = null;
+        try {
+            if (mPreview.getOutputClass() == SurfaceHolder.class) {
+                mCamera.setPreviewDisplay(null);
+            } else {
+                mCamera.setPreviewTexture(null);
+            }
+        } catch (IOException e) {
+            LOG.e("unbindFromSurface", "Could not release surface", e);
+        }
+    }
+
+    private boolean shouldStartPreview() {
+        return isCameraAvailable() && mIsBound;
+    }
+
     // To be called when the preview size is setup or changed.
-    private void applySizesAndStartPreview(String log) {
+    private void startPreview(String log) {
         LOG.i(log, "Dispatching onCameraPreviewSizeChanged.");
         mCameraCallbacks.onCameraPreviewSizeChanged();
 
@@ -159,6 +190,53 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         LOG.i(log, "Started preview.");
     }
 
+    private void stopPreview() {
+        mPreviewFormat = 0;
+        mFrameManager.release();
+        mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
+        try {
+            mCamera.stopPreview();
+        } catch (Exception e) {
+            LOG.e("stopPreview", "Could not stop preview", e);
+        }
+    }
+
+    private void createCamera() {
+        try {
+            mCamera = Camera.open(mCameraId);
+        } catch (Exception e) {
+            LOG.e("createCamera:", "Failed to connect. Maybe in use by another app?");
+            throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
+        }
+        mCamera.setErrorCallback(this);
+
+        // Set parameters that might have been set before the camera was opened.
+        LOG.i("createCamera:", "Applying default parameters.");
+        Camera.Parameters params = mCamera.getParameters();
+        mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
+        applyDefaultFocus(params);
+        mergeFlash(params, Flash.DEFAULT);
+        mergeLocation(params, null);
+        mergeWhiteBalance(params, WhiteBalance.DEFAULT);
+        mergeHdr(params, Hdr.DEFAULT);
+        mergePlaySound(mPlaySounds);
+        params.setRecordingHint(mMode == Mode.VIDEO);
+        mCamera.setParameters(params);
+        mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
+    }
+
+    private void destroyCamera() {
+        try {
+            LOG.i("destroyCamera:", "Clean up.", "Releasing camera.");
+            mCamera.release();
+            LOG.i("destroyCamera:", "Clean up.", "Released camera.");
+        } catch (Exception e) {
+            LOG.w("destroyCamera:", "Clean up.", "Exception while releasing camera.", e);
+        }
+        mCamera = null;
+        mCameraOptions = null;
+    }
+
     @WorkerThread
     @Override
     void onStart() {
@@ -167,30 +245,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             onStop(); // Should not happen.
         }
         if (collectCameraId()) {
-            try {
-                mCamera = Camera.open(mCameraId);
-            } catch (Exception e) {
-                LOG.e("onStart:", "Failed to connect. Maybe in use by another app?");
-                throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
-            }
-            mCamera.setErrorCallback(this);
-
-            // Set parameters that might have been set before the camera was opened.
-            LOG.i("onStart:", "Applying default parameters.");
-            Camera.Parameters params = mCamera.getParameters();
-            mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
-            applyDefaultFocus(params);
-            mergeFlash(params, Flash.DEFAULT);
-            mergeLocation(params, null);
-            mergeWhiteBalance(params, WhiteBalance.DEFAULT);
-            mergeHdr(params, Hdr.DEFAULT);
-            mergePlaySound(mPlaySounds);
-            params.setRecordingHint(mMode == Mode.VIDEO);
-            mCamera.setParameters(params);
-
-            // Try starting preview.
-            mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
+            createCamera();
             if (shouldBindToSurface()) bindToSurface();
+            if (shouldStartPreview()) startPreview("onStart");
             LOG.i("onStart:", "Ended");
         }
     }
@@ -200,31 +257,14 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     void onStop() {
         LOG.i("onStop:", "About to clean up.");
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
-        mFrameManager.release();
-
+        if (mVideoRecorder != null) {
+            mVideoRecorder.stop();
+            mVideoRecorder = null;
+        }
         if (mCamera != null) {
-            LOG.i("onStop:", "Clean up.", "Ending video. mVideoRecorder is null?", mVideoRecorder == null);
-            if (mVideoRecorder != null) {
-                mVideoRecorder.stop();
-                mVideoRecorder = null;
-            }
-
-            try {
-                LOG.i("onStop:", "Clean up.", "Stopping preview.");
-                mCamera.setPreviewCallbackWithBuffer(null);
-                mCamera.stopPreview();
-                LOG.i("onStop:", "Clean up.", "Stopped preview.");
-            } catch (Exception e) {
-                LOG.w("onStop:", "Clean up.", "Exception while stopping preview.", e);
-            }
-
-            try {
-                LOG.i("onStop:", "Clean up.", "Releasing camera.");
-                mCamera.release();
-                LOG.i("onStop:", "Clean up.", "Released camera.");
-            } catch (Exception e) {
-                LOG.w("onStop:", "Clean up.", "Exception while releasing camera.", e);
-            }
+            stopPreview();
+            unbindFromSurface();
+            destroyCamera();
         }
         mCameraOptions = null;
         mCamera = null;
@@ -767,7 +807,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     void startAutoFocus(@Nullable final Gesture gesture, final PointF point) {
         // Must get width and height from the UI thread.
         int viewWidth = 0, viewHeight = 0;
-        if (mPreview != null && mPreview.isReady()) {
+        if (mPreview != null && mPreview.hasSurface()) {
             viewWidth = mPreview.getView().getWidth();
             viewHeight = mPreview.getView().getHeight();
         }

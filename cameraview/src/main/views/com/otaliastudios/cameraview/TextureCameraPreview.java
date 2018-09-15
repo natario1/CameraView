@@ -25,17 +25,17 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                onSurfaceAvailable(width, height);
+                dispatchOnOutputSurfaceAvailable(width, height);
             }
 
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-                onSurfaceSizeChanged(width, height);
+                dispatchOnOutputSurfaceSizeChanged(width, height);
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                onSurfaceDestroyed();
+                dispatchOnOutputSurfaceDestroyed();
                 return true;
             }
 
