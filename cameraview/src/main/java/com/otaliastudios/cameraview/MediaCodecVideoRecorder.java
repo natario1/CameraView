@@ -1,9 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
 import android.opengl.EGL14;
 import android.os.Build;
 import android.os.Handler;
@@ -63,7 +61,7 @@ class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.R
     @Override
     public void onRendererFrame(SurfaceTexture surfaceTexture) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
-            VideoTextureEncoder.EncoderConfig configuration = new VideoTextureEncoder.EncoderConfig(
+            VideoTextureEncoder.Config configuration = new VideoTextureEncoder.Config(
                     mResult.file,
                     mResult.size.getWidth(),
                     mResult.size.getHeight(),
