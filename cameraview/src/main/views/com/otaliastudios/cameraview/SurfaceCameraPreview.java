@@ -3,7 +3,6 @@ package com.otaliastudios.cameraview;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -46,17 +45,17 @@ class SurfaceCameraPreview extends CameraPreview<View, SurfaceHolder> {
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
                 LOG.i("callback:", "surfaceChanged", "w:", width, "h:", height, "firstTime:", mFirstTime);
                 if (mFirstTime) {
-                    onSurfaceAvailable(width, height);
+                    dispatchOnOutputSurfaceAvailable(width, height);
                     mFirstTime = false;
                 } else {
-                    onSurfaceSizeChanged(width, height);
+                    dispatchOnOutputSurfaceSizeChanged(width, height);
                 }
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
                 LOG.i("callback:", "surfaceDestroyed");
-                onSurfaceDestroyed();
+                dispatchOnOutputSurfaceDestroyed();
                 mFirstTime = true;
             }
         });

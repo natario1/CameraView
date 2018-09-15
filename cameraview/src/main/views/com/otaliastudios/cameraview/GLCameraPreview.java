@@ -69,7 +69,6 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         glView.setEGLContextClientVersion(2);
         glView.setRenderer(this);
         glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        // glView.getHolder().setFixedSize(600, 300);
         glView.getHolder().addCallback(new SurfaceHolder.Callback() {
             public void surfaceCreated(SurfaceHolder holder) {}
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
@@ -78,7 +77,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                onSurfaceDestroyed();
+                dispatchOnOutputSurfaceDestroyed();
             }
         });
         return glView;
@@ -99,7 +98,12 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     @Override
     void onDestroy() {
         super.onDestroy();
+        releaseInputSurfaceTexture();
+    }
+
+    private void releaseInputSurfaceTexture() {
         if (mInputSurfaceTexture != null) {
+            mInputSurfaceTexture.setOnFrameAvailableListener(null);
             mInputSurfaceTexture.release();
             mInputSurfaceTexture = null;
         }
@@ -109,9 +113,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         }
     }
 
-    // Renderer thread
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    private void createInputSurfaceTexture() {
         mOutputViewport = new GLViewport();
         mOutputTextureId = mOutputViewport.createTexture();
         mInputSurfaceTexture = new SurfaceTexture(mOutputTextureId);
@@ -129,18 +131,52 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
 
     // Renderer thread
     @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        createInputSurfaceTexture();
+    }
+
+    // Renderer thread
+    @Override
+    public void onSurfaceChanged(GL10 gl, final int width, final int height) {
         if (!mDispatched) {
-            onSurfaceAvailable(width, height);
+            dispatchOnOutputSurfaceAvailable(width, height);
             mDispatched = true;
-        } else {
-            onSurfaceSizeChanged(width, height);
+        } else if (mOutputSurfaceWidth != width || mOutputSurfaceHeight != height) {
+            // It did actually change. (Got some cases where onSurfaceChanged is called with same values). Go on.
+            // Since surface size changed does not work, we try to destroy and recreate.
+            // dispatchOnOutputSurfaceSizeChanged(width, height);
+
+            // Recreate the texture...
+            releaseInputSurfaceTexture();
+
+            // Tell the controller that the output surface was destroyed..
+            // And recreated.
+            dispatchOnOutputSurfaceDestroyed();
+            getView().post(new Runnable() {
+                @Override
+                public void run() {
+                    // getView().setPreserveEGLContextOnPause(true);
+                    getView().onPause();
+                    getView().onResume();
+                    // getView().setPreserveEGLContextOnPause(false);
+                    getView().queueEvent(new Runnable() {
+                        @Override
+                        public void run() {
+                            createInputSurfaceTexture();
+                            dispatchOnOutputSurfaceAvailable(width, height);
+                        }
+                    });
+                }
+            });
+
         }
     }
 
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        if (mInputSurfaceTexture == null) return;
+
         // Latch the latest frame.  If there isn't anything new,
         // we'll just re-use whatever was there before.
         mInputSurfaceTexture.updateTexImage();
@@ -151,8 +187,17 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
 
         // Draw the video frame.
         mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
-        Matrix.scaleM(mTransformMatrix, 0, mScaleX, mScaleY, 1);
+        if (isCropping()) {
+            Matrix.scaleM(mTransformMatrix, 0, mScaleX, mScaleY, 1);
+        }
+        if (mOutputViewport == null) return;
         mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
+    }
+
+    @Override
+    void setInputStreamSize(int width, int height) {
+        // mInputSurfaceTexture.setDefaultBufferSize(width, height);
+        super.setInputStreamSize(width, height);
     }
 
     @Override
@@ -164,7 +209,6 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     SurfaceTexture getOutput() {
         return mInputSurfaceTexture;
     }
-
 
     @Override
     boolean supportsCropping() {
@@ -200,6 +244,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
                 // We must increase width.
                 scaleX = target.toFloat() / current.toFloat();
             }
+            mCropping = scaleX > 1.02f || scaleY > 1.02f;
             mScaleX = 1F / scaleX;
             mScaleY = 1F / scaleY;
             getView().requestRender();

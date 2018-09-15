@@ -79,7 +79,7 @@ public abstract class CameraPreviewTest extends BaseTest {
     @Test
     public void testDefaults() {
         ensureAvailable();
-        assertTrue(preview.isReady());
+        assertTrue(preview.hasSurface());
         assertNotNull(preview.getView());
         assertNotNull(preview.getOutputClass());
     }
@@ -128,7 +128,7 @@ public abstract class CameraPreviewTest extends BaseTest {
         // Since desired is 'desired', let's fake a new view size that is consistent with it.
         // Ensure crop is not happening anymore.
         preview.mCropTask.listen();
-        preview.onSurfaceSizeChanged((int) (50f * desired), 50); // Wait...
+        preview.dispatchOnOutputSurfaceSizeChanged((int) (50f * desired), 50); // Wait...
         preview.mCropTask.await();
         assertEquals(desired, getViewAspectRatioWithScale(), 0.01f);
         assertFalse(preview.isCropping());

@@ -17,6 +17,7 @@ abstract class CameraPreview<T extends View, Output> {
     interface SurfaceCallback {
         void onSurfaceAvailable();
         void onSurfaceChanged();
+        void onSurfaceDestroyed();
     }
 
     private SurfaceCallback mSurfaceCallback;
@@ -55,7 +56,9 @@ abstract class CameraPreview<T extends View, Output> {
         LOG.i("setInputStreamSize:", "desiredW=", width, "desiredH=", height);
         mInputStreamWidth = width;
         mInputStreamHeight = height;
-        crop();
+        if (mInputStreamWidth > 0 && mInputStreamHeight > 0) {
+            crop();
+        }
     }
 
     final Size getInputStreamSize() {
@@ -75,30 +78,35 @@ abstract class CameraPreview<T extends View, Output> {
     }
 
 
-    protected final void onSurfaceAvailable(int width, int height) {
-        LOG.i("onSurfaceAvailable:", "w=", width, "h=", height);
+    protected final void dispatchOnOutputSurfaceAvailable(int width, int height) {
+        LOG.i("dispatchOnOutputSurfaceAvailable:", "w=", width, "h=", height);
         mOutputSurfaceWidth = width;
         mOutputSurfaceHeight = height;
-        crop();
+        if (mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0) {
+            crop();
+        }
         mSurfaceCallback.onSurfaceAvailable();
     }
 
 
     // As far as I can see, these are the view/surface dimensions.
     // This is called by subclasses.
-    protected final void onSurfaceSizeChanged(int width, int height) {
-        LOG.i("onSurfaceSizeChanged:", "w=", width, "h=", height);
+    protected final void dispatchOnOutputSurfaceSizeChanged(int width, int height) {
+        LOG.i("dispatchOnOutputSurfaceSizeChanged:", "w=", width, "h=", height);
         if (width != mOutputSurfaceWidth || height != mOutputSurfaceHeight) {
             mOutputSurfaceWidth = width;
             mOutputSurfaceHeight = height;
-            crop();
+            if (width > 0 && height > 0) {
+                crop();
+            }
             mSurfaceCallback.onSurfaceChanged();
         }
     }
 
-    protected final void onSurfaceDestroyed() {
+    protected final void dispatchOnOutputSurfaceDestroyed() {
         mOutputSurfaceWidth = 0;
         mOutputSurfaceHeight = 0;
+        mSurfaceCallback.onSurfaceDestroyed();
     }
 
     void onResume() {}
@@ -107,7 +115,7 @@ abstract class CameraPreview<T extends View, Output> {
 
     void onDestroy() {}
 
-    final boolean isReady() {
+    final boolean hasSurface() {
         return mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0;
     }
 
