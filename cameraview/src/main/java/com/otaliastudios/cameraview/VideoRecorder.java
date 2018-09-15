@@ -21,16 +21,15 @@ abstract class VideoRecorder {
 
     abstract void start();
 
-    final void stop() {
+    abstract void stop();
+
+    protected void dispatchResult() {
         if (mListener != null) {
-            close();
             mListener.onVideoResult(mResult);
             mListener = null;
             mResult = null;
         }
     }
-
-    abstract void close();
 
 
     interface VideoResultListener {

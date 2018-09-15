@@ -35,6 +35,7 @@ android {
         main.java.srcDirs += 'src/main/options'
         main.java.srcDirs += 'src/main/views'
         main.java.srcDirs += 'src/main/utils'
+        main.java.srcDirs += 'src/main/gles'
     }
 }
 

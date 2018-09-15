@@ -1,7 +1,6 @@
 package com.otaliastudios.cameraview;
 
 
-import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 
@@ -9,9 +8,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-class GLElement {
+class EglElement {
 
-    private final static CameraLogger LOG = CameraLogger.create(GLElement.class.getSimpleName());
+    private final static CameraLogger LOG = CameraLogger.create(EglElement.class.getSimpleName());
 
     // Identity matrix for general use.
     protected static final float[] IDENTITY_MATRIX = new float[16];

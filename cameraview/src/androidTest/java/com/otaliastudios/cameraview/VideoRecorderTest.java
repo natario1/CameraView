@@ -25,6 +25,7 @@ public class VideoRecorderTest extends BaseTest {
         VideoRecorder.VideoResultListener listener = Mockito.mock(VideoRecorder.VideoResultListener.class);
         VideoRecorder recorder = new VideoRecorder(result, listener) {
             void start() {}
+            void stop() { }
         };
         recorder.start();
         recorder.stop();

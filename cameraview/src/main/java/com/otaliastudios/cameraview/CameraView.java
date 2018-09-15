@@ -1171,11 +1171,25 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param file a file where the video will be saved
      */
-    public void takeVideo(File file) {
+    public void takeVideo(@Nullable File file) {
         if (file == null) {
             file = new File(getContext().getFilesDir(), "video.mp4");
         }
         mCameraController.takeVideo(file);
+        mUiHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mKeepScreenOn = getKeepScreenOn();
+                if (!mKeepScreenOn) setKeepScreenOn(true);
+            }
+        });
+    }
+
+    public void takeVideoSnapshot(@Nullable File file) {
+        if (file == null) {
+            file = new File(getContext().getFilesDir(), "video.mp4");
+        }
+        mCameraController.takeVideoSnapshot(file);
         mUiHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -1207,6 +1221,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         });
         setVideoMaxDuration(durationMillis);
         takeVideo(file);
+    }
+
+    public void takeVideoSnapshot(File file, int durationMillis) {
+        final int old = getVideoMaxDuration();
+        addCameraListener(new CameraListener() {
+            @Override
+            public void onVideoTaken(VideoResult result) {
+                setVideoMaxDuration(old);
+                removeCameraListener(this);
+            }
+        });
+        setVideoMaxDuration(durationMillis);
+        takeVideoSnapshot(file);
     }
 
 

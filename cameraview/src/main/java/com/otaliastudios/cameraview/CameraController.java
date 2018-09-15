@@ -331,6 +331,8 @@ abstract class CameraController implements
 
     abstract void takeVideo(@NonNull File file);
 
+    abstract void takeVideoSnapshot(@NonNull File file);
+
     abstract void stopVideo();
 
     abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);

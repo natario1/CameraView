@@ -3,14 +3,15 @@ package com.otaliastudios.cameraview;
 
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
-import android.opengl.Matrix;
-import android.util.Log;
 
 import java.nio.FloatBuffer;
 
-class GLViewport extends GLElement {
+/**
+ * This is a mix of 3 grafika classes, FullFrameRect, Texture2dProgram, Drawable2d.
+ */
+class EglViewport extends EglElement {
 
-    private final static CameraLogger LOG = CameraLogger.create(GLViewport.class.getSimpleName());
+    private final static CameraLogger LOG = CameraLogger.create(EglViewport.class.getSimpleName());
 
     // Simple vertex shader.
     private static final String SIMPLE_VERTEX_SHADER =
@@ -74,7 +75,7 @@ class GLViewport extends GLElement {
     // private int muTexOffsetLoc; // Used for filtering
     // private int muColorAdjustLoc; // Used for filtering
 
-    GLViewport() {
+    EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
         mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
         maPositionLoc = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
@@ -90,10 +91,13 @@ class GLViewport extends GLElement {
 
     }
 
+    void release(boolean doEglCleanup) {
+        if (doEglCleanup) GLES20.glDeleteProgram(mProgramHandle);
+        mProgramHandle = -1;
+    }
 
     void release() {
-        GLES20.glDeleteProgram(mProgramHandle);
-        mProgramHandle = -1;
+        release(true);
     }
 
     int createTexture() {
