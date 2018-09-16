@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.SurfaceTexture;
 import android.media.CamcorderProfile;
+import android.media.MediaFormat;
 import android.opengl.EGL14;
 import android.os.Build;
 import android.os.Handler;
@@ -65,13 +66,20 @@ class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.R
     @Override
     public void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
-            // Size must not be flipped based on rotation, unlike MediaRecorderVideoRecorder
-            Size size = mResult.getSize();
+            // Size must be flipped based on rotation, because we will rotate the texture in the encoder
+            Size size = mResult.getRotation() % 180 == 0 ? mResult.getSize() : mResult.getSize().flip();
+            // size = mResult.size;
             // Ensure width and height are divisible by 2, as I have read somewhere.
             int width = size.getWidth();
             int height = size.getHeight();
             width = width % 2 == 0 ? width : width + 1;
             height = height % 2 == 0 ? height : height + 1;
+            String type = "";
+            switch (mResult.codec) {
+                case H_263: type = "video/3gpp"; break; // MediaFormat.MIMETYPE_VIDEO_H263;
+                case H_264: type = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
+                case DEVICE_DEFAULT: type = "video/avc"; break;
+            }
             VideoTextureEncoder.Config configuration = new VideoTextureEncoder.Config(
                     mResult.getFile(),
                     width,
@@ -81,6 +89,7 @@ class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.R
                     mResult.getRotation(),
                     scaleX,
                     scaleY,
+                    type,
                     EGL14.eglGetCurrentContext()
             );
             mEncoder.startRecording(configuration);
