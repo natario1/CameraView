@@ -719,7 +719,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.isSnapshot = true;
                 videoResult.codec = mVideoCodec;
                 videoResult.location = mLocation;
-                videoResult.rotation = offset(REF_SENSOR, REF_OUTPUT);
 
                 // What matters as size here is the preview size, which is passed to the GLCameraPreview
                 // surface texture, which is then passed to the encoder. The view size has no influence.
@@ -730,15 +729,30 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 Size preview = getPreviewSize(REF_VIEW); // The preview stream size in REF_VIEW
                 Size view = mPreview.getOutputSurfaceSize(); // The view size in REF_VIEW
                 Rect crop = CropHelper.computeCrop(preview, AspectRatio.of(view.getWidth(), view.getHeight()));
-                Size cropSize = new Size(crop.width(), crop.height()); // The visible size in REF_VIEW
-                Size finalSize = flip(REF_VIEW, REF_OUTPUT) ? cropSize.flip() : cropSize; // Move the REF_VIEW size to REF_OUTPUT
+                Size finalSize = new Size(crop.width(), crop.height()); // The visible size in REF_VIEW
+                // ^ We could flip to REF_OUTPUT here and this is what we are doing, but since the video codec recorder
+                // does not account rotation, we must stay in REF_VIEW for this to work well.
 
-                // Without cropping (missing ATM), the actual size is the preview size with no crops.
+                // Without cropping (missing ATM - Edit: DONE), the actual size is the preview size with no crops.
                 // Passing a cropped size while the cropping is not implemented at the encoder surface level,
                 // would cause distortions and crashes in the video encoder.
-                // Size finalSize2 = getPreviewSize(REF_OUTPUT);
+                // Size finalSize2 = getPreviewSize(REF_VIEW);
 
+                // With phone landscape on the left:
+                // offset(REF_SENSOR, REF_VIEW) -> 270 (correct)
+                // offset(REF_VIEW, REF_OUTPUT) -> 270 (correct)
+                // offset(REF_SENSOR, REF_OUTPUT) -> 180 (not correct)
+
+                // With straight phone:
+                // offset(REF_SENSOR, REF_VIEW) -> 270 (not correct)
+                // offset(REF_VIEW, REF_OUTPUT) -> 0 (correct)
+                // offset(REF_SENSOR, REF_OUTPUT) -> 270 (not correct)
+
+                // So it looks like REF_VIEW REF_OUTPUT is the correct one, meaning that
+                // the input data in this case is not in the REF_SENSOR coordinates but rather
+                // in the REF_VIEW ones.
                 videoResult.size = finalSize;
+                videoResult.rotation = offset(REF_VIEW, REF_OUTPUT);
                 videoResult.audio = mAudio;
                 videoResult.maxSize = mVideoMaxSize;
                 videoResult.maxDuration = mVideoMaxDuration;
