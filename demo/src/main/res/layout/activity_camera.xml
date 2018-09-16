@@ -11,10 +11,12 @@
     <com.otaliastudios.cameraview.CameraView
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/camera"
-        android:layout_width="300px"
-        android:layout_height="700px"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:layout_marginBottom="88dp"
         android:keepScreenOn="true"
+        app:cameraPreview="surface"
         app:cameraExperimental="true"
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
@@ -45,13 +47,14 @@
         android:layout_gravity="bottom"
         android:padding="16dp"
         android:orientation="horizontal"
+        android:background="@color/colorPrimary"
         android:weightSum="4">
 
         <ImageButton
             android:id="@+id/edit"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:background="@drawable/background"
+            android:background="?attr/selectableItemBackgroundBorderless"
             app:srcCompat="@drawable/ic_edit" />
 
         <Space
@@ -63,7 +66,7 @@
             android:id="@+id/capturePicture"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:background="@drawable/background"
+            android:background="?attr/selectableItemBackgroundBorderless"
             app:srcCompat="@drawable/ic_photo" />
 
         <Space
@@ -76,8 +79,8 @@
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:orientation="vertical"
-            android:gravity="center"
-            android:background="@drawable/background" >
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:gravity="center" >
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -100,7 +103,7 @@
             android:id="@+id/captureVideo"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:background="@drawable/background"
+            android:background="?attr/selectableItemBackgroundBorderless"
             app:srcCompat="@drawable/ic_video" />
 
         <Space
@@ -114,8 +117,8 @@
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:orientation="vertical"
-            android:gravity="center"
-            android:background="@drawable/background" >
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:gravity="center" >
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
