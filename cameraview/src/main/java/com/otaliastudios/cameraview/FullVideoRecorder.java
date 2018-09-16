@@ -7,18 +7,16 @@ import android.media.MediaRecorder;
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaRecorder} APIs.
  */
-class MediaRecorderVideoRecorder extends VideoRecorder {
+class FullVideoRecorder extends VideoRecorder {
 
-    private static final String TAG = MediaRecorderVideoRecorder.class.getSimpleName();
+    private static final String TAG = FullVideoRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private MediaRecorder mMediaRecorder;
     private CamcorderProfile mProfile;
-    private Mapper mMapper;
 
-    MediaRecorderVideoRecorder(VideoResult stub, VideoResultListener listener, Camera camera, int cameraId) {
+    FullVideoRecorder(VideoResult stub, VideoResultListener listener, Camera camera, int cameraId) {
         super(stub, listener);
-        mMapper = new Mapper1();
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setCamera(camera);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
@@ -102,7 +100,6 @@ class MediaRecorderVideoRecorder extends VideoRecorder {
         }
         mProfile = null;
         mMediaRecorder = null;
-        mMapper = null;
         dispatchResult();
     }
 }

@@ -1,8 +1,6 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.SurfaceTexture;
-import android.media.CamcorderProfile;
-import android.media.MediaFormat;
 import android.opengl.EGL14;
 import android.os.Build;
 import android.os.Handler;
@@ -16,9 +14,9 @@ import android.support.annotation.RequiresApi;
  * TODO when cropping is huge, the first frame of the video result, noticeably, has no transformation applied. Don't know why.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.RendererFrameCallback {
+class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.RendererFrameCallback {
 
-    private static final String TAG = MediaCodecVideoRecorder.class.getSimpleName();
+    private static final String TAG = SnapshotVideoRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private static final int STATE_RECORDING = 0;
@@ -31,7 +29,7 @@ class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.R
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
 
-    MediaCodecVideoRecorder(VideoResult stub, VideoResultListener listener, GLCameraPreview preview, int cameraId) {
+    SnapshotVideoRecorder(VideoResult stub, VideoResultListener listener, GLCameraPreview preview) {
         super(stub, listener);
         mEncoder = new VideoTextureEncoder();
         mPreview = preview;
