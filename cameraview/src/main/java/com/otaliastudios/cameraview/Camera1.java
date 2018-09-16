@@ -12,7 +12,6 @@ import android.location.Location;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.support.annotation.WorkerThread;
 import android.support.media.ExifInterface;
 import android.view.SurfaceHolder;
@@ -692,7 +691,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
                 // Initialize the media recorder
                 mCamera.unlock();
-                mVideoRecorder = new MediaRecorderVideoRecorder(videoResult, Camera1.this, mCamera, mCameraId);
+                mVideoRecorder = new FullVideoRecorder(videoResult, Camera1.this, mCamera, mCameraId);
                 mVideoRecorder.start();
             }
         });
@@ -758,7 +757,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.maxDuration = mVideoMaxDuration;
 
                 GLCameraPreview cameraPreview = (GLCameraPreview) mPreview;
-                mVideoRecorder = new MediaCodecVideoRecorder(videoResult, Camera1.this, cameraPreview, mCameraId);
+                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview);
                 mVideoRecorder.start();
             }
         });
