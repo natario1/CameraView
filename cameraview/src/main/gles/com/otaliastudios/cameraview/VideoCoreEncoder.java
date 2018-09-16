@@ -58,7 +58,7 @@ class VideoCoreEncoder {
     /**
      * Configures encoder and muxer state, and prepares the input Surface.
      */
-    public VideoCoreEncoder(int width, int height, int bitRate, int frameRate, File outputFile)
+    public VideoCoreEncoder(int width, int height, int bitRate, int frameRate, int rotation, File outputFile)
             throws IOException {
         mBufferInfo = new MediaCodec.BufferInfo();
 
@@ -71,6 +71,7 @@ class VideoCoreEncoder {
         format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
+        format.setInteger("rotation-degrees", rotation);
 
         // Create a MediaCodec encoder, and configure it with our format.  Get a Surface
         // we can use for input and wrap it with a class that handles the EGL work.

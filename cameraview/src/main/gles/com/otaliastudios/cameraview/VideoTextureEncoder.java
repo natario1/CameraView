@@ -98,12 +98,14 @@ class VideoTextureEncoder implements Runnable {
         final int mHeight;
         final int mBitRate;
         final int mFrameRate;
+        final int mRotation;
         final float mScaleX;
         final float mScaleY;
         final EGLContext mEglContext;
 
         Config(File outputFile, int width, int height,
               int bitRate, int frameRate,
+              int rotation,
               float scaleX, float scaleY,
               EGLContext sharedEglContext) {
             mOutputFile = outputFile;
@@ -114,6 +116,7 @@ class VideoTextureEncoder implements Runnable {
             mEglContext = sharedEglContext;
             mScaleX = scaleX;
             mScaleY = scaleY;
+            mRotation = rotation;
         }
 
         @Override
@@ -125,7 +128,10 @@ class VideoTextureEncoder implements Runnable {
 
     private void prepareEncoder(Config config) {
         try {
-            mVideoEncoder = new VideoCoreEncoder(config.mWidth, config.mHeight, config.mBitRate, config.mFrameRate, config.mOutputFile);
+            mVideoEncoder = new VideoCoreEncoder(config.mWidth, config.mHeight,
+                    config.mBitRate, config.mFrameRate,
+                    config.mRotation,
+                    config.mOutputFile);
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }

@@ -9,6 +9,10 @@ import android.support.annotation.RequiresApi;
 
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaCodec} APIs.
+ *
+ * TODO rotation support. Currently we pass the wrong size
+ * TODO audio support
+ * TODO when cropping is huge, the first frame of the video result, noticeably, has no transformation applied. Don't know why.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.RendererFrameCallback {
@@ -19,7 +23,6 @@ class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.R
     private static final int STATE_RECORDING = 0;
     private static final int STATE_NOT_RECORDING = 1;
 
-    private CamcorderProfile mProfile;
     private VideoTextureEncoder mEncoder;
     private GLCameraPreview mPreview;
 
@@ -29,7 +32,6 @@ class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.R
 
     MediaCodecVideoRecorder(VideoResult stub, VideoResultListener listener, GLCameraPreview preview, int cameraId) {
         super(stub, listener);
-        mProfile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_HIGH);
         mEncoder = new VideoTextureEncoder();
         mPreview = preview;
         mPreview.setRendererFrameCallback(this);
@@ -38,6 +40,8 @@ class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.R
     @Override
     void start() {
         mDesiredState = STATE_RECORDING;
+        // TODO respect maxSize by doing inspecting frameRate, bitRate and frame size?
+        // TODO do this at the encoder level, not here with a handler.
         if (mResult.maxDuration > 0) {
             new Handler().postDelayed(new Runnable() {
                 @Override
@@ -61,17 +65,20 @@ class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.R
     @Override
     public void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
+            // Size must not be flipped based on rotation, unlike MediaRecorderVideoRecorder
+            Size size = mResult.getSize();
             // Ensure width and height are divisible by 2, as I have read somewhere.
-            int width = mResult.size.getWidth();
-            int height = mResult.size.getHeight();
+            int width = size.getWidth();
+            int height = size.getHeight();
             width = width % 2 == 0 ? width : width + 1;
             height = height % 2 == 0 ? height : height + 1;
             VideoTextureEncoder.Config configuration = new VideoTextureEncoder.Config(
-                    mResult.file,
+                    mResult.getFile(),
                     width,
                     height,
                     1000000,
                     30,
+                    mResult.getRotation(),
                     scaleX,
                     scaleY,
                     EGL14.eglGetCurrentContext()
