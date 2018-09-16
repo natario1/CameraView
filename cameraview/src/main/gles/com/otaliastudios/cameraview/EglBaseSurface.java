@@ -195,6 +195,5 @@ class EglBaseSurface extends EglElement {
         } finally {
             if (bos != null) bos.close();
         }
-        Log.d(TAG, "Saved " + width + "x" + height + " frame as '" + filename + "'");
     }
 }

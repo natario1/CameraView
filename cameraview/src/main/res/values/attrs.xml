@@ -106,6 +106,12 @@
             <enum name="on" value="1" />
         </attr>
 
+        <attr name="cameraPreview" format="enum">
+            <enum name="surface" value="0" />
+            <enum name="texture" value="1" />
+            <enum name="glSurface" value="2" />
+        </attr>
+
         <attr name="cameraPlaySounds" format="boolean" />
 
         <attr name="cameraVideoMaxSize" format="float" />

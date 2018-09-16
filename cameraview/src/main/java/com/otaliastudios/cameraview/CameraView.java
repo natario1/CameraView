@@ -53,6 +53,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     // Self managed parameters
     private boolean mPlaySounds;
     private HashMap<Gesture, GestureAction> mGestureMap = new HashMap<>(4);
+    private Preview mPreview;
 
     // Components
     /* for tests */ CameraCallbacks mCameraCallbacks;
@@ -96,6 +97,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // Self managed
         boolean playSounds = a.getBoolean(R.styleable.CameraView_cameraPlaySounds, DEFAULT_PLAY_SOUNDS);
         mExperimental = a.getBoolean(R.styleable.CameraView_cameraExperimental, false);
+        mPreview = Preview.fromValue(a.getInteger(R.styleable.CameraView_cameraPreview, Preview.DEFAULT.value()));
 
         // Camera controller params
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT.value()));
@@ -229,12 +231,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
-        // TextureView is not supported without hardware acceleration.
         LOG.w("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
-        if (mExperimental) return new GLCameraPreview(context, container, null);
-        return isHardwareAccelerated() ?
-                new TextureCameraPreview(context, container, null) :
-                new SurfaceCameraPreview(context, container, null);
+        switch (mPreview) {
+            case SURFACE: return new SurfaceCameraPreview(context, container, null);
+            case TEXTURE: {
+                if (isHardwareAccelerated()) { // TextureView is not supported without hardware acceleration.
+                    return new TextureCameraPreview(context, container, null);
+                }
+            }
+            case GL_SURFACE: default: {
+                return new GLCameraPreview(context, container, null);
+            }
+        }
     }
 
     /* for tests */ void instantiatePreview() {
@@ -698,6 +706,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             setWhiteBalance((WhiteBalance) control);
         } else if (control instanceof VideoCodec) {
             setVideoCodec((VideoCodec) control);
+        } else if (control instanceof Preview) {
+            setPreview((Preview) control);
         }
     }
 
@@ -810,6 +820,22 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setHdr(Hdr hdr) {
         mCameraController.setHdr(hdr);
+    }
+
+    /**
+     * Controls the preview engine. Should only be called
+     * if this CameraView was never added to any window
+     * (like if you created it programmatically).
+     * Otherwise, it has no effect.
+     *
+     * @see Preview#SURFACE
+     * @see Preview#TEXTURE
+     * @see Preview#GL_SURFACE
+     *
+     * @param preview desired preview engine
+     */
+    public void setPreview(Preview preview) {
+        mPreview = preview;
     }
 
 
