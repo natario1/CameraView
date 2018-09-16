@@ -329,48 +329,21 @@ class VideoTextureEncoder implements Runnable {
                     // We must scale this matrix like GLCameraPreview does, because it might have some cropping.
                     // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
 
-                    // We also must rotate this matrix. In GLCameraPreview it is not needed because it is a live
-                    // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
-                    // Rotation also takes place with respect to the origin (the Z axis), so we must apply another Translation to compensate.
-
-                    // The order of operations must be translate, rotate & scale.
                     float scaleX = encoder.mTransformationScaleX;
                     float scaleY = encoder.mTransformationScaleY;
-                    int rotation = encoder.mTransformationRotation;
-                    float W = scaleX;
-                    float H = scaleY;
                     float scaleTranslX = (1F - scaleX) / 2F;
                     float scaleTranslY = (1F - scaleY) / 2F;
-                    float rotationTranslX = 0F;
-                    float rotationTranslY = 0F;
-                    boolean flip = false;// rotation % 180 != 0;
-                    Log.e("VideoTextureEncoder", "Rotation is " + rotation);
-                    if (rotation == 90) {
-                        rotationTranslX = W / 2F;
-                        rotationTranslY = W / 2F;
-                    } else if (rotation == 180) {
-                        rotationTranslX = W / 2F;
-                        rotationTranslY = H / 2F;
-                    } else if (rotation == 270) {
-                        rotationTranslX = H / 2F;
-                        rotationTranslY = H / 2F;
-                        Log.e("VideoTextureEncoder", "Rotation translY is" + rotationTranslY + ", h is " + H);
-                    }
-
-                    // Matrix.translateM(transform, 0, 0, 0, 0); // vedo il lato destro e alto
-                    // Matrix.translateM(transform, 0, 0, 0.5F, 0); // same
-                    // Matrix.translateM(transform, 0, 0, -0.5F, 0); // peggio
-                    // Matrix.translateM(transform, 0, 0.5F, 0, 0); // peggio: vedo il pixel in alto a dx
-                    // Matrix.translateM(transform, 0, -0.5F, 0, 0); // ho aggiustato la VERTICALE
-                    // Matrix.translateM(transform, 0, -0.5F, -1, 0); // no changes
-                    // Matrix.translateM(transform, 0, -0.5F, 1, 0); // ci siamo quasi
-                    Matrix.translateM(transform, 0, -0.5F, 1.75F, 0); // ottimo! ma è scalato male!!
-                    Matrix.rotateM(transform, 0, rotation, 0, 0, 1);
-                    Matrix.translateM(transform, 0, rotationTranslX, rotationTranslY, 0);
-
-
                     Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
                     Matrix.scaleM(transform, 0, scaleX, scaleY, 1);
+
+                    // We also must rotate this matrix. In GLCameraPreview it is not needed because it is a live
+                    // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
+                    // Rotation also takes place with respect to the origin (the Z axis), so we must
+                    // translate to origin, rotate, then back to where we were.
+
+                    Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
+                    Matrix.rotateM(transform, 0, encoder.mTransformationRotation, 0, 0, 1);
+                    Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
                     encoder.mVideoEncoder.drainEncoder(false);
                     encoder.mFullScreen.drawFrame(encoder.mTextureId, transform);
