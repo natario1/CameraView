@@ -59,13 +59,21 @@ class MediaCodecVideoRecorder extends VideoRecorder implements GLCameraPreview.R
     }
 
     @Override
-    public void onRendererFrame(SurfaceTexture surfaceTexture) {
+    public void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
+            // Ensure width and height are divisible by 2, as I have read somewhere.
+            int width = mResult.size.getWidth();
+            int height = mResult.size.getHeight();
+            width = width % 2 == 0 ? width : width + 1;
+            height = height % 2 == 0 ? height : height + 1;
             VideoTextureEncoder.Config configuration = new VideoTextureEncoder.Config(
                     mResult.file,
-                    mResult.size.getWidth(),
-                    mResult.size.getHeight(),
+                    width,
+                    height,
                     1000000,
+                    30,
+                    scaleX,
+                    scaleY,
                     EGL14.eglGetCurrentContext()
             );
             mEncoder.startRecording(configuration);

@@ -45,10 +45,7 @@ import java.nio.ByteBuffer;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class VideoCoreEncoder {
 
-    // TODO: these ought to be configurable as well
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
-    private static final int FRAME_RATE = 30;               // 30fps
-    private static final int IFRAME_INTERVAL = 5;           // 5 seconds between I-frames
 
     private Surface mInputSurface;
     private MediaMuxer mMuxer;
@@ -61,7 +58,7 @@ class VideoCoreEncoder {
     /**
      * Configures encoder and muxer state, and prepares the input Surface.
      */
-    public VideoCoreEncoder(int width, int height, int bitRate, File outputFile)
+    public VideoCoreEncoder(int width, int height, int bitRate, int frameRate, File outputFile)
             throws IOException {
         mBufferInfo = new MediaCodec.BufferInfo();
 
@@ -72,8 +69,8 @@ class VideoCoreEncoder {
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
 
         // Create a MediaCodec encoder, and configure it with our format.  Get a Surface
         // we can use for input and wrap it with a class that handles the EGL work.

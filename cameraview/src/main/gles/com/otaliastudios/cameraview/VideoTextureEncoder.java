@@ -17,6 +17,7 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.SurfaceTexture;
 import android.opengl.EGLContext;
+import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -73,6 +74,8 @@ class VideoTextureEncoder implements Runnable {
     private int mTextureId;
     private int mFrameNum;
     private VideoCoreEncoder mVideoEncoder;
+    private float mTransformationScaleX = 1F;
+    private float mTransformationScaleY = 1F;
 
     // ----- accessed by multiple threads -----
     private volatile EncoderHandler mHandler;
@@ -88,22 +91,29 @@ class VideoTextureEncoder implements Runnable {
      * explicit synchronization (and don't need to worry about it getting tweaked out from
      * under us).
      * <p>
-     * TODO: make frame rate and iframe interval configurable?
      */
-    public static class Config {
+    static class Config {
         final File mOutputFile;
         final int mWidth;
         final int mHeight;
         final int mBitRate;
+        final int mFrameRate;
+        final float mScaleX;
+        final float mScaleY;
         final EGLContext mEglContext;
 
-        public Config(File outputFile, int width, int height, int bitRate,
-                      EGLContext sharedEglContext) {
+        Config(File outputFile, int width, int height,
+              int bitRate, int frameRate,
+              float scaleX, float scaleY,
+              EGLContext sharedEglContext) {
             mOutputFile = outputFile;
             mWidth = width;
             mHeight = height;
             mBitRate = bitRate;
+            mFrameRate = frameRate;
             mEglContext = sharedEglContext;
+            mScaleX = scaleX;
+            mScaleY = scaleY;
         }
 
         @Override
@@ -113,18 +123,18 @@ class VideoTextureEncoder implements Runnable {
         }
     }
 
-    private void prepareEncoder(EGLContext sharedContext, int width, int height, int bitRate,
-                                File outputFile) {
+    private void prepareEncoder(Config config) {
         try {
-            mVideoEncoder = new VideoCoreEncoder(width, height, bitRate, outputFile);
+            mVideoEncoder = new VideoCoreEncoder(config.mWidth, config.mHeight, config.mBitRate, config.mFrameRate, config.mOutputFile);
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
-        mEglCore = new EglCore(sharedContext, EglCore.FLAG_RECORDABLE);
+        mEglCore = new EglCore(config.mEglContext, EglCore.FLAG_RECORDABLE);
         mInputWindowSurface = new EglWindowSurface(mEglCore, mVideoEncoder.getInputSurface(), true);
         mInputWindowSurface.makeCurrent();
-
         mFullScreen = new EglViewport();
+        mTransformationScaleX = config.mScaleX;
+        mTransformationScaleY = config.mScaleY;
     }
 
     private void releaseEncoder() {
@@ -216,6 +226,10 @@ class VideoTextureEncoder implements Runnable {
 
         float[] transform = new float[16]; // TODO - avoid alloc every frame. Not easy, need a pool
         st.getTransformMatrix(transform);
+        float translX = (1F - mTransformationScaleX) / 2F;
+        float translY = (1F - mTransformationScaleY) / 2F;
+        Matrix.translateM(transform, 0, translX, translY, 0);
+        Matrix.scaleM(transform, 0, mTransformationScaleX, mTransformationScaleY, 1);
         long timestamp = st.getTimestamp();
         if (timestamp == 0) {
             // Seeing this after device is toggled off/on with power button.  The
@@ -291,10 +305,7 @@ class VideoTextureEncoder implements Runnable {
                 case MSG_START_RECORDING:
                     encoder.mFrameNum = 0;
                     Config config = (Config) obj;
-                    encoder.prepareEncoder(config.mEglContext,
-                            config.mWidth, config.mHeight,
-                            config.mBitRate,
-                            config.mOutputFile);
+                    encoder.prepareEncoder(config);
                     break;
                 case MSG_STOP_RECORDING:
                     encoder.mVideoEncoder.drainEncoder(true);

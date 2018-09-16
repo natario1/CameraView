@@ -720,12 +720,25 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.codec = mVideoCodec;
                 videoResult.location = mLocation;
                 videoResult.rotation = offset(REF_SENSOR, REF_OUTPUT);
+
+                // What matters as size here is the preview size, which is passed to the GLCameraPreview
+                // surface texture, which is then passed to the encoder. The view size has no influence.
+
+                // CROPPING: We must make sure that the encoder applies our special transformation
+                // to the data so that it is cropped. In this case, we must CROP the preview size based
+                // on the view bounds, like below:
                 Size preview = getPreviewSize(REF_VIEW); // The preview stream size in REF_VIEW
                 Size view = mPreview.getOutputSurfaceSize(); // The view size in REF_VIEW
                 Rect crop = CropHelper.computeCrop(preview, AspectRatio.of(view.getWidth(), view.getHeight()));
                 Size cropSize = new Size(crop.width(), crop.height()); // The visible size in REF_VIEW
-                // Move the REF_VIEW size to REF_OUTPUT
-                videoResult.size = flip(REF_VIEW, REF_OUTPUT) ? cropSize.flip() : cropSize;
+                Size finalSize = flip(REF_VIEW, REF_OUTPUT) ? cropSize.flip() : cropSize; // Move the REF_VIEW size to REF_OUTPUT
+
+                // Without cropping (missing ATM), the actual size is the preview size with no crops.
+                // Passing a cropped size while the cropping is not implemented at the encoder surface level,
+                // would cause distortions and crashes in the video encoder.
+                // Size finalSize2 = getPreviewSize(REF_OUTPUT);
+
+                videoResult.size = finalSize;
                 videoResult.audio = mAudio;
                 videoResult.maxSize = mVideoMaxSize;
                 videoResult.maxDuration = mVideoMaxDuration;

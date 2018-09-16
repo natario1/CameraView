@@ -172,12 +172,20 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         }
 
         if (mRendererFrameCallback != null) {
-            mRendererFrameCallback.onRendererFrame(mInputSurfaceTexture);
+            mRendererFrameCallback.onRendererFrame(mInputSurfaceTexture, mScaleX, mScaleY);
         }
 
         // Draw the video frame.
         mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
         if (isCropping()) {
+            // If the view is 10x1000 (very tall), it will show only the left strip of the preview (not the center one).
+            // If the view is 1000x10 (very large), it will show only the bottom strip of the preview (not the center one).
+            // We must use Matrix.translateM, and it must happen before the crop.
+            float translX = (1F - mScaleX) / 2F;
+            float translY = (1F - mScaleY) / 2F;
+            Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
+
+            // Crop. Works, but without translation, it is not centered.
             Matrix.scaleM(mTransformMatrix, 0, mScaleX, mScaleY, 1);
         }
         mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
@@ -336,7 +344,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         void onRendererTextureCreated(int textureId);
 
         // Renderer thread.
-        void onRendererFrame(SurfaceTexture surfaceTexture);
+        void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY);
     }
 
     void setRendererFrameCallback(@Nullable RendererFrameCallback callback) {
