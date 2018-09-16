@@ -32,6 +32,19 @@
 - VideoSizeSelector: added. It is needed to choose the capture size in VIDEO mode.
   Defaults to SizeSelectors.biggest(), but you can choose by aspect ratio or whatever.
 - isTakingPicture(): added on top of isTakingVideo().
-
-TODO: improve gles stuff
-TODO: takeVideoSnapshot
+- takeVideoSnapshot(): new api. Requires the experimental flag, API 18 or it will throw.
+  Respects orientation, videocodec and max duration limit.
+  Automatically rotates the data. Automatically crops the video.
+  NO audio support.
+  NO maxSize limit.
+- New cameraPreview XML attribute lets you choose the backing preview engine (surfaceView, textureView, GlSurfaceView).
+  The default is GlSurfaceView and it is highly recommended that you do not change this.
+  
+TODO: cameraPreview documentation    
+TODO: takeVideoSnapshot documentation
+TODO: add audio to the video snapshots
+TODO: create PictureRecorder interface
+      create FullPictureRecorder implementation that just uses camera.takePicture
+      create SnapshotPictureRecorder implementation that, for now, uses camera.setOneShotPreviewCallback
+      improve SnapshotPictureRecorder so that, if preview is GL, we catch the preview through GLES drawing
+      this would finally remove the RotationHelper!

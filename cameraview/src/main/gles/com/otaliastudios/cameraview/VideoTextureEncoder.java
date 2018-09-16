@@ -142,7 +142,8 @@ class VideoTextureEncoder implements Runnable {
         }
         mEglCore = new EglCore(config.mEglContext, EglCore.FLAG_RECORDABLE);
         mInputWindowSurface = new EglWindowSurface(mEglCore, mVideoEncoder.getInputSurface(), true);
-        mInputWindowSurface.makeCurrent();
+        mInputWindowSurface.makeCurrent(); // drawing will happen on the InputWindowSurface, which
+                                           // is backed by mVideoEncoder.getInputSurface()
         mFullScreen = new EglViewport();
         mTransformationScaleX = config.mScaleX;
         mTransformationScaleY = config.mScaleY;

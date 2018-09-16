@@ -76,6 +76,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
                 dispatchOnOutputSurfaceDestroyed();
+                mDispatched = false;
             }
         });
         return glView;
