@@ -45,8 +45,6 @@ import java.nio.ByteBuffer;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class VideoCoreEncoder {
 
-    private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
-
     private Surface mInputSurface;
     private MediaMuxer mMuxer;
     private MediaCodec mEncoder;
@@ -58,11 +56,11 @@ class VideoCoreEncoder {
     /**
      * Configures encoder and muxer state, and prepares the input Surface.
      */
-    public VideoCoreEncoder(int width, int height, int bitRate, int frameRate, int rotation, File outputFile)
+    public VideoCoreEncoder(int width, int height, int bitRate, int frameRate, int rotation, File outputFile, String mimeType)
             throws IOException {
         mBufferInfo = new MediaCodec.BufferInfo();
 
-        MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
+        MediaFormat format = MediaFormat.createVideoFormat(mimeType, width, height);
 
         // Set some properties.  Failing to specify some of these can cause the MediaCodec
         // configure() call to throw an unhelpful exception.
@@ -75,7 +73,7 @@ class VideoCoreEncoder {
 
         // Create a MediaCodec encoder, and configure it with our format.  Get a Surface
         // we can use for input and wrap it with a class that handles the EGL work.
-        mEncoder = MediaCodec.createEncoderByType(MIME_TYPE);
+        mEncoder = MediaCodec.createEncoderByType(mimeType);
         mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mInputSurface = mEncoder.createInputSurface();
         mEncoder.start();
