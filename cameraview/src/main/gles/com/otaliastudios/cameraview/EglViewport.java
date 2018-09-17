@@ -56,20 +56,21 @@ class EglViewport extends EglElement {
     };
 
     // Stuff from Drawable2d.FULL_RECTANGLE
-    private FloatBuffer mVertexArray = floatBuffer(FULL_RECTANGLE_COORDS);
-    private FloatBuffer mTexCoordArray = floatBuffer(FULL_RECTANGLE_TEX_COORDS);
+    private FloatBuffer mVertexCoordinatesArray = floatBuffer(FULL_RECTANGLE_COORDS);
+    private FloatBuffer mTextureCoordinatesArray = floatBuffer(FULL_RECTANGLE_TEX_COORDS);
     private int mVertexCount = FULL_RECTANGLE_COORDS.length / 2;
-    private final int mCoordsPerVertex = 2;
+    private final int mCoordinatesPerVertex = 2;
     private final int mVertexStride = 8;
-    private final int mTexCoordStride = 8;
+    private final int mTextureStride = 8;
 
     // Stuff from Texture2dProgram
     private int mProgramHandle;
     private int mTextureTarget;
-    private int muMVPMatrixLoc;
-    private int muTexMatrixLoc;
-    private int maPositionLoc;
-    private int maTextureCoordLoc;
+    // Program attributes
+    private int muMVPMatrixLocation;
+    private int muTexMatrixLocation;
+    private int maPositionLocation;
+    private int maTextureCoordLocation;
 
     // private int muKernelLoc; // Used for filtering
     // private int muTexOffsetLoc; // Used for filtering
@@ -78,14 +79,14 @@ class EglViewport extends EglElement {
     EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
         mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
-        maPositionLoc = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
-        checkLocation(maPositionLoc, "aPosition");
-        maTextureCoordLoc = GLES20.glGetAttribLocation(mProgramHandle, "aTextureCoord");
-        checkLocation(maTextureCoordLoc, "aTextureCoord");
-        muMVPMatrixLoc = GLES20.glGetUniformLocation(mProgramHandle, "uMVPMatrix");
-        checkLocation(muMVPMatrixLoc, "uMVPMatrix");
-        muTexMatrixLoc = GLES20.glGetUniformLocation(mProgramHandle, "uTexMatrix");
-        checkLocation(muTexMatrixLoc, "uTexMatrix");
+        maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
+        checkLocation(maPositionLocation, "aPosition");
+        maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, "aTextureCoord");
+        checkLocation(maTextureCoordLocation, "aTextureCoord");
+        muMVPMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uMVPMatrix");
+        checkLocation(muMVPMatrixLocation, "uMVPMatrix");
+        muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uTexMatrix");
+        checkLocation(muTexMatrixLocation, "uTexMatrix");
 
         // Stuff from Drawable2d.FULL_RECTANGLE
 
@@ -122,15 +123,15 @@ class EglViewport extends EglElement {
         return texId;
     }
 
-    void drawFrame(int textureId, float[] texMatrix) {
-        drawFrame(textureId, texMatrix,
-                IDENTITY_MATRIX, mVertexArray, 0,
-                mVertexCount, mCoordsPerVertex,
-                mVertexStride, mTexCoordArray,
-                mTexCoordStride);
+    void drawFrame(int textureId, float[] textureMatrix) {
+        drawFrame(textureId, textureMatrix,
+                IDENTITY_MATRIX, mVertexCoordinatesArray, 0,
+                mVertexCount, mCoordinatesPerVertex,
+                mVertexStride, mTextureCoordinatesArray,
+                mTextureStride);
     }
 
-    private void drawFrame(int textureId, float[] texMatrix,
+    private void drawFrame(int textureId, float[] textureMatrix,
                           float[] mvpMatrix, FloatBuffer vertexBuffer, int firstVertex,
                           int vertexCount, int coordsPerVertex, int vertexStride,
                           FloatBuffer texBuffer, int texStride) {
@@ -145,28 +146,28 @@ class EglViewport extends EglElement {
         GLES20.glBindTexture(mTextureTarget, textureId);
 
         // Copy the model / view / projection matrix over.
-        GLES20.glUniformMatrix4fv(muMVPMatrixLoc, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(muMVPMatrixLocation, 1, false, mvpMatrix, 0);
         check("glUniformMatrix4fv");
 
         // Copy the texture transformation matrix over.
-        GLES20.glUniformMatrix4fv(muTexMatrixLoc, 1, false, texMatrix, 0);
+        GLES20.glUniformMatrix4fv(muTexMatrixLocation, 1, false, textureMatrix, 0);
         check("glUniformMatrix4fv");
 
         // Enable the "aPosition" vertex attribute.
-        GLES20.glEnableVertexAttribArray(maPositionLoc);
+        GLES20.glEnableVertexAttribArray(maPositionLocation);
         check("glEnableVertexAttribArray");
 
         // Connect vertexBuffer to "aPosition".
-        GLES20.glVertexAttribPointer(maPositionLoc, coordsPerVertex,
+        GLES20.glVertexAttribPointer(maPositionLocation, coordsPerVertex,
                 GLES20.GL_FLOAT, false, vertexStride, vertexBuffer);
         check("glVertexAttribPointer");
 
         // Enable the "aTextureCoord" vertex attribute.
-        GLES20.glEnableVertexAttribArray(maTextureCoordLoc);
+        GLES20.glEnableVertexAttribArray(maTextureCoordLocation);
         check("glEnableVertexAttribArray");
 
         // Connect texBuffer to "aTextureCoord".
-        GLES20.glVertexAttribPointer(maTextureCoordLoc, 2,
+        GLES20.glVertexAttribPointer(maTextureCoordLocation, 2,
                 GLES20.GL_FLOAT, false, texStride, texBuffer);
         check("glVertexAttribPointer");
 
@@ -175,8 +176,8 @@ class EglViewport extends EglElement {
         check("glDrawArrays");
 
         // Done -- disable vertex array, texture, and program.
-        GLES20.glDisableVertexAttribArray(maPositionLoc);
-        GLES20.glDisableVertexAttribArray(maTextureCoordLoc);
+        GLES20.glDisableVertexAttribArray(maPositionLocation);
+        GLES20.glDisableVertexAttribArray(maTextureCoordLocation);
         GLES20.glBindTexture(mTextureTarget, 0);
         GLES20.glUseProgram(0);
     }

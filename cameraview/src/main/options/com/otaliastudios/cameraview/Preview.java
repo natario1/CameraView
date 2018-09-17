@@ -16,13 +16,15 @@ public enum Preview implements Control {
 
     /**
      * Preview engine based on {@link android.view.TextureView}.
-     * Stable, but does not support all features (like video snapshots).
+     * Stable, but does not support all features (like video snapshots,
+     * or picture snapshot while taking videos).
      */
     TEXTURE(1),
 
     /**
      * Preview engine based on {@link android.opengl.GLSurfaceView}.
-     * This is the best engine available.
+     * This is the best engine available. Supports video snapshots,
+     * and picture snapshots while taking videos.
      */
     GL_SURFACE(2);
 

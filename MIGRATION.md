@@ -32,7 +32,7 @@
 - VideoSizeSelector: added. It is needed to choose the capture size in VIDEO mode.
   Defaults to SizeSelectors.biggest(), but you can choose by aspect ratio or whatever.
 - isTakingPicture(): added on top of isTakingVideo().
-- takeVideoSnapshot(): new api. Requires the experimental flag, API 18 or it will throw.
+- takeVideoSnapshot(): new api. API 18 and the Gl preview, or it will throw.
   Respects orientation, videocodec and max duration limit.
   Automatically rotates the data. Automatically crops the video.
   NO audio support.
@@ -41,10 +41,11 @@
   The default is GlSurfaceView and it is highly recommended that you do not change this.
 - New pictureRecorder interface for picture capturing.
 - Created FullPictureRecorder and SnapshotPictureRecorder for capturing HQ pictures and snapshots.
-
-TODO: cameraPreview documentation    
-TODO: takeVideoSnapshot documentation
+- When preview is GlSurface, the SnapshotPictureRecorder will use the gl texture and draw it into JPEG.
+  This is really fast and allows us to avoid RotationHelper, creating bitmap copies, OOMs, EXIF stuff.
+- When preview is GlSurface, you can take snapshots while recording video (or video snapshots!).
+  TODO: document this
+- TODO: cameraPreview documentation    
+- TODO: takeVideoSnapshot documentation
 
 TODO: add audio to the video snapshots
-TODO: improve SnapshotPictureRecorder so that, if preview is GL, we catch the preview through GLES drawing
-      this would finally remove the RotationHelper and OOMs!

@@ -11,7 +11,14 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLDisplay;
+import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
@@ -19,42 +26,43 @@ import javax.microedition.khronos.opengles.GL10;
  *
  * - in the SurfaceTexture constructor we pass the GL texture handle that we have created.
  *
- * - The SurfaceTexture is linked to the Camera1 object. It will pass down buffers of data with
- *   a specified size (that is, the Camera1 preview size).
+ * - The SurfaceTexture is linked to the Camera1 object. The camera will pass down buffers of data with
+ *   a specified size (that is, the Camera1 preview size). For this reason we don't have to specify
+ *   surfaceTexture.setDefaultBufferSize() (like we do, for example, in SnapshotPictureRecorder).
  *
- * - When SurfaceTexture.updateTexImage() is called, it will take the latest image from the camera stream
- *   and update it into the GL texture that was passed.
- *
- * - Now we have a GL texture referencing data. It must be drawn.
- *  [Note: it must be drawn using a transformation matrix taken from SurfaceTexture]
+ * - When SurfaceTexture.updateTexImage() is called, it will fetch the latest texture image from the
+ *   camera stream and assign it to the GL texture that was passed.
+ *   Now the GL texture must be drawn using draw* APIs. The SurfaceTexture will also give us
+ *   the transformation matrix to be applied.
  *
  * - The easy way to render an OpenGL texture is using the {@link GLSurfaceView} class.
- *   It manages the gl context, hosts a surface and runs a separated rendering thread that will perform
+ *   It manages the GL context, hosts a surface and runs a separated rendering thread that will perform
  *   the rendering.
  *
  * - As per docs, we ask the GLSurfaceView to delegate rendering to us, using
  *   {@link GLSurfaceView#setRenderer(GLSurfaceView.Renderer)}. We request a render on the SurfaceView
  *   anytime the SurfaceTexture notifies that it has new data available (see OnFrameAvailableListener below).
  *
- * - Everything is linked:
+ * - So in short:
  *   - The SurfaceTexture has buffers of data of mInputStreamSize
- *   - The SurfaceView hosts a view (and surface) of size mOutputSurfaceSize
+ *   - The SurfaceView hosts a view (and a surface) of size mOutputSurfaceSize.
+ *     These are determined by the CameraView.onMeasure method.
  *   - We have a GL rich texture to be drawn (in the given method & thread).
  *
- * TODO
- * CROPPING: Managed to do this using Matrix transformation.
- * UPDATING: Managed to work using view.onPause and onResume.
- * TAKING PICTURES: Sometime the snapshot takes ages... Can't reproduce anymore. Cool.
- * TAKING VIDEOS: Still have not tried...
+ * This class will provide rendering callbacks to anyone who registers a {@link RendererFrameCallback}.
+ * Callbacks are guaranteed to be called on the renderer thread, which means that we can fetch
+ * the GL context that was created and is managed by the {@link GLSurfaceView}.
  */
 class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> implements GLSurfaceView.Renderer {
 
     private boolean mDispatched;
     private final float[] mTransformMatrix = new float[16];
-    private int mOutputTextureId = -1;
+    private int mOutputTextureId = 0;
     private SurfaceTexture mInputSurfaceTexture;
     private EglViewport mOutputViewport;
-    private RendererFrameCallback mRendererFrameCallback;
+    private Set<RendererFrameCallback> mRendererFrameCallbacks = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
+    /* for tests */ float mScaleX = 1F;
+    /* for tests */ float mScaleY = 1F;
 
     GLCameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         super(context, parent, callback);
@@ -97,10 +105,8 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     @Override
     void onDestroy() {
         super.onDestroy();
-        releaseInputSurfaceTexture();
-    }
-
-    private void releaseInputSurfaceTexture() {
+        // View is gone, so EGL context is gone: callbacks make no sense anymore.
+        mRendererFrameCallbacks.clear();
         if (mInputSurfaceTexture != null) {
             mInputSurfaceTexture.setOnFrameAvailableListener(null);
             mInputSurfaceTexture.release();
@@ -113,26 +119,29 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         }
     }
 
-    private void createInputSurfaceTexture() {
+    // Renderer thread
+    @Override
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         mOutputViewport = new EglViewport();
         mOutputTextureId = mOutputViewport.createTexture();
         mInputSurfaceTexture = new SurfaceTexture(mOutputTextureId);
+        getView().queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                    callback.onRendererTextureCreated(mOutputTextureId);
+                }
+            }
+        });
 
         // Since we are using GLSurfaceView.RENDERMODE_WHEN_DIRTY, we must notify the SurfaceView
         // of dirtyness, so that it draws again. This is how it's done.
         mInputSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
             @Override
             public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                // requestRender is thread-safe.
-                getView().requestRender();
+                getView().requestRender(); // requestRender is thread-safe.
             }
         });
-    }
-
-    // Renderer thread
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        createInputSurfaceTexture();
     }
 
     // Renderer thread
@@ -143,27 +152,27 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             dispatchOnOutputSurfaceAvailable(width, height);
             mDispatched = true;
         } else if (mOutputSurfaceWidth == width && mOutputSurfaceHeight == height) {
-                // This change can be triggered by ourselves (see below). Ignore.
+            // I was experimenting and this was happening.
+            // Not sure if it is stil needed now.
         } else {
             // With other CameraPreview implementation we could just dispatch the 'size changed' event
-            // to the controller and everything would go straight. In case of GL, apparently we have to:
-            // - create a new texture (release the old)
-            // - unbind camera and surface
-            // - stop camera preview
-            // - recreate the GL context using view.onPause() and onResume()
-            // ...
-            onSizeChangeImplementation4(width, height);
+            // to the controller and everything would go straight. In case of GL, apparently we have to
+            // force recreate the EGLContext by calling onPause and onResume in the UI thread.
+            dispatchOnOutputSurfaceDestroyed();
+            getView().post(new Runnable() {
+                @Override
+                public void run() {
+                    getView().onPause();
+                    getView().onResume();
+                    dispatchOnOutputSurfaceAvailable(width, height);
+                }
+            });
         }
     }
 
-
+    // Renderer thread
     @Override
     public void onDrawFrame(GL10 gl) {
-        // This are only needed with some implementations,
-        // and implementation4 seems to work well without them.
-        // if (mInputSurfaceTexture == null) return;
-        // if (mOutputViewport == null) return;
-
         // Latch the latest frame.  If there isn't anything new,
         // we'll just re-use whatever was there before.
         mInputSurfaceTexture.updateTexImage();
@@ -172,24 +181,21 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             return;
         }
 
-        if (mRendererFrameCallback != null) {
-            mRendererFrameCallback.onRendererFrame(mInputSurfaceTexture, mScaleX, mScaleY);
-        }
-
-        // Draw the video frame.
         mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
         if (isCropping()) {
+            // Scaling is easy. However:
             // If the view is 10x1000 (very tall), it will show only the left strip of the preview (not the center one).
             // If the view is 1000x10 (very large), it will show only the bottom strip of the preview (not the center one).
-            // We must use Matrix.translateM, and it must happen before the crop.
+            // So we must use Matrix.translateM, and it must happen before the crop.
             float translX = (1F - mScaleX) / 2F;
             float translY = (1F - mScaleY) / 2F;
             Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
-
-            // Crop. Works, but without translation, it is not centered.
             Matrix.scaleM(mTransformMatrix, 0, mScaleX, mScaleY, 1);
         }
         mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
+        for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+            callback.onRendererFrame(mInputSurfaceTexture, mScaleX, mScaleY);
+        }
     }
 
     @Override
@@ -206,9 +212,6 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     boolean supportsCropping() {
         return true;
     }
-
-    /* for tests */ float mScaleX = 1F;
-    /* for tests */ float mScaleY = 1F;
 
     /**
      * To crop in GL, we could actually use view.setScaleX and setScaleY, but only from Android N onward.
@@ -244,114 +247,39 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         mCropTask.end(null);
     }
 
-
-    // This does work but looks like a lot of stuff.
-    private void onSizeChangeImplementation1(final int width, final int height) {
-        releaseInputSurfaceTexture();
-        dispatchOnOutputSurfaceDestroyed();
-        getView().post(new Runnable() {
-            @Override
-            public void run() {
-                getView().onPause();
-                getView().onResume();
-                getView().queueEvent(new Runnable() {
-                    @Override
-                    public void run() {
-                        createInputSurfaceTexture();
-                        dispatchOnOutputSurfaceAvailable(width, height);
-                    }
-                });
-            }
-        });
-    }
-
-    // This does not work. We get: startPreview failed.
-    private void onSizeChangeImplementation2(final int width, final int height) {
-        releaseInputSurfaceTexture();
-        getView().post(new Runnable() {
-            @Override
-            public void run() {
-                getView().onPause();
-                getView().onResume();
-                getView().queueEvent(new Runnable() {
-                    @Override
-                    public void run() {
-                        createInputSurfaceTexture();
-                        dispatchOnOutputSurfaceSizeChanged(width, height);
-                    }
-                });
-            }
-        });
-    }
-
-    // Works! So we don't need to recreate the GL texture.
-    private void onSizeChangeImplementation3(final int width, final int height) {
-        dispatchOnOutputSurfaceDestroyed();
-        getView().post(new Runnable() {
-            @Override
-            public void run() {
-                getView().onPause();
-                getView().onResume();
-                getView().queueEvent(new Runnable() {
-                    @Override
-                    public void run() {
-                        dispatchOnOutputSurfaceAvailable(width, height);
-                    }
-                });
-            }
-        });
-    }
-
-    // Works! This is getting easy.
-    private void onSizeChangeImplementation4(final int width, final int height) {
-        dispatchOnOutputSurfaceDestroyed();
-        getView().post(new Runnable() {
-            @Override
-            public void run() {
-                getView().onPause();
-                getView().onResume();
-                dispatchOnOutputSurfaceAvailable(width, height);
-            }
-        });
-    }
-
-    // Does not work. onPause and onResume must be called on the UI thread.
-    // This make sense.
-    private void onSizeChangeImplementation5(final int width, final int height) {
-        dispatchOnOutputSurfaceDestroyed();
-        getView().onPause();
-        getView().onResume();
-        dispatchOnOutputSurfaceAvailable(width, height);
-    }
-
-    // Does NOT work. The EGL context must be recreated
-    // for this to work out.
-    private void onSizeChangeImplementation6(final int width, final int height) {
-        dispatchOnOutputSurfaceDestroyed();
-        getView().post(new Runnable() {
-            @Override
-            public void run() {
-                getView().setPreserveEGLContextOnPause(true);
-                getView().onPause();
-                getView().onResume();
-                getView().setPreserveEGLContextOnPause(false);
-                dispatchOnOutputSurfaceAvailable(width, height);
-            }
-        });
-    }
-
     interface RendererFrameCallback {
-        // Renderer thread.
+
+        /**
+         * Called on the renderer thread, hopefully only once, to notify that
+         * the texture was created (or to inform a new callback of the old texture).
+         *
+         * @param textureId the GL texture linked to the image stream
+         */
         void onRendererTextureCreated(int textureId);
 
-        // Renderer thread.
+        /**
+         * Called on the renderer thread after each frame was drawn.
+         * You are not supposed to hold for too long onto this thread, because
+         * well, it is the rendering thread.
+         *
+         * @param surfaceTexture the texture to get transformation
+         * @param scaleX the scaleX (in REF_VIEW) value
+         * @param scaleY the scaleY (in REF_VIEW) value
+         */
         void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY);
     }
 
-    void setRendererFrameCallback(@Nullable RendererFrameCallback callback) {
-        mRendererFrameCallback = callback;
-        if (mRendererFrameCallback != null && mOutputTextureId != 0) {
-            mRendererFrameCallback.onRendererTextureCreated(mOutputTextureId);
-        }
+    void addRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
+        getView().queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                mRendererFrameCallbacks.add(callback);
+                if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
+            }
+        });
+    }
+
+    void removeRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
+        mRendererFrameCallbacks.remove(callback);
     }
 }
