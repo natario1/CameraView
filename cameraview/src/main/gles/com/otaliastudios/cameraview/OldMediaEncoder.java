@@ -58,8 +58,8 @@ import java.lang.ref.WeakReference;
  * TODO: tweak the API (esp. textureId) so it's less awkward for simple use cases.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class VideoTextureEncoder implements Runnable {
-    private static final String TAG = VideoTextureEncoder.class.getSimpleName();
+class OldMediaEncoder implements Runnable {
+    private static final String TAG = OldMediaEncoder.class.getSimpleName();
 
     private static final int MSG_START_RECORDING = 0;
     private static final int MSG_STOP_RECORDING = 1;
@@ -73,7 +73,7 @@ class VideoTextureEncoder implements Runnable {
     private EglViewport mFullScreen;
     private int mTextureId;
     private int mFrameNum = -1; // Important
-    private VideoCoreEncoder mVideoEncoder;
+    private OldMediaEncoderCore mVideoEncoder;
     private float mTransformationScaleX = 1F;
     private float mTransformationScaleY = 1F;
     private int mTransformationRotation = 0;
@@ -131,12 +131,12 @@ class VideoTextureEncoder implements Runnable {
     }
 
     private void prepareEncoder(Config config) {
+        OldMediaEncoderCore.VideoConfig videoConfig = new OldMediaEncoderCore.VideoConfig(
+                config.mWidth, config.mHeight, config.mBitRate, config.mFrameRate,
+                0, // The video encoder rotation does not work, so we apply it here using Matrix.rotateM().
+                config.mMimeType);
         try {
-            mVideoEncoder = new VideoCoreEncoder(config.mWidth, config.mHeight,
-                    config.mBitRate, config.mFrameRate,
-                    0, // The video encoder rotation does not work, so we apply it here using Matrix.rotateM().
-                    config.mOutputFile,
-                    config.mMimeType);
+            mVideoEncoder = new OldMediaEncoderCore(videoConfig, config.mOutputFile);
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
@@ -292,9 +292,9 @@ class VideoTextureEncoder implements Runnable {
      * Handles encoder state change requests.  The handler is created on the encoder thread.
      */
     private static class EncoderHandler extends Handler {
-        private WeakReference<VideoTextureEncoder> mWeakEncoder;
+        private WeakReference<OldMediaEncoder> mWeakEncoder;
 
-        public EncoderHandler(VideoTextureEncoder encoder) {
+        public EncoderHandler(OldMediaEncoder encoder) {
             mWeakEncoder = new WeakReference<>(encoder);
         }
 
@@ -303,7 +303,7 @@ class VideoTextureEncoder implements Runnable {
             int what = inputMessage.what;
             Object obj = inputMessage.obj;
 
-            VideoTextureEncoder encoder = mWeakEncoder.get();
+            OldMediaEncoder encoder = mWeakEncoder.get();
             if (encoder == null) {
                 Log.w(TAG, "EncoderHandler.handleMessage: encoder is null");
                 return;
