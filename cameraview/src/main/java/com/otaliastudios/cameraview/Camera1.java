@@ -697,7 +697,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 // So it looks like REF_VIEW REF_OUTPUT is the correct one, meaning that
                 // the input data in this case is not in the REF_SENSOR coordinates but rather
                 // in the REF_VIEW ones.
-                videoResult.size = finalSize;
+                videoResult.size = flip(REF_VIEW, REF_OUTPUT) ? finalSize.flip() : finalSize;
                 videoResult.rotation = offset(REF_VIEW, REF_OUTPUT);
                 videoResult.audio = mAudio;
                 videoResult.maxSize = mVideoMaxSize;
