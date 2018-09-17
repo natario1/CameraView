@@ -64,9 +64,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.Ren
     @Override
     public void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
-            // Size must be flipped based on rotation, because we will rotate the texture in the encoder
-            Size size = mResult.getRotation() % 180 == 0 ? mResult.getSize() : mResult.getSize().flip();
-            // size = mResult.size;
+            Size size = mResult.getSize();
             // Ensure width and height are divisible by 2, as I have read somewhere.
             int width = size.getWidth();
             int height = size.getHeight();
