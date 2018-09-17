@@ -4,6 +4,7 @@ import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.opengl.GLSurfaceView;
 
 import java.io.ByteArrayOutputStream;
 
@@ -17,6 +18,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
 
     private Camera1 mController;
     private Camera mCamera;
+    private CameraPreview mPreview;
     private AspectRatio mOutputRatio;
     private Size mSensorPreviewSize;
     private int mFormat;
@@ -24,6 +26,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
     SnapshotPictureRecorder(PictureResult stub, Camera1 controller, Camera camera, AspectRatio viewRatio) {
         super(stub, controller);
         mController = controller;
+        mPreview = controller.mPreview;
         mCamera = camera;
         mOutputRatio = viewRatio;
         mFormat = mController.mPreviewFormat;
@@ -32,6 +35,19 @@ class SnapshotPictureRecorder extends PictureRecorder {
 
     @Override
     void take() {
+        if (mPreview instanceof GLCameraPreview) {
+            takeGl((GLCameraPreview) mPreview);
+        } else {
+            takeLegacy();
+        }
+    }
+
+    private void takeGl(GLCameraPreview preview) {
+        // TODO implement.
+        takeLegacy();
+    }
+
+    private void takeLegacy() {
         mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
             @Override
             public void onPreviewFrame(final byte[] yuv, Camera camera) {
