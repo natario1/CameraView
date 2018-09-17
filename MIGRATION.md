@@ -1,4 +1,4 @@
-# Migrating to v2
+# Migrating to v2.X.X
 
 - JpegQuality: both cameraJpegQuality and setJpegQuality() have been removed, because
   they were working only with specific setups. We'll use the default quality provided

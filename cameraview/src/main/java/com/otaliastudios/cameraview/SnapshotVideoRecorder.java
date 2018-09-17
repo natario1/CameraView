@@ -18,11 +18,13 @@ class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.Ren
 
     private static final String TAG = SnapshotVideoRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
+    private static final boolean USE_OLD_ENCODER = false;
 
     private static final int STATE_RECORDING = 0;
     private static final int STATE_NOT_RECORDING = 1;
 
-    private VideoTextureEncoder mEncoder;
+    private OldMediaEncoder mEncoder;
+    private MediaEncoderEngine mEncoderEngine;
     private GLCameraPreview mPreview;
 
     private int mCurrentState = STATE_NOT_RECORDING;
@@ -31,7 +33,9 @@ class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.Ren
 
     SnapshotVideoRecorder(VideoResult stub, VideoResultListener listener, GLCameraPreview preview) {
         super(stub, listener);
-        mEncoder = new VideoTextureEncoder();
+        if (USE_OLD_ENCODER) {
+            mEncoder = new OldMediaEncoder();
+        }
         mPreview = preview;
         mPreview.addRendererFrameCallback(this);
     }
@@ -76,39 +80,72 @@ class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.Ren
                 case H_264: type = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
                 case DEVICE_DEFAULT: type = "video/avc"; break;
             }
-            VideoTextureEncoder.Config configuration = new VideoTextureEncoder.Config(
-                    mResult.getFile(),
-                    width,
-                    height,
-                    1000000,
-                    30,
-                    mResult.getRotation(),
-                    scaleX,
-                    scaleY,
-                    type,
-                    EGL14.eglGetCurrentContext()
-            );
+            if (USE_OLD_ENCODER) {
+                OldMediaEncoder.Config configuration = new OldMediaEncoder.Config(
+                        mResult.getFile(),
+                        width,
+                        height,
+                        1000000,
+                        30,
+                        mResult.getRotation(),
+                        scaleX,
+                        scaleY,
+                        type,
+                        EGL14.eglGetCurrentContext()
+                );
+                mEncoder.startRecording(configuration);
+                mEncoder.setTextureId(mTextureId);
+            } else {
+                TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(
+                        width, height,
+                        1000000,
+                        30,
+                        mResult.getRotation(),
+                        type, mTextureId,
+                        scaleX, scaleY,
+                        EGL14.eglGetCurrentContext()
+                );
+                TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
+                mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, null);
+                mEncoderEngine.start();
+            }
             mResult.rotation = 0; // We will rotate the result instead.
-            mEncoder.startRecording(configuration);
-            mEncoder.setTextureId(mTextureId);
             mCurrentState = STATE_RECORDING;
         }
 
         if (mCurrentState == STATE_RECORDING) {
-            mEncoder.frameAvailable(surfaceTexture);
+            if (USE_OLD_ENCODER) {
+                mEncoder.frameAvailable(surfaceTexture);
+            } else {
+                TextureMediaEncoder.Frame frame = new TextureMediaEncoder.Frame();
+                frame.timestamp = surfaceTexture.getTimestamp();
+                frame.transform = new float[16];
+                surfaceTexture.getTransformMatrix(frame.transform);
+                mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
+            }
         }
 
         if (mCurrentState == STATE_RECORDING && mDesiredState == STATE_NOT_RECORDING) {
-            mEncoder.stopRecording(new Runnable() {
-                @Override
-                public void run() {
-                    // We are in the encoder thread.
-                    dispatchResult();
-                }
-            });
+            if (USE_OLD_ENCODER) {
+                mEncoder.stopRecording(new Runnable() {
+                    @Override
+                    public void run() {
+                        // We are in the encoder thread.
+                        dispatchResult();
+                    }
+                });
+                mEncoder = null;
+            } else {
+                mEncoderEngine.stop(new Runnable() {
+                    @Override
+                    public void run() {
+                        // We are in the encoder thread.
+                        dispatchResult();
+                    }
+                });
+                mEncoderEngine = null;
+            }
             mCurrentState = STATE_NOT_RECORDING;
-
-            mEncoder = null;
             mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
             mPreview = null;
         }

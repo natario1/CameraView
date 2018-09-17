@@ -43,40 +43,55 @@ import java.nio.ByteBuffer;
  * on one thread, and drain the output on a different thread.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class VideoCoreEncoder {
+class OldMediaEncoderCore {
 
-    private Surface mInputSurface;
     private MediaMuxer mMuxer;
-    private MediaCodec mEncoder;
+    private boolean mMuxerStarted;
+    private MediaCodec mVideoEncoder;
+    private Surface mVideoInputSurface;
     private MediaCodec.BufferInfo mBufferInfo;
     private int mTrackIndex;
-    private boolean mMuxerStarted;
 
 
+    static class VideoConfig {
+        int width;
+        int height;
+        int bitRate;
+        int frameRate;
+        int rotation;
+        String mimeType;
+
+        VideoConfig(int width, int height, int bitRate, int frameRate, int rotation, String mimeType) {
+            this.width = width;
+            this.height = height;
+            this.bitRate = bitRate;
+            this.frameRate = frameRate;
+            this.rotation = rotation;
+            this.mimeType = mimeType;
+        }
+    }
     /**
      * Configures encoder and muxer state, and prepares the input Surface.
      */
-    public VideoCoreEncoder(int width, int height, int bitRate, int frameRate, int rotation, File outputFile, String mimeType)
-            throws IOException {
+    OldMediaEncoderCore(VideoConfig videoConfig, File outputFile) throws IOException {
         mBufferInfo = new MediaCodec.BufferInfo();
 
-        MediaFormat format = MediaFormat.createVideoFormat(mimeType, width, height);
+        MediaFormat format = MediaFormat.createVideoFormat(videoConfig.mimeType, videoConfig.width, videoConfig.height);
 
         // Set some properties.  Failing to specify some of these can cause the MediaCodec
         // configure() call to throw an unhelpful exception.
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
+        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, videoConfig.bitRate);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, videoConfig.frameRate);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
-        format.setInteger("rotation-degrees", rotation);
+        format.setInteger("rotation-degrees", videoConfig.rotation);
 
         // Create a MediaCodec encoder, and configure it with our format.  Get a Surface
         // we can use for input and wrap it with a class that handles the EGL work.
-        mEncoder = MediaCodec.createEncoderByType(mimeType);
-        mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        mInputSurface = mEncoder.createInputSurface();
-        mEncoder.start();
+        mVideoEncoder = MediaCodec.createEncoderByType(videoConfig.mimeType);
+        mVideoEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        mVideoInputSurface = mVideoEncoder.createInputSurface();
+        mVideoEncoder.start();
 
         // Create a MediaMuxer.  We can't add the video track and start() the muxer here,
         // because our MediaFormat doesn't have the Magic Goodies.  These can only be
@@ -84,8 +99,7 @@ class VideoCoreEncoder {
         //
         // We're not actually interested in multiplexing audio.  We just want to convert
         // the raw H.264 elementary stream we get from MediaCodec into a .mp4 file.
-        mMuxer = new MediaMuxer(outputFile.toString(),
-                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        mMuxer = new MediaMuxer(outputFile.toString(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 
         mTrackIndex = -1;
         mMuxerStarted = false;
@@ -95,17 +109,17 @@ class VideoCoreEncoder {
      * Returns the encoder's input surface.
      */
     public Surface getInputSurface() {
-        return mInputSurface;
+        return mVideoInputSurface;
     }
 
     /**
      * Releases encoder resources.
      */
     public void release() {
-        if (mEncoder != null) {
-            mEncoder.stop();
-            mEncoder.release();
-            mEncoder = null;
+        if (mVideoEncoder != null) {
+            mVideoEncoder.stop();
+            mVideoEncoder.release();
+            mVideoEncoder = null;
         }
         if (mMuxer != null) {
             // TODO: stop() throws an exception if you haven't fed it any data.  Keep track
@@ -130,12 +144,12 @@ class VideoCoreEncoder {
         final int TIMEOUT_USEC = 10000;
 
         if (endOfStream) {
-            mEncoder.signalEndOfInputStream();
+            mVideoEncoder.signalEndOfInputStream();
         }
 
-        ByteBuffer[] encoderOutputBuffers = mEncoder.getOutputBuffers();
+        ByteBuffer[] encoderOutputBuffers = mVideoEncoder.getOutputBuffers();
         while (true) {
-            int encoderStatus = mEncoder.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+            int encoderStatus = mVideoEncoder.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 // no output available yet
                 if (!endOfStream) {
@@ -143,20 +157,20 @@ class VideoCoreEncoder {
                 }
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 // not expected for an encoder
-                encoderOutputBuffers = mEncoder.getOutputBuffers();
+                encoderOutputBuffers = mVideoEncoder.getOutputBuffers();
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 // should happen before receiving buffers, and should only happen once
                 if (mMuxerStarted) {
                     throw new RuntimeException("format changed twice");
                 }
-                MediaFormat newFormat = mEncoder.getOutputFormat();
+                MediaFormat newFormat = mVideoEncoder.getOutputFormat();
 
                 // now that we have the Magic Goodies, start the muxer
                 mTrackIndex = mMuxer.addTrack(newFormat);
                 mMuxer.start();
                 mMuxerStarted = true;
             } else if (encoderStatus < 0) {
-                Log.w("VideoCoreEncoder", "unexpected result from encoder.dequeueOutputBuffer: " + encoderStatus);
+                Log.w("OldMediaEncoderCore", "unexpected result from encoder.dequeueOutputBuffer: " + encoderStatus);
                 // let's ignore it
             } else {
                 ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
@@ -182,11 +196,11 @@ class VideoCoreEncoder {
                     mMuxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
                 }
 
-                mEncoder.releaseOutputBuffer(encoderStatus, false);
+                mVideoEncoder.releaseOutputBuffer(encoderStatus, false);
 
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     if (!endOfStream) {
-                        Log.w("VideoCoreEncoder", "reached end of stream unexpectedly");
+                        Log.w("OldMediaEncoderCore", "reached end of stream unexpectedly");
                     }
                     break; // out of while
                 }
