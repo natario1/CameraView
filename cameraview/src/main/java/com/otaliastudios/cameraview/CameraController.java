@@ -54,6 +54,7 @@ abstract class CameraController implements
     protected Mapper mMapper;
     protected FrameManager mFrameManager;
     protected SizeSelector mPictureSizeSelector;
+    protected PictureRecorder mPictureRecorder;
     protected SizeSelector mVideoSizeSelector;
     protected VideoRecorder mVideoRecorder;
     protected long mVideoMaxSize;
@@ -65,9 +66,6 @@ abstract class CameraController implements
     protected int mSensorOffset;
     private int mDisplayOffset;
     private int mDeviceOrientation;
-
-    protected boolean mIsTakingImage = false;
-    protected boolean mIsTakingVideo = false;
 
     protected int mState = STATE_STOPPED;
 
@@ -405,11 +403,11 @@ abstract class CameraController implements
     }
 
     final boolean isTakingVideo() {
-        return mIsTakingVideo;
+        return mVideoRecorder != null;
     }
 
     final boolean isTakingPicture() {
-        return mIsTakingImage;
+        return mPictureRecorder != null;
     }
 
     //endregion
