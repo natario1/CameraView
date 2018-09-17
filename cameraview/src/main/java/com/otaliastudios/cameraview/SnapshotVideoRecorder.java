@@ -33,7 +33,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.Ren
         super(stub, listener);
         mEncoder = new VideoTextureEncoder();
         mPreview = preview;
-        mPreview.setRendererFrameCallback(this);
+        mPreview.addRendererFrameCallback(this);
     }
 
     @Override
@@ -109,7 +109,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.Ren
             mCurrentState = STATE_NOT_RECORDING;
 
             mEncoder = null;
-            mPreview.setRendererFrameCallback(null);
+            mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
             mPreview = null;
         }
 

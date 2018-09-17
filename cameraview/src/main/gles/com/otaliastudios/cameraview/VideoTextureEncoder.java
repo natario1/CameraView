@@ -157,7 +157,7 @@ class VideoTextureEncoder implements Runnable {
             mInputWindowSurface = null;
         }
         if (mFullScreen != null) {
-            mFullScreen.release(false);
+            mFullScreen.release(true);
             mFullScreen = null;
         }
         if (mEglCore != null) {

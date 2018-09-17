@@ -25,6 +25,7 @@ import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -157,7 +158,7 @@ class EglBaseSurface extends EglElement {
      * <p>
      * Expects that this object's EGL surface is current.
      */
-    public void saveFrame(File file) throws IOException {
+    public void saveFrameToFile(File file) throws IOException {
         if (!mEglCore.isCurrent(mEGLSurface)) {
             throw new RuntimeException("Expected EGL context/surface is not current");
         }
@@ -195,5 +196,43 @@ class EglBaseSurface extends EglElement {
         } finally {
             if (bos != null) bos.close();
         }
+    }
+
+    /**
+     * Saves the EGL surface to jpeg.
+     * <p>
+     * Expects that this object's EGL surface is current.
+     */
+    public byte[] saveFrameToJpeg() {
+        if (!mEglCore.isCurrent(mEGLSurface)) {
+            throw new RuntimeException("Expected EGL context/surface is not current");
+        }
+
+        // glReadPixels fills in a "direct" ByteBuffer with what is essentially big-endian RGBA
+        // data (i.e. a byte of red, followed by a byte of green...).  While the Bitmap
+        // constructor that takes an int[] wants little-endian ARGB (blue/red swapped), the
+        // Bitmap "copy pixels" method wants the same format GL provides.
+        //
+        // Ideally we'd have some way to re-use the ByteBuffer, especially if we're calling
+        // here often.
+        //
+        // Making this even more interesting is the upside-down nature of GL, which means
+        // our output will look upside down relative to what appears on screen if the
+        // typical GL conventions are used.
+
+        int width = getWidth();
+        int height = getHeight();
+        ByteBuffer buf = ByteBuffer.allocateDirect(width * height * 4);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        GLES20.glReadPixels(0, 0, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
+        check("glReadPixels");
+        buf.rewind();
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(buf.array().length);
+        Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        bmp.copyPixelsFromBuffer(buf);
+        bmp.compress(Bitmap.CompressFormat.JPEG, 90, bos);
+        bmp.recycle();
+        return bos.toByteArray();
     }
 }

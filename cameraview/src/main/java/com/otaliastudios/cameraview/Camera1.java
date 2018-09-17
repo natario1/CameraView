@@ -527,6 +527,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             @Override
             public void run() {
                 if (mMode == Mode.VIDEO) {
+                    // Could redirect to takePictureSnapshot, but it's better if people know
+                    // what they are doing.
                     throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
                 }
 
@@ -550,11 +552,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
-                if (isTakingVideo()) {
-                    // TODO v2: what to do here?
-                    return;
-                }
-
                 LOG.v("takePictureSnapshot: performing.", isTakingPicture());
                 if (isTakingPicture()) return;
 

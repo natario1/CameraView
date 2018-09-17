@@ -28,6 +28,8 @@ import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.Surface;
 
+import javax.microedition.khronos.egl.EGL10;
+
 /**
  * -- from grafika --
  *

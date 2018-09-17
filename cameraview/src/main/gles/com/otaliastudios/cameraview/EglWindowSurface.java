@@ -55,6 +55,14 @@ class EglWindowSurface extends EglBaseSurface {
     }
 
     /**
+     * Associates an EGL surface with the Surface.
+     */
+    public EglWindowSurface(EglCore eglCore, Surface surface) {
+        super(eglCore);
+        createWindowSurface(surface);
+    }
+
+    /**
      * Releases any resources associated with the EGL surface (and, if configured to do so,
      * with the Surface as well).
      * <p>
