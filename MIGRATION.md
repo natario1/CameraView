@@ -39,12 +39,12 @@
   NO maxSize limit.
 - New cameraPreview XML attribute lets you choose the backing preview engine (surfaceView, textureView, GlSurfaceView).
   The default is GlSurfaceView and it is highly recommended that you do not change this.
-  
+- New pictureRecorder interface for picture capturing.
+- Created FullPictureRecorder and SnapshotPictureRecorder for capturing HQ pictures and snapshots.
+
 TODO: cameraPreview documentation    
 TODO: takeVideoSnapshot documentation
+
 TODO: add audio to the video snapshots
-TODO: create PictureRecorder interface
-      create FullPictureRecorder implementation that just uses camera.takePicture
-      create SnapshotPictureRecorder implementation that, for now, uses camera.setOneShotPreviewCallback
-      improve SnapshotPictureRecorder so that, if preview is GL, we catch the preview through GLES drawing
-      this would finally remove the RotationHelper!
+TODO: improve SnapshotPictureRecorder so that, if preview is GL, we catch the preview through GLES drawing
+      this would finally remove the RotationHelper and OOMs!

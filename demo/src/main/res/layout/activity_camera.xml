@@ -16,7 +16,6 @@
         android:layout_gravity="center"
         android:layout_marginBottom="88dp"
         android:keepScreenOn="true"
-        app:cameraPreview="surface"
         app:cameraExperimental="true"
         app:cameraPlaySounds="true"
         app:cameraGrid="off"

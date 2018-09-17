@@ -90,6 +90,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.Ren
                     type,
                     EGL14.eglGetCurrentContext()
             );
+            mResult.rotation = 0; // We will rotate the result instead.
             mEncoder.startRecording(configuration);
             mEncoder.setTextureId(mTextureId);
             mCurrentState = STATE_RECORDING;

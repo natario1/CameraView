@@ -25,7 +25,9 @@ import java.util.List;
 
 
 @SuppressWarnings("deprecation")
-class Camera1 extends CameraController implements Camera.PreviewCallback, Camera.ErrorCallback, VideoRecorder.VideoResultListener {
+class Camera1 extends CameraController implements Camera.PreviewCallback, Camera.ErrorCallback,
+        VideoRecorder.VideoResultListener,
+        PictureRecorder.PictureResultListener {
 
     private static final String TAG = Camera1.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -272,8 +274,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mPreviewSize = null;
         mCaptureSize = null;
         mIsBound = false;
-        mIsTakingImage = false;
-        mIsTakingVideo = false;
         LOG.w("onStop:", "Clean up.", "Returning.");
 
         // We were saving a reference to the exception here and throwing to the user.
@@ -442,7 +442,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     @Override
     void setAudio(Audio audio) {
         if (mAudio != audio) {
-            if (mIsTakingVideo) {
+            if (isTakingVideo()) {
                 LOG.w("Audio setting was changed while recording. " +
                         "Changes will take place starting from next video");
             }
@@ -500,6 +500,25 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
     }
 
+    // -----------------
+    // Picture recording stuff.
+
+
+    @Override
+    public void onPictureShutter(boolean didPlaySound) {
+        mCameraCallbacks.onShutter(!didPlaySound);
+    }
+
+    @Override
+    public void onPictureResult(@Nullable PictureResult result) {
+        mPictureRecorder = null;
+        if (result != null) {
+            mCameraCallbacks.dispatchOnPictureTaken(result);
+        } else {
+            // Something went wrong.
+            LOG.e("onPictureResult", "result is null: something went wrong.");
+        }
+    }
 
     @Override
     void takePicture() {
@@ -511,47 +530,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                     throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
                 }
 
-                LOG.v("takePicture: performing.", mIsTakingImage);
-                if (mIsTakingImage) return;
-                mIsTakingImage = true;
-
-                final int sensorToOutput = offset(REF_SENSOR, REF_OUTPUT);
-                final Size outputSize = getPictureSize(REF_OUTPUT);
-                Camera.Parameters params = mCamera.getParameters();
-                params.setRotation(sensorToOutput);
-                mCamera.setParameters(params);
-                mCamera.takePicture(
-                        new Camera.ShutterCallback() {
-                            @Override
-                            public void onShutter() {
-                                mCameraCallbacks.onShutter(false);
-                            }
-                        },
-                        null,
-                        null,
-                        new Camera.PictureCallback() {
-                            @Override
-                            public void onPictureTaken(byte[] data, final Camera camera) {
-                                mIsTakingImage = false;
-                                int exifRotation;
-                                try {
-                                    ExifInterface exif = new ExifInterface(new ByteArrayInputStream(data));
-                                    int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                                    exifRotation = CameraUtils.decodeExifOrientation(exifOrientation);
-                                } catch (IOException e) {
-                                    exifRotation = 0;
-                                }
-                                PictureResult result = new PictureResult();
-                                result.jpeg = data;
-                                result.isSnapshot = false;
-                                result.location = mLocation;
-                                result.rotation = exifRotation;
-                                result.size = outputSize;
-                                mCameraCallbacks.dispatchOnPictureTaken(result);
-                                camera.startPreview(); // This is needed, read somewhere in the docs.
-                            }
-                        }
-                );
+                LOG.v("takePicture: performing.", isTakingPicture());
+                if (isTakingPicture()) return;
+                PictureResult result = new PictureResult();
+                result.isSnapshot = false;
+                result.location = mLocation;
+                result.rotation = offset(REF_SENSOR, REF_OUTPUT);
+                result.size = getPictureSize(REF_OUTPUT);
+                mPictureRecorder = new FullPictureRecorder(result, Camera1.this, mCamera);
+                mPictureRecorder.take();
             }
         });
     }
@@ -563,61 +550,22 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(null, true, new Runnable() {
             @Override
             public void run() {
-                if (mIsTakingVideo) {
+                if (isTakingVideo()) {
                     // TODO v2: what to do here?
-                    // This won't work while capturing a video.
-                    // But we want it to work.
                     return;
                 }
 
-                LOG.v("takePictureSnapshot: performing.", mIsTakingImage);
-                if (mIsTakingImage) return;
-                mIsTakingImage = true;
-                mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
-                    @Override
-                    public void onPreviewFrame(final byte[] yuv, Camera camera) {
-                        mCameraCallbacks.onShutter(true);
+                LOG.v("takePictureSnapshot: performing.", isTakingPicture());
+                if (isTakingPicture()) return;
 
-                        // Got to rotate the preview frame, since byte[] data here does not include
-                        // EXIF tags automatically set by camera. So either we add EXIF, or we rotate.
-                        // Adding EXIF to a byte array, unfortunately, is hard.
-                        final int sensorToOutput = offset(REF_SENSOR, REF_OUTPUT);
-                        final AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
-                        final Size outputSize = getPreviewSize(REF_OUTPUT);
-                        final int format = mPreviewFormat;
-                        WorkerHandler.run(new Runnable() {
-                            @Override
-                            public void run() {
-                                // Rotate the picture, because no one will write EXIF data,
-                                // then crop if needed. In both cases, transform yuv to jpeg.
-                                LOG.v("takePictureSnapshot:", "rotating.");
-                                byte[] data = RotationHelper.rotate(yuv, mPreviewSize, sensorToOutput);
-                                YuvImage yuv = new YuvImage(data, format, outputSize.getWidth(), outputSize.getHeight(), null);
-
-                                LOG.v("takePictureSnapshot:", "rotated. Cropping and transforming to jpeg.");
-                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                Rect outputRect = CropHelper.computeCrop(outputSize, outputRatio);
-                                yuv.compressToJpeg(outputRect, 90, stream);
-                                data = stream.toByteArray();
-
-                                LOG.v("takePictureSnapshot:", "cropped. Dispatching.");
-                                PictureResult result = new PictureResult();
-                                result.jpeg = data;
-                                result.size = new Size(outputRect.width(), outputRect.height());
-                                result.rotation = 0;
-                                result.location = mLocation;
-                                result.isSnapshot = true;
-                                mCameraCallbacks.dispatchOnPictureTaken(result);
-                                mIsTakingImage = false;
-                            }
-                        });
-
-                        // It seems that the buffers are already cleared here, so we need to allocate again.
-                        mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
-                        mCamera.setPreviewCallbackWithBuffer(Camera1.this); // Add ourselves
-                        mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewSize);
-                    }
-                });
+                PictureResult result = new PictureResult();
+                result.location = mLocation;
+                result.isSnapshot = true;
+                result.size = getPreviewSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
+                result.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
+                AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
+                mPictureRecorder = new SnapshotPictureRecorder(result, Camera1.this, mCamera, outputRatio);
+                mPictureRecorder.take();
             }
         });
     }
@@ -657,6 +605,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     @Override
     public void onVideoResult(@Nullable VideoResult result) {
+        mVideoRecorder = null;
         if (result != null) {
             mCameraCallbacks.dispatchOnVideoTaken(result);
         } else {
@@ -674,8 +623,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                     throw new IllegalStateException("Can't record video while in PICTURE mode");
                 }
 
-                if (mIsTakingVideo) return;
-                mIsTakingVideo = true;
+                if (isTakingVideo()) return;
 
                 // Create the video result stub
                 VideoResult videoResult = new VideoResult();
@@ -709,8 +657,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(mStartVideoTask, true, new Runnable() {
             @Override
             public void run() {
-                if (mIsTakingVideo) return;
-                mIsTakingVideo = true;
+                if (isTakingVideo()) return;
 
                 // Create the video result stub
                 VideoResult videoResult = new VideoResult();
@@ -768,7 +715,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(null, false, new Runnable() {
             @Override
             public void run() {
-                mIsTakingVideo = false;
                 LOG.i("stopVideo", "mVideoRecorder is null?", mVideoRecorder == null);
                 if (mVideoRecorder != null) {
                     mVideoRecorder.stop();
