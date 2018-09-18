@@ -43,8 +43,8 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
     }
 
     @Override
-    void prepare(MediaMuxer muxer) {
-        super.prepare(muxer);
+    void prepare(MediaEncoderEngine.Controller controller) {
+        super.prepare(controller);
         MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
 
         // Set some properties.  Failing to specify some of these can cause the MediaCodec
