@@ -616,7 +616,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         Context c = getContext();
         boolean needsCamera = true;
-        boolean needsAudio = mode == Mode.VIDEO && audio == Audio.ON;
+        boolean needsAudio = audio == Audio.ON;
 
         needsCamera = needsCamera && c.checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED;
         needsAudio = needsAudio && c.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED;

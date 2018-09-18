@@ -8,14 +8,13 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-@interface EncoderThread {}
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaEncoderEngine {
@@ -115,9 +114,7 @@ class MediaEncoderEngine {
                 if (mMediaMuxer != null) {
                     // stop() throws an exception if you haven't fed it any data.
                     // We can just swallow I think.
-                    try {
-                        mMediaMuxer.stop();
-                    } catch (Exception e) {};
+                    mMediaMuxer.stop();
                     mMediaMuxer.release();
                     mMediaMuxer = null;
                 }
