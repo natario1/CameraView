@@ -8,10 +8,6 @@ import android.support.annotation.RequiresApi;
 
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaCodec} APIs.
- *
- * TODO rotation support. Currently we pass the wrong size
- * TODO audio support
- * TODO when cropping is huge, the first frame of the video result, noticeably, has no transformation applied. Don't know why.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.RendererFrameCallback {
@@ -87,7 +83,11 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                     EGL14.eglGetCurrentContext()
             );
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
-            mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, null);
+            AudioMediaEncoder audioEncoder = null;
+            if (mResult.audio == Audio.ON) {
+                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config());
+            }
+            mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, audioEncoder);
             mEncoderEngine.start();
             mResult.rotation = 0; // We will rotate the result instead.
             mCurrentState = STATE_RECORDING;

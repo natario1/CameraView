@@ -73,6 +73,35 @@ abstract class MediaEncoder {
     }
 
     /**
+     * Encode data into the {@link #mMediaCodec}.
+     */
+    protected void encode(final ByteBuffer buffer, final int length, final long presentationTimeUs) {
+        final ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
+        while (true) { // TODO: stop if stop() is called!
+            final int inputBufferIndex = mMediaCodec.dequeueInputBuffer(TIMEOUT_USEC);
+            if (inputBufferIndex >= 0) {
+                final ByteBuffer inputBuffer = inputBuffers[inputBufferIndex];
+                inputBuffer.clear();
+                if (buffer != null) {
+                    inputBuffer.put(buffer);
+                }
+                if (length <= 0) { // send EOS
+                    mMediaCodec.queueInputBuffer(inputBufferIndex, 0, 0,
+                            presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
+                } else {
+                    mMediaCodec.queueInputBuffer(inputBufferIndex, 0, length,
+                            presentationTimeUs, 0);
+                }
+                break;
+            } else if (inputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                // wait for MediaCodec encoder is ready to encode
+                // nothing to do here because MediaCodec#dequeueInputBuffer(TIMEOUT_USEC)
+                // will wait for maximum TIMEOUT_USEC(10msec) on each call
+            }
+        }
+    }
+
+    /**
      * Extracts all pending data that was written and encoded into {@link #mMediaCodec},
      * and forwards it to the muxer.
      * <p>
@@ -120,6 +149,7 @@ abstract class MediaEncoder {
                     encodedData.position(mBufferInfo.offset);
                     encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
                     mController.write(mTrackIndex, encodedData, mBufferInfo);
+                    mPreviousTime = mBufferInfo.presentationTimeUs;
                 }
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
@@ -130,5 +160,17 @@ abstract class MediaEncoder {
                 }
             }
         }
+    }
+
+    private long mPreviousTime = 0;
+
+    protected long getPresentationTime() {
+        long result = System.nanoTime() / 1000L;
+        // presentationTimeUs should be monotonic
+        // otherwise muxer fail to write
+        if (result < mPreviousTime) {
+            result = (mPreviousTime - result) + result;
+        }
+        return result;
     }
 }

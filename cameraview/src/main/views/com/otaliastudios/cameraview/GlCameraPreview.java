@@ -21,9 +21,6 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
-
-@interface RendererThread {}
-
 /**
  * - The android camera will stream image to the given {@link SurfaceTexture}.
  *
