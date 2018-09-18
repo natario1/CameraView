@@ -19,29 +19,33 @@ class AudioMediaEncoder extends MediaEncoder {
 
     private static final String MIME_TYPE = "audio/mp4a-latm";
     private static final int SAMPLE_RATE = 44100; // 44.1[KHz] is only setting guaranteed to be available on all devices.
-    private static final int BIT_RATE = 64000;
     public static final int SAMPLES_PER_FRAME = 1024; // AAC, bytes/frame/channel
     public static final int FRAMES_PER_BUFFER = 25; // AAC, frame/buffer/sec
 
     private final Object mLock = new Object();
     private boolean mRequestStop = false;
+    private Config mConfig;
 
     static class Config {
-        Config() { }
+        int bitRate;
+
+        Config(int bitRate) {
+            this.bitRate = bitRate;
+        }
     }
 
     AudioMediaEncoder(@NonNull Config config) {
-
+        mConfig = config;
     }
 
     @EncoderThread
     @Override
-    void prepare(MediaEncoderEngine.Controller controller) {
-        super.prepare(controller);
+    void prepare(MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+        super.prepare(controller, maxLengthMillis);
         final MediaFormat audioFormat = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLE_RATE, 1);
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, AudioFormat.CHANNEL_IN_MONO);
-        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
+        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
         try {
             mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
@@ -124,5 +128,10 @@ class AudioMediaEncoder extends MediaEncoder {
                 mLock.notify();
             }
         }
+    }
+
+    @Override
+    int getBitRate() {
+        return mConfig.bitRate;
     }
 }

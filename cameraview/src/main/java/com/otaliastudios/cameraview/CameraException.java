@@ -30,6 +30,18 @@ public class CameraException extends RuntimeException {
      */
     public static final int REASON_DISCONNECTED = 3;
 
+    /**
+     * Could not take a picture or a picture snapshot,
+     * for some not specified reason.
+     */
+    public static final int REASON_PICTURE_FAILED = 4;
+
+    /**
+     * Could not take a video or a video snapshot,
+     * for some not specified reason.
+     */
+    public static final int REASON_VIDEO_FAILED = 5;
+
     private int reason = REASON_UNKNOWN;
 
     CameraException(Throwable cause) {
@@ -38,6 +50,11 @@ public class CameraException extends RuntimeException {
 
     CameraException(Throwable cause, int reason) {
         super(cause);
+        this.reason = reason;
+    }
+
+    CameraException(int reason) {
+        super();
         this.reason = reason;
     }
 

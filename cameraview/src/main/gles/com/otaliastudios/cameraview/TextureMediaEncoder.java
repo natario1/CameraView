@@ -50,8 +50,8 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
 
     @EncoderThread
     @Override
-    void prepare(MediaEncoderEngine.Controller controller) {
-        super.prepare(controller);
+    void prepare(MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+        super.prepare(controller, maxLengthMillis);
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent(); // drawing will happen on the InputWindowSurface, which

@@ -2,7 +2,6 @@ package com.otaliastudios.cameraview;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
-import android.media.MediaMuxer;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
@@ -20,6 +19,8 @@ abstract class MediaEncoder {
     private MediaCodec.BufferInfo mBufferInfo;
     private MediaEncoderEngine.Controller mController;
     private int mTrackIndex;
+    private long mMaxLengthMillis;
+    private boolean mMaxLengthReached;
 
     /**
      * Called to prepare this encoder before starting.
@@ -31,9 +32,10 @@ abstract class MediaEncoder {
      * @param controller the muxer controller
      */
     @EncoderThread
-    void prepare(MediaEncoderEngine.Controller controller) {
+    void prepare(MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         mController = controller;
         mBufferInfo = new MediaCodec.BufferInfo();
+        mMaxLengthMillis = maxLengthMillis;
     }
 
     /**
@@ -149,28 +151,40 @@ abstract class MediaEncoder {
                     encodedData.position(mBufferInfo.offset);
                     encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
                     mController.write(mTrackIndex, encodedData, mBufferInfo);
-                    mPreviousTime = mBufferInfo.presentationTimeUs;
+                    mLastPresentationTime = mBufferInfo.presentationTimeUs;
+                    if (mStartPresentationTime == 0) {
+                        mStartPresentationTime = mLastPresentationTime;
+                    }
                 }
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);
-                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                    if (!endOfStream) {
-                        Log.w("VideoMediaEncoder", "reached end of stream unexpectedly");
+                if (!mMaxLengthReached) {
+                    if (mLastPresentationTime / 1000 - mStartPresentationTime / 1000 > mMaxLengthMillis) {
+                        mMaxLengthReached = true;
+                        // Log.e("MediaEncoder", this.getClass().getSimpleName() + " requested stop at " + (mLastPresentationTime * 1000 * 1000));
+                        mController.requestStop();
+                        break;
                     }
+                }
+
+                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     break; // out of while
                 }
             }
         }
     }
 
-    private long mPreviousTime = 0;
+    private long mStartPresentationTime = 0;
+    private long mLastPresentationTime = 0;
 
-    protected long getPresentationTime() {
+    long getPresentationTime() {
         long result = System.nanoTime() / 1000L;
         // presentationTimeUs should be monotonic
         // otherwise muxer fail to write
-        if (result < mPreviousTime) {
-            result = (mPreviousTime - result) + result;
+        if (result < mLastPresentationTime) {
+            result = (mLastPresentationTime - result) + result;
         }
         return result;
     }
+
+    abstract int getBitRate();
 }

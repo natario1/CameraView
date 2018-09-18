@@ -19,15 +19,25 @@ import java.util.List;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaEncoderEngine {
 
+    final static int STOP_BY_USER = 0;
+    final static int STOP_BY_MAX_DURATION = 1;
+    final static int STOP_BY_MAX_SIZE = 2;
+
     private WorkerHandler mWorker;
     private ArrayList<MediaEncoder> mEncoders;
     private MediaMuxer mMediaMuxer;
     private int mMediaMuxerStartCount;
     private boolean mMediaMuxerStarted;
     private Controller mController;
+    private Listener mListener;
+    private int mStopReason = STOP_BY_USER;
+    private int mPossibleStopReason;
+    private final Object mLock = new Object();
 
-    MediaEncoderEngine(@NonNull File file, @NonNull VideoMediaEncoder videoEncoder, @Nullable AudioMediaEncoder audioEncoder) {
+    MediaEncoderEngine(@NonNull File file, @NonNull VideoMediaEncoder videoEncoder, @Nullable AudioMediaEncoder audioEncoder,
+                       final int maxDuration, final long maxSize, @Nullable Listener listener) {
         mWorker = WorkerHandler.get("EncoderEngine");
+        mListener = listener;
         mController = new Controller();
         mEncoders = new ArrayList<>();
         mEncoders.add(videoEncoder);
@@ -44,38 +54,74 @@ class MediaEncoderEngine {
         mWorker.post(new Runnable() {
             @Override
             public void run() {
+                // Trying to convert the size constraints to duration constraints,
+                // because they are super easy to check.
+                int bitRate = 0;
                 for (MediaEncoder encoder : mEncoders) {
-                    encoder.prepare(mController);
+                    bitRate += encoder.getBitRate();
+                }
+                int bytePerSecond = bitRate / 8;
+                long sizeMaxDuration = (maxSize / bytePerSecond) * 1000L;
+                long finalMaxDuration = Long.MAX_VALUE;
+                if (maxSize > 0 && maxDuration > 0) {
+                    mPossibleStopReason = sizeMaxDuration < maxDuration ? STOP_BY_MAX_SIZE : STOP_BY_MAX_DURATION;
+                    finalMaxDuration = Math.min(sizeMaxDuration, maxDuration);
+                } else if (maxSize > 0) {
+                    mPossibleStopReason = STOP_BY_MAX_SIZE;
+                    finalMaxDuration = sizeMaxDuration;
+                } else if (maxDuration > 0) {
+                    mPossibleStopReason = STOP_BY_MAX_DURATION;
+                    finalMaxDuration = maxDuration;
+                }
+                Log.e("MediaEncoderEngine", "Computed a max duration of " + (finalMaxDuration / 1000F));
+                for (MediaEncoder encoder : mEncoders) {
+                    encoder.prepare(mController, finalMaxDuration);
                 }
             }
         });
     }
 
+    // Stuff here might be called from multiple threads.
     class Controller {
 
         int start(MediaFormat format) {
-            if (mMediaMuxerStarted) {
-                throw new IllegalStateException("Trying to start but muxer started already");
+            synchronized (mLock) {
+                if (mMediaMuxerStarted) {
+                    throw new IllegalStateException("Trying to start but muxer started already");
+                }
+                int track = mMediaMuxer.addTrack(format);
+                mMediaMuxerStartCount++;
+                if (mMediaMuxerStartCount == mEncoders.size()) {
+                    mMediaMuxer.start();
+                    mMediaMuxerStarted = true;
+                }
+                return track;
             }
-            int track = mMediaMuxer.addTrack(format);
-            mMediaMuxerStartCount++;
-            if (mMediaMuxerStartCount == mEncoders.size()) {
-                mMediaMuxer.start();
-                mMediaMuxerStarted = true;
-            }
-            return track;
         }
 
         boolean isStarted() {
-            return mMediaMuxerStarted;
+            synchronized (mLock) {
+                return mMediaMuxerStarted;
+            }
         }
 
+        // Synchronization does not seem needed here.
         void write(int track, ByteBuffer encodedData, MediaCodec.BufferInfo info) {
             if (!mMediaMuxerStarted) {
                 throw new IllegalStateException("Trying to write before muxer started");
             }
             Log.e("MediaEncoderEngine", "Writing data." + track);
             mMediaMuxer.writeSampleData(track, encodedData, info);
+        }
+
+        void requestStop() {
+            synchronized (mLock) {
+                mMediaMuxerStartCount--;
+                if (mMediaMuxerStartCount == 0) {
+                    mStopReason = mPossibleStopReason;
+                    stop();
+                }
+            }
         }
     }
 
@@ -101,7 +147,7 @@ class MediaEncoderEngine {
         });
     }
 
-    void stop(final Runnable onStop) {
+    void stop() {
         mWorker.post(new Runnable() {
             @Override
             public void run() {
@@ -111,17 +157,31 @@ class MediaEncoderEngine {
                 for (MediaEncoder encoder : mEncoders) {
                     encoder.release();
                 }
+                Exception error = null;
                 if (mMediaMuxer != null) {
                     // stop() throws an exception if you haven't fed it any data.
-                    // We can just swallow I think.
-                    mMediaMuxer.stop();
-                    mMediaMuxer.release();
+                    // But also in other occasions. So this is a signal that something
+                    // went wrong, and we propagate that to the listener.
+                    try {
+                        mMediaMuxer.stop();
+                        mMediaMuxer.release();
+                    } catch (Exception e) {
+                        error = e;
+                    }
                     mMediaMuxer = null;
                 }
-                onStop.run();
+                if (mListener != null) mListener.onEncoderStop(mStopReason, error);
+                mStopReason = STOP_BY_USER;
+                mListener = null;
                 mMediaMuxerStartCount = 0;
                 mMediaMuxerStarted = false;
             }
         });
+    }
+
+    interface Listener {
+
+        @EncoderThread
+        void onEncoderStop(int stopReason, @Nullable Exception e);
     }
 }

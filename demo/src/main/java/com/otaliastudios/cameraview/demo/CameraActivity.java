@@ -13,6 +13,7 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
@@ -47,6 +48,9 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             public void onCameraOpened(CameraOptions options) { onOpened(); }
             public void onPictureTaken(PictureResult result) { onPicture(result); }
             public void onVideoTaken(VideoResult result) { onVideo(result.getFile()); }
+            public void onCameraError(@NonNull CameraException exception) {
+                onError(exception);
+            }
         });
 
         findViewById(R.id.edit).setOnClickListener(this);
@@ -86,6 +90,10 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             ControlView view = (ControlView) group.getChildAt(i);
             view.onCameraOpened(camera);
         }
+    }
+
+    private void onError(@NonNull CameraException exception) {
+        message("Got CameraException #" + exception.getReason(), true);
     }
 
     private void onPicture(PictureResult result) {

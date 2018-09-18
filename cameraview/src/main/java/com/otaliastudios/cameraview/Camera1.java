@@ -512,6 +512,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mCameraCallbacks.dispatchOnPictureTaken(result);
         } else {
             // Something went wrong.
+            mCameraCallbacks.dispatchError(new CameraException(CameraException.REASON_PICTURE_FAILED));
             LOG.e("onPictureResult", "result is null: something went wrong.");
         }
     }
@@ -603,6 +604,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mCameraCallbacks.dispatchOnVideoTaken(result);
         } else {
             // Something went wrong, lock the camera again.
+            mCameraCallbacks.dispatchError(new CameraException(CameraException.REASON_VIDEO_FAILED));
             mCamera.lock();
         }
     }
