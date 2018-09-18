@@ -45,7 +45,7 @@
   This is really fast and allows us to avoid RotationHelper, creating bitmap copies, OOMs, EXIF stuff.
 - When preview is GlSurface, you can take snapshots while recording video (or video snapshots!).
   TODO: document this
+- VideoSnapshots now record audio according to your Audio setting
+- VideoSnapshots now respect maxDuration and maxSize limits
 - TODO: cameraPreview documentation    
 - TODO: takeVideoSnapshot documentation
-
-TODO: add audio to the video snapshots
