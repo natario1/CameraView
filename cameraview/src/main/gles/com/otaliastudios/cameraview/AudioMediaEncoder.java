@@ -18,8 +18,8 @@ class AudioMediaEncoder extends MediaEncoder {
     }
 
     @Override
-    void prepare(MediaMuxer muxer) {
-        super.prepare(muxer);
+    void prepare(MediaEncoderEngine.Controller controller) {
+        super.prepare(controller);
     }
 
     @Override

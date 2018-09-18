@@ -18,21 +18,20 @@ abstract class MediaEncoder {
     protected MediaCodec mMediaCodec;
 
     private MediaCodec.BufferInfo mBufferInfo;
-    private MediaMuxer mMuxer;
+    private MediaEncoderEngine.Controller mController;
     private int mTrackIndex;
-    private boolean mTrackStarted;
 
-    MediaEncoder() {
-    }
-
-    void prepare(MediaMuxer muxer) {
-        mMuxer = muxer;
+    void prepare(MediaEncoderEngine.Controller controller) {
+        mController = controller;
         mBufferInfo = new MediaCodec.BufferInfo();
     }
 
     abstract void start();
+
     abstract void notify(String event, Object data);
+
     abstract void stop();
+
     abstract void release();
 
     /**
@@ -55,25 +54,19 @@ abstract class MediaEncoder {
             int encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 // no output available yet
-                if (!endOfStream) {
-                    break; // out of while
-                }
+                if (!endOfStream) break; // out of while
+
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 // not expected for an encoder
                 encoderOutputBuffers = mMediaCodec.getOutputBuffers();
+
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 // should happen before receiving buffers, and should only happen once
-                if (mTrackStarted) {
-                    throw new RuntimeException("format changed twice");
-                }
+                if (mController.isStarted()) throw new RuntimeException("format changed twice");
                 MediaFormat newFormat = mMediaCodec.getOutputFormat();
 
                 // now that we have the Magic Goodies, start the muxer
-                mTrackIndex = mMuxer.addTrack(newFormat);
-                // TODO this is wrong. Look at the Github project: it is a muxer wrapper.
-                // If you have multiple encoders this breaks.
-                mMuxer.start();
-                mTrackStarted = true;
+                mTrackIndex = mController.start(newFormat);
             } else if (encoderStatus < 0) {
                 Log.w("VideoMediaEncoder", "unexpected result from encoder.dequeueOutputBuffer: " + encoderStatus);
                 // let's ignore it
@@ -83,21 +76,14 @@ abstract class MediaEncoder {
                     throw new RuntimeException("encoderOutputBuffer " + encoderStatus + " was null");
                 }
 
-                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                    // The codec config data was pulled out and fed to the muxer when we got
-                    // the INFO_OUTPUT_FORMAT_CHANGED status.  Ignore it.
-                    mBufferInfo.size = 0;
-                }
-
-                if (mBufferInfo.size != 0) {
-                    if (!mTrackStarted) {
-                        throw new RuntimeException("muxer hasn't started");
-                    }
-
+                // Codec config means that config data was pulled out and fed to the muxer when we got
+                // the INFO_OUTPUT_FORMAT_CHANGED status. Ignore it.
+                boolean isCodecConfig = (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0;
+                if (!isCodecConfig && mController.isStarted() && mBufferInfo.size != 0) {
                     // adjust the ByteBuffer values to match BufferInfo (not needed?)
                     encodedData.position(mBufferInfo.offset);
                     encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
-                    mMuxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
+                    mController.write(mTrackIndex, encodedData, mBufferInfo);
                 }
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {

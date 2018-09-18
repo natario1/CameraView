@@ -18,7 +18,7 @@ import java.io.IOException;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> {
 
-    public final static String FRAME_EVENT = "frame";
+    final static String FRAME_EVENT = "frame";
 
     static class Frame {
         float[] transform;
@@ -49,8 +49,8 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
     }
 
     @Override
-    void prepare(MediaMuxer muxer) {
-        super.prepare(muxer);
+    void prepare(MediaEncoderEngine.Controller controller) {
+        super.prepare(controller);
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent(); // drawing will happen on the InputWindowSurface, which
