@@ -59,6 +59,8 @@ abstract class CameraController implements
     protected VideoRecorder mVideoRecorder;
     protected long mVideoMaxSize;
     protected int mVideoMaxDuration;
+    protected int mVideoBitRate;
+    protected int mAudioBitRate;
     protected Size mCaptureSize;
     protected Size mPreviewSize;
     protected int mPreviewFormat;
@@ -291,6 +293,13 @@ abstract class CameraController implements
         mVideoCodec = codec;
     }
 
+    final void setVideoBitRate(int videoBitRate) {
+        mVideoBitRate = videoBitRate;
+    }
+
+    final void setAudioBitRate(int audioBitRate) {
+        mAudioBitRate = audioBitRate;
+    }
 
     //endregion
 

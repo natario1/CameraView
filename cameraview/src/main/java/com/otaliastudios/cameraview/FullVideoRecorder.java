@@ -45,12 +45,22 @@ class FullVideoRecorder extends VideoRecorder {
             case H_264: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264); break;
             case DEVICE_DEFAULT: mMediaRecorder.setVideoEncoder(mProfile.videoCodec); break;
         }
-        mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
+        if (mResult.videoBitRate <= 0) {
+            mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
+            mResult.videoBitRate = mProfile.videoBitRate;
+        } else {
+            mMediaRecorder.setVideoEncodingBitRate(mResult.videoBitRate);
+        }
         if (mResult.getAudio() == Audio.ON) {
             mMediaRecorder.setAudioChannels(mProfile.audioChannels);
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
             mMediaRecorder.setAudioEncoder(mProfile.audioCodec);
-            mMediaRecorder.setAudioEncodingBitRate(mProfile.audioBitRate);
+            if (mResult.audioBitRate <= 0) {
+                mMediaRecorder.setAudioEncodingBitRate(mProfile.audioBitRate);
+                mResult.audioBitRate = mProfile.audioBitRate;
+            } else {
+                mMediaRecorder.setAudioEncodingBitRate(mResult.audioBitRate);
+            }
         }
         if (mResult.getLocation() != null) {
             mMediaRecorder.setLocation(

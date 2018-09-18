@@ -36,16 +36,6 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     @Override
     void start() {
         mDesiredState = STATE_RECORDING;
-        // TODO respect maxSize by doing inspecting frameRate, bitRate and frame size?
-        // TODO do this at the encoder level, not here with a handler.
-        /* if (mResult.maxDuration > 0) {
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mDesiredState = STATE_NOT_RECORDING;
-                }
-            }, (long) mResult.maxDuration);
-        } */
     }
 
     @Override
@@ -75,9 +65,11 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                 case H_264: type = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
                 case DEVICE_DEFAULT: type = "video/avc"; break;
             }
+            if (mResult.videoBitRate <= 0) mResult.videoBitRate = 1000000;
+            if (mResult.audioBitRate <= 0) mResult.audioBitRate = 64000;
             TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(
                     width, height,
-                    1000000,
+                    mResult.videoBitRate,
                     30,
                     mResult.getRotation(),
                     type, mTextureId,
@@ -87,7 +79,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
             AudioMediaEncoder audioEncoder = null;
             if (mResult.audio == Audio.ON) {
-                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config(64000));
+                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config(mResult.audioBitRate));
             }
             mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, audioEncoder,
                     mResult.maxDuration, mResult.maxSize, SnapshotVideoRecorder.this);

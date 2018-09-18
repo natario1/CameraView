@@ -56,6 +56,7 @@ class MediaEncoderEngine {
             public void run() {
                 // Trying to convert the size constraints to duration constraints,
                 // because they are super easy to check.
+                // This is really naive & not accurate, but...
                 int bitRate = 0;
                 for (MediaEncoder encoder : mEncoders) {
                     bitRate += encoder.getBitRate();

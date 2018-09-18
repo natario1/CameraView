@@ -22,6 +22,9 @@
         <attr name="cameraVideoSizeBiggest" format="boolean"/>
         <attr name="cameraVideoSizeAspectRatio" format="string|reference"/>
 
+        <attr name="cameraVideoBitRate" format="integer|reference" />
+        <attr name="cameraAudioBitRate" format="integer|reference" />
+
         <attr name="cameraGestureTap" format="enum">
             <enum name="none" value="0" />
             <enum name="focus" value="1" />
