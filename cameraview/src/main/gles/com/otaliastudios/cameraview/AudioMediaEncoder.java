@@ -41,9 +41,8 @@ class AudioMediaEncoder extends MediaEncoder {
 
     }
 
-    @EncoderThread
     @Override
     void release() {
-
+        super.release();
     }
 }
