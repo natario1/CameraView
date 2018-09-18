@@ -6,18 +6,14 @@ import android.graphics.ImageFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
-import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.location.Location;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
-import android.support.media.ExifInterface;
 import android.view.SurfaceHolder;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -645,8 +641,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     @SuppressLint("NewApi")
     @Override
     void takeVideoSnapshot(@NonNull final File file) {
-        if (!(mPreview instanceof GLCameraPreview)) {
-            throw new IllegalStateException("Video snapshots are only supported with GLCameraPreview.");
+        if (!(mPreview instanceof GlCameraPreview)) {
+            throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
             throw new IllegalStateException("Video snapshots are only supported starting from API 18.");
@@ -663,7 +659,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.codec = mVideoCodec;
                 videoResult.location = mLocation;
 
-                // What matters as size here is the preview size, which is passed to the GLCameraPreview
+                // What matters as size here is the preview size, which is passed to the GlCameraPreview
                 // surface texture, which is then passed to the encoder. The view size has no influence.
 
                 // CROPPING: We must make sure that the encoder applies our special transformation
@@ -700,7 +696,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.maxSize = mVideoMaxSize;
                 videoResult.maxDuration = mVideoMaxDuration;
 
-                GLCameraPreview cameraPreview = (GLCameraPreview) mPreview;
+                GlCameraPreview cameraPreview = (GlCameraPreview) mPreview;
                 mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview);
                 mVideoRecorder.start();
             }

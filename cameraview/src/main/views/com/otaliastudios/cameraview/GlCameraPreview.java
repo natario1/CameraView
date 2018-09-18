@@ -21,6 +21,9 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
+
+@interface RendererThread {}
+
 /**
  * - The android camera will stream image to the given {@link SurfaceTexture}.
  *
@@ -53,7 +56,7 @@ import javax.microedition.khronos.opengles.GL10;
  * Callbacks are guaranteed to be called on the renderer thread, which means that we can fetch
  * the GL context that was created and is managed by the {@link GLSurfaceView}.
  */
-class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> implements GLSurfaceView.Renderer {
+class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> implements GLSurfaceView.Renderer {
 
     private boolean mDispatched;
     private final float[] mTransformMatrix = new float[16];
@@ -64,7 +67,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     /* for tests */ float mScaleX = 1F;
     /* for tests */ float mScaleY = 1F;
 
-    GLCameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
+    GlCameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         super(context, parent, callback);
     }
 
@@ -119,7 +122,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         }
     }
 
-    // Renderer thread
+    @RendererThread
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         mOutputViewport = new EglViewport();
@@ -144,7 +147,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         });
     }
 
-    // Renderer thread
+    @RendererThread
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public void onSurfaceChanged(GL10 gl, final int width, final int height) {
@@ -170,7 +173,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         }
     }
 
-    // Renderer thread
+    @RendererThread
     @Override
     public void onDrawFrame(GL10 gl) {
         // Latch the latest frame.  If there isn't anything new,
@@ -255,6 +258,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
          *
          * @param textureId the GL texture linked to the image stream
          */
+        @RendererThread
         void onRendererTextureCreated(int textureId);
 
         /**
@@ -266,6 +270,7 @@ class GLCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
          * @param scaleX the scaleX (in REF_VIEW) value
          * @param scaleY the scaleY (in REF_VIEW) value
          */
+        @RendererThread
         void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY);
     }
 

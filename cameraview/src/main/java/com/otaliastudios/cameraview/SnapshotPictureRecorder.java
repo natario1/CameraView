@@ -1,7 +1,6 @@
 package com.otaliastudios.cameraview;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -9,19 +8,9 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.opengl.EGL14;
 import android.opengl.EGLContext;
-import android.opengl.EGLDisplay;
-import android.opengl.EGLSurface;
-import android.opengl.GLES11Ext;
-import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * A {@link PictureResult} that uses standard APIs.
@@ -50,21 +39,22 @@ class SnapshotPictureRecorder extends PictureRecorder {
 
     @Override
     void take() {
-        if (mPreview instanceof GLCameraPreview) {
-            takeGl((GLCameraPreview) mPreview);
+        if (mPreview instanceof GlCameraPreview) {
+            takeGl((GlCameraPreview) mPreview);
         } else {
             takeLegacy();
         }
     }
 
     @SuppressLint("NewApi")
-    private void takeGl(final GLCameraPreview preview) {
-        preview.addRendererFrameCallback(new GLCameraPreview.RendererFrameCallback() {
+    private void takeGl(final GlCameraPreview preview) {
+        preview.addRendererFrameCallback(new GlCameraPreview.RendererFrameCallback() {
 
             int mTextureId;
             SurfaceTexture mSurfaceTexture;
             float[] mTransform;
 
+            @RendererThread
             public void onRendererTextureCreated(int textureId) {
                 mTextureId = textureId;
                 mSurfaceTexture = new SurfaceTexture(mTextureId, true);
@@ -75,6 +65,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                 mTransform = new float[16];
             }
 
+            @RendererThread
             @Override
             public void onRendererFrame(SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
                 preview.removeRendererFrameCallback(this);

@@ -327,7 +327,7 @@ class OldMediaEncoder implements Runnable {
                     long timestamp = (((long) inputMessage.arg1) << 32) | (((long) inputMessage.arg2) & 0xffffffffL);
                     float[] transform = (float[]) obj;
 
-                    // We must scale this matrix like GLCameraPreview does, because it might have some cropping.
+                    // We must scale this matrix like GlCameraPreview does, because it might have some cropping.
                     // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
 
                     float scaleX = encoder.mTransformationScaleX;
@@ -337,7 +337,7 @@ class OldMediaEncoder implements Runnable {
                     Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
                     Matrix.scaleM(transform, 0, scaleX, scaleY, 1);
 
-                    // We also must rotate this matrix. In GLCameraPreview it is not needed because it is a live
+                    // We also must rotate this matrix. In GlCameraPreview it is not needed because it is a live
                     // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
                     // Rotation also takes place with respect to the origin (the Z axis), so we must
                     // translate to origin, rotate, then back to where we were.

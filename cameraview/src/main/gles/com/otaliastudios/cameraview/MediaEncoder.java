@@ -21,17 +21,22 @@ abstract class MediaEncoder {
     private MediaEncoderEngine.Controller mController;
     private int mTrackIndex;
 
+    @EncoderThread
     void prepare(MediaEncoderEngine.Controller controller) {
         mController = controller;
         mBufferInfo = new MediaCodec.BufferInfo();
     }
 
+    @EncoderThread
     abstract void start();
 
+    @EncoderThread
     abstract void notify(String event, Object data);
 
+    @EncoderThread
     abstract void stop();
 
+    @EncoderThread
     abstract void release();
 
     /**

@@ -48,6 +48,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         super(config);
     }
 
+    @EncoderThread
     @Override
     void prepare(MediaEncoderEngine.Controller controller) {
         super.prepare(controller);
@@ -58,6 +59,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         mViewport = new EglViewport();
     }
 
+    @EncoderThread
     @Override
     void release() {
         super.release();
@@ -75,12 +77,14 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         }
     }
 
+    @EncoderThread
     @Override
     void start() {
         super.start();
         // Nothing to do here. Waiting for the first frame.
     }
 
+    @EncoderThread
     @Override
     void notify(String event, Object data) {
         if (event.equals(FRAME_EVENT)) {
@@ -99,7 +103,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
             long timestamp = (((long) arg1) << 32) | (((long) arg2) & 0xffffffffL);
             float[] transform = frame.transform;
 
-            // We must scale this matrix like GLCameraPreview does, because it might have some cropping.
+            // We must scale this matrix like GlCameraPreview does, because it might have some cropping.
             // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
 
             float scaleX = mConfig.scaleX;
@@ -109,7 +113,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
             Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
             Matrix.scaleM(transform, 0, scaleX, scaleY, 1);
 
-            // We also must rotate this matrix. In GLCameraPreview it is not needed because it is a live
+            // We also must rotate this matrix. In GlCameraPreview it is not needed because it is a live
             // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
             // Rotation also takes place with respect to the origin (the Z axis), so we must
             // translate to origin, rotate, then back to where we were.

@@ -17,26 +17,31 @@ class AudioMediaEncoder extends MediaEncoder {
 
     }
 
+    @EncoderThread
     @Override
     void prepare(MediaEncoderEngine.Controller controller) {
         super.prepare(controller);
     }
 
+    @EncoderThread
     @Override
     void start() {
 
     }
 
+    @EncoderThread
     @Override
     void notify(String event, Object data) {
 
     }
 
+    @EncoderThread
     @Override
     void stop() {
 
     }
 
+    @EncoderThread
     @Override
     void release() {
 
