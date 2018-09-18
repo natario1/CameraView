@@ -67,18 +67,17 @@ class AudioMediaEncoder extends MediaEncoder {
     @Override
     void stop() {
         mRequestStop = true;
-        try {
-            synchronized (mLock) {
+        synchronized (mLock) {
+            try {
                 mLock.wait();
-            }
-        } catch (InterruptedException e) {
-            // Ignore
+            } catch (InterruptedException e) {}
         }
     }
 
     @Override
     void release() {
         super.release();
+        mRequestStop = false;
     }
 
     class AudioThread extends Thread {
@@ -93,8 +92,7 @@ class AudioMediaEncoder extends MediaEncoder {
             if (bufferSize < minBufferSize) {
                 bufferSize = ((minBufferSize / SAMPLES_PER_FRAME) + 1) * SAMPLES_PER_FRAME * 2;
             }
-            mAudioRecord = new AudioRecord(
-                    MediaRecorder.AudioSource.CAMCORDER, SAMPLE_RATE,
+            mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.CAMCORDER, SAMPLE_RATE,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
         }
 
@@ -120,6 +118,8 @@ class AudioMediaEncoder extends MediaEncoder {
             encode(null, 0, getPresentationTime());
             drain(false);
             mAudioRecord.stop();
+            mAudioRecord.release();
+            mAudioRecord = null;
             synchronized (mLock) {
                 mLock.notify();
             }
