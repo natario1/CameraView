@@ -13,6 +13,11 @@ import android.view.Surface;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+/**
+ * This alone does nothing.
+ * Subclasses must make sure they write each frame onto the given Surface {@link #mSurface}.
+ * @param <C> the config object.
+ */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends MediaEncoder {
 
@@ -42,6 +47,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
         mConfig = config;
     }
 
+    @EncoderThread
     @Override
     void prepare(MediaEncoderEngine.Controller controller) {
         super.prepare(controller);
@@ -67,18 +73,21 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
         mMediaCodec.start();
     }
 
+    @EncoderThread
     @Override
     void start() {
         // Nothing to do here. Waiting for the first frame.
         mFrameNum = 0;
     }
 
+    @EncoderThread
     @Override
     void stop() {
         mFrameNum = -1;
         drain(true);
     }
 
+    @EncoderThread
     @Override
     void release() {
         if (mMediaCodec != null) {

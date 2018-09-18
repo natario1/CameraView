@@ -15,6 +15,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+@interface EncoderThread {}
+
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaEncoderEngine {
 
@@ -60,6 +62,7 @@ class MediaEncoderEngine {
             mMediaMuxerStartCount++;
             if (mMediaMuxerStartCount == mEncoders.size()) {
                 mMediaMuxer.start();
+                mMediaMuxerStarted = true;
             }
             return track;
         }
@@ -110,9 +113,11 @@ class MediaEncoderEngine {
                     encoder.release();
                 }
                 if (mMediaMuxer != null) {
-                    // TODO: stop() throws an exception if you haven't fed it any data.  Keep track
-                    //       of frames submitted, and don't call stop() if we haven't written anything.
-                    mMediaMuxer.stop();
+                    // stop() throws an exception if you haven't fed it any data.
+                    // We can just swallow I think.
+                    try {
+                        mMediaMuxer.stop();
+                    } catch (Exception e) {};
                     mMediaMuxer.release();
                     mMediaMuxer = null;
                 }

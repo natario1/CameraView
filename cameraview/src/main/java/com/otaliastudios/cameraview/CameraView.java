@@ -7,7 +7,6 @@ import android.app.Activity;
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.Lifecycling;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -240,7 +239,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 }
             }
             case GL_SURFACE: default: {
-                return new GLCameraPreview(context, container, null);
+                return new GlCameraPreview(context, container, null);
             }
         }
     }

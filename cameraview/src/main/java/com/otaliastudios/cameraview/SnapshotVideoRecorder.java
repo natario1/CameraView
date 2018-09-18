@@ -14,7 +14,7 @@ import android.support.annotation.RequiresApi;
  * TODO when cropping is huge, the first frame of the video result, noticeably, has no transformation applied. Don't know why.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.RendererFrameCallback {
+class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.RendererFrameCallback {
 
     private static final String TAG = SnapshotVideoRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -25,13 +25,13 @@ class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.Ren
 
     private OldMediaEncoder mEncoder;
     private MediaEncoderEngine mEncoderEngine;
-    private GLCameraPreview mPreview;
+    private GlCameraPreview mPreview;
 
     private int mCurrentState = STATE_NOT_RECORDING;
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
 
-    SnapshotVideoRecorder(VideoResult stub, VideoResultListener listener, GLCameraPreview preview) {
+    SnapshotVideoRecorder(VideoResult stub, VideoResultListener listener, GlCameraPreview preview) {
         super(stub, listener);
         if (USE_OLD_ENCODER) {
             mEncoder = new OldMediaEncoder();
@@ -60,11 +60,13 @@ class SnapshotVideoRecorder extends VideoRecorder implements GLCameraPreview.Ren
         mDesiredState = STATE_NOT_RECORDING;
     }
 
+    @RendererThread
     @Override
     public void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
     }
 
+    @RendererThread
     @Override
     public void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
