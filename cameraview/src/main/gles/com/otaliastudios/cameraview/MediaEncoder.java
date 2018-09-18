@@ -77,7 +77,7 @@ abstract class MediaEncoder {
      */
     protected void encode(final ByteBuffer buffer, final int length, final long presentationTimeUs) {
         final ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
-        while (true) { // TODO: stop if stop() is called!
+        while (true) {
             final int inputBufferIndex = mMediaCodec.dequeueInputBuffer(TIMEOUT_USEC);
             if (inputBufferIndex >= 0) {
                 final ByteBuffer inputBuffer = inputBuffers[inputBufferIndex];

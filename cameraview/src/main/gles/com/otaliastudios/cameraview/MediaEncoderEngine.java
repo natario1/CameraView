@@ -74,6 +74,7 @@ class MediaEncoderEngine {
             if (!mMediaMuxerStarted) {
                 throw new IllegalStateException("Trying to write before muxer started");
             }
+            Log.e("MediaEncoderEngine", "Writing data." + track);
             mMediaMuxer.writeSampleData(track, encodedData, info);
         }
     }
@@ -107,7 +108,6 @@ class MediaEncoderEngine {
                 for (MediaEncoder encoder : mEncoders) {
                     encoder.stop();
                 }
-                onStop.run();
                 for (MediaEncoder encoder : mEncoders) {
                     encoder.release();
                 }
@@ -118,6 +118,7 @@ class MediaEncoderEngine {
                     mMediaMuxer.release();
                     mMediaMuxer = null;
                 }
+                onStop.run();
                 mMediaMuxerStartCount = 0;
                 mMediaMuxerStarted = false;
             }
