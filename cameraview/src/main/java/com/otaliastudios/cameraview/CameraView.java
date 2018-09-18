@@ -109,6 +109,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         VideoCodec codec = VideoCodec.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoCodec, VideoCodec.DEFAULT.value()));
         long videoMaxSize = (long) a.getFloat(R.styleable.CameraView_cameraVideoMaxSize, 0);
         int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
+        int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
+        int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
 
         // Picture size selector
         List<SizeSelector> pictureConstraints = new ArrayList<>(3);
@@ -207,11 +209,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setGrid(grid);
         setHdr(hdr);
         setAudio(audio);
+        setAudioBitRate(audioBitRate);
         setPictureSize(pictureSelector);
         setVideoSize(videoSelector);
         setVideoCodec(codec);
         setVideoMaxSize(videoMaxSize);
         setVideoMaxDuration(videoMaxDuration);
+        setVideoBitRate(videoBitRate);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -1088,6 +1092,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setVideoSize(@NonNull SizeSelector selector) {
         mCameraController.setVideoSizeSelector(selector);
+    }
+
+    /**
+     * Sets the bit rate in bits per second for video capturing.
+     * Will be used by both {@link #takeVideo(File)} and {@link #takeVideoSnapshot(File)}.
+     *
+     * @param bitRate desired bit rate
+     */
+    public void setVideoBitRate(int bitRate) {
+        mCameraController.setVideoBitRate(bitRate);
+    }
+
+    /**
+     * Sets the bit rate in bits per second for audio capturing.
+     * Will be used by both {@link #takeVideo(File)} and {@link #takeVideoSnapshot(File)}.
+     *
+     * @param bitRate desired bit rate
+     */
+    public void setAudioBitRate(int bitRate) {
+        mCameraController.setAudioBitRate(bitRate);
     }
 
 

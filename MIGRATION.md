@@ -49,3 +49,5 @@
 - VideoSnapshots now respect maxDuration and maxSize limits
 - TODO: cameraPreview documentation    
 - TODO: takeVideoSnapshot documentation
+- New setVideoBitRate() and setAudioBitRate() (and XML too) options, accepting bits per second values.
+  TODO: document them

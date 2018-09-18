@@ -631,6 +631,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.audio = mAudio;
                 videoResult.maxSize = mVideoMaxSize;
                 videoResult.maxDuration = mVideoMaxDuration;
+                videoResult.videoBitRate = mVideoBitRate;
+                videoResult.audioBitRate = mAudioBitRate;
 
                 // Initialize the media recorder
                 mCamera.unlock();
@@ -660,6 +662,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.isSnapshot = true;
                 videoResult.codec = mVideoCodec;
                 videoResult.location = mLocation;
+                videoResult.videoBitRate = mVideoBitRate;
+                videoResult.audioBitRate = mAudioBitRate;
 
                 // What matters as size here is the preview size, which is passed to the GlCameraPreview
                 // surface texture, which is then passed to the encoder. The view size has no influence.

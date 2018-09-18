@@ -25,6 +25,8 @@ public class VideoResult {
     long maxSize;
     int maxDuration;
     int endReason;
+    int videoBitRate;
+    int audioBitRate;
 
     VideoResult() {}
 
@@ -125,5 +127,23 @@ public class VideoResult {
      */
     public int getTerminationReason() {
         return endReason;
+    }
+
+    /**
+     * Returns the bit rate used for video encoding.
+     *
+     * @return the video bit rate
+     */
+    public int getVideoBitRate() {
+        return videoBitRate;
+    }
+
+    /**
+     * Returns the bit rate used for audio encoding.
+     *
+     * @return the audio bit rate
+     */
+    public int getAudioBitRate() {
+        return audioBitRate;
     }
 }
