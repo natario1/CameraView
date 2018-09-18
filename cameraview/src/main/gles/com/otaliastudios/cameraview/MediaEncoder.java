@@ -21,23 +21,56 @@ abstract class MediaEncoder {
     private MediaEncoderEngine.Controller mController;
     private int mTrackIndex;
 
+    /**
+     * Called to prepare this encoder before starting.
+     * Any initialization should be done here as it does not interfere with the original
+     * thread (that, generally, is the rendering thread).
+     *
+     * At this point subclasses MUST create the {@link #mMediaCodec} object.
+     *
+     * @param controller the muxer controller
+     */
     @EncoderThread
     void prepare(MediaEncoderEngine.Controller controller) {
         mController = controller;
         mBufferInfo = new MediaCodec.BufferInfo();
     }
 
+    /**
+     * Start recording. This might be a lightweight operation
+     * in case the encoder needs to wait for a certain event
+     * like a "frame available".
+     */
     @EncoderThread
     abstract void start();
 
+    /**
+     * The caller notifying of a certain event occurring.
+     * Should analyze the string and see if the event is important.
+     * @param event what happened
+     * @param data object
+     */
     @EncoderThread
     abstract void notify(String event, Object data);
 
+    /**
+     * Stop recording.
+     * This MUST happen SYNCHRONOUSLY!
+     */
     @EncoderThread
     abstract void stop();
 
+    /**
+     * Release resources here.
+     */
     @EncoderThread
-    abstract void release();
+    void release() {
+        if (mMediaCodec != null) {
+            mMediaCodec.stop();
+            mMediaCodec.release();
+            mMediaCodec = null;
+        }
+    }
 
     /**
      * Extracts all pending data from the encoder and forwards it to the muxer.

@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 /**
  * This alone does nothing.
  * Subclasses must make sure they write each frame onto the given Surface {@link #mSurface}.
+ *
  * @param <C> the config object.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -90,10 +91,6 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
     @EncoderThread
     @Override
     void release() {
-        if (mMediaCodec != null) {
-            mMediaCodec.stop();
-            mMediaCodec.release();
-            mMediaCodec = null;
-        }
+        super.release();
     }
 }
