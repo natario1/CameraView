@@ -50,8 +50,8 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
 
     @EncoderThread
     @Override
-    void prepare(MediaEncoderEngine.Controller controller) {
-        super.prepare(controller);
+    void prepare(MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+        super.prepare(controller, maxLengthMillis);
         MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
 
         // Set some properties.  Failing to specify some of these can cause the MediaCodec
@@ -59,7 +59,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, mConfig.frameRate);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2);
         format.setInteger("rotation-degrees", mConfig.rotation);
 
         // Create a MediaCodec encoder, and configure it with our format.  Get a Surface
@@ -88,9 +88,8 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
         drain(true);
     }
 
-    @EncoderThread
     @Override
-    void release() {
-        super.release();
+    int getBitRate() {
+        return mConfig.bitRate;
     }
 }

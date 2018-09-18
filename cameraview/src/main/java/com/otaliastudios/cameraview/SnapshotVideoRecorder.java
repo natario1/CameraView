@@ -4,13 +4,15 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaCodec} APIs.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.RendererFrameCallback {
+class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.RendererFrameCallback,
+        MediaEncoderEngine.Listener {
 
     private static final String TAG = SnapshotVideoRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -36,14 +38,14 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
         mDesiredState = STATE_RECORDING;
         // TODO respect maxSize by doing inspecting frameRate, bitRate and frame size?
         // TODO do this at the encoder level, not here with a handler.
-        if (mResult.maxDuration > 0) {
+        /* if (mResult.maxDuration > 0) {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     mDesiredState = STATE_NOT_RECORDING;
                 }
             }, (long) mResult.maxDuration);
-        }
+        } */
     }
 
     @Override
@@ -85,9 +87,10 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
             AudioMediaEncoder audioEncoder = null;
             if (mResult.audio == Audio.ON) {
-                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config());
+                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config(64000));
             }
-            mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, audioEncoder);
+            mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, audioEncoder,
+                    mResult.maxDuration, mResult.maxSize, SnapshotVideoRecorder.this);
             mEncoderEngine.start();
             mResult.rotation = 0; // We will rotate the result instead.
             mCurrentState = STATE_RECORDING;
@@ -102,18 +105,34 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
         }
 
         if (mCurrentState == STATE_RECORDING && mDesiredState == STATE_NOT_RECORDING) {
-            mEncoderEngine.stop(new Runnable() {
-                @Override
-                public void run() {
-                    // We are in the encoder thread.
-                    dispatchResult();
-                }
-            });
+            mEncoderEngine.stop();
             mEncoderEngine = null;
             mCurrentState = STATE_NOT_RECORDING;
             mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
             mPreview = null;
         }
 
+    }
+
+    @EncoderThread
+    @Override
+    public void onEncoderStop(int stopReason, @Nullable Exception e) {
+        // If something failed, undo the result, since this is the mechanism
+        // to notify Camera1 about this.
+        if (e != null) {
+            mResult = null;
+        } else {
+            if (stopReason == MediaEncoderEngine.STOP_BY_MAX_DURATION) {
+                mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
+            } else if (stopReason == MediaEncoderEngine.STOP_BY_MAX_SIZE) {
+                mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
+            }
+        }
+        mEncoderEngine = null;
+        if (mPreview != null) {
+            mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
+            mPreview = null;
+        }
+        dispatchResult();
     }
 }
