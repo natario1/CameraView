@@ -52,6 +52,8 @@
 - TODO: takeVideoSnapshot documentation
 - New setVideoBitRate() and setAudioBitRate() (and XML too) options, accepting bits per second values.
   TODO: document them
+- Now default Facing value is not BACK but rather a value that guarantees taht you have cameras (if possible).
+  If device has no BACK cameras, defaults to FRONT.  
   
   TODO: revisit the demo app, change the controls appearance, add missing controls,
         add all information from the VideoResult in the VideoPreviewActivity, same for pictures

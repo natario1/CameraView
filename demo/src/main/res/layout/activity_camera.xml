@@ -19,7 +19,6 @@
         app:cameraExperimental="true"
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
-        app:cameraFacing="back"
         app:cameraFlash="off"
         app:cameraAudio="on"
         app:cameraGestureTap="focusWithMarker"
