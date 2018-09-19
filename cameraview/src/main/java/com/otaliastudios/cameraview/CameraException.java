@@ -42,6 +42,13 @@ public class CameraException extends RuntimeException {
      */
     public static final int REASON_VIDEO_FAILED = 5;
 
+    /**
+     * Indicates that we could not find a camera for the current {@link Facing}
+     * value.
+     * This can be solved by changing the facing value and starting again.
+     */
+    public static final int REASON_NO_CAMERA = 6;
+
     private int reason = REASON_UNKNOWN;
 
     CameraException(Throwable cause) {

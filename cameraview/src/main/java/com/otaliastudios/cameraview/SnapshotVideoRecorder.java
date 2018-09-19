@@ -17,6 +17,10 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     private static final String TAG = SnapshotVideoRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
+    private static final int DEFAULT_VIDEO_FRAMERATE = 30;
+    private static final int DEFAULT_VIDEO_BITRATE = 1000000;
+    private static final int DEFAULT_AUDIO_BITRATE = 64000;
+
     private static final int STATE_RECORDING = 0;
     private static final int STATE_NOT_RECORDING = 1;
 
@@ -65,13 +69,13 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                 case H_264: type = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
                 case DEVICE_DEFAULT: type = "video/avc"; break;
             }
-            if (mResult.videoBitRate <= 0) mResult.videoBitRate = 1000000;
-            if (mResult.audioBitRate <= 0) mResult.audioBitRate = 64000;
-            TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(
-                    width, height,
+            if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
+            if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
+            if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
+            TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(width, height,
                     mResult.videoBitRate,
-                    30,
-                    mResult.getRotation(),
+                    mResult.videoFrameRate,
+                    mResult.rotation,
                     type, mTextureId,
                     scaleX, scaleY,
                     EGL14.eglGetCurrentContext()
@@ -91,7 +95,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
         if (mCurrentState == STATE_RECORDING) {
             TextureMediaEncoder.Frame frame = new TextureMediaEncoder.Frame();
             frame.timestamp = surfaceTexture.getTimestamp();
-            frame.transform = new float[16];
+            frame.transform = new float[16]; // TODO would be cool to avoid this at every frame. But it's not easy.
             surfaceTexture.getTransformMatrix(frame.transform);
             mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
         }

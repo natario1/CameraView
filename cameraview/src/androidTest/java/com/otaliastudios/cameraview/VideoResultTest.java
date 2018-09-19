@@ -32,6 +32,10 @@ public class VideoResultTest extends BaseTest {
         int maxDuration = 1234;
         long maxFileSize = 500000;
         int reason = VideoResult.REASON_MAX_DURATION_REACHED;
+        int videoFrameRate = 30;
+        int videoBitRate = 300000;
+        int audioBitRate = 30000;
+        Audio audio = Audio.ON;
 
         result.file = file;
         result.rotation = rotation;
@@ -42,6 +46,10 @@ public class VideoResultTest extends BaseTest {
         result.maxDuration = maxDuration;
         result.maxSize = maxFileSize;
         result.endReason = reason;
+        result.videoFrameRate = videoFrameRate;
+        result.videoBitRate = videoBitRate;
+        result.audioBitRate = audioBitRate;
+        result.audio = audio;
 
         assertEquals(result.getFile(), file);
         assertEquals(result.getRotation(), rotation);
@@ -52,5 +60,9 @@ public class VideoResultTest extends BaseTest {
         assertEquals(result.getMaxSize(), maxFileSize);
         assertEquals(result.getMaxDuration(), maxDuration);
         assertEquals(result.getTerminationReason(), reason);
+        assertEquals(result.getVideoFrameRate(), videoFrameRate);
+        assertEquals(result.getVideoBitRate(), videoBitRate);
+        assertEquals(result.getAudioBitRate(), audioBitRate);
+        assertEquals(result.getAudio(), audio);
     }
 }

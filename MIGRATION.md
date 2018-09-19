@@ -47,7 +47,11 @@
   TODO: document this
 - VideoSnapshots now record audio according to your Audio setting
 - VideoSnapshots now respect maxDuration and maxSize limits
+- Added videoFrameRate to the videoResult
 - TODO: cameraPreview documentation    
 - TODO: takeVideoSnapshot documentation
 - New setVideoBitRate() and setAudioBitRate() (and XML too) options, accepting bits per second values.
   TODO: document them
+  
+  TODO: revisit the demo app, change the controls appearance, add missing controls,
+        add all information from the VideoResult in the VideoPreviewActivity, same for pictures

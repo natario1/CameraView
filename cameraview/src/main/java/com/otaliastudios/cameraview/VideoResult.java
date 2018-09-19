@@ -26,6 +26,7 @@ public class VideoResult {
     int maxDuration;
     int endReason;
     int videoBitRate;
+    int videoFrameRate;
     int audioBitRate;
 
     VideoResult() {}
@@ -136,6 +137,16 @@ public class VideoResult {
      */
     public int getVideoBitRate() {
         return videoBitRate;
+    }
+
+    /**
+     * Returns the frame rate used for video encoding
+     * in frames per second.
+     *
+     * @return the video frame rate
+     */
+    public int getVideoFrameRate() {
+        return videoFrameRate;
     }
 
     /**

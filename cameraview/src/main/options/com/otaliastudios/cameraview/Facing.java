@@ -1,6 +1,9 @@
 package com.otaliastudios.cameraview;
 
 
+import android.content.Context;
+import android.support.annotation.Nullable;
+
 /**
  * Facing value indicates which camera sensor should be used for the current session.
  *
@@ -18,7 +21,19 @@ public enum Facing implements Control {
      */
     FRONT(1);
 
-    final static Facing DEFAULT = BACK;
+    final static Facing DEFAULT(@Nullable Context context) {
+        if (context == null) {
+            return BACK;
+        } else if (CameraUtils.hasCameraFacing(context, BACK)) {
+            return BACK;
+        } else if (CameraUtils.hasCameraFacing(context, FRONT)) {
+            return FRONT;
+        } else {
+            // The controller will throw a CameraException.
+            // This device has no cameras.
+            return BACK;
+        }
+    }
 
     private int value;
 
