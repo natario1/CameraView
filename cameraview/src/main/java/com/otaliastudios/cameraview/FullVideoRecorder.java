@@ -38,7 +38,12 @@ class FullVideoRecorder extends VideoRecorder {
 
         Size size = mResult.getRotation() % 180 != 0 ? mResult.getSize().flip() : mResult.getSize();
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
-        mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
+        if (mResult.videoFrameRate <= 0) {
+            mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
+            mResult.videoFrameRate = mProfile.videoFrameRate;
+        } else {
+            mMediaRecorder.setVideoFrameRate(mResult.videoFrameRate);
+        }
         mMediaRecorder.setVideoSize(size.getWidth(), size.getHeight());
         switch (mResult.getCodec()) {
             case H_263: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263); break;

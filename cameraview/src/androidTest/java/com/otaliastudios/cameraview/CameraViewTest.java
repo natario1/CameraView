@@ -107,7 +107,7 @@ public class CameraViewTest extends BaseTest {
     public void testDefaults() {
         // CameraController
         assertEquals(cameraView.getFlash(), Flash.DEFAULT);
-        assertEquals(cameraView.getFacing(), Facing.DEFAULT);
+        assertEquals(cameraView.getFacing(), Facing.DEFAULT(context()));
         assertEquals(cameraView.getGrid(), Grid.DEFAULT);
         assertEquals(cameraView.getWhiteBalance(), WhiteBalance.DEFAULT);
         assertEquals(cameraView.getMode(), Mode.DEFAULT);

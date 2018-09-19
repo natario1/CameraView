@@ -12,6 +12,7 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.File;
@@ -248,6 +249,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             if (shouldBindToSurface()) bindToSurface();
             if (shouldStartPreview()) startPreview("onStart");
             LOG.i("onStart:", "Ended");
+        } else {
+            LOG.e("onStart:", "No camera available for facing", mFacing);
+            throw new CameraException(CameraException.REASON_NO_CAMERA);
         }
     }
 
@@ -280,6 +284,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     private boolean collectCameraId() {
         int internalFacing = mMapper.map(mFacing);
+        LOG.i("collectCameraId", "Facing:", mFacing, "Internal:", internalFacing, "Cameras:", Camera.getNumberOfCameras());
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
@@ -360,13 +365,16 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     @Override
     void setFacing(Facing facing) {
-        if (facing != mFacing) {
+        final Facing old = mFacing;
+        if (facing != old) {
             mFacing = facing;
             schedule(null, true, new Runnable() {
                 @Override
                 public void run() {
                     if (collectCameraId()) {
                         restart();
+                    } else {
+                        mFacing = old;
                     }
                 }
             });
