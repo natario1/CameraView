@@ -54,6 +54,8 @@
   TODO: document them
 - Now default Facing value is not BACK but rather a value that guarantees taht you have cameras (if possible).
   If device has no BACK cameras, defaults to FRONT.  
+- Added CameraView.setGridColor() and app:cameraGridColor.
+  TODO: document this
   
   TODO: revisit the demo app, change the controls appearance, add missing controls,
         add all information from the VideoResult in the VideoPreviewActivity, same for pictures
