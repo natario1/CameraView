@@ -20,6 +20,7 @@ import android.media.MediaActionSound;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -102,6 +103,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT(context).value()));
         Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
         Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
+        int gridColor = a.getColor(R.styleable.CameraView_cameraGrid, GridLinesLayout.DEFAULT_COLOR);
         WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
         Mode mode = Mode.fromValue(a.getInteger(R.styleable.CameraView_cameraMode, Mode.DEFAULT.value()));
         Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
@@ -207,6 +209,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setMode(mode);
         setWhiteBalance(whiteBalance);
         setGrid(grid);
+        setGridColor(gridColor);
         setHdr(hdr);
         setAudio(audio);
         setAudioBitRate(audioBitRate);
@@ -814,6 +817,17 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
+     * Controls the color of the grid lines that will be drawn
+     * over the current layout.
+     *
+     * @param color a resolved color
+     */
+    public void setGridColor(@ColorInt int color) {
+        mGridLinesLayout.setGridColor(color);
+    }
+
+
+    /**
      * Controls the grids to be drawn over the current layout.
      *
      * @see Hdr#OFF
@@ -824,6 +838,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void setHdr(Hdr hdr) {
         mCameraController.setHdr(hdr);
     }
+
 
     /**
      * Controls the preview engine. Should only be called

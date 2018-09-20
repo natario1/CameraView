@@ -5,13 +5,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 
-// TODO animate lines!
 class GridLinesLayout extends View {
 
     private Grid gridMode;
@@ -24,14 +24,16 @@ class GridLinesLayout extends View {
 
     private final static float GOLDEN_RATIO_INV = 0.61803398874989f;
 
+    public final static int DEFAULT_COLOR = Color.argb(160, 255, 255, 255);
+
     public GridLinesLayout(@NonNull Context context) {
         this(context, null);
     }
 
     public GridLinesLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        horiz = new ColorDrawable(Color.WHITE); horiz.setAlpha(160);
-        vert = new ColorDrawable(Color.WHITE); vert.setAlpha(160);
+        horiz = new ColorDrawable(DEFAULT_COLOR);
+        vert = new ColorDrawable(DEFAULT_COLOR);
         width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0.9f, context.getResources().getDisplayMetrics());
     }
 
@@ -48,6 +50,12 @@ class GridLinesLayout extends View {
 
     public void setGridMode(Grid gridMode) {
         this.gridMode = gridMode;
+        postInvalidate();
+    }
+
+    public void setGridColor(@ColorInt int gridColor) {
+        horiz = new ColorDrawable(gridColor);
+        vert = new ColorDrawable(gridColor);
         postInvalidate();
     }
 
