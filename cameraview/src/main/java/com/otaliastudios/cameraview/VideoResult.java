@@ -88,7 +88,7 @@ public class VideoResult {
      * @return the video codec
      */
     @NonNull
-    public VideoCodec getCodec() {
+    public VideoCodec getVideoCodec() {
         return codec;
     }
 

@@ -1,7 +1,6 @@
 package com.otaliastudios.cameraview;
 
 
-import android.hardware.Camera;
 import android.location.Location;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -54,7 +53,7 @@ public class VideoResultTest extends BaseTest {
         assertEquals(result.getFile(), file);
         assertEquals(result.getRotation(), rotation);
         assertEquals(result.getSize(), size);
-        assertEquals(result.getCodec(), codec);
+        assertEquals(result.getVideoCodec(), codec);
         assertEquals(result.getLocation(), location);
         assertEquals(result.isSnapshot(), isSnapshot);
         assertEquals(result.getMaxSize(), maxFileSize);

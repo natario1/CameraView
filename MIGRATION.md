@@ -56,6 +56,5 @@
   If device has no BACK cameras, defaults to FRONT.  
 - Added CameraView.setGridColor() and app:cameraGridColor.
   TODO: document this
-  
-  TODO: revisit the demo app, change the controls appearance, add missing controls,
-        add all information from the VideoResult in the VideoPreviewActivity, same for pictures
+- UI Changes in the demo app, changed controls appearance, added some missing controls.
+  added all information from the VideoResult in the VideoPreviewActivity, same for pictures

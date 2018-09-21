@@ -44,7 +44,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera.addCameraListener(new CameraListener() {
             public void onCameraOpened(CameraOptions options) { onOpened(); }
             public void onPictureTaken(PictureResult result) { onPicture(result); }
-            public void onVideoTaken(VideoResult result) { onVideo(result.getFile()); }
+            public void onVideoTaken(VideoResult result) { onVideo(result); }
             public void onCameraError(@NonNull CameraException exception) {
                 onError(exception);
             }
@@ -102,18 +102,16 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         // This can happen if picture was taken with a gesture.
         long callbackTime = System.currentTimeMillis();
         if (mCaptureTime == 0) mCaptureTime = callbackTime - 300;
-        PicturePreviewActivity.setImage(result.getJpeg());
+        PicturePreviewActivity.setPictureResult(result);
         Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
         intent.putExtra("delay", callbackTime - mCaptureTime);
-        intent.putExtra("nativeWidth", result.getSize().getWidth());
-        intent.putExtra("nativeHeight", result.getSize().getHeight());
         startActivity(intent);
         mCaptureTime = 0;
     }
 
-    private void onVideo(File video) {
+    private void onVideo(VideoResult video) {
+        VideoPreviewActivity.setVideoResult(video);
         Intent intent = new Intent(CameraActivity.this, VideoPreviewActivity.class);
-        intent.putExtra("video", Uri.fromFile(video));
         startActivity(intent);
     }
 

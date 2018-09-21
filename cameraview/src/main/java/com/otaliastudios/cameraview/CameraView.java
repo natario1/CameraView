@@ -826,6 +826,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mGridLinesLayout.setGridColor(color);
     }
 
+    /**
+     * Returns the current grid color.
+     * @return the current grid color
+     */
+    public int getGridColor() {
+        return mGridLinesLayout.getGridColor();
+    }
 
     /**
      * Controls the grids to be drawn over the current layout.
@@ -1120,6 +1127,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
+     * Returns the current video bit rate.
+     * @return current bit rate
+     */
+    public int getVideoBitRate() {
+        return mCameraController.getVideoBitRate();
+    }
+
+    /**
      * Sets the bit rate in bits per second for audio capturing.
      * Will be used by both {@link #takeVideo(File)} and {@link #takeVideoSnapshot(File)}.
      *
@@ -1129,6 +1144,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraController.setAudioBitRate(bitRate);
     }
 
+    /**
+     * Returns the current audio bit rate.
+     * @return current bit rate
+     */
+    public int getAudioBitRate() {
+        return mCameraController.getAudioBitRate();
+    }
 
     /**
      * Adds a {@link CameraListener} instance to be notified of all

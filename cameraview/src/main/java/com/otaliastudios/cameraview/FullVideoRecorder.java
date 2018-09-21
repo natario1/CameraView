@@ -45,7 +45,7 @@ class FullVideoRecorder extends VideoRecorder {
             mMediaRecorder.setVideoFrameRate(mResult.videoFrameRate);
         }
         mMediaRecorder.setVideoSize(size.getWidth(), size.getHeight());
-        switch (mResult.getCodec()) {
+        switch (mResult.getVideoCodec()) {
             case H_263: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263); break;
             case H_264: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264); break;
             case DEVICE_DEFAULT: mMediaRecorder.setVideoEncoder(mProfile.videoCodec); break;
