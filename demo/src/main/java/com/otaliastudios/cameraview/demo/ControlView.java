@@ -57,8 +57,8 @@ public class ControlView<Value> extends LinearLayout implements Spinner.OnItemSe
     }
 
     @SuppressWarnings("all")
-    public void onCameraOpened(CameraView view) {
-        values = new ArrayList(control.getValues(view));
+    public void onCameraOpened(CameraView view, CameraOptions options) {
+        values = new ArrayList(control.getValues(view, options));
         value = (Value) control.getCurrentValue(view);
         valuesStrings = new ArrayList<>();
         for (Value value : values) {
