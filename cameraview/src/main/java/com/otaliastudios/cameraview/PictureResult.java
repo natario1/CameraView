@@ -82,4 +82,15 @@ public class PictureResult {
     public void asBitmap(int maxWidth, int maxHeight, BitmapCallback callback) {
         CameraUtils.decodeBitmap(getJpeg(), maxWidth, maxHeight, callback);
     }
+
+    /**
+     * Shorthand for {@link CameraUtils#decodeBitmap(byte[], BitmapCallback)}.
+     * Decodes this picture on a background thread and posts the result in the UI thread using
+     * the given callback.
+     *
+     * @param callback a callback to be notified of image decoding
+     */
+    public void asBitmap(BitmapCallback callback) {
+        CameraUtils.decodeBitmap(getJpeg(), callback);
+    }
 }

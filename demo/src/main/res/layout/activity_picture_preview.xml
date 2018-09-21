@@ -20,18 +20,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
-        <!-- com.otaliastudios.cameraview.demo.MessageView
-            android:id="@+id/actualResolution"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/-->
-
-        <!-- com.otaliastudios.cameraview.demo.MessageView
-            android:id="@+id/approxUncompressedSize"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/-->
-
         <com.otaliastudios.cameraview.demo.MessageView
             android:id="@+id/captureLatency"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/exifRotation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 

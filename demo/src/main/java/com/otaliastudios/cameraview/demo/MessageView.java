@@ -40,6 +40,11 @@ public class MessageView extends LinearLayout {
         message = (TextView) content.getChildAt(0);
     }
 
+    public void setTitleAndMessage(String title, String message) {
+        setTitle(title);
+        setMessage(message);
+    }
+
     public void setTitle(String title) {
         this.title.setText(title);
     }

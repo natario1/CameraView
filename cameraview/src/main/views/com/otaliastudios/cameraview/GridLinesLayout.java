@@ -14,17 +14,18 @@ import android.view.View;
 
 class GridLinesLayout extends View {
 
-    private Grid gridMode;
+    private final static float GOLDEN_RATIO_INV = 0.61803398874989f;
+    public final static int DEFAULT_COLOR = Color.argb(160, 255, 255, 255);
 
-    private Drawable horiz;
-    private Drawable vert;
+    private Grid gridMode;
+    private int gridColor = DEFAULT_COLOR;
+
+    private ColorDrawable horiz;
+    private ColorDrawable vert;
     private final float width;
 
     Task<Integer> drawTask = new Task<>();
 
-    private final static float GOLDEN_RATIO_INV = 0.61803398874989f;
-
-    public final static int DEFAULT_COLOR = Color.argb(160, 255, 255, 255);
 
     public GridLinesLayout(@NonNull Context context) {
         this(context, null);
@@ -32,8 +33,8 @@ class GridLinesLayout extends View {
 
     public GridLinesLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        horiz = new ColorDrawable(DEFAULT_COLOR);
-        vert = new ColorDrawable(DEFAULT_COLOR);
+        horiz = new ColorDrawable(gridColor);
+        vert = new ColorDrawable(gridColor);
         width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0.9f, context.getResources().getDisplayMetrics());
     }
 
@@ -54,9 +55,14 @@ class GridLinesLayout extends View {
     }
 
     public void setGridColor(@ColorInt int gridColor) {
-        horiz = new ColorDrawable(gridColor);
-        vert = new ColorDrawable(gridColor);
+        this.gridColor = gridColor;
+        horiz.setColor(gridColor);
+        vert.setColor(gridColor);
         postInvalidate();
+    }
+
+    public int getGridColor() {
+        return gridColor;
     }
 
     private int getLineCount() {

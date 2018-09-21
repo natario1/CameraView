@@ -16,6 +16,15 @@ public class AspectRatio implements Comparable<AspectRatio> {
     final static HashMap<String, AspectRatio> sCache = new HashMap<>(16);
 
     /**
+     * Creates an aspect ratio for the given size.
+     * @param size the size
+     * @return a (possibly cached) aspect ratio
+     */
+    public static AspectRatio of(Size size) {
+        return AspectRatio.of(size.getWidth(), size.getHeight());
+    }
+
+    /**
      * Creates an aspect ratio with the given values.
      * @param x the width
      * @param y the height

@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.demo;
 
+import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -12,6 +13,7 @@ import com.otaliastudios.cameraview.GestureAction;
 import com.otaliastudios.cameraview.Grid;
 import com.otaliastudios.cameraview.Hdr;
 import com.otaliastudios.cameraview.Mode;
+import com.otaliastudios.cameraview.VideoCodec;
 import com.otaliastudios.cameraview.WhiteBalance;
 
 import java.util.ArrayList;
@@ -25,17 +27,26 @@ public enum Control {
 
     WIDTH("Width", false),
     HEIGHT("Height", true),
+
     MODE("Mode", false),
     FLASH("Flash", false),
     WHITE_BALANCE("White balance", false),
-    GRID("Grid", true),
-    HDR("Hdr", false),
+    HDR("Hdr", true),
+
+    GRID("Grid lines", false),
+    GRID_COLOR("Grid color", true),
+
+    // TODO audio bitRate
+    // TODO video bitRate
+    // THey are a bit annoying because it's not clear what the default should be.
+    VIDEO_CODEC("Video codec", false),
     AUDIO("Audio", true),
-    PINCH("Pinch gesture", false),
-    HSCROLL("Horizontal scroll gesture", false),
-    VSCROLL("Vertical scroll gesture", false),
-    TAP("Single tap gesture", false),
-    LONG_TAP("Long tap gesture", true);
+
+    PINCH("Pinch", false),
+    HSCROLL("Horizontal scroll", false),
+    VSCROLL("Vertical scroll", false),
+    TAP("Single tap", false),
+    LONG_TAP("Long tap", true);
 
     private String name;
     private boolean last;
@@ -76,6 +87,7 @@ public enum Control {
             case HDR: return options.getSupportedControls(Hdr.class);
             case GRID: return options.getSupportedControls(Grid.class);
             case AUDIO: return options.getSupportedControls(Audio.class);
+            case VIDEO_CODEC: return options.getSupportedControls(VideoCodec.class);
             case PINCH:
             case HSCROLL:
             case VSCROLL:
@@ -92,7 +104,13 @@ public enum Control {
                 addIfSupported(options, list2, GestureAction.FOCUS);
                 addIfSupported(options, list2, GestureAction.FOCUS_WITH_MARKER);
                 return list2;
-
+            case GRID_COLOR:
+                ArrayList<GridColor> list3 = new ArrayList<>();
+                list3.add(new GridColor(Color.argb(160, 255, 255, 255), "default"));
+                list3.add(new GridColor(Color.WHITE, "white"));
+                list3.add(new GridColor(Color.BLACK, "black"));
+                list3.add(new GridColor(Color.YELLOW, "yellow"));
+                return list3;
         }
         return null;
     }
@@ -109,7 +127,9 @@ public enum Control {
             case FLASH: return view.getFlash();
             case WHITE_BALANCE: return view.getWhiteBalance();
             case GRID: return view.getGrid();
+            case GRID_COLOR: return new GridColor(view.getGridColor(), "color");
             case AUDIO: return view.getAudio();
+            case VIDEO_CODEC: return view.getVideoCodec();
             case HDR: return view.getHdr();
             case PINCH: return view.getGestureAction(Gesture.PINCH);
             case HSCROLL: return view.getGestureAction(Gesture.SCROLL_HORIZONTAL);
@@ -135,6 +155,7 @@ public enum Control {
             case WHITE_BALANCE:
             case GRID:
             case AUDIO:
+            case VIDEO_CODEC:
             case HDR:
                 camera.set((com.otaliastudios.cameraview.Control) value);
                 break;
@@ -153,8 +174,29 @@ public enum Control {
             case LONG_TAP:
                 camera.mapGesture(Gesture.LONG_TAP, (GestureAction) value);
                 break;
+            case GRID_COLOR:
+                camera.setGridColor(((GridColor) value).color);
         }
     }
 
 
+    static class GridColor {
+        int color;
+        String name;
+
+        GridColor(int color, String name) {
+            this.color = color;
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof GridColor && color == ((GridColor) obj).color;
+        }
+    }
 }

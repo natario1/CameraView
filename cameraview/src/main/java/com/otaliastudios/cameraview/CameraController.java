@@ -371,6 +371,10 @@ abstract class CameraController implements
         return mVideoCodec;
     }
 
+    final int getVideoBitRate() {
+        return mVideoBitRate;
+    }
+
     final long getVideoMaxSize() {
         return mVideoMaxSize;
     }
@@ -393,6 +397,10 @@ abstract class CameraController implements
 
     final Audio getAudio() {
         return mAudio;
+    }
+
+    final int getAudioBitRate() {
+        return mAudioBitRate;
     }
 
     /* for tests */ final SizeSelector getPictureSizeSelector() {
