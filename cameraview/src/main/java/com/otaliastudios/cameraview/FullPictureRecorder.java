@@ -1,8 +1,6 @@
 package com.otaliastudios.cameraview;
 
 import android.hardware.Camera;
-import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
 import android.support.media.ExifInterface;
 
 import java.io.ByteArrayInputStream;
@@ -49,7 +47,7 @@ class FullPictureRecorder extends PictureRecorder {
                         try {
                             ExifInterface exif = new ExifInterface(new ByteArrayInputStream(data));
                             int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                            exifRotation = CameraUtils.decodeExifOrientation(exifOrientation);
+                            exifRotation = CameraUtils.readExifOrientation(exifOrientation);
                         } catch (IOException e) {
                             exifRotation = 0;
                         }
