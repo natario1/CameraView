@@ -80,7 +80,7 @@ public class PictureResult {
      * @param callback a callback to be notified of image decoding
      */
     public void asBitmap(int maxWidth, int maxHeight, BitmapCallback callback) {
-        CameraUtils.decodeBitmap(getJpeg(), maxWidth, maxHeight, callback);
+        CameraUtils.decodeBitmap(getJpeg(), maxWidth, maxHeight, rotation, callback);
     }
 
     /**
@@ -91,6 +91,6 @@ public class PictureResult {
      * @param callback a callback to be notified of image decoding
      */
     public void asBitmap(BitmapCallback callback) {
-        CameraUtils.decodeBitmap(getJpeg(), callback);
+        asBitmap(-1, -1, callback);
     }
 }

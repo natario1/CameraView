@@ -58,3 +58,5 @@
   TODO: document this
 - UI Changes in the demo app, changed controls appearance, added some missing controls.
   added all information from the VideoResult in the VideoPreviewActivity, same for pictures
+- BitmapCallback result is now @Nullable ! This will happen if we encounter an OutOfMemoryError during decoding.
+  You should consider passing a maxWidth and maxHeight instead of loading the full image.
