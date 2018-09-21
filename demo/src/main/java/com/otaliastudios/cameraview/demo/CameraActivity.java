@@ -42,7 +42,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera = findViewById(R.id.camera);
         camera.setLifecycleOwner(this);
         camera.addCameraListener(new CameraListener() {
-            public void onCameraOpened(CameraOptions options) { onOpened(); }
+            public void onCameraOpened(CameraOptions options) { onOpened(options); }
             public void onPictureTaken(PictureResult result) { onPicture(result); }
             public void onVideoTaken(VideoResult result) { onVideo(result); }
             public void onCameraError(@NonNull CameraException exception) {
@@ -81,11 +81,11 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         Toast.makeText(this, content, length).show();
     }
 
-    private void onOpened() {
+    private void onOpened(CameraOptions options) {
         ViewGroup group = (ViewGroup) controlPanel.getChildAt(0);
         for (int i = 0; i < group.getChildCount(); i++) {
             ControlView view = (ControlView) group.getChildAt(i);
-            view.onCameraOpened(camera);
+            view.onCameraOpened(camera, options);
         }
     }
 

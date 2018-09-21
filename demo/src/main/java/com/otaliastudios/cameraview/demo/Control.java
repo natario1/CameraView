@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.demo;
 
 import android.graphics.Color;
+import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -64,8 +65,7 @@ public enum Control {
         return last;
     }
 
-    public Collection<?> getValues(CameraView view) {
-        CameraOptions options = view.getCameraOptions();
+    public Collection<?> getValues(CameraView view, @NonNull CameraOptions options) {
         switch (this) {
             case WIDTH:
             case HEIGHT:

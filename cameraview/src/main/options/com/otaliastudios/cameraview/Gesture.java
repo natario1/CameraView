@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.NonNull;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -74,7 +76,7 @@ public enum Gesture {
 
     private List<GestureAction> mControls;
 
-    boolean isAssignableTo(GestureAction control) {
+    boolean isAssignableTo(@NonNull GestureAction control) {
         return control == GestureAction.NONE || mControls.contains(control);
     }
 

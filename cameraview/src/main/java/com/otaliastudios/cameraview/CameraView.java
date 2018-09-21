@@ -445,7 +445,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param action which action should be assigned
      * @return true if this action could be assigned to this gesture
      */
-    public boolean mapGesture(@NonNull Gesture gesture, GestureAction action) {
+    public boolean mapGesture(@NonNull Gesture gesture, @NonNull GestureAction action) {
         GestureAction none = GestureAction.NONE;
         if (gesture.isAssignableTo(action)) {
             mGestureMap.put(gesture, action);
@@ -490,6 +490,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param gesture which gesture to inspect
      * @return mapped action
      */
+    @NonNull
     public GestureAction getGestureAction(@NonNull Gesture gesture) {
         return mGestureMap.get(gesture);
     }
@@ -583,7 +584,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param owner the owner activity or fragment
      */
-    public void setLifecycleOwner(LifecycleOwner owner) {
+    public void setLifecycleOwner(@NonNull LifecycleOwner owner) {
         if (mLifecycle != null) mLifecycle.removeObserver(this);
         mLifecycle = owner.getLifecycle();
         mLifecycle.addObserver(this);
@@ -616,7 +617,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @return true if we can go on, false otherwise.
      */
     @SuppressLint("NewApi")
-    protected boolean checkPermissions(Mode mode, Audio audio) {
+    protected boolean checkPermissions(@NonNull Mode mode, @NonNull Audio audio) {
         checkPermissionsManifestOrThrow(mode, audio);
         // Manifest is OK at this point. Let's check runtime permissions.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
@@ -641,7 +642,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * If the developer did not add this to its manifest, throw and fire warnings.
      * (Hoping this is not caught elsewhere... we should test).
      */
-    private void checkPermissionsManifestOrThrow(Mode mode, Audio audio) {
+    private void checkPermissionsManifestOrThrow(@NonNull Mode mode, @NonNull Audio audio) {
         if (mode == Mode.VIDEO && audio == Audio.ON) {
             try {
                 PackageManager manager = getContext().getPackageManager();
@@ -695,7 +696,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param control desired value
      */
-    public void set(Control control) {
+    public void set(@NonNull Control control) {
         if (control instanceof Audio) {
             setAudio((Audio) control);
         } else if (control instanceof Facing) {
@@ -802,7 +803,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param gridMode desired grid mode
      */
-    public void setGrid(Grid gridMode) {
+    public void setGrid(@NonNull Grid gridMode) {
         mGridLinesLayout.setGridMode(gridMode);
     }
 
@@ -811,6 +812,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Gets the current grid mode.
      * @return the current grid mode
      */
+    @NonNull
     public Grid getGrid() {
         return mGridLinesLayout.getGridMode();
     }
@@ -842,7 +844,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param hdr desired hdr value
      */
-    public void setHdr(Hdr hdr) {
+    public void setHdr(@NonNull Hdr hdr) {
         mCameraController.setHdr(hdr);
     }
 
@@ -859,7 +861,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param preview desired preview engine
      */
-    public void setPreview(Preview preview) {
+    public void setPreview(@NonNull Preview preview) {
         mPreview = preview;
     }
 
@@ -868,6 +870,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Gets the current hdr value.
      * @return the current hdr value
      */
+    @NonNull
     public Hdr getHdr() {
         return mCameraController.getHdr();
     }
@@ -894,7 +897,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param location current location
      */
-    public void setLocation(Location location) {
+    public void setLocation(@Nullable Location location) {
         mCameraController.setLocation(location);
     }
 
@@ -921,7 +924,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param whiteBalance desired white balance behavior.
      */
-    public void setWhiteBalance(WhiteBalance whiteBalance) {
+    public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
         mCameraController.setWhiteBalance(whiteBalance);
     }
 
@@ -930,6 +933,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Returns the current white balance behavior.
      * @return white balance value.
      */
+    @NonNull
     public WhiteBalance getWhiteBalance() {
         return mCameraController.getWhiteBalance();
     }
@@ -943,7 +947,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param facing a facing value.
      */
-    public void setFacing(Facing facing) {
+    public void setFacing(@NonNull Facing facing) {
         mCameraController.setFacing(facing);
     }
 
@@ -952,6 +956,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Gets the facing camera currently being used.
      * @return a facing value.
      */
+    @NonNull
     public Facing getFacing() {
         return mCameraController.getFacing();
     }
@@ -989,7 +994,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
      * @param flash desired flash mode.
      */
-    public void setFlash(Flash flash) {
+    public void setFlash(@NonNull Flash flash) {
         mCameraController.setFlash(flash);
     }
 
@@ -998,6 +1003,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Gets the current flash mode.
      * @return a flash mode
      */
+    @NonNull
     public Flash getFlash() {
         return mCameraController.getFlash();
     }
@@ -1011,7 +1017,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param audio desired audio value
      */
-    public void setAudio(Audio audio) {
+    public void setAudio(@NonNull Audio audio) {
 
         if (audio == getAudio() || isStopped()) {
             // Check did took place, or will happen on start().
@@ -1035,6 +1041,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Gets the current audio value.
      * @return the current audio value
      */
+    @NonNull
     public Audio getAudio() {
         return mCameraController.getAudio();
     }
@@ -1062,7 +1069,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param mode desired session type.
      */
-    public void setMode(Mode mode) {
+    public void setMode(@NonNull Mode mode) {
 
         if (mode == getMode() || isStopped()) {
             // Check did took place, or will happen on start().
@@ -1086,6 +1093,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Gets the current mode.
      * @return the current mode
      */
+    @NonNull
     public Mode getMode() {
         return mCameraController.getMode();
     }
@@ -1158,7 +1166,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param cameraListener a listener for events.
      */
-    public void addCameraListener(CameraListener cameraListener) {
+    public void addCameraListener(@Nullable CameraListener cameraListener) {
         if (cameraListener != null) {
             mListeners.add(cameraListener);
         }
@@ -1170,7 +1178,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param cameraListener a listener for events.
      */
-    public void removeCameraListener(CameraListener cameraListener) {
+    public void removeCameraListener(@Nullable CameraListener cameraListener) {
         if (cameraListener != null) {
             mListeners.remove(cameraListener);
         }
@@ -1192,7 +1200,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param processor a frame processor.
      */
-    public void addFrameProcessor(FrameProcessor processor) {
+    public void addFrameProcessor(@Nullable FrameProcessor processor) {
         if (processor != null) {
             mFrameProcessors.add(processor);
         }
@@ -1204,7 +1212,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param processor a frame processor
      */
-    public void removeFrameProcessor(FrameProcessor processor) {
+    public void removeFrameProcessor(@Nullable FrameProcessor processor) {
         if (processor != null) {
             mFrameProcessors.remove(processor);
         }
@@ -1296,7 +1304,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param durationMillis recording max duration
      *
      */
-    public void takeVideo(File file, int durationMillis) {
+    public void takeVideo(@Nullable File file, int durationMillis) {
         final int old = getVideoMaxDuration();
         addCameraListener(new CameraListener() {
             @Override
@@ -1309,7 +1317,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         takeVideo(file);
     }
 
-    public void takeVideoSnapshot(File file, int durationMillis) {
+    public void takeVideoSnapshot(@Nullable File file, int durationMillis) {
         final int old = getVideoMaxDuration();
         addCameraListener(new CameraListener() {
             @Override
@@ -1462,7 +1470,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param codec requested video codec
      */
-    public void setVideoCodec(VideoCodec codec) {
+    public void setVideoCodec(@NonNull VideoCodec codec) {
         mCameraController.setVideoCodec(codec);
     }
 
@@ -1471,6 +1479,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Gets the current encoder for video recordings.
      * @return the current video codec
      */
+    @NonNull
     public VideoCodec getVideoCodec() {
         return mCameraController.getVideoCodec();
     }
