@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview;
 
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.opengl.Matrix;
 
 import java.nio.FloatBuffer;
 
@@ -17,16 +18,41 @@ class EglViewport extends EglElement {
     private static final String SIMPLE_VERTEX_SHADER =
             "uniform mat4 uMVPMatrix;\n" +
                     "uniform mat4 uTexMatrix;\n" +
+                    "uniform vec2 uTextureScale;\n" +
                     "attribute vec4 aPosition;\n" +
                     "attribute vec4 aTextureCoord;\n" +
                     "varying vec2 vTextureCoord;\n" +
+                    "varying vec2 vTextureScale;\n" +
                     "void main() {\n" +
                     "    gl_Position = uMVPMatrix * aPosition;\n" +
                     "    vTextureCoord = (uTexMatrix * aTextureCoord).xy;\n" +
+                    "    vTextureScale = uTextureScale.xy;\n" +
+                    "}\n";
+
+    // Circle fragment shader for use with external 2D textures
+    // We draw as transparent all the pixels outside the circle of center (0.5, 0.5)
+    // and radius 0.5. Works well! But we have:
+    // - black in the preview. Solved with canvas.clipPath and a custom GlSurfaceView.
+    // - black in picture snapshots, UNLESS we use PNG which is super slow
+    // - black in videos because they have no alpha channel
+    private static final String CIRCLE_FRAGMENT_SHADER =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "varying vec2 vTextureScale;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "vec2 axis = vec2(0.5, 0.5);\n" +
+                    "vec2 center = vec2(0.5, 0.5);\n" +
+                    "vec4 none = vec4(0.0, 0.0, 0.0, 0.0);\n" +
+                    "void main() {\n" +
+                    "    if (pow((vTextureCoord.x - center.x) / (axis.x * vTextureScale.x), 2.0) + pow((vTextureCoord.y - center.y) / (axis.y * vTextureScale.y), 2.0) > 1.0) {\n" +
+                    "        gl_FragColor = none;\n" +
+                    "    } else {\n" +
+                    "        gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
+                    "    }\n" +
                     "}\n";
 
     // Simple fragment shader for use with external 2D textures
-    // (e.g. what we get from SurfaceTexture).
     private static final String SIMPLE_FRAGMENT_SHADER =
             "#extension GL_OES_EGL_image_external : require\n" +
                     "precision mediump float;\n" +
@@ -56,12 +82,9 @@ class EglViewport extends EglElement {
     };
 
     // Stuff from Drawable2d.FULL_RECTANGLE
+    private final static int VERTEX_COUNT = FULL_RECTANGLE_COORDS.length / 2;
     private FloatBuffer mVertexCoordinatesArray = floatBuffer(FULL_RECTANGLE_COORDS);
     private FloatBuffer mTextureCoordinatesArray = floatBuffer(FULL_RECTANGLE_TEX_COORDS);
-    private int mVertexCount = FULL_RECTANGLE_COORDS.length / 2;
-    private final int mCoordinatesPerVertex = 2;
-    private final int mVertexStride = 8;
-    private final int mTextureStride = 8;
 
     // Stuff from Texture2dProgram
     private int mProgramHandle;
@@ -71,6 +94,7 @@ class EglViewport extends EglElement {
     private int muTexMatrixLocation;
     private int maPositionLocation;
     private int maTextureCoordLocation;
+    private int muTextureScaleLocation;
 
     // private int muKernelLoc; // Used for filtering
     // private int muTexOffsetLoc; // Used for filtering
@@ -78,11 +102,13 @@ class EglViewport extends EglElement {
 
     EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
-        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
+        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, CIRCLE_FRAGMENT_SHADER);
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
         checkLocation(maPositionLocation, "aPosition");
         maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, "aTextureCoord");
         checkLocation(maTextureCoordLocation, "aTextureCoord");
+        muTextureScaleLocation = GLES20.glGetUniformLocation(mProgramHandle, "uTextureScale");
+        checkLocation(muTextureScaleLocation, "uTextureScale");
         muMVPMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uMVPMatrix");
         checkLocation(muMVPMatrixLocation, "uMVPMatrix");
         muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uTexMatrix");
@@ -110,14 +136,10 @@ class EglViewport extends EglElement {
         GLES20.glBindTexture(mTextureTarget, texId);
         check("glBindTexture " + texId);
 
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
         check("glTexParameter");
 
         return texId;
@@ -125,16 +147,34 @@ class EglViewport extends EglElement {
 
     void drawFrame(int textureId, float[] textureMatrix) {
         drawFrame(textureId, textureMatrix,
-                IDENTITY_MATRIX, mVertexCoordinatesArray, 0,
-                mVertexCount, mCoordinatesPerVertex,
-                mVertexStride, mTextureCoordinatesArray,
-                mTextureStride);
+                mVertexCoordinatesArray,
+                mTextureCoordinatesArray, 1F, 1F);
     }
 
+    void drawFrame(int textureId, float[] textureMatrix, float textureScaleX, float textureScaleY) {
+        drawFrame(textureId, textureMatrix,
+                mVertexCoordinatesArray,
+                mTextureCoordinatesArray, textureScaleX, textureScaleY);
+    }
+
+    private static final FloatBuffer TEMP = floatBuffer(new float[] { 1.0F, 1.0F });
+    /**
+     * The issue with the CIRCLE shader is that if the textureMatrix has a scale value,
+     * it fails miserably, not taking the scale into account.
+     * So what we can do here is
+     *
+     * - read textureMatrix scaleX and scaleY values. This is pretty much impossible to do from the matrix itself
+     *   without making risky assumptions over the order of operations.
+     *   https://www.opengl.org/discussion_boards/showthread.php/159215-Is-it-possible-to-extract-rotation-translation-scale-given-a-matrix
+     *   So we prefer passing scaleX and scaleY here to the draw function.
+     * - pass these values to the vertex shader
+     * - pass them to the fragment shader
+     * - in the fragment shader, take this scale value into account
+     */
     private void drawFrame(int textureId, float[] textureMatrix,
-                          float[] mvpMatrix, FloatBuffer vertexBuffer, int firstVertex,
-                          int vertexCount, int coordsPerVertex, int vertexStride,
-                          FloatBuffer texBuffer, int texStride) {
+                           FloatBuffer vertexBuffer,
+                           FloatBuffer texBuffer,
+                           float textureScaleX, float textureScaleY) {
         check("draw start");
 
         // Select the program.
@@ -146,33 +186,34 @@ class EglViewport extends EglElement {
         GLES20.glBindTexture(mTextureTarget, textureId);
 
         // Copy the model / view / projection matrix over.
-        GLES20.glUniformMatrix4fv(muMVPMatrixLocation, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(muMVPMatrixLocation, 1, false, IDENTITY_MATRIX, 0);
         check("glUniformMatrix4fv");
 
         // Copy the texture transformation matrix over.
         GLES20.glUniformMatrix4fv(muTexMatrixLocation, 1, false, textureMatrix, 0);
         check("glUniformMatrix4fv");
 
+        // Pass scale values.
+        GLES20.glUniform2f(muTextureScaleLocation, textureScaleX, textureScaleY);
+        check("glUniform2f");
+
         // Enable the "aPosition" vertex attribute.
+        // Connect vertexBuffer to "aPosition".
         GLES20.glEnableVertexAttribArray(maPositionLocation);
         check("glEnableVertexAttribArray");
-
-        // Connect vertexBuffer to "aPosition".
-        GLES20.glVertexAttribPointer(maPositionLocation, coordsPerVertex,
-                GLES20.GL_FLOAT, false, vertexStride, vertexBuffer);
+        GLES20.glVertexAttribPointer(maPositionLocation, 2, GLES20.GL_FLOAT, false, 8, vertexBuffer);
         check("glVertexAttribPointer");
 
         // Enable the "aTextureCoord" vertex attribute.
+        // Connect texBuffer to "aTextureCoord".
         GLES20.glEnableVertexAttribArray(maTextureCoordLocation);
         check("glEnableVertexAttribArray");
-
-        // Connect texBuffer to "aTextureCoord".
-        GLES20.glVertexAttribPointer(maTextureCoordLocation, 2,
-                GLES20.GL_FLOAT, false, texStride, texBuffer);
+        GLES20.glVertexAttribPointer(maTextureCoordLocation, 2, GLES20.GL_FLOAT, false, 8, texBuffer);
         check("glVertexAttribPointer");
 
+
         // Draw the rect.
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, firstVertex, vertexCount);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_COUNT);
         check("glDrawArrays");
 
         // Done -- disable vertex array, texture, and program.

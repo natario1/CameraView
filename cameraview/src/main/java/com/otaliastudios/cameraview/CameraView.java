@@ -877,7 +877,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Set location coordinates to be found later in the jpeg EXIF header
+     * Set location coordinates to be found later in the EXIF header
      *
      * @param latitude current latitude
      * @param longitude current longitude
@@ -893,7 +893,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Set location values to be found later in the jpeg EXIF header
+     * Set location values to be found later in the EXIF header
      *
      * @param location current location
      */

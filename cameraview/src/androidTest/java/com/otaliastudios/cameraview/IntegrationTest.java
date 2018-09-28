@@ -12,7 +12,6 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -481,11 +480,11 @@ public class IntegrationTest extends BaseTest {
         Size size = camera.getPictureSize();
         camera.takePicture();
         PictureResult result = waitForPicture(true);
-        Bitmap bitmap = CameraUtils.decodeBitmap(result.getJpeg(), Integer.MAX_VALUE, Integer.MAX_VALUE);
+        Bitmap bitmap = CameraUtils.decodeBitmap(result.getData(), Integer.MAX_VALUE, Integer.MAX_VALUE);
         assertEquals(result.getSize(), size);
         assertEquals(bitmap.getWidth(), size.getWidth());
         assertEquals(bitmap.getHeight(), size.getHeight());
-        assertNotNull(result.getJpeg());
+        assertNotNull(result.getData());
         assertNull(result.getLocation());
         assertFalse(result.isSnapshot());
     }
@@ -526,11 +525,11 @@ public class IntegrationTest extends BaseTest {
         camera.takePictureSnapshot();
 
         PictureResult result = waitForPicture(true);
-        Bitmap bitmap = CameraUtils.decodeBitmap(result.getJpeg(), Integer.MAX_VALUE, Integer.MAX_VALUE);
+        Bitmap bitmap = CameraUtils.decodeBitmap(result.getData(), Integer.MAX_VALUE, Integer.MAX_VALUE);
         assertEquals(result.getSize(), size);
         assertEquals(bitmap.getWidth(), size.getWidth());
         assertEquals(bitmap.getHeight(), size.getHeight());
-        assertNotNull(result.getJpeg());
+        assertNotNull(result.getData());
         assertNull(result.getLocation());
         assertTrue(result.isSnapshot());
     }

@@ -1,11 +1,17 @@
 package com.otaliastudios.cameraview;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.View;
@@ -68,15 +74,43 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         super(context, parent, callback);
     }
 
+    static class ClippingSurfaceView extends GLSurfaceView {
+
+        private Path path = new Path();
+        private RectF rect = new RectF();
+
+        public ClippingSurfaceView(Context context) {
+            super(context);
+        }
+        public ClippingSurfaceView(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+
+        @Override
+        protected void dispatchDraw(Canvas canvas) {
+            if (false) {
+                if (getWidth() != rect.width() || getHeight() != rect.height()) {
+                    rect.set(0, 0, getWidth(), getHeight());
+                    path.rewind();
+                    path.addOval(rect, Path.Direction.CW);
+                }
+                canvas.clipPath(path);
+            }
+            super.dispatchDraw(canvas);
+        }
+    }
+
     @NonNull
     @Override
     protected GLSurfaceView onCreateView(Context context, ViewGroup parent) {
-        View root = LayoutInflater.from(context).inflate(R.layout.cameraview_gl_view, parent, false);
-        parent.addView(root, 0);
+        ViewGroup root = (ViewGroup) LayoutInflater.from(context).inflate(R.layout.cameraview_gl_view, parent, false);
         GLSurfaceView glView = root.findViewById(R.id.gl_surface_view);
         glView.setEGLContextClientVersion(2);
         glView.setRenderer(this);
         glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        // Tried these 2 to remove the black background, does not work.
+        // glView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        // glView.setZOrderMediaOverlay(true);
         glView.getHolder().addCallback(new SurfaceHolder.Callback() {
             public void surfaceCreated(SurfaceHolder holder) {}
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) { }
@@ -87,6 +121,7 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
                 mDispatched = false;
             }
         });
+        parent.addView(root, 0);
         return glView;
     }
 
@@ -192,7 +227,7 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
             Matrix.scaleM(mTransformMatrix, 0, mScaleX, mScaleY, 1);
         }
-        mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
+        mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix, mScaleX, mScaleY);
         for (RendererFrameCallback callback : mRendererFrameCallbacks) {
             callback.onRendererFrame(mInputSurfaceTexture, mScaleX, mScaleY);
         }

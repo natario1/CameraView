@@ -123,7 +123,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
             Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
             drain(false);
-            mViewport.drawFrame(mConfig.textureId, transform);
+            mViewport.drawFrame(mConfig.textureId, transform, scaleX, scaleY);
             mWindow.setPresentationTime(timestamp);
             mWindow.swapBuffers();
         }
