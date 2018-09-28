@@ -109,6 +109,7 @@ class FullVideoRecorder extends VideoRecorder {
                 mMediaRecorder.stop();
             } catch (Exception e) {
                 // This can happen if stopVideo() is called right after takeVideo(). We don't care.
+                mResult = null;
                 LOG.w("stop:", "Error while closing media recorder. Swallowing", e);
             }
             mMediaRecorder.release();

@@ -642,8 +642,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.videoBitRate = mVideoBitRate;
                 videoResult.audioBitRate = mAudioBitRate;
 
-                // Initialize the media recorder
-                mCamera.unlock();
+                // Unlock the camera and start recording.
+                try {
+                    mCamera.unlock();
+                } catch (Exception e) {
+                    // If this failed, we are unlikely able to record the video.
+                    // Dispatch an error.
+                    onVideoResult(null);
+                    return;
+                }
                 mVideoRecorder = new FullVideoRecorder(videoResult, Camera1.this, mCamera, mCameraId);
                 mVideoRecorder.start();
             }
