@@ -9,8 +9,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 
-import java.io.File;
-
 import static org.junit.Assert.assertEquals;
 
 
@@ -22,21 +20,24 @@ public class PictureResultTest extends BaseTest {
 
     @Test
     public void testResult() {
+        int format = PictureResult.FORMAT_JPEG;
         int rotation = 90;
         Size size = new Size(20, 120);
         byte[] jpeg = new byte[]{2, 4, 1, 5, 2};
         Location location = Mockito.mock(Location.class);
         boolean isSnapshot = true;
 
+        result. format = format;
         result.rotation = rotation;
         result.size = size;
-        result.jpeg = jpeg;
+        result.data = jpeg;
         result.location = location;
         result.isSnapshot = isSnapshot;
 
+        assertEquals(result.getFormat(), format);
         assertEquals(result.getRotation(), rotation);
         assertEquals(result.getSize(), size);
-        assertEquals(result.getJpeg(), jpeg);
+        assertEquals(result.getData(), jpeg);
         assertEquals(result.getLocation(), location);
         assertEquals(result.isSnapshot(), isSnapshot);
     }

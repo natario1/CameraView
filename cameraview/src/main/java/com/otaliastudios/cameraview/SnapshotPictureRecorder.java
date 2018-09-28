@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -118,9 +119,13 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         Matrix.rotateM(mTransform, 0, rotation, 0, 0, 1);
                         Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0);
 
-                        viewport.drawFrame(mTextureId, mTransform);
+                        viewport.drawFrame(mTextureId, mTransform, realScaleX, realScaleY);
                         // don't - surface.swapBuffers();
-                        mResult.jpeg = surface.saveFrameToJpeg();
+                        // TODO: need PNG when the preview is rounded, which is an experimental thing
+                        // In all the other cases this must be JPEG!
+                        // Although PNG is extremely slow.
+                        mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
+                        mResult.format = PictureResult.FORMAT_JPEG;
                         mSurfaceTexture.releaseTexImage();
 
                         // EGL14.eglMakeCurrent(oldDisplay, oldSurface, oldSurface, eglContext);
@@ -160,9 +165,10 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         yuv.compressToJpeg(outputRect, 90, stream);
                         data = stream.toByteArray();
 
-                        mResult.jpeg = data;
+                        mResult.data = data;
                         mResult.size = new Size(outputRect.width(), outputRect.height());
                         mResult.rotation = 0;
+                        mResult.format = PictureResult.FORMAT_JPEG;
                         dispatchResult();
                     }
                 });

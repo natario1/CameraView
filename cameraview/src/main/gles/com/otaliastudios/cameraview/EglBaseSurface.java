@@ -199,11 +199,11 @@ class EglBaseSurface extends EglElement {
     }
 
     /**
-     * Saves the EGL surface to jpeg.
+     * Saves the EGL surface to given format.
      * <p>
      * Expects that this object's EGL surface is current.
      */
-    public byte[] saveFrameToJpeg() {
+    public byte[] saveFrameTo(Bitmap.CompressFormat compressFormat) {
         if (!mEglCore.isCurrent(mEGLSurface)) {
             throw new RuntimeException("Expected EGL context/surface is not current");
         }
@@ -231,7 +231,7 @@ class EglBaseSurface extends EglElement {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(buf.array().length);
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         bmp.copyPixelsFromBuffer(buf);
-        bmp.compress(Bitmap.CompressFormat.JPEG, 90, bos);
+        bmp.compress(compressFormat, 90, bos);
         bmp.recycle();
         return bos.toByteArray();
     }

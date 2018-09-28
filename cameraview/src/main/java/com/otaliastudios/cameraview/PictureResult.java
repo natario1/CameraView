@@ -10,11 +10,15 @@ import android.support.annotation.Nullable;
  */
 public class PictureResult {
 
+    public final static int FORMAT_JPEG = 0;
+    // public final static int FORMAT_PNG = 1;
+
     boolean isSnapshot;
     Location location;
     int rotation;
     Size size;
-    byte[] jpeg;
+    byte[] data;
+    int format;
 
     PictureResult() {}
 
@@ -41,7 +45,7 @@ public class PictureResult {
     /**
      * Returns the clock-wise rotation that should be applied to the
      * picture before displaying. If it is non-zero, it is also present
-     * in the jpeg EXIF metadata.
+     * in the EXIF metadata.
      *
      * @return the clock-wise rotation
      */
@@ -60,15 +64,25 @@ public class PictureResult {
     }
 
     /**
-     * Returns the raw jpeg, ready to be saved to file.
+     * Returns the raw compressed, ready to be saved to file,
+     * in the given format.
      *
-     * @return the jpeg stream
+     * @return the compressed data stream
      */
     @NonNull
-    public byte[] getJpeg() {
-        return jpeg;
+    public byte[] getData() {
+        return data;
     }
 
+    /**
+     * Returns the image format. At the moment this will always be
+     * {@link #FORMAT_JPEG}.
+     *
+     * @return the current format
+     */
+    public int getFormat() {
+        return format;
+    }
 
     /**
      * Shorthand for {@link CameraUtils#decodeBitmap(byte[], int, int, BitmapCallback)}.
@@ -80,7 +94,7 @@ public class PictureResult {
      * @param callback a callback to be notified of image decoding
      */
     public void asBitmap(int maxWidth, int maxHeight, BitmapCallback callback) {
-        CameraUtils.decodeBitmap(getJpeg(), maxWidth, maxHeight, rotation, callback);
+        CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, rotation, callback);
     }
 
     /**
