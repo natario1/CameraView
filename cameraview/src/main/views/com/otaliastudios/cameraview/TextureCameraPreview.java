@@ -58,8 +58,8 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
     @TargetApi(15)
     @Override
-    void setInputStreamSize(int width, int height) {
-        super.setInputStreamSize(width, height);
+    void setInputStreamSize(int width, int height, boolean wasFlipped) {
+        super.setInputStreamSize(width, height, wasFlipped);
         if (getView().getSurfaceTexture() != null) {
             getView().getSurfaceTexture().setDefaultBufferSize(width, height);
         }

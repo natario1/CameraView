@@ -78,6 +78,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                     mResult.rotation,
                     type, mTextureId,
                     scaleX, scaleY,
+                    mPreview.mInputFlipped,
                     EGL14.eglGetCurrentContext()
             );
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);

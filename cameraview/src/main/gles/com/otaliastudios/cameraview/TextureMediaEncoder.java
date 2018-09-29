@@ -28,14 +28,16 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         int textureId;
         float scaleX;
         float scaleY;
+        boolean scaleFlipped;
         EGLContext eglContext;
 
         Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
-               int textureId, float scaleX, float scaleY, EGLContext eglContext) {
+               int textureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
             super(width, height, bitRate, frameRate, rotation, mimeType);
             this.textureId = textureId;
             this.scaleX = scaleX;
             this.scaleY = scaleY;
+            this.scaleFlipped = scaleFlipped;
             this.eglContext = eglContext;
         }
     }
@@ -84,6 +86,8 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         // Nothing to do here. Waiting for the first frame.
     }
 
+    private float[] mScaleXY = new float[2];
+
     @EncoderThread
     @Override
     void notify(String event, Object data) {
@@ -119,11 +123,14 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
             // translate to origin, rotate, then back to where we were.
 
             Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
-            Matrix.rotateM(transform, 0, mConfig.rotation, 0, 0, 1);
+            Matrix.rotateM(transform, 0, mConfig.rotation /* VIEW-OUTPUT */, 0, 0, 1);
             Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
             drain(false);
-            mViewport.drawFrame(mConfig.textureId, transform, scaleX, scaleY);
+            boolean flip = mConfig.scaleFlipped;// mConfig.rotation % 180 != 0;
+            mScaleXY[0] = flip ? scaleY : scaleX;
+            mScaleXY[1] = flip ? scaleX : scaleY;
+            mViewport.drawFrame(mConfig.textureId, transform, mScaleXY);
             mWindow.setPresentationTime(timestamp);
             mWindow.swapBuffers();
         }

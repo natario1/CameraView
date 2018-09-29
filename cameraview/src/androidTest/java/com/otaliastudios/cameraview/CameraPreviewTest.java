@@ -86,7 +86,7 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     @Test
     public void testDesiredSize() {
-        preview.setInputStreamSize(160, 90);
+        preview.setInputStreamSize(160, 90, false);
         assertEquals(160, preview.getInputStreamSize().getWidth());
         assertEquals(90, preview.getInputStreamSize().getHeight());
     }
@@ -136,7 +136,7 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     private void setDesiredAspectRatio(float desiredAspectRatio) {
         preview.mCropTask.listen();
-        preview.setInputStreamSize((int) (10f * desiredAspectRatio), 10); // Wait...
+        preview.setInputStreamSize((int) (10f * desiredAspectRatio), 10, false); // Wait...
         preview.mCropTask.await();
         assertEquals(desiredAspectRatio, getViewAspectRatioWithScale(), 0.01f);
 

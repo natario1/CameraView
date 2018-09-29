@@ -119,7 +119,8 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         Matrix.rotateM(mTransform, 0, rotation, 0, 0, 1);
                         Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0);
 
-                        viewport.drawFrame(mTextureId, mTransform, realScaleX, realScaleY);
+                        float[] scaleXY = new float[] { realScaleX, realScaleY };
+                        viewport.drawFrame(mTextureId, mTransform, scaleXY);
                         // don't - surface.swapBuffers();
                         // TODO: need PNG when the preview is rounded, which is an experimental thing
                         // In all the other cases this must be JPEG!

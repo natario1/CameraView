@@ -60,3 +60,6 @@
   added all information from the VideoResult in the VideoPreviewActivity, same for pictures
 - BitmapCallback result is now @Nullable ! This will happen if we encounter an OutOfMemoryError during decoding.
   You should consider passing a maxWidth and maxHeight instead of loading the full image.
+- TODO: add Shape control: RECT and OVAL. Pass this shape around, to the preview and whoever needs it
+- TODO: add setPreviewSize API (think about it)
+- TODO: fix video recording rotation: with front camera, it does not work.
