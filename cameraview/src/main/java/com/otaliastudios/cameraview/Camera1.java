@@ -215,11 +215,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         Camera.Parameters params = mCamera.getParameters();
         mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
         applyDefaultFocus(params);
-        mergeFlash(params, Flash.DEFAULT);
-        mergeLocation(params, null);
-        mergeWhiteBalance(params, WhiteBalance.DEFAULT);
-        mergeHdr(params, Hdr.DEFAULT);
-        mergePlaySound(mPlaySounds);
+        applyFlash(params, Flash.DEFAULT);
+        applyLocation(params, null);
+        applyWhiteBalance(params, WhiteBalance.DEFAULT);
+        applyHdr(params, Hdr.DEFAULT);
+        applyPlaySounds(mPlaySounds);
         params.setRecordingHint(mMode == Mode.VIDEO);
         mCamera.setParameters(params);
         mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
@@ -347,12 +347,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             @Override
             public void run() {
                 Camera.Parameters params = mCamera.getParameters();
-                if (mergeLocation(params, oldLocation)) mCamera.setParameters(params);
+                if (applyLocation(params, oldLocation)) mCamera.setParameters(params);
             }
         });
     }
 
-    private boolean mergeLocation(Camera.Parameters params, Location oldLocation) {
+    private boolean applyLocation(Camera.Parameters params, Location oldLocation) {
         if (mLocation != null) {
             params.setGpsLatitude(mLocation.getLatitude());
             params.setGpsLongitude(mLocation.getLongitude());
@@ -389,12 +389,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             @Override
             public void run() {
                 Camera.Parameters params = mCamera.getParameters();
-                if (mergeWhiteBalance(params, old)) mCamera.setParameters(params);
+                if (applyWhiteBalance(params, old)) mCamera.setParameters(params);
             }
         });
     }
 
-    private boolean mergeWhiteBalance(Camera.Parameters params, WhiteBalance oldWhiteBalance) {
+    private boolean applyWhiteBalance(Camera.Parameters params, WhiteBalance oldWhiteBalance) {
         if (mCameraOptions.supports(mWhiteBalance)) {
             params.setWhiteBalance((String) mMapper.map(mWhiteBalance));
             return true;
@@ -411,12 +411,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             @Override
             public void run() {
                 Camera.Parameters params = mCamera.getParameters();
-                if (mergeHdr(params, old)) mCamera.setParameters(params);
+                if (applyHdr(params, old)) mCamera.setParameters(params);
             }
         });
     }
 
-    private boolean mergeHdr(Camera.Parameters params, Hdr oldHdr) {
+    private boolean applyHdr(Camera.Parameters params, Hdr oldHdr) {
         if (mCameraOptions.supports(mHdr)) {
             params.setSceneMode((String) mMapper.map(mHdr));
             return true;
@@ -426,7 +426,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @TargetApi(17)
-    private boolean mergePlaySound(boolean oldPlaySound) {
+    private boolean applyPlaySounds(boolean oldPlaySound) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             Camera.CameraInfo info = new Camera.CameraInfo();
             Camera.getCameraInfo(mCameraId, info);
@@ -462,13 +462,13 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             @Override
             public void run() {
                 Camera.Parameters params = mCamera.getParameters();
-                if (mergeFlash(params, old)) mCamera.setParameters(params);
+                if (applyFlash(params, old)) mCamera.setParameters(params);
             }
         });
     }
 
 
-    private boolean mergeFlash(Camera.Parameters params, Flash oldFlash) {
+    private boolean applyFlash(Camera.Parameters params, Flash oldFlash) {
         if (mCameraOptions.supports(mFlash)) {
             params.setFlashMode((String) mMapper.map(mFlash));
             return true;
@@ -946,7 +946,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         schedule(mPlaySoundsTask, true, new Runnable() {
             @Override
             public void run() {
-                mergePlaySound(old);
+                applyPlaySounds(old);
             }
         });
     }
