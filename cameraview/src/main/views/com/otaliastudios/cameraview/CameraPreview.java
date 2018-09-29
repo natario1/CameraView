@@ -31,6 +31,7 @@ abstract class CameraPreview<T extends View, Output> {
     // These are the preview stream dimensions, in REF_VIEW.
     protected int mInputStreamWidth;
     protected int mInputStreamHeight;
+    protected boolean mInputFlipped;
 
     CameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
         mView = onCreateView(context, parent);
@@ -52,10 +53,11 @@ abstract class CameraPreview<T extends View, Output> {
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
     // This is called by the CameraImpl.
     // These must be alredy rotated, if needed, to be consistent with surface/view sizes.
-    void setInputStreamSize(int width, int height) {
+    void setInputStreamSize(int width, int height, boolean wasFlipped) {
         LOG.i("setInputStreamSize:", "desiredW=", width, "desiredH=", height);
         mInputStreamWidth = width;
         mInputStreamHeight = height;
+        mInputFlipped = wasFlipped;
         if (mInputStreamWidth > 0 && mInputStreamHeight > 0) {
             crop();
         }

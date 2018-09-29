@@ -145,19 +145,12 @@ class EglViewport extends EglElement {
         return texId;
     }
 
-    void drawFrame(int textureId, float[] textureMatrix) {
+    void drawFrame(int textureId, float[] textureMatrix, float[] textureScale) {
         drawFrame(textureId, textureMatrix,
                 mVertexCoordinatesArray,
-                mTextureCoordinatesArray, 1F, 1F);
+                mTextureCoordinatesArray, textureScale);
     }
 
-    void drawFrame(int textureId, float[] textureMatrix, float textureScaleX, float textureScaleY) {
-        drawFrame(textureId, textureMatrix,
-                mVertexCoordinatesArray,
-                mTextureCoordinatesArray, textureScaleX, textureScaleY);
-    }
-
-    private static final FloatBuffer TEMP = floatBuffer(new float[] { 1.0F, 1.0F });
     /**
      * The issue with the CIRCLE shader is that if the textureMatrix has a scale value,
      * it fails miserably, not taking the scale into account.
@@ -174,7 +167,7 @@ class EglViewport extends EglElement {
     private void drawFrame(int textureId, float[] textureMatrix,
                            FloatBuffer vertexBuffer,
                            FloatBuffer texBuffer,
-                           float textureScaleX, float textureScaleY) {
+                           float[] textureScale) {
         check("draw start");
 
         // Select the program.
@@ -194,7 +187,7 @@ class EglViewport extends EglElement {
         check("glUniformMatrix4fv");
 
         // Pass scale values.
-        GLES20.glUniform2f(muTextureScaleLocation, textureScaleX, textureScaleY);
+        GLES20.glUniform2fv(muTextureScaleLocation, 1, textureScale, 0);
         check("glUniform2f");
 
         // Enable the "aPosition" vertex attribute.

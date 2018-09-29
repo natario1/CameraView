@@ -12,7 +12,6 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
-import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.File;
@@ -168,7 +167,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mCameraCallbacks.onCameraPreviewSizeChanged();
 
         Size previewSize = getPreviewSize(REF_VIEW);
-        mPreview.setInputStreamSize(previewSize.getWidth(), previewSize.getHeight());
+        boolean wasFlipped = flip(REF_SENSOR, REF_VIEW);
+        mPreview.setInputStreamSize(previewSize.getWidth(), previewSize.getHeight(), wasFlipped);
 
         Camera.Parameters params = mCamera.getParameters();
         mPreviewFormat = params.getPreviewFormat();
