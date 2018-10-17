@@ -90,5 +90,10 @@ public class OrientationHelperTest extends BaseTest {
         helper.mListener.onOrientationChanged(270);
         assertEquals(helper.getDeviceOrientation(), 270);
         verify(callback, times(1)).onDeviceOrientationChanged(270);
+
+        // It is still 270 after ORIENTATION_UNKNOWN
+        helper.mListener.onOrientationChanged(OrientationEventListener.ORIENTATION_UNKNOWN);
+        assertEquals(helper.getDeviceOrientation(), 270);
+        verify(callback, times(1)).onDeviceOrientationChanged(270);
     }
 }
