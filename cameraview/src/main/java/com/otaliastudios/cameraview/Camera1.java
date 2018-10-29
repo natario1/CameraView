@@ -684,6 +684,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
             mVideoFile = null;
         }
+        if (mCamera != null) {
+            mCamera.setPreviewCallbackWithBuffer(this);
+        }
     }
 
     @WorkerThread
