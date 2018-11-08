@@ -411,7 +411,7 @@ Most camera parameters can be controlled through XML attributes or linked method
     app:cameraSessionType="picture"
     app:cameraCropOutput="false"  
     app:cameraJpegQuality="100"
-    app:cameraVideoQuality="480p"
+    app:cameraVideoQuality="max480p"
     app:cameraVideoCodec="deviceDefault"
     app:cameraWhiteBalance="auto"
     app:cameraHdr="off"
