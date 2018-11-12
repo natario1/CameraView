@@ -98,7 +98,7 @@ public class CameraUtils {
      */
     @SuppressWarnings("WeakerAccess")
     public static void decodeBitmap(final byte[] source, final int maxWidth, final int maxHeight, final BitmapCallback callback) {
-        return decodeBitmap(source, maxWidth, maxHeight, new BitmapFactory.Options(), callback);
+        decodeBitmap(source, maxWidth, maxHeight, new BitmapFactory.Options(), callback);
     }
 
     /**
@@ -116,7 +116,7 @@ public class CameraUtils {
      * @param callback a callback to be notified
      */
     @SuppressWarnings("WeakerAccess")
-    public static void decodeBitmap(final byte[] source, final int maxWidth, final int maxHeight, BitmapFactory.Options options, final BitmapCallback callback) {
+    public static void decodeBitmap(final byte[] source, final int maxWidth, final int maxHeight, final BitmapFactory.Options options, final BitmapCallback callback) {
         final Handler ui = new Handler();
         WorkerHandler.run(new Runnable() {
             @Override
