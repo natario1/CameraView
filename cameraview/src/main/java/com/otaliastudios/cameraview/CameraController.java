@@ -177,6 +177,14 @@ abstract class CameraController implements
                 if (mState >= STATE_STARTING) return;
                 mState = STATE_STARTING;
                 LOG.i("Start:", "about to call onStart()", ss());
+
+//                Added this because an exception is raised on the onStart method below
+//                when another app is current accessing the camera
+                try {
+                    onStart();
+                }catch (RuntimeException e){
+                    throw new CameraLaunchException(e);
+                }
                 onStart();
                 LOG.i("Start:", "returned from onStart().", "Dispatching.", ss());
                 mState = STATE_STARTED;
