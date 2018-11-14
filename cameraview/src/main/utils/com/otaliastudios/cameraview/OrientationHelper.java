@@ -28,7 +28,7 @@ class OrientationHelper {
             public void onOrientationChanged(int orientation) {
                 int or = 0;
                 if (orientation == OrientationEventListener.ORIENTATION_UNKNOWN) {
-                    or = 0;
+                    or = mDeviceOrientation != -1 ? mDeviceOrientation : 0;
                 } else if (orientation >= 315 || orientation < 45) {
                     or = 0;
                 } else if (orientation >= 45 && orientation < 135) {
