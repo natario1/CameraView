@@ -823,15 +823,22 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 mCamera.setParameters(params);
                 mCameraCallbacks.dispatchOnFocusStart(gesture, p);
                 // TODO this is not guaranteed to be called... Fix.
-                mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                    @Override
-                    public void onAutoFocus(boolean success, Camera camera) {
-                        // TODO lock auto exposure and white balance for a while
-                        mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
-                        mHandler.get().removeCallbacks(mPostFocusResetRunnable);
-                        mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
-                    }
-                });
+                try {
+                    mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                        @Override
+                        public void onAutoFocus(boolean success, Camera camera) {
+                            // TODO lock auto exposure and white balance for a while
+                            mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
+                            mHandler.get().removeCallbacks(mPostFocusResetRunnable);
+                            mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
+                        }
+                    });
+                } catch (RuntimeException e) {
+                    // Handling random auto-focus exception on some devices
+                    // See https://github.com/natario1/CameraView/issues/181
+                    LOG.e("startAutoFocus:", "Error calling autoFocus", e);
+                    mCameraCallbacks.dispatchOnFocusEnd(gesture, false, p);
+                }
             }
         });
     }
