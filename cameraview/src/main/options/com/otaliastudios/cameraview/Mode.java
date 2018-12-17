@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.Nullable;
+
 import java.io.File;
 
 /**
@@ -42,6 +44,7 @@ public enum Mode implements Control {
         return value;
     }
 
+    @Nullable
     static Mode fromValue(int value) {
         Mode[] list = Mode.values();
         for (Mode action : list) {

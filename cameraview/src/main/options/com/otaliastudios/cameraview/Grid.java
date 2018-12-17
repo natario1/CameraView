@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.Nullable;
+
 /**
  * Grid values can be used to draw grid lines over the camera preview.
  *
@@ -42,6 +44,7 @@ public enum Grid implements Control {
         return value;
     }
 
+    @Nullable
     static Grid fromValue(int value) {
         Grid[] list = Grid.values();
         for (Grid action : list) {

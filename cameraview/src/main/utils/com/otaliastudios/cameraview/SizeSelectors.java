@@ -16,7 +16,7 @@ public class SizeSelectors {
      * sizes in a list.
      */
     public interface Filter {
-        boolean accepts(Size size);
+        boolean accepts(@NonNull Size size);
     }
 
     /**
@@ -26,6 +26,8 @@ public class SizeSelectors {
      * @param filter a filter
      * @return a new selector
      */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
     public static SizeSelector withFilter(@NonNull Filter filter) {
         return new FilterSelector(filter);
     }
@@ -37,10 +39,11 @@ public class SizeSelectors {
      * @param width the max width
      * @return a new selector
      */
+    @NonNull
     public static SizeSelector maxWidth(final int width) {
         return withFilter(new Filter() {
             @Override
-            public boolean accepts(Size size) {
+            public boolean accepts(@NonNull Size size) {
                 return size.getWidth() <= width;
             }
         });
@@ -53,10 +56,11 @@ public class SizeSelectors {
      * @param width the min width
      * @return a new selector
      */
+    @NonNull
     public static SizeSelector minWidth(final int width) {
         return withFilter(new Filter() {
             @Override
-            public boolean accepts(Size size) {
+            public boolean accepts(@NonNull Size size) {
                 return size.getWidth() >= width;
             }
         });
@@ -69,10 +73,12 @@ public class SizeSelectors {
      * @param height the max height
      * @return a new selector
      */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
     public static SizeSelector maxHeight(final int height) {
         return withFilter(new Filter() {
             @Override
-            public boolean accepts(Size size) {
+            public boolean accepts(@NonNull Size size) {
                 return size.getHeight() <= height;
             }
         });
@@ -85,10 +91,11 @@ public class SizeSelectors {
      * @param height the min height
      * @return a new selector
      */
+    @NonNull
     public static SizeSelector minHeight(final int height) {
         return withFilter(new Filter() {
             @Override
-            public boolean accepts(Size size) {
+            public boolean accepts(@NonNull Size size) {
                 return size.getHeight() >= height;
             }
         });
@@ -103,11 +110,13 @@ public class SizeSelectors {
      * @param delta a small tolerance value
      * @return a new selector
      */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
     public static SizeSelector aspectRatio(AspectRatio ratio, final float delta) {
         final float desired = ratio.toFloat();
         return withFilter(new Filter() {
             @Override
-            public boolean accepts(Size size) {
+            public boolean accepts(@NonNull Size size) {
                 float candidate = AspectRatio.of(size.getWidth(), size.getHeight()).toFloat();
                 return candidate >= desired - delta && candidate <= desired + delta;
             }
@@ -120,6 +129,8 @@ public class SizeSelectors {
      *
      * @return a new selector
      */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
     public static SizeSelector biggest() {
         return new SizeSelector() {
             @NonNull
@@ -138,6 +149,8 @@ public class SizeSelectors {
      *
      * @return a new selector
      */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
     public static SizeSelector smallest() {
         return new SizeSelector() {
             @NonNull
@@ -156,10 +169,12 @@ public class SizeSelectors {
      * @param area the max area
      * @return a new selector
      */
+    @NonNull
+    @SuppressWarnings("WeakerAccess")
     public static SizeSelector maxArea(final int area) {
         return withFilter(new Filter() {
             @Override
-            public boolean accepts(Size size) {
+            public boolean accepts(@NonNull Size size) {
                 return size.getHeight() * size.getWidth() <= area;
             }
         });
@@ -172,10 +187,12 @@ public class SizeSelectors {
      * @param area the min area
      * @return a new selector
      */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
     public static SizeSelector minArea(final int area) {
         return withFilter(new Filter() {
             @Override
-            public boolean accepts(Size size) {
+            public boolean accepts(@NonNull Size size) {
                 return size.getHeight() * size.getWidth() >= area;
             }
         });
@@ -191,6 +208,7 @@ public class SizeSelectors {
      * @param selectors input selectors
      * @return a new selector
      */
+    @NonNull
     public static SizeSelector and(SizeSelector... selectors) {
         return new AndSelector(selectors);
     }
@@ -203,6 +221,7 @@ public class SizeSelectors {
      * @param selectors input selectors
      * @return a new selector
      */
+    @NonNull
     public static SizeSelector or(SizeSelector... selectors) {
         return new OrSelector(selectors);
     }

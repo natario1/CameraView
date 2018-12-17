@@ -10,6 +10,7 @@ import android.hardware.Camera;
 import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
+import android.support.annotation.NonNull;
 
 import java.io.ByteArrayOutputStream;
 
@@ -28,7 +29,8 @@ class SnapshotPictureRecorder extends PictureRecorder {
     private Size mSensorPreviewSize;
     private int mFormat;
 
-    SnapshotPictureRecorder(PictureResult stub, Camera1 controller, Camera camera, AspectRatio outputRatio) {
+    SnapshotPictureRecorder(@NonNull PictureResult stub, @NonNull Camera1 controller,
+                            @NonNull Camera camera, @NonNull AspectRatio outputRatio) {
         super(stub, controller);
         mController = controller;
         mPreview = controller.mPreview;
@@ -48,7 +50,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
     }
 
     @SuppressLint("NewApi")
-    private void takeGl(final GlCameraPreview preview) {
+    private void takeGl(@NonNull final GlCameraPreview preview) {
         preview.addRendererFrameCallback(new GlCameraPreview.RendererFrameCallback() {
 
             int mTextureId;
@@ -145,7 +147,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
     private void takeLegacy() {
         mCamera.setOneShotPreviewCallback(new Camera.PreviewCallback() {
             @Override
-            public void onPreviewFrame(final byte[] yuv, Camera camera) {
+            public void onPreviewFrame(@NonNull final byte[] yuv, Camera camera) {
                 dispatchOnShutter(false);
 
                 // Got to rotate the preview frame, since byte[] data here does not include

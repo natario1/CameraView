@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.NonNull;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,7 +35,7 @@ public class SizeSelectorsTest {
     public void testWithFilter() {
         SizeSelector selector = SizeSelectors.withFilter(new SizeSelectors.Filter() {
             @Override
-            public boolean accepts(Size size) {
+            public boolean accepts(@NonNull Size size) {
                 return size.getWidth() == 600;
             }
         });

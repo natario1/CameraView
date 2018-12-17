@@ -1,6 +1,9 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
 /**
  * Constants for selecting the encoder of video recordings.
  * https://developer.android.com/guide/topics/media/media-formats.html#video-formats
@@ -37,6 +40,7 @@ public enum VideoCodec implements Control {
         return value;
     }
 
+    @Nullable
     static VideoCodec fromValue(int value) {
         VideoCodec[] list = VideoCodec.values();
         for (VideoCodec action : list) {

@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.Nullable;
+
 /**
  * Gestures actions are actions over camera controls that can be mapped to certain gestures over
  * the screen, using XML attributes or {@link CameraView#mapGesture(Gesture, GestureAction)}.
@@ -81,6 +83,7 @@ public enum GestureAction {
         return value;
     }
 
+    @Nullable
     static GestureAction fromValue(int value) {
         GestureAction[] list = GestureAction.values();
         for (GestureAction action : list) {

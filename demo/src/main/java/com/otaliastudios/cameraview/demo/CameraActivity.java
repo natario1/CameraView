@@ -43,9 +43,9 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera = findViewById(R.id.camera);
         camera.setLifecycleOwner(this);
         camera.addCameraListener(new CameraListener() {
-            public void onCameraOpened(CameraOptions options) { onOpened(options); }
-            public void onPictureTaken(PictureResult result) { onPicture(result); }
-            public void onVideoTaken(VideoResult result) { onVideo(result); }
+            public void onCameraOpened(@NonNull CameraOptions options) { onOpened(options); }
+            public void onPictureTaken(@NonNull PictureResult result) { onPicture(result); }
+            public void onVideoTaken(@NonNull VideoResult result) { onVideo(result); }
             public void onCameraError(@NonNull CameraException exception) {
                 onError(exception);
             }

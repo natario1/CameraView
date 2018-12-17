@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.Nullable;
+
 /**
  * Hdr values indicate whether to use high dynamic range techniques when capturing pictures.
  *
@@ -30,6 +32,7 @@ public enum Hdr implements Control {
         return value;
     }
 
+    @Nullable
     static Hdr fromValue(int value) {
         Hdr[] list = Hdr.values();
         for (Hdr action : list) {

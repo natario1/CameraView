@@ -30,11 +30,13 @@ public class MockCameraPreview extends CameraPreview<View, Void> {
         return new View(context);
     }
 
+    @NonNull
     @Override
     Class<Void> getOutputClass() {
         return null;
     }
 
+    @NonNull
     @Override
     Void getOutput() {
         return null;

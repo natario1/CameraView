@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.support.annotation.IntDef;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -45,7 +46,7 @@ public final class CameraLogger {
          * @param message the log message
          * @param throwable an optional throwable
          */
-        void log(@LogLevel int level, String tag, String message, @Nullable Throwable throwable);
+        void log(@LogLevel int level, @NonNull String tag, @NonNull String message, @Nullable Throwable throwable);
     }
 
     static String lastMessage;
@@ -59,7 +60,7 @@ public final class CameraLogger {
         sLoggers = new ArrayList<>();
         sLoggers.add(new Logger() {
             @Override
-            public void log(int level, String tag, String message, @Nullable Throwable throwable) {
+            public void log(int level, @NonNull String tag, @NonNull String message, @Nullable Throwable throwable) {
                 switch (level) {
                     case LEVEL_VERBOSE: Log.v(tag, message, throwable); break;
                     case LEVEL_INFO: Log.i(tag, message, throwable); break;
@@ -70,7 +71,7 @@ public final class CameraLogger {
         });
     }
 
-    static CameraLogger create(String tag) {
+    static CameraLogger create(@NonNull String tag) {
         return new CameraLogger(tag);
     }
 
@@ -93,7 +94,8 @@ public final class CameraLogger {
      *
      * @param logger logger to add
      */
-    public static void registerLogger(Logger logger) {
+    @SuppressWarnings("WeakerAccess")
+    public static void registerLogger(@NonNull Logger logger) {
         sLoggers.add(logger);
     }
 
@@ -103,13 +105,15 @@ public final class CameraLogger {
      *
      * @param logger logger to remove
      */
-    public static void unregisterLogger(Logger logger) {
+    @SuppressWarnings("WeakerAccess")
+    public static void unregisterLogger(@NonNull Logger logger) {
         sLoggers.remove(logger);
     }
 
+    @NonNull
     private String mTag;
 
-    private CameraLogger(String tag) {
+    private CameraLogger(@NonNull String tag) {
         mTag = tag;
     }
 
@@ -117,41 +121,39 @@ public final class CameraLogger {
         return sLevel <= messageLevel && sLoggers.size() > 0;
     }
 
-    void v(Object... data) {
+    void v(@NonNull Object... data) {
         log(LEVEL_VERBOSE, data);
     }
 
-    void i(Object... data) {
+    void i(@NonNull Object... data) {
         log(LEVEL_INFO, data);
     }
 
-    void w(Object... data) {
+    void w(@NonNull Object... data) {
         log(LEVEL_WARNING, data);
     }
 
-    void e(Object... data) {
+    void e(@NonNull Object... data) {
         log(LEVEL_ERROR, data);
     }
 
-    private void log(@LogLevel int level, Object... data) {
+    private void log(@LogLevel int level, @NonNull Object... data) {
         if (!should(level)) return;
 
-        String message = "";
+        StringBuilder message = new StringBuilder();
         Throwable throwable = null;
-        final int size = data.length;
         for (Object object : data) {
             if (object instanceof Throwable) {
                 throwable = (Throwable) object;
             }
-            message += String.valueOf(object);
-            message += " ";
+            message.append(String.valueOf(object));
+            message.append(" ");
         }
-        message = message.trim();
         for (Logger logger : sLoggers) {
-            logger.log(level, mTag, message, throwable);
+            logger.log(level, mTag, message.toString().trim(), throwable);
         }
 
-        lastMessage = message;
+        lastMessage = message.toString();
         lastTag = mTag;
     }
 }

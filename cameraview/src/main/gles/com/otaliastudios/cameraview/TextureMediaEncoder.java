@@ -9,6 +9,7 @@ import android.opengl.EGLContext;
 import android.opengl.Matrix;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.Surface;
@@ -46,13 +47,13 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
     private EglWindowSurface mWindow;
     private EglViewport mViewport;
 
-    public TextureMediaEncoder(@NonNull Config config) {
+    TextureMediaEncoder(@NonNull Config config) {
         super(config);
     }
 
     @EncoderThread
     @Override
-    void prepare(MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    void prepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         super.prepare(controller, maxLengthMillis);
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
@@ -90,7 +91,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
 
     @EncoderThread
     @Override
-    void notify(String event, Object data) {
+    void notify(@NonNull String event, @Nullable Object data) {
         if (event.equals(FRAME_EVENT)) {
             Frame frame = (Frame) data;
 

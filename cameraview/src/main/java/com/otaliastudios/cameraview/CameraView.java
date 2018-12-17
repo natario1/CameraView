@@ -752,7 +752,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             float max = options.getExposureCorrectionMaxValue();
             if (EVvalue < min) EVvalue = min;
             if (EVvalue > max) EVvalue = max;
-            mCameraController.setExposureCorrection(EVvalue, null, null, false);
+            float[] bounds = new float[]{min, max};
+            mCameraController.setExposureCorrection(EVvalue, bounds, null, false);
         }
     }
 
@@ -1561,10 +1562,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         void onShutter(boolean shouldPlaySound);
         void dispatchOnVideoTaken(VideoResult result);
         void dispatchOnPictureTaken(PictureResult result);
-        void dispatchOnFocusStart(@Nullable Gesture trigger, PointF where);
-        void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, PointF where);
-        void dispatchOnZoomChanged(final float newValue, final PointF[] fingers);
-        void dispatchOnExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers);
+        void dispatchOnFocusStart(@Nullable Gesture trigger, @NonNull PointF where);
+        void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, @NonNull PointF where);
+        void dispatchOnZoomChanged(final float newValue, @Nullable final PointF[] fingers);
+        void dispatchOnExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers);
         void dispatchFrame(Frame frame);
         void dispatchError(CameraException exception);
     }
@@ -1651,7 +1652,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void dispatchOnFocusStart(@Nullable final Gesture gesture, final PointF point) {
+        public void dispatchOnFocusStart(@Nullable final Gesture gesture, @NonNull final PointF point) {
             mLogger.i("dispatchOnFocusStart", gesture, point);
             mUiHandler.post(new Runnable() {
                 @Override
@@ -1669,7 +1670,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchOnFocusEnd(@Nullable final Gesture gesture, final boolean success,
-                                       final PointF point) {
+                                       @NonNull final PointF point) {
             mLogger.i("dispatchOnFocusEnd", gesture, success, point);
             mUiHandler.post(new Runnable() {
                 @Override
@@ -1707,7 +1708,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void dispatchOnZoomChanged(final float newValue, final PointF[] fingers) {
+        public void dispatchOnZoomChanged(final float newValue, @Nullable final PointF[] fingers) {
             mLogger.i("dispatchOnZoomChanged", newValue);
             mUiHandler.post(new Runnable() {
                 @Override
@@ -1721,8 +1722,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchOnExposureCorrectionChanged(final float newValue,
-                                                        final float[] bounds,
-                                                        final PointF[] fingers) {
+                                                        @NonNull final float[] bounds,
+                                                        @Nullable final PointF[] fingers) {
             mLogger.i("dispatchOnExposureCorrectionChanged", newValue);
             mUiHandler.post(new Runnable() {
                 @Override

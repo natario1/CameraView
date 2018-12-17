@@ -3,6 +3,8 @@ package com.otaliastudios.cameraview;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
@@ -14,6 +16,7 @@ abstract class MediaEncoder {
 
     private final static int TIMEOUT_USEC = 10000; // 10 msec
 
+    @SuppressWarnings("WeakerAccess")
     protected MediaCodec mMediaCodec;
 
     private MediaCodec.BufferInfo mBufferInfo;
@@ -32,7 +35,7 @@ abstract class MediaEncoder {
      * @param controller the muxer controller
      */
     @EncoderThread
-    void prepare(MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    void prepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         mController = controller;
         mBufferInfo = new MediaCodec.BufferInfo();
         mMaxLengthMillis = maxLengthMillis;
@@ -53,7 +56,7 @@ abstract class MediaEncoder {
      * @param data object
      */
     @EncoderThread
-    abstract void notify(String event, Object data);
+    abstract void notify(@NonNull String event, @Nullable Object data);
 
     /**
      * Stop recording.
@@ -77,7 +80,8 @@ abstract class MediaEncoder {
     /**
      * Encode data into the {@link #mMediaCodec}.
      */
-    protected void encode(final ByteBuffer buffer, final int length, final long presentationTimeUs) {
+    @SuppressWarnings("WeakerAccess")
+    protected void encode(@Nullable final ByteBuffer buffer, final int length, final long presentationTimeUs) {
         final ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
         while (true) {
             final int inputBufferIndex = mMediaCodec.dequeueInputBuffer(TIMEOUT_USEC);
@@ -111,6 +115,7 @@ abstract class MediaEncoder {
      * is set, we send EOS to the encoder, and then iterate until we see EOS on the output.
      * Calling this with endOfStream set should be done once, right before stopping the muxer.
      */
+    @SuppressWarnings("WeakerAccess")
     protected void drain(boolean endOfStream) {
         if (endOfStream) {
             mMediaCodec.signalEndOfInputStream();

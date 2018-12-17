@@ -4,6 +4,7 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 
@@ -31,7 +32,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
 
-    SnapshotVideoRecorder(VideoResult stub, VideoResultListener listener, GlCameraPreview preview) {
+    SnapshotVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview) {
         super(stub, listener);
         mPreview = preview;
         mPreview.addRendererFrameCallback(this);
@@ -55,7 +56,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
 
     @RendererThread
     @Override
-    public void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
+    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
             Size size = mResult.getSize();
             // Ensure width and height are divisible by 2, as I have read somewhere.

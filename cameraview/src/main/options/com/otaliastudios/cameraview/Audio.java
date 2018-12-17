@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.Nullable;
+
 /**
  * Audio values indicate whether to record audio stream when record video.
  *
@@ -30,6 +32,7 @@ public enum Audio implements Control {
         return value;
     }
 
+    @Nullable
     static Audio fromValue(int value) {
         Audio[] list = Audio.values();
         for (Audio action : list) {

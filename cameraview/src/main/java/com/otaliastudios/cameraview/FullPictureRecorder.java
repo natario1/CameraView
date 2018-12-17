@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 import android.hardware.Camera;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.media.ExifInterface;
 
 import java.io.ByteArrayInputStream;
@@ -16,7 +18,7 @@ class FullPictureRecorder extends PictureRecorder {
 
     private Camera mCamera;
 
-    FullPictureRecorder(PictureResult stub, PictureResultListener listener, Camera camera) {
+    FullPictureRecorder(@NonNull PictureResult stub, @Nullable PictureResultListener listener, @NonNull Camera camera) {
         super(stub, listener);
         mCamera = camera;
 

@@ -3,6 +3,8 @@ package com.otaliastudios.cameraview;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaRecorder} APIs.
@@ -15,7 +17,7 @@ class FullVideoRecorder extends VideoRecorder {
     private MediaRecorder mMediaRecorder;
     private CamcorderProfile mProfile;
 
-    FullVideoRecorder(VideoResult stub, VideoResultListener listener, Camera camera, int cameraId) {
+    FullVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull Camera camera, int cameraId) {
         super(stub, listener);
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setCamera(camera);

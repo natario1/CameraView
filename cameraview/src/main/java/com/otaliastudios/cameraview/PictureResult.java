@@ -93,7 +93,7 @@ public class PictureResult {
      * @param maxHeight the max. height of final bitmap
      * @param callback a callback to be notified of image decoding
      */
-    public void asBitmap(int maxWidth, int maxHeight, BitmapCallback callback) {
+    public void asBitmap(int maxWidth, int maxHeight, @NonNull BitmapCallback callback) {
         CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, rotation, callback);
     }
 
@@ -104,7 +104,9 @@ public class PictureResult {
      *
      * @param callback a callback to be notified of image decoding
      */
-    public void asBitmap(BitmapCallback callback) {
+    public void asBitmap(@NonNull BitmapCallback callback) {
         asBitmap(-1, -1, callback);
     }
+
+    // TODO toFile
 }

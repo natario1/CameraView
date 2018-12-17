@@ -11,8 +11,13 @@ import java.io.File;
  */
 public class VideoResult {
 
+    @SuppressWarnings({"WeakerAccess", "unused"})
     public static final int REASON_USER = 0;
+
+    @SuppressWarnings("WeakerAccess")
     public static final int REASON_MAX_SIZE_REACHED = 1;
+
+    @SuppressWarnings("WeakerAccess")
     public static final int REASON_MAX_DURATION_REACHED = 2;
 
     boolean isSnapshot;

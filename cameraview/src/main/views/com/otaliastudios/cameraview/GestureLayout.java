@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.graphics.PointF;
+import android.support.annotation.NonNull;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +18,12 @@ abstract class GestureLayout extends FrameLayout {
     protected Gesture mType;
     protected PointF[] mPoints;
 
-    public GestureLayout(Context context) {
+    public GestureLayout(@NonNull Context context) {
         super(context);
         onInitialize(context);
     }
 
-    protected void onInitialize(Context context) {
+    protected void onInitialize(@NonNull Context context) {
     }
 
     public void enable(boolean enable) {
@@ -35,15 +36,17 @@ abstract class GestureLayout extends FrameLayout {
 
     public abstract boolean onTouchEvent(MotionEvent event);
 
+    @NonNull
     public final Gesture getGestureType() {
         return mType;
     }
 
     // For tests.
-    void setGestureType(Gesture type) {
+    void setGestureType(@NonNull Gesture type) {
         mType = type;
     }
 
+    @NonNull
     public final PointF[] getPoints() {
         return mPoints;
     }
