@@ -9,6 +9,7 @@ import android.media.MediaMuxer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ class AudioMediaEncoder extends MediaEncoder {
 
     @EncoderThread
     @Override
-    void prepare(MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    void prepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         super.prepare(controller, maxLengthMillis);
         final MediaFormat audioFormat = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLE_RATE, 1);
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
@@ -65,7 +66,7 @@ class AudioMediaEncoder extends MediaEncoder {
 
     @EncoderThread
     @Override
-    void notify(String event, Object data) { }
+    void notify(@NonNull String event, @Nullable Object data) { }
 
     @EncoderThread
     @Override
@@ -74,7 +75,9 @@ class AudioMediaEncoder extends MediaEncoder {
         synchronized (mLock) {
             try {
                 mLock.wait();
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+                // do nothing
+            }
         }
     }
 

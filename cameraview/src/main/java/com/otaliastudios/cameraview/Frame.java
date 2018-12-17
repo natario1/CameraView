@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 /**
  * A preview frame to be processed by {@link FrameProcessor}s.
@@ -19,7 +20,7 @@ public class Frame {
         mManager = manager;
     }
 
-    void set(byte[] data, long time, int rotation, Size size, int format) {
+    void set(@NonNull byte[] data, long time, int rotation, @NonNull Size size, int format) {
         this.mData = data;
         this.mTime = time;
         this.mRotation = rotation;
@@ -40,6 +41,8 @@ public class Frame {
      *
      * @return a frozen Frame
      */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
     public Frame freeze() {
         byte[] data = new byte[mData.length];
         System.arraycopy(mData, 0, data, 0, mData.length);
@@ -74,6 +77,7 @@ public class Frame {
      * Returns the frame data.
      * @return the frame data
      */
+    @NonNull
     public byte[] getData() {
         return mData;
     }
@@ -104,6 +108,7 @@ public class Frame {
      *
      * @return frame size
      */
+    @NonNull
     public Size getSize() {
         return mSize;
     }

@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.io.File;
@@ -14,7 +15,7 @@ abstract class VideoRecorder {
     /* tests */ VideoResult mResult;
     /* tests */ VideoResultListener mListener;
 
-    VideoRecorder(VideoResult stub, VideoResultListener listener) {
+    VideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener) {
         mResult = stub;
         mListener = listener;
     }

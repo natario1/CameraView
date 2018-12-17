@@ -36,7 +36,7 @@ public class CameraOptions {
 
     // Camera1 constructor.
     @SuppressWarnings("deprecation")
-    CameraOptions(Camera.Parameters params, boolean flipSizes) {
+    CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
         Mapper mapper = new Mapper1();
 
@@ -107,7 +107,7 @@ public class CameraOptions {
 
     // Camera2 constructor.
     @TargetApi(21)
-    CameraOptions(CameraCharacteristics params) {}
+    CameraOptions(@NonNull CameraCharacteristics params) {}
 
 
     /**
@@ -116,7 +116,7 @@ public class CameraOptions {
      * @param control value to check
      * @return whether it's supported
      */
-    public boolean supports(Control control) {
+    public boolean supports(@NonNull Control control) {
         return getSupportedControls(control.getClass()).contains(control);
     }
 
@@ -128,7 +128,7 @@ public class CameraOptions {
      * @param action value to be checked
      * @return whether it's supported
      */
-    public boolean supports(GestureAction action) {
+    public boolean supports(@NonNull GestureAction action) {
         switch (action) {
             case FOCUS:
             case FOCUS_WITH_MARKER:
@@ -146,6 +146,7 @@ public class CameraOptions {
 
 
     @SuppressWarnings("unchecked")
+    @NonNull
     public <T extends Control> Collection<T> getSupportedControls(@NonNull Class<T> controlClass) {
         if (controlClass.equals(Audio.class)) {
             return (Collection<T>) Arrays.asList(Audio.values());
@@ -174,6 +175,7 @@ public class CameraOptions {
      *
      * @return a collection of supported values.
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<Size> getSupportedPictureSizes() {
         return Collections.unmodifiableSet(supportedPictureSizes);
@@ -185,6 +187,7 @@ public class CameraOptions {
      *
      * @return a collection of supported values.
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<AspectRatio> getSupportedPictureAspectRatios() {
         return Collections.unmodifiableSet(supportedPictureAspectRatio);
@@ -196,6 +199,7 @@ public class CameraOptions {
      *
      * @return a collection of supported values.
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<Size> getSupportedVideoSizes() {
         return Collections.unmodifiableSet(supportedVideoSizes);
@@ -207,6 +211,7 @@ public class CameraOptions {
      *
      * @return a set of supported values.
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<AspectRatio> getSupportedVideoAspectRatios() {
         return Collections.unmodifiableSet(supportedVideoAspectRatio);
@@ -220,6 +225,7 @@ public class CameraOptions {
      * @see Facing#FRONT
      * @return a collection of supported values.
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<Facing> getSupportedFacing() {
         return Collections.unmodifiableSet(supportedFacing);
@@ -235,6 +241,7 @@ public class CameraOptions {
      * @see Flash#TORCH
      * @return a collection of supported values.
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<Flash> getSupportedFlash() {
         return Collections.unmodifiableSet(supportedFlash);
@@ -251,6 +258,7 @@ public class CameraOptions {
      * @see WhiteBalance#CLOUDY
      * @return a collection of supported values.
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<WhiteBalance> getSupportedWhiteBalance() {
         return Collections.unmodifiableSet(supportedWhiteBalance);
@@ -264,6 +272,7 @@ public class CameraOptions {
      * @see Hdr#ON
      * @return a collection of supported values.
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<Hdr> getSupportedHdr() {
         return Collections.unmodifiableSet(supportedHdr);
@@ -275,6 +284,7 @@ public class CameraOptions {
      *
      * @return whether zoom is supported.
      */
+    @SuppressWarnings("WeakerAccess")
     public boolean isZoomSupported() {
         return zoomSupported;
     }
@@ -287,6 +297,7 @@ public class CameraOptions {
      *
      * @return whether auto focus is supported.
      */
+    @SuppressWarnings("WeakerAccess")
     public boolean isAutoFocusSupported() {
         return autoFocusSupported;
     }
@@ -300,6 +311,7 @@ public class CameraOptions {
      * @see #getExposureCorrectionMaxValue()
      * @return whether exposure correction is supported.
      */
+    @SuppressWarnings("WeakerAccess")
     public boolean isExposureCorrectionSupported() {
         return exposureCorrectionSupported;
     }
@@ -311,6 +323,7 @@ public class CameraOptions {
      *
      * @return min EV value
      */
+    @SuppressWarnings("WeakerAccess")
     public float getExposureCorrectionMinValue() {
         return exposureCorrectionMinValue;
     }
@@ -322,6 +335,7 @@ public class CameraOptions {
      *
      * @return max EV value
      */
+    @SuppressWarnings("WeakerAccess")
     public float getExposureCorrectionMaxValue() {
         return exposureCorrectionMaxValue;
     }

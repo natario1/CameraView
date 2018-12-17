@@ -22,8 +22,13 @@ import java.nio.ByteBuffer;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends MediaEncoder {
 
+    @SuppressWarnings("WeakerAccess")
     protected C mConfig;
+
+    @SuppressWarnings("WeakerAccess")
     protected Surface mSurface;
+
+    @SuppressWarnings("WeakerAccess")
     protected int mFrameNum = -1;
 
     static class Config {
@@ -50,7 +55,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
 
     @EncoderThread
     @Override
-    void prepare(MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    void prepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         super.prepare(controller, maxLengthMillis);
         MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
 

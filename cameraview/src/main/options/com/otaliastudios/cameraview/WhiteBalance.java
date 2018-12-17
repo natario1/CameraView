@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.Nullable;
 
 /**
  * White balance values control the white balance settings.
@@ -61,6 +62,7 @@ public enum WhiteBalance implements Control {
         return value;
     }
 
+    @Nullable
     static WhiteBalance fromValue(int value) {
         WhiteBalance[] list = WhiteBalance.values();
         for (WhiteBalance action : list) {

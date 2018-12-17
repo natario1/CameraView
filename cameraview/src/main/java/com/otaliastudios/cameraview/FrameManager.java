@@ -1,6 +1,9 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -21,7 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 class FrameManager {
 
     interface BufferCallback {
-        void onBufferAvailable(byte[] buffer);
+        void onBufferAvailable(@NonNull byte[] buffer);
     }
 
     private int mPoolSize;
@@ -29,7 +32,7 @@ class FrameManager {
     private BufferCallback mCallback;
     private LinkedBlockingQueue<Frame> mQueue;
 
-    FrameManager(int poolSize, BufferCallback callback) {
+    FrameManager(int poolSize, @Nullable BufferCallback callback) {
         mPoolSize = poolSize;
         mCallback = callback;
         mQueue = new LinkedBlockingQueue<>(mPoolSize);
@@ -71,14 +74,14 @@ class FrameManager {
      *
      * @return a new frame
      */
-    Frame getFrame(byte[] data, long time, int rotation, Size previewSize, int previewFormat) {
+    Frame getFrame(@NonNull byte[] data, long time, int rotation, @NonNull Size previewSize, int previewFormat) {
         Frame frame = mQueue.poll();
         if (frame == null) frame = new Frame(this);
         frame.set(data, time, rotation, previewSize, previewFormat);
         return frame;
     }
 
-    int allocate(int bitsPerPixel, Size previewSize) {
+    int allocate(int bitsPerPixel, @NonNull Size previewSize) {
         mBufferSize = getBufferSize(bitsPerPixel, previewSize);
         for (int i = 0; i < mPoolSize; i++) {
             mCallback.onBufferAvailable(new byte[mBufferSize]);
@@ -86,7 +89,7 @@ class FrameManager {
         return mBufferSize;
     }
 
-    private int getBufferSize(int bitsPerPixel, Size previewSize) {
+    private int getBufferSize(int bitsPerPixel, @NonNull Size previewSize) {
         long sizeInBits = previewSize.getHeight() * previewSize.getWidth() * bitsPerPixel;
         return (int) Math.ceil(sizeInBits / 8.0d);
     }

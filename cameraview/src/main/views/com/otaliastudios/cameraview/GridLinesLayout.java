@@ -26,7 +26,6 @@ class GridLinesLayout extends View {
 
     Task<Integer> drawTask = new Task<>();
 
-
     public GridLinesLayout(@NonNull Context context) {
         this(context, null);
     }
@@ -45,11 +44,12 @@ class GridLinesLayout extends View {
         vert.setBounds(0, top, (int) width, bottom);
     }
 
+    @NonNull
     public Grid getGridMode() {
         return gridMode;
     }
 
-    public void setGridMode(Grid gridMode) {
+    public void setGridMode(@NonNull Grid gridMode) {
         this.gridMode = gridMode;
         postInvalidate();
     }
@@ -89,7 +89,7 @@ class GridLinesLayout extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
         drawTask.start();
         int count = getLineCount();

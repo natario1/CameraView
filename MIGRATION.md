@@ -124,13 +124,16 @@ The listener interface brings two breaking signature changes:
 - `onVideoTaken()` now returns a `VideoResult`. Use `result.getFile()` to access the video file.
   The result class includes rich information about the video (or video snapshot) that was taken.
   
+## Experimental mode
+The v2 version introduces a `cameraExperimental` XML flag that you can use to enable experimental features.
+Might be used in the future to speed up development.
+
 ## Other improvements
+- Added `@Nullable` and `@NonNull` annotations pretty much everywhere. This might **break** your Kotlin build.
 - Added `setGridColor()` and `cameraGridColor` to control the grid color
 - Default `Facing` value is not `BACK` anymore but rather a value that guarantees that you have cameras (if possible).
   If device has no `BACK` cameras, defaults to `FRONT`.  
   
-  
-TODO: max size for video snapshot is naive
 TODO: document cameraGridColor
 TODO: document setVideoBitRate
 TODO: document setAudioBitRate

@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 /**
@@ -12,13 +13,14 @@ abstract class PictureRecorder {
     /* tests */ PictureResult mResult;
     /* tests */ PictureResultListener mListener;
 
-    PictureRecorder(PictureResult stub, PictureResultListener listener) {
+    PictureRecorder(@NonNull PictureResult stub, @Nullable PictureResultListener listener) {
         mResult = stub;
         mListener = listener;
     }
 
     abstract void take();
 
+    @SuppressWarnings("WeakerAccess")
     protected void dispatchOnShutter(boolean didPlaySound) {
         if (mListener != null) mListener.onPictureShutter(didPlaySound);
     }

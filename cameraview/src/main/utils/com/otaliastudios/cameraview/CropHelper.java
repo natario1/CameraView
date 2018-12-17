@@ -1,11 +1,13 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.Rect;
+import android.support.annotation.NonNull;
 
 class CropHelper {
 
     // It's important that size and aspect ratio belong to the same reference.
-    static Rect computeCrop(Size currentSize, AspectRatio targetRatio) {
+    @NonNull
+    static Rect computeCrop(@NonNull Size currentSize, @NonNull AspectRatio targetRatio) {
         int currentWidth = currentSize.getWidth();
         int currentHeight = currentSize.getHeight();
         if (targetRatio.matches(currentSize)) {

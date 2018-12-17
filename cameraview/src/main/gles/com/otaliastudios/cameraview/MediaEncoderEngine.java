@@ -19,6 +19,7 @@ import java.util.List;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaEncoderEngine {
 
+    @SuppressWarnings("WeakerAccess")
     final static int STOP_BY_USER = 0;
     final static int STOP_BY_MAX_DURATION = 1;
     final static int STOP_BY_MAX_SIZE = 2;
@@ -56,13 +57,14 @@ class MediaEncoderEngine {
             public void run() {
                 // Trying to convert the size constraints to duration constraints,
                 // because they are super easy to check.
-                // This is really naive & not accurate, but...
+                // This is really naive & probably not accurate, but...
                 int bitRate = 0;
                 for (MediaEncoder encoder : mEncoders) {
                     bitRate += encoder.getBitRate();
                 }
                 int bytePerSecond = bitRate / 8;
                 long sizeMaxDuration = (maxSize / bytePerSecond) * 1000L;
+
                 long finalMaxDuration = Long.MAX_VALUE;
                 if (maxSize > 0 && maxDuration > 0) {
                     mPossibleStopReason = sizeMaxDuration < maxDuration ? STOP_BY_MAX_SIZE : STOP_BY_MAX_DURATION;

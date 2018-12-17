@@ -642,9 +642,9 @@ public class CameraViewTest extends BaseTest {
         assertTrue(cameraView.mFrameProcessors.isEmpty());
 
         // Ensure this does not throw a ConcurrentModificationException
-        cameraView.addFrameProcessor(new FrameProcessor() { public void process(Frame f) {} });
-        cameraView.addFrameProcessor(new FrameProcessor() { public void process(Frame f) {} });
-        cameraView.addFrameProcessor(new FrameProcessor() { public void process(Frame f) {} });
+        cameraView.addFrameProcessor(new FrameProcessor() { public void process(@NonNull Frame f) {} });
+        cameraView.addFrameProcessor(new FrameProcessor() { public void process(@NonNull Frame f) {} });
+        cameraView.addFrameProcessor(new FrameProcessor() { public void process(@NonNull Frame f) {} });
         for (FrameProcessor test : cameraView.mFrameProcessors) {
             cameraView.mFrameProcessors.remove(test);
         }

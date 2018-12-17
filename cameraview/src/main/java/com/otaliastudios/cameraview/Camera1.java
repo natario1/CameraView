@@ -47,7 +47,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
     };
 
-    Camera1(CameraView.CameraCallbacks callback) {
+    Camera1(@NonNull CameraView.CameraCallbacks callback) {
         super(callback);
         mMapper = new Mapper1();
     }
@@ -298,7 +298,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    public void onBufferAvailable(byte[] buffer) {
+    public void onBufferAvailable(@NonNull byte[] buffer) {
         // TODO: sync with handler?
         if (isCameraAvailable()) {
             mCamera.addCallbackBuffer(buffer);
@@ -327,7 +327,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setMode(Mode mode) {
+    void setMode(@NonNull Mode mode) {
         if (mode != mMode) {
             mMode = mode;
             schedule(null, true, new Runnable() {
@@ -340,7 +340,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setLocation(Location location) {
+    void setLocation(@Nullable Location location) {
         final Location oldLocation = mLocation;
         mLocation = location;
         schedule(mLocationTask, true, new Runnable() {
@@ -352,7 +352,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         });
     }
 
-    private boolean applyLocation(Camera.Parameters params, Location oldLocation) {
+    private boolean applyLocation(@NonNull Camera.Parameters params, @Nullable Location oldLocation) {
         if (mLocation != null) {
             params.setGpsLatitude(mLocation.getLatitude());
             params.setGpsLongitude(mLocation.getLongitude());
@@ -364,7 +364,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setFacing(Facing facing) {
+    void setFacing(@NonNull Facing facing) {
         final Facing old = mFacing;
         if (facing != old) {
             mFacing = facing;
@@ -382,7 +382,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setWhiteBalance(WhiteBalance whiteBalance) {
+    void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
         final WhiteBalance old = mWhiteBalance;
         mWhiteBalance = whiteBalance;
         schedule(mWhiteBalanceTask, true, new Runnable() {
@@ -394,7 +394,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         });
     }
 
-    private boolean applyWhiteBalance(Camera.Parameters params, WhiteBalance oldWhiteBalance) {
+    private boolean applyWhiteBalance(@NonNull Camera.Parameters params, @NonNull WhiteBalance oldWhiteBalance) {
         if (mCameraOptions.supports(mWhiteBalance)) {
             params.setWhiteBalance((String) mMapper.map(mWhiteBalance));
             return true;
@@ -404,7 +404,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setHdr(Hdr hdr) {
+    void setHdr(@NonNull Hdr hdr) {
         final Hdr old = mHdr;
         mHdr = hdr;
         schedule(mHdrTask, true, new Runnable() {
@@ -416,7 +416,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         });
     }
 
-    private boolean applyHdr(Camera.Parameters params, Hdr oldHdr) {
+    private boolean applyHdr(@NonNull Camera.Parameters params, @NonNull Hdr oldHdr) {
         if (mCameraOptions.supports(mHdr)) {
             params.setSceneMode((String) mMapper.map(mHdr));
             return true;
@@ -444,7 +444,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Override
-    void setAudio(Audio audio) {
+    void setAudio(@NonNull Audio audio) {
         if (mAudio != audio) {
             if (isTakingVideo()) {
                 LOG.w("Audio setting was changed while recording. " +
@@ -455,7 +455,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setFlash(Flash flash) {
+    void setFlash(@NonNull Flash flash) {
         final Flash old = mFlash;
         mFlash = flash;
         schedule(mFlashTask, true, new Runnable() {
@@ -468,7 +468,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
 
-    private boolean applyFlash(Camera.Parameters params, Flash oldFlash) {
+    private boolean applyFlash(@NonNull Camera.Parameters params, @NonNull Flash oldFlash) {
         if (mCameraOptions.supports(mFlash)) {
             params.setFlashMode((String) mMapper.map(mFlash));
             return true;
@@ -479,7 +479,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     // Choose the best default focus, based on session type.
-    private void applyDefaultFocus(Camera.Parameters params) {
+    private void applyDefaultFocus(@NonNull Camera.Parameters params) {
         List<String> modes = params.getSupportedFocusModes();
 
         if (mMode == Mode.VIDEO &&
@@ -500,6 +500,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
         if (modes.contains(Camera.Parameters.FOCUS_MODE_FIXED)) {
             params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
+            //noinspection UnnecessaryReturnStatement
             return;
         }
     }
@@ -552,7 +553,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Override
-    void takePictureSnapshot(final AspectRatio viewAspectRatio) {
+    void takePictureSnapshot(@NonNull final AspectRatio viewAspectRatio) {
         LOG.v("takePictureSnapshot: scheduling");
         schedule(null, true, new Runnable() {
             @Override
@@ -573,7 +574,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    public void onPreviewFrame(byte[] data, Camera camera) {
+    public void onPreviewFrame(@NonNull byte[] data, Camera camera) {
         Frame frame = mFrameManager.getFrame(data,
                 System.currentTimeMillis(),
                 offset(REF_SENSOR, REF_OUTPUT),
@@ -782,7 +783,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Override
-    void setZoom(final float zoom, final PointF[] points, final boolean notify) {
+    void setZoom(final float zoom, @Nullable final PointF[] points, final boolean notify) {
         schedule(mZoomTask, true, new Runnable() {
             @Override
             public void run() {
@@ -802,8 +803,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     @Override
-    void setExposureCorrection(final float EVvalue, final float[] bounds,
-                               final PointF[] points, final boolean notify) {
+    void setExposureCorrection(final float EVvalue, @NonNull final float[] bounds,
+                               @Nullable final PointF[] points, final boolean notify) {
         schedule(mExposureCorrectionTask, true, new Runnable() {
             @Override
             public void run() {
@@ -831,7 +832,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Override
-    void startAutoFocus(@Nullable final Gesture gesture, final PointF point) {
+    void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
         // Must get width and height from the UI thread.
         int viewWidth = 0, viewHeight = 0;
         if (mPreview != null && mPreview.hasSurface()) {
@@ -880,7 +881,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         });
     }
 
-
+    @NonNull
     @WorkerThread
     private static List<Camera.Area> computeMeteringAreas(double viewClickX, double viewClickY,
                                                           int viewWidth, int viewHeight,
@@ -911,7 +912,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         return list;
     }
 
-
+    @NonNull
     private static Rect computeMeteringArea(double centerX, double centerY, double size) {
         double delta = size / 2d;
         int top = (int) Math.max(centerY - delta, -1000);
@@ -928,7 +929,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Nullable
-    private List<Size> sizesFromList(List<Camera.Size> sizes) {
+    private List<Size> sizesFromList(@Nullable List<Camera.Size> sizes) {
         if (sizes == null) return null;
         List<Size> result = new ArrayList<>(sizes.size());
         for (Camera.Size size : sizes) {
@@ -950,8 +951,5 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             }
         });
     }
-
-    // -----------------
-    // Additional helper info
 }
 

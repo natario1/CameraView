@@ -1,8 +1,10 @@
 package com.otaliastudios.cameraview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PointF;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 
@@ -14,14 +16,12 @@ class PinchGestureLayout extends GestureLayout {
     private boolean mNotify;
     /* tests */ float mFactor = 0;
 
-
-    public PinchGestureLayout(Context context) {
+    public PinchGestureLayout(@NonNull Context context) {
         super(context);
     }
 
-
     @Override
-    protected void onInitialize(Context context) {
+    protected void onInitialize(@NonNull Context context) {
         super.onInitialize(context);
         mPoints = new PointF[]{ new PointF(0, 0), new PointF(0, 0) };
         mDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -42,6 +42,7 @@ class PinchGestureLayout extends GestureLayout {
     }
 
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (!mEnabled) return false;

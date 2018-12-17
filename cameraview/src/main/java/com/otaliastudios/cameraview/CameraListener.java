@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 
 public abstract class CameraListener {
@@ -14,7 +15,7 @@ public abstract class CameraListener {
      * @param options camera supported options
      */
     @UiThread
-    public void onCameraOpened(CameraOptions options) {
+    public void onCameraOpened(@NonNull CameraOptions options) {
 
     }
 
@@ -57,7 +58,7 @@ public abstract class CameraListener {
      * @param result captured picture
      */
     @UiThread
-    public void onPictureTaken(PictureResult result) {
+    public void onPictureTaken(@NonNull PictureResult result) {
 
     }
 
@@ -68,7 +69,7 @@ public abstract class CameraListener {
      * @param result the video result
      */
     @UiThread
-    public void onVideoTaken(VideoResult result) {
+    public void onVideoTaken(@NonNull VideoResult result) {
 
     }
 
@@ -97,7 +98,7 @@ public abstract class CameraListener {
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
     @UiThread
-    public void onFocusStart(PointF point) {
+    public void onFocusStart(@NonNull PointF point) {
 
     }
 
@@ -112,7 +113,7 @@ public abstract class CameraListener {
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
     @UiThread
-    public void onFocusEnd(boolean successful, PointF point) {
+    public void onFocusEnd(boolean successful, @NonNull PointF point) {
 
     }
 
@@ -123,10 +124,10 @@ public abstract class CameraListener {
      *
      * @param newValue the new zoom value
      * @param bounds min and max bounds for newValue (fixed to 0 ... 1)
-     * @param fingers finger positions that caused the event
+     * @param fingers finger positions that caused the event, null if not caused by touch
      */
     @UiThread
-    public void onZoomChanged(float newValue, float[] bounds, PointF[] fingers) {
+    public void onZoomChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) {
 
     }
 
@@ -137,10 +138,10 @@ public abstract class CameraListener {
      *
      * @param newValue the new correction value
      * @param bounds min and max bounds for newValue, as returned by {@link CameraOptions}
-     * @param fingers finger positions that caused the event
+     * @param fingers finger positions that caused the event, null if not caused by touch
      */
     @UiThread
-    public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {
+    public void onExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) {
 
     }
 

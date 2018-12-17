@@ -2,8 +2,11 @@ package com.otaliastudios.cameraview;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PointF;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -13,20 +16,18 @@ import android.widget.ImageView;
 
 class TapGestureLayout extends GestureLayout {
 
-
     private GestureDetector mDetector;
     private boolean mNotify;
 
     private FrameLayout mFocusMarkerContainer;
     private ImageView mFocusMarkerFill;
 
-    public TapGestureLayout(Context context) {
+    public TapGestureLayout(@NonNull Context context) {
         super(context);
     }
 
-
     @Override
-    protected void onInitialize(Context context) {
+    protected void onInitialize(@NonNull Context context) {
         super.onInitialize(context);
         mPoints = new PointF[]{ new PointF(0, 0) };
         mDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
@@ -62,7 +63,7 @@ class TapGestureLayout extends GestureLayout {
         mFocusMarkerFill = findViewById(R.id.fill);
     }
 
-
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (!mEnabled) return false;
@@ -100,7 +101,7 @@ class TapGestureLayout extends GestureLayout {
         }
     };
 
-    public void onFocusStart(PointF point) {
+    public void onFocusStart(@NonNull PointF point) {
         removeCallbacks(mFocusMarkerHideRunnable);
         mFocusMarkerContainer.clearAnimation(); // animate().setListener(null).cancel();
         mFocusMarkerFill.clearAnimation(); // animate().setListener(null).cancel();
@@ -128,7 +129,6 @@ class TapGestureLayout extends GestureLayout {
         });
     }
 
-
     public void onFocusEnd(boolean success) {
         if (success) {
             animate(mFocusMarkerContainer, 1, 0, 500, 0, null);
@@ -145,9 +145,8 @@ class TapGestureLayout extends GestureLayout {
         }
     }
 
-
-    private static void animate(View view, float scale, float alpha, long duration, long delay,
-                                Animator.AnimatorListener listener) {
+    private static void animate(@NonNull View view, float scale, float alpha, long duration, long delay,
+                                @Nullable Animator.AnimatorListener listener) {
         view.animate().scaleX(scale).scaleY(scale)
                 .alpha(alpha)
                 .setDuration(duration)

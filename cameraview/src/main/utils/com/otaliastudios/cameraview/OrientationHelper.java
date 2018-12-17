@@ -20,10 +20,11 @@ class OrientationHelper {
         void onDeviceOrientationChanged(int deviceOrientation);
     }
 
-    OrientationHelper(Context context, @NonNull Callback callback) {
+    OrientationHelper(@NonNull Context context, @NonNull Callback callback) {
         mCallback = callback;
         mListener = new OrientationEventListener(context.getApplicationContext(), SensorManager.SENSOR_DELAY_NORMAL) {
 
+            @SuppressWarnings("ConstantConditions")
             @Override
             public void onOrientationChanged(int orientation) {
                 int or = 0;
@@ -47,7 +48,7 @@ class OrientationHelper {
         };
     }
 
-    void enable(Context context) {
+    void enable(@NonNull Context context) {
         Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         switch (display.getRotation()) {
             case Surface.ROTATION_0: mDisplayOffset = 0; break;

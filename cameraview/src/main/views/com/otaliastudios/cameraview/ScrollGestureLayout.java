@@ -1,7 +1,9 @@
 package com.otaliastudios.cameraview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PointF;
+import android.support.annotation.NonNull;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
@@ -14,13 +16,12 @@ class ScrollGestureLayout extends GestureLayout {
     private boolean mNotify;
     /* tests */ float mFactor;
 
-
-    public ScrollGestureLayout(Context context) {
+    public ScrollGestureLayout(@NonNull Context context) {
         super(context);
     }
 
     @Override
-    protected void onInitialize(Context context) {
+    protected void onInitialize(@NonNull Context context) {
         super.onInitialize(context);
         mPoints = new PointF[]{ new PointF(0, 0), new PointF(0, 0) };
         mDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
@@ -51,7 +52,7 @@ class ScrollGestureLayout extends GestureLayout {
         mDetector.setIsLongpressEnabled(false); // Looks important.
     }
 
-
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (!mEnabled) return false;
@@ -70,7 +71,6 @@ class ScrollGestureLayout extends GestureLayout {
         if (mNotify) LOG.i("Notifying a gesture of type", mType.name());
         return mNotify;
     }
-
 
     @Override
     public float scaleValue(float currValue, float minValue, float maxValue) {

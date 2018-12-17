@@ -71,7 +71,7 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     /* for tests */ float mScaleY = 1F;
     private float[] mScaleXY = new float[] { mScaleX, mScaleY };
 
-    GlCameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
+    GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         super(context, parent, callback);
     }
 
@@ -103,7 +103,7 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
 
     @NonNull
     @Override
-    protected GLSurfaceView onCreateView(Context context, ViewGroup parent) {
+    protected GLSurfaceView onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
         ViewGroup root = (ViewGroup) LayoutInflater.from(context).inflate(R.layout.cameraview_gl_view, parent, false);
         GLSurfaceView glView = root.findViewById(R.id.gl_surface_view);
         glView.setEGLContextClientVersion(2);
@@ -236,11 +236,13 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         }
     }
 
+    @NonNull
     @Override
     Class<SurfaceTexture> getOutputClass() {
         return SurfaceTexture.class;
     }
 
+    @NonNull
     @Override
     SurfaceTexture getOutput() {
         return mInputSurfaceTexture;

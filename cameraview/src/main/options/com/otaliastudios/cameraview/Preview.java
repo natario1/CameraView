@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import android.support.annotation.Nullable;
+
 /**
  * The preview engine to be used.
  *
@@ -40,6 +42,7 @@ public enum Preview implements Control {
         return value;
     }
 
+    @Nullable
     static Preview fromValue(int value) {
         Preview[] list = Preview.values();
         for (Preview action : list) {

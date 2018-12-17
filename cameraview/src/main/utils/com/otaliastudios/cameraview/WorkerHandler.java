@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.annotation.NonNull;
 
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
@@ -16,7 +17,8 @@ class WorkerHandler {
     private final static CameraLogger LOG = CameraLogger.create(WorkerHandler.class.getSimpleName());
     private final static ConcurrentHashMap<String, WeakReference<WorkerHandler>> sCache = new ConcurrentHashMap<>(4);
 
-    public static WorkerHandler get(String name) {
+    @NonNull
+    public static WorkerHandler get(@NonNull String name) {
         if (sCache.containsKey(name)) {
             WorkerHandler cached = sCache.get(name).get();
             if (cached != null) {
@@ -39,14 +41,14 @@ class WorkerHandler {
     // Handy util to perform action in a fallback thread.
     // Not to be used for long-running operations since they will
     // block the fallback thread.
-    public static void run(Runnable action) {
+    public static void run(@NonNull Runnable action) {
         get("FallbackCameraThread").post(action);
     }
 
     private HandlerThread mThread;
     private Handler mHandler;
 
-    private WorkerHandler(String name) {
+    private WorkerHandler(@NonNull String name) {
         mThread = new HandlerThread(name);
         mThread.setDaemon(true);
         mThread.start();
@@ -57,15 +59,16 @@ class WorkerHandler {
         return mHandler;
     }
 
-    public void post(Runnable runnable) {
+    public void post(@NonNull Runnable runnable) {
         mHandler.post(runnable);
     }
 
+    @NonNull
     public Thread getThread() {
         return mThread;
     }
 
-    public static void destroy() {
+    static void destroy() {
         for (String key : sCache.keySet()) {
             WeakReference<WorkerHandler> ref = sCache.get(key);
             WorkerHandler handler = ref.get();

@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 /**
@@ -21,7 +22,8 @@ public enum Facing implements Control {
      */
     FRONT(1);
 
-    final static Facing DEFAULT(@Nullable Context context) {
+    @NonNull
+    static Facing DEFAULT(@Nullable Context context) {
         if (context == null) {
             return BACK;
         } else if (CameraUtils.hasCameraFacing(context, BACK)) {
@@ -45,6 +47,7 @@ public enum Facing implements Control {
         return value;
     }
 
+    @Nullable
     static Facing fromValue(int value) {
         Facing[] list = Facing.values();
         for (Facing action : list) {

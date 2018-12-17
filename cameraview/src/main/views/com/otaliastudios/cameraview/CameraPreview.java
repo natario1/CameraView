@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -33,21 +34,23 @@ abstract class CameraPreview<T extends View, Output> {
     protected int mInputStreamHeight;
     protected boolean mInputFlipped;
 
-    CameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
+    CameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         mView = onCreateView(context, parent);
         mSurfaceCallback = callback;
     }
 
     @NonNull
-    protected abstract T onCreateView(Context context, ViewGroup parent);
+    protected abstract T onCreateView(@NonNull Context context, @NonNull ViewGroup parent);
 
     @NonNull
     final T getView() {
         return mView;
     }
 
+    @NonNull
     abstract Class<Output> getOutputClass();
 
+    @NonNull
     abstract Output getOutput();
 
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
@@ -63,15 +66,17 @@ abstract class CameraPreview<T extends View, Output> {
         }
     }
 
+    @NonNull
     final Size getInputStreamSize() {
         return new Size(mInputStreamWidth, mInputStreamHeight);
     }
 
+    @NonNull
     final Size getOutputSurfaceSize() {
         return new Size(mOutputSurfaceWidth, mOutputSurfaceHeight);
     }
 
-    final void setSurfaceCallback(SurfaceCallback callback) {
+    final void setSurfaceCallback(@NonNull SurfaceCallback callback) {
         mSurfaceCallback = callback;
         // If surface already available, dispatch.
         if (mOutputSurfaceWidth != 0 || mOutputSurfaceHeight != 0) {
@@ -80,6 +85,7 @@ abstract class CameraPreview<T extends View, Output> {
     }
 
 
+    @SuppressWarnings("WeakerAccess")
     protected final void dispatchOnOutputSurfaceAvailable(int width, int height) {
         LOG.i("dispatchOnOutputSurfaceAvailable:", "w=", width, "h=", height);
         mOutputSurfaceWidth = width;
@@ -93,6 +99,7 @@ abstract class CameraPreview<T extends View, Output> {
 
     // As far as I can see, these are the view/surface dimensions.
     // This is called by subclasses.
+    @SuppressWarnings("WeakerAccess")
     protected final void dispatchOnOutputSurfaceSizeChanged(int width, int height) {
         LOG.i("dispatchOnOutputSurfaceSizeChanged:", "w=", width, "h=", height);
         if (width != mOutputSurfaceWidth || height != mOutputSurfaceHeight) {
@@ -105,6 +112,7 @@ abstract class CameraPreview<T extends View, Output> {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected final void dispatchOnOutputSurfaceDestroyed() {
         mOutputSurfaceWidth = 0;
         mOutputSurfaceHeight = 0;

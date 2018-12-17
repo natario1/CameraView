@@ -156,6 +156,7 @@ abstract class CameraController implements
 
     //region Start&Stop
 
+    @NonNull
     private String ss() {
         switch (mState) {
             case STATE_STOPPING: return "STATE_STOPPING";
@@ -273,11 +274,11 @@ abstract class CameraController implements
         mDeviceOrientation = deviceOrientation;
     }
 
-    final void setPictureSizeSelector(SizeSelector selector) {
+    final void setPictureSizeSelector(@NonNull SizeSelector selector) {
         mPictureSizeSelector = selector;
     }
 
-    final void setVideoSizeSelector(SizeSelector selector) {
+    final void setVideoSizeSelector(@NonNull SizeSelector selector) {
         mVideoSizeSelector = selector;
     }
 
@@ -289,7 +290,7 @@ abstract class CameraController implements
         mVideoMaxDuration = videoMaxDurationMillis;
     }
 
-    final void setVideoCodec(VideoCodec codec) {
+    final void setVideoCodec(@NonNull VideoCodec codec) {
         mVideoCodec = codec;
     }
 
@@ -306,35 +307,35 @@ abstract class CameraController implements
     //region Abstract setters and APIs
 
     // Should restart the session if active.
-    abstract void setMode(Mode mode);
+    abstract void setMode(@NonNull Mode mode);
 
     // Should restart the session if active.
-    abstract void setFacing(Facing facing);
+    abstract void setFacing(@NonNull Facing facing);
 
     // If closed, no-op. If opened, check supported and apply.
-    abstract void setZoom(float zoom, PointF[] points, boolean notify);
+    abstract void setZoom(float zoom, @Nullable PointF[] points, boolean notify);
 
     // If closed, no-op. If opened, check supported and apply.
-    abstract void setExposureCorrection(float EVvalue, float[] bounds, PointF[] points, boolean notify);
+    abstract void setExposureCorrection(float EVvalue, @NonNull float[] bounds, @Nullable PointF[] points, boolean notify);
 
     // If closed, keep. If opened, check supported and apply.
-    abstract void setFlash(Flash flash);
+    abstract void setFlash(@NonNull Flash flash);
 
     // If closed, keep. If opened, check supported and apply.
-    abstract void setWhiteBalance(WhiteBalance whiteBalance);
+    abstract void setWhiteBalance(@NonNull WhiteBalance whiteBalance);
 
     // If closed, keep. If opened, check supported and apply.
-    abstract void setHdr(Hdr hdr);
+    abstract void setHdr(@NonNull Hdr hdr);
 
     // If closed, keep. If opened, check supported and apply.
-    abstract void setLocation(Location location);
+    abstract void setLocation(@Nullable Location location);
 
     // Just set.
-    abstract void setAudio(Audio audio);
+    abstract void setAudio(@NonNull Audio audio);
 
     abstract void takePicture();
 
-    abstract void takePictureSnapshot(AspectRatio viewAspectRatio);
+    abstract void takePictureSnapshot(@NonNull AspectRatio viewAspectRatio);
 
     abstract void takeVideo(@NonNull File file);
 
@@ -355,14 +356,17 @@ abstract class CameraController implements
         return mCameraOptions;
     }
 
+    @NonNull
     final Facing getFacing() {
         return mFacing;
     }
 
+    @NonNull
     final Flash getFlash() {
         return mFlash;
     }
 
+    @NonNull
     final WhiteBalance getWhiteBalance() {
         return mWhiteBalance;
     }
@@ -383,18 +387,22 @@ abstract class CameraController implements
         return mVideoMaxDuration;
     }
 
+    @NonNull
     final Mode getMode() {
         return mMode;
     }
 
+    @NonNull
     final Hdr getHdr() {
         return mHdr;
     }
 
+    @Nullable
     final Location getLocation() {
         return mLocation;
     }
 
+    @NonNull
     final Audio getAudio() {
         return mAudio;
     }
@@ -403,10 +411,12 @@ abstract class CameraController implements
         return mAudioBitRate;
     }
 
+    @NonNull
     /* for tests */ final SizeSelector getPictureSizeSelector() {
         return mPictureSizeSelector;
     }
 
+    @NonNull
     /* for tests */ final SizeSelector getVideoSizeSelector() {
         return mVideoSizeSelector;
     }
@@ -469,12 +479,12 @@ abstract class CameraController implements
         return offset(reference1, reference2) % 180 != 0;
     }
 
-    final Size getPictureSize(int reference) {
+    final Size getPictureSize(@SuppressWarnings("SameParameterValue") int reference) {
         if (mCaptureSize == null || mMode == Mode.VIDEO) return null;
         return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
-    final Size getVideoSize(int reference) {
+    final Size getVideoSize(@SuppressWarnings("SameParameterValue") int reference) {
         if (mCaptureSize == null || mMode == Mode.PICTURE) return null;
         return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
@@ -496,6 +506,8 @@ abstract class CameraController implements
      * But when it does, the {@link CameraPreview.SurfaceCallback} should be called,
      * and this should be refreshed.
      */
+    @NonNull
+    @SuppressWarnings("WeakerAccess")
     protected final Size computeCaptureSize() {
         // We want to pass stuff into the REF_VIEW reference, not the sensor one.
         // This is already managed by CameraOptions, so we just flip again at the end.
@@ -517,7 +529,9 @@ abstract class CameraController implements
         return result;
     }
 
-    protected final Size computePreviewSize(List<Size> previewSizes) {
+    @NonNull
+    @SuppressWarnings("WeakerAccess")
+    protected final Size computePreviewSize(@NonNull List<Size> previewSizes) {
         // instead of flipping everything to REF_VIEW, we can just flip the
         // surface size from REF_VIEW to REF_SENSOR, and reflip at the end.
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());

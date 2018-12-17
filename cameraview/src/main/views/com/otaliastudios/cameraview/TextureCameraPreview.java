@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.TextureView;
 import android.view.View;
@@ -11,13 +12,13 @@ import android.view.ViewGroup;
 
 class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
-    TextureCameraPreview(Context context, ViewGroup parent, SurfaceCallback callback) {
+    TextureCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         super(context, parent, callback);
     }
 
     @NonNull
     @Override
-    protected TextureView onCreateView(Context context, ViewGroup parent) {
+    protected TextureView onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
         View root = LayoutInflater.from(context).inflate(R.layout.cameraview_texture_view, parent, false);
         parent.addView(root, 0);
         TextureView texture = root.findViewById(R.id.texture_view);
@@ -46,11 +47,13 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
         return texture;
     }
 
+    @NonNull
     @Override
     Class<SurfaceTexture> getOutputClass() {
         return SurfaceTexture.class;
     }
 
+    @NonNull
     @Override
     SurfaceTexture getOutput() {
         return getView().getSurfaceTexture();
