@@ -6,8 +6,7 @@
     android:layout_gravity="center"
     android:gravity="center">
 
-    <view
-        class="com.otaliastudios.cameraview.GlCameraPreview$ClippingSurfaceView"
+    <android.opengl.GLSurfaceView
         android:id="@+id/gl_surface_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

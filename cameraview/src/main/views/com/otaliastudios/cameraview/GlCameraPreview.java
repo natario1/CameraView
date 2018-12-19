@@ -75,32 +75,6 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         super(context, parent, callback);
     }
 
-    static class ClippingSurfaceView extends GLSurfaceView {
-
-        private Path path = new Path();
-        private RectF rect = new RectF();
-
-        public ClippingSurfaceView(Context context) {
-            super(context);
-        }
-        public ClippingSurfaceView(Context context, AttributeSet attrs) {
-            super(context, attrs);
-        }
-
-        @Override
-        protected void dispatchDraw(Canvas canvas) {
-            if (false) {
-                if (getWidth() != rect.width() || getHeight() != rect.height()) {
-                    rect.set(0, 0, getWidth(), getHeight());
-                    path.rewind();
-                    path.addOval(rect, Path.Direction.CW);
-                }
-                canvas.clipPath(path);
-            }
-            super.dispatchDraw(canvas);
-        }
-    }
-
     @NonNull
     @Override
     protected GLSurfaceView onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
