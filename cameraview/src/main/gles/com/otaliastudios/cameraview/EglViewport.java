@@ -29,12 +29,26 @@ class EglViewport extends EglElement {
                     "    vTextureScale = uTextureScale.xy;\n" +
                     "}\n";
 
-    // Circle fragment shader for use with external 2D textures
-    // We draw as transparent all the pixels outside the circle of center (0.5, 0.5)
-    // and radius 0.5. Works well! But we have:
-    // - black in the preview. Solved with canvas.clipPath and a custom GlSurfaceView.
-    // - black in picture snapshots, UNLESS we use PNG which is super slow
-    // - black in videos because they have no alpha channel
+    // Simple fragment shader for use with external 2D textures
+    private static final String SIMPLE_FRAGMENT_SHADER =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "void main() {\n" +
+                    "    gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
+                    "}\n";
+
+    /**
+     * EXPERIMENT:
+     * An oval fragment shader. We draw all the pixels outside the circle of center (0.5, 0.5)
+     * and radius 0.5 as transparent. Works well, but we have:
+     *
+     * 1. black in the preview: This can be solved with a custom GlSurfaceView that overrides
+     *    dispatchDraw, and, before calling super, clips the canvas with an oval path (canvas.clipPath).
+     * 2. black in picture snapshot: This can be solved by using PNG, but it is suepr slow.
+     * 3. black in videos: No way to solve this AFAIK.
+     */
     private static final String CIRCLE_FRAGMENT_SHADER =
             "#extension GL_OES_EGL_image_external : require\n" +
                     "precision mediump float;\n" +
@@ -50,16 +64,6 @@ class EglViewport extends EglElement {
                     "    } else {\n" +
                     "        gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
                     "    }\n" +
-                    "}\n";
-
-    // Simple fragment shader for use with external 2D textures
-    private static final String SIMPLE_FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;\n" +
-                    "varying vec2 vTextureCoord;\n" +
-                    "uniform samplerExternalOES sTexture;\n" +
-                    "void main() {\n" +
-                    "    gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
                     "}\n";
 
     // Stuff from Drawable2d.FULL_RECTANGLE
@@ -102,7 +106,7 @@ class EglViewport extends EglElement {
 
     EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
-        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, CIRCLE_FRAGMENT_SHADER);
+        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
         checkLocation(maPositionLocation, "aPosition");
         maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, "aTextureCoord");

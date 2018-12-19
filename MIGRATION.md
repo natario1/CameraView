@@ -134,16 +134,18 @@ Might be used in the future to speed up development.
 - Default `Facing` value is not `BACK` anymore but rather a value that guarantees that you have cameras (if possible).
   If device has no `BACK` cameras, defaults to `FRONT`.  
   
+
+TODO: think bout getPreviewSize() being removed, and think about adding a setPreviewSize().
+      If adding getPreviewSize() back, update this doc.
+TODO: fix video recording rotation: with front camera, it does not work.
+TODO: opencollective
+
 TODO: document cameraGridColor
 TODO: document setVideoBitRate
 TODO: document setAudioBitRate
 TODO: document takeVideoSnapshot
 TODO: document that takePictureSnaphot works while taking videos, if GL_SURFACE
 TODO: document the camera previews
-TODO: think bout getPreviewSize() being removed, and think about adding a setPreviewSize().
-      If adding getPreviewSize() back, update this doc.
-TODO: fix video recording rotation: with front camera, it does not work.
-TODO: opencollective
 TODO: new docs?
 
 
