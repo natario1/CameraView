@@ -6,6 +6,8 @@ branches:
   only:
     - master
     - /^v\d+\.\d+\.\d+$/
+    - /^v\d+\.\d+\.\d+-beta\d+$/
+    - /^v\d+\.\d+\.\d+-rc\d+$/
 
 sudo: false
 
