@@ -98,7 +98,7 @@ public class IntegrationTest extends BaseTest {
     }
 
     private CameraOptions waitForOpen(boolean expectSuccess) {
-        camera.start();
+        camera.open();
         final Task<CameraOptions> open = new Task<>(true);
         doEndTask(open, 0).when(listener).onCameraOpened(any(CameraOptions.class));
         CameraOptions result = open.await(4000);
@@ -111,7 +111,7 @@ public class IntegrationTest extends BaseTest {
     }
 
     private void waitForClose(boolean expectSuccess) {
-        camera.stop();
+        camera.close();
         final Task<Boolean> close = new Task<>(true);
         doEndTask(close, true).when(listener).onCameraClosed();
         Boolean result = close.await(4000);
@@ -185,10 +185,10 @@ public class IntegrationTest extends BaseTest {
         doCountDown(latch).when(listener).onCameraOpened(any(CameraOptions.class));
         doCountDown(latch).when(listener).onCameraClosed();
 
-        camera.start();
-        camera.stop();
-        camera.start();
-        camera.stop();
+        camera.open();
+        camera.close();
+        camera.open();
+        camera.close();
 
         boolean did = latch.await(10, TimeUnit.SECONDS);
         assertTrue("Handles concurrent calls to start & stop, " + latch.getCount(), did);

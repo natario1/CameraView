@@ -2,16 +2,13 @@ package com.otaliastudios.cameraview.demo;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.otaliastudios.cameraview.CameraException;
@@ -22,8 +19,6 @@ import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.Mode;
 import com.otaliastudios.cameraview.VideoResult;
-
-import java.io.File;
 
 
 public class CameraActivity extends AppCompatActivity implements View.OnClickListener, ControlView.Callback {
@@ -219,8 +214,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         for (int grantResult : grantResults) {
             valid = valid && grantResult == PackageManager.PERMISSION_GRANTED;
         }
-        if (valid && !camera.isStarted()) {
-            camera.start();
+        if (valid && !camera.isOpened()) {
+            camera.open();
         }
     }
 

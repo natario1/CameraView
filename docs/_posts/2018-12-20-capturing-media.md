@@ -1,0 +1,82 @@
+---
+layout: page
+title: "Capturing Media"
+subtitle: "Taking pictures and videos"
+category: docs
+order: 3
+date: 2018-12-20 20:53:17
+---
+
+This section introduces some key concepts about media capturing, and about the `Mode` control.
+
+### Mode control
+
+The mode control determines what can be captured with the standard APIs (read below). It can be set through XML
+or dynamically changed using `cameraView.setMode()`. The current mode value has a few consequences:
+
+- Sizing: the capture size is chosen among the available picture or video sizes,
+  depending on the flag, according to the given size selector.
+- Capturing: while in picture mode, `takeVideo` will throw an exception.
+- Capturing: while in video mode, `takePicture` will throw an exception.
+- Permission behavior: when requesting a `video` session, the record audio permission will be requested.
+  If this is needed, the audio permission should be added to your manifest or the app will crash.
+  Please read the [permissions page](runtime-permissions.html).
+
+```java
+cameraView.setMode(Mode.PICTURE); // for pictures
+cameraView.setMode(Mode.VIDEO); // for video
+```
+
+### Capturing media
+
+The library supports 4 capture APIs, two for pictures and two for videos.
+
+- Standard APIs: `takePicture()` and `takeVideo()`. These take a high quality picture or video, depending
+  on the configuration values that were used. The standard APIs **must** be called in the appropriate `Mode`.
+- Snapshot APIs: `takePictureSnapshot()` and `takeVideoSnapshot()`. These take a super fast, reliable
+  snapshot of the camera preview. The snapshot APIs can be called in any `Mode` (you can snap videos in picture mode).
+
+Beyond being extremely fast, and small in size (though low quality), snapshot APIs have the benefit 
+that the result is automatically cropped to match the view bounds. This means that, if `CameraView` is square,
+resulting snapshots are square as well, no matter what the sensor available sizes are.
+
+|Method|Takes|Quality|Callable in `Mode.PICTURE`|Callable in `Mode.VIDEO`|Auto crop|Output size|
+|------|-----|-------|--------------------------|------------------------|---------|-----------|
+|`takePicture()`|Pictures|Standard|`yes`|`no`|`no`|That of `setPictureSize`|
+|`takeVideo(File)`|Videos|Standard|`no`|`yes`|`no`|That of `setVideoSize`|
+|`takePictureSnapshot()`|Pictures|Snapshot|`yes`|`yes`|`yes`|That of the view|
+|`takeVideoSnapshot(File)`|Videos|Snapshot|`yes`|`yes`|`yes`|That of the view|
+
+Please note that the video snaphot features requires:
+
+- API 18. If called before, it throws
+- An OpenGL preview (see [previews](previews.html)). If not, it throws
+
+### Capturing pictures while recording
+
+This is allowed at the following conditions:
+
+- `takePictureSnapshot()` is used (no HQ pictures)
+- the OpenGL preview is used (see [previews](previews.html))
+
+### Related XML attributes
+
+```xml
+<com.otaliastudios.cameraview.CameraView
+    app:cameraMode="picture|video"/>
+```
+
+### Related APIs
+
+|Method|Description|
+|------|-----------|
+|`setMode()`|Either `Mode.VIDEO` or `Mode.PICTURE`.|
+|`isTakingVideo()`|Returns true if the camera is currently recording a video.|
+|`isTakingPicture()`|Returns true if the camera is currently capturing a picture.|
+|`takePicture()`|Takes a high quality picture.|
+|`takeVideo(File)`|Takes a high quality video.|
+|`takePictureSnapshot()`|Takes a picture snapshot.|
+|`takeVideoSnapshot(File)`|Takes a video snapshot.|
+|`getPictureSize()`|Returns the output picture size, accounting for any rotation. Null while in `VIDEO` mode.|
+|`getVideoSize()`|Returns the output video size, accounting for any rotation. Null while in `PICTURE` mode.|
+|`getSnapshotSize()`|Returns the size of pictures taken with `takePictureSnapshot()` or videos taken with `takeVideoSnapshot()`. Accounts for rotation and cropping.|

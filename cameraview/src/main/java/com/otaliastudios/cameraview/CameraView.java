@@ -504,7 +504,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (!isStarted()) return true;
+        if (!isOpened()) return true;
 
         // Pass to our own GestureLayouts
         CameraOptions options = mCameraController.getCameraOptions(); // Non null
@@ -570,17 +570,17 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Returns whether the camera has started showing its preview.
      * @return whether the camera has started
      */
-    public boolean isStarted() {
+    public boolean isOpened() {
         return mCameraController.getState() >= CameraController.STATE_STARTED;
     }
 
-    private boolean isStopped() {
+    private boolean isClosed() {
         return mCameraController.getState() == CameraController.STATE_STOPPED;
     }
 
     /**
      * Sets the lifecycle owner for this view. This means you don't need
-     * to call {@link #start()}, {@link #stop()} or {@link #destroy()} at all.
+     * to call {@link #open()}, {@link #close()} or {@link #destroy()} at all.
      *
      * @param owner the owner activity or fragment
      */
@@ -596,7 +596,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * This should be called onResume(), or when you are ready with permissions.
      */
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    public void start() {
+    public void open() {
         if (!isEnabled()) return;
         if (mCameraPreview != null) mCameraPreview.onResume();
 
@@ -667,7 +667,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * This should be called onPause().
      */
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    public void stop() {
+    public void close() {
         mCameraController.stop();
         if (mCameraPreview != null) mCameraPreview.onPause();
     }
@@ -1020,7 +1020,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setAudio(@NonNull Audio audio) {
 
-        if (audio == getAudio() || isStopped()) {
+        if (audio == getAudio() || isClosed()) {
             // Check did took place, or will happen on start().
             mCameraController.setAudio(audio);
 
@@ -1033,7 +1033,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // Stop the camera so it can be restarted by the developer onPermissionResult.
             // Developer must also set the audio value again...
             // Not ideal but good for now.
-            stop();
+            close();
         }
     }
 
@@ -1072,7 +1072,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setMode(@NonNull Mode mode) {
 
-        if (mode == getMode() || isStopped()) {
+        if (mode == getMode() || isClosed()) {
             // Check did took place, or will happen on start().
             mCameraController.setMode(mode);
 
@@ -1085,7 +1085,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // Stop the camera so it can be restarted by the developer onPermissionResult.
             // Developer must also set the session type again...
             // Not ideal but good for now.
-            stop();
+            close();
         }
     }
 

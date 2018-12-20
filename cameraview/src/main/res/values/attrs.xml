@@ -96,16 +96,6 @@
             <enum name="video" value="1" />
         </attr>
 
-        <attr name="cameraVideoQuality" format="enum">
-            <enum name="lowest" value="0" />
-            <enum name="highest" value="1" />
-            <enum name="maxQvga" value="2" />
-            <enum name="max480p" value="3" />
-            <enum name="max720p" value="4" />
-            <enum name="max1080p" value="5" />
-            <enum name="max2160p" value="6" />
-        </attr>
-
         <attr name="cameraAudio" format="enum">
             <enum name="off" value="0" />
             <enum name="on" value="1" />

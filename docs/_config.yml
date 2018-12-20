@@ -1,0 +1,70 @@
+# Glide: https://github.com/bumptech/glide/blob/gh-pages/_config.yml
+# Source repo: https://github.com/bruth/jekyll-docs-template
+# Source site: http://bruth.github.io/jekyll-docs-template/
+# Ref guide: https://visualstudiomagazine.com/Articles/2015/03/01/GitHub-Pages.aspx?Page=2
+
+title: CameraView v2
+subtitle: A well documented, high-level Android interface that makes capturing pictures and videos easy, addressing all of the common issues and needs.
+github: [metadata]
+author:
+  name: Mattia Iavarone
+  email: mat.iavarone@gmail.com
+  github: natario1
+
+
+# if you wish to integrate disqus on pages set your shortname here
+disqus_shortname: ''
+
+# if you use google analytics, add your tracking id here
+google_analytics_id: ''
+
+# Enable/show navigation. There are there options:
+#   0 - always hide
+#   1 - always show
+#   2 - show only if posts are present
+navigation: 2
+
+# URL to source code, used in _includes/footer.html
+codeurl: 'https://github.com/natario1/CameraView'
+
+# Default categories (in order) to appear in the navigation
+# (Missing: DOCS and DONATE info)
+sections: [
+    ['about', 'Overview'],
+    ['docs', 'Documentation'],
+    ['extra', 'More']
+]
+
+# Keep as an empty string if served up at the root. If served up at a specific
+# path (e.g. on GitHub pages) leave off the trailing slash, e.g. /my-project
+baseurl: '/CameraView'
+
+# Dates are not included in permalinks
+permalink: none
+
+# Syntax highlighting
+highlighter: rouge
+
+# Since these are pages, it doesn't really matter
+future: true
+
+# Exclude non-site files
+exclude: ['script', 'README.md']
+
+# Use the kramdown Markdown renderer
+markdown: kramdown
+redcarpet:
+    extensions: [
+        'no_intra_emphasis',
+        'fenced_code_blocks',
+        'autolink',
+        'strikethrough',
+        'superscript',
+        'with_toc_data',
+        'tables',
+        'hardwrap'
+    ]
+
+# Use Github Flavored Markdown
+kramdown:
+  input: GFM
