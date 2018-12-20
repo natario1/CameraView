@@ -40,6 +40,7 @@ import java.nio.ByteOrder;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class EglBaseSurface extends EglElement {
     protected static final String TAG = EglBaseSurface.class.getSimpleName();
+    private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     // EglCore object we're associated with.  It may be associated with multiple surfaces.
     protected EglCore mEglCore;
@@ -65,6 +66,10 @@ class EglBaseSurface extends EglElement {
 
         // Don't cache width/height here, because the size of the underlying surface can change
         // out from under us (see e.g. HardwareScalerActivity).
+        int tempWidth = mEglCore.querySurface(mEGLSurface, EGL14.EGL_WIDTH);
+        int tempHeight = mEglCore.querySurface(mEGLSurface, EGL14.EGL_HEIGHT);
+        // TODO remove these logs
+        LOG.e("ROTBUG", "eglSurfaceWidth:", tempWidth, "eglSurfaceHeight:", tempHeight);
         //mWidth = mEglCore.querySurface(mEGLSurface, EGL14.EGL_WIDTH);
         //mHeight = mEglCore.querySurface(mEGLSurface, EGL14.EGL_HEIGHT);
     }

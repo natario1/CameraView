@@ -114,7 +114,8 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
 
                         // Apply rotation:
-                        // Not sure why we need the minus here... It makes no sense.
+                        // TODO Not sure why we need the minus here... It makes no sense to me.
+                        LOG.w("Recording frame. Rotation:", mResult.rotation, "Actual:", -mResult.rotation);
                         int rotation = -mResult.rotation;
                         mResult.rotation = 0;
                         Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0);
@@ -124,9 +125,6 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         float[] scaleXY = new float[] { realScaleX, realScaleY };
                         viewport.drawFrame(mTextureId, mTransform, scaleXY);
                         // don't - surface.swapBuffers();
-                        // TODO: need PNG when the preview is rounded, which is an experimental thing
-                        // In all the other cases this must be JPEG!
-                        // Although PNG is extremely slow.
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
                         mResult.format = PictureResult.FORMAT_JPEG;
                         mSurfaceTexture.releaseTexImage();

@@ -1281,10 +1281,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     public void takeVideoSnapshot(@Nullable File file) {
+        if (getWidth() == 0 || getHeight() == 0) return;
         if (file == null) {
             file = new File(getContext().getFilesDir(), "video.mp4");
         }
-        mCameraController.takeVideoSnapshot(file);
+        mCameraController.takeVideoSnapshot(file, AspectRatio.of(getWidth(), getHeight()));
         mUiHandler.post(new Runnable() {
             @Override
             public void run() {

@@ -567,6 +567,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 result.size = getPreviewSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
                 result.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
                 AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
+                // LOG.e("ROTBUG_pic", "aspectRatio (REF_VIEW):", viewAspectRatio);
+                // LOG.e("ROTBUG_pic", "aspectRatio (REF_OUTPUT):", outputRatio);
+                // LOG.e("ROTBUG_pic", "sizeUncropped (REF_OUTPUT):", result.size);
+                // LOG.e("ROTBUG_pic", "rotation:", result.rotation);
+
+                LOG.v("Rotations", "SV", offset(REF_SENSOR, REF_VIEW), "VS", offset(REF_VIEW, REF_SENSOR));
+                LOG.v("Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
+                LOG.v("Rotations", "VO", offset(REF_VIEW, REF_OUTPUT), "OV", offset(REF_OUTPUT, REF_VIEW));
+
                 mPictureRecorder = new SnapshotPictureRecorder(result, Camera1.this, mCamera, outputRatio);
                 mPictureRecorder.take();
             }
@@ -660,7 +669,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     @SuppressLint("NewApi")
     @Override
-    void takeVideoSnapshot(@NonNull final File file) {
+    void takeVideoSnapshot(@NonNull final File file, @NonNull final AspectRatio viewAspectRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
@@ -680,44 +689,59 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.location = mLocation;
                 videoResult.videoBitRate = mVideoBitRate;
                 videoResult.audioBitRate = mAudioBitRate;
-
-                // What matters as size here is the preview size, which is passed to the GlCameraPreview
-                // surface texture, which is then passed to the encoder. The view size has no influence.
-
-                // CROPPING: We must make sure that the encoder applies our special transformation
-                // to the data so that it is cropped. In this case, we must CROP the preview size based
-                // on the view bounds, like below:
-                Size preview = getPreviewSize(REF_VIEW); // The preview stream size in REF_VIEW
-                Size view = mPreview.getOutputSurfaceSize(); // The view size in REF_VIEW
-                Rect crop = CropHelper.computeCrop(preview, AspectRatio.of(view.getWidth(), view.getHeight()));
-                Size finalSize = new Size(crop.width(), crop.height()); // The visible size in REF_VIEW
-                // ^ We could flip to REF_OUTPUT here and this is what we are doing, but since the video codec recorder
-                // does not account rotation, we must stay in REF_VIEW for this to work well.
-
-                // Without cropping (missing ATM - Edit: DONE), the actual size is the preview size with no crops.
-                // Passing a cropped size while the cropping is not implemented at the encoder surface level,
-                // would cause distortions and crashes in the video encoder.
-                // Size finalSize2 = getPreviewSize(REF_VIEW);
-
-                // With phone landscape on the left:
-                // offset(REF_SENSOR, REF_VIEW) -> 270 (correct)
-                // offset(REF_VIEW, REF_OUTPUT) -> 270 (correct)
-                // offset(REF_SENSOR, REF_OUTPUT) -> 180 (not correct)
-
-                // With straight phone:
-                // offset(REF_SENSOR, REF_VIEW) -> 270 (not correct)
-                // offset(REF_VIEW, REF_OUTPUT) -> 0 (correct)
-                // offset(REF_SENSOR, REF_OUTPUT) -> 270 (not correct)
-
-                // So it looks like REF_VIEW REF_OUTPUT is the correct one, meaning that
-                // the input data in this case is not in the REF_SENSOR coordinates but rather
-                // in the REF_VIEW ones.
-                videoResult.size = flip(REF_VIEW, REF_OUTPUT) ? finalSize.flip() : finalSize;
-                videoResult.rotation = offset(REF_VIEW, REF_OUTPUT);
                 videoResult.audio = mAudio;
                 videoResult.maxSize = mVideoMaxSize;
                 videoResult.maxDuration = mVideoMaxDuration;
 
+                // Size and rotation turned out to be extremely tricky. In case of SnapshotPictureRecorder
+                // we use the preview size in REF_OUTPUT (cropped) and offset(REF_SENSOR, REF_OUTPUT) as rotation.
+                // These values mean that we expect input to be in the REF_SENSOR system.
+
+                // Here everything seems different. We would expect a difference because the two snapshot
+                // recorders have different mechanics (the picture one uses a SurfaceTexture with setBufferSize,
+                // the video one here uses the MediaCodec input surface which we can't control).
+
+                // The strangest thing is the fact that the correct angle seems to be the same for FRONT and
+                // BACK sensor, which means that our sensor correction actually screws things up. For this reason
+                // facing value is temporarily set to BACK.
+                Facing realFacing = mFacing;
+                mFacing = Facing.BACK;
+
+                // These are the angles that make it work on a Nexus5X, compared to the offset() results.
+                // For instance, SV means offset(REF_SENSOR, REF_VIEW). The rest should be clear.
+                //    CONFIG   | WANTED |   SV   |   VS   |   VO   |   OV   |   SO   |   OS   |
+                // ------------|--------|--------|--------|--------|--------|--------|--------|
+                //   Vertical  |   0    |   270  |   90   |   0    |   0    |   270  |   90   |
+                //     Left    |   270  |   270  |   90   |  270   |   90   |   180  |   180  |
+                //    Right    |   90   |   270  |   90   |   90   |   270  |    0   |    0   |
+                // Upside down |   180  |   270  |   90   |  180   |   180  |   90   |   270  |
+
+                // The VO is the only correct value. Things change when using FRONT camera, in which case,
+                // no value is actually correct, and the needed values are the same of BACK!
+                //    CONFIG   | WANTED |   SV   |   VS   |   VO   |   OV   |   SO   |   OS   |
+                // ------------|--------|--------|--------|--------|--------|--------|--------|
+                //   Vertical  |   0    |   90   |   270  |  180   |   180  |   270  |   90   |
+                //     Left    |   270  |   90   |   270  |  270   |   90   |    0   |    0   |
+                //    Right    |   90   |   90   |   270  |   90   |   270  |   180  |   180  |
+                // Upside down |   180  |   90   |   270  |   0    |    0   |   90   |   270  |
+
+                // Based on this we will use VO for everything. See if we get issues about distortion
+                // and maybe we can improve. The reason why this happen is beyond my understanding.
+
+                Size outputSize = getPreviewSize(REF_OUTPUT);
+                AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
+                Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
+                outputSize = new Size(outputCrop.width(), outputCrop.height());
+                videoResult.size = outputSize;
+                videoResult.rotation = offset(REF_VIEW, REF_OUTPUT);
+                // LOG.e("ROTBUG_video", "aspectRatio (REF_VIEW):", viewAspectRatio);
+                // LOG.e("ROTBUG_video", "aspectRatio (REF_OUTPUT):", outputRatio);
+                // LOG.e("ROTBUG_video", "sizeUncropped (REF_OUTPUT):", outputSize);
+                // LOG.e("ROTBUG_video", "sizeCropped (REF_OUTPUT):", videoResult.size);
+                // LOG.e("ROTBUG_video", "rotation:", videoResult.rotation);
+
+                // Reset facing and start.
+                mFacing = realFacing;
                 GlCameraPreview cameraPreview = (GlCameraPreview) mPreview;
                 mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview);
                 mVideoRecorder.start();

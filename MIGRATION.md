@@ -135,11 +135,8 @@ Might be used in the future to speed up development.
   If device has no `BACK` cameras, defaults to `FRONT`.  
   
 
-TODO: think bout getPreviewSize() being removed, and think about adding a setPreviewSize().
-      If adding getPreviewSize() back, update this doc.
-TODO: fix video recording rotation: with front camera, it does not work.
+TODO: do we want getPreviewSize() / setPreviewSize() ? probably not the getter.
 TODO: opencollective
-
 TODO: document cameraGridColor
 TODO: document setVideoBitRate
 TODO: document setAudioBitRate

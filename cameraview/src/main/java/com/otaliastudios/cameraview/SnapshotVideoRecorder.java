@@ -73,6 +73,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
             if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
             if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
+            LOG.w("Creating frame encoder. Rotation:", mResult.rotation);
             TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(width, height,
                     mResult.videoBitRate,
                     mResult.videoFrameRate,
@@ -103,9 +104,9 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
         }
 
         if (mCurrentState == STATE_RECORDING && mDesiredState == STATE_NOT_RECORDING) {
+            mCurrentState = STATE_NOT_RECORDING; // before nulling encoderEngine!
             mEncoderEngine.stop();
             mEncoderEngine = null;
-            mCurrentState = STATE_NOT_RECORDING;
             mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
             mPreview = null;
         }

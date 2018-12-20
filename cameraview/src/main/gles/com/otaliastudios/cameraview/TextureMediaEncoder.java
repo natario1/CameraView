@@ -19,6 +19,9 @@ import java.io.IOException;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> {
 
+    private static final String TAG = TextureMediaEncoder.class.getSimpleName();
+    private static final CameraLogger LOG = CameraLogger.create(TAG);
+
     final static String FRAME_EVENT = "frame";
 
     static class Frame {
@@ -31,10 +34,14 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         float scaleY;
         boolean scaleFlipped;
         EGLContext eglContext;
+        int transformRotation;
 
         Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
                int textureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
-            super(width, height, bitRate, frameRate, rotation, mimeType);
+            // We rotate the texture using transformRotation. Pass rotation=0 to super so that
+            // no rotation metadata is written into the output file.
+            super(width, height, bitRate, frameRate, 0, mimeType);
+            this.transformRotation = rotation;
             this.textureId = textureId;
             this.scaleX = scaleX;
             this.scaleY = scaleY;
@@ -124,7 +131,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
             // translate to origin, rotate, then back to where we were.
 
             Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
-            Matrix.rotateM(transform, 0, mConfig.rotation /* VIEW-OUTPUT */, 0, 0, 1);
+            Matrix.rotateM(transform, 0, mConfig.transformRotation, 0, 0, 1);
             Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
             drain(false);
