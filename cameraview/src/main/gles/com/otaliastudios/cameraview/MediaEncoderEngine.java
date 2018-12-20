@@ -19,6 +19,9 @@ import java.util.List;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaEncoderEngine {
 
+    private final static String TAG = MediaEncoder.class.getSimpleName();
+    private final static CameraLogger LOG = CameraLogger.create(TAG);
+
     @SuppressWarnings("WeakerAccess")
     final static int STOP_BY_USER = 0;
     final static int STOP_BY_MAX_DURATION = 1;
@@ -76,7 +79,7 @@ class MediaEncoderEngine {
                     mPossibleStopReason = STOP_BY_MAX_DURATION;
                     finalMaxDuration = maxDuration;
                 }
-                Log.e("MediaEncoderEngine", "Computed a max duration of " + (finalMaxDuration / 1000F));
+                LOG.i("Computed a max duration of", (finalMaxDuration / 1000F));
                 for (MediaEncoder encoder : mEncoders) {
                     encoder.prepare(mController, finalMaxDuration);
                 }
@@ -113,7 +116,6 @@ class MediaEncoderEngine {
             if (!mMediaMuxerStarted) {
                 throw new IllegalStateException("Trying to write before muxer started");
             }
-            Log.e("MediaEncoderEngine", "Writing data." + track);
             mMediaMuxer.writeSampleData(track, encodedData, info);
         }
 

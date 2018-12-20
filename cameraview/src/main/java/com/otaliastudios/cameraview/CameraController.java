@@ -339,7 +339,7 @@ abstract class CameraController implements
 
     abstract void takeVideo(@NonNull File file);
 
-    abstract void takeVideoSnapshot(@NonNull File file);
+    abstract void takeVideoSnapshot(@NonNull File file, @NonNull AspectRatio viewAspectRatio);
 
     abstract void stopVideo();
 
@@ -469,7 +469,7 @@ abstract class CameraController implements
         }
         // Maybe the sensor is the other.
         if (toReference == REF_SENSOR) {
-            return -offset(toReference, fromReference) + 360;
+            return (-offset(toReference, fromReference) + 360) % 360;
         }
         // None of them is the sensor. Use a difference.
         return (offset(REF_SENSOR, toReference) - offset(REF_SENSOR, fromReference) + 360) % 360;

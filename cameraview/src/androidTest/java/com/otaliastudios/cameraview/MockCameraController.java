@@ -100,7 +100,7 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void takeVideoSnapshot(@NonNull File file) {
+    void takeVideoSnapshot(@NonNull File file, @NonNull AspectRatio viewAspectRatio) {
 
     }
 
