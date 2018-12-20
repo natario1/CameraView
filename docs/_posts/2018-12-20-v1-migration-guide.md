@@ -1,4 +1,11 @@
-# Migrating to v2.X.X
+---
+layout: page
+title: "v1 Migration Guide"
+subtitle: "Breaking Changes & concepts"
+category: extra
+date: 2018-12-20 19:01:55
+order: 1
+---
 
 CameraView v2 introduces various breaking changes that will allow for more flexibility in the future,
 removes useless features and makes method names consistent. Upgrading will require addressing these
@@ -6,7 +13,9 @@ in your app, plus understanding new concepts.
 
 Until the final v2 release, these things might change, but likely they will not.
 
-## Removals
+### Open, not start
+The `start()` method has been renamed to `open()`, and the `stop()` method to `close()`. This was
+done for consistency with the `onCameraOpened` callback.
 
 ### Jpeg Quality
 Both `cameraJpegQuality` and `setJpegQuality()` have been removed. They were working only with specific
@@ -22,29 +31,25 @@ This was an opaque option packaging various parameters. It has been removed.
 You are expected to control the video quality by choosing the video size and setting video parameters
 with new APIs (see below).
 
-### Other removals
-
-- `ExtraProperties`: This has been removed as it was useless.
-
-## CameraUtils
+### CameraUtils
 
 - The `BitmapCallback` has been moved into a separate class.
 - The `BitmapCallback` result is now `@Nullable`! This will happen if we encounter an `OutOfMemoryError` during decoding.
   You should consider passing a maxWidth and maxHeight instead of loading the full image.
 
-## CameraOptions
+### CameraOptions
 
 - Methods returning a `Set` now return a `Collection` instead.
 - `isVideoSnapshotSupported()` was removed, as we do not rely on internal video snapshot feature anymore. See below.
 - In addition to `getSupportedPictureSizes` and `getSupportedPictureAspectRatio`, we now have equivalent methods for video. See below.
 
-## Session type
+### Session type
 The `SessionType` has been renamed to `Mode` which has a clearer meaning.
 
 - `setSessionType()` is now `setMode()`
 - `cameraSessionType` is now `cameraMode`
 
-## Sizing
+### Sizing
 
 - `getPreviewSize()` was removed.
 - `getPictureSize()`: now returns the real output picture size. This means that it accounts for rotation.
@@ -59,9 +64,9 @@ It works exactly like the picture one, so please refer to the size selector docu
 
 The engine will use the video size selector when mode is `VIDEO`, and the picture size selector when mode is `PICTURE`.
   
-## Picture and videos
+### Picture and videos
 
-### Take, not capture
+#### Take, not capture
 
 - `capturePicture()` is now `takePicture()`
 - `captureSnapshot()` is now `takePictureSnapshot()`
@@ -70,7 +75,7 @@ The engine will use the video size selector when mode is `VIDEO`, and the pictur
 
 The new `isTakingPicture()` method was added for symmetry with videos.
 
-### Snapshots
+#### Snapshots
 This is the major improvement over v1. There are now 4 capture APIs, two for pictures and two for videos.
 
 - Standard APIs: `takePicture()` and `takeVideo()`. These take a high quality picture or video, depending
@@ -95,13 +100,13 @@ which makes it a powerful tool. The drawback is that it needs:
 - API 18. If called before, it throws
 - An OpenGL preview (see below). If not, it throws
 
-### Video capturing
+#### Video capturing
 Some new APIs were introduced, which are respected by both standard videos and snapshot videos:
 
 - `setAudioBitRate()` and `cameraAudioBitRate`: sets the audio bit rate in bit/s
 - `setVideoBitRate()` and `cameraVideoBitRate`: sets the video bit rate in bit/s
 
-## Camera Preview
+### Camera Preview
 The type of preview is now configurable with `cameraPreview` XML attribute and `Preview` control class.
 This defaults to the new `GL_SURFACE` and it is highly recommended that you do not change this.
 
@@ -115,7 +120,7 @@ The GL surface, as an extra benefit, has a much more efficient way of capturing 
 that avoids OOM errors, rotating the image on the fly, reading EXIF, and other horrible things belonging to v1.
 These picture snapshots will also work while taking videos.
 
-## CameraListener
+### CameraListener
 The listener interface brings two breaking signature changes:
 
 - `onPictureTaken()` now returns a `PictureResult`. Use `result.getJpeg()` to access the jpeg stream.
@@ -124,25 +129,18 @@ The listener interface brings two breaking signature changes:
 - `onVideoTaken()` now returns a `VideoResult`. Use `result.getFile()` to access the video file.
   The result class includes rich information about the video (or video snapshot) that was taken.
   
-## Experimental mode
+### Experimental mode
 The v2 version introduces a `cameraExperimental` XML flag that you can use to enable experimental features.
 Might be used in the future to speed up development.
 
-## Other improvements
+### Other improvements & changes
 - Added `@Nullable` and `@NonNull` annotations pretty much everywhere. This might **break** your Kotlin build.
 - Added `setGridColor()` and `cameraGridColor` to control the grid color
 - Default `Facing` value is not `BACK` anymore but rather a value that guarantees that you have cameras (if possible).
   If device has no `BACK` cameras, defaults to `FRONT`.  
-  
+- Removed `ExtraProperties` as it was useless.
 
+
+TODO: opencollective?
+TODO: improve the focus marker drawing, move out of XML (accept a drawable?)
 TODO: do we want getPreviewSize() / setPreviewSize() ? probably not the getter.
-TODO: opencollective
-TODO: document cameraGridColor
-TODO: document setVideoBitRate
-TODO: document setAudioBitRate
-TODO: document takeVideoSnapshot
-TODO: document that takePictureSnaphot works while taking videos, if GL_SURFACE
-TODO: document the camera previews
-TODO: new docs?
-
-

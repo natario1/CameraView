@@ -71,16 +71,16 @@ public class CameraViewTest extends BaseTest {
     //region testLifecycle
 
     @Test
-    public void testStart() {
-        cameraView.start();
+    public void testOpen() {
+        cameraView.open();
         verify(mockPreview, times(1)).onResume();
         // Can't verify controller, depends on permissions.
         // See to-do at the end.
     }
 
     @Test
-    public void testStop() {
-        cameraView.stop();
+    public void testClose() {
+        cameraView.close();
         verify(mockPreview, times(1)).onPause();
         verify(mockController, times(1)).stop();
     }
@@ -96,7 +96,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testNullBeforeStart() {
-        assertFalse(cameraView.isStarted());
+        assertFalse(cameraView.isOpened());
         assertNull(cameraView.getCameraOptions());
         assertNull(cameraView.getSnapshotSize());
         assertNull(cameraView.getPictureSize());
