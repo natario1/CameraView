@@ -5,6 +5,7 @@ subtitle: "Measuring behavior"
 category: docs
 order: 7
 date: 2018-12-20 22:07:17
+disqus: 1
 ---
 
 `CameraView` has a smart measuring behavior that will let you do what you want with a few flags.

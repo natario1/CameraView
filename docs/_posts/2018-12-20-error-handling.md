@@ -4,6 +4,7 @@ title: "Error Handling"
 category: docs
 order: 9
 date: 2018-12-20 20:02:31
+disqus: 1
 ---
 
 Errors are posted to the registered `CameraListener`s callback:

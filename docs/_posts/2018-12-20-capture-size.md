@@ -5,6 +5,7 @@ subtitle: "Set size of output media"
 category: docs
 order: 8
 date: 2018-12-20 22:07:22
+disqus: 1
 ---
 
 If you are planning to use the snapshot APIs, the size of the media output is that of the preview,

@@ -5,6 +5,7 @@ subtitle: "Process each frame in real time"
 category: docs
 order: 5
 date: 2018-12-20 20:45:42
+disqus: 1
 ---
 
 We support frame processors that will receive data from the camera preview stream. This is a useful

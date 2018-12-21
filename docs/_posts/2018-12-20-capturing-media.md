@@ -5,6 +5,7 @@ subtitle: "Taking pictures and videos"
 category: docs
 order: 3
 date: 2018-12-20 20:53:17
+disqus: 1
 ---
 
 This section introduces some key concepts about media capturing, and about the `Mode` control.
