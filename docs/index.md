@@ -35,3 +35,8 @@ This website contains documentation and informations about version 2.X.X of the 
 For older versions, please take a look at the v1 branch in the [project page](https://github.com/natario1/CameraView).
 For migration guide, take a look at the [migration page](extra/v1-migration-guide.html).
 
+### Support
+
+If you like the project, use it with profit, and want to thank back, please consider [donating or
+becoming a supporter](extra/donate.html).
+

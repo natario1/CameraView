@@ -170,6 +170,4 @@ Might be used in the future to speed up development.
   If device has no `BACK` cameras, defaults to `FRONT`.  
 - Removed `ExtraProperties` as it was useless.
 
-
-TODO: opencollective?
 TODO: improve the focus marker drawing, move out of XML (accept a drawable?)

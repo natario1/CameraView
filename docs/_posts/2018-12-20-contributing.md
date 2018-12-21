@@ -3,13 +3,14 @@ layout: page
 title: "Contributing & License"
 category: extra
 date: 2018-12-20 19:28:45
-order: 3
+order: 2
 ---
 
 Everyone is welcome to contribute with suggestions or pull requests, as the library is under active development,
 although it has reached a high level of stability.
 
-We are grateful to anyone who has contributed with fixes, features or feature requests.
+We are grateful to anyone who has contributed with fixes, features or feature requests. If you don't
+want to get involved but still want to support the project, please [consider donating](donate.html).
 
 ## Bug reports
 

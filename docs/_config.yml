@@ -37,6 +37,9 @@ navigation: 2
 # URL to source code, used in _includes/footer.html
 codeurl: 'https://github.com/natario1/CameraView'
 
+# relative URL for donations, used in footer.html
+donateurl: '/extra/donate.html'
+
 # Default categories (in order) to appear in the navigation
 # (Missing: DOCS and DONATE info)
 sections: [
