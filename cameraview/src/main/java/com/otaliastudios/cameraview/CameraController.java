@@ -49,13 +49,15 @@ abstract class CameraController implements
     protected float mExposureCorrectionValue;
     protected boolean mPlaySounds;
 
+    @Nullable private SizeSelector mPreviewSizeSelector;
+    private SizeSelector mPictureSizeSelector;
+    private SizeSelector mVideoSizeSelector;
+
     protected int mCameraId;
     protected CameraOptions mCameraOptions;
     protected Mapper mMapper;
     protected FrameManager mFrameManager;
-    protected SizeSelector mPictureSizeSelector;
     protected PictureRecorder mPictureRecorder;
-    protected SizeSelector mVideoSizeSelector;
     protected VideoRecorder mVideoRecorder;
     protected long mVideoMaxSize;
     protected int mVideoMaxDuration;
@@ -221,6 +223,7 @@ abstract class CameraController implements
     }
 
     // Forces a restart.
+    @SuppressWarnings("WeakerAccess")
     protected final void restart() {
         LOG.i("Restart:", "posting runnable");
         mHandler.post(new Runnable() {
@@ -272,6 +275,10 @@ abstract class CameraController implements
     // This can be called multiple times.
     final void setDeviceOrientation(int deviceOrientation) {
         mDeviceOrientation = deviceOrientation;
+    }
+
+    final void setPreviewSizeSelector(@Nullable SizeSelector selector) {
+        mPreviewSizeSelector = selector;
     }
 
     final void setPictureSizeSelector(@NonNull SizeSelector selector) {
@@ -343,7 +350,7 @@ abstract class CameraController implements
 
     abstract void stopVideo();
 
-    abstract void startAutoFocus(@Nullable Gesture gesture, PointF point);
+    abstract void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point);
 
     abstract void setPlaySounds(boolean playSounds);
 
@@ -409,6 +416,11 @@ abstract class CameraController implements
 
     final int getAudioBitRate() {
         return mAudioBitRate;
+    }
+
+    @Nullable
+    /* for tests */ final SizeSelector getPreviewSizeSelector() {
+        return mPreviewSizeSelector;
     }
 
     @NonNull
@@ -532,12 +544,19 @@ abstract class CameraController implements
     @NonNull
     @SuppressWarnings("WeakerAccess")
     protected final Size computePreviewSize(@NonNull List<Size> previewSizes) {
-        // instead of flipping everything to REF_VIEW, we can just flip the
-        // surface size from REF_VIEW to REF_SENSOR, and reflip at the end.
-        AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+        // These sizes come in REF_SENSOR. Since there is an external selector involved,
+        // we must convert all of them to REF_VIEW, then flip back when returning.
+        boolean flip = flip(REF_SENSOR, REF_VIEW);
+        List<Size> sizes = new ArrayList<>(previewSizes.size());
+        for (Size size : previewSizes) {
+            sizes.add(flip ? size.flip() : size);
+        }
+
+        // Create our own default selector, which will be used if the external mPreviewSizeSelector
+        // is null, or if it fails in finding a size.
         Size targetMinSize = mPreview.getOutputSurfaceSize();
-        boolean flip = flip(REF_VIEW, REF_SENSOR);
-        if (flip) targetMinSize = targetMinSize.flip();
+        AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+        if (flip) targetRatio = targetRatio.inverse();
         LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
         SizeSelector matchRatio = SizeSelectors.and( // Match this aspect ratio and sort by biggest
                 SizeSelectors.aspectRatio(targetRatio, 0),
@@ -552,7 +571,17 @@ abstract class CameraController implements
                 matchRatio, // If couldn't respect size, at least match aspect ratio
                 SizeSelectors.biggest() // If couldn't match any, take the biggest.
         );
-        Size result = matchAll.select(previewSizes).get(0);
+
+        // Apply the external selector with this as a fallback,
+        // and return a size in REF_SENSOR reference.
+        SizeSelector selector;
+        if (mPreviewSizeSelector != null) {
+            selector = SizeSelectors.or(mPreviewSizeSelector, matchAll);
+        } else {
+            selector = matchAll;
+        }
+        Size result = selector.select(sizes).get(0);
+        if (flip) result = result.flip();
         LOG.i("computePreviewSize:", "result:", result, "flip:", flip);
         return result;
     }
