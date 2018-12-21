@@ -2,6 +2,7 @@
 layout: page
 title: "Capturing Media"
 subtitle: "Taking pictures and videos"
+description: "Taking pictures and videos"
 category: docs
 order: 3
 date: 2018-12-20 20:53:17

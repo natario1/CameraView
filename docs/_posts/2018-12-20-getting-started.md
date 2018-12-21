@@ -2,6 +2,7 @@
 layout: page
 title: "Getting Started"
 subtitle: "Simple guide to take your first picture"
+description: "Simple guide to take your first picture"
 category: about
 date: 2018-12-20 17:48:58
 order: 2

@@ -4,13 +4,23 @@
 # Ref guide: https://visualstudiomagazine.com/Articles/2015/03/01/GitHub-Pages.aspx?Page=2
 
 title: CameraView v2
+
+# subtitle is used by ourselves, description is used by seo tag.
 subtitle: A well documented, high-level Android interface that makes capturing pictures and videos easy, addressing all of the common issues and needs.
+description: A well documented, high-level Android interface that makes capturing pictures and videos easy, addressing all of the common issues and needs.
+
+# Can't remember what this does.
 github: [metadata]
+
+# Should be used by some plugins but we're not using any,
 author:
   name: Mattia Iavarone
   email: mat.iavarone@gmail.com
   github: natario1
 
+# Add head tags.
+plugins:
+  - jekyll-seo-tag
 
 # if you wish to integrate disqus on pages set your shortname here
 disqus_shortname: 'cameraview'

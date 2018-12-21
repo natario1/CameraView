@@ -2,6 +2,7 @@
 layout: page
 title: "Preview Size"
 subtitle: "Measuring behavior"
+description: "Measuring behavior"
 category: docs
 order: 7
 date: 2018-12-20 22:07:17
