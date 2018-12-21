@@ -1,7 +1,7 @@
 package com.otaliastudios.cameraview;
 
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 /**
  * Hdr values indicate whether to use high dynamic range techniques when capturing pictures.

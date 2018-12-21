@@ -1,8 +1,8 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.Bitmap;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
 
 /**
  * Receives callbacks about a bitmap decoding operation.

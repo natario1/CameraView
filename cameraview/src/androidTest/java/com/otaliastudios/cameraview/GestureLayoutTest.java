@@ -3,25 +3,22 @@ package com.otaliastudios.cameraview;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.support.test.espresso.Espresso;
-import android.support.test.espresso.Root;
-import android.support.test.espresso.ViewAssertion;
-import android.support.test.espresso.ViewInteraction;
-import android.support.test.espresso.assertion.ViewAssertions;
-import android.support.test.espresso.matcher.RootMatchers;
-import android.support.test.espresso.matcher.ViewMatchers;
-import android.support.test.rule.ActivityTestRule;
+import androidx.test.espresso.Espresso;
+import androidx.test.espresso.Root;
+import androidx.test.espresso.ViewAssertion;
+import androidx.test.espresso.ViewInteraction;
+import androidx.test.espresso.assertion.ViewAssertions;
+import androidx.test.espresso.matcher.RootMatchers;
+import androidx.test.espresso.matcher.ViewMatchers;
+import androidx.test.rule.ActivityTestRule;
 import android.view.MotionEvent;
 import android.view.View;
 
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 
-import static android.support.test.espresso.Espresso.onView;
-import static org.hamcrest.Matchers.any;
+import static androidx.test.espresso.Espresso.onView;
 
 @TargetApi(17)
 public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTest {

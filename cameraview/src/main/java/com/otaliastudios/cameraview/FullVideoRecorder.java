@@ -3,8 +3,8 @@ package com.otaliastudios.cameraview;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaRecorder} APIs.

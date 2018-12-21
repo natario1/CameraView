@@ -3,12 +3,11 @@ package com.otaliastudios.cameraview.demo;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.widget.ImageView;
 
 import com.otaliastudios.cameraview.AspectRatio;
 import com.otaliastudios.cameraview.BitmapCallback;
-import com.otaliastudios.cameraview.CameraUtils;
 import com.otaliastudios.cameraview.PictureResult;
 
 import java.lang.ref.WeakReference;

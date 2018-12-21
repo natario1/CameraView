@@ -1,7 +1,7 @@
 package com.otaliastudios.cameraview;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import org.junit.Before;
 import org.junit.Test;
