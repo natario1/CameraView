@@ -189,27 +189,41 @@ task mergedCoverageReport(type: JacocoReport) {
     dependsOn "testDebugUnitTest"
     dependsOn "connectedCheck"
 
-    def testData = "jacoco/testDebugUnitTest.exec"
-    def androidTestData = "outputs/code-coverage/connected/*coverage.ec"
-    executionData = fileTree(dir: "$buildDir", includes: [testData, androidTestData])
+    // Merge unit tests and android tests data
+    executionData = fileTree(dir: "$buildDir", includes: [
+            "jacoco/testDebugUnitTest.exec", // Unit tests
+            "outputs/code-coverage/connected/*coverage.ec" // Android tests
+    ])
 
-    // Sources.
-    sourceDirectories = android.sourceSets.main.java.sourceFiles
-    // Add BuildConfig and R.
-    additionalSourceDirs = files([
+    // Sources
+    sourceDirectories = files(android.sourceSets.main.java.sourceFiles)
+    additionalSourceDirs = files([ // Add BuildConfig and R.
             "$buildDir/generated/source/buildConfig/debug",
             "$buildDir/generated/source/r/debug"
     ])
 
-    // Classes.
-    def debugDir = "$buildDir/intermediates/classes/debug"
-    def filter = ['**/R.class', '**/R$*.class', '**/*$ViewInjector*.*',
-                  '**/BuildConfig.*', '**/Manifest*.*']
-    classDirectories = fileTree(dir: debugDir, excludes: filter);
+    // Classes (.class files)
+    // Not everything in the filter relates to CameraView,
+    // but let's keep a generic filter
+    def classDir = "$buildDir/intermediates/javac/debug"
+    def classFilter = [
+            '**/R.class',
+            '**/R$*.class',
+            '**/BuildConfig.*',
+            '**/Manifest*.*',
+            'android/**',
+            'androidx/**',
+            'com/google/**',
+            '**/*$ViewInjector*.*',
+            '**/Dagger*Component.class',
+            '**/Dagger*Component$Builder.class',
+            '**/*Module_*Factory.class',
+    ]
+    classDirectories = fileTree(dir: classDir, excludes: classFilter);
 
-    reports.xml.enabled = true
     reports.html.enabled = true
-    reports.xml.destination = "$reportsDirectory/mergedCoverageReport/report.xml"
+    reports.xml.enabled = true
+    reports.xml.destination file("$reportsDirectory/mergedCoverageReport/report.xml")
 }
 
 //endregion
