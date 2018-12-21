@@ -1,9 +1,6 @@
 package com.otaliastudios.cameraview;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.support.annotation.NonNull;
-import android.util.SparseArray;
+import androidx.annotation.NonNull;
 
 import java.util.HashMap;
 

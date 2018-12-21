@@ -2,20 +2,11 @@ package com.otaliastudios.cameraview.demo;
 
 
 import android.content.Context;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
-
-import com.otaliastudios.cameraview.CameraView;
-
-import java.util.ArrayList;
 
 public class MessageView extends LinearLayout {
 

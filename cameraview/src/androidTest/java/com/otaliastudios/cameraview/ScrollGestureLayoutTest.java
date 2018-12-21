@@ -2,19 +2,19 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
-import android.support.test.espresso.ViewAction;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.espresso.ViewAction;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.swipeDown;
-import static android.support.test.espresso.action.ViewActions.swipeLeft;
-import static android.support.test.espresso.action.ViewActions.swipeRight;
-import static android.support.test.espresso.action.ViewActions.swipeUp;
-import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.swipeDown;
+import static androidx.test.espresso.action.ViewActions.swipeLeft;
+import static androidx.test.espresso.action.ViewActions.swipeRight;
+import static androidx.test.espresso.action.ViewActions.swipeUp;
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;

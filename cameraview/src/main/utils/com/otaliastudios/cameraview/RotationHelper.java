@@ -1,7 +1,6 @@
 package com.otaliastudios.cameraview;
 
-import android.graphics.Rect;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * This will only be used on low APIs or when GL surface is not available.

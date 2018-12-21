@@ -1,17 +1,15 @@
 package com.otaliastudios.cameraview;
 
 
-import android.graphics.Canvas;
-import android.support.test.filters.MediumTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)

@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
-import android.support.test.rule.ActivityTestRule;
+import androidx.test.rule.ActivityTestRule;
 import android.view.ViewGroup;
 
 import org.junit.After;

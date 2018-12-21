@@ -13,20 +13,28 @@ in your app, plus understanding new concepts.
 
 Until the final v2 release, these things might change, but likely they will not.
 
+### AndroidX
+
+The lib was moved to AndroidX classes. Hopefully this should not have any impact on you. 
+
 ### Open, not start
+
 The `start()` method has been renamed to `open()`, and the `stop()` method to `close()`. This was
 done for consistency with the `onCameraOpened` callback.
 
 ### Jpeg Quality
+
 Both `cameraJpegQuality` and `setJpegQuality()` have been removed. They were working only with specific
 setups and made no real sense. We will use the default quality provided by the camera engine.
 
 ### Crop Output
+
 Both `cameraCropOutput` and `setCropOutput()` have been removed. This was an expensive operation that
 worked with pictures only. In v2, if you want your output to be cropped to match the view bounds, you
 will use the `*snapshot()` APIs (see below).
 
 ### Video Quality
+
 This was an opaque option packaging various parameters. It has been removed.
 You are expected to control the video quality by choosing the video size and setting video parameters
 with new APIs (see below).
@@ -44,6 +52,7 @@ with new APIs (see below).
 - In addition to `getSupportedPictureSizes` and `getSupportedPictureAspectRatio`, we now have equivalent methods for video. See below.
 
 ### Session type
+
 The `SessionType` has been renamed to `Mode` which has a clearer meaning.
 
 - `setSessionType()` is now `setMode()`
@@ -107,6 +116,7 @@ Some new APIs were introduced, which are respected by both standard videos and s
 - `setVideoBitRate()` and `cameraVideoBitRate`: sets the video bit rate in bit/s
 
 ### Camera Preview
+
 The type of preview is now configurable with `cameraPreview` XML attribute and `Preview` control class.
 This defaults to the new `GL_SURFACE` and it is highly recommended that you do not change this.
 
@@ -136,6 +146,7 @@ for instance, please do so using `setPictureSize()` and `setVideoSize()`.
 **Note**: `getPreviewSize()` was removed as it has no useful meaning.
 
 ### CameraListener
+
 The listener interface brings two breaking signature changes:
 
 - `onPictureTaken()` now returns a `PictureResult`. Use `result.getJpeg()` to access the jpeg stream.
@@ -145,10 +156,12 @@ The listener interface brings two breaking signature changes:
   The result class includes rich information about the video (or video snapshot) that was taken.
   
 ### Experimental mode
+
 The v2 version introduces a `cameraExperimental` XML flag that you can use to enable experimental features.
 Might be used in the future to speed up development.
 
 ### Other improvements & changes
+
 - Added `@Nullable` and `@NonNull` annotations pretty much everywhere. This might **break** your Kotlin build.
 - Added `setGridColor()` and `cameraGridColor` to control the grid color
 - Default `Facing` value is not `BACK` anymore but rather a value that guarantees that you have cameras (if possible).

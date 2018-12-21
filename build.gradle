@@ -20,8 +20,6 @@ allprojects {
 
 ext {
     compileSdkVersion = 28
-    supportLibVersion = '28.0.0'
-    lifecycleVersion = '1.1.1'
     minSdkVersion = 15
     targetSdkVersion = 28
 }

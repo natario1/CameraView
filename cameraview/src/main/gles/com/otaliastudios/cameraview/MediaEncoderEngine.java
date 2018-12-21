@@ -1,20 +1,17 @@
 package com.otaliastudios.cameraview;
 
-import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.List;
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaEncoderEngine {

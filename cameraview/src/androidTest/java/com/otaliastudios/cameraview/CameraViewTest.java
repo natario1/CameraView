@@ -3,9 +3,9 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.location.Location;
-import android.support.annotation.NonNull;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.annotation.NonNull;
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 

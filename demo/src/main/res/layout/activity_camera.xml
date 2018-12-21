@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root"
@@ -132,7 +132,7 @@
     </LinearLayout>
 
     <!-- Edit -->
-    <android.support.v4.widget.NestedScrollView
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/controls"
         android:background="@android:color/white"
         app:layout_behavior="@string/bottom_sheet_behavior"
@@ -145,6 +145,6 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
-    </android.support.v4.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
 
-</android.support.design.widget.CoordinatorLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

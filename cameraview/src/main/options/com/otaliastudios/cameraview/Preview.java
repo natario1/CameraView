@@ -1,7 +1,7 @@
 package com.otaliastudios.cameraview;
 
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 /**
  * The preview engine to be used.

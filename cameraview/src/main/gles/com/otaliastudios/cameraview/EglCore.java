@@ -24,11 +24,9 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
 import android.util.Log;
 import android.view.Surface;
-
-import javax.microedition.khronos.egl.EGL10;
 
 /**
  * -- from grafika --
