@@ -26,10 +26,10 @@ compile 'com.otaliastudios:cameraview:2.0.0-beta01'
 - Works down to API level 15
 - Well tested
 
-Read the [official website](https://natario1/github.io/CameraView) for setup instructions and documentation.
+Read the [official website](https://natario1.github.io/CameraView) for setup instructions and documentation.
 
-- Coming from v1? Take a look at the [migration guide](https://natario1/github.io/CameraView/extra/v1-migration-guide.html)
-- Changelog is hosted [here](https://natario1/github.io/CameraView/about/changelog.html)
+- Coming from v1? Take a look at the [migration guide](https://natario1.github.io/CameraView/extra/v1-migration-guide.html)
+- Changelog is hosted [here](https://natario1.github.io/CameraView/about/changelog.html)
 
 <p>
   <img src="docs/static/screen1.jpg" width="250" vspace="20" hspace="5">
@@ -37,12 +37,12 @@ Read the [official website](https://natario1/github.io/CameraView) for setup ins
   <img src="docs/static/screen3.jpg" width="250" vspace="20" hspace="5">
 </p>
 
-If you like the project, use it with profit, or simply want to thank back, you can consider [donating
-to the project](https://opencollective.com/cameraview/donate). You can either make a one time
-donation or become a sponsor, in which case your company logo will show up here.
+If you like the project, use it with profit, or simply want to thank back, please consider [donating
+to the project](https://natario1.github.io/CameraView/extra/donate) now! You can either make a one time
+donation or become a sponsor, in which case your company logo will immediately show up here.
 
-We are grateful for any contribution in this sense, as it gives us motivation to push the library forward and is
-a nice reward for what has been done until now.
+Thank you for any contribution - it is a nice reward for what has been done until now, and a 
+motivation boost to push the library forward.
 
 ## Backers
 
