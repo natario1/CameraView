@@ -5,6 +5,7 @@ subtitle: "Breaking Changes & new concepts"
 category: extra
 date: 2018-12-20 19:01:55
 order: 1
+disqus: 1
 ---
 
 CameraView v2 introduces various breaking changes that will allow for more flexibility in the future,

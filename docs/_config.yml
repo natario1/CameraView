@@ -13,7 +13,7 @@ author:
 
 
 # if you wish to integrate disqus on pages set your shortname here
-disqus_shortname: ''
+disqus_shortname: 'cameraview'
 
 # if you use google analytics, add your tracking id here
 google_analytics_id: ''

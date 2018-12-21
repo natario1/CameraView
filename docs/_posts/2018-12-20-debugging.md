@@ -4,6 +4,7 @@ title: "Debugging"
 category: docs
 order: 10
 date: 2018-12-20 20:02:38
+disqus: 1
 ---
 
 `CameraView` will log a lot of interesting events related to the camera lifecycle. These are important

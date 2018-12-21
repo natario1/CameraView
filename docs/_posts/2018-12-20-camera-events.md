@@ -5,6 +5,7 @@ subtitle: "Events and lifecycle"
 category: docs
 date: 2018-12-20 20:02:08
 order: 1
+disqus: 1
 ---
 
 The camera engine will notify anyone about camera events that took place, either on their own or
