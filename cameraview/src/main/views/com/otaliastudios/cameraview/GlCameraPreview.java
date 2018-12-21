@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
+import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.Collections;
@@ -62,6 +63,8 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     /* for tests */ float mScaleY = 1F;
     private float[] mScaleXY = new float[] { mScaleX, mScaleY };
 
+    private View mRootView;
+
     GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         super(context, parent, callback);
     }
@@ -88,23 +91,30 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             }
         });
         parent.addView(root, 0);
+        mRootView = root;
         return glView;
     }
 
+    @NonNull
     @Override
-    void onResume() {
+    View getRootView() {
+        return mRootView;
+    }
+
+    @Override
+    public void onResume() {
         super.onResume();
         getView().onResume();
     }
 
     @Override
-    void onPause() {
+    public void onPause() {
         super.onPause();
         getView().onPause();
     }
 
     @Override
-    void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         // View is gone, so EGL context is gone: callbacks make no sense anymore.
         mRendererFrameCallbacks.clear();

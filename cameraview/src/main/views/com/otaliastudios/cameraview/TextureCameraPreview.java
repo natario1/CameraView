@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 
 class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
+    private View mRootView;
+
     TextureCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         super(context, parent, callback);
     }
@@ -44,7 +46,14 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
             }
         });
+        mRootView = root;
         return texture;
+    }
+
+    @NonNull
+    @Override
+    View getRootView() {
+        return mRootView;
     }
 
     @NonNull

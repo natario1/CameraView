@@ -10,14 +10,16 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.espresso.core.internal.deps.guava.collect.ObjectArrays;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import android.view.View;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
@@ -67,6 +69,19 @@ public class BaseTest {
         keyguardLock.reenableKeyguard();
     }
 
+    /**
+     * This will make mockito report the error when it should.
+     * Mockito reports failure on the next mockito invocation, which is terrible
+     * since it might be on the next test or even never happen.
+     *
+     * Calling this
+     */
+    @After
+    public void syncMockito() {
+        Object object = Mockito.mock(Object.class);
+        object.toString();
+    }
+
     public static void ui(Runnable runnable) {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(runnable);
     }
@@ -112,33 +127,10 @@ public class BaseTest {
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(command);
     }
 
-    public static byte[] mockJpeg(int width, int height) {
-        Bitmap source = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        source.compress(Bitmap.CompressFormat.JPEG, 100, os);
-        return os.toByteArray();
-    }
-
-    public static YuvImage mockYuv(int width, int height) {
-        YuvImage y = mock(YuvImage.class);
-        when(y.getWidth()).thenReturn(width);
-        when(y.getHeight()).thenReturn(height);
-        when(y.compressToJpeg(any(Rect.class), anyInt(), any(OutputStream.class))).thenAnswer(new Answer<Boolean>() {
-            @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                Rect rect = (Rect) invocation.getArguments()[0];
-                OutputStream stream = (OutputStream) invocation.getArguments()[2];
-                stream.write(mockJpeg(rect.width(), rect.height()));
-                return true;
-            }
-        });
-        return y;
-    }
-
     public static Stubber doCountDown(final CountDownLatch latch) {
         return doAnswer(new Answer<Object>() {
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 latch.countDown();
                 return null;
             }

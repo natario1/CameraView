@@ -24,29 +24,43 @@ public abstract class CameraPreviewTest extends BaseTest {
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
+    @SuppressWarnings("WeakerAccess")
     protected CameraPreview preview;
+    @SuppressWarnings("WeakerAccess")
     protected Size surfaceSize;
     private CameraPreview.SurfaceCallback callback;
-    private Task<Boolean> availability;
+
+    private Task<Boolean> available;
+    private Task<Boolean> destroyed;
 
     @Before
     public void setUp() {
-        availability = new Task<>(true);
+        available = new Task<>(true);
+        destroyed = new Task<>(true);
 
         ui(new Runnable() {
             @Override
             public void run() {
                 TestActivity a = rule.getActivity();
                 surfaceSize = a.getContentSize();
-
                 callback = mock(CameraPreview.SurfaceCallback.class);
+
                 doAnswer(new Answer() {
                     @Override
-                    public Object answer(InvocationOnMock invocation) throws Throwable {
-                        if (availability != null) availability.end(true);
+                    public Object answer(InvocationOnMock invocation) {
+                        if (available != null) available.end(true);
                         return null;
                     }
                 }).when(callback).onSurfaceAvailable();
+
+                doAnswer(new Answer() {
+                    @Override
+                    public Object answer(InvocationOnMock invocation) {
+                        if (destroyed != null) destroyed.end(true);
+                        return null;
+                    }
+                }).when(callback).onSurfaceDestroyed();
+
                 preview = createPreview(a, a.getContentView(), callback);
             }
         });
@@ -54,7 +68,7 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     // Wait for surface to be available.
     protected void ensureAvailable() {
-        assertNotNull(availability.await(2000));
+        assertNotNull(available.await(2000));
     }
 
     // Trigger a destroy.
@@ -62,10 +76,10 @@ public abstract class CameraPreviewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                rule.getActivity().getContentView().removeView(preview.getView());
+                rule.getActivity().getContentView().removeView(preview.getRootView());
             }
         });
-        idle();
+        assertNotNull(destroyed.await(2000));
     }
 
     @After
@@ -73,7 +87,8 @@ public abstract class CameraPreviewTest extends BaseTest {
         preview = null;
         callback = null;
         surfaceSize = null;
-        availability = null;
+        available = null;
+        destroyed = null;
     }
 
     @Test
@@ -81,6 +96,7 @@ public abstract class CameraPreviewTest extends BaseTest {
         ensureAvailable();
         assertTrue(preview.hasSurface());
         assertNotNull(preview.getView());
+        assertNotNull(preview.getRootView());
         assertNotNull(preview.getOutputClass());
     }
 
@@ -103,12 +119,14 @@ public abstract class CameraPreviewTest extends BaseTest {
     public void testSurfaceDestroyed() {
         ensureAvailable();
         ensureDestroyed();
+        // This might be called twice in Texture because it overrides ensureDestroyed method
+        verify(callback, atLeastOnce()).onSurfaceDestroyed();
         assertEquals(0, preview.getOutputSurfaceSize().getWidth());
         assertEquals(0, preview.getOutputSurfaceSize().getHeight());
     }
 
     @Test
-    public void testCropCenter() throws Exception {
+    public void testCropCenter() {
         ensureAvailable();
 
         // This is given by the activity, it's the fixed size.

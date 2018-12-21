@@ -27,14 +27,14 @@ public class SizeTest {
     @Test
     public void testEquals() {
         Size s1 = new Size(10, 20);
-        assertTrue(s1.equals(s1));
-        assertFalse(s1.equals(null));
-        assertFalse(s1.equals(""));
+        assertEquals(s1, s1);
+        assertNotEquals(s1, null);
+        assertNotEquals(s1, "");
 
         Size s2 = new Size(10, 0);
         Size s3 = new Size(10, 20);
-        assertTrue(s1.equals(s3));
-        assertFalse(s1.equals(s2));
+        assertEquals(s1, s3);
+        assertNotEquals(s1, s2);
     }
 
     @Test
@@ -49,6 +49,7 @@ public class SizeTest {
         Size s1 = new Size(10, 20);
         Size s2 = new Size(10, 0);
         Size s3 = new Size(10, 20);
+        //noinspection SimplifiableJUnitAssertion
         assertTrue(s1.compareTo(s3) == 0);
         assertTrue(s1.compareTo(s2) > 0);
         assertTrue(s2.compareTo(s1) < 0);

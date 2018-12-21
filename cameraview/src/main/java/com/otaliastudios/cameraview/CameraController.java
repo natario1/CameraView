@@ -145,7 +145,8 @@ abstract class CameraController implements
         }
     }
 
-    final void destroy() {
+    // Public & not final so we can verify with mockito in CameraViewTest
+    public void destroy() {
         LOG.i("destroy:", "state:", ss());
         // Prevent CameraController leaks. Don't set to null, or exceptions
         // inside the standard stop() method might crash the main thread.
@@ -188,7 +189,8 @@ abstract class CameraController implements
     }
 
     // Stops the preview asynchronously.
-    final void stop() {
+    // Public & not final so we can verify with mockito in CameraViewTest
+    public void stop() {
         LOG.i("Stop:", "posting runnable. State:", ss());
         mHandler.post(new Runnable() {
             @Override

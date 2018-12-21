@@ -1,8 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,8 +18,8 @@ public class WorkerHandlerTest extends BaseTest {
         WorkerHandler w1 = WorkerHandler.get("handler1");
         WorkerHandler w1a = WorkerHandler.get("handler1");
         WorkerHandler w2 = WorkerHandler.get("handler2");
-        assertTrue(w1 == w1a);
-        assertFalse(w1 == w2);
+        assertSame(w1, w1a);
+        assertNotSame(w1, w2);
     }
 
     @Test

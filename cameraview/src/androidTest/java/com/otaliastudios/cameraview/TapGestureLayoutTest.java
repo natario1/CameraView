@@ -6,8 +6,8 @@ import androidx.test.espresso.action.GeneralClickAction;
 import androidx.test.espresso.action.GeneralLocation;
 import androidx.test.espresso.action.Press;
 import androidx.test.espresso.action.Tap;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 

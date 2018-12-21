@@ -2,8 +2,9 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 import android.view.ViewGroup;
 
 import org.junit.runner.RunWith;

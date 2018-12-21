@@ -47,6 +47,10 @@ abstract class CameraPreview<T extends View, Output> {
         return mView;
     }
 
+    // Only used in tests
+    @NonNull
+    abstract View getRootView();
+
     @NonNull
     abstract Class<Output> getOutputClass();
 
@@ -119,11 +123,14 @@ abstract class CameraPreview<T extends View, Output> {
         mSurfaceCallback.onSurfaceDestroyed();
     }
 
-    void onResume() {}
+    // Public for mockito (CameraViewTest)
+    public void onResume() {}
 
-    void onPause() {}
+    // Public for mockito (CameraViewTest)
+    public void onPause() {}
 
-    void onDestroy() {}
+    // Public for mockito (CameraViewTest)
+    public void onDestroy() {}
 
     final boolean hasSurface() {
         return mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0;
