@@ -1302,6 +1302,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         });
     }
 
+    /**
+     * Starts recording a fast, low quality video snapshot. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     *
+     * Throws an exception if API level is below 18, or if the preview being used is not
+     * {@link Preview#GL_SURFACE}.
+     *
+     * @param file a file where the video will be saved
+     */
     public void takeVideoSnapshot(@Nullable File file) {
         if (getWidth() == 0 || getHeight() == 0) return;
         if (file == null) {
@@ -1332,22 +1341,53 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         final int old = getVideoMaxDuration();
         addCameraListener(new CameraListener() {
             @Override
-            public void onVideoTaken(VideoResult result) {
+            public void onVideoTaken(@NonNull VideoResult result) {
                 setVideoMaxDuration(old);
                 removeCameraListener(this);
+            }
+
+            @Override
+            public void onCameraError(@NonNull CameraException exception) {
+                super.onCameraError(exception);
+                if (exception.getReason() == CameraException.REASON_VIDEO_FAILED) {
+                    setVideoMaxDuration(old);
+                    removeCameraListener(this);
+                }
             }
         });
         setVideoMaxDuration(durationMillis);
         takeVideo(file);
     }
 
+    /**
+     * Starts recording a fast, low quality video snapshot. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     * Recording will be automatically stopped after the given duration, overriding
+     * temporarily any duration limit set by {@link #setVideoMaxDuration(int)}.
+     *
+     * Throws an exception if API level is below 18, or if the preview being used is not
+     * {@link Preview#GL_SURFACE}.
+     *
+     * @param file a file where the video will be saved
+     * @param durationMillis recording max duration
+     *
+     */
     public void takeVideoSnapshot(@Nullable File file, int durationMillis) {
         final int old = getVideoMaxDuration();
         addCameraListener(new CameraListener() {
             @Override
-            public void onVideoTaken(VideoResult result) {
+            public void onVideoTaken(@NonNull VideoResult result) {
                 setVideoMaxDuration(old);
                 removeCameraListener(this);
+            }
+
+            @Override
+            public void onCameraError(@NonNull CameraException exception) {
+                super.onCameraError(exception);
+                if (exception.getReason() == CameraException.REASON_VIDEO_FAILED) {
+                    setVideoMaxDuration(old);
+                    removeCameraListener(this);
+                }
             }
         });
         setVideoMaxDuration(durationMillis);
@@ -1355,11 +1395,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
-    // TODO: pauseCapturingVideo and resumeCapturingVideo. There is mediarecorder.pause(), but API 24...
+    // TODO: pauseVideo and resumeVideo? There is mediarecorder.pause(), but API 24...
 
 
     /**
-     * Stops capturing video, if there was a video record going on.
+     * Stops capturing video or video snapshots being recorded, if there was any.
      * This will fire {@link CameraListener#onVideoTaken(VideoResult)}.
      */
     public void stopVideo() {

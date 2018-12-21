@@ -75,8 +75,10 @@ This is allowed at the following conditions:
 |`isTakingPicture()`|Returns true if the camera is currently capturing a picture.|
 |`takePicture()`|Takes a high quality picture.|
 |`takeVideo(File)`|Takes a high quality video.|
+|`takeVideo(File, long)`|Takes a high quality video, stopping after the given duration.|
 |`takePictureSnapshot()`|Takes a picture snapshot.|
 |`takeVideoSnapshot(File)`|Takes a video snapshot.|
+|`takeVideoSnapshot(File, long)`|Takes a video snapshot, stopping after the given duration.|
 |`getPictureSize()`|Returns the output picture size, accounting for any rotation. Null while in `VIDEO` mode.|
 |`getVideoSize()`|Returns the output video size, accounting for any rotation. Null while in `PICTURE` mode.|
 |`getSnapshotSize()`|Returns the size of pictures taken with `takePictureSnapshot()` or videos taken with `takeVideoSnapshot()`. Accounts for rotation and cropping.|
