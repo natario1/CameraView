@@ -3,8 +3,10 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.graphics.PointF;
+
+import androidx.annotation.NonNull;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
-import androidx.test.runner.AndroidJUnit4;
 import android.view.ViewGroup;
 
 import org.junit.After;
@@ -38,7 +40,6 @@ public class CameraViewCallbacksTest extends BaseTest {
     private MockCameraPreview mockPreview;
     private Task<Boolean> task;
 
-
     @Before
     public void setUp() {
         ui(new Runnable() {
@@ -61,7 +62,7 @@ public class CameraViewCallbacksTest extends BaseTest {
                     }
 
                     @Override
-                    protected boolean checkPermissions(Mode mode, Audio audio) {
+                    protected boolean checkPermissions(@NonNull Mode mode, @NonNull Audio audio) {
                         return true;
                     }
                 };

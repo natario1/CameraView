@@ -4,8 +4,8 @@ package com.otaliastudios.cameraview;
 import android.content.Context;
 import android.location.Location;
 import androidx.annotation.NonNull;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
-import androidx.test.runner.AndroidJUnit4;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 
@@ -39,18 +39,18 @@ public class CameraViewTest extends BaseTest {
                 cameraView = new CameraView(context) {
                     @Override
                     protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
-                        mockController = new MockCameraController(callbacks);
+                        mockController = spy(new MockCameraController(callbacks));
                         return mockController;
                     }
 
                     @Override
                     protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
-                        mockPreview = new MockCameraPreview(context, container);
+                        mockPreview = spy(new MockCameraPreview(context, container));
                         return mockPreview;
                     }
 
                     @Override
-                    protected boolean checkPermissions(Mode mode, Audio audio) {
+                    protected boolean checkPermissions(@NonNull Mode mode, @NonNull Audio audio) {
                         return hasPermissions;
                     }
                 };

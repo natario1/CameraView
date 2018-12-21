@@ -18,6 +18,7 @@ class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHolder> {
     private final static CameraLogger LOG = CameraLogger.create(SurfaceCameraPreview.class.getSimpleName());
 
     private boolean mDispatched;
+    private View mRootView;
 
     SurfaceCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         super(context, parent, callback);
@@ -57,7 +58,14 @@ class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHolder> {
                 mDispatched = false;
             }
         });
+        mRootView = root;
         return surfaceView;
+    }
+
+    @NonNull
+    @Override
+    View getRootView() {
+        return mRootView;
     }
 
     @NonNull

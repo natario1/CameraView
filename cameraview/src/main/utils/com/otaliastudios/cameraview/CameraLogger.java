@@ -149,11 +149,11 @@ public final class CameraLogger {
             message.append(String.valueOf(object));
             message.append(" ");
         }
+        String string = message.toString().trim();
         for (Logger logger : sLoggers) {
-            logger.log(level, mTag, message.toString().trim(), throwable);
+            logger.log(level, mTag, string, throwable);
         }
-
-        lastMessage = message.toString();
+        lastMessage = string;
         lastTag = mTag;
     }
 }

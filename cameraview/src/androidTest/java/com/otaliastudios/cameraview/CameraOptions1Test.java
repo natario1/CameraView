@@ -2,8 +2,9 @@ package com.otaliastudios.cameraview;
 
 
 import android.hardware.Camera;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -283,6 +284,7 @@ public class CameraOptions1Test extends BaseTest {
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.isVideoSnapshotSupported()).thenReturn(true);
         when(params.isZoomSupported()).thenReturn(true);
+        //noinspection ArraysAsListWithZeroOrOneArgument
         when(params.getSupportedFocusModes()).thenReturn(Arrays.asList(Camera.Parameters.FOCUS_MODE_AUTO));
         CameraOptions o = new CameraOptions(params, false);
         assertTrue(o.isZoomSupported());

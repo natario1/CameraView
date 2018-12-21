@@ -13,20 +13,14 @@ public class MockCameraPreview extends CameraPreview<View, Void> {
         super(context, parent, null);
     }
 
-    private boolean mCropping = false;
-
-    public void setIsCropping(boolean crop) {
-        mCropping = crop;
-    }
-
     @Override
-    boolean isCropping() {
-        return mCropping;
+    boolean supportsCropping() {
+        return true;
     }
 
     @NonNull
     @Override
-    protected View onCreateView(Context context, ViewGroup parent) {
+    protected View onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
         return new View(context);
     }
 
@@ -42,4 +36,9 @@ public class MockCameraPreview extends CameraPreview<View, Void> {
         return null;
     }
 
+    @NonNull
+    @Override
+    View getRootView() {
+        return null;
+    }
 }

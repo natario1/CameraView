@@ -5,13 +5,15 @@ import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +38,7 @@ import static org.mockito.Mockito.mock;
  */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-// @Ignore
+@Ignore
 public class IntegrationTest extends BaseTest {
 
     @Rule

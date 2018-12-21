@@ -28,7 +28,9 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
+    @SuppressWarnings("WeakerAccess")
     protected T layout;
+    @SuppressWarnings("WeakerAccess")
     protected Task<Gesture> touch;
 
     @Before
@@ -54,6 +56,7 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
         });
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected final ViewInteraction onLayout() {
         return onView(Matchers.<View>is(layout))
                 .inRoot(RootMatchers.withDecorView(

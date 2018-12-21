@@ -2,8 +2,9 @@ package com.otaliastudios.cameraview;
 
 
 import android.location.Location;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +33,7 @@ public class PictureResultTest extends BaseTest {
         result.size = size;
         result.data = jpeg;
         result.location = location;
+        //noinspection ConstantConditions
         result.isSnapshot = isSnapshot;
 
         assertEquals(result.getFormat(), format);
@@ -39,6 +41,7 @@ public class PictureResultTest extends BaseTest {
         assertEquals(result.getSize(), size);
         assertEquals(result.getData(), jpeg);
         assertEquals(result.getLocation(), location);
+        //noinspection ConstantConditions
         assertEquals(result.isSnapshot(), isSnapshot);
     }
 }
