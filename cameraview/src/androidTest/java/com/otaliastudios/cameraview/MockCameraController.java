@@ -109,7 +109,7 @@ public class MockCameraController extends CameraController {
     }
 
     @Override
-    void startAutoFocus(@Nullable Gesture gesture, PointF point) {
+    void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point) {
         mFocusStarted = true;
     }
 

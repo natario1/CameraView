@@ -20,7 +20,7 @@ This means that your visible preview can be of any size, not just the presets.
 Whatever you do, the preview will never be distorted - it can only be cropped
 if needed.
 
-### Examples
+## Examples
 
 ##### Center Inside
 
@@ -51,3 +51,36 @@ of the internal preview surface, the surface will be cropped to fill the view.
 
 This means that part of the preview might be hidden, and the output might contain parts of the scene
 that were not visible during the capture, **unless it is taken as a snapshot, since snapshots account for cropping**.
+
+
+## Advanced feature: Preview Size Selection
+
+**Only do this if you know what you are doing. This is typically not needed - prefer picture/video size selectors,
+as they will drive the preview size selection and, eventually, the view size. If what you want is just
+choose an aspect ratio, do so with [Capture Size](capture-size.html) selection.**
+
+As said, `WRAP_CONTENT` adapts the view boundaries to the preview size. The preview size must be determined
+based on the sizes that the device sensor & hardware actually support. This operation is done automatically
+by the engine. The default selector will do the following:
+
+- Constraint 1: match the picture/video output aspect ratio (so you get what you see)
+- Constraint 2: match sizes a bit bigger than the View (so there is no upscaling)
+- Try to match both, or just one, or fallback to the biggest available size
+
+There are not so many reason why you would replace this, other than control the frame processor size
+or, indirectly, the snapshot size. You can, however, hook into the process using `setPreviewSize(SizeSelector)`:
+
+```java
+cameraView.setPreviewSize(new SizeSelector() {
+    @Override
+    public List<Size> select(List<Size> source) {
+        // Receives a list of available sizes.
+        // Must return a list of acceptable sizes.
+    }
+});
+```
+
+After the preview size is determined, if it has changed since list time, the `CameraView` will receive
+another call to `onMeasure` so the `WRAP_CONTENT` magic can take place.
+
+To understand how SizeSelectors work and the available utilities, please read the [Capture Size](capture-size.html) document.

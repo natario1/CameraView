@@ -559,6 +559,15 @@ public class CameraViewTest extends BaseTest {
     }
 
     @Test
+    public void testPreviewSizeSelector() {
+        SizeSelector source = SizeSelectors.minHeight(50);
+        cameraView.setPreviewSize(source);
+        SizeSelector result = mockController.getPreviewSizeSelector();
+        assertNotNull(result);
+        assertEquals(result, source);
+    }
+
+    @Test
     public void testPictureSizeSelector() {
         SizeSelector source = SizeSelectors.minHeight(50);
         cameraView.setPictureSize(source);

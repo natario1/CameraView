@@ -1,7 +1,7 @@
 ---
 layout: page
 title: "v1 Migration Guide"
-subtitle: "Breaking Changes & concepts"
+subtitle: "Breaking Changes & new concepts"
 category: extra
 date: 2018-12-20 19:01:55
 order: 1
@@ -120,6 +120,21 @@ The GL surface, as an extra benefit, has a much more efficient way of capturing 
 that avoids OOM errors, rotating the image on the fly, reading EXIF, and other horrible things belonging to v1.
 These picture snapshots will also work while taking videos.
 
+### Advanced feature: Preview Sizing
+
+We finally introduced a `setPreviewSize()` method which accepts a `SizeSelector`. The use of this method
+is discouraged if you don't know exactly what you are doing. The default preview size selector is already
+smart enough to
+
+- respect the picture/video aspect ratio
+- be a bit bigger than the view so that there is no upscaling
+
+There are not so many reason why you would use this method, other than, for example, control the frame
+processor size or, indirectly, the snapshots size. If what you are doing is just assigning an aspect ratio, 
+for instance, please do so using `setPictureSize()` and `setVideoSize()`.
+
+**Note**: `getPreviewSize()` was removed as it has no useful meaning.
+
 ### CameraListener
 The listener interface brings two breaking signature changes:
 
@@ -143,4 +158,3 @@ Might be used in the future to speed up development.
 
 TODO: opencollective?
 TODO: improve the focus marker drawing, move out of XML (accept a drawable?)
-TODO: do we want getPreviewSize() / setPreviewSize() ? probably not the getter.

@@ -1063,6 +1063,28 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
+     * <strong>ADVANCED FEATURE</strong> - sets a size selector for the preview stream.
+     * The {@link SizeSelector} will be invoked with the list of available sizes, and the first
+     * acceptable size will be accepted and passed to the internal engine & surface.
+     *
+     * This is typically NOT NEEDED. The default size selector is already smart enough to respect
+     * the picture/video output aspect ratio, and be bigger than the surface so that there is no
+     * upscaling. If all you want is set an aspect ratio, use {@link #setPictureSize(SizeSelector)}
+     * and {@link #setVideoSize(SizeSelector)}.
+     *
+     * When size changes, the {@link CameraView} is remeasured so any WRAP_CONTENT dimension
+     * is recomputed accordingly.
+     *
+     * See the {@link SizeSelectors} class for handy utilities for creating selectors.
+     *
+     * @param selector a size selector
+     */
+    public void setPreviewSize(@NonNull SizeSelector selector) {
+        mCameraController.setPreviewSizeSelector(selector);
+    }
+
+
+    /**
      * Set the current session type to either picture or video.
      *
      * @see Mode#PICTURE

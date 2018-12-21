@@ -27,10 +27,11 @@ addressing most of the common issues and needs, and still leaving you with flexi
 ### Get started
 
 Get started with [install info](about/install.html), [quick setup](about/getting-started.html), or
-read the in-depth [documentation]().
+read the in-depth [documentation](docs/camera-events.html).
 
 ### Older versions
 
 This website contains documentation and informations about version 2.X.X of the library.
 For older versions, please take a look at the v1 branch in the [project page](https://github.com/natario1/CameraView).
+For migration guide, take a look at the [migration page](extra/v1-migration-guide.html).
 
