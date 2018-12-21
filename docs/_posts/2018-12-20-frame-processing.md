@@ -2,6 +2,7 @@
 layout: page
 title: "Frame Processing"
 subtitle: "Process each frame in real time"
+description: "Process each frame in real time"
 category: docs
 order: 5
 date: 2018-12-20 20:45:42

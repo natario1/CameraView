@@ -2,6 +2,7 @@
 layout: page
 title: "Capture Size"
 subtitle: "Set size of output media"
+description: "Set size of output media"
 category: docs
 order: 8
 date: 2018-12-20 22:07:22

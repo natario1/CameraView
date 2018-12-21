@@ -2,6 +2,7 @@
 layout: page
 title: "v1 Migration Guide"
 subtitle: "Breaking Changes & new concepts"
+description: "Breaking Changes & new concepts"
 category: extra
 date: 2018-12-20 19:01:55
 order: 1
