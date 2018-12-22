@@ -86,3 +86,4 @@ After the preview size is determined, if it has changed since list time, the `Ca
 another call to `onMeasure` so the `WRAP_CONTENT` magic can take place.
 
 To understand how SizeSelectors work and the available utilities, please read the [Capture Size](capture-size.html) document.
+
