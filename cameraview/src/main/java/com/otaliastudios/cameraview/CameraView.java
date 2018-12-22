@@ -1189,10 +1189,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param cameraListener a listener for events.
      */
-    public void addCameraListener(@Nullable CameraListener cameraListener) {
-        if (cameraListener != null) {
-            mListeners.add(cameraListener);
-        }
+    public void addCameraListener(@NonNull CameraListener cameraListener) {
+        mListeners.add(cameraListener);
     }
 
 
@@ -1201,10 +1199,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param cameraListener a listener for events.
      */
-    public void removeCameraListener(@Nullable CameraListener cameraListener) {
-        if (cameraListener != null) {
-            mListeners.remove(cameraListener);
-        }
+    public void removeCameraListener(@NonNull CameraListener cameraListener) {
+        mListeners.remove(cameraListener);
     }
 
 
