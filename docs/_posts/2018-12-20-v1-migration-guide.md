@@ -117,6 +117,9 @@ Some new APIs were introduced, which are respected by both standard videos and s
 - `setAudioBitRate()` and `cameraAudioBitRate`: sets the audio bit rate in bit/s
 - `setVideoBitRate()` and `cameraVideoBitRate`: sets the video bit rate in bit/s
 
+**Important: takeVideo(), like takeVideoSnapshot(), will not accept a null file as input. Use
+new File(context.getFilesDir(), "video.mp4") to use the old default.**
+
 ### Camera Preview
 
 The type of preview is now configurable with `cameraPreview` XML attribute and `Preview` control class.

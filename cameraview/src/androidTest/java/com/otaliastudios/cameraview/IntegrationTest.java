@@ -18,6 +18,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -149,7 +150,8 @@ public class IntegrationTest extends BaseTest {
 
     private void waitForVideoStart() {
         controller.mStartVideoTask.listen();
-        camera.takeVideo(null);
+        File file = new File(context().getFilesDir(), "video.mp4");
+        camera.takeVideo(file);
         controller.mStartVideoTask.await(400);
     }
 
