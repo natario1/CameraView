@@ -156,7 +156,7 @@ The listener interface brings two breaking signature changes:
 
 - `onPictureTaken()` now returns a `PictureResult`. Use `result.getJpeg()` to access the jpeg stream.
   The result class includes rich information about the picture (or picture snapshot) that was taken,
-  plus handy utilities (`result.asBitmap()`...)
+  plus handy utilities (`result.toBitmap()`, `result.toFile()`...)
 - `onVideoTaken()` now returns a `VideoResult`. Use `result.getFile()` to access the video file.
   The result class includes rich information about the video (or video snapshot) that was taken.
   
