@@ -122,8 +122,9 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         Matrix.rotateM(mTransform, 0, rotation, 0, 0, 1);
                         Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0);
 
-                        float[] scaleXY = new float[] { realScaleX, realScaleY };
-                        viewport.drawFrame(mTextureId, mTransform, scaleXY);
+                        // Future note: passing scale values to the viewport?
+                        // They are simply realScaleX and realScaleY.
+                        viewport.drawFrame(mTextureId, mTransform);
                         // don't - surface.swapBuffers();
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
                         mResult.format = PictureResult.FORMAT_JPEG;

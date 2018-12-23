@@ -61,7 +61,6 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     private Set<RendererFrameCallback> mRendererFrameCallbacks = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
     /* for tests */ float mScaleX = 1F;
     /* for tests */ float mScaleY = 1F;
-    private float[] mScaleXY = new float[] { mScaleX, mScaleY };
 
     private View mRootView;
 
@@ -203,9 +202,9 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
             Matrix.scaleM(mTransformMatrix, 0, mScaleX, mScaleY, 1);
         }
-        mScaleXY[0] = mInputFlipped ? mScaleY : mScaleX;
-        mScaleXY[1] = mInputFlipped ? mScaleX : mScaleY;
-        mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix, mScaleXY);
+        // Future note: passing scale to the viewport?
+        // They are scaleX an scaleY, but flipped based on mInputFlipped.
+        mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
         for (RendererFrameCallback callback : mRendererFrameCallbacks) {
             callback.onRendererFrame(mInputSurfaceTexture, mScaleX, mScaleY);
         }
