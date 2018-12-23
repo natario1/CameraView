@@ -58,6 +58,7 @@ public class CameraOptions {
         }
 
         // Flash
+        supportedFlash.add(Flash.OFF);
         strings = params.getSupportedFlashModes();
         if (strings != null) {
             for (String string : strings) {
@@ -67,6 +68,7 @@ public class CameraOptions {
         }
 
         // Hdr
+        supportedHdr.add(Hdr.OFF);
         strings = params.getSupportedSceneModes();
         if (strings != null) {
             for (String string : strings) {

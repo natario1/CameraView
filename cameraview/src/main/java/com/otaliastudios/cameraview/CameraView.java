@@ -239,13 +239,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
         LOG.w("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
         switch (mPreview) {
-            case SURFACE: return new SurfaceCameraPreview(context, container, null);
+            case SURFACE:
+                return new SurfaceCameraPreview(context, container, null);
             case TEXTURE: {
-                if (isHardwareAccelerated()) { // TextureView is not supported without hardware acceleration.
+                if (isHardwareAccelerated()) {
+                    // TextureView is not supported without hardware acceleration.
                     return new TextureCameraPreview(context, container, null);
                 }
             }
             case GL_SURFACE: default: {
+                mPreview = Preview.GL_SURFACE;
                 return new GlCameraPreview(context, container, null);
             }
         }

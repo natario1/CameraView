@@ -85,8 +85,6 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         // Nothing to do here. Waiting for the first frame.
     }
 
-    private float[] mScaleXY = new float[2];
-
     @EncoderThread
     @Override
     void notify(@NonNull String event, @Nullable Object data) {
@@ -126,10 +124,9 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
             Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
             drain(false);
-            boolean flip = mConfig.scaleFlipped;// mConfig.rotation % 180 != 0;
-            mScaleXY[0] = flip ? scaleY : scaleX;
-            mScaleXY[1] = flip ? scaleX : scaleY;
-            mViewport.drawFrame(mConfig.textureId, transform, mScaleXY);
+            // Future note: passing scale values to the viewport? They are scaleX and scaleY,
+            // but flipped based on the mConfig.scaleFlipped boolean.
+            mViewport.drawFrame(mConfig.textureId, transform);
             mWindow.setPresentationTime(timestamp);
             mWindow.swapBuffers();
         }
