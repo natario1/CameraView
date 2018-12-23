@@ -12,9 +12,14 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.exifinterface.media.ExifInterface;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Static utilities for dealing with camera I/O, orientations, etc.
@@ -58,6 +63,59 @@ public class CameraUtils {
 
 
     /**
+     * Simply writes the given data to the given file. It is done synchronously. If you are
+     * running on the UI thread, please use {@link #writeToFile(byte[], File, FileCallback)}
+     * and pass a file callback.
+     *
+     * If any error is encountered, this returns null.
+     *
+     * @param data the data to be written
+     * @param file the file to write into
+     * @return the source file, or null if error
+     */
+    @SuppressWarnings("WeakerAccess")
+    @Nullable
+    @WorkerThread
+    public static File writeToFile(@NonNull final byte[] data, @NonNull File file) {
+        if (file.exists() && !file.delete()) return null;
+        try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(file))) {
+            stream.write(data);
+            stream.flush();
+            return file;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+
+    /**
+     * Writes the given data to the given file in a background thread, returning on the
+     * original thread (typically the UI thread) once writing is done.
+     * If some error is encountered, the {@link FileCallback} will return null instead of the
+     * original file.
+     *
+     * @param data the data to be written
+     * @param file the file to write into
+     * @param callback a callback
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static void writeToFile(@NonNull final byte[] data, @NonNull final File file, @NonNull final FileCallback callback) {
+        final Handler ui = new Handler();
+        WorkerHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                final File result = writeToFile(data, file);
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onFileReady(result);
+                    }
+                });
+            }
+        });
+    }
+
+    /**
      * Decodes an input byte array and outputs a Bitmap that is ready to be displayed.
      * The difference with {@link android.graphics.BitmapFactory#decodeByteArray(byte[], int, int)}
      * is that this cares about orientation, reading it from the EXIF header.
@@ -65,9 +123,10 @@ public class CameraUtils {
      * @param source a JPEG byte array
      */
     @SuppressWarnings("WeakerAccess")
+    @Nullable
     @WorkerThread
-    public static void decodeBitmap(@NonNull final byte[] source) {
-        decodeBitmap(source, Integer.MAX_VALUE, Integer.MAX_VALUE);
+    public static Bitmap decodeBitmap(@NonNull final byte[] source) {
+        return decodeBitmap(source, Integer.MAX_VALUE, Integer.MAX_VALUE);
     }
 
     /**

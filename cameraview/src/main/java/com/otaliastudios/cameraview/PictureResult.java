@@ -1,6 +1,9 @@
 package com.otaliastudios.cameraview;
 
 import android.location.Location;
+
+import java.io.File;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -93,7 +96,7 @@ public class PictureResult {
      * @param maxHeight the max. height of final bitmap
      * @param callback a callback to be notified of image decoding
      */
-    public void asBitmap(int maxWidth, int maxHeight, @NonNull BitmapCallback callback) {
+    public void toBitmap(int maxWidth, int maxHeight, @NonNull BitmapCallback callback) {
         CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, rotation, callback);
     }
 
@@ -104,9 +107,19 @@ public class PictureResult {
      *
      * @param callback a callback to be notified of image decoding
      */
-    public void asBitmap(@NonNull BitmapCallback callback) {
-        asBitmap(-1, -1, callback);
+    public void toBitmap(@NonNull BitmapCallback callback) {
+        toBitmap(-1, -1, callback);
     }
 
-    // TODO toFile
+    /**
+     * Shorthand for {@link CameraUtils#writeToFile(byte[], File, FileCallback)}.
+     * This writes this picture to file on a background thread and posts the result in the UI
+     * thread using the given callback.
+     *
+     * @param file the file to write into
+     * @param callback a callback
+     */
+    public void toFile(@NonNull File file, @NonNull FileCallback callback) {
+        CameraUtils.writeToFile(getData(), file, callback);
+    }
 }

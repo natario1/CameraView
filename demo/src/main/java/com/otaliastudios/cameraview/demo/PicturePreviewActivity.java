@@ -39,7 +39,7 @@ public class PicturePreviewActivity extends Activity {
         captureLatency.setTitleAndMessage("Approx. latency", delay + " milliseconds");
         captureResolution.setTitleAndMessage("Resolution", result.getSize() + " (" + ratio + ")");
         exifRotation.setTitleAndMessage("EXIF rotation", result.getRotation() + "");
-        result.asBitmap(1000, 1000, new BitmapCallback() {
+        result.toBitmap(1000, 1000, new BitmapCallback() {
             @Override
             public void onBitmapReady(Bitmap bitmap) {
                 imageView.setImageBitmap(bitmap);

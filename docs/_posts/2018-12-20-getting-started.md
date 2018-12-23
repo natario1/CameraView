@@ -73,12 +73,16 @@ camera.addCameraListener(new CameraListener() {
     @Override
     public void onPictureTaken(PictureResult result) {
         // Picture was taken!
-        // If planning to save a file, just get the jpeg array.
-        byte[] jpeg = result.getJpeg();
-        
         // If planning to show a Bitmap, we will take care of
         // EXIF rotation and background threading for you...
-        result.asBitmap(maxWidth, maxHeight, callback);
+        result.toBitmap(maxWidth, maxHeight, callback);
+        
+        // If planning to save a file on a background thread,
+        // just use toFile. Ensure you have permissions.
+        result.toFile(file, callback);
+        
+        // Access the raw data if needed.
+        byte[] data = result.getData();
     }
 });
 camera.takePicture();
@@ -124,7 +128,7 @@ For runtime permissions and Manifest setup, please read the [permissions page]()
 
 If you are not using support libraries and you can't resolve the LifecycleOwner interface,
 make sure you override `onResume`, `onPause` and  `onDestroy` in your activity (`onDestroyView`
-in your fragment), and call `CameraView.open()`, `close()` and `destroy()`.
+in your fragment), and call `open()`, `close()` and `destroy()`.
 
 ```java
 @Override
