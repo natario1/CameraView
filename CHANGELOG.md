@@ -3,8 +3,9 @@
 This is the last release before v2.
 
 - Fixed: crash when using TextureView in API 28, thanks to [@Keyrillanskiy][Keyrillanskiy] ([#297][297])
+- Fixed: restore Frame Processor callbacks after taking videos, thanks to [@stefanJi][stefanJi] ([#344][344])
 - Enhancement: when horizontal, camera now uses the last available orientation, thanks to [@aartikov][aartikov] ([#290][290])
-
+- Changed: we now swallow exceptions during autoFocus that were happening unpredictably on some devices, thanks to [@mahdi-ninja][mahdi-ninja] ([#332][332])
 https://github.com/natario1/CameraView/compare/v1.6.0...v1.6.1
 
 ## v1.6.0
@@ -116,6 +117,8 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [MatFl]: https://github.com/MatFl
 [Namazed]: https://github.com/Namazed
 [Keyrillanskiy]: https://github.com/Keyrillanskiy
+[mahdi-ninja]: https://github.com/mahdi-ninja
+[stefanJi]: https://github.com/stefanJi
 
 [73]: https://github.com/natario1/CameraView/pull/73
 [80]: https://github.com/natario1/CameraView/pull/80
@@ -149,3 +152,5 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [265]: https://github.com/natario1/CameraView/pull/265
 [290]: https://github.com/natario1/CameraView/pull/290
 [297]: https://github.com/natario1/CameraView/pull/297
+[332]: https://github.com/natario1/CameraView/pull/332
+[334]: https://github.com/natario1/CameraView/pull/334
