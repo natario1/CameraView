@@ -32,8 +32,8 @@ public class CameraOptions1Test extends BaseTest {
         assertTrue(o.getSupportedPictureAspectRatios().isEmpty());
         assertTrue(o.getSupportedPictureSizes().isEmpty());
         assertTrue(o.getSupportedWhiteBalance().isEmpty());
-        assertTrue(o.getSupportedFlash().isEmpty());
-        assertTrue(o.getSupportedHdr().isEmpty());
+        assertEquals(1, o.getSupportedFlash().size()); // Flash.OFF is always there
+        assertEquals(1, o.getSupportedHdr().size()); // Hdr.OFF is always there
         assertFalse(o.isAutoFocusSupported());
         assertFalse(o.isExposureCorrectionSupported());
         assertFalse(o.isZoomSupported());
@@ -247,6 +247,7 @@ public class CameraOptions1Test extends BaseTest {
     public void testFlash() {
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedFlashModes()).thenReturn(Arrays.asList(
+                Camera.Parameters.FLASH_MODE_OFF, // Supported
                 Camera.Parameters.FLASH_MODE_AUTO, // Supported
                 Camera.Parameters.FLASH_MODE_TORCH, // Supported
                 Camera.Parameters.FLASH_MODE_RED_EYE // Not supported
@@ -254,9 +255,12 @@ public class CameraOptions1Test extends BaseTest {
 
         CameraOptions o = new CameraOptions(params, false);
         Collection<Flash> f = o.getSupportedControls(Flash.class);
-        assertEquals(f.size(), 2);
+        assertEquals(f.size(), 3);
+        assertTrue(f.contains(Flash.OFF));
         assertTrue(f.contains(Flash.AUTO));
         assertTrue(f.contains(Flash.TORCH));
+
+        assertTrue(o.supports(Flash.OFF));
         assertTrue(o.supports(Flash.AUTO));
         assertTrue(o.supports(Flash.TORCH));
     }
@@ -275,6 +279,7 @@ public class CameraOptions1Test extends BaseTest {
         assertEquals(h.size(), 2);
         assertTrue(h.contains(Hdr.OFF));
         assertTrue(h.contains(Hdr.ON));
+
         assertTrue(o.supports(Hdr.OFF));
         assertTrue(o.supports(Hdr.ON));
     }
