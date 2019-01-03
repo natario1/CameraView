@@ -626,5 +626,19 @@ public class IntegrationTest extends BaseTest {
         assert30Frames(processor);
     }
 
+
+    @Test
+    public void testFrameProcessing_afterVideo() throws Exception {
+        FrameProcessor processor = mock(FrameProcessor.class);
+        camera.addFrameProcessor(processor);
+        camera.setSessionType(SessionType.VIDEO);
+        waitForOpen(true);
+
+        camera.startCapturingVideo(null, 2000);
+        waitForVideoEnd(true);
+
+        assert30Frames(processor);
+    }
+
     //endregion
 }

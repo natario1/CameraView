@@ -684,6 +684,10 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             mCameraCallbacks.dispatchOnVideoTaken(mVideoFile);
             mVideoFile = null;
         }
+        if (mCamera != null) {
+            // This is needed to restore FrameProcessor. No re-allocation needed though.
+            mCamera.setPreviewCallbackWithBuffer(this);
+        }
     }
 
     @WorkerThread
