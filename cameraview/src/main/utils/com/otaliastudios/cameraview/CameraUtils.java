@@ -82,7 +82,7 @@ public class CameraUtils {
     public static void decodeBitmap(final byte[] source, final BitmapCallback callback) {
         decodeBitmap(source, Integer.MAX_VALUE, Integer.MAX_VALUE, callback);
     }
-
+    
     /**
      * Decodes an input byte array and outputs a Bitmap that is ready to be displayed.
      * The difference with {@link android.graphics.BitmapFactory#decodeByteArray(byte[], int, int)}
@@ -98,11 +98,30 @@ public class CameraUtils {
      */
     @SuppressWarnings("WeakerAccess")
     public static void decodeBitmap(final byte[] source, final int maxWidth, final int maxHeight, final BitmapCallback callback) {
+        decodeBitmap(source, maxWidth, maxHeight, new BitmapFactory.Options(), callback);
+    }
+
+    /**
+     * Decodes an input byte array and outputs a Bitmap that is ready to be displayed.
+     * The difference with {@link android.graphics.BitmapFactory#decodeByteArray(byte[], int, int)}
+     * is that this cares about orientation, reading it from the EXIF header.
+     * This is executed in a background thread, and returns the result to the original thread.
+     *
+     * The image is also downscaled taking care of the maxWidth and maxHeight arguments.
+     *
+     * @param source a JPEG byte array
+     * @param maxWidth the max allowed width
+     * @param maxHeight the max allowed height
+     * @param options the options to be passed to decodeByteArray
+     * @param callback a callback to be notified
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static void decodeBitmap(final byte[] source, final int maxWidth, final int maxHeight, final BitmapFactory.Options options, final BitmapCallback callback) {
         final Handler ui = new Handler();
         WorkerHandler.run(new Runnable() {
             @Override
             public void run() {
-                final Bitmap bitmap = decodeBitmap(source, maxWidth, maxHeight);
+                final Bitmap bitmap = decodeBitmap(source, maxWidth, maxHeight, options);
                 ui.post(new Runnable() {
                     @Override
                     public void run() {
@@ -112,7 +131,6 @@ public class CameraUtils {
             }
         });
     }
-
 
     /**
      * Decodes an input byte array and outputs a Bitmap that is ready to be displayed.
@@ -125,10 +143,26 @@ public class CameraUtils {
      * @param maxWidth the max allowed width
      * @param maxHeight the max allowed height
      */
+    static Bitmap decodeBitmap(byte[] source, int maxWidth, int maxHeight) {
+        return decodeBitmap(source, maxWidth, maxHeight, new BitmapFactory.Options());
+    }
+
+    /**
+     * Decodes an input byte array and outputs a Bitmap that is ready to be displayed.
+     * The difference with {@link android.graphics.BitmapFactory#decodeByteArray(byte[], int, int)}
+     * is that this cares about orientation, reading it from the EXIF header.
+     *
+     * The image is also downscaled taking care of the maxWidth and maxHeight arguments.
+     *
+     * @param source a JPEG byte array
+     * @param maxWidth the max allowed width
+     * @param maxHeight the max allowed height
+     * @param options the options to be passed to decodeByteArray
+     */
     // TODO ignores flipping
     @SuppressWarnings({"SuspiciousNameCombination", "WeakerAccess"})
     @WorkerThread
-    public static Bitmap decodeBitmap(byte[] source, int maxWidth, int maxHeight) {
+    public static Bitmap decodeBitmap(byte[] source, int maxWidth, int maxHeight, BitmapFactory.Options options) {
         if (maxWidth <= 0) maxWidth = Integer.MAX_VALUE;
         if (maxHeight <= 0) maxHeight = Integer.MAX_VALUE;
         int orientation;
@@ -176,7 +210,6 @@ public class CameraUtils {
 
         Bitmap bitmap;
         if (maxWidth < Integer.MAX_VALUE || maxHeight < Integer.MAX_VALUE) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
             BitmapFactory.decodeByteArray(source, 0, source.length, options);
 
