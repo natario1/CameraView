@@ -1,6 +1,14 @@
 [![Build Status](https://travis-ci.org/natario1/CameraView.svg?branch=master)](https://travis-ci.org/natario1/CameraView)
 [![Code Coverage](https://codecov.io/gh/natario1/CameraView/branch/master/graph/badge.svg)](https://codecov.io/gh/natario1/CameraView)
 
+*This is a new major version (v2) of the library. It includes breaking changes, signature changes and new functionality.
+Keep reading if interested, or head to the legacy-v1 branch to read v1 documentation and info.*
+
+*The v2 version is still in beta and its API surface might still change. Functions might be renamed,
+options might be removed (though they probably won't), signatures might change. If this is a problem,
+please wait for the final release and keep using v1*.
+
+
 <p align="center">
   <img src="docs/static/icon.png" vspace="10" width="250" height="250">
 </p>
