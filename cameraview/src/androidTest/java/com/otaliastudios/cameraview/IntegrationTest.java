@@ -39,7 +39,7 @@ import static org.mockito.Mockito.mock;
  */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
-@Ignore
+// @Ignore
 public class IntegrationTest extends BaseTest {
 
     @Rule
@@ -401,7 +401,7 @@ public class IntegrationTest extends BaseTest {
         // as documented. This works locally though.
         camera.setMode(Mode.VIDEO);
         waitForOpen(true);
-        camera.takeVideo(null, 4000);
+        camera.takeVideo(new File(context().getFilesDir(), "video.mp4"), 4000);
         waitForVideoEnd(true);
     }
 
@@ -589,10 +589,9 @@ public class IntegrationTest extends BaseTest {
     public void testFrameProcessing_afterVideo() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
-        camera.setSessionType(SessionType.VIDEO);
+        camera.setMode(Mode.VIDEO);
         waitForOpen(true);
-
-        camera.startCapturingVideo(null, 2000);
+        camera.takeVideo(new File(context().getFilesDir(), "video.mp4"), 4000);
         waitForVideoEnd(true);
 
         assert30Frames(processor);

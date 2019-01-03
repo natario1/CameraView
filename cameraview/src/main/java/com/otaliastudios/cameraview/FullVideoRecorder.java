@@ -16,9 +16,14 @@ class FullVideoRecorder extends VideoRecorder {
 
     private MediaRecorder mMediaRecorder;
     private CamcorderProfile mProfile;
+    private Camera1 mController;
+    private Camera mCamera;
 
-    FullVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull Camera camera, int cameraId) {
+    FullVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener,
+                      @NonNull Camera1 controller, @NonNull Camera camera, int cameraId) {
         super(stub, listener);
+        mCamera = camera;
+        mController = controller;
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setCamera(camera);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
@@ -115,9 +120,15 @@ class FullVideoRecorder extends VideoRecorder {
                 LOG.w("stop:", "Error while closing media recorder. Swallowing", e);
             }
             mMediaRecorder.release();
+            if (mController != null) {
+                // Restore frame processing.
+                mCamera.setPreviewCallbackWithBuffer(mController);
+            }
         }
         mProfile = null;
         mMediaRecorder = null;
+        mCamera = null;
+        mController = null;
         dispatchResult();
     }
 }

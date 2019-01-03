@@ -661,7 +661,8 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                     onVideoResult(null);
                     return;
                 }
-                mVideoRecorder = new FullVideoRecorder(videoResult, Camera1.this, mCamera, mCameraId);
+                mVideoRecorder = new FullVideoRecorder(videoResult, Camera1.this,
+                        Camera1.this, mCamera, mCameraId);
                 mVideoRecorder.start();
             }
         });
@@ -761,45 +762,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 }
             }
         });
-    }
-
-    @Override
-    public void onVideoResult(@Nullable VideoResult result) {
-        if (result != null) {
-            mCameraCallbacks.dispatchOnVideoTaken(result);
-        } else {
-            // Something went wrong, lock the camera again.
-            mCamera.lock();
-        }
-    }
-
-    @WorkerThread
-    private void initMediaRecorder() {
-        mMediaRecorder = new MediaRecorder();
-        mCamera.unlock();
-        mMediaRecorder.setCamera(mCamera);
-
-        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-        if (mAudio == Audio.ON) {
-            // Must be called before setOutputFormat.
-            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
-        }
-        CamcorderProfile profile = getCamcorderProfile();
-        mMediaRecorder.setOutputFormat(profile.fileFormat);
-        mMediaRecorder.setVideoFrameRate(profile.videoFrameRate);
-        mMediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
-        if (mVideoCodec == VideoCodec.DEFAULT) {
-            mMediaRecorder.setVideoEncoder(profile.videoCodec);
-        } else {
-            mMediaRecorder.setVideoEncoder(mMapper.map(mVideoCodec));
-        }
-        mMediaRecorder.setVideoEncodingBitRate(profile.videoBitRate);
-        if (mAudio == Audio.ON) {
-            mMediaRecorder.setAudioChannels(profile.audioChannels);
-            mMediaRecorder.setAudioSamplingRate(profile.audioSampleRate);
-            mMediaRecorder.setAudioEncoder(profile.audioCodec);
-            mMediaRecorder.setAudioEncodingBitRate(profile.audioBitRate);
-        }
     }
 
     // -----------------
