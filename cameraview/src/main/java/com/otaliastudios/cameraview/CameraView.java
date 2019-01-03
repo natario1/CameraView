@@ -1330,7 +1330,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param durationMillis recording max duration
      *
      */
-    public void takeVideo(@Nullable File file, int durationMillis) {
+    public void takeVideo(@NonNull File file, int durationMillis) {
         final int old = getVideoMaxDuration();
         addCameraListener(new CameraListener() {
             @Override
@@ -1365,7 +1365,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param durationMillis recording max duration
      *
      */
-    public void takeVideoSnapshot(@Nullable File file, int durationMillis) {
+    public void takeVideoSnapshot(@NonNull File file, int durationMillis) {
         final int old = getVideoMaxDuration();
         addCameraListener(new CameraListener() {
             @Override
