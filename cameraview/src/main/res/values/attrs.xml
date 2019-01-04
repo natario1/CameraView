@@ -120,6 +120,17 @@
             <enum name="h264" value="2" />
         </attr>
 
+        <attr name="cameraVideoBitRate" format="integer" />
+        <attr name="cameraAudioBitRate" format="integer" />
+        <attr name="cameraAudioSampleRate" format="integer" />
+
+        <attr name="cameraAudioChannels" format="enum">
+            <enum name="deviceDefault" value="0" />
+            <enum name="one_channel" value="1" />
+            <enum name="two_channels" value="2" />
+        </attr>
+
+
         <!-- deprecated attr name="cameraZoomMode" format="enum">
             <enum name="off" value="0" />
             <enum name="pinch" value="1" />

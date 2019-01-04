@@ -116,6 +116,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         VideoCodec codec = VideoCodec.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoCodec, VideoCodec.DEFAULT.value()));
         long videoMaxSize = (long) a.getFloat(R.styleable.CameraView_cameraVideoMaxSize, 0);
         int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
+        int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
+        int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
+        int audioSampleRate = a.getInteger(R.styleable.CameraView_cameraAudioSampleRate, 0);
+        int audioChannels = a.getInteger(R.styleable.CameraView_cameraAudioChannels, 0);
 
         // Size selectors
         List<SizeSelector> constraints = new ArrayList<>(3);
@@ -191,6 +195,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoCodec(codec);
         setVideoMaxSize(videoMaxSize);
         setVideoMaxDuration(videoMaxDuration);
+        setVideoBitRate(videoBitRate);
+        setAudioBitRate(audioBitRate);
+        setAudioSampleRate(audioSampleRate);
+        setAudioChannels(audioChannels);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -1478,6 +1486,68 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public boolean isCapturingVideo(){
         return mCameraController.isCapturingVideo();
+    }
+
+    /**
+     * Returns custom video bitrate, or 0 if no limit was set.
+     *
+     * @see #setVideoBitRate(int)
+     * @return custom video bitrate
+     */
+    public int getVideoBitRate() {
+        return mCameraController.getVideoBitRate();
+    }
+
+
+    /**
+     * Returns custom audio bitrate, or 0 if no limit was set.
+     *
+     * @see #setAudioBitRate(int)
+     * @return audio bit rate
+     */
+    public int getAudioBitRate() {
+        return mCameraController.getVideoBitRate();
+    }
+
+    /**
+     * Returns custom audio bitrate, or 0 if no limit was set.
+     *
+     * @see #setAudioSampleRate(int)
+     * @return audio bit rate
+     */
+    public int getAudioSampleRate() {
+        return mCameraController.getAudioSampleRate();
+    }
+
+    /**
+     * Sets custom video bitrate for recording. Use 0 or negatives to disable.
+     *
+     * @param videoBitRate The maximum video bitrate
+     */
+    public void setVideoBitRate(int videoBitRate) {
+        mCameraController.setVideoBitRate(videoBitRate);
+    }
+
+    /**
+     * Sets custom audio bitrate for recording. Use 0 or negatives to disable.
+     *
+     * @param audioBitRate The maximum video bitrate
+     */
+    public void setAudioBitRate(int audioBitRate) {
+        mCameraController.setAudioBitRate(audioBitRate);
+    }
+
+    /**
+     * Sets custom audio sample rate for recording. Use 0 or negatives to disable.
+     *
+     * @param audioSampleRate The maximum audio sample rate
+     */
+    public void setAudioSampleRate(int audioSampleRate) {
+        mCameraController.setAudioSampleRate(audioSampleRate);
+    }
+
+    public void setAudioChannels(int audioChannels){
+        mCameraController.setAudioChannels(audioChannels);
     }
 
     //endregion

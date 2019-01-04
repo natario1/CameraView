@@ -2,32 +2,35 @@
 <android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root"
     android:background="#FF444444"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <!-- Camera -->
-    <com.otaliastudios.cameraview.CameraView
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <com.otaliastudios.cameraview.CameraView xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/camera"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:keepScreenOn="true"
-        app:cameraPlaySounds="true"
-        app:cameraGrid="off"
+        app:cameraAudio="on"
+        app:cameraAudioBitRate="12200"
+        app:cameraAudioChannels="deviceDefault"
         app:cameraCropOutput="false"
         app:cameraFacing="back"
         app:cameraFlash="off"
-        app:cameraAudio="on"
-        app:cameraGestureTap="focusWithMarker"
         app:cameraGestureLongTap="none"
         app:cameraGesturePinch="zoom"
         app:cameraGestureScrollHorizontal="exposureCorrection"
         app:cameraGestureScrollVertical="none"
+        app:cameraGestureTap="focusWithMarker"
+        app:cameraGrid="off"
         app:cameraJpegQuality="100"
-        app:cameraSessionType="picture" />
+        app:cameraPlaySounds="true"
+        app:cameraSessionType="picture"
+        app:cameraVideoBitRate="128000" />
 
     <!-- Controls -->
     <LinearLayout
