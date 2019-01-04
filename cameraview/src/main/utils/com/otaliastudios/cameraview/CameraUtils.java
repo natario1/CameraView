@@ -121,6 +121,7 @@ public class CameraUtils {
      * is that this cares about orientation, reading it from the EXIF header.
      *
      * @param source a JPEG byte array
+     * @return decoded bitmap or null if error is encountered
      */
     @SuppressWarnings("WeakerAccess")
     @Nullable
@@ -223,6 +224,7 @@ public class CameraUtils {
      * @param maxWidth the max allowed width
      * @param maxHeight the max allowed height
      * @param options the options to be passed to decodeByteArray
+     * @return decoded bitmap or null if error is encountered
      */
     @SuppressWarnings({"SuspiciousNameCombination", "WeakerAccess"})
     @Nullable

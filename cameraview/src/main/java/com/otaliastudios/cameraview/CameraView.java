@@ -1068,7 +1068,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     /**
      * <strong>ADVANCED FEATURE</strong> - sets a size selector for the preview stream.
      * The {@link SizeSelector} will be invoked with the list of available sizes, and the first
-     * acceptable size will be accepted and passed to the internal engine & surface.
+     * acceptable size will be accepted and passed to the internal engine and surface.
      *
      * This is typically NOT NEEDED. The default size selector is already smart enough to respect
      * the picture/video output aspect ratio, and be bigger than the surface so that there is no
