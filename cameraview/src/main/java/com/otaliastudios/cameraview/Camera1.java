@@ -695,7 +695,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         if (mAudio == Audio.ON) {
             // Must be called before setOutputFormat.
-            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         }
         CamcorderProfile profile = getCamcorderProfile();
         mMediaRecorder.setOutputFormat(profile.fileFormat);
