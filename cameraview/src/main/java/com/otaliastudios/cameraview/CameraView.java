@@ -117,6 +117,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         long videoMaxSize = (long) a.getFloat(R.styleable.CameraView_cameraVideoMaxSize, 0);
         int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
         int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
+        int videoFrameRate = a.getInteger(R.styleable.CameraView_cameraVideoFrameRate, 0);
         int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
         int audioSampleRate = a.getInteger(R.styleable.CameraView_cameraAudioSampleRate, 0);
         int audioChannels = a.getInteger(R.styleable.CameraView_cameraAudioChannels, 0);
@@ -196,6 +197,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoMaxSize(videoMaxSize);
         setVideoMaxDuration(videoMaxDuration);
         setVideoBitRate(videoBitRate);
+        setVideoFrameRate(videoFrameRate);
         setAudioBitRate(audioBitRate);
         setAudioSampleRate(audioSampleRate);
         setAudioChannels(audioChannels);
@@ -1489,6 +1491,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
+     * Returns custom video frame rate, or 0 if no limit was set.
+     *
+     * @see #setVideoFrameRate(int)
+     * @return custom video frame rate
+     */
+    public int getVideoFrameRate() {
+        return mCameraController.getVideoFrameRate();
+    }
+
+    /**
      * Returns custom video bitrate, or 0 if no limit was set.
      *
      * @see #setVideoBitRate(int)
@@ -1526,6 +1538,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setVideoBitRate(int videoBitRate) {
         mCameraController.setVideoBitRate(videoBitRate);
+    }
+
+    /**
+     * Sets custom video frame rate for recording. Use 0 or negatives to disable.
+     *
+     * @param videoFrameRate The maximum video frame rate
+     */
+    public void setVideoFrameRate(int videoFrameRate) {
+        mCameraController.setVideoFrameRate(videoFrameRate);
     }
 
     /**

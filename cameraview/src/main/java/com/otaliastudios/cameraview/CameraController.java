@@ -62,6 +62,7 @@ abstract class CameraController implements
     protected Size mPreviewSize;
     protected int mPreviewFormat;
     protected int mVideoBitRate;
+    protected int mVideoFrameRate;
     protected int mAudioBitRate;
     protected int mAudioSampleRate;
     protected int mAudioChannels;
@@ -298,6 +299,10 @@ abstract class CameraController implements
         mVideoBitRate = videoBitRate;
     }
 
+    final void setVideoFrameRate(int videoBitRate) {
+        mVideoFrameRate = videoBitRate;
+    }
+
     final void setAudioBitRate(int audioBitRate) {
         mAudioBitRate = audioBitRate;
     }
@@ -440,6 +445,10 @@ abstract class CameraController implements
 
     final int getVideoBitRate() {
         return mVideoBitRate;
+    }
+
+    final int getVideoFrameRate() {
+        return mVideoFrameRate;
     }
 
     final int getAudioBitRate() {

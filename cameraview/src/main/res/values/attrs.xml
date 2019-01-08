@@ -121,6 +121,7 @@
         </attr>
 
         <attr name="cameraVideoBitRate" format="integer" />
+        <attr name="cameraVideoFrameRate" format="integer" />
         <attr name="cameraAudioBitRate" format="integer" />
         <attr name="cameraAudioSampleRate" format="integer" />
 
