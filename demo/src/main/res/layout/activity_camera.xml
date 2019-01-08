@@ -18,6 +18,7 @@
         app:cameraAudio="on"
         app:cameraAudioBitRate="12200"
         app:cameraAudioChannels="deviceDefault"
+        app:cameraAudioSampleRate="11025"
         app:cameraCropOutput="false"
         app:cameraFacing="back"
         app:cameraFlash="off"
@@ -30,7 +31,8 @@
         app:cameraJpegQuality="100"
         app:cameraPlaySounds="true"
         app:cameraSessionType="video"
-        app:cameraVideoBitRate="128000" />
+        app:cameraVideoBitRate="128000"
+        app:cameraVideoFrameRate="25" />
 
     <!-- Controls -->
     <LinearLayout
