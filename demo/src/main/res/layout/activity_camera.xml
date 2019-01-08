@@ -29,7 +29,7 @@
         app:cameraGrid="off"
         app:cameraJpegQuality="100"
         app:cameraPlaySounds="true"
-        app:cameraSessionType="picture"
+        app:cameraSessionType="video"
         app:cameraVideoBitRate="128000" />
 
     <!-- Controls -->

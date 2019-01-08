@@ -303,7 +303,7 @@ abstract class CameraController implements
     }
 
     final void setAudioSampleRate(int audioSampleRate) {
-        mAudioBitRate = audioSampleRate;
+        mAudioSampleRate = audioSampleRate;
     }
 
     final void setAudioChannels(int audioChannels){
