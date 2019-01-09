@@ -62,7 +62,7 @@ public class CameraViewCallbacksTest extends BaseTest {
                     }
 
                     @Override
-                    protected boolean checkPermissions(@NonNull Mode mode, @NonNull Audio audio) {
+                    protected boolean checkPermissions(@NonNull Audio audio) {
                         return true;
                     }
                 };
