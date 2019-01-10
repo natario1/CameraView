@@ -523,12 +523,17 @@ abstract class CameraController implements
     @NonNull
     @SuppressWarnings("WeakerAccess")
     protected final Size computeCaptureSize() {
+        return computeCaptureSize(mMode);
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected final Size computeCaptureSize(Mode mode) {
         // We want to pass stuff into the REF_VIEW reference, not the sensor one.
         // This is already managed by CameraOptions, so we just flip again at the end.
         boolean flip = flip(REF_SENSOR, REF_VIEW);
         SizeSelector selector;
         Collection<Size> sizes;
-        if (mMode == Mode.PICTURE) {
+        if (mode == Mode.PICTURE) {
             selector = mPictureSizeSelector;
             sizes = mCameraOptions.getSupportedPictureSizes();
         } else {
@@ -538,7 +543,7 @@ abstract class CameraController implements
         selector = SizeSelectors.or(selector, SizeSelectors.biggest());
         List<Size> list = new ArrayList<>(sizes);
         Size result = selector.select(list).get(0);
-        LOG.i("computeCaptureSize:", "result:", result, "flip:", flip);
+        LOG.i("computeCaptureSize:", "result:", result, "flip:", flip, "mode:", mode);
         if (flip) result = result.flip(); // Go back to REF_SENSOR
         return result;
     }
