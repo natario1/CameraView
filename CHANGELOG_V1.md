@@ -1,3 +1,5 @@
+For v2 changelogs, please take a look at the [website](https://natario1.github.io/CameraView/about/changelog.html).
+
 ## v1.6.1
 
 This is the last release before v2.
