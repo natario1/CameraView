@@ -603,7 +603,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (!isEnabled()) return;
         if (mCameraPreview != null) mCameraPreview.onResume();
 
-        if (checkPermissions(getMode(), getAudio())) {
+        if (checkPermissions(getAudio())) {
             // Update display orientation for current CameraController
             mOrientationHelper.enable(getContext());
             mCameraController.setDisplayOffset(mOrientationHelper.getDisplayOffset());
@@ -613,15 +613,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Checks that we have appropriate permissions for this session type.
-     * Throws if session = audio and manifest did not add the microphone permissions.     
-     * @param mode the sessionType to be checked
+     * Checks that we have appropriate permissions.
+     * This means checking that we have audio permissions if audio = Audio.ON.
      * @param audio the audio setting to be checked
      * @return true if we can go on, false otherwise.
      */
+    @SuppressWarnings("ConstantConditions")
     @SuppressLint("NewApi")
-    protected boolean checkPermissions(@NonNull Mode mode, @NonNull Audio audio) {
-        checkPermissionsManifestOrThrow(mode, audio);
+    protected boolean checkPermissions(@NonNull Audio audio) {
+        checkPermissionsManifestOrThrow(audio);
         // Manifest is OK at this point. Let's check runtime permissions.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
 
@@ -641,12 +641,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * If mSessionType == SESSION_TYPE_VIDEO we will ask for RECORD_AUDIO permission.
+     * If audio is on we will ask for RECORD_AUDIO permission.
      * If the developer did not add this to its manifest, throw and fire warnings.
-     * (Hoping this is not caught elsewhere... we should test).
      */
-    private void checkPermissionsManifestOrThrow(@NonNull Mode mode, @NonNull Audio audio) {
-        if (mode == Mode.VIDEO && audio == Audio.ON) {
+    private void checkPermissionsManifestOrThrow(@NonNull Audio audio) {
+        if (audio == Audio.ON) {
             try {
                 PackageManager manager = getContext().getPackageManager();
                 PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
@@ -655,7 +654,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                         return;
                     }
                 }
-                LOG.e("Permission error:", "When the session type is set to video,",
+                LOG.e("Permission error:", "When audio is enabled (Audio.ON),",
                         "the RECORD_AUDIO permission should be added to the app manifest file.");
                 throw new IllegalStateException(CameraLogger.lastMessage);
             } catch (PackageManager.NameNotFoundException e) {
@@ -1027,7 +1026,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // Check did took place, or will happen on start().
             mCameraController.setAudio(audio);
 
-        } else if (checkPermissions(getMode(), audio)) {
+        } else if (checkPermissions(audio)) {
             // Camera is running. Pass.
             mCameraController.setAudio(audio);
 
@@ -1096,22 +1095,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param mode desired session type.
      */
     public void setMode(@NonNull Mode mode) {
-
-        if (mode == getMode() || isClosed()) {
-            // Check did took place, or will happen on start().
-            mCameraController.setMode(mode);
-
-        } else if (checkPermissions(mode, getAudio())) {
-            // Camera is running. CameraImpl setMode will do the trick.
-            mCameraController.setMode(mode);
-
-        } else {
-            // This means that the audio permission is being asked.
-            // Stop the camera so it can be restarted by the developer onPermissionResult.
-            // Developer must also set the session type again...
-            // Not ideal but good for now.
-            close();
-        }
+        mCameraController.setMode(mode);
     }
 
 

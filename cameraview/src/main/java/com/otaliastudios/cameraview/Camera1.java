@@ -173,7 +173,16 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         Camera.Parameters params = mCamera.getParameters();
         mPreviewFormat = params.getPreviewFormat();
         params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight()); // <- not allowed during preview
-        params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
+        if (mMode == Mode.PICTURE) {
+            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
+        } else {
+            // mCaptureSize in this case is a video size. The available video sizes are not necessarily
+            // a subset of the picture sizes, so we can't use the mCaptureSize value: it might crash.
+            // However, the setPictureSize() passed here is useless : we don't allow HQ pictures in video mode.
+            // While this might be lifted in the future, for now, just use a picture capture size.
+            Size pictureSize = computeCaptureSize(Mode.PICTURE);
+            params.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
+        }
         mCamera.setParameters(params);
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left

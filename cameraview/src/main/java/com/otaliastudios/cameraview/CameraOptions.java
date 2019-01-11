@@ -87,7 +87,7 @@ public class CameraOptions {
         exposureCorrectionSupported = params.getMinExposureCompensation() != 0
                 || params.getMaxExposureCompensation() != 0;
 
-        // Sizes
+        // Picture Sizes
         List<Camera.Size> sizes = params.getSupportedPictureSizes();
         for (Camera.Size size : sizes) {
             int width = flipSizes ? size.height : size.width;
@@ -95,9 +95,20 @@ public class CameraOptions {
             supportedPictureSizes.add(new Size(width, height));
             supportedPictureAspectRatio.add(AspectRatio.of(width, height));
         }
+
+        // Video Sizes
         List<Camera.Size> vsizes = params.getSupportedVideoSizes();
         if (vsizes != null) {
             for (Camera.Size size : vsizes) {
+                int width = flipSizes ? size.height : size.width;
+                int height = flipSizes ? size.width : size.height;
+                supportedVideoSizes.add(new Size(width, height));
+                supportedVideoAspectRatio.add(AspectRatio.of(width, height));
+            }
+        } else {
+            // StackOverflow threads seems to agree that if getSupportedVideoSizes is null, previews can be used.
+            List<Camera.Size> fallback = params.getSupportedPreviewSizes();
+            for (Camera.Size size : fallback) {
                 int width = flipSizes ? size.height : size.width;
                 int height = flipSizes ? size.width : size.height;
                 supportedVideoSizes.add(new Size(width, height));

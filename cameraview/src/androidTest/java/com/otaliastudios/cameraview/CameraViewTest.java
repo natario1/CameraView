@@ -50,7 +50,7 @@ public class CameraViewTest extends BaseTest {
                     }
 
                     @Override
-                    protected boolean checkPermissions(@NonNull Mode mode, @NonNull Audio audio) {
+                    protected boolean checkPermissions(@NonNull Audio audio) {
                         return hasPermissions;
                     }
                 };
