@@ -554,6 +554,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 result.location = mLocation;
                 result.rotation = offset(REF_SENSOR, REF_OUTPUT);
                 result.size = getPictureSize(REF_OUTPUT);
+                result.facing = mFacing;
                 mPictureRecorder = new FullPictureRecorder(result, Camera1.this, mCamera);
                 mPictureRecorder.take();
             }
@@ -573,6 +574,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 PictureResult result = new PictureResult();
                 result.location = mLocation;
                 result.isSnapshot = true;
+                result.facing = mFacing;
                 result.size = getPreviewSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
                 result.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
                 AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
@@ -653,6 +655,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.isSnapshot = false;
                 videoResult.codec = mVideoCodec;
                 videoResult.location = mLocation;
+                videoResult.facing = mFacing;
                 videoResult.rotation = offset(REF_SENSOR, REF_OUTPUT);
                 videoResult.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
                 videoResult.audio = mAudio;
@@ -697,6 +700,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 videoResult.isSnapshot = true;
                 videoResult.codec = mVideoCodec;
                 videoResult.location = mLocation;
+                videoResult.facing = mFacing;
                 videoResult.videoBitRate = mVideoBitRate;
                 videoResult.audioBitRate = mAudioBitRate;
                 videoResult.audio = mAudio;

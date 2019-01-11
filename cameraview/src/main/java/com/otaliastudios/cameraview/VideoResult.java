@@ -25,6 +25,7 @@ public class VideoResult {
     int rotation;
     Size size;
     File file;
+    Facing facing;
     VideoCodec codec;
     Audio audio;
     long maxSize;
@@ -85,6 +86,16 @@ public class VideoResult {
     @NonNull
     public File getFile() {
         return file;
+    }
+
+    /**
+     * Returns the facing value with which this video was recorded.
+     *
+     * @return the Facing of this video
+     */
+    @NonNull
+    public Facing getFacing() {
+        return facing;
     }
 
     /**

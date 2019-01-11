@@ -21,6 +21,7 @@ public class PictureResult {
     Location location;
     int rotation;
     Size size;
+    Facing facing;
     byte[] data;
     int format;
 
@@ -65,6 +66,16 @@ public class PictureResult {
     @NonNull
     public Size getSize() {
         return size;
+    }
+
+    /**
+     * Returns the facing value with which this video was recorded.
+     *
+     * @return the Facing of this video
+     */
+    @NonNull
+    public Facing getFacing() {
+        return facing;
     }
 
     /**
