@@ -36,6 +36,7 @@ public class VideoResultTest extends BaseTest {
         int videoBitRate = 300000;
         int audioBitRate = 30000;
         Audio audio = Audio.ON;
+        Facing facing = Facing.FRONT;
 
         result.file = file;
         result.rotation = rotation;
@@ -50,6 +51,7 @@ public class VideoResultTest extends BaseTest {
         result.videoBitRate = videoBitRate;
         result.audioBitRate = audioBitRate;
         result.audio = audio;
+        result.facing = facing;
 
         assertEquals(result.getFile(), file);
         assertEquals(result.getRotation(), rotation);
@@ -64,5 +66,7 @@ public class VideoResultTest extends BaseTest {
         assertEquals(result.getVideoBitRate(), videoBitRate);
         assertEquals(result.getAudioBitRate(), audioBitRate);
         assertEquals(result.getAudio(), audio);
+        assertEquals(result.getFacing(), facing);
+
     }
 }

@@ -27,12 +27,14 @@ public class PictureResultTest extends BaseTest {
         byte[] jpeg = new byte[]{2, 4, 1, 5, 2};
         Location location = Mockito.mock(Location.class);
         boolean isSnapshot = true;
+        Facing facing = Facing.FRONT;
 
         result. format = format;
         result.rotation = rotation;
         result.size = size;
         result.data = jpeg;
         result.location = location;
+        result.facing = facing;
         //noinspection ConstantConditions
         result.isSnapshot = isSnapshot;
 
@@ -43,5 +45,6 @@ public class PictureResultTest extends BaseTest {
         assertEquals(result.getLocation(), location);
         //noinspection ConstantConditions
         assertEquals(result.isSnapshot(), isSnapshot);
+        assertEquals(result.getFacing(), facing);
     }
 }
