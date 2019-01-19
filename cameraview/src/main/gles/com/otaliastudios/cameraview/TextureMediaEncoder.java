@@ -17,10 +17,12 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
 
     static class Frame {
         float[] transform;
+        float[] overlayTransform;
         long timestamp;
     }
     static class Config extends VideoMediaEncoder.Config {
         int textureId;
+        int overlayTextureId;
         float scaleX;
         float scaleY;
         boolean scaleFlipped;
@@ -29,11 +31,17 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
 
         Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
                int textureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
+            this(width, height, bitRate, frameRate, rotation, mimeType, textureId, 0, scaleX, scaleY, scaleFlipped, eglContext);
+        }
+
+        Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
+               int textureId, int overlayTextureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
             // We rotate the texture using transformRotation. Pass rotation=0 to super so that
             // no rotation metadata is written into the output file.
             super(width, height, bitRate, frameRate, 0, mimeType);
             this.transformRotation = rotation;
             this.textureId = textureId;
+            this.overlayTextureId = overlayTextureId;
             this.scaleX = scaleX;
             this.scaleY = scaleY;
             this.scaleFlipped = scaleFlipped;
@@ -57,7 +65,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent(); // drawing will happen on the InputWindowSurface, which
         // is backed by mVideoEncoder.getInputSurface()
-        mViewport = new EglViewport();
+        mViewport = new EglViewport(mConfig.overlayTextureId != 0);
     }
 
     @EncoderThread
@@ -126,7 +134,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
             drain(false);
             // Future note: passing scale values to the viewport? They are scaleX and scaleY,
             // but flipped based on the mConfig.scaleFlipped boolean.
-            mViewport.drawFrame(mConfig.textureId, transform);
+            mViewport.drawFrame(mConfig.textureId, mConfig.overlayTextureId, transform, frame.overlayTransform);
             mWindow.setPresentationTime(timestamp);
             mWindow.swapBuffers();
         }

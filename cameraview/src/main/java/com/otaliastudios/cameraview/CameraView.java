@@ -24,13 +24,17 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
+import android.view.Surface;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -249,7 +253,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
             case GL_SURFACE: default: {
                 mPreview = Preview.GL_SURFACE;
-                return new GlCameraPreview(context, container, null);
+                return new GlCameraPreview(context, container, null, true);
             }
         }
     }
@@ -259,6 +263,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraController.setPreview(mCameraPreview);
     }
 
+    private OverlayLayout mPreviewOverlayLayout;
+    private OverlayLayout mNoPreviewOverlayLayout;
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -266,6 +273,40 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // isHardwareAccelerated will return the real value only after we are
             // attached. That's why we instantiate the preview here.
             instantiatePreview();
+
+            mPreviewOverlayLayout = findViewById(R.id.preview_overlay_layout);
+            mNoPreviewOverlayLayout = findViewById(R.id.no_preview_overlay_layout);
+            mNoPreviewOverlayLayout.setDrawOnScreen(false);
+
+            ((GlCameraPreview) mCameraPreview).addOverlayInputSurfaceListener(new GlCameraPreview.OverlayInputSurfaceListener() {
+                @Override
+                public void onSurface(@NonNull Surface surface) {
+                    mPreviewOverlayLayout.setOutputSurface(surface);
+                    mNoPreviewOverlayLayout.setOutputSurface(surface);
+                }
+            });
+
+            LinkedList<Integer> indexesOverlayViews = new LinkedList<>();
+            for (int i = 0; i < getChildCount(); i++) {
+                View view = getChildAt(i);
+                if (view.getLayoutParams() instanceof OverlayLayoutParams &&
+                        ((OverlayLayoutParams) view.getLayoutParams()).isOverlay) {
+                    indexesOverlayViews.add(i);
+                }
+            }
+            for (Integer i : indexesOverlayViews) {
+                if (i != null && getChildAt(i) != null) {
+                    View view = getChildAt(i);
+
+                    removeViewAt(i);
+                    if (((OverlayLayoutParams) view.getLayoutParams()).showInPreview) {
+                        mPreviewOverlayLayout.addView(view);
+                    } else {
+                        mNoPreviewOverlayLayout.addView(view);
+                    }
+
+                }
+            }
         }
         if (!isInEditMode()) {
             mOrientationHelper.enable(getContext());
@@ -278,6 +319,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mOrientationHelper.disable();
         }
         super.onDetachedFromWindow();
+    }
+
+    @Override
+    protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
+        return p instanceof OverlayLayoutParams;
+    }
+
+    @Override
+    protected OverlayLayoutParams generateDefaultLayoutParams() {
+        return new OverlayLayoutParams(OverlayLayoutParams.WRAP_CONTENT, OverlayLayoutParams.WRAP_CONTENT);
+    }
+
+    @Override
+    public OverlayLayoutParams generateLayoutParams(AttributeSet attributeSet) {
+        return new OverlayLayoutParams(this.getContext(), attributeSet);
+    }
+
+    @Override
+    protected OverlayLayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+        return new OverlayLayoutParams(p);
     }
 
     //endregion
@@ -1821,6 +1882,71 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     }
                 }
             });
+        }
+    }
+
+    public static class OverlayLayoutParams extends FrameLayout.LayoutParams {
+
+        private boolean isOverlay = false;
+        private boolean showInPreview = false;
+        private boolean showInPicture = false;
+        private boolean showInVideo = false;
+
+        public OverlayLayoutParams(Context context, AttributeSet attributeSet) {
+            super(context, attributeSet);
+            this.readStyleParameters(context, attributeSet);
+        }
+
+        public OverlayLayoutParams(int width, int height) {
+            super(width, height);
+        }
+
+        public OverlayLayoutParams(ViewGroup.LayoutParams layoutParams) {
+            super(layoutParams);
+        }
+
+        private void readStyleParameters(Context context, AttributeSet attributeSet) {
+            TypedArray a = context.obtainStyledAttributes(attributeSet, R.styleable.CameraView_Layout);
+            try {
+                this.isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_overlay, false);
+                this.showInPreview = a.getBoolean(R.styleable.CameraView_Layout_layout_showInPreview, false);
+                this.showInPicture = a.getBoolean(R.styleable.CameraView_Layout_layout_showInPicture, false);
+                this.showInVideo = a.getBoolean(R.styleable.CameraView_Layout_layout_showInVideo, false);
+            } finally {
+                a.recycle();
+            }
+        }
+
+        public boolean isOverlay() {
+            return isOverlay;
+        }
+
+        public void setOverlay(boolean overlay) {
+            isOverlay = overlay;
+        }
+
+        public boolean isShowInPreview() {
+            return showInPreview;
+        }
+
+        public void setShowInPreview(boolean showInPreview) {
+            this.showInPreview = showInPreview;
+        }
+
+        public boolean isShowInPicture() {
+            return showInPicture;
+        }
+
+        public void setShowInPicture(boolean showInPicture) {
+            this.showInPicture = showInPicture;
+        }
+
+        public boolean isShowInVideo() {
+            return showInVideo;
+        }
+
+        public void setShowInVideo(boolean showInVideo) {
+            this.showInVideo = showInVideo;
         }
     }
 

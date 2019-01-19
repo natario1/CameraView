@@ -10,6 +10,8 @@ import android.hardware.Camera;
 import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import java.io.ByteArrayOutputStream;
@@ -54,23 +56,38 @@ class SnapshotPictureRecorder extends PictureRecorder {
         preview.addRendererFrameCallback(new GlCameraPreview.RendererFrameCallback() {
 
             int mTextureId;
+            int mOverlayTextureId = 0;
             SurfaceTexture mSurfaceTexture;
+            SurfaceTexture mOverlaySurfaceTexture;
             float[] mTransform;
+            float[] mOverlayTransform;
 
             @RendererThread
-            public void onRendererTextureCreated(int textureId) {
-                mTextureId = textureId;
+            public void onRendererTextureCreated(int... textureIds) {
+                mTextureId = textureIds[0];
+                if (textureIds.length > 1) {
+                    mOverlayTextureId = textureIds[1];
+                }
                 mSurfaceTexture = new SurfaceTexture(mTextureId, true);
+                if (mOverlayTextureId != 0) {
+                    mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
+                }
                 // Need to crop the size.
                 Rect crop = CropHelper.computeCrop(mResult.size, mOutputRatio);
                 mResult.size = new Size(crop.width(), crop.height());
                 mSurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
+                if (mOverlaySurfaceTexture != null) {
+                    mSurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
+                }
                 mTransform = new float[16];
+                if (mOverlaySurfaceTexture != null) {
+                    mOverlayTransform = new float[16];
+                }
             }
 
             @RendererThread
             @Override
-            public void onRendererFrame(SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
+            public void onRendererFrame(SurfaceTexture surfaceTexture, SurfaceTexture overlaySurfaceTexture, final float scaleX, final float scaleY) {
                 preview.removeRendererFrameCallback(this);
 
                 // This kinda work but has drawbacks:
@@ -99,9 +116,13 @@ class SnapshotPictureRecorder extends PictureRecorder {
                     public void run() {
                         EglWindowSurface surface = new EglWindowSurface(core, mSurfaceTexture);
                         surface.makeCurrent();
-                        EglViewport viewport = new EglViewport();
+                        EglViewport viewport = new EglViewport(mOverlaySurfaceTexture != null);
                         mSurfaceTexture.updateTexImage();
                         mSurfaceTexture.getTransformMatrix(mTransform);
+                        if (mOverlaySurfaceTexture != null) {
+                            mOverlaySurfaceTexture.updateTexImage();
+                            mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
+                        }
 
                         // Apply scale and crop:
                         // NOTE: scaleX and scaleY are in REF_VIEW, while our input appears to be in REF_SENSOR.
@@ -124,16 +145,22 @@ class SnapshotPictureRecorder extends PictureRecorder {
 
                         // Future note: passing scale values to the viewport?
                         // They are simply realScaleX and realScaleY.
-                        viewport.drawFrame(mTextureId, mTransform);
+                        viewport.drawFrame(mTextureId, mOverlayTextureId, mTransform, mOverlayTransform);
                         // don't - surface.swapBuffers();
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
                         mResult.format = PictureResult.FORMAT_JPEG;
                         mSurfaceTexture.releaseTexImage();
+                        if (mOverlaySurfaceTexture != null) {
+                            mOverlaySurfaceTexture.releaseTexImage();
+                        }
 
                         // EGL14.eglMakeCurrent(oldDisplay, oldSurface, oldSurface, eglContext);
                         surface.release();
                         viewport.release();
                         mSurfaceTexture.release();
+                        if (mOverlaySurfaceTexture != null) {
+                            mOverlaySurfaceTexture.release();
+                        }
                         core.release();
                         dispatchResult();
                     }

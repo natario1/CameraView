@@ -6,8 +6,18 @@
     android:layout_gravity="center"
     android:gravity="center">
 
+    <com.otaliastudios.cameraview.OverlayLayout
+        android:id="@+id/no_preview_overlay_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <android.opengl.GLSurfaceView
         android:id="@+id/gl_surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.otaliastudios.cameraview.OverlayLayout
+        android:id="@+id/preview_overlay_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

@@ -31,6 +31,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     private int mCurrentState = STATE_NOT_RECORDING;
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
+    private int mOverlayTextureId = 0;
 
     SnapshotVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview) {
         super(stub, listener);
@@ -50,13 +51,16 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
 
     @RendererThread
     @Override
-    public void onRendererTextureCreated(int textureId) {
-        mTextureId = textureId;
+    public void onRendererTextureCreated(int... textureId) {
+        mTextureId = textureId[0];
+        if (textureId.length > 1) {
+            mOverlayTextureId = textureId[1];
+        }
     }
 
     @RendererThread
     @Override
-    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
+    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, SurfaceTexture overlaySurfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
             Size size = mResult.getSize();
             // Ensure width and height are divisible by 2, as I have read somewhere.
@@ -79,6 +83,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                     mResult.videoFrameRate,
                     mResult.rotation,
                     type, mTextureId,
+                    mOverlayTextureId,
                     scaleX, scaleY,
                     mPreview.mInputFlipped,
                     EGL14.eglGetCurrentContext()
@@ -99,7 +104,11 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             TextureMediaEncoder.Frame frame = new TextureMediaEncoder.Frame();
             frame.timestamp = surfaceTexture.getTimestamp();
             frame.transform = new float[16]; // TODO would be cool to avoid this at every frame. But it's not easy.
+            frame.overlayTransform = new float[16];
             surfaceTexture.getTransformMatrix(frame.transform);
+            if (overlaySurfaceTexture != null) {
+                overlaySurfaceTexture.getTransformMatrix(frame.overlayTransform);
+            }
             mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
         }
 
