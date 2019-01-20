@@ -35,9 +35,6 @@
             android:textColor="@android:color/white"
             android:layout_gravity="bottom|end"
             app:layout_overlay="true"
-            app:layout_showInPreview="true"
-            app:layout_showInPicture="true"
-            app:layout_showInVideo="false"
             />
 
     </com.otaliastudios.cameraview.CameraView>

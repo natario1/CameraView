@@ -127,11 +127,5 @@
 
         <attr name="layout_overlay" format="boolean"/>
 
-        <attr name="layout_showInPreview" format="boolean"/>
-
-        <attr name="layout_showInPicture" format="boolean"/>
-
-        <attr name="layout_showInVideo" format="boolean"/>
-
     </declare-styleable>
 </resources>

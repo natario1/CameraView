@@ -81,6 +81,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private Handler mUiHandler;
     private WorkerHandler mFrameProcessorsHandler;
 
+    // Overlay
+    private boolean mHasOverlay = false;
+    private OverlayLayout mPreviewOverlayLayout;
+
     public CameraView(@NonNull Context context) {
         super(context, null);
         init(context, null);
@@ -253,7 +257,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
             case GL_SURFACE: default: {
                 mPreview = Preview.GL_SURFACE;
-                return new GlCameraPreview(context, container, null, true);
+                return new GlCameraPreview(context, container, null, mHasOverlay);
             }
         }
     }
@@ -263,26 +267,30 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraController.setPreview(mCameraPreview);
     }
 
-    private OverlayLayout mPreviewOverlayLayout;
-    private OverlayLayout mNoPreviewOverlayLayout;
-
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (mCameraPreview == null) {
+
+            // check if we have any overlay view before instantiating preview
+            for (int i = 0; i < getChildCount(); i++) {
+                View view = getChildAt(i);
+                if (view.getLayoutParams() instanceof OverlayLayoutParams &&
+                        ((OverlayLayoutParams) view.getLayoutParams()).isOverlay) {
+                    mHasOverlay = true;
+                }
+            }
+
             // isHardwareAccelerated will return the real value only after we are
             // attached. That's why we instantiate the preview here.
             instantiatePreview();
 
             mPreviewOverlayLayout = findViewById(R.id.preview_overlay_layout);
-            mNoPreviewOverlayLayout = findViewById(R.id.no_preview_overlay_layout);
-            mNoPreviewOverlayLayout.setDrawOnScreen(false);
 
             ((GlCameraPreview) mCameraPreview).addOverlayInputSurfaceListener(new GlCameraPreview.OverlayInputSurfaceListener() {
                 @Override
                 public void onSurface(@NonNull Surface surface) {
                     mPreviewOverlayLayout.setOutputSurface(surface);
-                    mNoPreviewOverlayLayout.setOutputSurface(surface);
                 }
             });
 
@@ -299,12 +307,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     View view = getChildAt(i);
 
                     removeViewAt(i);
-                    if (((OverlayLayoutParams) view.getLayoutParams()).showInPreview) {
-                        mPreviewOverlayLayout.addView(view);
-                    } else {
-                        mNoPreviewOverlayLayout.addView(view);
-                    }
-
+                    mPreviewOverlayLayout.addView(view);
                 }
             }
         }
@@ -1111,6 +1114,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return mCameraController.getAudio();
     }
 
+    /**
+     * Gets a boolean which is true if there is at least one overlay view.
+     * @return a boolean which is true if there is at least one overlay view
+     */
+    public boolean hasOverlay() {
+        return mHasOverlay;
+    }
 
     /**
      * Starts an autofocus process at the given coordinates, with respect
@@ -1888,9 +1898,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public static class OverlayLayoutParams extends FrameLayout.LayoutParams {
 
         private boolean isOverlay = false;
-        private boolean showInPreview = false;
-        private boolean showInPicture = false;
-        private boolean showInVideo = false;
 
         public OverlayLayoutParams(Context context, AttributeSet attributeSet) {
             super(context, attributeSet);
@@ -1909,9 +1916,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             TypedArray a = context.obtainStyledAttributes(attributeSet, R.styleable.CameraView_Layout);
             try {
                 this.isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_overlay, false);
-                this.showInPreview = a.getBoolean(R.styleable.CameraView_Layout_layout_showInPreview, false);
-                this.showInPicture = a.getBoolean(R.styleable.CameraView_Layout_layout_showInPicture, false);
-                this.showInVideo = a.getBoolean(R.styleable.CameraView_Layout_layout_showInVideo, false);
             } finally {
                 a.recycle();
             }
@@ -1923,30 +1927,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         public void setOverlay(boolean overlay) {
             isOverlay = overlay;
-        }
-
-        public boolean isShowInPreview() {
-            return showInPreview;
-        }
-
-        public void setShowInPreview(boolean showInPreview) {
-            this.showInPreview = showInPreview;
-        }
-
-        public boolean isShowInPicture() {
-            return showInPicture;
-        }
-
-        public void setShowInPicture(boolean showInPicture) {
-            this.showInPicture = showInPicture;
-        }
-
-        public boolean isShowInVideo() {
-            return showInVideo;
-        }
-
-        public void setShowInVideo(boolean showInVideo) {
-            this.showInVideo = showInVideo;
         }
     }
 
