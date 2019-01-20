@@ -477,6 +477,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         return false;
     }
 
+    @Override
+    void setDisableOverlayFor(@NonNull DisableOverlayFor disableOverlayFor) {
+        if (mDisableOverlayFor != disableOverlayFor) {
+            LOG.w("DisableOverlayFor setting was changed while recording. " +
+                        "Changes will take place starting from next video/picture.");
+            mDisableOverlayFor = disableOverlayFor;
+        }
+    }
+
 
     // Choose the best default focus, based on session type.
     private void applyDefaultFocus(@NonNull Camera.Parameters params) {
@@ -744,7 +753,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 // Reset facing and start.
                 mFacing = realFacing;
                 GlCameraPreview cameraPreview = (GlCameraPreview) mPreview;
-                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview);
+                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview, mDisableOverlayFor != DisableOverlayFor.VIDEO);
                 mVideoRecorder.start();
             }
         });

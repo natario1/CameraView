@@ -26,15 +26,16 @@
         app:cameraGesturePinch="zoom"
         app:cameraGestureScrollHorizontal="exposureCorrection"
         app:cameraGestureScrollVertical="none"
-        app:cameraMode="picture">
+        app:cameraMode="picture"
+        app:cameraDisableOverlayFor="none">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ciao"
+            android:text="Ciao ciao"
             android:textColor="@android:color/white"
             android:layout_gravity="bottom|end"
-            app:layout_overlay="true"
+            app:layout_isOverlay="true"
             />
 
     </com.otaliastudios.cameraview.CameraView>

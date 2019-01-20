@@ -24,7 +24,6 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -121,6 +120,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
         int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
         int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
+        DisableOverlayFor disableOverlayFor = DisableOverlayFor.fromValue(a.getInteger(R.styleable.CameraView_cameraDisableOverlayFor, DisableOverlayFor.DEFAULT.value()));
 
         // Picture size selector
         List<SizeSelector> pictureConstraints = new ArrayList<>(3);
@@ -227,6 +227,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoMaxSize(videoMaxSize);
         setVideoMaxDuration(videoMaxDuration);
         setVideoBitRate(videoBitRate);
+        setDisableOverlayFor(disableOverlayFor);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -782,6 +783,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             setVideoCodec((VideoCodec) control);
         } else if (control instanceof Preview) {
             setPreview((Preview) control);
+        } else if (control instanceof DisableOverlayFor) {
+            setDisableOverlayFor((DisableOverlayFor) control);
         }
     }
 
@@ -1678,6 +1681,30 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return mCameraController.isTakingPicture();
     }
 
+
+    /**
+     * Sets the mode where the overlay is disabled.
+     *
+     * @see DisableOverlayFor#NONE
+     * @see DisableOverlayFor#PICTURE
+     * @see DisableOverlayFor#VIDEO
+
+     * @param mode desired mode.
+     */
+    public void setDisableOverlayFor(@NonNull DisableOverlayFor mode) {
+        mCameraController.setDisableOverlayFor(mode);
+    }
+
+
+    /**
+     * Gets the current mode where the overlay is disabled.
+     * @return a mode
+     */
+    @NonNull
+    public DisableOverlayFor getDisableOverlayFor() {
+        return mCameraController.getDisableOverlayFor();
+    }
+
     //endregion
 
     //region Callbacks and dispatching
@@ -1915,7 +1942,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         private void readStyleParameters(Context context, AttributeSet attributeSet) {
             TypedArray a = context.obtainStyledAttributes(attributeSet, R.styleable.CameraView_Layout);
             try {
-                this.isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_overlay, false);
+                this.isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, false);
             } finally {
                 a.recycle();
             }

@@ -121,11 +121,17 @@
 
         <attr name="cameraExperimental" format="boolean" />
 
+        <attr name="cameraDisableOverlayFor" format="enum">
+            <enum name="none" value="0" />
+            <enum name="picture" value="1" />
+            <enum name="video" value="2" />
+        </attr>
+
     </declare-styleable>
 
     <declare-styleable name="CameraView_Layout">
 
-        <attr name="layout_overlay" format="boolean"/>
+        <attr name="layout_isOverlay" format="boolean"/>
 
     </declare-styleable>
 </resources>

@@ -33,10 +33,13 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     private int mTextureId = 0;
     private int mOverlayTextureId = 0;
 
-    SnapshotVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview) {
+    private boolean mWithOverlay;
+
+    SnapshotVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview, boolean withOverlay) {
         super(stub, listener);
         mPreview = preview;
         mPreview.addRendererFrameCallback(this);
+        mWithOverlay = withOverlay;
     }
 
     @Override
@@ -83,7 +86,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                     mResult.videoFrameRate,
                     mResult.rotation,
                     type, mTextureId,
-                    mOverlayTextureId,
+                    mWithOverlay ? mOverlayTextureId : 0,
                     scaleX, scaleY,
                     mPreview.mInputFlipped,
                     EGL14.eglGetCurrentContext()
@@ -106,7 +109,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             frame.transform = new float[16]; // TODO would be cool to avoid this at every frame. But it's not easy.
             frame.overlayTransform = new float[16];
             surfaceTexture.getTransformMatrix(frame.transform);
-            if (overlaySurfaceTexture != null) {
+            if (mWithOverlay && overlaySurfaceTexture != null) {
                 overlaySurfaceTexture.getTransformMatrix(frame.overlayTransform);
             }
             mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);

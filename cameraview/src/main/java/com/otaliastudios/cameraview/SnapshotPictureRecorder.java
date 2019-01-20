@@ -31,6 +31,8 @@ class SnapshotPictureRecorder extends PictureRecorder {
     private Size mSensorPreviewSize;
     private int mFormat;
 
+    private boolean mWithOverlay;
+
     SnapshotPictureRecorder(@NonNull PictureResult stub, @NonNull Camera1 controller,
                             @NonNull Camera camera, @NonNull AspectRatio outputRatio) {
         super(stub, controller);
@@ -40,6 +42,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
         mOutputRatio = outputRatio;
         mFormat = mController.mPreviewFormat;
         mSensorPreviewSize = mController.mPreviewSize;
+        mWithOverlay = mController.mDisableOverlayFor != DisableOverlayFor.PICTURE;
     }
 
     @Override
@@ -65,7 +68,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
             @RendererThread
             public void onRendererTextureCreated(int... textureIds) {
                 mTextureId = textureIds[0];
-                if (textureIds.length > 1) {
+                if (textureIds.length > 1 && mWithOverlay) {
                     mOverlayTextureId = textureIds[1];
                 }
                 mSurfaceTexture = new SurfaceTexture(mTextureId, true);
