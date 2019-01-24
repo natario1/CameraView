@@ -17,6 +17,9 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
 
     static class Frame {
         float[] transform;
+
+        // Nanoseconds, in no meaningful time-base. Should be for offsets only.
+        // Typically coming from SurfaceTexture.getTimestamp().
         long timestamp;
     }
     static class Config extends VideoMediaEncoder.Config {
@@ -99,14 +102,16 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
             if (mFrameNum < 0) return;
             mFrameNum++;
 
+            // No idea what this does. Seems to leave the timestamp unaffected, but
+            // will leave it here just in case.
             int arg1 = (int) (frame.timestamp >> 32);
             int arg2 = (int) frame.timestamp;
             long timestamp = (((long) arg1) << 32) | (((long) arg2) & 0xffffffffL);
-            float[] transform = frame.transform;
+            LOG.v("Incoming frame timestamp:", timestamp);
 
             // We must scale this matrix like GlCameraPreview does, because it might have some cropping.
             // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
-
+            float[] transform = frame.transform;
             float scaleX = mConfig.scaleX;
             float scaleY = mConfig.scaleY;
             float scaleTranslX = (1F - scaleX) / 2F;

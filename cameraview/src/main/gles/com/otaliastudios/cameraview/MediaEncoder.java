@@ -155,17 +155,19 @@ abstract class MediaEncoder {
                     // adjust the ByteBuffer values to match BufferInfo (not needed?)
                     encodedData.position(mBufferInfo.offset);
                     encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
-                    mController.write(mTrackIndex, encodedData, mBufferInfo);
-                    mLastPresentationTime = mBufferInfo.presentationTimeUs;
-                    if (mStartPresentationTime == 0) {
-                        mStartPresentationTime = mLastPresentationTime;
+                    if (mStartPresentationTimeUs == Long.MIN_VALUE) {
+                        mStartPresentationTimeUs = mBufferInfo.presentationTimeUs;
                     }
+                    mBufferInfo.presentationTimeUs = mBufferInfo.presentationTimeUs - mStartPresentationTimeUs;
+                    if (mBufferInfo.presentationTimeUs == 0) mBufferInfo.presentationTimeUs = 1; // Read somewhere in Grafika that 0 should not be used
+                    mController.write(mTrackIndex, encodedData, mBufferInfo);
+                    mLastPresentationTimeUs = mBufferInfo.presentationTimeUs;
                 }
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);
                 if (!mMaxLengthReached) {
-                    if (mLastPresentationTime / 1000 - mStartPresentationTime / 1000 > mMaxLengthMillis) {
+                    if (mLastPresentationTimeUs - mStartPresentationTimeUs > mMaxLengthMillis * 1000) {
                         mMaxLengthReached = true;
-                        // Log.e("MediaEncoder", this.getClass().getSimpleName() + " requested stop at " + (mLastPresentationTime * 1000 * 1000));
+                        // Log.e("MediaEncoder", this.getClass().getSimpleName() + " requested stop at " + (mLastPresentationTimeUs * 1000 * 1000));
                         mController.requestStop();
                         break;
                     }
@@ -178,18 +180,8 @@ abstract class MediaEncoder {
         }
     }
 
-    private long mStartPresentationTime = 0;
-    private long mLastPresentationTime = 0;
-
-    long getPresentationTime() {
-        long result = System.nanoTime() / 1000L;
-        // presentationTimeUs should be monotonic
-        // otherwise muxer fail to write
-        if (result < mLastPresentationTime) {
-            result = (mLastPresentationTime - result) + result;
-        }
-        return result;
-    }
+    private long mStartPresentationTimeUs = Long.MIN_VALUE;
+    private long mLastPresentationTimeUs = 0;
 
     abstract int getBitRate();
 }

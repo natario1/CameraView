@@ -12,11 +12,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaEncoderEngine {
 
-    private final static String TAG = MediaEncoder.class.getSimpleName();
+    private final static String TAG = MediaEncoderEngine.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     @SuppressWarnings("WeakerAccess")
@@ -93,6 +95,7 @@ class MediaEncoderEngine {
                     throw new IllegalStateException("Trying to start but muxer started already");
                 }
                 int track = mMediaMuxer.addTrack(format);
+                LOG.w("Controller:", "Assigned track", track, "to format", format.getString(MediaFormat.KEY_MIME));
                 mMediaMuxerStartCount++;
                 if (mMediaMuxerStartCount == mEncoders.size()) {
                     mMediaMuxer.start();
@@ -113,6 +116,10 @@ class MediaEncoderEngine {
             if (!mMediaMuxerStarted) {
                 throw new IllegalStateException("Trying to write before muxer started");
             }
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(info.presentationTimeUs / 1000);
+            LOG.e("Writing for track", track, ". Presentation:",
+                    calendar.get(Calendar.MINUTE) + ":" + calendar.get(Calendar.SECOND) + ":" + calendar.get(Calendar.MILLISECOND));
             mMediaMuxer.writeSampleData(track, encodedData, info);
         }
 

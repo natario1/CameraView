@@ -115,13 +115,13 @@ class AudioMediaEncoder extends MediaEncoder {
                     // set audio data to encoder
                     buffer.position(readBytes);
                     buffer.flip();
-                    encode(buffer, readBytes, getPresentationTime());
+                    encode(buffer, readBytes, getInputPresentationTimeUs());
                     drain(false);
                 }
             }
             // This will signal the endOfStream.
             // Can't use drain(true); it is only available when writing to the codec InputSurface.
-            encode(null, 0, getPresentationTime());
+            encode(null, 0, getInputPresentationTimeUs());
             drain(false);
             mAudioRecord.stop();
             mAudioRecord.release();
@@ -135,5 +135,18 @@ class AudioMediaEncoder extends MediaEncoder {
     @Override
     int getBitRate() {
         return mConfig.bitRate;
+    }
+
+    private long mLastInputPresentationTimeUs = Long.MIN_VALUE;
+
+    // presentationTimeUs should be monotonic
+    // otherwise muxer fail to write
+    private long getInputPresentationTimeUs() {
+        long result = System.nanoTime() / 1000L;
+        if (result < mLastInputPresentationTimeUs) {
+            result = (mLastInputPresentationTimeUs - result) + result;
+        }
+        mLastInputPresentationTimeUs = result;
+        return result;
     }
 }

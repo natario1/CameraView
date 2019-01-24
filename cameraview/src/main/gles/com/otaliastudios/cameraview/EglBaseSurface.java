@@ -151,6 +151,7 @@ class EglBaseSurface extends EglElement {
 
     /**
      * Sends the presentation time stamp to EGL.
+     * https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_presentation_time.txt
      *
      * @param nsecs Timestamp, in nanoseconds.
      */
