@@ -51,10 +51,15 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
         mConfig = config;
     }
 
+    @NonNull
+    @Override
+    String getName() {
+        return "VideoEncoder";
+    }
+
     @EncoderThread
     @Override
-    void prepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
-        super.prepare(controller, maxLengthMillis);
+    void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
 
         // Set some properties.  Failing to specify some of these can cause the MediaCodec
@@ -62,6 +67,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, mConfig.frameRate);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, 6); // TODO
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2);
         format.setInteger("rotation-degrees", mConfig.rotation);
 
@@ -79,16 +85,17 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
 
     @EncoderThread
     @Override
-    void start() {
+    void onStart() {
         // Nothing to do here. Waiting for the first frame.
         mFrameNum = 0;
     }
 
     @EncoderThread
     @Override
-    void stop() {
+    void onStop() {
         mFrameNum = -1;
-        drain(true);
+        signalEndOfInputStream();
+        drainOutput(true);
     }
 
     @Override

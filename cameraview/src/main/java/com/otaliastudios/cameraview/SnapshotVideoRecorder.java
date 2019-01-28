@@ -113,7 +113,6 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
 
     }
 
-    @EncoderThread
     @Override
     public void onEncoderStop(int stopReason, @Nullable Exception e) {
         // If something failed, undo the result, since this is the mechanism
