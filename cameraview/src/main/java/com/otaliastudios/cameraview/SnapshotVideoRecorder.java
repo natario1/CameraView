@@ -96,11 +96,11 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
         }
 
         if (mCurrentState == STATE_RECORDING) {
-            TextureMediaEncoder.Frame frame = new TextureMediaEncoder.Frame();
-            frame.timestamp = surfaceTexture.getTimestamp();
-            frame.transform = new float[16]; // TODO would be cool to avoid this at every frame. But it's not easy.
-            surfaceTexture.getTransformMatrix(frame.transform);
-            mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
+            TextureMediaEncoder textureEncoder = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
+            TextureMediaEncoder.TextureFrame textureFrame = textureEncoder.acquireFrame();
+            textureFrame.timestamp = surfaceTexture.getTimestamp();
+            surfaceTexture.getTransformMatrix(textureFrame.transform);
+            mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
         }
 
         if (mCurrentState == STATE_RECORDING && mDesiredState == STATE_NOT_RECORDING) {

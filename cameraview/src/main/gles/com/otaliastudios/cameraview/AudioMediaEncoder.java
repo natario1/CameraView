@@ -46,9 +46,9 @@ class AudioMediaEncoder extends MediaEncoder {
     private static final int FRAME_SIZE = FRAME_SIZE_PER_CHANNEL * CHANNELS_COUNT; // bytes/frame
 
     // We allocate buffers of 1KB each, which is not so much. I would say that allocating
-    // at most 100 of them is a reasonable value. With the current setup, in device tests,
-    // we manage to use 5 at most.
-    private static final int BUFFER_POOL_MAX_SIZE = 100;
+    // at most 200 of them is a reasonable value. With the current setup, in device tests,
+    // we manage to use 50 at most.
+    private static final int BUFFER_POOL_MAX_SIZE = 200;
 
     private boolean mRequestStop = false;
     private AudioEncodingHandler mEncoder;

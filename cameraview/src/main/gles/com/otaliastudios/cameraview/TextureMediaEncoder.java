@@ -3,6 +3,8 @@ package com.otaliastudios.cameraview;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
 import android.os.Build;
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -15,13 +17,6 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
 
     final static String FRAME_EVENT = "frame";
 
-    static class Frame {
-        float[] transform;
-
-        // Nanoseconds, in no meaningful time-base. Should be for offsets only.
-        // Typically coming from SurfaceTexture.getTimestamp().
-        long timestamp;
-    }
     static class Config extends VideoMediaEncoder.Config {
         int textureId;
         float scaleX;
@@ -47,10 +42,35 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
     private EglCore mEglCore;
     private EglWindowSurface mWindow;
     private EglViewport mViewport;
+    private Pool<TextureFrame> mFramePool = new Pool<>(30, new Pool.Factory<TextureFrame>() {
+        @Override
+        public TextureFrame create() {
+            return new TextureFrame();
+        }
+    });
 
     TextureMediaEncoder(@NonNull Config config) {
         super(config);
     }
+
+    static class TextureFrame {
+        private TextureFrame() {}
+        // Nanoseconds, in no meaningful time-base. Should be for offsets only.
+        // Typically coming from SurfaceTexture.getTimestamp().
+        long timestamp;
+        float[] transform = new float[16];
+    }
+
+    @NonNull
+    TextureFrame acquireFrame() {
+        if (!mFramePool.canGet()) {
+            throw new RuntimeException("Need more frames than this! Please increase the pool size.");
+        } else {
+            //noinspection ConstantConditions
+            return mFramePool.get();
+        }
+    }
+
 
     @EncoderThread
     @Override
@@ -74,13 +94,17 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
     @Override
     void onEvent(@NonNull String event, @Nullable Object data) {
         if (!event.equals(FRAME_EVENT)) return;
-        Frame frame = (Frame) data;
+        TextureFrame frame = (TextureFrame) data;
         if (frame == null) return; // Should not happen
-        if (frame.timestamp == 0) return; // Read in Grafika
-        if (mFrameNum < 0) return; // We were asked to stop. Ignore frame
+        if (frame.timestamp == 0 || mFrameNum < 0) {
+            // The first condition comes from grafika.
+            // The second condition means we were asked to stop.
+            mFramePool.recycle(frame);
+            return;
+        }
+
         mFrameNum++;
         LOG.v("Incoming frame timestamp:", frame.timestamp);
-
         // We must scale this matrix like GlCameraPreview does, because it might have some cropping.
         // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
         float[] transform = frame.transform;

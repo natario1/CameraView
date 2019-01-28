@@ -210,6 +210,20 @@ class MediaEncoderEngine {
         mMediaMuxerStarted = false;
     }
 
+    @NonNull
+    VideoMediaEncoder getVideoEncoder() {
+        return (VideoMediaEncoder) mEncoders.get(0);
+    }
+
+    @Nullable
+    AudioMediaEncoder getAudioEncoder() {
+        if (mEncoders.size() > 1) {
+            return (AudioMediaEncoder) mEncoders.get(1);
+        } else {
+            return null;
+        }
+    }
+
     interface Listener {
 
         @EncoderThread

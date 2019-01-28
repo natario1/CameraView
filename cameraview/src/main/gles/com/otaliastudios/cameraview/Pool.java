@@ -26,9 +26,13 @@ class Pool<T> {
         this.factory = factory;
     }
 
+    boolean canGet() {
+        return count() < maxPoolSize;
+    }
+
     @Nullable
     T get() {
-        if (count() >= maxPoolSize) {
+        if (!canGet()) {
             LOG.v("GET: Returning null. Too much items requested.");
             return null;
         }
@@ -46,14 +50,14 @@ class Pool<T> {
     }
 
 
-    void recycle(@NonNull T buffer) {
+    void recycle(@NonNull T item) {
         LOG.v("RECYCLE: Recycling item. Count", count(), "Active", activeCount(), "Cached", cachedCount());
         if (--activeCount < 0) {
             throw new IllegalStateException("Trying to recycle an item which makes activeCount < 0." +
                     "This means that this or some previous items being recycled were not coming from " +
                     "this pool, or some item was recycled more than once.");
         }
-        if (!mQueue.offer(buffer)) {
+        if (!mQueue.offer(item)) {
             throw new IllegalStateException("Trying to recycle an item while the queue is full. " +
                     "This means that this or some previous items being recycled were not coming from " +
                     "this pool, or some item was recycled more than once.");
