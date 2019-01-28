@@ -20,7 +20,6 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
 
     private static final int DEFAULT_VIDEO_FRAMERATE = 30;
     private static final int DEFAULT_VIDEO_BITRATE = 1000000;
-    private static final int DEFAULT_AUDIO_BITRATE = 64000;
 
     private static final int STATE_RECORDING = 0;
     private static final int STATE_NOT_RECORDING = 1;
@@ -71,7 +70,6 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                 case DEVICE_DEFAULT: type = "video/avc"; break;
             }
             if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
-            if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
             if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
             LOG.w("Creating frame encoder. Rotation:", mResult.rotation);
             TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(width, height,
@@ -84,9 +82,11 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                     EGL14.eglGetCurrentContext()
             );
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
+
             AudioMediaEncoder audioEncoder = null;
             if (mResult.audio == Audio.ON) {
-                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config(mResult.audioBitRate));
+                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config());
+                mResult.audioBitRate = AudioMediaEncoder.BIT_RATE;
             }
             mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, audioEncoder,
                     mResult.maxDuration, mResult.maxSize, SnapshotVideoRecorder.this);

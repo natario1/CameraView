@@ -39,7 +39,8 @@ class AudioMediaEncoder extends MediaEncoder {
     private static final int SAMPLE_SIZE = 2; // byte/sample/channel
     private static final int BYTE_RATE_PER_CHANNEL = SAMPLING_FREQUENCY * SAMPLE_SIZE; // byte/sec/channel
     private static final int BYTE_RATE = BYTE_RATE_PER_CHANNEL * CHANNELS_COUNT; // byte/sec
-    private static final int BIT_RATE = BYTE_RATE * 8; // bit/sec
+
+    static final int BIT_RATE = BYTE_RATE * 8; // bit/sec
 
     // We call FRAME here the chunk of data that we want to read at each loop cycle
     private static final int FRAME_SIZE_PER_CHANNEL = 1024; // bytes/frame/channel [AAC constant]
@@ -55,13 +56,8 @@ class AudioMediaEncoder extends MediaEncoder {
     private AudioRecordingThread mRecorder;
     private ByteBufferPool mByteBufferPool;
 
-    // TODO this bitRate is ignored.
-    static class Config {
-        int bitRate;
-        Config(int bitRate) {
-            this.bitRate = bitRate;
-        }
-    }
+    // TODO add options
+    static class Config { }
 
     AudioMediaEncoder(@NonNull Config config) { }
 
