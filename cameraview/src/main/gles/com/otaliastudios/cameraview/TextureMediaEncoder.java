@@ -134,6 +134,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
 
     @Override
     void onRelease() {
+        mFramePool.clear();
         if (mWindow != null) {
             mWindow.release();
             mWindow = null;

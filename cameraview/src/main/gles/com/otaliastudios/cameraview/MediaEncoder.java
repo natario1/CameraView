@@ -163,6 +163,9 @@ abstract class MediaEncoder {
         mMediaCodec.stop();
         mMediaCodec.release();
         mMediaCodec = null;
+        mOutputBufferPool.clear();
+        mOutputBufferPool = null;
+        mBuffers = null;
         onRelease();
     }
 
