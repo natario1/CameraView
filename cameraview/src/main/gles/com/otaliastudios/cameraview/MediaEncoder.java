@@ -328,5 +328,5 @@ abstract class MediaEncoder {
     private long mStartPresentationTimeUs = Long.MIN_VALUE;
     private long mLastPresentationTimeUs = 0;
 
-    abstract int getBitRate();
+    abstract int getEncodedBitRate();
 }

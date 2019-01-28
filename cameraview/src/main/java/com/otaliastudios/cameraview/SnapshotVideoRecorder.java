@@ -20,6 +20,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
 
     private static final int DEFAULT_VIDEO_FRAMERATE = 30;
     private static final int DEFAULT_VIDEO_BITRATE = 1000000;
+    private static final int DEFAULT_AUDIO_BITRATE = 64000;
 
     private static final int STATE_RECORDING = 0;
     private static final int STATE_NOT_RECORDING = 1;
@@ -57,8 +58,13 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     @Override
     public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
+            // Set default options
+            if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
+            if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
+            if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
+
+            // Video. Ensure width and height are divisible by 2, as I have read somewhere.
             Size size = mResult.getSize();
-            // Ensure width and height are divisible by 2, as I have read somewhere.
             int width = size.getWidth();
             int height = size.getHeight();
             width = width % 2 == 0 ? width : width + 1;
@@ -69,8 +75,6 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                 case H_264: type = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
                 case DEVICE_DEFAULT: type = "video/avc"; break;
             }
-            if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
-            if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
             LOG.w("Creating frame encoder. Rotation:", mResult.rotation);
             TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(width, height,
                     mResult.videoBitRate,
@@ -83,11 +87,13 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             );
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
 
+            // Audio
             AudioMediaEncoder audioEncoder = null;
             if (mResult.audio == Audio.ON) {
-                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config());
-                mResult.audioBitRate = AudioMediaEncoder.BIT_RATE;
+                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config(mResult.audioBitRate));
             }
+
+            // Engine
             mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, audioEncoder,
                     mResult.maxDuration, mResult.maxSize, SnapshotVideoRecorder.this);
             mEncoderEngine.start();

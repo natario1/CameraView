@@ -55,11 +55,18 @@ class AudioMediaEncoder extends MediaEncoder {
     private AudioEncodingHandler mEncoder;
     private AudioRecordingThread mRecorder;
     private ByteBufferPool mByteBufferPool;
+    private Config mConfig;
 
-    // TODO add options
-    static class Config { }
+    static class Config {
+        int bitRate;
+        Config(int bitRate) {
+            this.bitRate = bitRate;
+        }
+    }
 
-    AudioMediaEncoder(@NonNull Config config) { }
+    AudioMediaEncoder(@NonNull Config config) {
+        mConfig = config;
+    }
 
     @NonNull
     @Override
@@ -73,7 +80,7 @@ class AudioMediaEncoder extends MediaEncoder {
         final MediaFormat audioFormat = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLING_FREQUENCY, CHANNELS_COUNT);
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, CHANNELS);
-        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
+        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, CHANNELS_COUNT);
         try {
             mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
@@ -116,8 +123,8 @@ class AudioMediaEncoder extends MediaEncoder {
     }
 
     @Override
-    int getBitRate() {
-        return BIT_RATE;
+    int getEncodedBitRate() {
+        return mConfig.bitRate;
     }
 
     class AudioRecordingThread extends Thread {

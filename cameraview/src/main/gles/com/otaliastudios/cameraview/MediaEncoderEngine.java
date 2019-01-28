@@ -1,6 +1,5 @@
 package com.otaliastudios.cameraview;
 
-import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
@@ -10,7 +9,6 @@ import androidx.annotation.RequiresApi;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -58,7 +56,7 @@ class MediaEncoderEngine {
         // This is really naive & probably not accurate, but...
         int bitRate = 0;
         for (MediaEncoder encoder : mEncoders) {
-            bitRate += encoder.getBitRate();
+            bitRate += encoder.getEncodedBitRate();
         }
         int bytePerSecond = bitRate / 8;
         long sizeMaxDuration = (maxSize / bytePerSecond) * 1000L;

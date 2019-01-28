@@ -99,7 +99,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
     }
 
     @Override
-    int getBitRate() {
+    int getEncodedBitRate() {
         return mConfig.bitRate;
     }
 }
