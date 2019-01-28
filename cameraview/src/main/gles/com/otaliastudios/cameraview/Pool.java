@@ -32,36 +32,42 @@ class Pool<T> {
 
     @Nullable
     T get() {
-        if (!canGet()) {
-            LOG.v("GET: Returning null. Too much items requested.");
-            return null;
-        }
-
         T buffer = mQueue.poll();
         if (buffer != null) {
-            activeCount++;
-            LOG.v("GET: Reusing recycled item. Count", count(), "Active", activeCount(), "Cached", cachedCount());
+            activeCount++; // poll decreases, this fixes
+            LOG.v("GET: Reusing recycled item.", this);
             return buffer;
         }
 
+        if (!canGet()) {
+            LOG.v("GET: Returning null. Too much items requested.", this);
+            return null;
+        }
+
         activeCount++;
-        LOG.v("GET: Creating a new item. Count", count(), "Active", activeCount(), "Cached", cachedCount());
+        LOG.v("GET: Creating a new item.", this);
         return factory.create();
     }
 
 
     void recycle(@NonNull T item) {
-        LOG.v("RECYCLE: Recycling item. Count", count(), "Active", activeCount(), "Cached", cachedCount());
+        LOG.v("RECYCLE: Recycling item.", this);
         if (--activeCount < 0) {
             throw new IllegalStateException("Trying to recycle an item which makes activeCount < 0." +
                     "This means that this or some previous items being recycled were not coming from " +
-                    "this pool, or some item was recycled more than once.");
+                    "this pool, or some item was recycled more than once. " + this);
         }
         if (!mQueue.offer(item)) {
             throw new IllegalStateException("Trying to recycle an item while the queue is full. " +
                     "This means that this or some previous items being recycled were not coming from " +
-                    "this pool, or some item was recycled more than once.");
+                    "this pool, or some item was recycled more than once. " + this);
         }
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + " -- count:" + count() + ", active:" + activeCount() + ", cached:" + cachedCount();
     }
 
     final int count() {

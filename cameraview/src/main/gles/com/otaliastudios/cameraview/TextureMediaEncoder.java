@@ -42,7 +42,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
     private EglCore mEglCore;
     private EglWindowSurface mWindow;
     private EglViewport mViewport;
-    private Pool<TextureFrame> mFramePool = new Pool<>(30, new Pool.Factory<TextureFrame>() {
+    private Pool<TextureFrame> mFramePool = new Pool<>(100, new Pool.Factory<TextureFrame>() {
         @Override
         public TextureFrame create() {
             return new TextureFrame();
@@ -130,6 +130,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         mViewport.drawFrame(mConfig.textureId, transform);
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();
+        mFramePool.recycle(frame);
     }
 
     @Override
