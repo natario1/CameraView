@@ -166,7 +166,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         }
         if (camera.isTakingPicture() || camera.isTakingVideo()) return;
         message("Recording for 5 seconds...", true);
-        camera.takeVideo(new File(getFilesDir(), "video.mp4"), 15000);
+        camera.takeVideo(new File(getFilesDir(), "video.mp4"), 5000);
     }
 
     private void captureVideoSnapshot() {
