@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="define_Natario1CameraView"></string>
+  <string name="library_Natario1CameraView_author">Mattia Iavarone</string>
+  <string name="library_Natario1CameraView_authorWebsite"></string>
+  <string name="library_Natario1CameraView_libraryName">CameraView</string>
+  <string name="library_Natario1CameraView_libraryDescription">A well documented, high-level Android interface that makes capturing pictures and videos easy, addressing all of the common issues and needs. https://natario1.github.io/CameraView</string>
+  <string name="library_Natario1CameraView_libraryVersion">2.0.0-beta02</string>
+  <string name="library_Natario1CameraView_libraryWebsite">https://github.com/natario1/CameraView</string>
+  <string name="library_Natario1CameraView_licenseId">mit</string>
+  <string name="library_Natario1CameraView_isOpenSource">true</string>
+  <string name="library_Natario1CameraView_repositoryLink">https://github.com/natario1/CameraView/blob/master/LICENSE</string>
+</resources>
