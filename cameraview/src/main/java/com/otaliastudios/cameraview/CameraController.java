@@ -96,6 +96,10 @@ abstract class CameraController implements
         mPreview.setSurfaceCallback(this);
     }
 
+    public int getDeviceOrientation(){
+        return  mDeviceOrientation;
+    }
+
     //region Error handling
 
     private static class NoOpExceptionHandler implements Thread.UncaughtExceptionHandler {
@@ -275,7 +279,7 @@ abstract class CameraController implements
     }
 
     // This can be called multiple times.
-    final void setDeviceOrientation(int deviceOrientation) {
+    void setDeviceOrientation(int deviceOrientation) {
         mDeviceOrientation = deviceOrientation;
     }
 
