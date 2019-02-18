@@ -157,6 +157,16 @@ public class IntegrationTest extends BaseTest {
 
     //region test open/close
 
+
+    @Test
+    public void testPreviewSizeOnOrientationChange() {
+        waitForOpen(true);
+        controller.setDeviceOrientation(90);
+        assertTrue(controller.mPreviewSize.getWidth() > controller.mPreviewSize.getHeight());
+        controller.setDeviceOrientation(0);
+        assertTrue(controller.mPreviewSize.getWidth() < controller.mPreviewSize.getHeight());
+    }
+
     @Test
     public void testOpenClose() throws Exception {
         // Starting and stopping are hard to get since they happen on another thread.
