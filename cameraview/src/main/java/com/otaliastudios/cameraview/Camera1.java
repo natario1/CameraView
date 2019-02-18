@@ -190,7 +190,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             width = Math.min(previewSize.getHeight(), previewSize.getWidth());
             height = Math.max(previewSize.getHeight(), previewSize.getWidth());
         }
-        mPreview.setInputStreamSize(width,height, wasFlipped);
+        mPreview.setInputStreamSize(width, height, wasFlipped);
 
         Camera.Parameters params = mCamera.getParameters();
         mPreviewFormat = params.getPreviewFormat();
