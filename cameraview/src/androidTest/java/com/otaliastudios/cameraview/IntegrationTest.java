@@ -88,6 +88,15 @@ public class IntegrationTest extends BaseTest {
         controller.mCrashHandler = crashThread.get();
     }
 
+    @Test
+    public void testPreviewOrientationOnRotation(){
+        waitForOpen(true);
+        controller.setDeviceOrientation(270);
+        assertEquals(controller.getCameraOrientation(), 0);
+        controller.setDeviceOrientation(0);
+        assertEquals(controller.getCameraOrientation(), 90);
+    }
+
     @After
     public void tearDown() throws Exception {
         camera.stopVideo();
@@ -158,14 +167,7 @@ public class IntegrationTest extends BaseTest {
     //region test open/close
 
 
-    @Test
-    public void testPreviewSizeOnOrientationChange() {
-        waitForOpen(true);
-        controller.setDeviceOrientation(90);
-        assertTrue(controller.mPreviewSize.getWidth() > controller.mPreviewSize.getHeight());
-        controller.setDeviceOrientation(0);
-        assertTrue(controller.mPreviewSize.getWidth() < controller.mPreviewSize.getHeight());
-    }
+
 
     @Test
     public void testOpenClose() throws Exception {

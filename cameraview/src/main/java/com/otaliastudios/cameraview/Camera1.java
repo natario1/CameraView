@@ -165,14 +165,21 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
      void setDeviceOrientation(int deviceOrientation) {
         super.setDeviceOrientation(deviceOrientation);
         if (mCamera != null && mPreview != null) {
-            if (this.getDeviceOrientation() == 270)
-                mCamera.setDisplayOrientation(0);
-            else if (this.getDeviceOrientation() == 90)
-                mCamera.setDisplayOrientation(180);
-            else if (this.getDeviceOrientation() == 0)
-                mCamera.setDisplayOrientation(90);
+            int cameraOrientation = getCameraOrientation();
+            mCamera.setDisplayOrientation(cameraOrientation);
         }
     }
+
+    public int getCameraOrientation(){
+        if (this.getDeviceOrientation() == 270)
+            return 0;
+        else if (this.getDeviceOrientation() == 90)
+           return 180;
+        else if (this.getDeviceOrientation() == 0)
+            return 90;
+        return 270;
+    }
+
 
     // To be called when the preview size is setup or changed.
     private void startPreview(String log) {
