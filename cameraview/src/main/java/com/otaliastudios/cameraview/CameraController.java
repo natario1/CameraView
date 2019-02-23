@@ -91,7 +91,7 @@ abstract class CameraController implements
         mFrameManager = new FrameManager(2, this);
     }
 
-    void setPreview(CameraPreview cameraPreview) {
+    void setPreview(@NonNull CameraPreview cameraPreview) {
         mPreview = cameraPreview;
         mPreview.setSurfaceCallback(this);
     }
