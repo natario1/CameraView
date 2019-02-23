@@ -314,6 +314,7 @@ final class EglCore {
 
     /**
      * Sends the presentation time stamp to EGL.  Time is expressed in nanoseconds.
+     * https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_presentation_time.txt
      */
     public void setPresentationTime(EGLSurface eglSurface, long nsecs) {
         EGLExt.eglPresentationTimeANDROID(mEGLDisplay, eglSurface, nsecs);

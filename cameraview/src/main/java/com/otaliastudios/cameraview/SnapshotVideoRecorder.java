@@ -58,8 +58,13 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     @Override
     public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
+            // Set default options
+            if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
+            if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
+            if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
+
+            // Video. Ensure width and height are divisible by 2, as I have read somewhere.
             Size size = mResult.getSize();
-            // Ensure width and height are divisible by 2, as I have read somewhere.
             int width = size.getWidth();
             int height = size.getHeight();
             width = width % 2 == 0 ? width : width + 1;
@@ -70,9 +75,6 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                 case H_264: type = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
                 case DEVICE_DEFAULT: type = "video/avc"; break;
             }
-            if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
-            if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
-            if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
             LOG.w("Creating frame encoder. Rotation:", mResult.rotation);
             TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(width, height,
                     mResult.videoBitRate,
@@ -84,10 +86,14 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                     EGL14.eglGetCurrentContext()
             );
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
+
+            // Audio
             AudioMediaEncoder audioEncoder = null;
             if (mResult.audio == Audio.ON) {
                 audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config(mResult.audioBitRate));
             }
+
+            // Engine
             mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, audioEncoder,
                     mResult.maxDuration, mResult.maxSize, SnapshotVideoRecorder.this);
             mEncoderEngine.start();
@@ -96,11 +102,11 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
         }
 
         if (mCurrentState == STATE_RECORDING) {
-            TextureMediaEncoder.Frame frame = new TextureMediaEncoder.Frame();
-            frame.timestamp = surfaceTexture.getTimestamp();
-            frame.transform = new float[16]; // TODO would be cool to avoid this at every frame. But it's not easy.
-            surfaceTexture.getTransformMatrix(frame.transform);
-            mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
+            TextureMediaEncoder textureEncoder = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
+            TextureMediaEncoder.TextureFrame textureFrame = textureEncoder.acquireFrame();
+            textureFrame.timestamp = surfaceTexture.getTimestamp();
+            surfaceTexture.getTransformMatrix(textureFrame.transform);
+            mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
         }
 
         if (mCurrentState == STATE_RECORDING && mDesiredState == STATE_NOT_RECORDING) {
@@ -113,7 +119,6 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
 
     }
 
-    @EncoderThread
     @Override
     public void onEncoderStop(int stopReason, @Nullable Exception e) {
         // If something failed, undo the result, since this is the mechanism

@@ -2,6 +2,8 @@ package com.otaliastudios.cameraview;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
+
 import androidx.annotation.NonNull;
 
 import java.lang.ref.WeakReference;
@@ -63,8 +65,13 @@ class WorkerHandler {
     }
 
     @NonNull
-    public Thread getThread() {
+    public HandlerThread getThread() {
         return mThread;
+    }
+
+    @NonNull
+    public Looper getLooper() {
+        return mThread.getLooper();
     }
 
     static void destroy() {
@@ -73,6 +80,7 @@ class WorkerHandler {
             WorkerHandler handler = ref.get();
             if (handler != null && handler.getThread().isAlive()) {
                 handler.getThread().interrupt();
+                // handler.getThread().quit();
             }
             ref.clear();
         }
