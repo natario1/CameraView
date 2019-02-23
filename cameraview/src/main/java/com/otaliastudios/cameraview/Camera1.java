@@ -440,8 +440,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             Camera.CameraInfo info = new Camera.CameraInfo();
             Camera.getCameraInfo(mCameraId, info);
             if (info.canDisableShutterSound) {
-                mCamera.enableShutterSound(mPlaySounds);
-                return true;
+                try {
+                    // this method is documented to throw on some occasions. #377
+                    return mCamera.enableShutterSound(mPlaySounds);
+                } catch (RuntimeException exception) {
+                    return false;
+                }
             }
         }
         if (mPlaySounds) {
