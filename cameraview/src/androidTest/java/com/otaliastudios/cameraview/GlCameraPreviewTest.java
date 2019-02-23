@@ -15,7 +15,7 @@ public class GlCameraPreviewTest extends CameraPreviewTest {
 
     @Override
     protected CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback) {
-        return new GlCameraPreview(context, parent, callback);
+        return new GlCameraPreview(context, parent, callback, false);
     }
 
     @Override

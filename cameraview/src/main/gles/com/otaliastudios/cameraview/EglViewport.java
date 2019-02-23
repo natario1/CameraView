@@ -66,12 +66,7 @@ class EglViewport extends EglElement {
                     "void main() {\n" +
                     "    lowp vec4 c2 = texture2D(sTexture, vTextureCoord);\n" +
                     "    lowp vec4 c1 = texture2D(overlayTexture, vOverlayTextureCoord);\n" +
-                    "    lowp vec4 outputColor;\n" +
-                    "    outputColor.r = c1.r + c2.r * c2.a * (1.0 - c1.a);\n" +
-                    "    outputColor.g = c1.g + c2.g * c2.a * (1.0 - c1.a);\n" +
-                    "    outputColor.b = c1.b + c2.b * c2.a * (1.0 - c1.a);\n" +
-                    "    outputColor.a = c1.a + c2.a * (1.0 - c1.a);\n" +
-                    "    gl_FragColor = outputColor;\n" +
+                    "    gl_FragColor = mix(c2, c1, c1.a);\n" +
                     "}\n";
 
     // Stuff from Drawable2d.FULL_RECTANGLE

@@ -80,7 +80,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                 mResult.size = new Size(crop.width(), crop.height());
                 mSurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
                 if (mOverlaySurfaceTexture != null) {
-                    mSurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
+                    mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
                 }
                 mTransform = new float[16];
                 if (mOverlaySurfaceTexture != null) {
@@ -123,7 +123,6 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         mSurfaceTexture.updateTexImage();
                         mSurfaceTexture.getTransformMatrix(mTransform);
                         if (mOverlaySurfaceTexture != null) {
-                            mOverlaySurfaceTexture.updateTexImage();
                             mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
                         }
 
@@ -153,9 +152,6 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
                         mResult.format = PictureResult.FORMAT_JPEG;
                         mSurfaceTexture.releaseTexImage();
-                        if (mOverlaySurfaceTexture != null) {
-                            mOverlaySurfaceTexture.releaseTexImage();
-                        }
 
                         // EGL14.eglMakeCurrent(oldDisplay, oldSurface, oldSurface, eglContext);
                         surface.release();

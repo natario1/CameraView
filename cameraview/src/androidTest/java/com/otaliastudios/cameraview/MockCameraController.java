@@ -134,4 +134,9 @@ public class MockCameraController extends CameraController {
     void setPlaySounds(boolean playSounds) {
 
     }
+
+    @Override
+    void setDisableOverlayFor(@NonNull DisableOverlayFor disableOverlayFor) {
+
+    }
 }
