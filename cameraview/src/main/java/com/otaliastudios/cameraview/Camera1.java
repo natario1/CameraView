@@ -66,7 +66,10 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         });
     }
 
-    // Preview surface is now available. If camera is open, set up.
+    /**
+     * Preview surface is now available. If camera is open, set up.
+     * At this point we are sure that mPreview is not null.
+     */
     @Override
     public void onSurfaceAvailable() {
         LOG.i("onSurfaceAvailable:", "Size is", mPreview.getOutputSurfaceSize());
@@ -80,8 +83,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         });
     }
 
-    // Preview surface did change its size. Compute a new preview size.
-    // This requires stopping and restarting the preview.
+    /**
+     * Preview surface did change its size. Compute a new preview size.
+     * This requires stopping and restarting the preview.
+     * At this point we are sure that mPreview is not null.
+     */
     @Override
     public void onSurfaceChanged() {
         LOG.i("onSurfaceChanged, size is", mPreview.getOutputSurfaceSize());
@@ -119,8 +125,11 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         return isCameraAvailable() && mPreview != null && mPreview.hasSurface() && !mIsBound;
     }
 
-    // The act of binding an "open" camera to a "ready" preview.
-    // These can happen at different times but we want to end up here.
+    /**
+     * The act of binding an "open" camera to a "ready" preview.
+     * These can happen at different times but we want to end up here.
+     * At this point we are sure that mPreview is not null.
+     */
     @WorkerThread
     private void bindToSurface() {
         LOG.i("bindToSurface:", "Started");
@@ -275,7 +284,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
         if (mCamera != null) {
             stopPreview();
-            unbindFromSurface();
+            if (mIsBound) unbindFromSurface();
             destroyCamera();
         }
         mCameraOptions = null;
