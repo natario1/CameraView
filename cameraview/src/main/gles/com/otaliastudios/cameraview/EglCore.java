@@ -137,7 +137,7 @@ final class EglCore {
         int[] values = new int[1];
         EGL14.eglQueryContext(mEGLDisplay, mEGLContext, EGL14.EGL_CONTEXT_CLIENT_VERSION,
                 values, 0);
-        Log.d(TAG, "EGLContext created, client version " + values[0]);
+        // Log.d(TAG, "EGLContext created, client version " + values[0]);
     }
 
     /**
@@ -273,7 +273,7 @@ final class EglCore {
     public void makeCurrent(EGLSurface eglSurface) {
         if (mEGLDisplay == EGL14.EGL_NO_DISPLAY) {
             // called makeCurrent() before create?
-            Log.d(TAG, "NOTE: makeCurrent w/o display");
+            // Log.d(TAG, "NOTE: makeCurrent w/o display");
         }
         if (!EGL14.eglMakeCurrent(mEGLDisplay, eglSurface, eglSurface, mEGLContext)) {
             throw new RuntimeException("eglMakeCurrent failed");
@@ -349,21 +349,6 @@ final class EglCore {
      */
     public int getGlVersion() {
         return mGlVersion;
-    }
-
-    /**
-     * Writes the current display, context, and surface to the log.
-     */
-    public static void logCurrent(String msg) {
-        EGLDisplay display;
-        EGLContext context;
-        EGLSurface surface;
-
-        display = EGL14.eglGetCurrentDisplay();
-        context = EGL14.eglGetCurrentContext();
-        surface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW);
-        Log.i(TAG, "Current EGL (" + msg + "): display=" + display + ", context=" + context +
-                ", surface=" + surface);
     }
 
     /**

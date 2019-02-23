@@ -8,6 +8,11 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+### v2.0.0-beta03
+
+- Fixed a few bugs ([#392][392])
+- Important fixes to video snapshot recording ([#374][374])
+
 ### v2.0.0-beta02
 
 - Fixed important bugs ([#356][356])
@@ -20,3 +25,5 @@ This is the first beta release. For changes with respect to v1, please take a lo
 
 [356]: https://github.com/natario1/CameraView/pull/356
 [360]: https://github.com/natario1/CameraView/pull/360
+[374]: https://github.com/natario1/CameraView/pull/374
+[392]: https://github.com/natario1/CameraView/pull/392

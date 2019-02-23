@@ -602,7 +602,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void open() {
         if (!isEnabled()) return;
         if (mCameraPreview != null) mCameraPreview.onResume();
-
         if (checkPermissions(getAudio())) {
             // Update display orientation for current CameraController
             mOrientationHelper.enable(getContext());
