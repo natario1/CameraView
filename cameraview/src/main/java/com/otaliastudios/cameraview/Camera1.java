@@ -72,7 +72,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
      */
     @Override
     public void onSurfaceAvailable() {
-        LOG.i("onSurfaceAvailable:", "Size is", mPreview.getOutputSurfaceSize());
+        LOG.i("onSurfaceAvailable:", "Size is", getSurfaceSize(REF_VIEW));
         schedule(null, false, new Runnable() {
             @Override
             public void run() {
@@ -90,7 +90,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
      */
     @Override
     public void onSurfaceChanged() {
-        LOG.i("onSurfaceChanged, size is", mPreview.getOutputSurfaceSize());
+        LOG.i("onSurfaceChanged, size is", getSurfaceSize(REF_VIEW));
         schedule(null, true, new Runnable() {
             @Override
             public void run() {

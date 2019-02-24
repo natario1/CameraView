@@ -493,19 +493,28 @@ abstract class CameraController implements
         return offset(reference1, reference2) % 180 != 0;
     }
 
+    @Nullable
     final Size getPictureSize(@SuppressWarnings("SameParameterValue") int reference) {
         if (mCaptureSize == null || mMode == Mode.VIDEO) return null;
         return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
+    @Nullable
     final Size getVideoSize(@SuppressWarnings("SameParameterValue") int reference) {
         if (mCaptureSize == null || mMode == Mode.PICTURE) return null;
         return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
+    @Nullable
     final Size getPreviewSize(int reference) {
         if (mPreviewSize == null) return null;
         return flip(REF_SENSOR, reference) ? mPreviewSize.flip() : mPreviewSize;
+    }
+
+    @Nullable
+    final Size getSurfaceSize(int reference) {
+        if (mPreview == null) return null;
+        return flip(REF_VIEW, reference) ? mPreview.getOutputSurfaceSize().flip() : mPreview.getOutputSurfaceSize();
     }
 
 
@@ -561,7 +570,7 @@ abstract class CameraController implements
 
         // Create our own default selector, which will be used if the external mPreviewSizeSelector
         // is null, or if it fails in finding a size.
-        Size targetMinSize = mPreview.getOutputSurfaceSize();
+        Size targetMinSize = getSurfaceSize(REF_VIEW);
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         if (flip) targetRatio = targetRatio.inverse();
         LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
