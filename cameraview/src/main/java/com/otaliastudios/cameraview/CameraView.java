@@ -24,6 +24,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -274,13 +275,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (mCameraPreview == null) {
 
             // check if we have any overlay view before instantiating preview
+            boolean foundOverlay = false;
             for (int i = 0; i < getChildCount(); i++) {
                 View view = getChildAt(i);
                 if (view.getLayoutParams() instanceof OverlayLayoutParams &&
                         ((OverlayLayoutParams) view.getLayoutParams()).isOverlay) {
-                    mHasOverlay = true;
+                    foundOverlay = true;
                 }
             }
+            mHasOverlay = foundOverlay;
 
             // isHardwareAccelerated will return the real value only after we are
             // attached. That's why we instantiate the preview here.
@@ -295,19 +298,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 }
             });
 
-            LinkedList<Integer> indexesOverlayViews = new LinkedList<>();
+            LinkedList<View> overlayViews = new LinkedList<>();
             for (int i = 0; i < getChildCount(); i++) {
                 View view = getChildAt(i);
                 if (view.getLayoutParams() instanceof OverlayLayoutParams &&
                         ((OverlayLayoutParams) view.getLayoutParams()).isOverlay) {
-                    indexesOverlayViews.add(i);
+                    overlayViews.add(view);
                 }
             }
-            for (Integer i : indexesOverlayViews) {
-                if (i != null && getChildAt(i) != null) {
-                    View view = getChildAt(i);
-
-                    removeViewAt(i);
+            for (View view : overlayViews) {
+                if (view != null) {
+                    Log.d(TAG, "onAttachedToWindow: ovel:" + view.toString());
+                    removeView(view);
                     mPreviewOverlayLayout.addView(view);
                 }
             }
