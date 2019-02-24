@@ -661,5 +661,17 @@ public class CameraViewTest extends BaseTest {
 
     //endregion
 
+    //region Snapshots
+
+    @Test
+    public void testSetSnapshotMaxSize() {
+        cameraView.setSnapshotMaxWidth(500);
+        cameraView.setSnapshotMaxHeight(1000);
+        assertEquals(mockController.mSnapshotMaxWidth, 500);
+        assertEquals(mockController.mSnapshotMaxHeight, 1000);
+    }
+
+    //endregion
+
     // TODO: test permissions
 }

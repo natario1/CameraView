@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import java.io.File;
@@ -53,8 +54,10 @@ abstract class CameraController implements
     private SizeSelector mPictureSizeSelector;
     private SizeSelector mVideoSizeSelector;
 
-    private int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
-    private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
 
     protected int mCameraId;
     protected CameraOptions mCameraOptions;

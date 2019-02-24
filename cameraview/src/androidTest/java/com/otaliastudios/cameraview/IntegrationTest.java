@@ -89,7 +89,7 @@ public class IntegrationTest extends BaseTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         camera.stopVideo();
         camera.destroy();
         WorkerHandler.destroy();
