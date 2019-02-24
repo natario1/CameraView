@@ -28,17 +28,17 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                dispatchOnOutputSurfaceAvailable(width, height);
+                dispatchOnSurfaceAvailable(width, height);
             }
 
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-                dispatchOnOutputSurfaceSizeChanged(width, height);
+                dispatchOnSurfaceSizeChanged(width, height);
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                dispatchOnOutputSurfaceDestroyed();
+                dispatchOnSurfaceDestroyed();
                 return true;
             }
 
@@ -70,8 +70,8 @@ class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
     @TargetApi(15)
     @Override
-    void setInputStreamSize(int width, int height, boolean wasFlipped) {
-        super.setInputStreamSize(width, height, wasFlipped);
+    void setStreamSize(int width, int height, boolean wasFlipped) {
+        super.setStreamSize(width, height, wasFlipped);
         if (getView().getSurfaceTexture() != null) {
             getView().getSurfaceTexture().setDefaultBufferSize(width, height);
         }

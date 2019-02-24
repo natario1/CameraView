@@ -311,7 +311,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Size previewSize = mCameraController.getPreviewSize(CameraController.REF_VIEW);
+        Size previewSize = mCameraController.getPreviewStreamSize(CameraController.REF_VIEW);
         if (previewSize == null) {
             LOG.w("onMeasure:", "surface is not ready. Calling default behavior.");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -1073,15 +1073,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * upscaling. If all you want is set an aspect ratio, use {@link #setPictureSize(SizeSelector)}
      * and {@link #setVideoSize(SizeSelector)}.
      *
-     * When size changes, the {@link CameraView} is remeasured so any WRAP_CONTENT dimension
+     * When stream size changes, the {@link CameraView} is remeasured so any WRAP_CONTENT dimension
      * is recomputed accordingly.
      *
      * See the {@link SizeSelectors} class for handy utilities for creating selectors.
      *
      * @param selector a size selector
      */
-    public void setPreviewSize(@NonNull SizeSelector selector) {
-        mCameraController.setPreviewSizeSelector(selector);
+    public void setPreviewStreamSize(@NonNull SizeSelector selector) {
+        mCameraController.setPreviewStreamSizeSelector(selector);
     }
 
 
@@ -1388,6 +1388,27 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         });
     }
 
+    /**
+     * Sets the max width for snapshots taken with {@link #takePictureSnapshot()} or
+     * {@link #takeVideoSnapshot(File)}. If the snapshot width exceeds this value, the snapshot
+     * will be scaled down to match this constraint.
+     *
+     * @param maxWidth max width for snapshots
+     */
+    public void setSnapshotMaxWidth(int maxWidth) {
+        mCameraController.setSnapshotMaxWidth(maxWidth);
+    }
+
+    /**
+     * Sets the max height for snapshots taken with {@link #takePictureSnapshot()} or
+     * {@link #takeVideoSnapshot(File)}. If the snapshot height exceeds this value, the snapshot
+     * will be scaled down to match this constraint.
+     *
+     * @param maxHeight max height for snapshots
+     */
+    public void setSnapshotMaxHeight(int maxHeight) {
+        mCameraController.setSnapshotMaxHeight(maxHeight);
+    }
 
     /**
      * Returns the size used for snapshots, or null if it hasn't been computed
@@ -1402,7 +1423,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Get the preview size and crop according to the current view size.
         // It's better to do calculations in the REF_VIEW reference, and then flip if needed.
-        Size preview = mCameraController.getPreviewSize(CameraController.REF_VIEW);
+        Size preview = mCameraController.getUncroppedSnapshotSize(CameraController.REF_VIEW);
         AspectRatio viewRatio = AspectRatio.of(getWidth(), getHeight());
         Rect crop = CropHelper.computeCrop(preview, viewRatio);
         Size cropSize = new Size(crop.width(), crop.height());
@@ -1597,7 +1618,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     interface CameraCallbacks extends OrientationHelper.Callback {
         void dispatchOnCameraOpened(CameraOptions options);
         void dispatchOnCameraClosed();
-        void onCameraPreviewSizeChanged();
+        void onCameraPreviewStreamSizeChanged();
         void onShutter(boolean shouldPlaySound);
         void dispatchOnVideoTaken(VideoResult result);
         void dispatchOnPictureTaken(PictureResult result);
@@ -1642,8 +1663,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void onCameraPreviewSizeChanged() {
-            mLogger.i("onCameraPreviewSizeChanged");
+        public void onCameraPreviewStreamSizeChanged() {
+            mLogger.i("onCameraPreviewStreamSizeChanged");
             // Camera preview size has changed.
             // Request a layout pass for onMeasure() to do its stuff.
             // Potentially this will change CameraView size, which changes Surface size,

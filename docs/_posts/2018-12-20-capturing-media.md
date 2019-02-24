@@ -46,8 +46,8 @@ resulting snapshots are square as well, no matter what the sensor available size
 |------|-----|-------|--------------------------|------------------------|---------|-----------|
 |`takePicture()`|Pictures|Standard|`yes`|`no`|`no`|That of `setPictureSize`|
 |`takeVideo(File)`|Videos|Standard|`no`|`yes`|`no`|That of `setVideoSize`|
-|`takePictureSnapshot()`|Pictures|Snapshot|`yes`|`yes`|`yes`|That of the view|
-|`takeVideoSnapshot(File)`|Videos|Snapshot|`yes`|`yes`|`yes`|That of the view|
+|`takePictureSnapshot()`|Pictures|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size.html)|
+|`takeVideoSnapshot(File)`|Videos|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size.html)|
 
 Please note that the video snaphot features requires:
 

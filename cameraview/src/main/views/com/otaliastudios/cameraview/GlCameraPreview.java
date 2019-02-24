@@ -85,7 +85,7 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                dispatchOnOutputSurfaceDestroyed();
+                dispatchOnSurfaceDestroyed();
                 mDispatched = false;
             }
         });
@@ -159,7 +159,7 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     @Override
     public void onSurfaceChanged(GL10 gl, final int width, final int height) {
         if (!mDispatched) {
-            dispatchOnOutputSurfaceAvailable(width, height);
+            dispatchOnSurfaceAvailable(width, height);
             mDispatched = true;
         } else if (mOutputSurfaceWidth == width && mOutputSurfaceHeight == height) {
             // I was experimenting and this was happening.
@@ -168,13 +168,13 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             // With other CameraPreview implementation we could just dispatch the 'size changed' event
             // to the controller and everything would go straight. In case of GL, apparently we have to
             // force recreate the EGLContext by calling onPause and onResume in the UI thread.
-            dispatchOnOutputSurfaceDestroyed();
+            dispatchOnSurfaceDestroyed();
             getView().post(new Runnable() {
                 @Override
                 public void run() {
                     getView().onPause();
                     getView().onResume();
-                    dispatchOnOutputSurfaceAvailable(width, height);
+                    dispatchOnSurfaceAvailable(width, height);
                 }
             });
         }

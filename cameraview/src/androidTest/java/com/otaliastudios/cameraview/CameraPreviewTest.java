@@ -102,17 +102,17 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     @Test
     public void testDesiredSize() {
-        preview.setInputStreamSize(160, 90, false);
-        assertEquals(160, preview.getInputStreamSize().getWidth());
-        assertEquals(90, preview.getInputStreamSize().getHeight());
+        preview.setStreamSize(160, 90, false);
+        assertEquals(160, preview.getStreamSize().getWidth());
+        assertEquals(90, preview.getStreamSize().getHeight());
     }
 
     @Test
     public void testSurfaceAvailable() {
         ensureAvailable();
         verify(callback, times(1)).onSurfaceAvailable();
-        assertEquals(surfaceSize.getWidth(), preview.getOutputSurfaceSize().getWidth());
-        assertEquals(surfaceSize.getHeight(), preview.getOutputSurfaceSize().getHeight());
+        assertEquals(surfaceSize.getWidth(), preview.getSurfaceSize().getWidth());
+        assertEquals(surfaceSize.getHeight(), preview.getSurfaceSize().getHeight());
     }
 
     @Test
@@ -121,8 +121,8 @@ public abstract class CameraPreviewTest extends BaseTest {
         ensureDestroyed();
         // This might be called twice in Texture because it overrides ensureDestroyed method
         verify(callback, atLeastOnce()).onSurfaceDestroyed();
-        assertEquals(0, preview.getOutputSurfaceSize().getWidth());
-        assertEquals(0, preview.getOutputSurfaceSize().getHeight());
+        assertEquals(0, preview.getSurfaceSize().getWidth());
+        assertEquals(0, preview.getSurfaceSize().getHeight());
     }
 
     @Test
@@ -146,7 +146,7 @@ public abstract class CameraPreviewTest extends BaseTest {
         // Since desired is 'desired', let's fake a new view size that is consistent with it.
         // Ensure crop is not happening anymore.
         preview.mCropTask.listen();
-        preview.dispatchOnOutputSurfaceSizeChanged((int) (50f * desired), 50); // Wait...
+        preview.dispatchOnSurfaceSizeChanged((int) (50f * desired), 50); // Wait...
         preview.mCropTask.await();
         assertEquals(desired, getViewAspectRatioWithScale(), 0.01f);
         assertFalse(preview.isCropping());
@@ -154,19 +154,19 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     private void setDesiredAspectRatio(float desiredAspectRatio) {
         preview.mCropTask.listen();
-        preview.setInputStreamSize((int) (10f * desiredAspectRatio), 10, false); // Wait...
+        preview.setStreamSize((int) (10f * desiredAspectRatio), 10, false); // Wait...
         preview.mCropTask.await();
         assertEquals(desiredAspectRatio, getViewAspectRatioWithScale(), 0.01f);
 
     }
 
     private float getViewAspectRatio() {
-        Size size = preview.getOutputSurfaceSize();
+        Size size = preview.getSurfaceSize();
         return AspectRatio.of(size.getWidth(), size.getHeight()).toFloat();
     }
 
     private float getViewAspectRatioWithScale() {
-        Size size = preview.getOutputSurfaceSize();
+        Size size = preview.getSurfaceSize();
         int newWidth = (int) (((float) size.getWidth()) * getCropScaleX());
         int newHeight = (int) (((float) size.getHeight()) * getCropScaleY());
         return AspectRatio.of(newWidth, newHeight).toFloat();

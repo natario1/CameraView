@@ -55,13 +55,13 @@ This means that part of the preview might be hidden, and the output might contai
 that were not visible during the capture, **unless it is taken as a snapshot, since snapshots account for cropping**.
 
 
-## Advanced feature: Preview Size Selection
+## Advanced feature: Preview Stream Size Selection
 
 **Only do this if you know what you are doing. This is typically not needed - prefer picture/video size selectors,
-as they will drive the preview size selection and, eventually, the view size. If what you want is just
+as they will drive the preview stream size selection and, eventually, the view size. If what you want is just
 choose an aspect ratio, do so with [Capture Size](capture-size.html) selection.**
 
-As said, `WRAP_CONTENT` adapts the view boundaries to the preview size. The preview size must be determined
+As said, `WRAP_CONTENT` adapts the view boundaries to the preview stream size. The preview stream size must be determined
 based on the sizes that the device sensor & hardware actually support. This operation is done automatically
 by the engine. The default selector will do the following:
 
@@ -70,10 +70,10 @@ by the engine. The default selector will do the following:
 - Try to match both, or just one, or fallback to the biggest available size
 
 There are not so many reason why you would replace this, other than control the frame processor size
-or, indirectly, the snapshot size. You can, however, hook into the process using `setPreviewSize(SizeSelector)`:
+or, indirectly, the snapshot size. You can, however, hook into the process using `setPreviewStreamSize(SizeSelector)`:
 
 ```java
-cameraView.setPreviewSize(new SizeSelector() {
+cameraView.setPreviewStreamSize(new SizeSelector() {
     @Override
     public List<Size> select(List<Size> source) {
         // Receives a list of available sizes.
@@ -82,7 +82,7 @@ cameraView.setPreviewSize(new SizeSelector() {
 });
 ```
 
-After the preview size is determined, if it has changed since list time, the `CameraView` will receive
+After the preview stream size is determined, if it has changed since list time, the `CameraView` will receive
 another call to `onMeasure` so the `WRAP_CONTENT` magic can take place.
 
 To understand how SizeSelectors work and the available utilities, please read the [Capture Size](capture-size.html) document.

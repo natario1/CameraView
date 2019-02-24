@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import java.io.File;
@@ -49,9 +50,14 @@ abstract class CameraController implements
     protected float mExposureCorrectionValue;
     protected boolean mPlaySounds;
 
-    @Nullable private SizeSelector mPreviewSizeSelector;
+    @Nullable private SizeSelector mPreviewStreamSizeSelector;
     private SizeSelector mPictureSizeSelector;
     private SizeSelector mVideoSizeSelector;
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
 
     protected int mCameraId;
     protected CameraOptions mCameraOptions;
@@ -64,7 +70,7 @@ abstract class CameraController implements
     protected int mVideoBitRate;
     protected int mAudioBitRate;
     protected Size mCaptureSize;
-    protected Size mPreviewSize;
+    protected Size mPreviewStreamSize;
     protected int mPreviewFormat;
 
     protected int mSensorOffset;
@@ -279,8 +285,8 @@ abstract class CameraController implements
         mDeviceOrientation = deviceOrientation;
     }
 
-    final void setPreviewSizeSelector(@Nullable SizeSelector selector) {
-        mPreviewSizeSelector = selector;
+    final void setPreviewStreamSizeSelector(@Nullable SizeSelector selector) {
+        mPreviewStreamSizeSelector = selector;
     }
 
     final void setPictureSizeSelector(@NonNull SizeSelector selector) {
@@ -309,6 +315,14 @@ abstract class CameraController implements
 
     final void setAudioBitRate(int audioBitRate) {
         mAudioBitRate = audioBitRate;
+    }
+
+    final void setSnapshotMaxWidth(int maxWidth) {
+        mSnapshotMaxWidth = maxWidth;
+    }
+
+    final void setSnapshotMaxHeight(int maxHeight) {
+        mSnapshotMaxHeight = maxHeight;
     }
 
     //endregion
@@ -421,8 +435,8 @@ abstract class CameraController implements
     }
 
     @Nullable
-    /* for tests */ final SizeSelector getPreviewSizeSelector() {
-        return mPreviewSizeSelector;
+    /* for tests */ final SizeSelector getPreviewStreamSizeSelector() {
+        return mPreviewStreamSizeSelector;
     }
 
     @NonNull
@@ -493,19 +507,71 @@ abstract class CameraController implements
         return offset(reference1, reference2) % 180 != 0;
     }
 
+    @Nullable
     final Size getPictureSize(@SuppressWarnings("SameParameterValue") int reference) {
         if (mCaptureSize == null || mMode == Mode.VIDEO) return null;
         return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
+    @Nullable
     final Size getVideoSize(@SuppressWarnings("SameParameterValue") int reference) {
         if (mCaptureSize == null || mMode == Mode.PICTURE) return null;
         return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
-    final Size getPreviewSize(int reference) {
-        if (mPreviewSize == null) return null;
-        return flip(REF_SENSOR, reference) ? mPreviewSize.flip() : mPreviewSize;
+    @Nullable
+    final Size getPreviewStreamSize(int reference) {
+        if (mPreviewStreamSize == null) return null;
+        return flip(REF_SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    @Nullable
+    final Size getPreviewSurfaceSize(int reference) {
+        if (mPreview == null) return null;
+        return flip(REF_VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
+    }
+
+    /**
+     * Returns the snapshot size, but not cropped with the view dimensions, which
+     * is what we will do before creating the snapshot. However, cropping is done at various
+     * levels so we don't want to perform the op here.
+     *
+     * The base snapshot size is based on PreviewStreamSize (later cropped with view ratio). Why?
+     * One might be tempted to say that it is the SurfaceSize (which already matches the view ratio).
+     *
+     * The camera sensor will capture preview frames with PreviewStreamSize and that's it. Then they
+     * are hardware-scaled by the preview surface, but this does not affect the snapshot, as the
+     * snapshot recorder simply creates another surface.
+     *
+     * Done tests to ensure that this is true, by using
+     * 1. small SurfaceSize and biggest() PreviewStreamSize: output is not low quality
+     * 2. big SurfaceSize and smallest() PreviewStreamSize: output is low quality
+     * In both cases the result.size here was set to the biggest of the two.
+     *
+     * I could not find the same evidence for videos, but I would say that the same things should
+     * apply, despite the capturing mechanism being different.
+     */
+    @Nullable
+    final Size getUncroppedSnapshotSize(int reference) {
+        Size baseSize = getPreviewStreamSize(reference);
+        if (baseSize == null) return null;
+        boolean flip = flip(reference, REF_VIEW);
+        int maxWidth = flip ? mSnapshotMaxHeight : mSnapshotMaxWidth;
+        int maxHeight = flip ? mSnapshotMaxWidth : mSnapshotMaxHeight;
+        float baseRatio = AspectRatio.of(baseSize).toFloat();
+        float maxValuesRatio = AspectRatio.of(maxWidth, maxHeight).toFloat();
+        if (maxValuesRatio >= baseRatio) {
+            // Height is the real constraint.
+            int outHeight = Math.min(baseSize.getHeight(), maxHeight);
+            int outWidth = (int) Math.floor((float) outHeight * baseRatio);
+            return new Size(outWidth, outHeight);
+        } else {
+            // Width is the real constraint.
+            int outWidth = Math.min(baseSize.getWidth(), maxWidth);
+            int outHeight = (int) Math.floor((float) outWidth / baseRatio);
+            return new Size(outWidth, outHeight);
+        }
     }
 
 
@@ -550,7 +616,7 @@ abstract class CameraController implements
 
     @NonNull
     @SuppressWarnings("WeakerAccess")
-    protected final Size computePreviewSize(@NonNull List<Size> previewSizes) {
+    protected final Size computePreviewStreamSize(@NonNull List<Size> previewSizes) {
         // These sizes come in REF_SENSOR. Since there is an external selector involved,
         // we must convert all of them to REF_VIEW, then flip back when returning.
         boolean flip = flip(REF_SENSOR, REF_VIEW);
@@ -559,12 +625,12 @@ abstract class CameraController implements
             sizes.add(flip ? size.flip() : size);
         }
 
-        // Create our own default selector, which will be used if the external mPreviewSizeSelector
+        // Create our own default selector, which will be used if the external mPreviewStreamSizeSelector
         // is null, or if it fails in finding a size.
-        Size targetMinSize = mPreview.getOutputSurfaceSize();
+        Size targetMinSize = getPreviewSurfaceSize(REF_VIEW);
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         if (flip) targetRatio = targetRatio.inverse();
-        LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
+        LOG.i("size:", "computePreviewStreamSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
         SizeSelector matchRatio = SizeSelectors.and( // Match this aspect ratio and sort by biggest
                 SizeSelectors.aspectRatio(targetRatio, 0),
                 SizeSelectors.biggest());
@@ -582,14 +648,14 @@ abstract class CameraController implements
         // Apply the external selector with this as a fallback,
         // and return a size in REF_SENSOR reference.
         SizeSelector selector;
-        if (mPreviewSizeSelector != null) {
-            selector = SizeSelectors.or(mPreviewSizeSelector, matchAll);
+        if (mPreviewStreamSizeSelector != null) {
+            selector = SizeSelectors.or(mPreviewStreamSizeSelector, matchAll);
         } else {
             selector = matchAll;
         }
         Size result = selector.select(sizes).get(0);
         if (flip) result = result.flip();
-        LOG.i("computePreviewSize:", "result:", result, "flip:", flip);
+        LOG.i("computePreviewStreamSize:", "result:", result, "flip:", flip);
         return result;
     }
 

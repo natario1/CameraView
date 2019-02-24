@@ -5,6 +5,8 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
+
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.MediaController;
@@ -73,6 +75,11 @@ public class VideoPreviewActivity extends Activity {
                 lp.height = (int) (viewWidth * (videoHeight / videoWidth));
                 videoView.setLayoutParams(lp);
                 playVideo();
+
+                if (result.isSnapshot()) {
+                    // Log the real size for debugging reason.
+                    Log.e("VideoPreview", "The video full size is " + videoWidth + "x" + videoHeight);
+                }
             }
         });
     }
