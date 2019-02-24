@@ -53,6 +53,9 @@ abstract class CameraController implements
     private SizeSelector mPictureSizeSelector;
     private SizeSelector mVideoSizeSelector;
 
+    private int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+    private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+
     protected int mCameraId;
     protected CameraOptions mCameraOptions;
     protected Mapper mMapper;
@@ -311,6 +314,14 @@ abstract class CameraController implements
         mAudioBitRate = audioBitRate;
     }
 
+    final void setSnapshotMaxWidth(int maxWidth) {
+        mSnapshotMaxWidth = maxWidth;
+    }
+
+    final void setSnapshotMaxHeight(int maxHeight) {
+        mSnapshotMaxHeight = maxHeight;
+    }
+
     //endregion
 
     //region Abstract setters and APIs
@@ -516,6 +527,39 @@ abstract class CameraController implements
     final Size getPreviewSurfaceSize(int reference) {
         if (mPreview == null) return null;
         return flip(REF_VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
+    }
+
+    /**
+     * Returns the snapshot size, but not cropped with the view dimensions, which
+     * is what we will do before creating the snapshot. However, cropping is done at various
+     * levels so we don't want to perform the op here.
+     *
+     * The base snapshot size is based on PreviewStreamSize (later cropped with view ratio). Why?
+     * One might be tempted to say that it is the SurfaceSize (which already matches the view ratio).
+     *
+     * The camera sensor will capture preview frames with PreviewStreamSize and that's it. Then they
+     * are hardware-scaled by the preview surface, but this does not affect the snapshot, as the
+     * snapshot recorder simply creates another surface.
+     *
+     * Done tests to ensure that this is true, by using
+     * 1. small SurfaceSize and biggest() PreviewStreamSize: output is not low quality
+     * 2. big SurfaceSize and smallest() PreviewStreamSize: output is low quality
+     * In both cases the result.size here was set to the biggest of the two.
+     *
+     * I could not find the same evidence for videos, but I would say that the same things should
+     * apply, despite the capturing mechanism being different.
+     */
+    @Nullable
+    final Size getUncroppedSnapshotSize(int reference) {
+        Size baseSize = getPreviewStreamSize(reference);
+        if (baseSize == null) return null;
+        boolean flip = flip(reference, REF_VIEW);
+        int maxWidth = flip ? mSnapshotMaxHeight : mSnapshotMaxWidth;
+        int maxHeight = flip ? mSnapshotMaxWidth : mSnapshotMaxHeight;
+        return new Size(
+                Math.min(baseSize.getWidth(), maxWidth),
+                Math.max(baseSize.getHeight(), maxHeight)
+        );
     }
 
 

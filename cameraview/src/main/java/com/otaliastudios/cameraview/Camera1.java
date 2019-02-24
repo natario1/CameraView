@@ -580,18 +580,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     /**
      * Just a note about the snapshot size - it is the PreviewStreamSize, cropped with the view ratio.
-     * One might be tempted to say that it is the SurfaceSize (which already matches the view ratio),
-     * but it's not.
-     *
-     * The camera sensor will capture preview frames with PreviewStreamSize and that's it. Then they
-     * are hardware-scaled by the preview surface, but this does not affect the snapshot, as the
-     * snapshot recorder simply creates another surface.
-     *
-     * Done tests to ensure that this is true, by using
-     * 1. small SurfaceSize and biggest() PreviewStreamSize: output is not low quality
-     * 2. big SurfaceSize and smallest() PreviewStreamSize: output is low quality
-     * In both cases the result.size here was set to the biggest of the two.
-     *
      * @param viewAspectRatio the view aspect ratio
      */
     @Override
@@ -607,7 +595,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 result.location = mLocation;
                 result.isSnapshot = true;
                 result.facing = mFacing;
-                result.size = getPreviewStreamSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
+                result.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
                 result.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
                 AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
                 // LOG.e("ROTBUG_pic", "aspectRatio (REF_VIEW):", viewAspectRatio);
@@ -713,11 +701,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     }
 
     /**
-     * Is output size the SurfaceSize or the PreviewStreamSize ?
-     * I could not find evidence by testing, but I think that comments in {@link #takePictureSnapshot(AspectRatio)}
-     * would still apply here, despite the capturing mechanism being different.
-     * So we should use PreviewStreamSize as output size, cropped by the view aspect ratio.
-     *
      * @param file the output file
      * @param viewAspectRatio the view aspect ratio
      */
@@ -783,7 +766,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 // Based on this we will use VO for everything. See if we get issues about distortion
                 // and maybe we can improve. The reason why this happen is beyond my understanding.
 
-                Size outputSize = getPreviewStreamSize(REF_OUTPUT);
+                Size outputSize = getUncroppedSnapshotSize(REF_OUTPUT);
                 AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
                 Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
                 outputSize = new Size(outputCrop.width(), outputCrop.height());

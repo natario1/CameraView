@@ -1388,6 +1388,27 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         });
     }
 
+    /**
+     * Sets the max width for snapshots taken with {@link #takePictureSnapshot()} or
+     * {@link #takeVideoSnapshot(File)}. If the snapshot width exceeds this value, the snapshot
+     * will be scaled down to match this constraint.
+     *
+     * @param maxWidth max width for snapshots
+     */
+    public void setSnapshotMaxWidth(int maxWidth) {
+        mCameraController.setSnapshotMaxWidth(maxWidth);
+    }
+
+    /**
+     * Sets the max height for snapshots taken with {@link #takePictureSnapshot()} or
+     * {@link #takeVideoSnapshot(File)}. If the snapshot height exceeds this value, the snapshot
+     * will be scaled down to match this constraint.
+     *
+     * @param maxHeight max height for snapshots
+     */
+    public void setSnapshotMaxHeight(int maxHeight) {
+        mCameraController.setSnapshotMaxHeight(maxHeight);
+    }
 
     /**
      * Returns the size used for snapshots, or null if it hasn't been computed
@@ -1402,7 +1423,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Get the preview size and crop according to the current view size.
         // It's better to do calculations in the REF_VIEW reference, and then flip if needed.
-        Size preview = mCameraController.getPreviewStreamSize(CameraController.REF_VIEW);
+        Size preview = mCameraController.getUncroppedSnapshotSize(CameraController.REF_VIEW);
         AspectRatio viewRatio = AspectRatio.of(getWidth(), getHeight());
         Rect crop = CropHelper.computeCrop(preview, viewRatio);
         Size cropSize = new Size(crop.width(), crop.height());

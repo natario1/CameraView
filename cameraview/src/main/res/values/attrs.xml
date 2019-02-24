@@ -25,6 +25,9 @@
         <attr name="cameraVideoBitRate" format="integer|reference" />
         <attr name="cameraAudioBitRate" format="integer|reference" />
 
+        <attr name="cameraSnapshotMaxWidth" format="integer|reference" />
+        <attr name="cameraSnapshotMaxHeight" format="integer|reference" />
+
         <attr name="cameraGestureTap" format="enum">
             <enum name="none" value="0" />
             <enum name="focus" value="1" />
