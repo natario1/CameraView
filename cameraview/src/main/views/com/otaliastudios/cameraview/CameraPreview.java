@@ -6,6 +6,13 @@ import androidx.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 
+/**
+ * A CameraPreview takes in input stream from the {@link CameraController}, and streams it
+ * into an output surface that belongs to the view hierarchy.
+ *
+ * @param <T> the type of view which hosts the content surface
+ * @param <Output> the type of output, either {@link android.view.SurfaceHolder} or {@link android.graphics.SurfaceTexture}
+ */
 abstract class CameraPreview<T extends View, Output> {
 
     protected final static CameraLogger LOG = CameraLogger.create(CameraPreview.class.getSimpleName());
@@ -60,8 +67,8 @@ abstract class CameraPreview<T extends View, Output> {
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
     // This is called by the CameraImpl.
     // These must be alredy rotated, if needed, to be consistent with surface/view sizes.
-    void setInputStreamSize(int width, int height, boolean wasFlipped) {
-        LOG.i("setInputStreamSize:", "desiredW=", width, "desiredH=", height);
+    void setStreamSize(int width, int height, boolean wasFlipped) {
+        LOG.i("setStreamSize:", "desiredW=", width, "desiredH=", height);
         mInputStreamWidth = width;
         mInputStreamHeight = height;
         mInputFlipped = wasFlipped;
@@ -71,12 +78,12 @@ abstract class CameraPreview<T extends View, Output> {
     }
 
     @NonNull
-    final Size getInputStreamSize() {
+    final Size getStreamSize() {
         return new Size(mInputStreamWidth, mInputStreamHeight);
     }
 
     @NonNull
-    final Size getOutputSurfaceSize() {
+    final Size getSurfaceSize() {
         return new Size(mOutputSurfaceWidth, mOutputSurfaceHeight);
     }
 
@@ -90,8 +97,8 @@ abstract class CameraPreview<T extends View, Output> {
 
 
     @SuppressWarnings("WeakerAccess")
-    protected final void dispatchOnOutputSurfaceAvailable(int width, int height) {
-        LOG.i("dispatchOnOutputSurfaceAvailable:", "w=", width, "h=", height);
+    protected final void dispatchOnSurfaceAvailable(int width, int height) {
+        LOG.i("dispatchOnSurfaceAvailable:", "w=", width, "h=", height);
         mOutputSurfaceWidth = width;
         mOutputSurfaceHeight = height;
         if (mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0) {
@@ -104,8 +111,8 @@ abstract class CameraPreview<T extends View, Output> {
     // As far as I can see, these are the view/surface dimensions.
     // This is called by subclasses.
     @SuppressWarnings("WeakerAccess")
-    protected final void dispatchOnOutputSurfaceSizeChanged(int width, int height) {
-        LOG.i("dispatchOnOutputSurfaceSizeChanged:", "w=", width, "h=", height);
+    protected final void dispatchOnSurfaceSizeChanged(int width, int height) {
+        LOG.i("dispatchOnSurfaceSizeChanged:", "w=", width, "h=", height);
         if (width != mOutputSurfaceWidth || height != mOutputSurfaceHeight) {
             mOutputSurfaceWidth = width;
             mOutputSurfaceHeight = height;
@@ -117,7 +124,7 @@ abstract class CameraPreview<T extends View, Output> {
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected final void dispatchOnOutputSurfaceDestroyed() {
+    protected final void dispatchOnSurfaceDestroyed() {
         mOutputSurfaceWidth = 0;
         mOutputSurfaceHeight = 0;
         mSurfaceCallback.onSurfaceDestroyed();

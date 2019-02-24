@@ -37,7 +37,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
         mCamera = camera;
         mOutputRatio = outputRatio;
         mFormat = mController.mPreviewFormat;
-        mSensorPreviewSize = mController.mPreviewSize;
+        mSensorPreviewSize = mController.mPreviewStreamSize;
     }
 
     @Override
@@ -189,7 +189,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                 // It seems that the buffers are already cleared here, so we need to allocate again.
                 camera.setPreviewCallbackWithBuffer(null); // Release anything left
                 camera.setPreviewCallbackWithBuffer(mController); // Add ourselves
-                mController.mFrameManager.allocate(ImageFormat.getBitsPerPixel(mFormat), mController.mPreviewSize);
+                mController.mFrameManager.allocate(ImageFormat.getBitsPerPixel(mFormat), mController.mPreviewStreamSize);
             }
         });
     }

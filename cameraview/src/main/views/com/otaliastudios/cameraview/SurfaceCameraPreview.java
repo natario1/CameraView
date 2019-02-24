@@ -44,17 +44,17 @@ class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHolder> {
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
                 LOG.i("callback:", "surfaceChanged", "w:", width, "h:", height, "dispatched:", mDispatched);
                 if (!mDispatched) {
-                    dispatchOnOutputSurfaceAvailable(width, height);
+                    dispatchOnSurfaceAvailable(width, height);
                     mDispatched = true;
                 } else {
-                    dispatchOnOutputSurfaceSizeChanged(width, height);
+                    dispatchOnSurfaceSizeChanged(width, height);
                 }
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
                 LOG.i("callback:", "surfaceDestroyed");
-                dispatchOnOutputSurfaceDestroyed();
+                dispatchOnSurfaceDestroyed();
                 mDispatched = false;
             }
         });

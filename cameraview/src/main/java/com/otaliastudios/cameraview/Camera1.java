@@ -97,12 +97,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 if (!mIsBound) return;
 
                 // Compute a new camera preview size.
-                Size newSize = computePreviewSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
-                if (newSize.equals(mPreviewSize)) return;
+                Size newSize = computePreviewStreamSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
+                if (newSize.equals(mPreviewStreamSize)) return;
 
                 // Apply.
                 LOG.i("onSurfaceChanged:", "Computed a new preview size. Going on.");
-                mPreviewSize = newSize;
+                mPreviewStreamSize = newSize;
                 stopPreview();
                 startPreview("onSurfaceChanged:");
             }
@@ -135,10 +135,12 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         LOG.i("bindToSurface:", "Started");
         Object output = mPreview.getOutput();
         try {
-            if (mPreview.getOutputClass() == SurfaceHolder.class) {
+            if (output instanceof SurfaceHolder) {
                 mCamera.setPreviewDisplay((SurfaceHolder) output);
-            } else {
+            } else if (output instanceof SurfaceTexture) {
                 mCamera.setPreviewTexture((SurfaceTexture) output);
+            } else {
+                throw new RuntimeException("Unknown CameraPreview output class.");
             }
         } catch (IOException e) {
             LOG.e("bindToSurface:", "Failed to bind.", e);
@@ -146,20 +148,22 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
 
         mCaptureSize = computeCaptureSize();
-        mPreviewSize = computePreviewSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
+        mPreviewStreamSize = computePreviewStreamSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
         mIsBound = true;
     }
 
     @WorkerThread
     private void unbindFromSurface() {
         mIsBound = false;
-        mPreviewSize = null;
+        mPreviewStreamSize = null;
         mCaptureSize = null;
         try {
             if (mPreview.getOutputClass() == SurfaceHolder.class) {
                 mCamera.setPreviewDisplay(null);
-            } else {
+            } else if (mPreview.getOutputClass() == SurfaceTexture.class) {
                 mCamera.setPreviewTexture(null);
+            } else {
+                throw new RuntimeException("Unknown CameraPreview output class.");
             }
         } catch (IOException e) {
             LOG.e("unbindFromSurface", "Could not release surface", e);
@@ -172,16 +176,16 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
     // To be called when the preview size is setup or changed.
     private void startPreview(String log) {
-        LOG.i(log, "Dispatching onCameraPreviewSizeChanged.");
-        mCameraCallbacks.onCameraPreviewSizeChanged();
+        LOG.i(log, "Dispatching onCameraPreviewStreamSizeChanged.");
+        mCameraCallbacks.onCameraPreviewStreamSizeChanged();
 
-        Size previewSize = getPreviewSize(REF_VIEW);
+        Size previewSize = getPreviewStreamSize(REF_VIEW);
         boolean wasFlipped = flip(REF_SENSOR, REF_VIEW);
-        mPreview.setInputStreamSize(previewSize.getWidth(), previewSize.getHeight(), wasFlipped);
+        mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight(), wasFlipped);
 
         Camera.Parameters params = mCamera.getParameters();
         mPreviewFormat = params.getPreviewFormat();
-        params.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight()); // <- not allowed during preview
+        params.setPreviewSize(mPreviewStreamSize.getWidth(), mPreviewStreamSize.getHeight()); // <- not allowed during preview
         if (mMode == Mode.PICTURE) {
             params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
         } else {
@@ -196,7 +200,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
-        mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewSize);
+        mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewStreamSize);
 
         LOG.i(log, "Starting preview with startPreview().");
         try {
@@ -289,7 +293,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         }
         mCameraOptions = null;
         mCamera = null;
-        mPreviewSize = null;
+        mPreviewStreamSize = null;
         mCaptureSize = null;
         mIsBound = false;
         LOG.w("onStop:", "Clean up.", "Returning.");
@@ -574,7 +578,22 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         });
     }
 
-
+    /**
+     * Just a note about the snapshot size - it is the PreviewStreamSize, cropped with the view ratio.
+     * One might be tempted to say that it is the SurfaceSize (which already matches the view ratio),
+     * but it's not.
+     *
+     * The camera sensor will capture preview frames with PreviewStreamSize and that's it. Then they
+     * are hardware-scaled by the preview surface, but this does not affect the snapshot, as the
+     * snapshot recorder simply creates another surface.
+     *
+     * Done tests to ensure that this is true, by using
+     * 1. small SurfaceSize and biggest() PreviewStreamSize: output is not low quality
+     * 2. big SurfaceSize and smallest() PreviewStreamSize: output is low quality
+     * In both cases the result.size here was set to the biggest of the two.
+     *
+     * @param viewAspectRatio the view aspect ratio
+     */
     @Override
     void takePictureSnapshot(@NonNull final AspectRatio viewAspectRatio) {
         LOG.v("takePictureSnapshot: scheduling");
@@ -588,7 +607,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 result.location = mLocation;
                 result.isSnapshot = true;
                 result.facing = mFacing;
-                result.size = getPreviewSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
+                result.size = getPreviewStreamSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
                 result.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
                 AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
                 // LOG.e("ROTBUG_pic", "aspectRatio (REF_VIEW):", viewAspectRatio);
@@ -611,7 +630,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         Frame frame = mFrameManager.getFrame(data,
                 System.currentTimeMillis(),
                 offset(REF_SENSOR, REF_OUTPUT),
-                mPreviewSize,
+                mPreviewStreamSize,
                 mPreviewFormat);
         mCameraCallbacks.dispatchFrame(frame);
     }
@@ -693,6 +712,15 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         });
     }
 
+    /**
+     * Is output size the SurfaceSize or the PreviewStreamSize ?
+     * I could not find evidence by testing, but I think that comments in {@link #takePictureSnapshot(AspectRatio)}
+     * would still apply here, despite the capturing mechanism being different.
+     * So we should use PreviewStreamSize as output size, cropped by the view aspect ratio.
+     *
+     * @param file the output file
+     * @param viewAspectRatio the view aspect ratio
+     */
     @SuppressLint("NewApi")
     @Override
     void takeVideoSnapshot(@NonNull final File file, @NonNull final AspectRatio viewAspectRatio) {
@@ -755,7 +783,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 // Based on this we will use VO for everything. See if we get issues about distortion
                 // and maybe we can improve. The reason why this happen is beyond my understanding.
 
-                Size outputSize = getPreviewSize(REF_OUTPUT);
+                Size outputSize = getPreviewStreamSize(REF_OUTPUT);
                 AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
                 Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
                 outputSize = new Size(outputCrop.width(), outputCrop.height());

@@ -49,7 +49,7 @@ abstract class CameraController implements
     protected float mExposureCorrectionValue;
     protected boolean mPlaySounds;
 
-    @Nullable private SizeSelector mPreviewSizeSelector;
+    @Nullable private SizeSelector mPreviewStreamSizeSelector;
     private SizeSelector mPictureSizeSelector;
     private SizeSelector mVideoSizeSelector;
 
@@ -64,7 +64,7 @@ abstract class CameraController implements
     protected int mVideoBitRate;
     protected int mAudioBitRate;
     protected Size mCaptureSize;
-    protected Size mPreviewSize;
+    protected Size mPreviewStreamSize;
     protected int mPreviewFormat;
 
     protected int mSensorOffset;
@@ -279,8 +279,8 @@ abstract class CameraController implements
         mDeviceOrientation = deviceOrientation;
     }
 
-    final void setPreviewSizeSelector(@Nullable SizeSelector selector) {
-        mPreviewSizeSelector = selector;
+    final void setPreviewStreamSizeSelector(@Nullable SizeSelector selector) {
+        mPreviewStreamSizeSelector = selector;
     }
 
     final void setPictureSizeSelector(@NonNull SizeSelector selector) {
@@ -421,8 +421,8 @@ abstract class CameraController implements
     }
 
     @Nullable
-    /* for tests */ final SizeSelector getPreviewSizeSelector() {
-        return mPreviewSizeSelector;
+    /* for tests */ final SizeSelector getPreviewStreamSizeSelector() {
+        return mPreviewStreamSizeSelector;
     }
 
     @NonNull
@@ -506,15 +506,15 @@ abstract class CameraController implements
     }
 
     @Nullable
-    final Size getPreviewSize(int reference) {
-        if (mPreviewSize == null) return null;
-        return flip(REF_SENSOR, reference) ? mPreviewSize.flip() : mPreviewSize;
+    final Size getPreviewStreamSize(int reference) {
+        if (mPreviewStreamSize == null) return null;
+        return flip(REF_SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
     }
 
     @Nullable
     final Size getSurfaceSize(int reference) {
         if (mPreview == null) return null;
-        return flip(REF_VIEW, reference) ? mPreview.getOutputSurfaceSize().flip() : mPreview.getOutputSurfaceSize();
+        return flip(REF_VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
     }
 
 
@@ -559,7 +559,7 @@ abstract class CameraController implements
 
     @NonNull
     @SuppressWarnings("WeakerAccess")
-    protected final Size computePreviewSize(@NonNull List<Size> previewSizes) {
+    protected final Size computePreviewStreamSize(@NonNull List<Size> previewSizes) {
         // These sizes come in REF_SENSOR. Since there is an external selector involved,
         // we must convert all of them to REF_VIEW, then flip back when returning.
         boolean flip = flip(REF_SENSOR, REF_VIEW);
@@ -568,12 +568,12 @@ abstract class CameraController implements
             sizes.add(flip ? size.flip() : size);
         }
 
-        // Create our own default selector, which will be used if the external mPreviewSizeSelector
+        // Create our own default selector, which will be used if the external mPreviewStreamSizeSelector
         // is null, or if it fails in finding a size.
         Size targetMinSize = getSurfaceSize(REF_VIEW);
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         if (flip) targetRatio = targetRatio.inverse();
-        LOG.i("size:", "computePreviewSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
+        LOG.i("size:", "computePreviewStreamSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
         SizeSelector matchRatio = SizeSelectors.and( // Match this aspect ratio and sort by biggest
                 SizeSelectors.aspectRatio(targetRatio, 0),
                 SizeSelectors.biggest());
@@ -591,14 +591,14 @@ abstract class CameraController implements
         // Apply the external selector with this as a fallback,
         // and return a size in REF_SENSOR reference.
         SizeSelector selector;
-        if (mPreviewSizeSelector != null) {
-            selector = SizeSelectors.or(mPreviewSizeSelector, matchAll);
+        if (mPreviewStreamSizeSelector != null) {
+            selector = SizeSelectors.or(mPreviewStreamSizeSelector, matchAll);
         } else {
             selector = matchAll;
         }
         Size result = selector.select(sizes).get(0);
         if (flip) result = result.flip();
-        LOG.i("computePreviewSize:", "result:", result, "flip:", flip);
+        LOG.i("computePreviewStreamSize:", "result:", result, "flip:", flip);
         return result;
     }
 

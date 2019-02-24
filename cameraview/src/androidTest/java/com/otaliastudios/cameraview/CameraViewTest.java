@@ -288,14 +288,14 @@ public class CameraViewTest extends BaseTest {
 
     //region testMeasure
 
-    private void mockPreviewSize() {
+    private void mockPreviewStreamSize() {
         Size size = new Size(900, 1600);
-        mockController.setMockPreviewSize(size);
+        mockController.setMockPreviewStreamSize(size);
     }
 
     @Test
     public void testMeasure_early() {
-        mockController.setMockPreviewSize(null);
+        mockController.setMockPreviewStreamSize(null);
         cameraView.measure(
                 makeMeasureSpec(500, EXACTLY),
                 makeMeasureSpec(500, EXACTLY));
@@ -305,7 +305,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testMeasure_matchParentBoth() {
-        mockPreviewSize();
+        mockPreviewStreamSize();
 
         // Respect parent/layout constraints on both dimensions.
         cameraView.setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
@@ -331,7 +331,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testMeasure_wrapContentBoth() {
-        mockPreviewSize();
+        mockPreviewStreamSize();
 
         // Respect parent constraints, but fit aspect ratio.
         // Fit into a 160x160 parent so we espect final width to be 90.
@@ -345,7 +345,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testMeasure_wrapContentSingle() {
-        mockPreviewSize();
+        mockPreviewStreamSize();
 
         // Respect MATCH_PARENT on height, change width to fit the aspect ratio.
         cameraView.setLayoutParams(new ViewGroup.LayoutParams(WRAP_CONTENT, MATCH_PARENT));
@@ -366,7 +366,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testMeasure_scrollableContainer() {
-        mockPreviewSize();
+        mockPreviewStreamSize();
 
         // Assume a vertical scroll view. It will pass UNSPECIFIED as height.
         // We respect MATCH_PARENT on width (160), and enlarge height to match the aspect ratio.
@@ -559,10 +559,10 @@ public class CameraViewTest extends BaseTest {
     }
 
     @Test
-    public void testPreviewSizeSelector() {
+    public void testPreviewStreamSizeSelector() {
         SizeSelector source = SizeSelectors.minHeight(50);
-        cameraView.setPreviewSize(source);
-        SizeSelector result = mockController.getPreviewSizeSelector();
+        cameraView.setPreviewStreamSize(source);
+        SizeSelector result = mockController.getPreviewStreamSizeSelector();
         assertNotNull(result);
         assertEquals(result, source);
     }
