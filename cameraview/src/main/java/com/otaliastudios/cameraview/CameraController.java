@@ -511,8 +511,9 @@ abstract class CameraController implements
         return flip(REF_SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
     }
 
+    @SuppressWarnings("SameParameterValue")
     @Nullable
-    final Size getSurfaceSize(int reference) {
+    final Size getPreviewSurfaceSize(int reference) {
         if (mPreview == null) return null;
         return flip(REF_VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
     }
@@ -570,7 +571,7 @@ abstract class CameraController implements
 
         // Create our own default selector, which will be used if the external mPreviewStreamSizeSelector
         // is null, or if it fails in finding a size.
-        Size targetMinSize = getSurfaceSize(REF_VIEW);
+        Size targetMinSize = getPreviewSurfaceSize(REF_VIEW);
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         if (flip) targetRatio = targetRatio.inverse();
         LOG.i("size:", "computePreviewStreamSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
