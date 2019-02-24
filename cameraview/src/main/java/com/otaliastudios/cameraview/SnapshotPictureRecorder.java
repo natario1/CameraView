@@ -41,8 +41,9 @@ class SnapshotPictureRecorder extends PictureRecorder {
         mCamera = camera;
         mOutputRatio = outputRatio;
         mFormat = mController.mPreviewFormat;
-        mSensorPreviewSize = mController.mPreviewSize;
+        mSensorPreviewSize = mController.mPreviewStreamSize;
         mWithOverlay = mController.mDisableOverlayFor != DisableOverlayFor.PICTURE;
+
     }
 
     @Override
@@ -136,13 +137,24 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         Matrix.translateM(mTransform, 0, scaleTranslX, scaleTranslY, 0);
                         Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
 
-                        // Apply rotation:
+                        // Fix rotation:
                         // TODO Not sure why we need the minus here... It makes no sense to me.
                         LOG.w("Recording frame. Rotation:", mResult.rotation, "Actual:", -mResult.rotation);
                         int rotation = -mResult.rotation;
                         mResult.rotation = 0;
+
+                        // Go back to 0,0 so that rotate and flip work well.
                         Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0);
+
+                        // Apply rotation:
                         Matrix.rotateM(mTransform, 0, rotation, 0, 0, 1);
+
+                        // Flip horizontally for front camera:
+                        if (mResult.facing == Facing.FRONT) {
+                            Matrix.scaleM(mTransform, 0, -1, 1, 1);
+                        }
+
+                        // Go back to old position.
                         Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0);
 
                         // Future note: passing scale values to the viewport?
@@ -204,7 +216,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                 // It seems that the buffers are already cleared here, so we need to allocate again.
                 camera.setPreviewCallbackWithBuffer(null); // Release anything left
                 camera.setPreviewCallbackWithBuffer(mController); // Add ourselves
-                mController.mFrameManager.allocate(ImageFormat.getBitsPerPixel(mFormat), mController.mPreviewSize);
+                mController.mFrameManager.allocate(ImageFormat.getBitsPerPixel(mFormat), mController.mPreviewStreamSize);
             }
         });
     }

@@ -378,7 +378,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Size previewSize = mCameraController.getPreviewSize(CameraController.REF_VIEW);
+        Size previewSize = mCameraController.getPreviewStreamSize(CameraController.REF_VIEW);
         if (previewSize == null) {
             LOG.w("onMeasure:", "surface is not ready. Calling default behavior.");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -669,8 +669,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void open() {
         if (!isEnabled()) return;
         if (mCameraPreview != null) mCameraPreview.onResume();
-
-        if (checkPermissions(getMode(), getAudio())) {
+        if (checkPermissions(getAudio())) {
             // Update display orientation for current CameraController
             mOrientationHelper.enable(getContext());
             mCameraController.setDisplayOffset(mOrientationHelper.getDisplayOffset());
@@ -680,15 +679,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * Checks that we have appropriate permissions for this session type.
-     * Throws if session = audio and manifest did not add the microphone permissions.     
-     * @param mode the sessionType to be checked
+     * Checks that we have appropriate permissions.
+     * This means checking that we have audio permissions if audio = Audio.ON.
      * @param audio the audio setting to be checked
      * @return true if we can go on, false otherwise.
      */
+    @SuppressWarnings("ConstantConditions")
     @SuppressLint("NewApi")
-    protected boolean checkPermissions(@NonNull Mode mode, @NonNull Audio audio) {
-        checkPermissionsManifestOrThrow(mode, audio);
+    protected boolean checkPermissions(@NonNull Audio audio) {
+        checkPermissionsManifestOrThrow(audio);
         // Manifest is OK at this point. Let's check runtime permissions.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
 
@@ -708,12 +707,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * If mSessionType == SESSION_TYPE_VIDEO we will ask for RECORD_AUDIO permission.
+     * If audio is on we will ask for RECORD_AUDIO permission.
      * If the developer did not add this to its manifest, throw and fire warnings.
-     * (Hoping this is not caught elsewhere... we should test).
      */
-    private void checkPermissionsManifestOrThrow(@NonNull Mode mode, @NonNull Audio audio) {
-        if (mode == Mode.VIDEO && audio == Audio.ON) {
+    private void checkPermissionsManifestOrThrow(@NonNull Audio audio) {
+        if (audio == Audio.ON) {
             try {
                 PackageManager manager = getContext().getPackageManager();
                 PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
@@ -722,7 +720,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                         return;
                     }
                 }
-                LOG.e("Permission error:", "When the session type is set to video,",
+                LOG.e("Permission error:", "When audio is enabled (Audio.ON),",
                         "the RECORD_AUDIO permission should be added to the app manifest file.");
                 throw new IllegalStateException(CameraLogger.lastMessage);
             } catch (PackageManager.NameNotFoundException e) {
@@ -1096,7 +1094,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // Check did took place, or will happen on start().
             mCameraController.setAudio(audio);
 
-        } else if (checkPermissions(getMode(), audio)) {
+        } else if (checkPermissions(audio)) {
             // Camera is running. Pass.
             mCameraController.setAudio(audio);
 
@@ -1151,15 +1149,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * upscaling. If all you want is set an aspect ratio, use {@link #setPictureSize(SizeSelector)}
      * and {@link #setVideoSize(SizeSelector)}.
      *
-     * When size changes, the {@link CameraView} is remeasured so any WRAP_CONTENT dimension
+     * When stream size changes, the {@link CameraView} is remeasured so any WRAP_CONTENT dimension
      * is recomputed accordingly.
      *
      * See the {@link SizeSelectors} class for handy utilities for creating selectors.
      *
      * @param selector a size selector
      */
-    public void setPreviewSize(@NonNull SizeSelector selector) {
-        mCameraController.setPreviewSizeSelector(selector);
+    public void setPreviewStreamSize(@NonNull SizeSelector selector) {
+        mCameraController.setPreviewStreamSizeSelector(selector);
     }
 
 
@@ -1172,22 +1170,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param mode desired session type.
      */
     public void setMode(@NonNull Mode mode) {
-
-        if (mode == getMode() || isClosed()) {
-            // Check did took place, or will happen on start().
-            mCameraController.setMode(mode);
-
-        } else if (checkPermissions(mode, getAudio())) {
-            // Camera is running. CameraImpl setMode will do the trick.
-            mCameraController.setMode(mode);
-
-        } else {
-            // This means that the audio permission is being asked.
-            // Stop the camera so it can be restarted by the developer onPermissionResult.
-            // Developer must also set the session type again...
-            // Not ideal but good for now.
-            close();
-        }
+        mCameraController.setMode(mode);
     }
 
 
@@ -1481,6 +1464,27 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         });
     }
 
+    /**
+     * Sets the max width for snapshots taken with {@link #takePictureSnapshot()} or
+     * {@link #takeVideoSnapshot(File)}. If the snapshot width exceeds this value, the snapshot
+     * will be scaled down to match this constraint.
+     *
+     * @param maxWidth max width for snapshots
+     */
+    public void setSnapshotMaxWidth(int maxWidth) {
+        mCameraController.setSnapshotMaxWidth(maxWidth);
+    }
+
+    /**
+     * Sets the max height for snapshots taken with {@link #takePictureSnapshot()} or
+     * {@link #takeVideoSnapshot(File)}. If the snapshot height exceeds this value, the snapshot
+     * will be scaled down to match this constraint.
+     *
+     * @param maxHeight max height for snapshots
+     */
+    public void setSnapshotMaxHeight(int maxHeight) {
+        mCameraController.setSnapshotMaxHeight(maxHeight);
+    }
 
     /**
      * Returns the size used for snapshots, or null if it hasn't been computed
@@ -1495,7 +1499,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Get the preview size and crop according to the current view size.
         // It's better to do calculations in the REF_VIEW reference, and then flip if needed.
-        Size preview = mCameraController.getPreviewSize(CameraController.REF_VIEW);
+        Size preview = mCameraController.getUncroppedSnapshotSize(CameraController.REF_VIEW);
         AspectRatio viewRatio = AspectRatio.of(getWidth(), getHeight());
         Rect crop = CropHelper.computeCrop(preview, viewRatio);
         Size cropSize = new Size(crop.width(), crop.height());
@@ -1714,7 +1718,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     interface CameraCallbacks extends OrientationHelper.Callback {
         void dispatchOnCameraOpened(CameraOptions options);
         void dispatchOnCameraClosed();
-        void onCameraPreviewSizeChanged();
+        void onCameraPreviewStreamSizeChanged();
         void onShutter(boolean shouldPlaySound);
         void dispatchOnVideoTaken(VideoResult result);
         void dispatchOnPictureTaken(PictureResult result);
@@ -1759,8 +1763,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void onCameraPreviewSizeChanged() {
-            mLogger.i("onCameraPreviewSizeChanged");
+        public void onCameraPreviewStreamSizeChanged() {
+            mLogger.i("onCameraPreviewStreamSizeChanged");
             // Camera preview size has changed.
             // Request a layout pass for onMeasure() to do its stuff.
             // Potentially this will change CameraView size, which changes Surface size,

@@ -131,6 +131,27 @@ public class CameraOptions1Test extends BaseTest {
     }
 
     @Test
+    public void testVideoSizesNull() {
+        // When videoSizes is null, we take the preview sizes.
+        List<Camera.Size> sizes = Arrays.asList(
+                mockCameraSize(100, 200),
+                mockCameraSize(50, 50),
+                mockCameraSize(1600, 900),
+                mockCameraSize(1000, 2000)
+        );
+        Camera.Parameters params = mock(Camera.Parameters.class);
+        when(params.getSupportedVideoSizes()).thenReturn(null);
+        when(params.getSupportedPreviewSizes()).thenReturn(sizes);
+        CameraOptions o = new CameraOptions(params, false);
+        Collection<Size> supportedSizes = o.getSupportedVideoSizes();
+        assertEquals(supportedSizes.size(), sizes.size());
+        for (Camera.Size size : sizes) {
+            Size internalSize = new Size(size.width, size.height);
+            assertTrue(supportedSizes.contains(internalSize));
+        }
+    }
+
+    @Test
     public void testVideoSizesFlip() {
         List<Camera.Size> sizes = Arrays.asList(
                 mockCameraSize(100, 200),

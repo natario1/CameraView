@@ -2,8 +2,11 @@ package com.otaliastudios.cameraview.demo;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
+
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.otaliastudios.cameraview.AspectRatio;
@@ -45,6 +48,18 @@ public class PicturePreviewActivity extends Activity {
                 imageView.setImageBitmap(bitmap);
             }
         });
+
+        if (result.isSnapshot()) {
+            // Log the real size for debugging reason.
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeByteArray(result.getData(), 0, result.getData().length, options);
+            if (result.getRotation() % 180 != 0) {
+                Log.e("PicturePreview", "The picture full size is " + result.getSize().getHeight() + "x" + result.getSize().getWidth());
+            } else {
+                Log.e("PicturePreview", "The picture full size is " + result.getSize().getWidth() + "x" + result.getSize().getHeight());
+            }
+        }
     }
 
     @Override

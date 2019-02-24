@@ -23,8 +23,8 @@ public class MockCameraController extends CameraController {
         mCameraOptions = options;
     }
 
-    void setMockPreviewSize(Size size) {
-        mPreviewSize = size;
+    void setMockPreviewStreamSize(Size size) {
+        mPreviewStreamSize = size;
     }
 
     void mockStarted(boolean started) {
