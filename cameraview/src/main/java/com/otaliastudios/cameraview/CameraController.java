@@ -556,10 +556,19 @@ abstract class CameraController implements
         boolean flip = flip(reference, REF_VIEW);
         int maxWidth = flip ? mSnapshotMaxHeight : mSnapshotMaxWidth;
         int maxHeight = flip ? mSnapshotMaxWidth : mSnapshotMaxHeight;
-        return new Size(
-                Math.min(baseSize.getWidth(), maxWidth),
-                Math.max(baseSize.getHeight(), maxHeight)
-        );
+        float baseRatio = AspectRatio.of(baseSize).toFloat();
+        float maxValuesRatio = AspectRatio.of(maxWidth, maxHeight).toFloat();
+        if (maxValuesRatio >= baseRatio) {
+            // Height is the real constraint.
+            int outHeight = Math.min(baseSize.getHeight(), maxHeight);
+            int outWidth = (int) Math.floor((float) outHeight * baseRatio);
+            return new Size(outWidth, outHeight);
+        } else {
+            // Width is the real constraint.
+            int outWidth = Math.min(baseSize.getWidth(), maxWidth);
+            int outHeight = (int) Math.floor((float) outWidth / baseRatio);
+            return new Size(outWidth, outHeight);
+        }
     }
 
 
