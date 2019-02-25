@@ -366,7 +366,7 @@ abstract class CameraController implements
 
     abstract void stopVideo();
 
-    abstract void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point);
+    abstract void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point, Boolean autoReset);
 
     abstract void setPlaySounds(boolean playSounds);
 

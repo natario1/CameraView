@@ -855,7 +855,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
 
 
     @Override
-    void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
+    void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point, final Boolean autoReset) {
         // Must get width and height from the UI thread.
         int viewWidth = 0, viewHeight = 0;
         if (mPreview != null && mPreview.hasSurface()) {
@@ -891,7 +891,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                             // TODO lock auto exposure and white balance for a while
                             mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
                             mHandler.get().removeCallbacks(mPostFocusResetRunnable);
-                            mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
+                            if (autoReset) {
+                                mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
+                            }
                         }
                     });
                 } catch (RuntimeException e) {

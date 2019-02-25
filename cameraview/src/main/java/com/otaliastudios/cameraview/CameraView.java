@@ -541,7 +541,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
             case FOCUS:
             case FOCUS_WITH_MARKER:
-                mCameraController.startAutoFocus(gesture, points[0]);
+                mCameraController.startAutoFocus(gesture, points[0], true);
                 break;
 
             case ZOOM:
@@ -1055,11 +1055,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param x should be between 0 and getWidth()
      * @param y should be between 0 and getHeight()
+     * @param autoCancel true if auto focus should be cancelled once focused
      */
-    public void startAutoFocus(float x, float y) {
+    public void startAutoFocus(float x, float y, Boolean autoCancel) {
         if (x < 0 || x > getWidth()) throw new IllegalArgumentException("x should be >= 0 and <= getWidth()");
         if (y < 0 || y > getHeight()) throw new IllegalArgumentException("y should be >= 0 and <= getHeight()");
-        mCameraController.startAutoFocus(null, new PointF(x, y));
+        mCameraController.startAutoFocus(null, new PointF(x, y), autoCancel);
     }
 
 
