@@ -89,7 +89,7 @@ public abstract class CameraListener {
     /**
      * Notifies that user interacted with the screen and started focus with a gesture,
      * and the autofocus is trying to focus around that area. This can be used to draw things on screen.
-     * Can also be triggered by {@link CameraView#startAutoFocus(float, float)}.
+     * Can also be triggered by {@link CameraView#startAutoFocus(float, float, Boolean)}.
      *
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
@@ -103,7 +103,7 @@ public abstract class CameraListener {
      * Notifies that a gesture focus event just ended, and the camera converged
      * to a new focus (and possibly exposure and white balance).
      * This might succeed or not.
-     * Can also be triggered by {@link CameraView#startAutoFocus(float, float)}.
+     * Can also be triggered by {@link CameraView#startAutoFocus(float, float, Boolean)}.
      *
      * @param successful whether camera succeeded
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()

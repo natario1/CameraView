@@ -131,7 +131,6 @@ bintray {
 //endregion
 
 //region javadoc and sources
-
 // From official sample https://github.com/bintray/bintray-examples/blob/master/gradle-aar-example/build.gradle
 task sourcesJar(type: Jar) {
     classifier = 'sources'
