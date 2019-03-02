@@ -29,14 +29,30 @@
         app:cameraMode="picture"
         app:cameraDisableOverlayFor="none">
 
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ciao ciao"
-            android:textColor="@android:color/white"
+            android:orientation="vertical"
             android:layout_gravity="bottom|end"
             app:layout_isOverlay="true"
-            />
+            android:gravity="center"
+            android:padding="8dp"
+            >
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/cameraview"
+                android:contentDescription="Watermark" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CameraView"
+                android:textColor="@android:color/white"
+                />
+
+        </LinearLayout>
 
     </com.otaliastudios.cameraview.CameraView>
 
