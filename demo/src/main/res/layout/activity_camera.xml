@@ -46,6 +46,7 @@
                 android:contentDescription="Watermark" />
 
             <TextView
+                android:id="@+id/watermark_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="CameraView"

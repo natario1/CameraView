@@ -1711,6 +1711,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return mCameraController.getDisableOverlayFor();
     }
 
+    /**
+     * Force the overlay to be redrawn.
+     */
+    public void invalidateOverlay() {
+        if (mPreviewOverlayLayout != null) {
+            mPreviewOverlayLayout.postInvalidate();
+        }
+    }
     //endregion
 
     //region Callbacks and dispatching

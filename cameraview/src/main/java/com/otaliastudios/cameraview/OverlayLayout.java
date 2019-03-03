@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.util.AttributeSet;
 import android.view.Surface;
 import android.view.View;
@@ -36,6 +37,7 @@ public class OverlayLayout extends FrameLayout {
 
                 float xScale = surfaceCanvas.getWidth() / (float) canvas.getWidth();
                 surfaceCanvas.scale(xScale, xScale);
+                surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
                 super.draw(surfaceCanvas);
 
                 outputSurface.unlockCanvasAndPost(surfaceCanvas);
