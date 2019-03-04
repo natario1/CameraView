@@ -116,12 +116,17 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         // We must scale this matrix like GlCameraPreview does, because it might have some cropping.
         // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
         float[] transform = frame.transform;
+        float[] overlayTransform = frame.overlayTransform;
         float scaleX = mConfig.scaleX;
         float scaleY = mConfig.scaleY;
         float scaleTranslX = (1F - scaleX) / 2F;
         float scaleTranslY = (1F - scaleY) / 2F;
         Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
         Matrix.scaleM(transform, 0, scaleX, scaleY, 1);
+        if (overlayTransform != null) {
+            Matrix.translateM(overlayTransform, 0, scaleTranslX, scaleTranslY, 0);
+            Matrix.scaleM(overlayTransform, 0, scaleX, scaleY, 1);
+        }
 
         // We also must rotate this matrix. In GlCameraPreview it is not needed because it is a live
         // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
@@ -131,11 +136,16 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
         Matrix.rotateM(transform, 0, mConfig.transformRotation, 0, 0, 1);
         Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
+        if (overlayTransform != null) {
+            Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
+            Matrix.rotateM(overlayTransform, 0, mConfig.transformRotation, 0, 0, 1);
+            Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
+        }
 
         drainOutput(false);
         // Future note: passing scale values to the viewport? They are scaleX and scaleY,
         // but flipped based on the mConfig.scaleFlipped boolean.
-        mViewport.drawFrame(mConfig.textureId, mConfig.overlayTextureId, transform, frame.overlayTransform);
+        mViewport.drawFrame(mConfig.textureId, mConfig.overlayTextureId, transform, overlayTransform);
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();
         mFramePool.recycle(frame);
