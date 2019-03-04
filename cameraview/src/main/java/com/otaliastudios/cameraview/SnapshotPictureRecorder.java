@@ -136,26 +136,48 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         float scaleTranslY = (1F - realScaleY) / 2F;
                         Matrix.translateM(mTransform, 0, scaleTranslX, scaleTranslY, 0);
                         Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
+                        if (mOverlayTransform != null) {
+                            Matrix.translateM(mOverlayTransform, 0, scaleTranslX, scaleTranslY, 0);
+                            Matrix.scaleM(mOverlayTransform, 0, realScaleX, realScaleY, 1);
+                        }
 
                         // Fix rotation:
                         // TODO Not sure why we need the minus here... It makes no sense to me.
                         LOG.w("Recording frame. Rotation:", mResult.rotation, "Actual:", -mResult.rotation);
                         int rotation = -mResult.rotation;
+                        int overlayRotation = -mController.offset(CameraController.REF_VIEW, CameraController.REF_OUTPUT);
+                        // apparently with front facing camera with don't need the minus sign
+                        if (mResult.facing == Facing.FRONT) {
+                            overlayRotation = -overlayRotation;
+                        }
                         mResult.rotation = 0;
 
                         // Go back to 0,0 so that rotate and flip work well.
                         Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0);
+                        if (mOverlayTransform != null) {
+                            Matrix.translateM(mOverlayTransform, 0, 0.5F, 0.5F, 0);
+                        }
 
                         // Apply rotation:
                         Matrix.rotateM(mTransform, 0, rotation, 0, 0, 1);
+                        if (mOverlayTransform != null) {
+                            Matrix.rotateM(mOverlayTransform, 0, overlayRotation, 0, 0, 1);
+                        }
 
                         // Flip horizontally for front camera:
                         if (mResult.facing == Facing.FRONT) {
                             Matrix.scaleM(mTransform, 0, -1, 1, 1);
+                            if (mOverlayTransform != null) {
+                                // not sure why we have to flip the mirror the y axis
+                                Matrix.scaleM(mOverlayTransform, 0, -1, -1, 1);
+                            }
                         }
 
                         // Go back to old position.
                         Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0);
+                        if (mOverlayTransform != null) {
+                            Matrix.translateM(mOverlayTransform, 0, -0.5F, -0.5F, 0);
+                        }
 
                         // Future note: passing scale values to the viewport?
                         // They are simply realScaleX and realScaleY.
