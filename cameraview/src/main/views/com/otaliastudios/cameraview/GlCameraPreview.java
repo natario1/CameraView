@@ -158,25 +158,12 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public void onSurfaceChanged(GL10 gl, final int width, final int height) {
+        gl.glViewport(0, 0, width, height);
         if (!mDispatched) {
             dispatchOnSurfaceAvailable(width, height);
             mDispatched = true;
-        } else if (mOutputSurfaceWidth == width && mOutputSurfaceHeight == height) {
-            // I was experimenting and this was happening.
-            // Not sure if it is stil needed now.
-        } else {
-            // With other CameraPreview implementation we could just dispatch the 'size changed' event
-            // to the controller and everything would go straight. In case of GL, apparently we have to
-            // force recreate the EGLContext by calling onPause and onResume in the UI thread.
-            dispatchOnSurfaceDestroyed();
-            getView().post(new Runnable() {
-                @Override
-                public void run() {
-                    getView().onPause();
-                    getView().onResume();
-                    dispatchOnSurfaceAvailable(width, height);
-                }
-            });
+        } else if (width != mOutputSurfaceWidth || height != mOutputSurfaceHeight){
+            dispatchOnSurfaceSizeChanged(width, height);
         }
     }
 
