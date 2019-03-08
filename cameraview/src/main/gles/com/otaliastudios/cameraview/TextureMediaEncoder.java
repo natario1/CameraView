@@ -123,10 +123,6 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         float scaleTranslY = (1F - scaleY) / 2F;
         Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
         Matrix.scaleM(transform, 0, scaleX, scaleY, 1);
-        if (overlayTransform != null) {
-            Matrix.translateM(overlayTransform, 0, scaleTranslX, scaleTranslY, 0);
-            Matrix.scaleM(overlayTransform, 0, scaleX, scaleY, 1);
-        }
 
         // We also must rotate this matrix. In GlCameraPreview it is not needed because it is a live
         // stream, but the output video, must be correctly rotated based on the device rotation at the moment.

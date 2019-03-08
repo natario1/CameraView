@@ -241,11 +241,6 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             float translY = (1F - mScaleY) / 2F;
             Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
             Matrix.scaleM(mTransformMatrix, 0, mScaleX, mScaleY, 1);
-
-            if (hasOverlay()) {
-                Matrix.translateM(mOverlayTransformMatrix, 0, translX, translY, 0);
-                Matrix.scaleM(mOverlayTransformMatrix, 0, mScaleX, mScaleY, 1);
-            }
         }
         // Future note: passing scale to the viewport?
         // They are scaleX an scaleY, but flipped based on mInputFlipped.

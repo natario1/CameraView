@@ -3,7 +3,6 @@ package com.otaliastudios.cameraview;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.util.AttributeSet;
 import android.view.Surface;
@@ -36,7 +35,8 @@ public class OverlayLayout extends FrameLayout {
                 final Canvas surfaceCanvas = outputSurface.lockCanvas(null);
 
                 float xScale = surfaceCanvas.getWidth() / (float) canvas.getWidth();
-                surfaceCanvas.scale(xScale, xScale);
+                float yScale = surfaceCanvas.getHeight() / (float) canvas.getHeight();
+                surfaceCanvas.scale(xScale, yScale);
                 surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
                 super.draw(surfaceCanvas);
 

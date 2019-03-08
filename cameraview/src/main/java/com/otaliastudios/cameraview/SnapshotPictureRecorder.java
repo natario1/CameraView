@@ -136,10 +136,6 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         float scaleTranslY = (1F - realScaleY) / 2F;
                         Matrix.translateM(mTransform, 0, scaleTranslX, scaleTranslY, 0);
                         Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
-                        if (mOverlayTransform != null) {
-                            Matrix.translateM(mOverlayTransform, 0, scaleTranslX, scaleTranslY, 0);
-                            Matrix.scaleM(mOverlayTransform, 0, realScaleX, realScaleY, 1);
-                        }
 
                         // Fix rotation:
                         // TODO Not sure why we need the minus here... It makes no sense to me.
