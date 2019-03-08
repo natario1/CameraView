@@ -293,8 +293,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
             ((GlCameraPreview) mCameraPreview).addOverlayInputSurfaceListener(new GlCameraPreview.OverlayInputSurfaceListener() {
                 @Override
-                public void onSurface(@NonNull Surface surface) {
-                    mPreviewOverlayLayout.setOutputSurface(surface);
+                public void onSurface(@NonNull final Surface surface) {
+                    mUiHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mPreviewOverlayLayout.setOutputSurface(surface);
+                        }
+                    });
                 }
             });
 
