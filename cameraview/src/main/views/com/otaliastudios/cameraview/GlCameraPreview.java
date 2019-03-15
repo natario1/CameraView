@@ -7,14 +7,11 @@ import android.opengl.Matrix;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,23 +55,17 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
 
     private boolean mDispatched;
     private final float[] mTransformMatrix = new float[16];
-    private final float[] mOverlayTransformMatrix = new float[16];
-    private int[] mOutputTextureIds = new int[]{0, 0};
+    private int mOutputTextureId = 0;
     private SurfaceTexture mInputSurfaceTexture;
-    private SurfaceTexture mOverlaySurfaceTexture;
-    private Surface mOverlaySurface;
     private EglViewport mOutputViewport;
-    private EglViewport mOutputOverlayViewport;
     private Set<RendererFrameCallback> mRendererFrameCallbacks = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
     /* for tests */ float mScaleX = 1F;
     /* for tests */ float mScaleY = 1F;
 
     private View mRootView;
 
-    private ArrayList<OverlayInputSurfaceListener> overlayListeners = new ArrayList<>();
-
-    GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback, boolean hasOverlay) {
-        super(context, parent, callback, hasOverlay);
+    GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
+        super(context, parent, callback);
     }
 
     @NonNull
@@ -131,23 +122,10 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             mInputSurfaceTexture.release();
             mInputSurfaceTexture = null;
         }
-        if (mOverlaySurface != null) {
-            mOverlaySurface.release();
-            mOverlaySurface = null;
-        }
-        if (mOverlaySurfaceTexture != null) {
-            mOverlaySurfaceTexture.release();
-            mOverlaySurfaceTexture = null;
-        }
-        mOutputTextureIds[0] = 0;
-        mOutputTextureIds[1] = 0;
+        mOutputTextureId = 0;
         if (mOutputViewport != null) {
             mOutputViewport.release();
             mOutputViewport = null;
-        }
-        if (mOutputOverlayViewport != null) {
-            mOutputOverlayViewport.release();
-            mOutputOverlayViewport = null;
         }
     }
 
@@ -155,30 +133,13 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         mOutputViewport = new EglViewport();
-        mOutputOverlayViewport = new EglViewport();
-        mOutputTextureIds[0] = mOutputViewport.createTexture();
-        if (hasOverlay()) {
-            mOutputTextureIds[1] = mOutputOverlayViewport.createTexture();
-            mOverlaySurfaceTexture = new SurfaceTexture(mOutputTextureIds[1]);
-            mOverlaySurface = new Surface(mOverlaySurfaceTexture);
-            for (OverlayInputSurfaceListener listener : overlayListeners) {
-                if (listener != null) {
-                    listener.onSurface(mOverlaySurface);
-                }
-            }
-
-            mOverlaySurfaceTexture.setDefaultBufferSize(mInputStreamWidth, mInputStreamHeight);
-        }
-        mInputSurfaceTexture = new SurfaceTexture(mOutputTextureIds[0]);
+        mOutputTextureId = mOutputViewport.createTexture();
+        mInputSurfaceTexture = new SurfaceTexture(mOutputTextureId);
         getView().queueEvent(new Runnable() {
             @Override
             public void run() {
                 for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                    if (mOutputTextureIds[1] != 0) {
-                        callback.onRendererTextureCreated(mOutputTextureIds[0], mOutputTextureIds[1]);
-                    } else {
-                        callback.onRendererTextureCreated(mOutputTextureIds[0]);
-                    }
+                    callback.onRendererTextureCreated(mOutputTextureId);
                 }
             }
         });
@@ -197,25 +158,12 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public void onSurfaceChanged(GL10 gl, final int width, final int height) {
+        gl.glViewport(0, 0, width, height);
         if (!mDispatched) {
             dispatchOnSurfaceAvailable(width, height);
             mDispatched = true;
-        } else if (mOutputSurfaceWidth == width && mOutputSurfaceHeight == height) {
-            // I was experimenting and this was happening.
-            // Not sure if it is stil needed now.
-        } else {
-            // With other CameraPreview implementation we could just dispatch the 'size changed' event
-            // to the controller and everything would go straight. In case of GL, apparently we have to
-            // force recreate the EGLContext by calling onPause and onResume in the UI thread.
-            dispatchOnSurfaceDestroyed();
-            getView().post(new Runnable() {
-                @Override
-                public void run() {
-                    getView().onPause();
-                    getView().onResume();
-                    dispatchOnSurfaceAvailable(width, height);
-                }
-            });
+        } else if (width != mOutputSurfaceWidth || height != mOutputSurfaceHeight){
+            dispatchOnSurfaceSizeChanged(width, height);
         }
     }
 
@@ -225,18 +173,12 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         // Latch the latest frame.  If there isn't anything new,
         // we'll just re-use whatever was there before.
         mInputSurfaceTexture.updateTexImage();
-        if (hasOverlay()) {
-            mOverlaySurfaceTexture.updateTexImage();
-        }
         if (mInputStreamWidth <= 0 || mInputStreamHeight <= 0) {
             // Skip drawing. Camera was not opened.
             return;
         }
 
         mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
-        if (hasOverlay()) {
-            mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransformMatrix);
-        }
         if (isCropping()) {
             // Scaling is easy. However:
             // If the view is 10x1000 (very tall), it will show only the left strip of the preview (not the center one).
@@ -249,12 +191,9 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         }
         // Future note: passing scale to the viewport?
         // They are scaleX an scaleY, but flipped based on mInputFlipped.
-        mOutputViewport.drawFrame(mOutputTextureIds[0], mTransformMatrix);
-        if (hasOverlay() && mOutputTextureIds[1] != 0) {
-            mOutputOverlayViewport.drawFrame(mOutputTextureIds[1], mOverlayTransformMatrix);
-        }
+        mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
         for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-            callback.onRendererFrame(mInputSurfaceTexture, mOverlaySurfaceTexture, mScaleX, mScaleY);
+            callback.onRendererFrame(mInputSurfaceTexture, mScaleX, mScaleY);
         }
     }
 
@@ -315,10 +254,10 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
          * Called on the renderer thread, hopefully only once, to notify that
          * the texture was created (or to inform a new callback of the old texture).
          *
-         * @param textureId the GL textures linked to the image stream
+         * @param textureId the GL texture linked to the image stream
          */
         @RendererThread
-        void onRendererTextureCreated(int... textureId);
+        void onRendererTextureCreated(int textureId);
 
         /**
          * Called on the renderer thread after each frame was drawn.
@@ -330,7 +269,7 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
          * @param scaleY the scaleY (in REF_VIEW) value
          */
         @RendererThread
-        void onRendererFrame(SurfaceTexture surfaceTexture, SurfaceTexture overlaySurfaceTexture, float scaleX, float scaleY);
+        void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY);
     }
 
     void addRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
@@ -338,26 +277,12 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             @Override
             public void run() {
                 mRendererFrameCallbacks.add(callback);
-                if (mOutputTextureIds[0] != 0 && mOutputTextureIds[1] != 0) {
-                    callback.onRendererTextureCreated(mOutputTextureIds);
-                }
-                else if (mOutputTextureIds[0] != 0) callback.onRendererTextureCreated(mOutputTextureIds[0]);
+                if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
             }
         });
     }
 
     void removeRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
         mRendererFrameCallbacks.remove(callback);
-    }
-
-    public void addOverlayInputSurfaceListener(@NonNull OverlayInputSurfaceListener listener) {
-        overlayListeners.add(listener);
-        if (mOverlaySurface != null) {
-            listener.onSurface(mOverlaySurface);
-        }
-    }
-
-    interface OverlayInputSurfaceListener {
-        void onSurface(@NonNull Surface surface);
     }
 }

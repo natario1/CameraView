@@ -54,16 +54,16 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
 
     @RendererThread
     @Override
-    public void onRendererTextureCreated(int... textureId) {
-        mTextureId = textureId[0];
-        if (textureId.length > 1) {
-            mOverlayTextureId = textureId[1];
-        }
+    public void onRendererTextureCreated(int textureId) {
+        mTextureId = textureId;
+//        if (textureId.length > 1) {
+//            mOverlayTextureId = textureId[1];
+//        }
     }
 
     @RendererThread
     @Override
-    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, SurfaceTexture overlaySurfaceTexture, float scaleX, float scaleY) {
+    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
             // Set default options
             if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
@@ -114,9 +114,9 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             TextureMediaEncoder.TextureFrame textureFrame = textureEncoder.acquireFrame();
             textureFrame.timestamp = surfaceTexture.getTimestamp();
             surfaceTexture.getTransformMatrix(textureFrame.transform);
-            if (mWithOverlay && overlaySurfaceTexture != null) {
-                overlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);
-            }
+//            if (mWithOverlay && overlaySurfaceTexture != null) {
+//                overlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);
+//            }
             mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
         }
 

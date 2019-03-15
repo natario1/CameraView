@@ -13,9 +13,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public class OverlayLayout extends FrameLayout {
-
-    private Surface outputSurface = null;
+public class OverlayLayout extends FrameLayout implements SurfaceDrawer {
 
     public OverlayLayout(@NonNull Context context) {
         super(context);
@@ -29,36 +27,46 @@ public class OverlayLayout extends FrameLayout {
 
     @Override
     public void draw(Canvas canvas) {
-        if (outputSurface != null ) {
-            // Requires a try/catch for .lockCanvas( null )
-            try {
-                final Canvas surfaceCanvas = outputSurface.lockCanvas(null);
-
-                float xScale = surfaceCanvas.getWidth() / (float) canvas.getWidth();
-                float yScale = surfaceCanvas.getHeight() / (float) canvas.getHeight();
-                surfaceCanvas.scale(xScale, yScale);
-                surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                super.draw(surfaceCanvas);
-
-                outputSurface.unlockCanvasAndPost(surfaceCanvas);
-            } catch (Surface.OutOfResourcesException e) {
-                e.printStackTrace();
-            }
-        }
+//        if (outputSurface != null ) {
+//            // Requires a try/catch for .lockCanvas( null )
+//            try {
+//                final Canvas surfaceCanvas = outputSurface.lockCanvas(null);
+//
+//                float xScale = surfaceCanvas.getWidth() / (float) canvas.getWidth();
+//                float yScale = surfaceCanvas.getHeight() / (float) canvas.getHeight();
+//                surfaceCanvas.scale(xScale, yScale);
+//                surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+//                super.draw(surfaceCanvas);
+//
+//                outputSurface.unlockCanvasAndPost(surfaceCanvas);
+//            } catch (Surface.OutOfResourcesException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
         // draw the view as always, since we are already drawing on the preview this step can be
         // skipped
-        //super.draw(canvas);
+        super.draw(canvas);
     }
 
+    @Override
+    public void drawOnSurface(Surface outputSurface) {
+//        postInvalidate();
+//        postInvalidateRecursive(this);
 
+        try {
+            final Canvas surfaceCanvas = outputSurface.lockCanvas(null);
 
-    public void setOutputSurface(Surface outputSurface) {
-        this.outputSurface = outputSurface;
+            float xScale = surfaceCanvas.getWidth() / (float) getWidth();
+            float yScale = surfaceCanvas.getHeight() / (float) getHeight();
+            surfaceCanvas.scale(xScale, yScale);
+            surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+            super.draw(surfaceCanvas);
 
-        // force redrawing
-        postInvalidate();
-        postInvalidateRecursive(this);
+            outputSurface.unlockCanvasAndPost(surfaceCanvas);
+        } catch (Surface.OutOfResourcesException e) {
+            e.printStackTrace();
+        }
     }
 
     // invalidates children (and nested children) recursively

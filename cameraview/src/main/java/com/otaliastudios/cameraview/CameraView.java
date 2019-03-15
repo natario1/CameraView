@@ -259,7 +259,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
             case GL_SURFACE: default: {
                 mPreview = Preview.GL_SURFACE;
-                return new GlCameraPreview(context, container, null, mHasOverlay);
+                return new GlCameraPreview(context, container, null);
             }
         }
     }
@@ -291,18 +291,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
             mPreviewOverlayLayout = findViewById(R.id.preview_overlay_layout);
 
-            ((GlCameraPreview) mCameraPreview).addOverlayInputSurfaceListener(new GlCameraPreview.OverlayInputSurfaceListener() {
-                @Override
-                public void onSurface(@NonNull final Surface surface) {
-                    mUiHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mPreviewOverlayLayout.setOutputSurface(surface);
-                        }
-                    });
-                }
-            });
-
             LinkedList<View> overlayViews = new LinkedList<>();
             for (int i = 0; i < getChildCount(); i++) {
                 View view = getChildAt(i);
@@ -318,6 +306,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     mPreviewOverlayLayout.addView(view);
                 }
             }
+
+            mCameraController.addPictureSurfaceDrawer(mPreviewOverlayLayout);
         }
         if (!isInEditMode()) {
             mOrientationHelper.enable(getContext());

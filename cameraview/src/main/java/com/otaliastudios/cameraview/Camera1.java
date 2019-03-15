@@ -616,7 +616,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 LOG.v("Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
                 LOG.v("Rotations", "VO", offset(REF_VIEW, REF_OUTPUT), "OV", offset(REF_OUTPUT, REF_VIEW));
 
-                mPictureRecorder = new SnapshotPictureRecorder(result, Camera1.this, mCamera, outputRatio);
+                mPictureRecorder = new SnapshotPictureRecorder(result, Camera1.this, mCamera, outputRatio, pictureSurfaceDrawerList);
                 mPictureRecorder.take();
             }
         });

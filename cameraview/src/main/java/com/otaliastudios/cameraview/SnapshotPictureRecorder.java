@@ -11,10 +11,13 @@ import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
 import android.util.Log;
+import android.view.Surface;
 
 import androidx.annotation.NonNull;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A {@link PictureResult} that uses standard APIs.
@@ -30,11 +33,13 @@ class SnapshotPictureRecorder extends PictureRecorder {
     private AspectRatio mOutputRatio;
     private Size mSensorPreviewSize;
     private int mFormat;
+    private List<SurfaceDrawer> mSurfaceDrawerList;
 
     private boolean mWithOverlay;
 
     SnapshotPictureRecorder(@NonNull PictureResult stub, @NonNull Camera1 controller,
-                            @NonNull Camera camera, @NonNull AspectRatio outputRatio) {
+                            @NonNull Camera camera, @NonNull AspectRatio outputRatio,
+                            @NonNull List<SurfaceDrawer> surfaceDrawerList) {
         super(stub, controller);
         mController = controller;
         mPreview = controller.mPreview;
@@ -43,7 +48,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
         mFormat = mController.mPreviewFormat;
         mSensorPreviewSize = mController.mPreviewStreamSize;
         mWithOverlay = mController.mDisableOverlayFor != DisableOverlayFor.PICTURE;
-
+        mSurfaceDrawerList = surfaceDrawerList;
     }
 
     @Override
@@ -65,17 +70,18 @@ class SnapshotPictureRecorder extends PictureRecorder {
             SurfaceTexture mOverlaySurfaceTexture;
             float[] mTransform;
             float[] mOverlayTransform;
+            EglViewport overlayViewport;
 
             @RendererThread
-            public void onRendererTextureCreated(int... textureIds) {
-                mTextureId = textureIds[0];
-                if (textureIds.length > 1 && mWithOverlay) {
-                    mOverlayTextureId = textureIds[1];
+            public void onRendererTextureCreated(int textureId) {
+                mTextureId = textureId;
+                overlayViewport = new EglViewport();
+                if (mWithOverlay) {
+                    mOverlayTextureId = overlayViewport.createTexture();
                 }
                 mSurfaceTexture = new SurfaceTexture(mTextureId, true);
                 if (mOverlayTextureId != 0) {
-                    mOverlaySurfaceTexture = null;
-//                    mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
+                    mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
                 }
                 // Need to crop the size.
                 Rect crop = CropHelper.computeCrop(mResult.size, mOutputRatio);
@@ -92,7 +98,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
 
             @RendererThread
             @Override
-            public void onRendererFrame(SurfaceTexture surfaceTexture, final SurfaceTexture overlaySurfaceTexture, final float scaleX, final float scaleY) {
+            public void onRendererFrame(SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
                 preview.removeRendererFrameCallback(this);
 
                 // This kinda work but has drawbacks:
@@ -124,7 +130,12 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         EglViewport viewport = new EglViewport();
                         mSurfaceTexture.updateTexImage();
                         mSurfaceTexture.getTransformMatrix(mTransform);
+                        Surface drawOnto = new Surface(mOverlaySurfaceTexture);
                         if (mOverlaySurfaceTexture != null) {
+                            for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
+                                surfaceDrawer.drawOnSurface(drawOnto);
+                            }
+                            mOverlaySurfaceTexture.updateTexImage();
                             mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
                         }
 
@@ -142,7 +153,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         // TODO Not sure why we need the minus here... It makes no sense to me.
                         LOG.w("Recording frame. Rotation:", mResult.rotation, "Actual:", -mResult.rotation);
                         int rotation = -mResult.rotation;
-                        int overlayRotation = -mController.offset(CameraController.REF_VIEW, CameraController.REF_OUTPUT);
+                        int overlayRotation = mController.offset(CameraController.REF_VIEW, CameraController.REF_OUTPUT);
                         // apparently with front facing camera with don't need the minus sign
                         if (mResult.facing == Facing.FRONT) {
                             overlayRotation = -overlayRotation;
@@ -169,6 +180,10 @@ class SnapshotPictureRecorder extends PictureRecorder {
                                 Matrix.scaleM(mOverlayTransform, 0, -1, -1, 1);
                             }
                         }
+                        if (mOverlayTransform != null) {
+                            // not sure why we have to flip the mirror the y axis
+                            Matrix.scaleM(mOverlayTransform, 0, 1, -1, 1);
+                        }
 
                         // Go back to old position.
                         Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0);
@@ -180,7 +195,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         // They are simply realScaleX and realScaleY.
                         viewport.drawFrame(mTextureId, mTransform);
                         if (mOverlayTransform != null) {
-//                            viewport.drawFrameOverlay(mOverlayTextureId, mOverlayTransform);
+                            overlayViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
                         }
                         // don't - surface.swapBuffers();
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
@@ -190,6 +205,8 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         // EGL14.eglMakeCurrent(oldDisplay, oldSurface, oldSurface, eglContext);
                         surface.release();
                         viewport.release();
+                        overlayViewport.release();
+                        drawOnto.release();
                         mSurfaceTexture.release();
                         if (mOverlaySurfaceTexture != null) {
                             mOverlaySurfaceTexture.release();

@@ -38,6 +38,8 @@ abstract class CameraController implements
     protected WorkerHandler mHandler;
     /* for tests */ Handler mCrashHandler;
 
+    protected final ArrayList<SurfaceDrawer> pictureSurfaceDrawerList = new ArrayList<>();
+
     protected Facing mFacing;
     protected Flash mFlash;
     protected WhiteBalance mWhiteBalance;
@@ -668,4 +670,14 @@ abstract class CameraController implements
     }
 
     //endregion
+
+    public void addPictureSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
+        if (!pictureSurfaceDrawerList.contains(surfaceDrawer)) {
+            pictureSurfaceDrawerList.add(surfaceDrawer);
+        }
+    }
+
+    public void removePictureSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
+        pictureSurfaceDrawerList.remove(surfaceDrawer);
+    }
 }
