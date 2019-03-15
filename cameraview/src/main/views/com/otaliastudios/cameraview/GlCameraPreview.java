@@ -64,6 +64,7 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
     private SurfaceTexture mOverlaySurfaceTexture;
     private Surface mOverlaySurface;
     private EglViewport mOutputViewport;
+    private EglViewport mOutputOverlayViewport;
     private Set<RendererFrameCallback> mRendererFrameCallbacks = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
     /* for tests */ float mScaleX = 1F;
     /* for tests */ float mScaleY = 1F;
@@ -144,14 +145,20 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             mOutputViewport.release();
             mOutputViewport = null;
         }
+        if (mOutputOverlayViewport != null) {
+            mOutputOverlayViewport.release();
+            mOutputOverlayViewport = null;
+        }
     }
 
     @RendererThread
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        mOutputViewport = new EglViewport(hasOverlay());
+        mOutputViewport = new EglViewport();
+        mOutputOverlayViewport = new EglViewport();
+        mOutputTextureIds[0] = mOutputViewport.createTexture();
         if (hasOverlay()) {
-            mOutputTextureIds = mOutputViewport.createTextures();
+            mOutputTextureIds[1] = mOutputOverlayViewport.createTexture();
             mOverlaySurfaceTexture = new SurfaceTexture(mOutputTextureIds[1]);
             mOverlaySurface = new Surface(mOverlaySurfaceTexture);
             for (OverlayInputSurfaceListener listener : overlayListeners) {
@@ -161,8 +168,6 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
             }
 
             mOverlaySurfaceTexture.setDefaultBufferSize(mInputStreamWidth, mInputStreamHeight);
-        } else {
-            mOutputTextureIds[0] = mOutputViewport.createTexture();
         }
         mInputSurfaceTexture = new SurfaceTexture(mOutputTextureIds[0]);
         getView().queueEvent(new Runnable() {
@@ -244,11 +249,9 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         }
         // Future note: passing scale to the viewport?
         // They are scaleX an scaleY, but flipped based on mInputFlipped.
+        mOutputViewport.drawFrame(mOutputTextureIds[0], mTransformMatrix);
         if (hasOverlay() && mOutputTextureIds[1] != 0) {
-            mOutputViewport.drawFrame(mOutputTextureIds[0], mOutputTextureIds[1], mTransformMatrix, mOverlayTransformMatrix);
-            mOutputViewport.drawFrameOverlay(mOutputTextureIds[1], mOverlayTransformMatrix);
-        } else {
-            mOutputViewport.drawFrame(mOutputTextureIds[0], mTransformMatrix);
+            mOutputOverlayViewport.drawFrame(mOutputTextureIds[1], mOverlayTransformMatrix);
         }
         for (RendererFrameCallback callback : mRendererFrameCallbacks) {
             callback.onRendererFrame(mInputSurfaceTexture, mOverlaySurfaceTexture, mScaleX, mScaleY);

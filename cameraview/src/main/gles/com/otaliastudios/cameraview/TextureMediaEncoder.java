@@ -88,7 +88,8 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent(); // drawing will happen on the InputWindowSurface, which
         // is backed by mVideoEncoder.getInputSurface()
-        mViewport = new EglViewport(mConfig.overlayTextureId != 0);
+//        mViewport = new EglViewport(mConfig.overlayTextureId != 0);
+        mViewport = new EglViewport();
     }
 
     @EncoderThread
@@ -141,7 +142,8 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         drainOutput(false);
         // Future note: passing scale values to the viewport? They are scaleX and scaleY,
         // but flipped based on the mConfig.scaleFlipped boolean.
-        mViewport.drawFrame(mConfig.textureId, mConfig.overlayTextureId, transform, overlayTransform);
+//        mViewport.drawFrame(mConfig.textureId, mConfig.overlayTextureId, transform, overlayTransform);
+        mViewport.drawFrame(mConfig.textureId, transform);
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();
         mFramePool.recycle(frame);

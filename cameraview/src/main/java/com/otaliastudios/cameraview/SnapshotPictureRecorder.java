@@ -74,7 +74,8 @@ class SnapshotPictureRecorder extends PictureRecorder {
                 }
                 mSurfaceTexture = new SurfaceTexture(mTextureId, true);
                 if (mOverlayTextureId != 0) {
-                    mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
+                    mOverlaySurfaceTexture = null;
+//                    mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
                 }
                 // Need to crop the size.
                 Rect crop = CropHelper.computeCrop(mResult.size, mOutputRatio);
@@ -91,7 +92,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
 
             @RendererThread
             @Override
-            public void onRendererFrame(SurfaceTexture surfaceTexture, SurfaceTexture overlaySurfaceTexture, final float scaleX, final float scaleY) {
+            public void onRendererFrame(SurfaceTexture surfaceTexture, final SurfaceTexture overlaySurfaceTexture, final float scaleX, final float scaleY) {
                 preview.removeRendererFrameCallback(this);
 
                 // This kinda work but has drawbacks:
@@ -120,7 +121,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                     public void run() {
                         EglWindowSurface surface = new EglWindowSurface(core, mSurfaceTexture);
                         surface.makeCurrent();
-                        EglViewport viewport = new EglViewport(mOverlaySurfaceTexture != null);
+                        EglViewport viewport = new EglViewport();
                         mSurfaceTexture.updateTexImage();
                         mSurfaceTexture.getTransformMatrix(mTransform);
                         if (mOverlaySurfaceTexture != null) {
@@ -177,9 +178,9 @@ class SnapshotPictureRecorder extends PictureRecorder {
 
                         // Future note: passing scale values to the viewport?
                         // They are simply realScaleX and realScaleY.
-                        viewport.drawFrame(mTextureId, mOverlayTextureId, mTransform, mOverlayTransform);
+                        viewport.drawFrame(mTextureId, mTransform);
                         if (mOverlayTransform != null) {
-                            viewport.drawFrameOverlay(mOverlayTextureId, mOverlayTransform);
+//                            viewport.drawFrameOverlay(mOverlayTextureId, mOverlayTransform);
                         }
                         // don't - surface.swapBuffers();
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
