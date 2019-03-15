@@ -178,6 +178,9 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         // Future note: passing scale values to the viewport?
                         // They are simply realScaleX and realScaleY.
                         viewport.drawFrame(mTextureId, mOverlayTextureId, mTransform, mOverlayTransform);
+                        if (mOverlayTransform != null) {
+                            viewport.drawFrameOverlay(mOverlayTextureId, mOverlayTransform);
+                        }
                         // don't - surface.swapBuffers();
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
                         mResult.format = PictureResult.FORMAT_JPEG;

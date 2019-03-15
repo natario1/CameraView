@@ -246,6 +246,7 @@ class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> imple
         // They are scaleX an scaleY, but flipped based on mInputFlipped.
         if (hasOverlay() && mOutputTextureIds[1] != 0) {
             mOutputViewport.drawFrame(mOutputTextureIds[0], mOutputTextureIds[1], mTransformMatrix, mOverlayTransformMatrix);
+            mOutputViewport.drawFrameOverlay(mOutputTextureIds[1], mOverlayTransformMatrix);
         } else {
             mOutputViewport.drawFrame(mOutputTextureIds[0], mTransformMatrix);
         }

@@ -30,15 +30,12 @@ class EglViewport extends EglElement {
     // Simple vertex shader.
     private static final String OVERLAY_VERTEX_SHADER =
             "uniform mat4 uMVPMatrix;\n" +
-                    "uniform mat4 uTexMatrix;\n" +
                     "uniform mat4 uOverlayTexMatrix;\n" +
                     "attribute vec4 aPosition;\n" +
                     "attribute vec4 aTextureCoord;\n" +
-                    "varying vec2 vTextureCoord;\n" +
                     "varying vec2 vOverlayTextureCoord;\n" +
                     "void main() {\n" +
                     "    gl_Position = uMVPMatrix * aPosition;\n" +
-                    "    vTextureCoord = (uTexMatrix * aTextureCoord).xy;\n" +
                     "    vOverlayTextureCoord = (uOverlayTexMatrix * aTextureCoord).xy;\n" +
                     "}\n";
 
@@ -59,14 +56,12 @@ class EglViewport extends EglElement {
     private static final String OVERLAY_FRAGMENT_SHADER =
             "#extension GL_OES_EGL_image_external : require\n" +
                     "precision mediump float;\n" +
-                    "varying vec2 vTextureCoord;\n" +
                     "varying vec2 vOverlayTextureCoord;\n" +
-                    "uniform samplerExternalOES sTexture;\n" +
                     "uniform samplerExternalOES overlayTexture;\n" +
                     "void main() {\n" +
-                    "    lowp vec4 c2 = texture2D(sTexture, vTextureCoord);\n" +
                     "    lowp vec4 c1 = texture2D(overlayTexture, vOverlayTextureCoord);\n" +
-                    "    gl_FragColor = mix(c2, c1, c1.a);\n" +
+                    "    if (c1.a == 0.0){ discard; }\n" +
+                    "    gl_FragColor = c1;\n" +
                     "}\n";
 
     // Stuff from Drawable2d.FULL_RECTANGLE
@@ -75,8 +70,8 @@ class EglViewport extends EglElement {
     private static final float FULL_RECTANGLE_COORDS[] = {
             -1.0f, -1.0f,   // 0 bottom left
             1.0f, -1.0f,   // 1 bottom right
-            -1.0f,  1.0f,   // 2 top left
-            1.0f,  1.0f,   // 3 top right
+            -1.0f, 1.0f,   // 2 top left
+            1.0f, 1.0f,   // 3 top right
     };
 
     // Stuff from Drawable2d.FULL_RECTANGLE
@@ -95,15 +90,19 @@ class EglViewport extends EglElement {
 
     // Stuff from Texture2dProgram
     private int mProgramHandle;
+    private int mProgramHandleOverlay;
     private int mTextureTarget;
     // Program attributes
     private int muMVPMatrixLocation;
+    private int muOverlayMVPMatrixLocation;
     private int muTexMatrixLocation;
     private int muOverlayTexMatrixLocation;
     private int muTextureLocation;
     private int muOverlayTextureLocation;
     private int maPositionLocation;
+    private int maOverlayPositionLocation;
     private int maTextureCoordLocation;
+    private int maOverlayTextureCoordLocation;
 
     // private int muKernelLoc; // Used for filtering
     // private int muTexOffsetLoc; // Used for filtering
@@ -120,11 +119,9 @@ class EglViewport extends EglElement {
         mHasOverlay = hasOverlay;
 
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
-        if (mHasOverlay) {
-            mProgramHandle = createProgram(OVERLAY_VERTEX_SHADER, OVERLAY_FRAGMENT_SHADER);
-        } else {
-            mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
-        }
+        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
+        mProgramHandleOverlay = createProgram(OVERLAY_VERTEX_SHADER, OVERLAY_FRAGMENT_SHADER);
+
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
         checkLocation(maPositionLocation, "aPosition");
         maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, "aTextureCoord");
@@ -133,14 +130,22 @@ class EglViewport extends EglElement {
         checkLocation(muMVPMatrixLocation, "uMVPMatrix");
         muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uTexMatrix");
         checkLocation(muTexMatrixLocation, "uTexMatrix");
-        muTextureLocation = GLES20.glGetUniformLocation(mProgramHandle, "sTexture");
-        checkLocation(muTextureLocation, "sTexture");
+
+        maOverlayPositionLocation = GLES20.glGetAttribLocation(mProgramHandleOverlay, "aPosition");
+        checkLocation(maOverlayPositionLocation, "aPosition");
+        maOverlayTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandleOverlay, "aTextureCoord");
+        checkLocation(maOverlayTextureCoordLocation, "aTextureCoord");
+        muOverlayMVPMatrixLocation = GLES20.glGetUniformLocation(mProgramHandleOverlay, "uMVPMatrix");
+        checkLocation(muOverlayMVPMatrixLocation, "uMVPMatrix");
+
         if (mHasOverlay) {
-            muOverlayTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uOverlayTexMatrix");
+            muOverlayTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandleOverlay, "uOverlayTexMatrix");
             checkLocation(muOverlayTexMatrixLocation, "uOverlayTexMatrix");
-            muOverlayTextureLocation = GLES20.glGetUniformLocation(mProgramHandle, "overlayTexture");
+            muOverlayTextureLocation = GLES20.glGetUniformLocation(mProgramHandleOverlay, "overlayTexture");
             checkLocation(muOverlayTextureLocation, "overlayTexture");
         }
+        muTextureLocation = GLES20.glGetUniformLocation(mProgramHandle, "sTexture");
+        checkLocation(muTextureLocation, "sTexture");
 
         // Stuff from Drawable2d.FULL_RECTANGLE
 
@@ -163,7 +168,8 @@ class EglViewport extends EglElement {
         // index 0 is reserved for the camera texture, index 1 is reserved for the overlay texture
         int numTextures = mHasOverlay ? 2 : 1;
         int[] textures = new int[numTextures];
-        GLES20.glGenTextures(numTextures, textures, 0);
+        GLES20.glGenTextures(1, textures, 0);
+        GLES20.glGenTextures(1, textures, 1);
         check("glGenTextures");
 
         // camera texture
@@ -203,8 +209,14 @@ class EglViewport extends EglElement {
                            FloatBuffer texBuffer) {
         // 0 is not a valid texture id
         drawFrame(textureId, 0, textureMatrix, null,
-            vertexBuffer,
-            texBuffer);
+                vertexBuffer,
+                texBuffer);
+    }
+
+    void drawFrameOverlay(int overlayTextureId, float[] overlayTextureMatrix) {
+        drawFrameOverlay(overlayTextureId, overlayTextureMatrix,
+                mVertexCoordinatesArray,
+                mTextureCoordinatesArray);
     }
 
     void drawFrame(int textureId, int overlayTextureId, float[] textureMatrix, float[] overlayTextureMatrix) {
@@ -217,11 +229,11 @@ class EglViewport extends EglElement {
      * The issue with the CIRCLE shader is that if the textureMatrix has a scale value,
      * it fails miserably, not taking the scale into account.
      * So what we can do here is
-     *
+     * <p>
      * - read textureMatrix scaleX and scaleY values. This is pretty much impossible to do from the matrix itself
-     *   without making risky assumptions over the order of operations.
-     *   https://www.opengl.org/discussion_boards/showthread.php/159215-Is-it-possible-to-extract-rotation-translation-scale-given-a-matrix
-     *   So we prefer passing scaleX and scaleY here to the draw function.
+     * without making risky assumptions over the order of operations.
+     * https://www.opengl.org/discussion_boards/showthread.php/159215-Is-it-possible-to-extract-rotation-translation-scale-given-a-matrix
+     * So we prefer passing scaleX and scaleY here to the draw function.
      * - pass these values to the vertex shader
      * - pass them to the fragment shader
      * - in the fragment shader, take this scale value into account
@@ -262,17 +274,6 @@ class EglViewport extends EglElement {
         GLES20.glVertexAttribPointer(maTextureCoordLocation, 2, GLES20.GL_FLOAT, false, 8, texBuffer);
         check("glVertexAttribPointer");
 
-        // Set the overlay texture.
-        if (mHasOverlay) {
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
-            GLES20.glBindTexture(mTextureTarget, overlayTextureId);
-            GLES20.glUniform1i(muOverlayTextureLocation, 1);
-
-            // Copy the texture transformation matrix over.
-            GLES20.glUniformMatrix4fv(muOverlayTexMatrixLocation, 1, false, overlayTextureMatrix, 0);
-            check("glUniformMatrix4fv");
-        }
-
         // Draw the rect.
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_COUNT);
         check("glDrawArrays");
@@ -280,6 +281,64 @@ class EglViewport extends EglElement {
         // Done -- disable vertex array, textures, and program.
         GLES20.glDisableVertexAttribArray(maPositionLocation);
         GLES20.glDisableVertexAttribArray(maTextureCoordLocation);
+        GLES20.glBindTexture(mTextureTarget, 0);
+        GLES20.glUseProgram(0);
+    }
+
+    private void drawFrameOverlay(int overlayTextureId, float[] overlayTextureMatrix,
+                                  FloatBuffer vertexBuffer,
+                                  FloatBuffer texBuffer) {
+        check("draw start");
+
+        // Select the program.
+        GLES20.glUseProgram(mProgramHandleOverlay);
+        check("glUseProgram");
+
+        // No culling of back faces
+        GLES20.glDisable(GLES20.GL_CULL_FACE);
+
+        // No depth testing
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+
+        // Enable blending
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+        GLES20.glBindTexture(mTextureTarget, overlayTextureId);
+        GLES20.glUniform1i(muOverlayTextureLocation, 1);
+
+
+        // Copy the model / view / projection matrix over.
+        GLES20.glUniformMatrix4fv(muOverlayMVPMatrixLocation, 1, false, IDENTITY_MATRIX, 0);
+        check("glUniformMatrix4fv");
+
+        // Copy the texture transformation matrix over.
+        GLES20.glUniformMatrix4fv(muOverlayTexMatrixLocation, 1, false, overlayTextureMatrix, 0);
+        check("glUniformMatrix4fv");
+
+        // Enable the "aPosition" vertex attribute.
+        // Connect vertexBuffer to "aPosition".
+        GLES20.glEnableVertexAttribArray(maOverlayPositionLocation);
+        check("glEnableVertexAttribArray");
+        GLES20.glVertexAttribPointer(maOverlayPositionLocation, 2, GLES20.GL_FLOAT, false, 8, vertexBuffer);
+        check("glVertexAttribPointer");
+
+        // Enable the "aTextureCoord" vertex attribute.
+        // Connect texBuffer to "aTextureCoord".
+        GLES20.glEnableVertexAttribArray(maOverlayTextureCoordLocation);
+        check("glEnableVertexAttribArray");
+        GLES20.glVertexAttribPointer(maOverlayTextureCoordLocation, 2, GLES20.GL_FLOAT, false, 8, texBuffer);
+        check("glVertexAttribPointer");
+
+
+        // Draw the rect.
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_COUNT);
+        check("glDrawArrays");
+
+        // Done -- disable vertex array, textures, and program.
+        GLES20.glDisableVertexAttribArray(maOverlayPositionLocation);
+        GLES20.glDisableVertexAttribArray(maOverlayTextureCoordLocation);
         GLES20.glBindTexture(mTextureTarget, 0);
         GLES20.glUseProgram(0);
     }
