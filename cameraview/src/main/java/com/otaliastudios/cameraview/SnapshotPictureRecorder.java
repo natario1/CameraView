@@ -70,14 +70,14 @@ class SnapshotPictureRecorder extends PictureRecorder {
             SurfaceTexture mOverlaySurfaceTexture;
             float[] mTransform;
             float[] mOverlayTransform;
-            EglViewport overlayViewport;
+            EglViewport viewport;
 
             @RendererThread
             public void onRendererTextureCreated(int textureId) {
                 mTextureId = textureId;
-                overlayViewport = new EglViewport();
+                viewport = new EglViewport();
                 if (mWithOverlay) {
-                    mOverlayTextureId = overlayViewport.createTexture();
+                    mOverlayTextureId = viewport.createTexture();
                 }
                 mSurfaceTexture = new SurfaceTexture(mTextureId, true);
                 if (mOverlayTextureId != 0) {
@@ -127,7 +127,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                     public void run() {
                         EglWindowSurface surface = new EglWindowSurface(core, mSurfaceTexture);
                         surface.makeCurrent();
-                        EglViewport viewport = new EglViewport();
+//                        EglViewport viewport = new EglViewport();
                         mSurfaceTexture.updateTexImage();
                         mSurfaceTexture.getTransformMatrix(mTransform);
                         Surface drawOnto = new Surface(mOverlaySurfaceTexture);
@@ -195,7 +195,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         // They are simply realScaleX and realScaleY.
                         viewport.drawFrame(mTextureId, mTransform);
                         if (mOverlayTransform != null) {
-                            overlayViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
+                            viewport.drawFrame(mOverlayTextureId, mOverlayTransform);
                         }
                         // don't - surface.swapBuffers();
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
@@ -205,7 +205,6 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         // EGL14.eglMakeCurrent(oldDisplay, oldSurface, oldSurface, eglContext);
                         surface.release();
                         viewport.release();
-                        overlayViewport.release();
                         drawOnto.release();
                         mSurfaceTexture.release();
                         if (mOverlaySurfaceTexture != null) {

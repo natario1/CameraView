@@ -26,34 +26,7 @@ public class OverlayLayout extends FrameLayout implements SurfaceDrawer {
     }
 
     @Override
-    public void draw(Canvas canvas) {
-//        if (outputSurface != null ) {
-//            // Requires a try/catch for .lockCanvas( null )
-//            try {
-//                final Canvas surfaceCanvas = outputSurface.lockCanvas(null);
-//
-//                float xScale = surfaceCanvas.getWidth() / (float) canvas.getWidth();
-//                float yScale = surfaceCanvas.getHeight() / (float) canvas.getHeight();
-//                surfaceCanvas.scale(xScale, yScale);
-//                surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-//                super.draw(surfaceCanvas);
-//
-//                outputSurface.unlockCanvasAndPost(surfaceCanvas);
-//            } catch (Surface.OutOfResourcesException e) {
-//                e.printStackTrace();
-//            }
-//        }
-
-        // draw the view as always, since we are already drawing on the preview this step can be
-        // skipped
-        super.draw(canvas);
-    }
-
-    @Override
     public void drawOnSurface(Surface outputSurface) {
-//        postInvalidate();
-//        postInvalidateRecursive(this);
-
         try {
             final Canvas surfaceCanvas = outputSurface.lockCanvas(null);
 
