@@ -308,6 +308,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
 
             mCameraController.addPictureSurfaceDrawer(mPreviewOverlayLayout);
+            mCameraController.addVideoSurfaceDrawer(mPreviewOverlayLayout);
         }
         if (!isInEditMode()) {
             mOrientationHelper.enable(getContext());

@@ -88,7 +88,6 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent(); // drawing will happen on the InputWindowSurface, which
         // is backed by mVideoEncoder.getInputSurface()
-//        mViewport = new EglViewport(mConfig.overlayTextureId != 0);
         mViewport = new EglViewport();
     }
 
@@ -144,6 +143,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         // but flipped based on the mConfig.scaleFlipped boolean.
 //        mViewport.drawFrame(mConfig.textureId, mConfig.overlayTextureId, transform, overlayTransform);
         mViewport.drawFrame(mConfig.textureId, transform);
+        mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();
         mFramePool.recycle(frame);

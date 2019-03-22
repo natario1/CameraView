@@ -39,6 +39,7 @@ abstract class CameraController implements
     /* for tests */ Handler mCrashHandler;
 
     protected final ArrayList<SurfaceDrawer> pictureSurfaceDrawerList = new ArrayList<>();
+    protected final ArrayList<SurfaceDrawer> videoSurfaceDrawerList = new ArrayList<>();
 
     protected Facing mFacing;
     protected Flash mFlash;
@@ -679,5 +680,15 @@ abstract class CameraController implements
 
     public void removePictureSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
         pictureSurfaceDrawerList.remove(surfaceDrawer);
+    }
+
+    public void addVideoSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
+        if (!videoSurfaceDrawerList.contains(surfaceDrawer)) {
+            videoSurfaceDrawerList.add(surfaceDrawer);
+        }
+    }
+
+    public void removeVideoSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
+        videoSurfaceDrawerList.remove(surfaceDrawer);
     }
 }

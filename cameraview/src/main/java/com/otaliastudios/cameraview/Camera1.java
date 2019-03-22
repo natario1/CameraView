@@ -790,7 +790,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 // Reset facing and start.
                 mFacing = realFacing;
                 GlCameraPreview cameraPreview = (GlCameraPreview) mPreview;
-                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview, mDisableOverlayFor != DisableOverlayFor.VIDEO);
+                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview, mDisableOverlayFor != DisableOverlayFor.VIDEO, videoSurfaceDrawerList);
                 mVideoRecorder.start();
             }
         });

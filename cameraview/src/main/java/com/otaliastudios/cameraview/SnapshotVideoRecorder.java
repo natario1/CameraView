@@ -3,6 +3,10 @@ package com.otaliastudios.cameraview;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
+import android.util.Log;
+import android.view.Surface;
+
+import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,14 +36,18 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
     private int mOverlayTextureId = 0;
+    private SurfaceTexture mOverlaySurfaceTexture;
+    private Surface mOverlaySurface;
+    private List<SurfaceDrawer> mSurfaceDrawerList;
 
     private boolean mWithOverlay;
 
-    SnapshotVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview, boolean withOverlay) {
+    SnapshotVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview, boolean withOverlay, @NonNull List<SurfaceDrawer> surfaceDrawerList) {
         super(stub, listener);
         mPreview = preview;
         mPreview.addRendererFrameCallback(this);
         mWithOverlay = withOverlay;
+        mSurfaceDrawerList = surfaceDrawerList;
     }
 
     @Override
@@ -56,9 +64,14 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     @Override
     public void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
-//        if (textureId.length > 1) {
-//            mOverlayTextureId = textureId[1];
-//        }
+        if (mWithOverlay) {
+            EglViewport temp = new EglViewport();
+            mOverlayTextureId = temp.createTexture();
+
+            mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId);
+            mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
+            mOverlaySurface = new Surface(mOverlaySurfaceTexture);
+        }
     }
 
     @RendererThread
@@ -114,9 +127,15 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             TextureMediaEncoder.TextureFrame textureFrame = textureEncoder.acquireFrame();
             textureFrame.timestamp = surfaceTexture.getTimestamp();
             surfaceTexture.getTransformMatrix(textureFrame.transform);
-//            if (mWithOverlay && overlaySurfaceTexture != null) {
-//                overlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);
-//            }
+
+            // get overlay
+            if (mOverlaySurfaceTexture != null) {
+                for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
+                    surfaceDrawer.drawOnSurface(mOverlaySurface);
+                }
+                mOverlaySurfaceTexture.updateTexImage();
+                mOverlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);
+            }
             mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
         }
 
@@ -126,6 +145,14 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             mEncoderEngine = null;
             mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
             mPreview = null;
+            if (mOverlaySurfaceTexture != null) {
+                mOverlaySurfaceTexture.release();
+                mOverlaySurfaceTexture = null;
+            }
+            if (mOverlaySurface != null) {
+                mOverlaySurface.release();
+                mOverlaySurface = null;
+            }
         }
 
     }
