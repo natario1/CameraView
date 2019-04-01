@@ -13,7 +13,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public class OverlayLayout extends FrameLayout implements SurfaceDrawer {
+class OverlayLayout extends FrameLayout implements SurfaceDrawer {
 
     public OverlayLayout(@NonNull Context context) {
         super(context);
@@ -39,19 +39,6 @@ public class OverlayLayout extends FrameLayout implements SurfaceDrawer {
             outputSurface.unlockCanvasAndPost(surfaceCanvas);
         } catch (Surface.OutOfResourcesException e) {
             e.printStackTrace();
-        }
-    }
-
-    // invalidates children (and nested children) recursively
-    private void postInvalidateRecursive(ViewGroup layout) {
-        int count = layout.getChildCount();
-        View child;
-        for (int i = 0; i < count; i++) {
-            child = layout.getChildAt(i);
-            if(child instanceof ViewGroup)
-                postInvalidateRecursive((ViewGroup) child);
-            else
-                child.postInvalidate();
         }
     }
 }

@@ -47,7 +47,8 @@ class SnapshotPictureRecorder extends PictureRecorder {
         mOutputRatio = outputRatio;
         mFormat = mController.mPreviewFormat;
         mSensorPreviewSize = mController.mPreviewStreamSize;
-        mWithOverlay = mController.mDisableOverlayFor != DisableOverlayFor.PICTURE;
+        // TODO when we'll have the API for setting where to draw each view, we'll fix this.
+        mWithOverlay = true;
         mSurfaceDrawerList = surfaceDrawerList;
     }
 
@@ -80,18 +81,18 @@ class SnapshotPictureRecorder extends PictureRecorder {
                     mOverlayTextureId = viewport.createTexture();
                 }
                 mSurfaceTexture = new SurfaceTexture(mTextureId, true);
-                if (mOverlayTextureId != 0) {
+                if (mWithOverlay) {
                     mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
                 }
                 // Need to crop the size.
                 Rect crop = CropHelper.computeCrop(mResult.size, mOutputRatio);
                 mResult.size = new Size(crop.width(), crop.height());
                 mSurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
-                if (mOverlaySurfaceTexture != null) {
+                if (mWithOverlay) {
                     mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
                 }
                 mTransform = new float[16];
-                if (mOverlaySurfaceTexture != null) {
+                if (mWithOverlay) {
                     mOverlayTransform = new float[16];
                 }
             }
@@ -131,7 +132,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         mSurfaceTexture.updateTexImage();
                         mSurfaceTexture.getTransformMatrix(mTransform);
                         Surface drawOnto = new Surface(mOverlaySurfaceTexture);
-                        if (mOverlaySurfaceTexture != null) {
+                        if (mWithOverlay) {
                             for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
                                 surfaceDrawer.drawOnSurface(drawOnto);
                             }
@@ -194,7 +195,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         // Future note: passing scale values to the viewport?
                         // They are simply realScaleX and realScaleY.
                         viewport.drawFrame(mTextureId, mTransform);
-                        if (mOverlayTransform != null) {
+                        if (mWithOverlay) {
                             viewport.drawFrame(mOverlayTextureId, mOverlayTransform);
                         }
                         // don't - surface.swapBuffers();

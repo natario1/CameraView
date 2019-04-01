@@ -141,7 +141,6 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         drainOutput(false);
         // Future note: passing scale values to the viewport? They are scaleX and scaleY,
         // but flipped based on the mConfig.scaleFlipped boolean.
-//        mViewport.drawFrame(mConfig.textureId, mConfig.overlayTextureId, transform, overlayTransform);
         mViewport.drawFrame(mConfig.textureId, transform);
         mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
         mWindow.setPresentationTime(frame.timestamp);

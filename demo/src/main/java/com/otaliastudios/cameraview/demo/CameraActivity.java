@@ -185,13 +185,11 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         switch (camera.toggleFacing()) {
             case BACK:
                 watermarkTitle.setText("Back facing");
-                camera.invalidateOverlay();
                 message("Switched to back camera!", false);
                 break;
 
             case FRONT:
                 watermarkTitle.setText("Front facing");
-                camera.invalidateOverlay();
                 message("Switched to front camera!", false);
                 break;
         }

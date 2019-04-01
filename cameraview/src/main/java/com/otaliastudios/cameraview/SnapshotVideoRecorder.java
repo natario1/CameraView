@@ -136,9 +136,12 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                 mOverlaySurfaceTexture.updateTexImage();
                 mOverlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);
             }
-            // Sometimes when the video ends an Exception is thrown saying that nofify was called on
-            // a null object. This might be highlighting a bigger problem, but checking for null
-            // fixes the Exception.
+
+            /* TODO
+             * Sometimes when the video ends an Exception is thrown saying that notify was called on
+             * a null object. This might be highlighting a bigger problem, but checking for null
+             * fixes the Exception.
+             */
             if (mEncoderEngine != null) {
                 mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
             }

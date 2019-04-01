@@ -52,7 +52,6 @@ abstract class CameraController implements
     protected float mZoomValue;
     protected float mExposureCorrectionValue;
     protected boolean mPlaySounds;
-    protected DisableOverlayFor mDisableOverlayFor;
 
     @Nullable private SizeSelector mPreviewStreamSizeSelector;
     private SizeSelector mPictureSizeSelector;
@@ -374,8 +373,6 @@ abstract class CameraController implements
 
     abstract void setPlaySounds(boolean playSounds);
 
-    abstract void setDisableOverlayFor(@NonNull DisableOverlayFor disableOverlayFor);
-
     //endregion
 
     //region final getters
@@ -469,11 +466,6 @@ abstract class CameraController implements
 
     final boolean isTakingPicture() {
         return mPictureRecorder != null;
-    }
-
-    @NonNull
-    final DisableOverlayFor getDisableOverlayFor() {
-        return mDisableOverlayFor;
     }
 
     //endregion
