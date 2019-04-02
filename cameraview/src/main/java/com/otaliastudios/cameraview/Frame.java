@@ -20,6 +20,18 @@ public class Frame {
         mManager = manager;
     }
 
+    boolean isAlive() {
+        return mData != null;
+    }
+
+    private void ensureAlive() {
+        if (!isAlive()) {
+            throw new RuntimeException("You should not access a released frame. " +
+                    "If this frame was passed to a FrameProcessor, you can only use its contents synchronously," +
+                    "for the duration of the process() method.");
+        }
+    }
+
     void set(@NonNull byte[] data, long time, int rotation, @NonNull Size size, int format) {
         this.mData = data;
         this.mTime = time;
@@ -44,6 +56,7 @@ public class Frame {
     @SuppressWarnings("WeakerAccess")
     @NonNull
     public Frame freeze() {
+        ensureAlive();
         byte[] data = new byte[mData.length];
         System.arraycopy(mData, 0, data, 0, mData.length);
         Frame other = new Frame(mManager);
@@ -56,11 +69,12 @@ public class Frame {
      * that are not useful anymore.
      */
     public void release() {
+        if (!isAlive()) return;
+
         if (mManager != null) {
             // If needed, the manager will call releaseManager on us.
             mManager.onFrameReleased(this);
         }
-
         mData = null;
         mRotation = 0;
         mTime = -1;
@@ -79,6 +93,7 @@ public class Frame {
      */
     @NonNull
     public byte[] getData() {
+        ensureAlive();
         return mData;
     }
 
@@ -89,6 +104,7 @@ public class Frame {
      * @return time data
      */
     public long getTime() {
+        ensureAlive();
         return mTime;
     }
 
@@ -100,6 +116,7 @@ public class Frame {
      * @return clock-wise rotation
      */
     public int getRotation() {
+        ensureAlive();
         return mRotation;
     }
 
@@ -110,6 +127,7 @@ public class Frame {
      */
     @NonNull
     public Size getSize() {
+        ensureAlive();
         return mSize;
     }
 
@@ -122,6 +140,7 @@ public class Frame {
      * @see android.graphics.ImageFormat
      */
     public int getFormat() {
+        ensureAlive();
         return mFormat;
     }
 }
