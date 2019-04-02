@@ -6,6 +6,7 @@ import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
@@ -29,6 +30,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 
 /**
@@ -593,6 +595,25 @@ public class IntegrationTest extends BaseTest {
         waitForOpen(true);
         camera.takeVideo(new File(context().getFilesDir(), "video.mp4"), 4000);
         waitForVideoEnd(true);
+
+        assert30Frames(processor);
+    }
+
+
+    @Test
+    public void testFrameProcessing_freezeRelease() throws Exception {
+        // Ensure that freeze/release cycles do not cause OOMs.
+        // There was a bug doing this and it might resurface for any improper
+        // disposal of the frames.
+        FrameProcessor source = new FrameProcessor() {
+            @Override
+            public void process(@NonNull Frame frame) {
+                frame.freeze().release();
+            }
+        };
+        FrameProcessor processor = spy(source);
+        camera.addFrameProcessor(processor);
+        waitForOpen(true);
 
         assert30Frames(processor);
     }
