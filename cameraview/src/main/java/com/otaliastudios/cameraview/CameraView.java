@@ -47,6 +47,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     public final static int PERMISSION_REQUEST_CODE = 16;
+    public final static long DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS = 3000;
 
     final static boolean DEFAULT_PLAY_SOUNDS = true;
 
@@ -1047,6 +1048,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public Audio getAudio() {
         return mCameraController.getAudio();
     }
+
+
+    /**
+     * the current delay in milliseconds to reset the focus after an autofocus process.
+     *
+     * @param cameraAutoFocusResetDelayMillis desired delay (in milliseconds).  If the delay
+     *                                        is less than or equal to 0 or equal to Long.MAX_VALUE,
+     *                                        the autofocus will not be reset.
+     */
+    public void setAutoFocusResetDelay(long cameraAutoFocusResetDelayMillis) {
+        mCameraController.setAutoFocusResetDelay(cameraAutoFocusResetDelayMillis);
+    }
+
+    /**
+     * Returns the current delay in milliseconds to reset the focus after an autofocus process.
+     * @return the current autofocus reset delay in milliseconds.
+     */
+    public long getAutoFocusResetDelay() { return mCameraController.getAutoFocusResetDelay(); }
 
 
     /**
