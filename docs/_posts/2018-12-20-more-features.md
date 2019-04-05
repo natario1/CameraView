@@ -65,10 +65,10 @@ This is useful for low end devices that have slow auto-focus capabilities.
 Defaults to 3 seconds.
 
 ```java
-cameraView.cameraAutoFocusResetDelay(1000);  // 1 second
-cameraView.cameraAutoFocusResetDelay(0);  // NO reset
-cameraView.cameraAutoFocusResetDelay(-1);  // NO reset
-cameraView.cameraAutoFocusResetDelay(Long.MAX_VALUE);  // NO reset
+cameraView.setCameraAutoFocusResetDelay(1000);  // 1 second
+cameraView.setCameraAutoFocusResetDelay(0);  // NO reset
+cameraView.setCameraAutoFocusResetDelay(-1);  // NO reset
+cameraView.setCameraAutoFocusResetDelay(Long.MAX_VALUE);  // NO reset
 
 
 ### UI Orientation

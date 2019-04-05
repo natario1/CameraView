@@ -72,7 +72,7 @@ abstract class CameraController implements
     protected Size mCaptureSize;
     protected Size mPreviewStreamSize;
     protected int mPreviewFormat;
-    protected long mAutoFocusResetDelayMillis = CameraView.DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS;
+    protected long mAutoFocusResetDelayMillis;
 
     protected int mSensorOffset;
     private int mDisplayOffset;

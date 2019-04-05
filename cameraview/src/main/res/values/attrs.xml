@@ -124,7 +124,7 @@
 
         <attr name="cameraExperimental" format="boolean" />
 
-        <attr name="cameraAutoFocusResetDelay" format="float"/>
+        <attr name="cameraAutoFocusResetDelay" format="integer|reference"/>
 
     </declare-styleable>
 </resources>

@@ -47,8 +47,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     public final static int PERMISSION_REQUEST_CODE = 16;
-    public final static long DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS = 3000;
 
+    final static long DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS = 3000;
     final static boolean DEFAULT_PLAY_SOUNDS = true;
 
     // Self managed parameters
@@ -114,7 +114,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
         int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
         int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
-        long autoFocusResetDelay = (long) a.getFloat(R.styleable.CameraView_cameraAutoFocusResetDelay, DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS);
+        long autoFocusResetDelay = (long) a.getInteger(R.styleable.CameraView_cameraAutoFocusResetDelay, (int) DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS);
 
         // Picture size selector
         List<SizeSelector> pictureConstraints = new ArrayList<>(3);
