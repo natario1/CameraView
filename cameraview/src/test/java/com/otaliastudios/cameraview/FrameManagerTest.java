@@ -65,14 +65,20 @@ public class FrameManagerTest {
     }
 
     @Test
-    public void testOnFrameReleased_nullBuffer() {
+    public void testOnFrameReleased_alreadyFull() {
         FrameManager manager = new FrameManager(1, callback);
-        manager.allocate(4, new Size(50, 50));
-        reset(callback);
+        int length = manager.allocate(4, new Size(50, 50));
 
-        Frame frame = manager.getFrame(null, 0, 0, null, 0);
-        manager.onFrameReleased(frame);
-        verify(callback, never()).onBufferAvailable(frame.getData());
+        Frame frame1 = manager.getFrame(new byte[length], 0, 0, null, 0);
+        // Since frame1 is already taken and poolSize = 1, a new Frame is created.
+        Frame frame2 = manager.getFrame(new byte[length], 0, 0, null, 0);
+        // Release the first frame so it goes back into the pool.
+        manager.onFrameReleased(frame1);
+        reset(callback);
+        // Release the second. The pool is already full, so onBufferAvailable should not be called
+        // since this Frame instance will NOT be reused.
+        manager.onFrameReleased(frame2);
+        verify(callback, never()).onBufferAvailable(frame2.getData());
     }
 
     @Test
@@ -118,7 +124,6 @@ public class FrameManagerTest {
 
         // Release the whole manager and ensure it clears the frame.
         manager.release();
-        assertNull(first.getData());
         assertNull(first.mManager);
     }
 }
