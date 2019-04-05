@@ -15,7 +15,8 @@ disqus: 1
 <com.otaliastudios.cameraview.CameraView
     app:cameraPlaySounds="true|false"
     app:cameraGrid="off|draw3x3|draw4x4|drawPhi"
-    app:cameraGridColor="@color/black"/>
+    app:cameraGridColor="@color/black"
+    app:cameraAutoFocusResetDelay="0"/>
 ```
 
 ##### cameraPlaySounds
@@ -55,6 +56,20 @@ Defaults to a shade of grey.
 cameraView.setGridColor(Color.WHITE);
 cameraView.setGridColor(Color.BLACK);
 ```
+
+##### cameraAutoFocusResetDelay
+
+Lets you control how an auto-focus operation is reset after completed.
+Setting a value <= 0 or == Long.MAX_VALUE will not reset the auto-focus.
+This is useful for low end devices that have slow auto-focus capabilities.
+Defaults to 3 seconds.
+
+```java
+cameraView.setCameraAutoFocusResetDelay(1000);  // 1 second
+cameraView.setCameraAutoFocusResetDelay(0);  // NO reset
+cameraView.setCameraAutoFocusResetDelay(-1);  // NO reset
+cameraView.setCameraAutoFocusResetDelay(Long.MAX_VALUE);  // NO reset
+
 
 ### UI Orientation
 
