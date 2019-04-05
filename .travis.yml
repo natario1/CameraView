@@ -16,17 +16,16 @@ jdk:
 
 env:
   global:
-    # Where to run androidTests
     - EMULATOR_API=22 # 24 has some issues, probably some overlayed window
-    - EMULATOR_ABI=armeabi-v7a
-    - EMULATOR_TAG=default
+    - EMULATOR_ABI=x86_64 # seems to work with emulator v29.
+    - EMULATOR_TAG=default # can be google_apis
     - PATH=$ANDROID_HOME:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
 
 android:
   components:
     - tools
     - platform-tools
-    - build-tools-28.0.2
+    - build-tools-28.0.3
     - android-28
     - doc-28
 
@@ -38,15 +37,18 @@ install:
   - echo yes | sdkmanager "emulator" # Ensure emulator is present
 
   # Install emulator
+  # The channel=4 line looks into canary which brings in v29.
+  # The previous version v28 was broken:
+  # https://travis-ci.community/t/android-emulators-not-starting-for-the-last-few-days-late-march-2019/2871/11?u=mikehardy
   - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
-  - echo yes | sdkmanager "platforms;android-$EMULATOR_API" # Install sdk
-  - echo yes | sdkmanager "$EMULATOR" # Install system image
+  - echo yes | sdkmanager "platforms;android-$EMULATOR_API" # Install sdk for the emulator
+  - echo yes | sdkmanager --channel=4 "$EMULATOR" # Install system image
   - sdkmanager --list || true # Check everything is updated
 
   # Create adn start emulator
-  - echo no | avdmanager create avd -n test -k "$EMULATOR" -f # Create emulator
-  - which emulator # ensure we are using the right emulator (home/emulator/)
-  - emulator -avd test -no-window -camera-back emulated -camera-front emulated -memory 2048 -writable-system & # Launch
+  - echo no | avdmanager create avd -n test -k "$EMULATOR" -f # Create emulator virtual device
+  - which emulator # ensure we are using the right emulator ($ANDROID_HOME/emulator/emulator)
+  - emulator -avd test -no-window -no-accel -no-snapshot -camera-back emulated -camera-front emulated -memory 2048 -writable-system & # Launch
   - adb wait-for-device # Wait for adb process
   - adb remount # Mount as writable
 
