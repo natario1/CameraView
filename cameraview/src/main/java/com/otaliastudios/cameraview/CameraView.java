@@ -114,6 +114,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
         int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
         int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
+        long autoFocusResetDelay = (long) a.getFloat(R.styleable.CameraView_cameraAutoFocusResetDelay, DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS);
 
         // Picture size selector
         List<SizeSelector> pictureConstraints = new ArrayList<>(3);
@@ -220,6 +221,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoMaxSize(videoMaxSize);
         setVideoMaxDuration(videoMaxDuration);
         setVideoBitRate(videoBitRate);
+        setAutoFocusResetDelay(autoFocusResetDelay);
 
         // Apply gestures
         mapGesture(Gesture.TAP, tapGesture);
@@ -1051,14 +1053,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
 
     /**
-     * the current delay in milliseconds to reset the focus after an autofocus process.
+     * Sets the current delay in milliseconds to reset the focus after an autofocus process.
      *
-     * @param cameraAutoFocusResetDelayMillis desired delay (in milliseconds).  If the delay
-     *                                        is less than or equal to 0 or equal to Long.MAX_VALUE,
-     *                                        the autofocus will not be reset.
+     * @param delayMillis desired delay (in milliseconds).  If the delay
+     *                    is less than or equal to 0 or equal to Long.MAX_VALUE,
+     *                    the autofocus will not be reset.
      */
-    public void setAutoFocusResetDelay(long cameraAutoFocusResetDelayMillis) {
-        mCameraController.setAutoFocusResetDelay(cameraAutoFocusResetDelayMillis);
+    public void setAutoFocusResetDelay(long delayMillis) {
+        mCameraController.setAutoFocusResetDelay(delayMillis);
     }
 
     /**
