@@ -52,15 +52,17 @@ class FrameManager {
         byte[] buffer = frame.getData();
         boolean willRecycle = mQueue.offer(frame);
         if (!willRecycle) {
+            // If frame queue is full, let's drop everything.
             frame.releaseManager();
-        }
-        if (buffer != null && mCallback != null) {
+        } else {
+            // If frame will be recycled, let's recycle the buffer as well.
             int currSize = buffer.length;
             int reqSize = mBufferSize;
-            if (currSize == reqSize) {
+            if (currSize == reqSize && mCallback != null) {
                 mCallback.onBufferAvailable(buffer);
             }
         }
+
     }
 
     /**

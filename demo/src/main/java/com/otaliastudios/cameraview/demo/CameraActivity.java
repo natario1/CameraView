@@ -7,6 +7,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -17,6 +19,8 @@ import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.Frame;
+import com.otaliastudios.cameraview.FrameProcessor;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.Mode;
 import com.otaliastudios.cameraview.VideoResult;
@@ -40,14 +44,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
         camera = findViewById(R.id.camera);
         camera.setLifecycleOwner(this);
-        camera.addCameraListener(new CameraListener() {
-            public void onCameraOpened(@NonNull CameraOptions options) { onOpened(options); }
-            public void onPictureTaken(@NonNull PictureResult result) { onPicture(result); }
-            public void onVideoTaken(@NonNull VideoResult result) { onVideo(result); }
-            public void onCameraError(@NonNull CameraException exception) {
-                onError(exception);
-            }
-        });
+        camera.addCameraListener(new Listener());
 
         findViewById(R.id.edit).setOnClickListener(this);
         findViewById(R.id.capturePicture).setOnClickListener(this);
@@ -80,38 +77,48 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         Toast.makeText(this, content, length).show();
     }
 
-    private void onOpened(CameraOptions options) {
-        ViewGroup group = (ViewGroup) controlPanel.getChildAt(0);
-        for (int i = 0; i < group.getChildCount(); i++) {
-            ControlView view = (ControlView) group.getChildAt(i);
-            view.onCameraOpened(camera, options);
-        }
-    }
+    private class Listener extends CameraListener {
 
-    private void onError(@NonNull CameraException exception) {
-        message("Got CameraException #" + exception.getReason(), true);
-    }
-
-    private void onPicture(PictureResult result) {
-        if (camera.isTakingVideo()) {
-            message("Captured while taking video. Size=" + result.getSize(), false);
-            return;
+        @Override
+        public void onCameraOpened(@NonNull CameraOptions options) {
+            ViewGroup group = (ViewGroup) controlPanel.getChildAt(0);
+            for (int i = 0; i < group.getChildCount(); i++) {
+                ControlView view = (ControlView) group.getChildAt(i);
+                view.onCameraOpened(camera, options);
+            }
         }
 
-        // This can happen if picture was taken with a gesture.
-        long callbackTime = System.currentTimeMillis();
-        if (mCaptureTime == 0) mCaptureTime = callbackTime - 300;
-        PicturePreviewActivity.setPictureResult(result);
-        Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
-        intent.putExtra("delay", callbackTime - mCaptureTime);
-        startActivity(intent);
-        mCaptureTime = 0;
-    }
+        @Override
+        public void onCameraError(@NonNull CameraException exception) {
+            super.onCameraError(exception);
+            message("Got CameraException #" + exception.getReason(), true);
+        }
 
-    private void onVideo(VideoResult video) {
-        VideoPreviewActivity.setVideoResult(video);
-        Intent intent = new Intent(CameraActivity.this, VideoPreviewActivity.class);
-        startActivity(intent);
+        @Override
+        public void onPictureTaken(@NonNull PictureResult result) {
+            super.onPictureTaken(result);
+            if (camera.isTakingVideo()) {
+                message("Captured while taking video. Size=" + result.getSize(), false);
+                return;
+            }
+
+            // This can happen if picture was taken with a gesture.
+            long callbackTime = System.currentTimeMillis();
+            if (mCaptureTime == 0) mCaptureTime = callbackTime - 300;
+            PicturePreviewActivity.setPictureResult(result);
+            Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
+            intent.putExtra("delay", callbackTime - mCaptureTime);
+            startActivity(intent);
+            mCaptureTime = 0;
+        }
+
+        @Override
+        public void onVideoTaken(@NonNull VideoResult result) {
+            super.onVideoTaken(result);
+            VideoPreviewActivity.setVideoResult(result);
+            Intent intent = new Intent(CameraActivity.this, VideoPreviewActivity.class);
+            startActivity(intent);
+        }
     }
 
     @Override

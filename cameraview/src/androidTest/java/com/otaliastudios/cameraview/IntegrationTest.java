@@ -6,6 +6,7 @@ import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
@@ -29,6 +30,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 
 /**
@@ -416,7 +418,7 @@ public class IntegrationTest extends BaseTest {
     @Test
     public void testEndVideo_withMaxSize() {
         camera.setMode(Mode.VIDEO);
-        camera.setVideoMaxSize(500*1000); // 0.5 mb
+        camera.setVideoMaxSize(3000*1000); // Less is risky
         waitForOpen(true);
         waitForVideoStart();
         waitForVideoEnd(true);
@@ -595,6 +597,27 @@ public class IntegrationTest extends BaseTest {
         waitForVideoEnd(true);
 
         assert30Frames(processor);
+    }
+
+
+    @Test
+    public void testFrameProcessing_freezeRelease() throws Exception {
+        // Ensure that freeze/release cycles do not cause OOMs.
+        // There was a bug doing this and it might resurface for any improper
+        // disposal of the frames.
+        FrameProcessor source = new FreezeReleaseFrameProcessor();
+        FrameProcessor processor = spy(source);
+        camera.addFrameProcessor(processor);
+        waitForOpen(true);
+
+        assert30Frames(processor);
+    }
+
+    public class FreezeReleaseFrameProcessor implements FrameProcessor {
+        @Override
+        public void process(@NonNull Frame frame) {
+            frame.freeze().release();
+        }
     }
 
     //endregion

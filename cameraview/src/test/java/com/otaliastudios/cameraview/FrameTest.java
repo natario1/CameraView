@@ -6,6 +6,7 @@ import android.graphics.ImageFormat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertArrayEquals;
@@ -34,16 +35,6 @@ public class FrameTest {
     }
 
     @Test
-    public void testDefaults() {
-        Frame frame = new Frame(manager);
-        assertEquals(frame.getTime(), -1);
-        assertEquals(frame.getFormat(), -1);
-        assertEquals(frame.getRotation(), 0);
-        assertNull(frame.getData());
-        assertNull(frame.getSize());
-    }
-
-    @Test
     public void testEquals() {
         Frame f1 = new Frame(manager);
         long time = 1000;
@@ -57,17 +48,26 @@ public class FrameTest {
     }
 
     @Test
-    public void testRelease() {
-        Frame frame = new Frame(manager);
+    public void testReleaseThrows() {
+        final Frame frame = new Frame(manager);
         frame.set(new byte[2], 1000, 90, new Size(10, 10), ImageFormat.NV21);
         frame.release();
-
-        assertEquals(frame.getTime(), -1);
-        assertEquals(frame.getFormat(), -1);
-        assertEquals(frame.getRotation(), 0);
-        assertNull(frame.getData());
-        assertNull(frame.getSize());
         verify(manager, times(1)).onFrameReleased(frame);
+
+        assertThrows(new Runnable() { public void run() { frame.getTime(); }});
+        assertThrows(new Runnable() { public void run() { frame.getFormat(); }});
+        assertThrows(new Runnable() { public void run() { frame.getRotation(); }});
+        assertThrows(new Runnable() { public void run() { frame.getData(); }});
+        assertThrows(new Runnable() { public void run() { frame.getSize(); }});
+    }
+
+    private void assertThrows(Runnable runnable) {
+        try {
+            runnable.run();
+            throw new IllegalStateException("Expected an exception but found none.");
+        } catch (Exception e) {
+            // All good
+        }
     }
 
     @Test
