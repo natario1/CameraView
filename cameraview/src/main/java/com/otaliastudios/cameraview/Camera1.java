@@ -31,7 +31,6 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     private Camera mCamera;
     private boolean mIsBound = false;
 
-    private final int mPostFocusResetDelay = 3000;
     private Runnable mPostFocusResetRunnable = new Runnable() {
         @Override
         public void run() {
@@ -891,7 +890,9 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                             // TODO lock auto exposure and white balance for a while
                             mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
                             mHandler.get().removeCallbacks(mPostFocusResetRunnable);
-                            mHandler.get().postDelayed(mPostFocusResetRunnable, mPostFocusResetDelay);
+                            if (shouldResetAutoFocus()) {
+                                mHandler.get().postDelayed(mPostFocusResetRunnable, getAutoFocusResetDelay());
+                            }
                         }
                     });
                 } catch (RuntimeException e) {
