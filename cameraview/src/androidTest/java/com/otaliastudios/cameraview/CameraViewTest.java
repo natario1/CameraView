@@ -2,12 +2,32 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.location.Location;
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
+
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.ControlParser;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.GestureAction;
+import com.otaliastudios.cameraview.controls.Grid;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.VideoCodec;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.gesture.GestureParser;
+import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
+import com.otaliastudios.cameraview.gesture.ScrollGestureLayout;
+import com.otaliastudios.cameraview.gesture.TapGestureLayout;
+import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.size.SizeSelector;
+import com.otaliastudios.cameraview.size.SizeSelectors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -106,14 +126,16 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testDefaults() {
         // CameraController
-        assertEquals(cameraView.getFlash(), Flash.DEFAULT);
-        assertEquals(cameraView.getFacing(), Facing.DEFAULT(context()));
-        assertEquals(cameraView.getGrid(), Grid.DEFAULT);
-        assertEquals(cameraView.getWhiteBalance(), WhiteBalance.DEFAULT);
-        assertEquals(cameraView.getMode(), Mode.DEFAULT);
-        assertEquals(cameraView.getHdr(), Hdr.DEFAULT);
-        assertEquals(cameraView.getAudio(), Audio.DEFAULT);
-        assertEquals(cameraView.getVideoCodec(), VideoCodec.DEFAULT);
+        TypedArray empty = context().obtainStyledAttributes(new int[]{});
+        ControlParser controls = new ControlParser(context(), empty);
+        assertEquals(cameraView.getFlash(), controls.getFlash());
+        assertEquals(cameraView.getFacing(), controls.getFacing());
+        assertEquals(cameraView.getGrid(), controls.getGrid());
+        assertEquals(cameraView.getWhiteBalance(), controls.getWhiteBalance());
+        assertEquals(cameraView.getMode(), controls.getMode());
+        assertEquals(cameraView.getHdr(), controls.getHdr());
+        assertEquals(cameraView.getAudio(), controls.getAudio());
+        assertEquals(cameraView.getVideoCodec(), controls.getVideoCodec());
         assertEquals(cameraView.getLocation(), null);
         assertEquals(cameraView.getExposureCorrection(), 0f, 0f);
         assertEquals(cameraView.getZoom(), 0f, 0f);
@@ -121,12 +143,13 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getVideoMaxSize(), 0, 0);
 
         // Self managed
+        GestureParser gestures = new GestureParser(empty);
         assertEquals(cameraView.getPlaySounds(), CameraView.DEFAULT_PLAY_SOUNDS);
-        assertEquals(cameraView.getGestureAction(Gesture.TAP), GestureAction.DEFAULT_TAP);
-        assertEquals(cameraView.getGestureAction(Gesture.LONG_TAP), GestureAction.DEFAULT_LONG_TAP);
-        assertEquals(cameraView.getGestureAction(Gesture.PINCH), GestureAction.DEFAULT_PINCH);
-        assertEquals(cameraView.getGestureAction(Gesture.SCROLL_HORIZONTAL), GestureAction.DEFAULT_SCROLL_HORIZONTAL);
-        assertEquals(cameraView.getGestureAction(Gesture.SCROLL_VERTICAL), GestureAction.DEFAULT_SCROLL_VERTICAL);
+        assertEquals(cameraView.getGestureAction(Gesture.TAP), gestures.getTapAction());
+        assertEquals(cameraView.getGestureAction(Gesture.LONG_TAP), gestures.getLongTapAction());
+        assertEquals(cameraView.getGestureAction(Gesture.PINCH), gestures.getPinchAction());
+        assertEquals(cameraView.getGestureAction(Gesture.SCROLL_HORIZONTAL), gestures.getHorizontalScrollAction());
+        assertEquals(cameraView.getGestureAction(Gesture.SCROLL_VERTICAL), gestures.getVerticalScrollAction());
     }
 
     //endregion
@@ -159,21 +182,21 @@ public class CameraViewTest extends BaseTest {
 
         // PinchGestureLayout
         cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
-        assertTrue(cameraView.mPinchGestureLayout.enabled());
+        assertTrue(cameraView.mPinchGestureLayout.isActive());
         cameraView.clearGesture(Gesture.PINCH);
-        assertFalse(cameraView.mPinchGestureLayout.enabled());
+        assertFalse(cameraView.mPinchGestureLayout.isActive());
 
         // TapGestureLayout
         cameraView.mapGesture(Gesture.TAP, GestureAction.CAPTURE);
-        assertTrue(cameraView.mTapGestureLayout.enabled());
+        assertTrue(cameraView.mTapGestureLayout.isActive());
         cameraView.clearGesture(Gesture.TAP);
-        assertFalse(cameraView.mPinchGestureLayout.enabled());
+        assertFalse(cameraView.mPinchGestureLayout.isActive());
 
         // ScrollGestureLayout
         cameraView.mapGesture(Gesture.SCROLL_HORIZONTAL, GestureAction.ZOOM);
-        assertTrue(cameraView.mScrollGestureLayout.enabled());
+        assertTrue(cameraView.mScrollGestureLayout.isActive());
         cameraView.clearGesture(Gesture.SCROLL_HORIZONTAL);
-        assertFalse(cameraView.mScrollGestureLayout.enabled());
+        assertFalse(cameraView.mScrollGestureLayout.isActive());
     }
 
     //endregion
@@ -188,10 +211,11 @@ public class CameraViewTest extends BaseTest {
             @Override
             public void run() {
                 cameraView.mTapGestureLayout = new TapGestureLayout(cameraView.getContext()) {
-                    public boolean onTouchEvent(MotionEvent event) { return true; }
-
+                    protected boolean handleTouchEvent(@NonNull MotionEvent event) {
+                        setGesture(Gesture.TAP);
+                        return true;
+                    }
                 };
-                cameraView.mTapGestureLayout.setGestureType(Gesture.TAP);
             }
         });
         cameraView.mapGesture(Gesture.TAP, GestureAction.CAPTURE);
@@ -207,9 +231,11 @@ public class CameraViewTest extends BaseTest {
             @Override
             public void run() {
                 cameraView.mTapGestureLayout = new TapGestureLayout(cameraView.getContext()) {
-                    public boolean onTouchEvent(MotionEvent event) { return true; }
+                    protected boolean handleTouchEvent(@NonNull MotionEvent event) {
+                        setGesture(Gesture.TAP);
+                        return true;
+                    }
                 };
-                cameraView.mTapGestureLayout.setGestureType(Gesture.TAP);
             }
         });
         mockController.mFocusStarted = false;
@@ -224,30 +250,41 @@ public class CameraViewTest extends BaseTest {
         assertTrue(mockController.mFocusStarted);
     }
 
+    private class FactorHolder { float value; }
+
     @Test
     public void testGestureAction_zoom() {
         mockController.mockStarted(true);
         mockController.mZoomChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
+        final FactorHolder factor = new FactorHolder();
         ui(new Runnable() {
             @Override
             public void run() {
                 cameraView.mPinchGestureLayout = new PinchGestureLayout(cameraView.getContext()) {
-                    public boolean onTouchEvent(MotionEvent event) { return true; }
+                    @Override
+                    protected boolean handleTouchEvent(@NonNull MotionEvent event) {
+                        setGesture(Gesture.PINCH);
+                        return true;
+                    }
+
+                    @Override
+                    protected float getFactor() {
+                        return factor.value;
+                    }
                 };
-                cameraView.mPinchGestureLayout.setGestureType(Gesture.PINCH);
                 cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
 
             }
         });
 
         // If factor is 0, we return the same value. The controller should not be notified.
-        cameraView.mPinchGestureLayout.mFactor = 0f;
+        factor.value = 0f;
         cameraView.dispatchTouchEvent(event);
         assertFalse(mockController.mZoomChanged);
 
         // For larger factors, the value is scaled. The controller should be notified.
-        cameraView.mPinchGestureLayout.mFactor = 1f;
+        factor.value = 1f;
         cameraView.dispatchTouchEvent(event);
         assertTrue(mockController.mZoomChanged);
     }
@@ -262,24 +299,33 @@ public class CameraViewTest extends BaseTest {
         mockController.mockStarted(true);
         mockController.mExposureCorrectionChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
+        final FactorHolder factor = new FactorHolder();
         ui(new Runnable() {
             @Override
             public void run() {
                 cameraView.mScrollGestureLayout = new ScrollGestureLayout(cameraView.getContext()) {
-                    public boolean onTouchEvent(MotionEvent event) { return true; }
+                    @Override
+                    protected boolean handleTouchEvent(@NonNull MotionEvent event) {
+                        setGesture(Gesture.SCROLL_HORIZONTAL);
+                        return true;
+                    }
+
+                    @Override
+                    protected float getFactor() {
+                        return factor.value;
+                    }
                 };
-                cameraView.mScrollGestureLayout.setGestureType(Gesture.SCROLL_HORIZONTAL);
                 cameraView.mapGesture(Gesture.SCROLL_HORIZONTAL, GestureAction.EXPOSURE_CORRECTION);
             }
         });
 
         // If factor is 0, we return the same value. The controller should not be notified.
-        cameraView.mScrollGestureLayout.mFactor = 0f;
+        factor.value = 0f;
         cameraView.dispatchTouchEvent(event);
         assertFalse(mockController.mExposureCorrectionChanged);
 
         // For larger factors, the value is scaled. The controller should be notified.
-        cameraView.mScrollGestureLayout.mFactor = 1f;
+        factor.value = 1f;
         cameraView.dispatchTouchEvent(event);
         assertTrue(mockController.mExposureCorrectionChanged);
     }

@@ -3,10 +3,11 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.ImageFormat;
 
+import com.otaliastudios.cameraview.size.Size;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertArrayEquals;

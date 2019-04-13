@@ -1,6 +1,9 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.gesture;
 
 
+import com.otaliastudios.cameraview.CameraView;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
@@ -16,55 +19,55 @@ public enum GestureAction {
     /**
      * No action. This can be mapped to any gesture to disable it.
      */
-    NONE(0),
+    NONE(0, GestureType.ONE_SHOT),
 
     /**
      * Auto focus control, typically assigned to the tap gesture.
-     * This action can be mapped to:
+     * This action can be mapped to one shot gestures:
      *
      * - {@link Gesture#TAP}
      * - {@link Gesture#LONG_TAP}
      */
-    FOCUS(1),
+    FOCUS(1, GestureType.ONE_SHOT),
 
     /**
      * Auto focus control, typically assigned to the tap gesture.
      * On top of {@link #FOCUS}, this will draw a default marker on screen.
-     * This action can be mapped to:
+     * This action can be mapped to one shot gestures:
      *
      * - {@link Gesture#TAP}
      * - {@link Gesture#LONG_TAP}
      */
-    FOCUS_WITH_MARKER(2),
+    FOCUS_WITH_MARKER(2, GestureType.ONE_SHOT),
 
     /**
      * When triggered, this action will fire a picture shoot.
-     * This action can be mapped to:
+     * This action can be mapped to one shot gestures:
      *
      * - {@link Gesture#TAP}
      * - {@link Gesture#LONG_TAP}
      */
-    CAPTURE(3),
+    CAPTURE(3, GestureType.ONE_SHOT),
 
     /**
      * Zoom control, typically assigned to the pinch gesture.
-     * This action can be mapped to:
+     * This action can be mapped to continuous gestures:
      *
      * - {@link Gesture#PINCH}
      * - {@link Gesture#SCROLL_HORIZONTAL}
      * - {@link Gesture#SCROLL_VERTICAL}
      */
-    ZOOM(4),
+    ZOOM(4, GestureType.CONTINUOUS),
 
     /**
      * Exposure correction control.
-     * This action can be mapped to:
+     * This action can be mapped to continuous gestures:
      *
      * - {@link Gesture#PINCH}
      * - {@link Gesture#SCROLL_HORIZONTAL}
      * - {@link Gesture#SCROLL_VERTICAL}
      */
-    EXPOSURE_CORRECTION(5);
+    EXPOSURE_CORRECTION(5, GestureType.CONTINUOUS);
 
 
     final static GestureAction DEFAULT_PINCH = NONE;
@@ -74,13 +77,20 @@ public enum GestureAction {
     final static GestureAction DEFAULT_SCROLL_VERTICAL = NONE;
 
     private int value;
+    private GestureType type;
 
-    GestureAction(int value) {
+    GestureAction(int value, @NonNull GestureType type) {
         this.value = value;
+        this.type = type;
     }
 
     int value() {
         return value;
+    }
+
+    @NonNull
+    GestureType type() {
+        return type;
     }
 
     @Nullable

@@ -3,6 +3,17 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.PointF;
 import android.location.Location;
+
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.size.AspectRatio;
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 

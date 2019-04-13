@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import com.otaliastudios.cameraview.controls.Facing;
+
 /**
  * Holds an error with the camera configuration.
  */

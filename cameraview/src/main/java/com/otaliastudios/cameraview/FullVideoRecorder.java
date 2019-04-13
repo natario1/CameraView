@@ -3,6 +3,10 @@ package com.otaliastudios.cameraview;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 

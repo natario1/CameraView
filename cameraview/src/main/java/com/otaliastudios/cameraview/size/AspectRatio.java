@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.size;
 
 import androidx.annotation.NonNull;
 
@@ -10,7 +10,7 @@ import java.util.HashMap;
  */
 public class AspectRatio implements Comparable<AspectRatio> {
 
-    final static HashMap<String, AspectRatio> sCache = new HashMap<>(16);
+    private final static HashMap<String, AspectRatio> sCache = new HashMap<>(16);
 
     /**
      * Creates an aspect ratio for the given size.
@@ -125,9 +125,13 @@ public class AspectRatio implements Comparable<AspectRatio> {
         return -1;
     }
 
+    /**
+     * Returns a flipped aspect ratio, which means inverting its dimensions.
+     * @return a flipped aspect ratio
+     */
     @SuppressWarnings("SuspiciousNameCombination")
     @NonNull
-    public AspectRatio inverse() {
+    public AspectRatio flip() {
         return AspectRatio.of(mY, mX);
     }
 

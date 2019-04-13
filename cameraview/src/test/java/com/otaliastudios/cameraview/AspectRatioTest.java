@@ -1,6 +1,9 @@
 package com.otaliastudios.cameraview;
 
 
+import com.otaliastudios.cameraview.size.AspectRatio;
+import com.otaliastudios.cameraview.size.Size;
+
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -47,7 +50,7 @@ public class AspectRatioTest {
     @Test
     public void testInverse() {
         AspectRatio ratio = AspectRatio.of(50, 10);
-        AspectRatio inverse = ratio.inverse();
+        AspectRatio inverse = ratio.flip();
         assertEquals(inverse.getX(), 1f, 0);
         assertEquals(inverse.getY(), 5f, 0);
     }

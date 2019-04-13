@@ -11,6 +11,10 @@ import androidx.test.filters.SmallTest;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.TapGestureLayout;
+import com.otaliastudios.cameraview.size.Size;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -28,7 +32,7 @@ public class TapGestureLayoutTest extends GestureLayoutTest<TapGestureLayout> {
 
     @Test
     public void testDefaults() {
-        assertNull(layout.getGestureType());
+        assertNull(layout.getGesture());
         assertEquals(layout.getPoints().length, 1);
         assertEquals(layout.getPoints()[0].x, 0, 0);
         assertEquals(layout.getPoints()[0].y, 0, 0);
@@ -52,7 +56,7 @@ public class TapGestureLayoutTest extends GestureLayoutTest<TapGestureLayout> {
 
     @Test
     public void testTapWhileDisabled() {
-        layout.enable(false);
+        layout.setActive(false);
         touch.listen();
         touch.start();
         onLayout().perform(click());

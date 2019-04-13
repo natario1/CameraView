@@ -26,8 +26,8 @@ class Pool<T> {
         this.factory = factory;
     }
 
-    boolean canGet() {
-        return count() < maxPoolSize;
+    boolean isEmpty() {
+        return count() >= maxPoolSize;
     }
 
     @Nullable
@@ -39,7 +39,7 @@ class Pool<T> {
             return buffer;
         }
 
-        if (!canGet()) {
+        if (isEmpty()) {
             LOG.v("GET: Returning null. Too much items requested.", this);
             return null;
         }

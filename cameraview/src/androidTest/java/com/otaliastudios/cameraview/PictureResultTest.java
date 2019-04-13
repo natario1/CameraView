@@ -3,6 +3,9 @@ package com.otaliastudios.cameraview;
 
 import android.location.Location;
 
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 

@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.controls;
 
 /**
  * Base interface for controls like {@link Audio},

@@ -10,6 +10,8 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.size.AspectRatio;
+
 class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
     private View mRootView;

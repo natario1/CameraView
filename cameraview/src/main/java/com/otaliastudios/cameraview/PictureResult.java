@@ -3,6 +3,9 @@ package com.otaliastudios.cameraview;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.size.Size;
+
 import java.io.File;
 
 import androidx.annotation.NonNull;

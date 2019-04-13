@@ -2,6 +2,10 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
+
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
+
 import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -26,7 +30,7 @@ public class PinchGestureLayoutTest extends GestureLayoutTest<PinchGestureLayout
 
     @Test
     public void testDefaults() {
-        assertEquals(layout.getGestureType(), Gesture.PINCH);
+        assertEquals(layout.getGesture(), Gesture.PINCH);
         assertEquals(layout.getPoints().length, 2);
         assertEquals(layout.getPoints()[0].x, 0, 0);
         assertEquals(layout.getPoints()[0].y, 0, 0);
@@ -54,7 +58,7 @@ public class PinchGestureLayoutTest extends GestureLayoutTest<PinchGestureLayout
 
         // How will this move  our parameter?
         float curr = 0.5f, min = 0f, max = 1f;
-        float newValue = layout.scaleValue(curr, min, max);
+        float newValue = layout.getValue(curr, min, max);
         if (increasing) {
             assertTrue(newValue > curr);
             assertTrue(newValue <= max);

@@ -71,7 +71,14 @@ public final class CameraLogger {
         });
     }
 
-    static CameraLogger create(@NonNull String tag) {
+    /**
+     * Creates a CameraLogger that will stream logs into the
+     * internal logs and dispatch them to {@link Logger}s.
+     *
+     * @param tag the logger tag
+     * @return a new CameraLogger
+     */
+    public static CameraLogger create(@NonNull String tag) {
         return new CameraLogger(tag);
     }
 
@@ -121,18 +128,34 @@ public final class CameraLogger {
         return sLevel <= messageLevel && sLoggers.size() > 0;
     }
 
-    void v(@NonNull Object... data) {
+    /**
+     * Log to the verbose channel.
+     * @param data log contents
+     */
+    public void v(@NonNull Object... data) {
         log(LEVEL_VERBOSE, data);
     }
 
-    void i(@NonNull Object... data) {
+    /**
+     * Log to the info channel.
+     * @param data log contents
+     */
+    public void i(@NonNull Object... data) {
         log(LEVEL_INFO, data);
     }
 
+    /**
+     * Log to the warning channel.
+     * @param data log contents
+     */
     void w(@NonNull Object... data) {
         log(LEVEL_WARNING, data);
     }
 
+    /**
+     * Log to the error channel.
+     * @param data log contents
+     */
     void e(@NonNull Object... data) {
         log(LEVEL_ERROR, data);
     }

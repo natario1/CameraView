@@ -1,10 +1,9 @@
 package com.otaliastudios.cameraview;
 
-import android.hardware.Camera;
-import android.media.MediaRecorder;
-import android.os.Build;
-
-import java.util.HashMap;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
 
 abstract class Mapper {
 

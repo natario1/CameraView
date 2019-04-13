@@ -14,6 +14,16 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import android.view.SurfaceHolder;
 
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.size.AspectRatio;
+import com.otaliastudios.cameraview.size.Size;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -236,10 +246,10 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
         Camera.Parameters params = mCamera.getParameters();
         mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
         applyDefaultFocus(params);
-        applyFlash(params, Flash.DEFAULT);
+        applyFlash(params, Flash.OFF);
         applyLocation(params, null);
-        applyWhiteBalance(params, WhiteBalance.DEFAULT);
-        applyHdr(params, Hdr.DEFAULT);
+        applyWhiteBalance(params, WhiteBalance.AUTO);
+        applyHdr(params, Hdr.OFF);
         applyPlaySounds(mPlaySounds);
         params.setRecordingHint(mMode == Mode.VIDEO);
         mCamera.setParameters(params);
@@ -596,7 +606,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 result.facing = mFacing;
                 result.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
                 result.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
-                AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
+                AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
                 // LOG.e("ROTBUG_pic", "aspectRatio (REF_VIEW):", viewAspectRatio);
                 // LOG.e("ROTBUG_pic", "aspectRatio (REF_OUTPUT):", outputRatio);
                 // LOG.e("ROTBUG_pic", "sizeUncropped (REF_OUTPUT):", result.size);
@@ -766,7 +776,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 // and maybe we can improve. The reason why this happen is beyond my understanding.
 
                 Size outputSize = getUncroppedSnapshotSize(REF_OUTPUT);
-                AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.inverse() : viewAspectRatio;
+                AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
                 Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
                 outputSize = new Size(outputCrop.width(), outputCrop.height());
                 videoResult.size = outputSize;

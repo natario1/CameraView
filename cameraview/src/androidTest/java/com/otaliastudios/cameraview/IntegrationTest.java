@@ -6,6 +6,13 @@ import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
 
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;

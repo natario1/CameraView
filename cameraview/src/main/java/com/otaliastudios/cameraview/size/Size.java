@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.size;
 
 import androidx.annotation.NonNull;
 
@@ -10,7 +10,7 @@ public class Size implements Comparable<Size> {
     private final int mWidth;
     private final int mHeight;
 
-    Size(int width, int height) {
+    public Size(int width, int height) {
         mWidth = width;
         mHeight = height;
     }
@@ -23,8 +23,14 @@ public class Size implements Comparable<Size> {
         return mHeight;
     }
 
+    /**
+     * Returns a flipped size, with height equal to this size's width
+     * and width equal to this size's height.
+     *
+     * @return a flipped size
+     */
     @SuppressWarnings("SuspiciousNameCombination")
-    Size flip() {
+    public Size flip() {
         return new Size(mHeight, mWidth);
     }
 

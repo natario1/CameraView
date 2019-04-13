@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.gesture;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -14,7 +14,13 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-class TapGestureLayout extends GestureLayout {
+import com.otaliastudios.cameraview.R;
+
+/**
+ * A {@link GestureLayout} that detects {@link Gesture#TAP}
+ * and {@link Gesture#LONG_TAP} gestures.
+ */
+public class TapGestureLayout extends GestureLayout {
 
     private GestureDetector mDetector;
     private boolean mNotify;
@@ -23,19 +29,13 @@ class TapGestureLayout extends GestureLayout {
     private ImageView mFocusMarkerFill;
 
     public TapGestureLayout(@NonNull Context context) {
-        super(context);
-    }
-
-    @Override
-    protected void onInitialize(@NonNull Context context) {
-        super.onInitialize(context);
-        mPoints = new PointF[]{ new PointF(0, 0) };
+        super(context, 1);
         mDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
 
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
                 mNotify = true;
-                mType = Gesture.TAP;
+                setGesture(Gesture.TAP);
                 return true;
             }
 
@@ -50,7 +50,7 @@ class TapGestureLayout extends GestureLayout {
             @Override
             public void onLongPress(MotionEvent e) {
                 mNotify = true;
-                mType = Gesture.LONG_TAP;
+                setGesture(Gesture.LONG_TAP);
             }
         });
 
@@ -63,11 +63,8 @@ class TapGestureLayout extends GestureLayout {
         mFocusMarkerFill = findViewById(R.id.fill);
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (!mEnabled) return false;
-
+    protected boolean handleTouchEvent(@NonNull MotionEvent event) {
         // Reset the mNotify flag on a new gesture.
         // This is to ensure that the mNotify flag stays on until the
         // previous gesture ends.
@@ -80,15 +77,15 @@ class TapGestureLayout extends GestureLayout {
 
         // Keep notifying CameraView as long as the gesture goes.
         if (mNotify) {
-            mPoints[0].x = event.getX();
-            mPoints[0].y = event.getY();
+            getPoint(0).x = event.getX();
+            getPoint(0).y = event.getY();
             return true;
         }
         return false;
     }
 
     @Override
-    public float scaleValue(float currValue, float minValue, float maxValue) {
+    public float getValue(float currValue, float minValue, float maxValue) {
         return 0;
     }
 

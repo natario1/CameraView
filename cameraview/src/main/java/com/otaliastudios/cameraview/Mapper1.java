@@ -3,6 +3,11 @@ package com.otaliastudios.cameraview;
 import android.hardware.Camera;
 import android.os.Build;
 
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
+
 import java.util.HashMap;
 
 

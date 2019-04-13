@@ -1,7 +1,8 @@
 package com.otaliastudios.cameraview;
 
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 /**
  * A preview frame to be processed by {@link FrameProcessor}s.
@@ -20,7 +21,7 @@ public class Frame {
         mManager = manager;
     }
 
-    boolean isAlive() {
+    private boolean isAlive() {
         return mData != null;
     }
 

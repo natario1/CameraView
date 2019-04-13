@@ -1,7 +1,11 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.controls;
 
 
 import android.content.Context;
+
+import com.otaliastudios.cameraview.CameraUtils;
+import com.otaliastudios.cameraview.CameraView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 

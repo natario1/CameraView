@@ -12,6 +12,8 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 
+import com.otaliastudios.cameraview.controls.Grid;
+
 class GridLinesLayout extends View {
 
     private final static float GOLDEN_RATIO_INV = 0.61803398874989f;

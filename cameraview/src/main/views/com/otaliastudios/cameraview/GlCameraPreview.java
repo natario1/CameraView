@@ -12,6 +12,8 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.size.AspectRatio;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;

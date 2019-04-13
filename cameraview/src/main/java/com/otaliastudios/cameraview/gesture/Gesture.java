@@ -1,5 +1,7 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.gesture;
 
+
+import com.otaliastudios.cameraview.CameraView;
 
 import androidx.annotation.NonNull;
 
@@ -19,65 +21,69 @@ public enum Gesture {
 
     /**
      * Pinch gesture, typically assigned to the zoom control.
-     * This gesture can be mapped to:
+     * This gesture can be mapped to continuous actions:
      *
      * - {@link GestureAction#ZOOM}
      * - {@link GestureAction#EXPOSURE_CORRECTION}
      * - {@link GestureAction#NONE}
      */
-    PINCH(GestureAction.ZOOM, GestureAction.EXPOSURE_CORRECTION),
+    PINCH(GestureType.CONTINUOUS),
 
     /**
      * Single tap gesture, typically assigned to the focus control.
-     * This gesture can be mapped to:
+     * This gesture can be mapped to one shot actions:
      *
      * - {@link GestureAction#FOCUS}
      * - {@link GestureAction#FOCUS_WITH_MARKER}
      * - {@link GestureAction#CAPTURE}
      * - {@link GestureAction#NONE}
      */
-    TAP(GestureAction.FOCUS, GestureAction.FOCUS_WITH_MARKER, GestureAction.CAPTURE),
-    // DOUBLE_TAP(GestureAction.FOCUS, GestureAction.FOCUS_WITH_MARKER, GestureAction.CAPTURE),
+    TAP(GestureType.ONE_SHOT),
 
     /**
      * Long tap gesture.
-     * This gesture can be mapped to:
+     * This gesture can be mapped to one shot actions:
      *
      * - {@link GestureAction#FOCUS}
      * - {@link GestureAction#FOCUS_WITH_MARKER}
      * - {@link GestureAction#CAPTURE}
      * - {@link GestureAction#NONE}
      */
-    LONG_TAP(GestureAction.FOCUS, GestureAction.FOCUS_WITH_MARKER, GestureAction.CAPTURE),
+    LONG_TAP(GestureType.ONE_SHOT),
 
     /**
      * Horizontal scroll gesture.
-     * This gesture can be mapped to:
+     * This gesture can be mapped to continuous actions:
      *
      * - {@link GestureAction#ZOOM}
      * - {@link GestureAction#EXPOSURE_CORRECTION}
      * - {@link GestureAction#NONE}
      */
-    SCROLL_HORIZONTAL(GestureAction.ZOOM, GestureAction.EXPOSURE_CORRECTION),
+    SCROLL_HORIZONTAL(GestureType.CONTINUOUS),
 
     /**
      * Vertical scroll gesture.
-     * This gesture can be mapped to:
+     * This gesture can be mapped to continuous actions:
      *
      * - {@link GestureAction#ZOOM}
      * - {@link GestureAction#EXPOSURE_CORRECTION}
      * - {@link GestureAction#NONE}
      */
-    SCROLL_VERTICAL(GestureAction.ZOOM, GestureAction.EXPOSURE_CORRECTION);
+    SCROLL_VERTICAL(GestureType.CONTINUOUS);
 
-    Gesture(GestureAction... controls) {
-        mControls = Arrays.asList(controls);
+    Gesture(@NonNull GestureType type) {
+        this.type = type;
     }
 
-    private List<GestureAction> mControls;
+    private GestureType type;
 
-    boolean isAssignableTo(@NonNull GestureAction control) {
-        return control == GestureAction.NONE || mControls.contains(control);
+    /**
+     * Whether this gesture can be assigned to the given {@link GestureAction}.
+     * @param action the action to be checked
+     * @return true if assignable
+     */
+    public boolean isAssignableTo(@NonNull GestureAction action) {
+        return action == GestureAction.NONE || action.type() == type;
     }
 
 }

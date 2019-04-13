@@ -2,6 +2,10 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
+
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.ScrollGestureLayout;
+
 import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -31,7 +35,7 @@ public class ScrollGestureLayoutTest extends GestureLayoutTest<ScrollGestureLayo
 
     @Test
     public void testDefaults() {
-        assertNull(layout.getGestureType());
+        assertNull(layout.getGesture());
         assertEquals(layout.getPoints().length, 2);
         assertEquals(layout.getPoints()[0].x, 0, 0);
         assertEquals(layout.getPoints()[0].y, 0, 0);
@@ -41,7 +45,7 @@ public class ScrollGestureLayoutTest extends GestureLayoutTest<ScrollGestureLayo
 
     @Test
     public void testScrollDisabled() {
-        layout.enable(false);
+        layout.setActive(false);
         touch.listen();
         touch.start();
         onLayout().perform(swipeUp());
@@ -58,7 +62,7 @@ public class ScrollGestureLayoutTest extends GestureLayoutTest<ScrollGestureLayo
 
         // How will this move our parameter?
         float curr = 0.5f, min = 0f, max = 1f;
-        float newValue = layout.scaleValue(curr, min, max);
+        float newValue = layout.getValue(curr, min, max);
         if (increasing) {
             assertTrue(newValue > curr);
             assertTrue(newValue <= max);

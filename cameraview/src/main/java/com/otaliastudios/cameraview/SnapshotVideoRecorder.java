@@ -4,6 +4,9 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
 
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;

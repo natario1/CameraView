@@ -3,7 +3,6 @@ package com.otaliastudios.cameraview;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
 import android.os.Build;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -63,7 +62,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
 
     @NonNull
     TextureFrame acquireFrame() {
-        if (!mFramePool.canGet()) {
+        if (mFramePool.isEmpty()) {
             throw new RuntimeException("Need more frames than this! Please increase the pool size.");
         } else {
             //noinspection ConstantConditions

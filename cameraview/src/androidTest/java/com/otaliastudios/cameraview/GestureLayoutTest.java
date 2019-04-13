@@ -3,16 +3,15 @@ package com.otaliastudios.cameraview;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import androidx.test.espresso.Espresso;
-import androidx.test.espresso.Root;
-import androidx.test.espresso.ViewAssertion;
+
 import androidx.test.espresso.ViewInteraction;
-import androidx.test.espresso.assertion.ViewAssertions;
 import androidx.test.espresso.matcher.RootMatchers;
-import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.rule.ActivityTestRule;
 import android.view.MotionEvent;
 import android.view.View;
+
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.GestureLayout;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -40,7 +39,7 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
             public void run() {
                 TestActivity a = rule.getActivity();
                 layout = create(a);
-                layout.enable(true);
+                layout.setActive(true);
                 a.inflate(layout);
 
                 touch = new Task<>();
@@ -48,7 +47,7 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
                     @Override
                     public boolean onTouch(View view, MotionEvent motionEvent) {
                         boolean found = layout.onTouchEvent(motionEvent);
-                        if (found) touch.end(layout.getGestureType());
+                        if (found) touch.end(layout.getGesture());
                         return true;
                     }
                 });

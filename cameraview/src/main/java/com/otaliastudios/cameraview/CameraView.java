@@ -28,6 +28,30 @@ import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Control;
+import com.otaliastudios.cameraview.controls.ControlParser;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.GestureAction;
+import com.otaliastudios.cameraview.controls.Grid;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.Preview;
+import com.otaliastudios.cameraview.controls.VideoCodec;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.gesture.GestureLayout;
+import com.otaliastudios.cameraview.gesture.GestureParser;
+import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
+import com.otaliastudios.cameraview.gesture.ScrollGestureLayout;
+import com.otaliastudios.cameraview.gesture.TapGestureLayout;
+import com.otaliastudios.cameraview.size.AspectRatio;
+import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.size.SizeSelector;
+import com.otaliastudios.cameraview.size.SizeSelectorParser;
+import com.otaliastudios.cameraview.size.SizeSelectors;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,11 +118,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         setWillNotDraw(false);
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
+        ControlParser controls = new ControlParser(context, a);
 
         // Self managed
         boolean playSounds = a.getBoolean(R.styleable.CameraView_cameraPlaySounds, DEFAULT_PLAY_SOUNDS);
         mExperimental = a.getBoolean(R.styleable.CameraView_cameraExperimental, false);
-        mPreview = Preview.fromValue(a.getInteger(R.styleable.CameraView_cameraPreview, Preview.DEFAULT.value()));
+        mPreview = controls.getPreview();
 
         // Camera controller params
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT(context).value()));
@@ -116,73 +141,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
         long autoFocusResetDelay = (long) a.getInteger(R.styleable.CameraView_cameraAutoFocusResetDelay, (int) DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS);
 
-        // Picture size selector
-        List<SizeSelector> pictureConstraints = new ArrayList<>(3);
-        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMinWidth)) {
-            pictureConstraints.add(SizeSelectors.minWidth(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinWidth, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMaxWidth)) {
-            pictureConstraints.add(SizeSelectors.maxWidth(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxWidth, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMinHeight)) {
-            pictureConstraints.add(SizeSelectors.minHeight(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinHeight, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMaxHeight)) {
-            pictureConstraints.add(SizeSelectors.maxHeight(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxHeight, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMinArea)) {
-            pictureConstraints.add(SizeSelectors.minArea(a.getInteger(R.styleable.CameraView_cameraPictureSizeMinArea, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeMaxArea)) {
-            pictureConstraints.add(SizeSelectors.maxArea(a.getInteger(R.styleable.CameraView_cameraPictureSizeMaxArea, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraPictureSizeAspectRatio)) {
-            //noinspection ConstantConditions
-            pictureConstraints.add(SizeSelectors.aspectRatio(AspectRatio.parse(a.getString(R.styleable.CameraView_cameraPictureSizeAspectRatio)), 0));
-        }
-
-        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeSmallest, false)) pictureConstraints.add(SizeSelectors.smallest());
-        if (a.getBoolean(R.styleable.CameraView_cameraPictureSizeBiggest, false)) pictureConstraints.add(SizeSelectors.biggest());
-        SizeSelector pictureSelector = !pictureConstraints.isEmpty() ?
-                SizeSelectors.and(pictureConstraints.toArray(new SizeSelector[0])) :
-                SizeSelectors.biggest();
-
-        // Video size selector
-        List<SizeSelector> videoConstraints = new ArrayList<>(3);
-        if (a.hasValue(R.styleable.CameraView_cameraVideoSizeMinWidth)) {
-            videoConstraints.add(SizeSelectors.minWidth(a.getInteger(R.styleable.CameraView_cameraVideoSizeMinWidth, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraVideoSizeMaxWidth)) {
-            videoConstraints.add(SizeSelectors.maxWidth(a.getInteger(R.styleable.CameraView_cameraVideoSizeMaxWidth, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraVideoSizeMinHeight)) {
-            videoConstraints.add(SizeSelectors.minHeight(a.getInteger(R.styleable.CameraView_cameraVideoSizeMinHeight, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraVideoSizeMaxHeight)) {
-            videoConstraints.add(SizeSelectors.maxHeight(a.getInteger(R.styleable.CameraView_cameraVideoSizeMaxHeight, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraVideoSizeMinArea)) {
-            videoConstraints.add(SizeSelectors.minArea(a.getInteger(R.styleable.CameraView_cameraVideoSizeMinArea, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraVideoSizeMaxArea)) {
-            videoConstraints.add(SizeSelectors.maxArea(a.getInteger(R.styleable.CameraView_cameraVideoSizeMaxArea, 0)));
-        }
-        if (a.hasValue(R.styleable.CameraView_cameraVideoSizeAspectRatio)) {
-            //noinspection ConstantConditions
-            videoConstraints.add(SizeSelectors.aspectRatio(AspectRatio.parse(a.getString(R.styleable.CameraView_cameraVideoSizeAspectRatio)), 0));
-        }
-        if (a.getBoolean(R.styleable.CameraView_cameraVideoSizeSmallest, false)) videoConstraints.add(SizeSelectors.smallest());
-        if (a.getBoolean(R.styleable.CameraView_cameraVideoSizeBiggest, false)) videoConstraints.add(SizeSelectors.biggest());
-        SizeSelector videoSelector = !videoConstraints.isEmpty() ?
-                SizeSelectors.and(videoConstraints.toArray(new SizeSelector[0])) :
-                SizeSelectors.biggest();
-
-        // Gestures
-        GestureAction tapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value()));
-        GestureAction longTapGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureLongTap, GestureAction.DEFAULT_LONG_TAP.value()));
-        GestureAction pinchGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGesturePinch, GestureAction.DEFAULT_PINCH.value()));
-        GestureAction scrollHorizontalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollHorizontal, GestureAction.DEFAULT_SCROLL_HORIZONTAL.value()));
-        GestureAction scrollVerticalGesture = GestureAction.fromValue(a.getInteger(R.styleable.CameraView_cameraGestureScrollVertical, GestureAction.DEFAULT_SCROLL_VERTICAL.value()));
+        // Size selectors and gestures
+        SizeSelectorParser sizeSelectors = new SizeSelectorParser(a);
+        GestureParser gestures = new GestureParser(a);
 
         a.recycle();
 
@@ -206,29 +167,29 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setPlaySounds(playSounds);
 
         // Apply camera controller params
-        setFacing(facing);
-        setFlash(flash);
-        setMode(mode);
-        setWhiteBalance(whiteBalance);
-        setGrid(grid);
+        setFacing(controls.getFacing());
+        setFlash(controls.getFlash());
+        setMode(controls.getMode());
+        setWhiteBalance(controls.getWhiteBalance());
+        setGrid(controls.getGrid());
         setGridColor(gridColor);
-        setHdr(hdr);
-        setAudio(audio);
+        setHdr(controls.getHdr());
+        setAudio(controls.getAudio());
         setAudioBitRate(audioBitRate);
-        setPictureSize(pictureSelector);
-        setVideoSize(videoSelector);
-        setVideoCodec(codec);
+        setPictureSize(sizeSelectors.getPictureSizeSelector());
+        setVideoSize(sizeSelectors.getVideoSizeSelector());
+        setVideoCodec(controls.getVideoCodec());
         setVideoMaxSize(videoMaxSize);
         setVideoMaxDuration(videoMaxDuration);
         setVideoBitRate(videoBitRate);
         setAutoFocusResetDelay(autoFocusResetDelay);
 
         // Apply gestures
-        mapGesture(Gesture.TAP, tapGesture);
-        mapGesture(Gesture.LONG_TAP, longTapGesture);
-        mapGesture(Gesture.PINCH, pinchGesture);
-        mapGesture(Gesture.SCROLL_HORIZONTAL, scrollHorizontalGesture);
-        mapGesture(Gesture.SCROLL_VERTICAL, scrollVerticalGesture);
+        mapGesture(Gesture.TAP, gestures.getTapAction());
+        mapGesture(Gesture.LONG_TAP, gestures.getLongTapAction());
+        mapGesture(Gesture.PINCH, gestures.getPinchAction());
+        mapGesture(Gesture.SCROLL_HORIZONTAL, gestures.getHorizontalScrollAction());
+        mapGesture(Gesture.SCROLL_VERTICAL, gestures.getVerticalScrollAction());
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
@@ -457,19 +418,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mGestureMap.put(gesture, action);
             switch (gesture) {
                 case PINCH:
-                    mPinchGestureLayout.enable(mGestureMap.get(Gesture.PINCH) != none);
+                    mPinchGestureLayout.setActive(mGestureMap.get(Gesture.PINCH) != none);
                     break;
                 case TAP:
                 // case DOUBLE_TAP:
                 case LONG_TAP:
-                    mTapGestureLayout.enable(
+                    mTapGestureLayout.setActive(
                             mGestureMap.get(Gesture.TAP) != none ||
                             // mGestureMap.get(Gesture.DOUBLE_TAP) != none ||
                             mGestureMap.get(Gesture.LONG_TAP) != none);
                     break;
                 case SCROLL_HORIZONTAL:
                 case SCROLL_VERTICAL:
-                    mScrollGestureLayout.enable(
+                    mScrollGestureLayout.setActive(
                             mGestureMap.get(Gesture.SCROLL_HORIZONTAL) != none ||
                             mGestureMap.get(Gesture.SCROLL_VERTICAL) != none);
                     break;
@@ -532,7 +493,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     // (1) if it was mapped to some action (we check here)
     // (2) if it's supported by the camera (CameraController checks)
     private void onGesture(GestureLayout source, @NonNull CameraOptions options) {
-        Gesture gesture = source.getGestureType();
+        Gesture gesture = source.getGesture();
         GestureAction action = mGestureMap.get(gesture);
         PointF[] points = source.getPoints();
         float oldValue, newValue;
@@ -549,7 +510,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
             case ZOOM:
                 oldValue = mCameraController.getZoomValue();
-                newValue = source.scaleValue(oldValue, 0, 1);
+                newValue = source.computeValue(oldValue, 0, 1);
                 if (newValue != oldValue) {
                     mCameraController.setZoom(newValue, points, true);
                 }
@@ -559,7 +520,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 oldValue = mCameraController.getExposureCorrectionValue();
                 float minValue = options.getExposureCorrectionMinValue();
                 float maxValue = options.getExposureCorrectionMaxValue();
-                newValue = source.scaleValue(oldValue, minValue, maxValue);
+                newValue = source.computeValue(oldValue, minValue, maxValue);
                 if (newValue != oldValue) {
                     float[] bounds = new float[]{minValue, maxValue};
                     mCameraController.setExposureCorrection(newValue, bounds, points, true);

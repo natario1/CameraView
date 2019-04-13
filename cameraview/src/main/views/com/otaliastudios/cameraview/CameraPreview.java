@@ -6,6 +6,8 @@ import androidx.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.size.Size;
+
 /**
  * A CameraPreview takes in input stream from the {@link CameraController}, and streams it
  * into an output surface that belongs to the view hierarchy.

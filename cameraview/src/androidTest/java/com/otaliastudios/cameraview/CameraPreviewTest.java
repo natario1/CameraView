@@ -5,6 +5,9 @@ import android.content.Context;
 import androidx.test.rule.ActivityTestRule;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.size.AspectRatio;
+import com.otaliastudios.cameraview.size.Size;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;

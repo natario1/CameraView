@@ -1,6 +1,10 @@
 package com.otaliastudios.cameraview;
 
 import android.graphics.Rect;
+
+import com.otaliastudios.cameraview.size.AspectRatio;
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.annotation.NonNull;
 
 class CropHelper {

@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 

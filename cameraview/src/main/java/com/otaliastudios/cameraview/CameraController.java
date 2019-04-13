@@ -6,6 +6,20 @@ import android.location.Location;
 
 import android.os.Handler;
 import android.os.Looper;
+
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.VideoCodec;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.size.AspectRatio;
+import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.size.SizeSelector;
+import com.otaliastudios.cameraview.size.SizeSelectors;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -638,7 +652,7 @@ abstract class CameraController implements
         // is null, or if it fails in finding a size.
         Size targetMinSize = getPreviewSurfaceSize(REF_VIEW);
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
-        if (flip) targetRatio = targetRatio.inverse();
+        if (flip) targetRatio = targetRatio.flip();
         LOG.i("size:", "computePreviewStreamSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
         SizeSelector matchRatio = SizeSelectors.and( // Match this aspect ratio and sort by biggest
                 SizeSelectors.aspectRatio(targetRatio, 0),

@@ -12,6 +12,9 @@ import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
 import android.os.Build;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.size.AspectRatio;
+import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
 
