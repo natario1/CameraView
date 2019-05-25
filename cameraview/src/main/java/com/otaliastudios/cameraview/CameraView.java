@@ -104,7 +104,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT(context).value()));
         Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
         Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
-        int gridColor = a.getColor(R.styleable.CameraView_cameraGrid, GridLinesLayout.DEFAULT_COLOR);
+        int gridColor = a.getColor(R.styleable.CameraView_cameraGridColor, GridLinesLayout.DEFAULT_COLOR);
         WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
         Mode mode = Mode.fromValue(a.getInteger(R.styleable.CameraView_cameraMode, Mode.DEFAULT.value()));
         Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
