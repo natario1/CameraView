@@ -132,11 +132,14 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                 mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
             }
         }
-        mEncoderEngine = null;
+        // Cleanup
+        mCurrentState = STATE_NOT_RECORDING;
+        mDesiredState = STATE_NOT_RECORDING;
         if (mPreview != null) {
             mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
             mPreview = null;
         }
+        mEncoderEngine = null;
         dispatchResult();
     }
 }
