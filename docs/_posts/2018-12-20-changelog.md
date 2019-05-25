@@ -8,6 +8,13 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+### v2.0.0-beta05
+
+- Fixed `FrameProcessor` freeze and release behavior, was broken ([#431][431])
+- New: new api `setAutoFocusResetDelay` to control the delay to reset the focus after autofocus was performed, thanks to [@cneuwirt][cneuwirt] ([#435][435])
+- Faster camera preview on layout changes ([#403][403])
+- A few bug fixes ([#471][471])
+
 ### v2.0.0-beta04
 
 - Renames setPreviewSize to setPreviewStreamSize (previewSize suggests it is related to the view size but it's not) ([#393][393])
@@ -28,8 +35,14 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 
 This is the first beta release. For changes with respect to v1, please take a look at the [migration guide](../extra/v1-migration-guide.html).
 
+[cneuwirt]: https://github.com/cneuwirt
+
 [356]: https://github.com/natario1/CameraView/pull/356
 [360]: https://github.com/natario1/CameraView/pull/360
 [374]: https://github.com/natario1/CameraView/pull/374
 [392]: https://github.com/natario1/CameraView/pull/392
 [393]: https://github.com/natario1/CameraView/pull/393
+[471]: https://github.com/natario1/CameraView/pull/471
+[431]: https://github.com/natario1/CameraView/pull/431
+[403]: https://github.com/natario1/CameraView/pull/403
+[435]: https://github.com/natario1/CameraView/pull/435
