@@ -28,7 +28,7 @@ public class VideoRecorderTest extends BaseTest {
         };
         recorder.start();
         recorder.stop();
-        Mockito.verify(listener, Mockito.times(1)).onVideoResult(result, );
+        Mockito.verify(listener, Mockito.times(1)).onVideoResult(result, null);
         assertNull(recorder.mListener);
         assertNull(recorder.mResult);
     }
