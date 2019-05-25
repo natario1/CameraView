@@ -12,6 +12,7 @@ abstract class VideoRecorder {
 
     /* tests */ VideoResult mResult;
     /* tests */ VideoResultListener mListener;
+    protected Exception mError;
 
     VideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener) {
         mResult = stub;
@@ -25,14 +26,15 @@ abstract class VideoRecorder {
     @SuppressWarnings("WeakerAccess")
     protected void dispatchResult() {
         if (mListener != null) {
-            mListener.onVideoResult(mResult);
+            mListener.onVideoResult(mResult, mError);
             mListener = null;
             mResult = null;
+            mError = null;
         }
     }
 
 
     interface VideoResultListener {
-        void onVideoResult(@Nullable VideoResult result);
+        void onVideoResult(@Nullable VideoResult result, @Nullable Exception exception);
     }
 }

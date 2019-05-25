@@ -336,7 +336,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
             return;
         }
 
-        LOG.e("Error inside the onError callback.", error);
+        LOG.e("Internal Camera1 error.", error);
         Exception runtime = new RuntimeException(CameraLogger.lastMessage);
         int reason;
         switch (error) {
@@ -646,13 +646,13 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
     // Video recording stuff.
 
     @Override
-    public void onVideoResult(@Nullable VideoResult result) {
+    public void onVideoResult(@Nullable VideoResult result, @Nullable Exception exception) {
         mVideoRecorder = null;
         if (result != null) {
             mCameraCallbacks.dispatchOnVideoTaken(result);
         } else {
             // Something went wrong, lock the camera again.
-            mCameraCallbacks.dispatchError(new CameraException(CameraException.REASON_VIDEO_FAILED));
+            mCameraCallbacks.dispatchError(new CameraException(exception, CameraException.REASON_VIDEO_FAILED));
             mCamera.lock();
         }
     }
@@ -689,7 +689,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 } catch (Exception e) {
                     // If this failed, we are unlikely able to record the video.
                     // Dispatch an error.
-                    onVideoResult(null);
+                    onVideoResult(null, e);
                     return;
                 }
                 mVideoRecorder = new FullVideoRecorder(videoResult, Camera1.this,

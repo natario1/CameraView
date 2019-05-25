@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
@@ -10,6 +11,8 @@ import android.hardware.Camera;
 import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
+import android.os.Build;
+
 import androidx.annotation.NonNull;
 
 import java.io.ByteArrayOutputStream;
@@ -42,14 +45,14 @@ class SnapshotPictureRecorder extends PictureRecorder {
 
     @Override
     void take() {
-        if (mPreview instanceof GlCameraPreview) {
+        if (mPreview instanceof GlCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             takeGl((GlCameraPreview) mPreview);
         } else {
             takeLegacy();
         }
     }
 
-    @SuppressLint("NewApi")
+    @TargetApi(Build.VERSION_CODES.KITKAT)
     private void takeGl(@NonNull final GlCameraPreview preview) {
         preview.addRendererFrameCallback(new GlCameraPreview.RendererFrameCallback() {
 

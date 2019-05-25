@@ -124,7 +124,9 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
         // If something failed, undo the result, since this is the mechanism
         // to notify Camera1 about this.
         if (e != null) {
+            LOG.e("Error onEncoderStop", e);
             mResult = null;
+            mError = e;
         } else {
             if (stopReason == MediaEncoderEngine.STOP_BY_MAX_DURATION) {
                 mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
@@ -132,11 +134,14 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
                 mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
             }
         }
-        mEncoderEngine = null;
+        // Cleanup
+        mCurrentState = STATE_NOT_RECORDING;
+        mDesiredState = STATE_NOT_RECORDING;
         if (mPreview != null) {
             mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
             mPreview = null;
         }
+        mEncoderEngine = null;
         dispatchResult();
     }
 }

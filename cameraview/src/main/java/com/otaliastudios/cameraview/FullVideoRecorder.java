@@ -104,7 +104,9 @@ class FullVideoRecorder extends VideoRecorder {
             mMediaRecorder.prepare();
             mMediaRecorder.start();
         } catch (Exception e) {
+            LOG.w("stop:", "Error while starting media recorder.", e);
             mResult = null;
+            mError = e;
             stop();
         }
     }
@@ -115,9 +117,12 @@ class FullVideoRecorder extends VideoRecorder {
             try {
                 mMediaRecorder.stop();
             } catch (Exception e) {
-                // This can happen if stopVideo() is called right after takeVideo(). We don't care.
+                LOG.w("stop:", "Error while closing media recorder.", e);
+                // This can happen if stopVideo() is called right after takeVideo() (in which case we don't care)
+                // Or when prepare()/start() have failed for some reason and we are not allowed to call stop.
+                // Make sure we don't override the error if one exists already.
                 mResult = null;
-                LOG.w("stop:", "Error while closing media recorder. Swallowing", e);
+                if (mError == null) mError = e;
             }
             mMediaRecorder.release();
             if (mController != null) {
