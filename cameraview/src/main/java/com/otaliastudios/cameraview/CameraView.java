@@ -24,9 +24,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -34,7 +32,6 @@ import android.widget.FrameLayout;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -74,16 +71,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     PinchGestureLayout mPinchGestureLayout;
     TapGestureLayout mTapGestureLayout;
     ScrollGestureLayout mScrollGestureLayout;
+    OverlayLayout mOverlayLayout;
     private boolean mKeepScreenOn;
     private boolean mExperimental;
 
     // Threading
     private Handler mUiHandler;
     private WorkerHandler mFrameProcessorsHandler;
-
-    // Overlay
-    private boolean mHasOverlay = false;
-    private OverlayLayout mPreviewOverlayLayout;
 
     public CameraView(@NonNull Context context) {
         super(context, null);
@@ -203,10 +197,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mPinchGestureLayout = new PinchGestureLayout(context);
         mTapGestureLayout = new TapGestureLayout(context);
         mScrollGestureLayout = new ScrollGestureLayout(context);
+        mOverlayLayout = new OverlayLayout(context);
         addView(mGridLinesLayout);
         addView(mPinchGestureLayout);
         addView(mTapGestureLayout);
         addView(mScrollGestureLayout);
+        addView(mOverlayLayout);
 
         // Apply self managed
         setPlaySounds(playSounds);
@@ -272,41 +268,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         super.onAttachedToWindow();
         if (mCameraPreview == null) {
 
-            // check if we have any overlay view before instantiating preview
-            boolean foundOverlay = false;
-            for (int i = 0; i < getChildCount(); i++) {
-                View view = getChildAt(i);
-                if (view.getLayoutParams() instanceof OverlayLayoutParams &&
-                        ((OverlayLayoutParams) view.getLayoutParams()).isOverlay) {
-                    foundOverlay = true;
-                }
-            }
-            mHasOverlay = foundOverlay;
-
             // isHardwareAccelerated will return the real value only after we are
             // attached. That's why we instantiate the preview here.
             instantiatePreview();
 
-            mPreviewOverlayLayout = findViewById(R.id.preview_overlay_layout);
-
-            LinkedList<View> overlayViews = new LinkedList<>();
-            for (int i = 0; i < getChildCount(); i++) {
-                View view = getChildAt(i);
-                if (view.getLayoutParams() instanceof OverlayLayoutParams &&
-                        ((OverlayLayoutParams) view.getLayoutParams()).isOverlay) {
-                    overlayViews.add(view);
-                }
-            }
-            for (View view : overlayViews) {
-                if (view != null) {
-                    Log.d(TAG, "onAttachedToWindow: ovel:" + view.toString());
-                    removeView(view);
-                    mPreviewOverlayLayout.addView(view);
-                }
-            }
-
-            mCameraController.addPictureSurfaceDrawer(mPreviewOverlayLayout);
-            mCameraController.addVideoSurfaceDrawer(mPreviewOverlayLayout);
+            mCameraController.addPictureSurfaceDrawer(mOverlayLayout);
+            mCameraController.addVideoSurfaceDrawer(mOverlayLayout);
         }
         if (!isInEditMode()) {
             mOrientationHelper.enable(getContext());
@@ -322,23 +289,31 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     @Override
-    protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
-        return p instanceof OverlayLayoutParams;
+    public void addView(View child, ViewGroup.LayoutParams params) {
+        if (params instanceof OverlayLayoutParams) {
+            mOverlayLayout.addView(child, params);
+        } else {
+            super.addView(child, params);
+        }
     }
 
     @Override
-    protected OverlayLayoutParams generateDefaultLayoutParams() {
-        return new OverlayLayoutParams(OverlayLayoutParams.WRAP_CONTENT, OverlayLayoutParams.WRAP_CONTENT);
+    public LayoutParams generateLayoutParams(AttributeSet attributeSet) {
+        TypedArray a = getContext().obtainStyledAttributes(attributeSet, R.styleable.CameraView_Layout);
+        if (a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, false)) {
+            a.recycle();
+            return new OverlayLayoutParams(this.getContext(), attributeSet);
+        }
+        a.recycle();
+        return super.generateLayoutParams(attributeSet);
     }
 
     @Override
-    public OverlayLayoutParams generateLayoutParams(AttributeSet attributeSet) {
-        return new OverlayLayoutParams(this.getContext(), attributeSet);
-    }
-
-    @Override
-    protected OverlayLayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
-        return new OverlayLayoutParams(p);
+    protected ViewGroup.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+        if (p instanceof OverlayLayoutParams) {
+            return p;
+        }
+        return super.generateLayoutParams(p);
     }
 
     //endregion
@@ -1107,14 +1082,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @NonNull
     public Audio getAudio() {
         return mCameraController.getAudio();
-    }
-
-    /**
-     * Gets a boolean which is true if there is at least one overlay view.
-     * @return a boolean which is true if there is at least one overlay view
-     */
-    public boolean hasOverlay() {
-        return mHasOverlay;
     }
 
     /**
