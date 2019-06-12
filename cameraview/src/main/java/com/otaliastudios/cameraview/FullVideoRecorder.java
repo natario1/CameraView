@@ -18,6 +18,7 @@ class FullVideoRecorder extends VideoRecorder {
     private CamcorderProfile mProfile;
     private Camera1 mController;
     private Camera mCamera;
+    private Size mSize;
 
     FullVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener,
                       @NonNull Camera1 controller, @NonNull Camera camera, int cameraId) {
@@ -27,11 +28,10 @@ class FullVideoRecorder extends VideoRecorder {
         mMediaRecorder = new MediaRecorder();
         mMediaRecorder.setCamera(camera);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-        mProfile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_HIGH);
-        // TODO: should get a profile of a quality compatible with the chosen size.
-        // Might do this by inspecting mResult.getSize(). However, it is not super important.
-        // We are only bound to respect the video size passed by the VideoSizeSelector, and
-        // we are doing that below.
+
+        // Get a profile of quality compatible with the chosen size.
+        mSize = mResult.getRotation() % 180 != 0 ? mResult.getSize().flip() : mResult.getSize();
+        mProfile = CamcorderProfiles.get(cameraId, mSize);
     }
 
     // Camera2 constructor here...
@@ -43,7 +43,6 @@ class FullVideoRecorder extends VideoRecorder {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         }
 
-        Size size = mResult.getRotation() % 180 != 0 ? mResult.getSize().flip() : mResult.getSize();
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
         if (mResult.videoFrameRate <= 0) {
             mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
@@ -51,7 +50,7 @@ class FullVideoRecorder extends VideoRecorder {
         } else {
             mMediaRecorder.setVideoFrameRate(mResult.videoFrameRate);
         }
-        mMediaRecorder.setVideoSize(size.getWidth(), size.getHeight());
+        mMediaRecorder.setVideoSize(mSize.getWidth(), mSize.getHeight());
         switch (mResult.getVideoCodec()) {
             case H_263: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263); break;
             case H_264: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264); break;
