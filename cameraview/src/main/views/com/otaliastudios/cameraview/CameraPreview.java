@@ -41,16 +41,9 @@ abstract class CameraPreview<T extends View, Output> {
     protected int mInputStreamHeight;
     protected boolean mInputFlipped;
 
-    private final boolean mHasOverlay;
-
     CameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
-        this(context, parent, callback, false);
-    }
-
-    CameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback, boolean hasOverlay) {
         mView = onCreateView(context, parent);
         mSurfaceCallback = callback;
-        mHasOverlay = hasOverlay;
     }
 
     @NonNull
@@ -175,9 +168,5 @@ abstract class CameraPreview<T extends View, Output> {
      */
     /* not final for tests */ boolean isCropping() {
         return mCropping;
-    }
-
-    protected final boolean hasOverlay() {
-        return mHasOverlay;
     }
 }
