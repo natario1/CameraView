@@ -3,5 +3,6 @@ package com.otaliastudios.cameraview;
 import android.view.Surface;
 
 interface SurfaceDrawer {
-    void drawOnSurface(Surface surface);
+    void drawOnSurfaceForPictureSnapshot(Surface surface);
+    void drawOnSurfaceForVideoSnapshot(Surface surface);
 }

@@ -26,7 +26,7 @@ class OverlayLayout extends FrameLayout implements SurfaceDrawer {
     }
 
     @Override
-    public void drawOnSurface(Surface outputSurface) {
+    public void drawOnSurfaceForPictureSnapshot(Surface outputSurface) {
         try {
             final Canvas surfaceCanvas = outputSurface.lockCanvas(null);
 
@@ -34,11 +34,49 @@ class OverlayLayout extends FrameLayout implements SurfaceDrawer {
             float yScale = surfaceCanvas.getHeight() / (float) getHeight();
             surfaceCanvas.scale(xScale, yScale);
             surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-            super.draw(surfaceCanvas);
+
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                if (((CameraView.OverlayLayoutParams) child.getLayoutParams()).isDrawInPictureSnapshot()) {
+                    drawChild(surfaceCanvas, child, getDrawingTime());
+                }
+            }
 
             outputSurface.unlockCanvasAndPost(surfaceCanvas);
         } catch (Surface.OutOfResourcesException e) {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void drawOnSurfaceForVideoSnapshot(Surface outputSurface) {
+        try {
+            final Canvas surfaceCanvas = outputSurface.lockCanvas(null);
+
+            float xScale = surfaceCanvas.getWidth() / (float) getWidth();
+            float yScale = surfaceCanvas.getHeight() / (float) getHeight();
+            surfaceCanvas.scale(xScale, yScale);
+            surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i); if (((CameraView.OverlayLayoutParams) child.getLayoutParams()).isDrawInVideoSnapshot()) {
+                    drawChild(surfaceCanvas, child, getDrawingTime());
+                }
+            }
+
+            outputSurface.unlockCanvasAndPost(surfaceCanvas);
+        } catch (Surface.OutOfResourcesException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i); if (((CameraView.OverlayLayoutParams) child.getLayoutParams()).isDrawInPreview()) {
+                drawChild(canvas, child, getDrawingTime());
+            }
+        }
+    }
+
 }

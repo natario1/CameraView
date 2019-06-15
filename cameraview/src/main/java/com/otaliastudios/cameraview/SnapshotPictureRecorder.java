@@ -134,7 +134,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         Surface drawOnto = new Surface(mOverlaySurfaceTexture);
                         if (mWithOverlay) {
                             for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
-                                surfaceDrawer.drawOnSurface(drawOnto);
+                                surfaceDrawer.drawOnSurfaceForPictureSnapshot(drawOnto);
                             }
                             mOverlaySurfaceTexture.updateTexImage();
                             mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);

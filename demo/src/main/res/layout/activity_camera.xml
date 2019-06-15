@@ -33,7 +33,9 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_gravity="bottom|end"
-            app:layout_isOverlay="true"
+            app:layout_drawInPreview="false"
+            app:layout_drawInVideoSnapshot="true"
+            app:layout_drawInPictureSnapshot="true"
             android:gravity="center"
             android:padding="8dp"
             >
@@ -53,6 +55,16 @@
                 />
 
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/other_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CameraView"
+            app:layout_drawInPreview="true"
+            app:layout_drawInPictureSnapshot="true"
+            android:textColor="@android:color/white"
+            />
 
     </com.otaliastudios.cameraview.CameraView>
 

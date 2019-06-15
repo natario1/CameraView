@@ -299,12 +299,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @Override
     public LayoutParams generateLayoutParams(AttributeSet attributeSet) {
-        TypedArray a = getContext().obtainStyledAttributes(attributeSet, R.styleable.CameraView_Layout);
-        if (a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, false)) {
-            a.recycle();
-            return new OverlayLayoutParams(this.getContext(), attributeSet);
+        OverlayLayoutParams toBeChecked = new OverlayLayoutParams(this.getContext(), attributeSet);
+        if (toBeChecked.isOverlay()) {
+            return toBeChecked;
         }
-        a.recycle();
         return super.generateLayoutParams(attributeSet);
     }
 
@@ -1865,7 +1863,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     public static class OverlayLayoutParams extends FrameLayout.LayoutParams {
 
-        private boolean isOverlay = false;
+        private boolean drawInPreview = false;
+        private boolean drawInPictureSnapshot = false;
+        private boolean drawInVideoSnapshot = false;
 
         public OverlayLayoutParams(Context context, AttributeSet attributeSet) {
             super(context, attributeSet);
@@ -1883,18 +1883,40 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         private void readStyleParameters(Context context, AttributeSet attributeSet) {
             TypedArray a = context.obtainStyledAttributes(attributeSet, R.styleable.CameraView_Layout);
             try {
-                this.isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, false);
+                this.drawInPreview = a.getBoolean(R.styleable.CameraView_Layout_layout_drawInPreview, false);
+                this.drawInPictureSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawInPictureSnapshot, false);
+                this.drawInVideoSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawInVideoSnapshot, false);
             } finally {
                 a.recycle();
             }
         }
 
-        public boolean isOverlay() {
-            return isOverlay;
+        public boolean isDrawInPreview() {
+            return drawInPreview;
         }
 
-        public void setOverlay(boolean overlay) {
-            isOverlay = overlay;
+        public void setDrawInPreview(boolean drawInPreview) {
+            this.drawInPreview = drawInPreview;
+        }
+
+        public boolean isDrawInPictureSnapshot() {
+            return drawInPictureSnapshot;
+        }
+
+        public void setDrawInPictureSnapshot(boolean drawInPictureSnapshot) {
+            this.drawInPictureSnapshot = drawInPictureSnapshot;
+        }
+
+        public boolean isDrawInVideoSnapshot() {
+            return drawInVideoSnapshot;
+        }
+
+        public void setDrawInVideoSnapshot(boolean drawInVideoSnapshot) {
+            this.drawInVideoSnapshot = drawInVideoSnapshot;
+        }
+
+        public boolean isOverlay() {
+            return drawInPreview || drawInPictureSnapshot || drawInVideoSnapshot;
         }
     }
 

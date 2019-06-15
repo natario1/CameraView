@@ -131,7 +131,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             // get overlay
             if (mOverlaySurfaceTexture != null) {
                 for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
-                    surfaceDrawer.drawOnSurface(mOverlaySurface);
+                    surfaceDrawer.drawOnSurfaceForVideoSnapshot(mOverlaySurface);
                 }
                 mOverlaySurfaceTexture.updateTexImage();
                 mOverlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);
