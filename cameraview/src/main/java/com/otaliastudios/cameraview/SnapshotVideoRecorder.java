@@ -42,11 +42,12 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
 
     private boolean mWithOverlay;
 
-    SnapshotVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview, boolean withOverlay, @NonNull List<SurfaceDrawer> surfaceDrawerList) {
+    SnapshotVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview, @NonNull List<SurfaceDrawer> surfaceDrawerList) {
         super(stub, listener);
         mPreview = preview;
         mPreview.addRendererFrameCallback(this);
-        mWithOverlay = withOverlay;
+        // TODO should it always be true?
+        mWithOverlay = true;
         mSurfaceDrawerList = surfaceDrawerList;
     }
 
@@ -129,7 +130,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
             surfaceTexture.getTransformMatrix(textureFrame.transform);
 
             // get overlay
-            if (mOverlaySurfaceTexture != null) {
+            if (mWithOverlay) {
                 for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
                     surfaceDrawer.drawOnSurfaceForVideoSnapshot(mOverlaySurface);
                 }

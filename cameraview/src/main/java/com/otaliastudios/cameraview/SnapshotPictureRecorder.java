@@ -47,7 +47,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
         mOutputRatio = outputRatio;
         mFormat = mController.mPreviewFormat;
         mSensorPreviewSize = mController.mPreviewStreamSize;
-        // TODO when we'll have the API for setting where to draw each view, we'll fix this.
+        // TODO should it always be true?
         mWithOverlay = true;
         mSurfaceDrawerList = surfaceDrawerList;
     }

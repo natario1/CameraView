@@ -782,7 +782,7 @@ class Camera1 extends CameraController implements Camera.PreviewCallback, Camera
                 mFacing = realFacing;
                 GlCameraPreview cameraPreview = (GlCameraPreview) mPreview;
                 // TODO when we'll have the API for setting where to draw each view, we'll fix the withOverlay parameter..
-                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview, true, videoSurfaceDrawerList);
+                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview, videoSurfaceDrawerList);
                 mVideoRecorder.start();
             }
         });
