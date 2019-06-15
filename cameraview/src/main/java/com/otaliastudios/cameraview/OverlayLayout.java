@@ -53,9 +53,11 @@ class OverlayLayout extends FrameLayout implements SurfaceDrawer {
         try {
             final Canvas surfaceCanvas = outputSurface.lockCanvas(null);
 
-            float xScale = surfaceCanvas.getWidth() / (float) getWidth();
-            float yScale = surfaceCanvas.getHeight() / (float) getHeight();
-            surfaceCanvas.scale(xScale, yScale);
+            // scale factor between canvas width and this View's width
+            float widthScale = surfaceCanvas.getWidth() / (float) getWidth();
+            // scale factor between canvas height and this View's height
+            float heightScale = surfaceCanvas.getHeight() / (float) getHeight();
+            surfaceCanvas.scale(widthScale, heightScale);
             surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
             for (int i = 0; i < getChildCount(); i++) {
