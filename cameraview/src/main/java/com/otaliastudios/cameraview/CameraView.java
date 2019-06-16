@@ -72,6 +72,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     TapGestureLayout mTapGestureLayout;
     ScrollGestureLayout mScrollGestureLayout;
     OverlayLayoutManager mOverlayLayoutManager;
+    // see OverlayLayoutManager for why having two of them
     OverlayLayoutManager mOverlayLayoutManagerBelow;
     private boolean mKeepScreenOn;
     private boolean mExperimental;
@@ -205,7 +206,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         addView(mTapGestureLayout);
         addView(mScrollGestureLayout);
         addView(mOverlayLayoutManager);
-        addView(mOverlayLayoutManagerBelow, 0);
+        addView(mOverlayLayoutManagerBelow, 0); // put it at the bottom of the FrameLayout
 
         // Apply self managed
         setPlaySounds(playSounds);

@@ -3,8 +3,6 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,19 +15,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class manages the allocation of buffers and Frame objects.
- * We are interested in both recycling byte[] buffers so they are not allocated for each
- * preview frame, and in recycling Frame instances (so we don't instantiate a lot).
+ * This class manages {@link OverlayLayout}s.
+ * The necessity for this class comes from two features of {@link View}s:
+ *  - a {@link View} can only have one parent
+ *  - the View framework does not provide a straightforward way for a {@link ViewGroup} to draw
+ *    only a subset of it's children.
+ * We have three possible target for a overlay {@link View} to be drawn on:
+ *  - camera preview
+ *  - picture snapshot
+ *  - video snapshot
+ * Given the two constraints above in order to draw exclusively on a subset of targets we need a
+ * different {@link OverlayLayout} for each subset of targets. This class manages those different
+ * {@link OverlayLayout}s.
  *
- * For this, we keep a mPoolSize integer that defines the size of instances to keep.
- * Whether this does make sense, it depends on how slow the frame processors are.
- * If they are very slow, it is possible that some frames will be skipped.
- *
- * - byte[] buffer pool:
- *     this is not kept here, because Camera1 internals already have one that we can't control, but
- *     it should be OK. The only thing we do is allocate mPoolSize buffers when requested.
- * - Frame pool:
- *     We keep a list of mPoolSize recycled instances, to be reused when a new buffer is available.
+ * A problem remains: the views are drawn on preview when {@link #draw(Canvas)} is called on this
+ * class, for not drawing on the preview but drawing on picture snapshot, for instance, we cannot
+ * change the child's visibility.
+ * One way to solve this problem is to have two instances of {@link OverlayLayoutManager} and layer
+ * them so that the one below is covered and hidden by the camera preview. This way only the top
+ * {@link OverlayLayoutManager} is shown on top of the camera preview and we can still access the
+ * bottom one's {@link OverlayLayout#draw(Canvas)} for drawing on picture snapshots.
  */
 class OverlayLayoutManager extends FrameLayout implements SurfaceDrawer {
 
