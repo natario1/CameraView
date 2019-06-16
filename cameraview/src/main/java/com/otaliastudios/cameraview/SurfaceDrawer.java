@@ -1,8 +1,8 @@
 package com.otaliastudios.cameraview;
 
-import android.view.Surface;
+import android.graphics.Canvas;
 
 interface SurfaceDrawer {
-    void drawOnSurfaceForPictureSnapshot(Surface surface);
-    void drawOnSurfaceForVideoSnapshot(Surface surface);
+    void drawOnSurfaceForPictureSnapshot(Canvas surfaceCanvas);
+    void drawOnSurfaceForVideoSnapshot(Canvas surfaceCanvas);
 }

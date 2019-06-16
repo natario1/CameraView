@@ -71,7 +71,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     PinchGestureLayout mPinchGestureLayout;
     TapGestureLayout mTapGestureLayout;
     ScrollGestureLayout mScrollGestureLayout;
-    OverlayLayout mOverlayLayout;
+    OverlayLayoutManager mOverlayLayoutManager;
+    OverlayLayoutManager mOverlayLayoutManagerBelow;
     private boolean mKeepScreenOn;
     private boolean mExperimental;
 
@@ -197,12 +198,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mPinchGestureLayout = new PinchGestureLayout(context);
         mTapGestureLayout = new TapGestureLayout(context);
         mScrollGestureLayout = new ScrollGestureLayout(context);
-        mOverlayLayout = new OverlayLayout(context);
+        mOverlayLayoutManager = new OverlayLayoutManager(context);
+        mOverlayLayoutManagerBelow = new OverlayLayoutManager(context);
         addView(mGridLinesLayout);
         addView(mPinchGestureLayout);
         addView(mTapGestureLayout);
         addView(mScrollGestureLayout);
-        addView(mOverlayLayout);
+        addView(mOverlayLayoutManager);
+        addView(mOverlayLayoutManagerBelow, 0);
 
         // Apply self managed
         setPlaySounds(playSounds);
@@ -272,8 +275,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // attached. That's why we instantiate the preview here.
             instantiatePreview();
 
-            mCameraController.addPictureSurfaceDrawer(mOverlayLayout);
-            mCameraController.addVideoSurfaceDrawer(mOverlayLayout);
+            mCameraController.addPictureSurfaceDrawer(mOverlayLayoutManager);
+            mCameraController.addPictureSurfaceDrawer(mOverlayLayoutManagerBelow);
+            mCameraController.addVideoSurfaceDrawer(mOverlayLayoutManager);
+            mCameraController.addVideoSurfaceDrawer(mOverlayLayoutManagerBelow);
         }
         if (!isInEditMode()) {
             mOrientationHelper.enable(getContext());
@@ -291,7 +296,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Override
     public void addView(View child, ViewGroup.LayoutParams params) {
         if (params instanceof OverlayLayoutParams) {
-            mOverlayLayout.addView(child, params);
+            if (((OverlayLayoutParams) params).drawInPreview) {
+                mOverlayLayoutManager.addView(child, params);
+            } else {
+                mOverlayLayoutManagerBelow.addView(child, params);
+            }
         } else {
             super.addView(child, params);
         }

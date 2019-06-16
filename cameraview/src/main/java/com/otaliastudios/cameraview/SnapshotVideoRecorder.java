@@ -1,5 +1,8 @@
 package com.otaliastudios.cameraview;
 
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
@@ -131,8 +134,16 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
 
             // get overlay
             if (mWithOverlay) {
-                for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
-                    surfaceDrawer.drawOnSurfaceForVideoSnapshot(mOverlaySurface);
+                try {
+                    final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
+                    surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                    for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
+                        surfaceDrawer.drawOnSurfaceForVideoSnapshot(surfaceCanvas);
+                    }
+
+                    mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
+                } catch (Surface.OutOfResourcesException e) {
+                    e.printStackTrace();
                 }
                 mOverlaySurfaceTexture.updateTexImage();
                 mOverlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);

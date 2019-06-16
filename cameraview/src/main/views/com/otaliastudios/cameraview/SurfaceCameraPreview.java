@@ -28,7 +28,7 @@ class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHolder> {
     @Override
     protected SurfaceView onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
         View root = LayoutInflater.from(context).inflate(R.layout.cameraview_surface_view, parent, false);
-        parent.addView(root, 0);
+        parent.addView(root, 1);
         SurfaceView surfaceView = root.findViewById(R.id.surface_view);
         final SurfaceHolder holder = surfaceView.getHolder();
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);

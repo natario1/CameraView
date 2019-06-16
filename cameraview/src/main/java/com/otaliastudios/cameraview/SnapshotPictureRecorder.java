@@ -2,7 +2,10 @@ package com.otaliastudios.cameraview;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.graphics.YuvImage;
@@ -133,8 +136,16 @@ class SnapshotPictureRecorder extends PictureRecorder {
                         mSurfaceTexture.getTransformMatrix(mTransform);
                         Surface drawOnto = new Surface(mOverlaySurfaceTexture);
                         if (mWithOverlay) {
-                            for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
-                                surfaceDrawer.drawOnSurfaceForPictureSnapshot(drawOnto);
+                            try {
+                                final Canvas surfaceCanvas = drawOnto.lockCanvas(null);
+                                surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                                for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
+                                    surfaceDrawer.drawOnSurfaceForPictureSnapshot(surfaceCanvas);
+                                }
+
+                                drawOnto.unlockCanvasAndPost(surfaceCanvas);
+                            } catch (Surface.OutOfResourcesException e) {
+                                e.printStackTrace();
                             }
                             mOverlaySurfaceTexture.updateTexImage();
                             mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
