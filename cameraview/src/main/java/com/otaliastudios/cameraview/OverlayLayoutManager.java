@@ -67,6 +67,19 @@ class OverlayLayoutManager extends FrameLayout implements SurfaceDrawer {
     }
 
     @Override
+    public void removeView(View child) {
+        // params must be instance of OverlayLayoutParams
+        if (!(child.getLayoutParams() instanceof CameraView.OverlayLayoutParams)) {
+            return;
+        }
+
+        OverlayType viewOverlayType = new OverlayType((CameraView.OverlayLayoutParams) child.getLayoutParams());
+        if (mLayouts.containsKey(viewOverlayType)) {
+            mLayouts.get(viewOverlayType).removeView(child);
+        }
+    }
+
+    @Override
     public void drawOnSurfaceForPictureSnapshot(Canvas surfaceCanvas) {
         surfaceCanvas.save();
         // scale factor between canvas width and this View's width

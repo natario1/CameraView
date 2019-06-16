@@ -308,6 +308,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     @Override
+    public void removeView(View child) {
+        if (child.getLayoutParams() instanceof OverlayLayoutParams) {
+            if (((OverlayLayoutParams) child.getLayoutParams()).drawInPreview) {
+                mOverlayLayoutManager.removeView(child);
+            } else {
+                mOverlayLayoutManagerBelow.removeView(child);
+            }
+        } else {
+            super.removeView(child);
+        }
+    }
+
+    @Override
     public LayoutParams generateLayoutParams(AttributeSet attributeSet) {
         OverlayLayoutParams toBeChecked = new OverlayLayoutParams(this.getContext(), attributeSet);
         if (toBeChecked.isOverlay()) {
