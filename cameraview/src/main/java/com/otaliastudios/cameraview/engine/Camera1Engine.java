@@ -287,7 +287,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     @WorkerThread
     @Override
-    void onStart() {
+    protected void onStart() {
         if (isCameraAvailable()) {
             LOG.w("onStart:", "Camera not available. Should not happen.");
             onStop(); // Should not happen.
@@ -305,7 +305,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     @WorkerThread
     @Override
-    void onStop() {
+    protected void onStop() {
         LOG.i("onStop:", "About to clean up.");
         mHandler.get().removeCallbacks(mPostFocusResetRunnable);
         if (mVideoRecorder != null) {

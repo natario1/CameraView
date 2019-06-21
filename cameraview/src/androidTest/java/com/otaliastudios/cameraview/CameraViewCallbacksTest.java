@@ -150,19 +150,21 @@ public class CameraViewCallbacksTest extends BaseTest {
 
     @Test
     public void testDispatchOnVideoTaken() {
-        completeTask().when(listener).onVideoTaken(null);
-        camera.mCameraCallbacks.dispatchOnVideoTaken(null);
+        VideoResult.Stub stub = new VideoResult.Stub();
+        completeTask().when(listener).onVideoTaken(any(VideoResult.class));
+        camera.mCameraCallbacks.dispatchOnVideoTaken(stub);
 
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onVideoTaken(null);
+        verify(listener, times(1)).onVideoTaken(any(VideoResult.class));
     }
 
     @Test
     public void testDispatchOnPictureTaken() {
-        completeTask().when(listener).onPictureTaken(null);
-        camera.mCameraCallbacks.dispatchOnPictureTaken(null);
+        PictureResult.Stub stub = new PictureResult.Stub();
+        completeTask().when(listener).onPictureTaken(any(PictureResult.class));
+        camera.mCameraCallbacks.dispatchOnPictureTaken(stub);
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onPictureTaken(null);
+        verify(listener, times(1)).onPictureTaken(any(PictureResult.class));
     }
 
     @Test

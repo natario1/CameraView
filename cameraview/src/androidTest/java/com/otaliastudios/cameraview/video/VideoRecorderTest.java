@@ -41,7 +41,7 @@ public class VideoRecorderTest extends BaseTest {
     }
 
     private VideoResult.Stub createStub() throws Exception {
-        Constructor<VideoResult.Stub> constructor = VideoResult.Stub.class.getConstructor();
+        Constructor<VideoResult.Stub> constructor = VideoResult.Stub.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         return constructor.newInstance();
     }

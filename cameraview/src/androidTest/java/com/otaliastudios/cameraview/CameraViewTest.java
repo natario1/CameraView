@@ -215,6 +215,8 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_capture() {
+        CameraOptions o = mock(CameraOptions.class);
+        mockController.setMockCameraOptions(o);
         mockController.mockStarted(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
@@ -235,6 +237,8 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_focus() {
+        CameraOptions o = mock(CameraOptions.class);
+        mockController.setMockCameraOptions(o);
         mockController.mockStarted(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
@@ -264,6 +268,8 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_zoom() {
+        CameraOptions o = mock(CameraOptions.class);
+        mockController.setMockCameraOptions(o);
         mockController.mockStarted(true);
         mockController.mZoomChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
@@ -301,7 +307,6 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_exposureCorrection() {
-        // This needs a valid CameraOptions value.
         CameraOptions o = mock(CameraOptions.class);
         when(o.getExposureCorrectionMinValue()).thenReturn(-10f);
         when(o.getExposureCorrectionMaxValue()).thenReturn(10f);

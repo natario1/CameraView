@@ -37,7 +37,7 @@ public class PictureRecorderTest extends BaseTest {
     }
 
     private PictureResult.Stub createStub() throws Exception {
-        Constructor<PictureResult.Stub> constructor = PictureResult.Stub.class.getConstructor();
+        Constructor<PictureResult.Stub> constructor = PictureResult.Stub.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         return constructor.newInstance();
     }
