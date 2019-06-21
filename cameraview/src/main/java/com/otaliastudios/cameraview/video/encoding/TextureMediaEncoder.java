@@ -15,14 +15,14 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> {
+public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> {
 
     private static final String TAG = TextureMediaEncoder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    final static String FRAME_EVENT = "frame";
+    public final static String FRAME_EVENT = "frame";
 
-    static class Config extends VideoMediaEncoder.Config {
+    public static class Config extends VideoMediaEncoder.Config {
         int textureId;
         float scaleX;
         float scaleY;
@@ -30,7 +30,7 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         EGLContext eglContext;
         int transformRotation;
 
-        Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
+        public Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
                int textureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
             // We rotate the texture using transformRotation. Pass rotation=0 to super so that
             // no rotation metadata is written into the output file.
@@ -54,20 +54,20 @@ class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> 
         }
     });
 
-    TextureMediaEncoder(@NonNull Config config) {
+    public TextureMediaEncoder(@NonNull Config config) {
         super(config);
     }
 
-    static class TextureFrame {
+    public static class TextureFrame {
         private TextureFrame() {}
         // Nanoseconds, in no meaningful time-base. Should be for offsets only.
         // Typically coming from SurfaceTexture.getTimestamp().
-        long timestamp;
-        float[] transform = new float[16];
+        public long timestamp;
+        public float[] transform = new float[16];
     }
 
     @NonNull
-    TextureFrame acquireFrame() {
+    public TextureFrame acquireFrame() {
         if (mFramePool.isEmpty()) {
             throw new RuntimeException("Need more frames than this! Please increase the pool size.");
         } else {

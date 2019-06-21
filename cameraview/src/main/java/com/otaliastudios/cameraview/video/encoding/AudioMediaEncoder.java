@@ -25,7 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 // TODO create onVideoRecordingStart/onVideoRecordingEnd callbacks
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class AudioMediaEncoder extends MediaEncoder {
+public class AudioMediaEncoder extends MediaEncoder {
 
     private static final String TAG = AudioMediaEncoder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -59,14 +59,14 @@ class AudioMediaEncoder extends MediaEncoder {
     private ByteBufferPool mByteBufferPool;
     private Config mConfig;
 
-    static class Config {
+    public static class Config {
         int bitRate;
-        Config(int bitRate) {
+        public Config(int bitRate) {
             this.bitRate = bitRate;
         }
     }
 
-    AudioMediaEncoder(@NonNull Config config) {
+    public AudioMediaEncoder(@NonNull Config config) {
         mConfig = config;
     }
 

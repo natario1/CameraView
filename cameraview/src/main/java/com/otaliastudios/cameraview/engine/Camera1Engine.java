@@ -809,7 +809,8 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
                 // Reset facing and start.
                 mFacing = realFacing;
                 GlCameraPreview cameraPreview = (GlCameraPreview) mPreview;
-                mVideoRecorder = new SnapshotVideoRecorder(stub, Camera1Engine.this, cameraPreview);
+                mVideoRecorder = new SnapshotVideoRecorder(stub,
+                        Camera1Engine.this, Camera1Engine.this, cameraPreview);
                 mVideoRecorder.start();
             }
         });

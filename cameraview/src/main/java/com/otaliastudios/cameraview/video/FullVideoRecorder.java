@@ -7,10 +7,9 @@ import android.media.MediaRecorder;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
-import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
+import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
 import com.otaliastudios.cameraview.size.Size;
-import com.otaliastudios.cameraview.utils.CamcorderProfiles;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,15 +38,13 @@ public class FullVideoRecorder extends VideoRecorder {
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
         // Get a profile of quality compatible with the chosen size.
-        mSize = mResult.getRotation() % 180 != 0 ? mResult.getSize().flip() : mResult.getSize();
+        mSize = mResult.rotation % 180 != 0 ? mResult.size.flip() : mResult.size;
         mProfile = CamcorderProfiles.get(cameraId, mSize);
     }
 
-    // Camera2 constructor here...
-
     @Override
-    void start() {
-        if (mResult.getAudio() == Audio.ON) {
+    public void start() {
+        if (mResult.audio == Audio.ON) {
             // Must be called before setOutputFormat.
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         }
@@ -60,10 +57,10 @@ public class FullVideoRecorder extends VideoRecorder {
             mMediaRecorder.setVideoFrameRate(mResult.videoFrameRate);
         }
         mMediaRecorder.setVideoSize(mSize.getWidth(), mSize.getHeight());
-        switch (mResult.getVideoCodec()) {
-            case VideoCodec.H_263: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263); break;
-            case VideoCodec.H_264: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264); break;
-            case VideoCodec.DEVICE_DEFAULT: mMediaRecorder.setVideoEncoder(mProfile.videoCodec); break;
+        switch (mResult.videoCodec) {
+            case H_263: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263); break;
+            case H_264: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264); break;
+            case DEVICE_DEFAULT: mMediaRecorder.setVideoEncoder(mProfile.videoCodec); break;
         }
         if (mResult.videoBitRate <= 0) {
             mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
@@ -71,7 +68,7 @@ public class FullVideoRecorder extends VideoRecorder {
         } else {
             mMediaRecorder.setVideoEncodingBitRate(mResult.videoBitRate);
         }
-        if (mResult.getAudio() == Audio.ON) {
+        if (mResult.audio == Audio.ON) {
             mMediaRecorder.setAudioChannels(mProfile.audioChannels);
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
             mMediaRecorder.setAudioEncoder(mProfile.audioCodec);
@@ -82,15 +79,15 @@ public class FullVideoRecorder extends VideoRecorder {
                 mMediaRecorder.setAudioEncodingBitRate(mResult.audioBitRate);
             }
         }
-        if (mResult.getLocation() != null) {
+        if (mResult.location != null) {
             mMediaRecorder.setLocation(
-                    (float) mResult.getLocation().getLatitude(),
-                    (float) mResult.getLocation().getLongitude());
+                    (float) mResult.location.getLatitude(),
+                    (float) mResult.location.getLongitude());
         }
-        mMediaRecorder.setOutputFile(mResult.getFile().getAbsolutePath());
-        mMediaRecorder.setOrientationHint(mResult.getRotation());
-        mMediaRecorder.setMaxFileSize(mResult.getMaxSize());
-        mMediaRecorder.setMaxDuration(mResult.getMaxDuration());
+        mMediaRecorder.setOutputFile(mResult.file.getAbsolutePath());
+        mMediaRecorder.setOrientationHint(mResult.rotation);
+        mMediaRecorder.setMaxFileSize(mResult.maxSize);
+        mMediaRecorder.setMaxDuration(mResult.maxDuration);
         mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
             @Override
             public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
@@ -120,7 +117,7 @@ public class FullVideoRecorder extends VideoRecorder {
     }
 
     @Override
-    void stop() {
+    public void stop() {
         if (mMediaRecorder != null) {
             try {
                 mMediaRecorder.stop();

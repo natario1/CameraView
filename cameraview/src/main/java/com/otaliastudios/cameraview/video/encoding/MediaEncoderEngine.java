@@ -15,15 +15,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class MediaEncoderEngine {
+public class MediaEncoderEngine {
 
     private final static String TAG = MediaEncoderEngine.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     @SuppressWarnings("WeakerAccess")
-    final static int STOP_BY_USER = 0;
-    final static int STOP_BY_MAX_DURATION = 1;
-    final static int STOP_BY_MAX_SIZE = 2;
+    public final static int STOP_BY_USER = 0;
+    public final static int STOP_BY_MAX_DURATION = 1;
+    public final static int STOP_BY_MAX_SIZE = 2;
 
     private ArrayList<MediaEncoder> mEncoders;
     private MediaMuxer mMediaMuxer;
@@ -36,7 +36,7 @@ class MediaEncoderEngine {
     private int mPossibleStopReason;
     private final Object mControllerLock = new Object();
 
-    MediaEncoderEngine(@NonNull File file, @NonNull VideoMediaEncoder videoEncoder, @Nullable AudioMediaEncoder audioEncoder,
+    public MediaEncoderEngine(@NonNull File file, @NonNull VideoMediaEncoder videoEncoder, @Nullable AudioMediaEncoder audioEncoder,
                        final int maxDuration, final long maxSize, @Nullable Listener listener) {
         mListener = listener;
         mController = new Controller();
@@ -164,14 +164,14 @@ class MediaEncoderEngine {
         }
     }
 
-    final void start() {
+    public final void start() {
         for (MediaEncoder encoder : mEncoders) {
             encoder.start();
         }
     }
 
     @SuppressWarnings("SameParameterValue")
-    final void notify(final String event, final Object data) {
+    public final void notify(final String event, final Object data) {
         for (MediaEncoder encoder : mEncoders) {
             encoder.notify(event, data);
         }
@@ -181,7 +181,7 @@ class MediaEncoderEngine {
      * This just asks the encoder to stop. We will wait for them to call {@link Controller#requestRelease(int)}
      * to actually stop the muxer, as there might be async stuff going on.
      */
-    final void stop() {
+    public final void stop() {
         for (MediaEncoder encoder : mEncoders) {
             encoder.stop();
         }
@@ -212,12 +212,12 @@ class MediaEncoderEngine {
     }
 
     @NonNull
-    VideoMediaEncoder getVideoEncoder() {
+    public VideoMediaEncoder getVideoEncoder() {
         return (VideoMediaEncoder) mEncoders.get(0);
     }
 
     @Nullable
-    AudioMediaEncoder getAudioEncoder() {
+    public AudioMediaEncoder getAudioEncoder() {
         if (mEncoders.size() > 1) {
             return (AudioMediaEncoder) mEncoders.get(1);
         } else {
@@ -225,7 +225,7 @@ class MediaEncoderEngine {
         }
     }
 
-    interface Listener {
+    public interface Listener {
 
         @EncoderThread
         void onEncoderStop(int stopReason, @Nullable Exception e);

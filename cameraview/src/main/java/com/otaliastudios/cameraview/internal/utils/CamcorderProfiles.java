@@ -18,7 +18,7 @@ import androidx.annotation.NonNull;
 /**
  * Wraps the {@link android.media.CamcorderProfile} static utilities.
  */
-class CamcorderProfiles {
+public class CamcorderProfiles {
 
     @SuppressLint("UseSparseArrays")
     private static Map<Size, Integer> sizeToProfileMap = new HashMap<>();
@@ -44,7 +44,7 @@ class CamcorderProfiles {
      * @return a profile
      */
     @NonNull
-    static CamcorderProfile get(int cameraId, @NonNull Size targetSize) {
+    public static CamcorderProfile get(int cameraId, @NonNull Size targetSize) {
         final int targetArea = targetSize.getWidth() * targetSize.getHeight();
         List<Size> sizes = new ArrayList<>(sizeToProfileMap.keySet());
         Collections.sort(sizes, new Comparator<Size>() {

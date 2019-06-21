@@ -4,17 +4,17 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
 
-import com.otaliastudios.cameraview.AudioMediaEncoder;
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.MediaEncoderEngine;
-import com.otaliastudios.cameraview.TextureMediaEncoder;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
-import com.otaliastudios.cameraview.controls.VideoCodec;
+import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.video.encoding.AudioMediaEncoder;
+import com.otaliastudios.cameraview.video.encoding.MediaEncoderEngine;
+import com.otaliastudios.cameraview.video.encoding.TextureMediaEncoder;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,24 +39,27 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     private MediaEncoderEngine mEncoderEngine;
     private GlCameraPreview mPreview;
+    private boolean mFlipped;
 
     private int mCurrentState = STATE_NOT_RECORDING;
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
 
-    public SnapshotVideoRecorder(@NonNull VideoResult.Stub stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview) {
+    public SnapshotVideoRecorder(@NonNull VideoResult.Stub stub, @Nullable VideoResultListener listener,
+                                 @NonNull CameraEngine engine, @NonNull GlCameraPreview preview) {
         super(stub, listener);
         mPreview = preview;
         mPreview.addRendererFrameCallback(this);
+        mFlipped = engine.flip(CameraEngine.REF_SENSOR, CameraEngine.REF_VIEW);
     }
 
     @Override
-    void start() {
+    public void start() {
         mDesiredState = STATE_RECORDING;
     }
 
     @Override
-    void stop() {
+    public void stop() {
         mDesiredState = STATE_NOT_RECORDING;
     }
 
@@ -76,16 +79,16 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
 
             // Video. Ensure width and height are divisible by 2, as I have read somewhere.
-            Size size = mResult.getSize();
+            Size size = mResult.size;
             int width = size.getWidth();
             int height = size.getHeight();
             width = width % 2 == 0 ? width : width + 1;
             height = height % 2 == 0 ? height : height + 1;
             String type = "";
-            switch (mResult.codec) {
-                case VideoCodec.H_263: type = "video/3gpp"; break; // MediaFormat.MIMETYPE_VIDEO_H263;
-                case VideoCodec.H_264: type = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
-                case VideoCodec.DEVICE_DEFAULT: type = "video/avc"; break;
+            switch (mResult.videoCodec) {
+                case H_263: type = "video/3gpp"; break; // MediaFormat.MIMETYPE_VIDEO_H263;
+                case H_264: type = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
+                case DEVICE_DEFAULT: type = "video/avc"; break;
             }
             LOG.w("Creating frame encoder. Rotation:", mResult.rotation);
             TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(width, height,
@@ -94,7 +97,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                     mResult.rotation,
                     type, mTextureId,
                     scaleX, scaleY,
-                    mPreview.mInputFlipped,
+                    mFlipped,
                     EGL14.eglGetCurrentContext()
             );
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
