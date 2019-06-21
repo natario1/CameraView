@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.size;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.HashMap;
 
@@ -10,7 +11,7 @@ import java.util.HashMap;
  */
 public class AspectRatio implements Comparable<AspectRatio> {
 
-    private final static HashMap<String, AspectRatio> sCache = new HashMap<>(16);
+    @VisibleForTesting final static HashMap<String, AspectRatio> sCache = new HashMap<>(16);
 
     /**
      * Creates an aspect ratio for the given size.

@@ -1,8 +1,4 @@
-package com.otaliastudios.cameraview;
-
-
-import com.otaliastudios.cameraview.size.AspectRatio;
-import com.otaliastudios.cameraview.size.Size;
+package com.otaliastudios.cameraview.size;
 
 import org.junit.Test;
 

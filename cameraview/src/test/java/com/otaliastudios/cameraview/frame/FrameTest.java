@@ -1,10 +1,8 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.frame;
 
 
 import android.graphics.ImageFormat;
 
-import com.otaliastudios.cameraview.frame.Frame;
-import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.size.Size;
 
 import org.junit.After;
@@ -14,10 +12,8 @@ import org.junit.Test;
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;

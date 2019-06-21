@@ -1,7 +1,5 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.size;
 
-
-import com.otaliastudios.cameraview.size.Size;
 
 import org.junit.Test;
 
