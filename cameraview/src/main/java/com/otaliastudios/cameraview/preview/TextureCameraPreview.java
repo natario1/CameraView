@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.preview;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -10,6 +10,8 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.R;
+import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {

@@ -10,8 +10,10 @@ import androidx.test.filters.MediumTest;
 import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureAction;
+import com.otaliastudios.cameraview.preview.CameraPreview;
 
 import org.junit.After;
 import org.junit.Before;

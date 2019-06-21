@@ -11,6 +11,8 @@ import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.engine.Camera1Engine;
+import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -55,7 +57,7 @@ public class IntegrationTest extends BaseTest {
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
     private CameraView camera;
-    private Camera1 controller;
+    private Camera1Engine controller;
     private CameraListener listener;
     private Task<Throwable> uiExceptionTask;
 
@@ -74,7 +76,7 @@ public class IntegrationTest extends BaseTest {
                 camera = new CameraView(rule.getActivity()) {
                     @Override
                     protected CameraEngine instantiateCameraController(CameraCallbacks callbacks) {
-                        controller = new Camera1(callbacks);
+                        controller = new Camera1Engine(callbacks);
                         return controller;
                     }
                 };

@@ -7,7 +7,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import android.view.ViewGroup;
 
-import org.junit.Test;
+import com.otaliastudios.cameraview.preview.CameraPreview;
+import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
+
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)

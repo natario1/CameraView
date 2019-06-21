@@ -5,6 +5,7 @@ import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -20,12 +21,12 @@ class FullVideoRecorder extends VideoRecorder {
 
     private MediaRecorder mMediaRecorder;
     private CamcorderProfile mProfile;
-    private Camera1 mController;
+    private Camera1Engine mController;
     private Camera mCamera;
     private Size mSize;
 
     FullVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener,
-                      @NonNull Camera1 controller, @NonNull Camera camera, int cameraId) {
+                      @NonNull Camera1Engine controller, @NonNull Camera camera, int cameraId) {
         super(stub, listener);
         mCamera = camera;
         mController = controller;

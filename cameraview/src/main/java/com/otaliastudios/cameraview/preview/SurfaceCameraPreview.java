@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.preview;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
@@ -8,6 +8,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.R;
 
 // Fallback preview when hardware acceleration is off.
 // Currently this does NOT support cropping (e. g. the crop inside behavior),

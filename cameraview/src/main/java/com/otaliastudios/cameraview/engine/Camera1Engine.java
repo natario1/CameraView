@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.engine;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -14,6 +14,23 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import android.view.SurfaceHolder;
 
+import com.otaliastudios.cameraview.CameraException;
+import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.CameraOptions;
+import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.CropHelper;
+import com.otaliastudios.cameraview.Frame;
+import com.otaliastudios.cameraview.FullPictureRecorder;
+import com.otaliastudios.cameraview.FullVideoRecorder;
+import com.otaliastudios.cameraview.GlCameraPreview;
+import com.otaliastudios.cameraview.Mapper1;
+import com.otaliastudios.cameraview.PictureRecorder;
+import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.SnapshotPictureRecorder;
+import com.otaliastudios.cameraview.SnapshotVideoRecorder;
+import com.otaliastudios.cameraview.Task;
+import com.otaliastudios.cameraview.VideoRecorder;
+import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
@@ -31,11 +48,11 @@ import java.util.List;
 
 
 @SuppressWarnings("deprecation")
-class Camera1 extends CameraEngine implements Camera.PreviewCallback, Camera.ErrorCallback,
+class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Camera.ErrorCallback,
         VideoRecorder.VideoResultListener,
         PictureRecorder.PictureResultListener {
 
-    private static final String TAG = Camera1.class.getSimpleName();
+    private static final String TAG = Camera1Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private Camera mCamera;
@@ -56,7 +73,7 @@ class Camera1 extends CameraEngine implements Camera.PreviewCallback, Camera.Err
         }
     };
 
-    Camera1(@NonNull CameraView.CameraCallbacks callback) {
+    Camera1Engine(@NonNull CameraView.CameraCallbacks callback) {
         super(callback);
         mMapper = new Mapper1();
     }
@@ -581,7 +598,7 @@ class Camera1 extends CameraEngine implements Camera.PreviewCallback, Camera.Err
                 result.rotation = offset(REF_SENSOR, REF_OUTPUT);
                 result.size = getPictureSize(REF_OUTPUT);
                 result.facing = mFacing;
-                mPictureRecorder = new FullPictureRecorder(result, Camera1.this, mCamera);
+                mPictureRecorder = new FullPictureRecorder(result, Camera1Engine.this, mCamera);
                 mPictureRecorder.take();
             }
         });
@@ -616,7 +633,7 @@ class Camera1 extends CameraEngine implements Camera.PreviewCallback, Camera.Err
                 LOG.v("Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
                 LOG.v("Rotations", "VO", offset(REF_VIEW, REF_OUTPUT), "OV", offset(REF_OUTPUT, REF_VIEW));
 
-                mPictureRecorder = new SnapshotPictureRecorder(result, Camera1.this, mCamera, outputRatio);
+                mPictureRecorder = new SnapshotPictureRecorder(result, Camera1Engine.this, mCamera, outputRatio);
                 mPictureRecorder.take();
             }
         });
@@ -702,8 +719,8 @@ class Camera1 extends CameraEngine implements Camera.PreviewCallback, Camera.Err
                     onVideoResult(null, e);
                     return;
                 }
-                mVideoRecorder = new FullVideoRecorder(videoResult, Camera1.this,
-                        Camera1.this, mCamera, mCameraId);
+                mVideoRecorder = new FullVideoRecorder(videoResult, Camera1Engine.this,
+                        Camera1Engine.this, mCamera, mCameraId);
                 mVideoRecorder.start();
             }
         });
@@ -790,7 +807,7 @@ class Camera1 extends CameraEngine implements Camera.PreviewCallback, Camera.Err
                 // Reset facing and start.
                 mFacing = realFacing;
                 GlCameraPreview cameraPreview = (GlCameraPreview) mPreview;
-                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1.this, cameraPreview);
+                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1Engine.this, cameraPreview);
                 mVideoRecorder.start();
             }
         });

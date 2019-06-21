@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.engine;
 
 import android.graphics.PointF;
 import android.location.Location;
@@ -7,6 +7,17 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.otaliastudios.cameraview.CameraException;
+import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.CameraOptions;
+import com.otaliastudios.cameraview.preview.CameraPreview;
+import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.FrameManager;
+import com.otaliastudios.cameraview.Mapper;
+import com.otaliastudios.cameraview.PictureRecorder;
+import com.otaliastudios.cameraview.Task;
+import com.otaliastudios.cameraview.VideoRecorder;
+import com.otaliastudios.cameraview.WorkerHandler;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
@@ -30,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-abstract class CameraEngine implements
+public abstract class CameraEngine implements
         CameraPreview.SurfaceCallback,
         FrameManager.BufferCallback,
         Thread.UncaughtExceptionHandler {

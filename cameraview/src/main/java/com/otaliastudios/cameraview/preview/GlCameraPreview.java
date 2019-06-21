@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.preview;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
@@ -12,6 +12,10 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.EglViewport;
+import com.otaliastudios.cameraview.R;
+import com.otaliastudios.cameraview.RendererThread;
+import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 import java.util.Collections;
@@ -26,8 +30,8 @@ import javax.microedition.khronos.opengles.GL10;
  *
  * - in the SurfaceTexture constructor we pass the GL texture handle that we have created.
  *
- * - The SurfaceTexture is linked to the Camera1 object. The camera will pass down buffers of data with
- *   a specified size (that is, the Camera1 preview size). For this reason we don't have to specify
+ * - The SurfaceTexture is linked to the Camera1Engine object. The camera will pass down buffers of data with
+ *   a specified size (that is, the Camera1Engine preview size). For this reason we don't have to specify
  *   surfaceTexture.setDefaultBufferSize() (like we do, for example, in SnapshotPictureRecorder).
  *
  * - When SurfaceTexture.updateTexImage() is called, it will fetch the latest texture image from the

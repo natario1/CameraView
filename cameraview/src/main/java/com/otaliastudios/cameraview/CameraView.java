@@ -33,6 +33,8 @@ import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.controls.ControlParser;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.engine.Camera1Engine;
+import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
@@ -46,6 +48,10 @@ import com.otaliastudios.cameraview.gesture.GestureParser;
 import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
 import com.otaliastudios.cameraview.gesture.ScrollGestureLayout;
 import com.otaliastudios.cameraview.gesture.TapGestureLayout;
+import com.otaliastudios.cameraview.preview.CameraPreview;
+import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
+import com.otaliastudios.cameraview.preview.TextureCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
@@ -197,7 +203,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     protected CameraEngine instantiateCameraController(CameraCallbacks callbacks) {
-        return new Camera1(callbacks);
+        return new Camera1Engine(callbacks);
     }
 
     protected CameraPreview instantiatePreview(Context context, ViewGroup container) {

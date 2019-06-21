@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.test.rule.ActivityTestRule;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 

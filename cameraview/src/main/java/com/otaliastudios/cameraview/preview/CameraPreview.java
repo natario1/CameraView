@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.preview;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
@@ -6,6 +6,9 @@ import androidx.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.Task;
+import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.size.Size;
 
 /**
@@ -15,7 +18,7 @@ import com.otaliastudios.cameraview.size.Size;
  * @param <T> the type of view which hosts the content surface
  * @param <Output> the type of output, either {@link android.view.SurfaceHolder} or {@link android.graphics.SurfaceTexture}
  */
-abstract class CameraPreview<T extends View, Output> {
+public abstract class CameraPreview<T extends View, Output> {
 
     protected final static CameraLogger LOG = CameraLogger.create(CameraPreview.class.getSimpleName());
 

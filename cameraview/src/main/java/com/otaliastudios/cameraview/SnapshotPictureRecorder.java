@@ -13,6 +13,10 @@ import android.opengl.EGLContext;
 import android.opengl.Matrix;
 import android.os.Build;
 import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.engine.Camera1Engine;
+import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.preview.CameraPreview;
+import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -28,14 +32,14 @@ class SnapshotPictureRecorder extends PictureRecorder {
     private static final String TAG = SnapshotPictureRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    private Camera1 mController;
+    private Camera1Engine mController;
     private Camera mCamera;
     private CameraPreview mPreview;
     private AspectRatio mOutputRatio;
     private Size mSensorPreviewSize;
     private int mFormat;
 
-    SnapshotPictureRecorder(@NonNull PictureResult stub, @NonNull Camera1 controller,
+    SnapshotPictureRecorder(@NonNull PictureResult stub, @NonNull Camera1Engine controller,
                             @NonNull Camera camera, @NonNull AspectRatio outputRatio) {
         super(stub, controller);
         mController = controller;

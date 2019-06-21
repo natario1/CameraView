@@ -5,6 +5,7 @@ import android.opengl.EGL14;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -125,7 +126,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     @Override
     public void onEncoderStop(int stopReason, @Nullable Exception e) {
         // If something failed, undo the result, since this is the mechanism
-        // to notify Camera1 about this.
+        // to notify Camera1Engine about this.
         if (e != null) {
             LOG.e("Error onEncoderStop", e);
             mResult = null;

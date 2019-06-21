@@ -48,7 +48,7 @@ public class CameraOptions {
     private boolean autoFocusSupported;
 
 
-    // Camera1 constructor.
+    // Camera1Engine constructor.
     @SuppressWarnings("deprecation")
     CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
         List<String> strings;

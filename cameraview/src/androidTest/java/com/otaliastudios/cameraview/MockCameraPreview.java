@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.preview.CameraPreview;
+
 public class MockCameraPreview extends CameraPreview<View, Void> {
 
     MockCameraPreview(Context context, ViewGroup parent) {
