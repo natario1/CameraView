@@ -40,7 +40,7 @@ public class CameraViewCallbacksTest extends BaseTest {
     private CameraView camera;
     private CameraListener listener;
     private FrameProcessor processor;
-    private MockCameraController mockController;
+    private MockCameraEngine mockController;
     private MockCameraPreview mockPreview;
     private Task<Boolean> task;
 
@@ -54,8 +54,8 @@ public class CameraViewCallbacksTest extends BaseTest {
                 processor = mock(FrameProcessor.class);
                 camera = new CameraView(context) {
                     @Override
-                    protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
-                        mockController = new MockCameraController(callbacks);
+                    protected CameraEngine instantiateCameraController(CameraCallbacks callbacks) {
+                        mockController = new MockCameraEngine(callbacks);
                         return mockController;
                     }
 

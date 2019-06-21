@@ -31,7 +31,7 @@ import java.util.List;
 
 
 @SuppressWarnings("deprecation")
-class Camera1 extends CameraController implements Camera.PreviewCallback, Camera.ErrorCallback,
+class Camera1 extends CameraEngine implements Camera.PreviewCallback, Camera.ErrorCallback,
         VideoRecorder.VideoResultListener,
         PictureRecorder.PictureResultListener {
 

@@ -111,7 +111,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
 
                         // Apply scale and crop:
                         // NOTE: scaleX and scaleY are in REF_VIEW, while our input appears to be in REF_SENSOR.
-                        boolean flip = mController.flip(CameraController.REF_VIEW, CameraController.REF_SENSOR);
+                        boolean flip = mController.flip(CameraEngine.REF_VIEW, CameraEngine.REF_SENSOR);
                         float realScaleX = flip ? scaleY : scaleX;
                         float realScaleY = flip ? scaleX : scaleY;
                         float scaleTranslX = (1F - realScaleX) / 2F;

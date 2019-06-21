@@ -30,12 +30,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-abstract class CameraController implements
+abstract class CameraEngine implements
         CameraPreview.SurfaceCallback,
         FrameManager.BufferCallback,
         Thread.UncaughtExceptionHandler {
 
-    private static final String TAG = CameraController.class.getSimpleName();
+    private static final String TAG = CameraEngine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     static final int STATE_STOPPING = -1; // Camera is about to be stopped.
@@ -104,7 +104,7 @@ abstract class CameraController implements
     Task<Void> mStartVideoTask = new Task<>();
     Task<Void> mPlaySoundsTask = new Task<>();
 
-    CameraController(CameraView.CameraCallbacks callback) {
+    CameraEngine(CameraView.CameraCallbacks callback) {
         mCameraCallbacks = callback;
         mCrashHandler = new Handler(Looper.getMainLooper());
         mHandler = WorkerHandler.get("CameraViewController");
@@ -169,7 +169,7 @@ abstract class CameraController implements
     // Public & not final so we can verify with mockito in CameraViewTest
     public void destroy() {
         LOG.i("destroy:", "state:", ss());
-        // Prevent CameraController leaks. Don't set to null, or exceptions
+        // Prevent CameraEngine leaks. Don't set to null, or exceptions
         // inside the standard stop() method might crash the main thread.
         mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
         // Stop if needed.
@@ -632,6 +632,9 @@ abstract class CameraController implements
         selector = SizeSelectors.or(selector, SizeSelectors.biggest());
         List<Size> list = new ArrayList<>(sizes);
         Size result = selector.select(list).get(0);
+        if (!list.contains(result)) {
+            throw new RuntimeException("SizeSelectors must not return Sizes other than those in the input list.");
+        }
         LOG.i("computeCaptureSize:", "result:", result, "flip:", flip, "mode:", mode);
         if (flip) result = result.flip(); // Go back to REF_SENSOR
         return result;
@@ -677,6 +680,9 @@ abstract class CameraController implements
             selector = matchAll;
         }
         Size result = selector.select(sizes).get(0);
+        if (!sizes.contains(result)) {
+            throw new RuntimeException("SizeSelectors must not return Sizes other than those in the input list.");
+        }
         if (flip) result = result.flip();
         LOG.i("computePreviewStreamSize:", "result:", result, "flip:", flip);
         return result;

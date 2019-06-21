@@ -19,14 +19,14 @@ import androidx.annotation.Nullable;
 
 import java.io.File;
 
-public class MockCameraController extends CameraController {
+public class MockCameraEngine extends CameraEngine {
 
     boolean mPictureCaptured;
     boolean mFocusStarted;
     boolean mZoomChanged;
     boolean mExposureCorrectionChanged;
 
-    MockCameraController(CameraView.CameraCallbacks callback) {
+    MockCameraEngine(CameraView.CameraCallbacks callback) {
         super(callback);
     }
 

@@ -46,7 +46,7 @@ import static android.view.ViewGroup.LayoutParams.*;
 public class CameraViewTest extends BaseTest {
 
     private CameraView cameraView;
-    private MockCameraController mockController;
+    private MockCameraEngine mockController;
     private CameraPreview mockPreview;
     private boolean hasPermissions;
 
@@ -58,8 +58,8 @@ public class CameraViewTest extends BaseTest {
                 Context context = context();
                 cameraView = new CameraView(context) {
                     @Override
-                    protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
-                        mockController = spy(new MockCameraController(callbacks));
+                    protected CameraEngine instantiateCameraController(CameraCallbacks callbacks) {
+                        mockController = spy(new MockCameraEngine(callbacks));
                         return mockController;
                     }
 
@@ -125,7 +125,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testDefaults() {
-        // CameraController
+        // CameraEngine
         TypedArray empty = context().obtainStyledAttributes(new int[]{});
         ControlParser controls = new ControlParser(context(), empty);
         assertEquals(cameraView.getFlash(), controls.getFlash());

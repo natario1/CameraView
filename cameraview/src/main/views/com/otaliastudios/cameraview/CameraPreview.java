@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import com.otaliastudios.cameraview.size.Size;
 
 /**
- * A CameraPreview takes in input stream from the {@link CameraController}, and streams it
+ * A CameraPreview takes in input stream from the {@link CameraEngine}, and streams it
  * into an output surface that belongs to the view hierarchy.
  *
  * @param <T> the type of view which hosts the content surface
@@ -22,7 +22,7 @@ abstract class CameraPreview<T extends View, Output> {
     // Used for testing.
     Task<Void> mCropTask = new Task<>();
 
-    // This is used to notify CameraController to recompute its camera Preview size.
+    // This is used to notify CameraEngine to recompute its camera Preview size.
     // After that, CameraView will need a new layout pass to adapt to the Preview size.
     interface SurfaceCallback {
         void onSurfaceAvailable();

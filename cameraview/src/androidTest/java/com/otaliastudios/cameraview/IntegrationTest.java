@@ -41,7 +41,7 @@ import static org.mockito.Mockito.spy;
 
 
 /**
- * These tests work great on real devices, and are the only way to test actual CameraController
+ * These tests work great on real devices, and are the only way to test actual CameraEngine
  * implementation - we really need to open the camera device.
  * Unfortunately they fail unreliably on emulated devices, due to some bug with the
  * emulated camera controller. Waiting for it to be fixed.
@@ -73,7 +73,7 @@ public class IntegrationTest extends BaseTest {
             public void run() {
                 camera = new CameraView(rule.getActivity()) {
                     @Override
-                    protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
+                    protected CameraEngine instantiateCameraController(CameraCallbacks callbacks) {
                         controller = new Camera1(callbacks);
                         return controller;
                     }
@@ -169,13 +169,13 @@ public class IntegrationTest extends BaseTest {
     @Test
     public void testOpenClose() throws Exception {
         // Starting and stopping are hard to get since they happen on another thread.
-        assertEquals(controller.getState(), CameraController.STATE_STOPPED);
+        assertEquals(controller.getState(), CameraEngine.STATE_STOPPED);
 
         waitForOpen(true);
-        assertEquals(controller.getState(), CameraController.STATE_STARTED);
+        assertEquals(controller.getState(), CameraEngine.STATE_STARTED);
 
         waitForClose(true);
-        assertEquals(controller.getState(), CameraController.STATE_STOPPED);
+        assertEquals(controller.getState(), CameraEngine.STATE_STOPPED);
     }
 
     @Test
