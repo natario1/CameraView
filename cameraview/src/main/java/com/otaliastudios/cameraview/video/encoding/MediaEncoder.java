@@ -14,6 +14,9 @@ import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Base class for single-track encoders, coordinated by a {@link MediaEncoderEngine}.
+ */
 // https://github.com/saki4510t/AudioVideoRecordingSample/blob/master/app/src/main/java/com/serenegiant/encoder/MediaEncoder.java
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 abstract class MediaEncoder {
@@ -296,6 +299,9 @@ abstract class MediaEncoder {
                     // TODO fix the mBufferInfo being the same, then implement delayed writing in Controller
                     // and remove the isStarted() check here.
                     OutputBuffer buffer = mOutputBufferPool.get();
+                    if (buffer == null) {
+                        throw new IllegalStateException("buffer is null!");
+                    }
                     buffer.info = mBufferInfo;
                     buffer.trackIndex = mTrackIndex;
                     buffer.data = encodedData;

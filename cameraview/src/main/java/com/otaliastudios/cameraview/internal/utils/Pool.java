@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
  * Base class for pools of recycleable objects.
  * @param <T> the object type
  */
-class Pool<T> {
+public class Pool<T> {
 
     private static final String TAG = Pool.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);

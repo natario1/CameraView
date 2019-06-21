@@ -14,8 +14,27 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * The entry point for encoding video files.
+ */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class MediaEncoderEngine {
+
+    /**
+     * Receives the stop event callback to know when the video
+     * was written (or what went wrong).
+     */
+    public interface Listener {
+
+        /**
+         * Called when encoding stopped for some reason.
+         * If there's an exception, it failed.
+         * @param stopReason the reason
+         * @param e the error, if present
+         */
+        @EncoderThread
+        void onEncoderStop(int stopReason, @Nullable Exception e);
+    }
 
     private final static String TAG = MediaEncoderEngine.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
@@ -30,14 +49,30 @@ public class MediaEncoderEngine {
     private int mStartedEncodersCount;
     private int mStoppedEncodersCount;
     private boolean mMediaMuxerStarted;
+    @SuppressWarnings("FieldCanBeLocal")
     private Controller mController;
     private Listener mListener;
     private int mStopReason = STOP_BY_USER;
     private int mPossibleStopReason;
     private final Object mControllerLock = new Object();
 
-    public MediaEncoderEngine(@NonNull File file, @NonNull VideoMediaEncoder videoEncoder, @Nullable AudioMediaEncoder audioEncoder,
-                       final int maxDuration, final long maxSize, @Nullable Listener listener) {
+    /**
+     * Creates a new engine for the given file, with the given encoders and max limits,
+     * and listener to receive events.
+     *
+     * @param file output file
+     * @param videoEncoder video encoder to use
+     * @param audioEncoder audio encoder to use
+     * @param maxDuration max duration in millis
+     * @param maxSize max size
+     * @param listener a listener
+     */
+    public MediaEncoderEngine(@NonNull File file,
+                              @NonNull VideoMediaEncoder videoEncoder,
+                              @Nullable AudioMediaEncoder audioEncoder,
+                              final int maxDuration,
+                              final long maxSize,
+                              @Nullable Listener listener) {
         mListener = listener;
         mController = new Controller();
         mEncoders = new ArrayList<>();
@@ -81,7 +116,95 @@ public class MediaEncoderEngine {
         }
     }
 
-    // Stuff here might be called from multiple threads.
+    /**
+     * Asks encoders to start (each one on its own track).
+     */
+    public final void start() {
+        for (MediaEncoder encoder : mEncoders) {
+            encoder.start();
+        }
+    }
+
+    /**
+     * Notifies encoders of some event with the given payload.
+     * Can be used for example to notify the video encoder of new frame available.
+     * @param event an event string
+     * @param data an event payload
+     */
+    @SuppressWarnings("SameParameterValue")
+    public final void notify(final String event, final Object data) {
+        for (MediaEncoder encoder : mEncoders) {
+            encoder.notify(event, data);
+        }
+    }
+
+    /**
+     * Asks encoders to stop. This is not sync, of course we will ask for encoders
+     * to call {@link Controller#requestRelease(int)} before actually stop the muxer.
+     * When all encoders request a release, {@link #release()} is called to do cleanup
+     * and notify the listener.
+     */
+    public final void stop() {
+        for (MediaEncoder encoder : mEncoders) {
+            encoder.stop();
+        }
+    }
+
+    /**
+     * Called after all encoders have requested a release using {@link Controller#requestRelease(int)}.
+     * At this point we will do cleanup and notify the listener.
+     */
+    private void release() {
+        Exception error = null;
+        if (mMediaMuxer != null) {
+            // stop() throws an exception if you haven't fed it any data.
+            // But also in other occasions. So this is a signal that something
+            // went wrong, and we propagate that to the listener.
+            try {
+                mMediaMuxer.stop();
+                mMediaMuxer.release();
+            } catch (Exception e) {
+                error = e;
+            }
+            mMediaMuxer = null;
+        }
+        if (mListener != null) {
+            mListener.onEncoderStop(mStopReason, error);
+            mListener = null;
+        }
+        mStopReason = STOP_BY_USER;
+        mStartedEncodersCount = 0;
+        mStoppedEncodersCount = 0;
+        mMediaMuxerStarted = false;
+    }
+
+    /**
+     * Returns the current video encoder.
+     * @return the current video encoder
+     */
+    @NonNull
+    public VideoMediaEncoder getVideoEncoder() {
+        return (VideoMediaEncoder) mEncoders.get(0);
+    }
+
+    /**
+     * Returns the current audio encoder.
+     * @return the current audio encoder
+     */
+    @SuppressWarnings("unused")
+    @Nullable
+    public AudioMediaEncoder getAudioEncoder() {
+        if (mEncoders.size() > 1) {
+            return (AudioMediaEncoder) mEncoders.get(1);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * A handle for {@link MediaEncoder}s to pass information to this engine.
+     * All methods here can be called for multiple threads.
+     */
     class Controller {
 
         /**
@@ -90,7 +213,7 @@ public class MediaEncoderEngine {
          * @param format the media format
          * @return the encoder track index
          */
-        int requestStart(MediaFormat format) {
+        int requestStart(@NonNull MediaFormat format) {
             synchronized (mControllerLock) {
                 if (mMediaMuxerStarted) {
                     throw new IllegalStateException("Trying to start but muxer started already");
@@ -121,7 +244,7 @@ public class MediaEncoderEngine {
          * TODO cache values if not started yet, then apply later. Read comments in drain().
          * Currently they are recycled instantly.
          */
-        void write(OutputBufferPool pool, OutputBuffer buffer) {
+        void write(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
             if (!mMediaMuxerStarted) {
                 throw new IllegalStateException("Trying to write before muxer started");
             }
@@ -162,72 +285,5 @@ public class MediaEncoderEngine {
                 }
             }
         }
-    }
-
-    public final void start() {
-        for (MediaEncoder encoder : mEncoders) {
-            encoder.start();
-        }
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    public final void notify(final String event, final Object data) {
-        for (MediaEncoder encoder : mEncoders) {
-            encoder.notify(event, data);
-        }
-    }
-
-    /**
-     * This just asks the encoder to stop. We will wait for them to call {@link Controller#requestRelease(int)}
-     * to actually stop the muxer, as there might be async stuff going on.
-     */
-    public final void stop() {
-        for (MediaEncoder encoder : mEncoders) {
-            encoder.stop();
-        }
-    }
-
-    private void release() {
-        Exception error = null;
-        if (mMediaMuxer != null) {
-            // stop() throws an exception if you haven't fed it any data.
-            // But also in other occasions. So this is a signal that something
-            // went wrong, and we propagate that to the listener.
-            try {
-                mMediaMuxer.stop();
-                mMediaMuxer.release();
-            } catch (Exception e) {
-                error = e;
-            }
-            mMediaMuxer = null;
-        }
-        if (mListener != null) {
-            mListener.onEncoderStop(mStopReason, error);
-            mListener = null;
-        }
-        mStopReason = STOP_BY_USER;
-        mStartedEncodersCount = 0;
-        mStoppedEncodersCount = 0;
-        mMediaMuxerStarted = false;
-    }
-
-    @NonNull
-    public VideoMediaEncoder getVideoEncoder() {
-        return (VideoMediaEncoder) mEncoders.get(0);
-    }
-
-    @Nullable
-    public AudioMediaEncoder getAudioEncoder() {
-        if (mEncoders.size() > 1) {
-            return (AudioMediaEncoder) mEncoders.get(1);
-        } else {
-            return null;
-        }
-    }
-
-    public interface Listener {
-
-        @EncoderThread
-        void onEncoderStop(int stopReason, @Nullable Exception e);
     }
 }

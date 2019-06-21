@@ -13,6 +13,7 @@ import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.video.encoding.AudioMediaEncoder;
+import com.otaliastudios.cameraview.video.encoding.EncoderThread;
 import com.otaliastudios.cameraview.video.encoding.MediaEncoderEngine;
 import com.otaliastudios.cameraview.video.encoding.TextureMediaEncoder;
 
@@ -134,6 +135,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     }
 
+    @EncoderThread
     @Override
     public void onEncoderStop(int stopReason, @Nullable Exception e) {
         // If something failed, undo the result, since this is the mechanism

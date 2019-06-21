@@ -58,7 +58,6 @@ public abstract class CameraPreview<T extends View, Output> {
     // These are the preview stream dimensions, in REF_VIEW.
     int mInputStreamWidth;
     int mInputStreamHeight;
-    private boolean mInputFlipped;
 
     /**
      * Creates a new preview.
@@ -134,13 +133,11 @@ public abstract class CameraPreview<T extends View, Output> {
      *
      * @param width width of the preview stream, in view coordinates
      * @param height height of the preview stream, in view coordinates
-     * @param wasFlipped whether width and height were flipped before calling this
      */
-    public void setStreamSize(int width, int height, boolean wasFlipped) {
+    public void setStreamSize(int width, int height) {
         LOG.i("setStreamSize:", "desiredW=", width, "desiredH=", height);
         mInputStreamWidth = width;
         mInputStreamHeight = height;
-        mInputFlipped = wasFlipped;
         if (mInputStreamWidth > 0 && mInputStreamHeight > 0) {
             crop(mCropTask);
         }

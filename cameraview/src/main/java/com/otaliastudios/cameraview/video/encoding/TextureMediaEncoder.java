@@ -8,12 +8,15 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.internal.egl.EglCore;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
-import com.otaliastudios.cameraview.utils.Pool;
+import com.otaliastudios.cameraview.internal.utils.Pool;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+/**
+ * Default implementation for video encoding.
+ */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> {
 

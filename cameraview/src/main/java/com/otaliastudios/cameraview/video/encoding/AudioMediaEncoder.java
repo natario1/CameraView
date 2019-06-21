@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * Default implementation for audio encoding.
+ */
 // TODO create onVideoRecordingStart/onVideoRecordingEnd callbacks
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class AudioMediaEncoder extends MediaEncoder {

@@ -5,10 +5,13 @@ import android.os.Build;
 
 import java.nio.ByteBuffer;
 
+import androidx.annotation.RequiresApi;
+
 /**
  * A Wrapper to MediaCodec that facilitates the use of API-dependent get{Input/Output}Buffer methods,
  * in order to prevent: http://stackoverflow.com/q/30646885
  */
+@RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaCodecBuffers {
 
     private final MediaCodec mMediaCodec;
@@ -26,7 +29,7 @@ class MediaCodecBuffers {
         }
     }
 
-    public ByteBuffer getInputBuffer(final int index) {
+    ByteBuffer getInputBuffer(final int index) {
         if (Build.VERSION.SDK_INT >= 21) {
             return mMediaCodec.getInputBuffer(index);
         }
@@ -35,14 +38,14 @@ class MediaCodecBuffers {
         return buffer;
     }
 
-    public ByteBuffer getOutputBuffer(final int index) {
+    ByteBuffer getOutputBuffer(final int index) {
         if (Build.VERSION.SDK_INT >= 21) {
             return mMediaCodec.getOutputBuffer(index);
         }
         return mOutputBuffers[index];
     }
 
-    public void onOutputBuffersChanged() {
+    void onOutputBuffersChanged() {
         if (Build.VERSION.SDK_INT < 21) {
             mOutputBuffers = mMediaCodec.getOutputBuffers();
         }

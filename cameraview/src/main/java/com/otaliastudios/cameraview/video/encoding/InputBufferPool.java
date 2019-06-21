@@ -1,7 +1,10 @@
 package com.otaliastudios.cameraview.video.encoding;
 
-import com.otaliastudios.cameraview.utils.Pool;
+import com.otaliastudios.cameraview.internal.utils.Pool;
 
+/**
+ * A simple {@link Pool(int, Factory)} implementation for input buffers.
+ */
 class InputBufferPool extends Pool<InputBuffer> {
 
     InputBufferPool() {

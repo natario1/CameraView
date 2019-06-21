@@ -207,8 +207,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         if (previewSize == null) {
             throw new IllegalStateException("previewStreamSize should not be null at this point.");
         }
-        boolean wasFlipped = flip(REF_SENSOR, REF_VIEW);
-        mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight(), wasFlipped);
+        mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
 
         Camera.Parameters params = mCamera.getParameters();
         mPreviewStreamFormat = params.getPreviewFormat();

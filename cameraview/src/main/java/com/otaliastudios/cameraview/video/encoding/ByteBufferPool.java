@@ -1,9 +1,12 @@
 package com.otaliastudios.cameraview.video.encoding;
 
-import com.otaliastudios.cameraview.utils.Pool;
+import com.otaliastudios.cameraview.internal.utils.Pool;
 
 import java.nio.ByteBuffer;
 
+/**
+ * A simple {@link Pool(int, Factory)} implementation for byte buffers.
+ */
 class ByteBufferPool extends Pool<ByteBuffer> {
 
     ByteBufferPool(final int bufferSize, int maxPoolSize) {
