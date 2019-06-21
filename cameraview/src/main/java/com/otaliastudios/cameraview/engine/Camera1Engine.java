@@ -211,7 +211,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight(), wasFlipped);
 
         Camera.Parameters params = mCamera.getParameters();
-        mPreviewFormat = params.getPreviewFormat();
+        mPreviewStreamFormat = params.getPreviewFormat();
         params.setPreviewSize(mPreviewStreamSize.getWidth(), mPreviewStreamSize.getHeight()); // <- not allowed during preview
         if (mMode == Mode.PICTURE) {
             params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
@@ -227,7 +227,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
-        mFrameManager.allocateBuffers(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewStreamSize);
+        mFrameManager.allocateBuffers(ImageFormat.getBitsPerPixel(mPreviewStreamFormat), mPreviewStreamSize);
 
         LOG.i(log, "Starting preview with startPreview().");
         try {
@@ -240,7 +240,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     }
 
     private void stopPreview() {
-        mPreviewFormat = 0;
+        mPreviewStreamFormat = 0;
         mFrameManager.release();
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         try {
@@ -634,7 +634,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
                 LOG.v("Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
                 LOG.v("Rotations", "VO", offset(REF_VIEW, REF_OUTPUT), "OV", offset(REF_OUTPUT, REF_VIEW));
 
-                mPictureRecorder = new SnapshotPictureRecorder(stub, Camera1Engine.this, mCamera, outputRatio);
+                mPictureRecorder = new SnapshotPictureRecorder(stub, Camera1Engine.this, mPreview, mCamera, outputRatio);
                 mPictureRecorder.take();
             }
         });
@@ -646,7 +646,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
                 System.currentTimeMillis(),
                 offset(REF_SENSOR, REF_OUTPUT),
                 mPreviewStreamSize,
-                mPreviewFormat);
+                mPreviewStreamFormat);
         mCallback.dispatchFrame(frame);
     }
 

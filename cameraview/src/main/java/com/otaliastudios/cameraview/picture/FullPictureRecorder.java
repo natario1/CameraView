@@ -3,8 +3,8 @@ package com.otaliastudios.cameraview.picture;
 import android.hardware.Camera;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.CameraUtils;
 import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.internal.utils.ExifHelper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +19,7 @@ import java.io.IOException;
 public class FullPictureRecorder extends PictureRecorder {
 
     private static final String TAG = FullPictureRecorder.class.getSimpleName();
+    @SuppressWarnings("unused")
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private Camera mCamera;
@@ -34,10 +35,8 @@ public class FullPictureRecorder extends PictureRecorder {
         mCamera.setParameters(params);
     }
 
-    // Camera2 constructor here...
-
     @Override
-    void take() {
+    public void take() {
         mCamera.takePicture(
                 new Camera.ShutterCallback() {
                     @Override
@@ -54,7 +53,7 @@ public class FullPictureRecorder extends PictureRecorder {
                         try {
                             ExifInterface exif = new ExifInterface(new ByteArrayInputStream(data));
                             int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                            exifRotation = CameraUtils.readExifOrientation(exifOrientation);
+                            exifRotation = ExifHelper.readExifOrientation(exifOrientation);
                         } catch (IOException e) {
                             exifRotation = 0;
                         }

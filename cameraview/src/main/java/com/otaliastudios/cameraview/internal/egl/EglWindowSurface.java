@@ -27,7 +27,7 @@ import android.view.Surface;
  * It's good practice to explicitly release() the surface, preferably from a "finally" block.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class EglWindowSurface extends EglBaseSurface {
+public class EglWindowSurface extends EglBaseSurface {
     private Surface mSurface;
     private boolean mReleaseSurface;
 

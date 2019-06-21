@@ -11,6 +11,7 @@ import android.os.Handler;
 
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.engine.Mapper;
+import com.otaliastudios.cameraview.internal.utils.ExifHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
 import androidx.annotation.NonNull;
@@ -258,7 +259,7 @@ public class CameraUtils {
                 stream = new ByteArrayInputStream(source);
                 ExifInterface exif = new ExifInterface(stream);
                 int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                orientation = readExifOrientation(exifOrientation);
+                orientation = ExifHelper.readExifOrientation(exifOrientation);
                 flip = exifOrientation == ExifInterface.ORIENTATION_FLIP_HORIZONTAL ||
                         exifOrientation == ExifInterface.ORIENTATION_FLIP_VERTICAL ||
                         exifOrientation == ExifInterface.ORIENTATION_TRANSPOSE ||
@@ -314,31 +315,6 @@ public class CameraUtils {
         }
         return bitmap;
     }
-
-    private static int readExifOrientation(int exifOrientation) {
-        int orientation;
-        switch (exifOrientation) {
-            case ExifInterface.ORIENTATION_NORMAL:
-            case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
-                orientation = 0; break;
-
-            case ExifInterface.ORIENTATION_ROTATE_180:
-            case ExifInterface.ORIENTATION_FLIP_VERTICAL:
-                orientation = 180; break;
-
-            case ExifInterface.ORIENTATION_ROTATE_90:
-            case ExifInterface.ORIENTATION_TRANSPOSE:
-                orientation = 90; break;
-
-            case ExifInterface.ORIENTATION_ROTATE_270:
-            case ExifInterface.ORIENTATION_TRANSVERSE:
-                orientation = 270; break;
-
-            default: orientation = 0;
-        }
-        return orientation;
-    }
-
 
     private static int computeSampleSize(int width, int height, int maxWidth, int maxHeight) {
         // https://developer.android.com/topic/performance/graphics/load-bitmap.html

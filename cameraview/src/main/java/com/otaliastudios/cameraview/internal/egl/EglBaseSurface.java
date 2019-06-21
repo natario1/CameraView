@@ -40,7 +40,7 @@ import java.nio.ByteOrder;
  * There can be multiple surfaces associated with a single context.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class EglBaseSurface extends EglElement {
+public class EglBaseSurface extends EglElement {
     protected static final String TAG = EglBaseSurface.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 

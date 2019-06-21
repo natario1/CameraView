@@ -75,6 +75,7 @@ public abstract class CameraEngine implements
     public static final int REF_OUTPUT = 2;
 
     protected final Callback mCallback;
+    protected final FrameManager mFrameManager;
     protected CameraPreview mPreview;
     protected WorkerHandler mHandler;
     @VisibleForTesting Handler mCrashHandler;
@@ -101,7 +102,6 @@ public abstract class CameraEngine implements
     protected int mCameraId;
     protected CameraOptions mCameraOptions;
     protected Mapper mMapper;
-    protected FrameManager mFrameManager;
     protected PictureRecorder mPictureRecorder;
     protected VideoRecorder mVideoRecorder;
     protected long mVideoMaxSize;
@@ -110,7 +110,7 @@ public abstract class CameraEngine implements
     protected int mAudioBitRate;
     protected Size mCaptureSize;
     protected Size mPreviewStreamSize;
-    protected int mPreviewFormat;
+    protected int mPreviewStreamFormat;
     protected long mAutoFocusResetDelayMillis;
 
     protected int mSensorOffset;
@@ -415,6 +415,15 @@ public abstract class CameraEngine implements
     //endregion
 
     //region final getters
+
+    @NonNull
+    public final FrameManager getFrameManager() {
+        return mFrameManager;
+    }
+
+    public final int getPreviewStreamFormat() {
+        return mPreviewStreamFormat;
+    }
 
     @Nullable
     public final CameraOptions getCameraOptions() {

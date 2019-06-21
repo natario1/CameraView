@@ -36,7 +36,7 @@ import android.view.Surface;
  * The EGLContext must only be attached to one thread at a time.  This class is not thread-safe.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-final class EglCore {
+public final class EglCore {
     private static final String TAG = EglCore.class.getSimpleName();
 
     /**

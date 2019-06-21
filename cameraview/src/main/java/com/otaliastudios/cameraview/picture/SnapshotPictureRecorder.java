@@ -42,22 +42,27 @@ public class SnapshotPictureRecorder extends PictureRecorder {
     private static final String TAG = SnapshotPictureRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    private Camera1Engine mController;
+    private Camera1Engine mEngine1;
     private Camera mCamera;
     private CameraPreview mPreview;
     private AspectRatio mOutputRatio;
-    private Size mSensorPreviewSize;
     private int mFormat;
 
-    public SnapshotPictureRecorder(@NonNull PictureResult.Stub stub, @NonNull Camera1Engine controller,
-                            @NonNull Camera camera, @NonNull AspectRatio outputRatio) {
-        super(stub, controller);
-        mController = controller;
-        mPreview = controller.mPreview;
+    /**
+     * Camera1 constructor.
+     */
+    public SnapshotPictureRecorder(
+            @NonNull PictureResult.Stub stub,
+            @NonNull Camera1Engine engine,
+            @NonNull CameraPreview preview,
+            @NonNull Camera camera,
+            @NonNull AspectRatio outputRatio) {
+        super(stub, engine);
+        mEngine1 = engine;
+        mPreview = preview;
         mCamera = camera;
         mOutputRatio = outputRatio;
-        mFormat = mController.mPreviewFormat;
-        mSensorPreviewSize = mController.mPreviewStreamSize;
+        mFormat = engine.getPreviewStreamFormat();
     }
 
     @Override
@@ -125,7 +130,7 @@ public class SnapshotPictureRecorder extends PictureRecorder {
 
                         // Apply scale and crop:
                         // NOTE: scaleX and scaleY are in REF_VIEW, while our input appears to be in REF_SENSOR.
-                        boolean flip = mController.flip(CameraEngine.REF_VIEW, CameraEngine.REF_SENSOR);
+                        boolean flip = mEngine1.flip(CameraEngine.REF_VIEW, CameraEngine.REF_SENSOR);
                         float realScaleX = flip ? scaleY : scaleX;
                         float realScaleY = flip ? scaleX : scaleY;
                         float scaleTranslX = (1F - realScaleX) / 2F;
@@ -185,12 +190,17 @@ public class SnapshotPictureRecorder extends PictureRecorder {
                 // Adding EXIF to a byte array, unfortunately, is hard.
                 final int sensorToOutput = mResult.rotation;
                 final Size outputSize = mResult.size;
+                final Size previewStreamSize = mEngine1.getPreviewStreamSize(CameraEngine.REF_SENSOR);
+                if (previewStreamSize == null) {
+                    throw new IllegalStateException("Preview stream size should never be null here.");
+                }
                 WorkerHandler.run(new Runnable() {
                     @Override
                     public void run() {
                         // Rotate the picture, because no one will write EXIF data,
                         // then crop if needed. In both cases, transform yuv to jpeg.
-                        byte[] data = RotationHelper.rotate(yuv, mSensorPreviewSize, sensorToOutput);
+                        //noinspection deprecation
+                        byte[] data = RotationHelper.rotate(yuv, previewStreamSize, sensorToOutput);
                         YuvImage yuv = new YuvImage(data, mFormat, outputSize.getWidth(), outputSize.getHeight(), null);
 
                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -208,19 +218,18 @@ public class SnapshotPictureRecorder extends PictureRecorder {
 
                 // It seems that the buffers are already cleared here, so we need to allocate again.
                 camera.setPreviewCallbackWithBuffer(null); // Release anything left
-                camera.setPreviewCallbackWithBuffer(mController); // Add ourselves
-                mController.mFrameManager.allocateBuffers(ImageFormat.getBitsPerPixel(mFormat), mController.mPreviewStreamSize);
+                camera.setPreviewCallbackWithBuffer(mEngine1); // Add ourselves
+                mEngine1.getFrameManager().allocateBuffers(ImageFormat.getBitsPerPixel(mFormat), previewStreamSize);
             }
         });
     }
 
     @Override
     protected void dispatchResult() {
-        mController = null;
+        mEngine1 = null;
         mCamera = null;
         mOutputRatio = null;
         mFormat = 0;
-        mSensorPreviewSize = null;
         super.dispatchResult();
     }
 }

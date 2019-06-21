@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
-class RotationHelper {
+public class RotationHelper {
 
     /**
      * Rotates the given yuv image into another yuv array, by the given angle.
