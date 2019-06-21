@@ -11,8 +11,11 @@ import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureAction;
+import com.otaliastudios.cameraview.internal.utils.Task;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 
 import org.junit.After;

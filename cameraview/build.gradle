@@ -30,11 +30,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
-    sourceSets {
-        main.java.srcDirs += 'src/main/utils'
-        main.java.srcDirs += 'src/main/gles'
-    }
 }
 
 dependencies {

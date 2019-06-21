@@ -3,18 +3,16 @@ package com.otaliastudios.cameraview;
 
 import android.app.KeyguardManager;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
-import androidx.test.annotation.UiThreadTest;
-import androidx.test.espresso.core.internal.deps.guava.collect.ObjectArrays;
+
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.ActivityTestRule;
+
 import android.view.View;
+
+import com.otaliastudios.cameraview.internal.utils.Task;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -24,17 +22,13 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
 
 import static android.content.Context.KEYGUARD_SERVICE;
 import static android.content.Context.POWER_SERVICE;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class BaseTest {
 

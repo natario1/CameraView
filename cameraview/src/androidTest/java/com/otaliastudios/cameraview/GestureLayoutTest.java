@@ -12,6 +12,7 @@ import android.view.View;
 
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureLayout;
+import com.otaliastudios.cameraview.internal.utils.Task;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;

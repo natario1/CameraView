@@ -19,7 +19,7 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.CropHelper;
-import com.otaliastudios.cameraview.Frame;
+import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.FullPictureRecorder;
 import com.otaliastudios.cameraview.FullVideoRecorder;
 import com.otaliastudios.cameraview.GlCameraPreview;

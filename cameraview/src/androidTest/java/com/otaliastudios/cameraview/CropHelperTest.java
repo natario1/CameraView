@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.Rect;
 
+import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 

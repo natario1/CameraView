@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.size.Size;
 
 import org.junit.After;

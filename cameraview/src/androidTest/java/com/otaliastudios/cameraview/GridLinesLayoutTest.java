@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 
 import com.otaliastudios.cameraview.controls.Grid;
+import com.otaliastudios.cameraview.internal.GridLinesLayout;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
