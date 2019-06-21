@@ -27,7 +27,7 @@ public abstract class CameraPreview<T extends View, Output> {
 
     // This is used to notify CameraEngine to recompute its camera Preview size.
     // After that, CameraView will need a new layout pass to adapt to the Preview size.
-    interface SurfaceCallback {
+    public interface SurfaceCallback {
         void onSurfaceAvailable();
         void onSurfaceChanged();
         void onSurfaceDestroyed();
@@ -55,7 +55,7 @@ public abstract class CameraPreview<T extends View, Output> {
     protected abstract T onCreateView(@NonNull Context context, @NonNull ViewGroup parent);
 
     @NonNull
-    final T getView() {
+    public final T getView() {
         return mView;
     }
 
@@ -64,15 +64,15 @@ public abstract class CameraPreview<T extends View, Output> {
     abstract View getRootView();
 
     @NonNull
-    abstract Class<Output> getOutputClass();
+    public abstract Class<Output> getOutputClass();
 
     @NonNull
-    abstract Output getOutput();
+    public abstract Output getOutput();
 
     // As far as I can see, these are the actual preview dimensions, as set in CameraParameters.
     // This is called by the CameraImpl.
     // These must be alredy rotated, if needed, to be consistent with surface/view sizes.
-    void setStreamSize(int width, int height, boolean wasFlipped) {
+    public void setStreamSize(int width, int height, boolean wasFlipped) {
         LOG.i("setStreamSize:", "desiredW=", width, "desiredH=", height);
         mInputStreamWidth = width;
         mInputStreamHeight = height;
@@ -88,11 +88,11 @@ public abstract class CameraPreview<T extends View, Output> {
     }
 
     @NonNull
-    final Size getSurfaceSize() {
+    public final Size getSurfaceSize() {
         return new Size(mOutputSurfaceWidth, mOutputSurfaceHeight);
     }
 
-    final void setSurfaceCallback(@NonNull SurfaceCallback callback) {
+    public final void setSurfaceCallback(@NonNull SurfaceCallback callback) {
         mSurfaceCallback = callback;
         // If surface already available, dispatch.
         if (mOutputSurfaceWidth != 0 || mOutputSurfaceHeight != 0) {
@@ -144,7 +144,7 @@ public abstract class CameraPreview<T extends View, Output> {
     // Public for mockito (CameraViewTest)
     public void onDestroy() {}
 
-    final boolean hasSurface() {
+    public final boolean hasSurface() {
         return mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0;
     }
 

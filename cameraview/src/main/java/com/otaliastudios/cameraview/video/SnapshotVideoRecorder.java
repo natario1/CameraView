@@ -23,7 +23,7 @@ import androidx.annotation.RequiresApi;
  * A {@link VideoRecorder} that uses {@link android.media.MediaCodec} APIs.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.RendererFrameCallback,
+public class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.RendererFrameCallback,
         MediaEncoderEngine.Listener {
 
     private static final String TAG = SnapshotVideoRecorder.class.getSimpleName();
@@ -43,7 +43,7 @@ class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.Ren
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
 
-    SnapshotVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview) {
+    public SnapshotVideoRecorder(@NonNull VideoResult.Stub stub, @Nullable VideoResultListener listener, @NonNull GlCameraPreview preview) {
         super(stub, listener);
         mPreview = preview;
         mPreview.addRendererFrameCallback(this);

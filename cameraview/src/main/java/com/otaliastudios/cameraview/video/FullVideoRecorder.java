@@ -18,7 +18,7 @@ import androidx.annotation.Nullable;
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaRecorder} APIs.
  */
-class FullVideoRecorder extends VideoRecorder {
+public class FullVideoRecorder extends VideoRecorder {
 
     private static final String TAG = FullVideoRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -29,7 +29,7 @@ class FullVideoRecorder extends VideoRecorder {
     private Camera mCamera;
     private Size mSize;
 
-    FullVideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener,
+    public FullVideoRecorder(@NonNull VideoResult.Stub stub, @Nullable VideoResultListener listener,
                       @NonNull Camera1Engine controller, @NonNull Camera camera, int cameraId) {
         super(stub, listener);
         mCamera = camera;

@@ -2,7 +2,6 @@ package com.otaliastudios.cameraview.gesture;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PointF;
 import androidx.annotation.NonNull;

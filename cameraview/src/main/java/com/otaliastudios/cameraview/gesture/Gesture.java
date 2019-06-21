@@ -5,9 +5,6 @@ import com.otaliastudios.cameraview.CameraView;
 
 import androidx.annotation.NonNull;
 
-import java.util.Arrays;
-import java.util.List;
-
 
 /**
  * Gestures listen to finger gestures over the {@link CameraView} bounds and can be mapped

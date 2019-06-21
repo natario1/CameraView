@@ -1,14 +1,6 @@
 package com.otaliastudios.cameraview.gesture;
 
 
-import com.otaliastudios.cameraview.CameraView;
-
-import java.util.Arrays;
-import java.util.List;
-
-import androidx.annotation.NonNull;
-
-
 /**
  * Gestures and gesture actions can both have a type. For a gesture to be able to be mapped to
  * a certain {@link GestureAction}, both of them might be of the same type.

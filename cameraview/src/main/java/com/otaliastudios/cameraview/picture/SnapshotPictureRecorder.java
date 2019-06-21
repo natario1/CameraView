@@ -36,7 +36,7 @@ import java.io.ByteArrayOutputStream;
 /**
  * A {@link PictureResult} that uses standard APIs.
  */
-class SnapshotPictureRecorder extends PictureRecorder {
+public class SnapshotPictureRecorder extends PictureRecorder {
 
     private static final String TAG = SnapshotPictureRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -48,7 +48,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
     private Size mSensorPreviewSize;
     private int mFormat;
 
-    SnapshotPictureRecorder(@NonNull PictureResult stub, @NonNull Camera1Engine controller,
+    public SnapshotPictureRecorder(@NonNull PictureResult.Stub stub, @NonNull Camera1Engine controller,
                             @NonNull Camera camera, @NonNull AspectRatio outputRatio) {
         super(stub, controller);
         mController = controller;
@@ -60,7 +60,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
     }
 
     @Override
-    void take() {
+    public void take() {
         if (mPreview instanceof GlCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             takeGl((GlCameraPreview) mPreview);
         } else {
@@ -208,7 +208,7 @@ class SnapshotPictureRecorder extends PictureRecorder {
                 // It seems that the buffers are already cleared here, so we need to allocate again.
                 camera.setPreviewCallbackWithBuffer(null); // Release anything left
                 camera.setPreviewCallbackWithBuffer(mController); // Add ourselves
-                mController.mFrameManager.allocate(ImageFormat.getBitsPerPixel(mFormat), mController.mPreviewStreamSize);
+                mController.mFrameManager.allocateBuffers(ImageFormat.getBitsPerPixel(mFormat), mController.mPreviewStreamSize);
             }
         });
     }

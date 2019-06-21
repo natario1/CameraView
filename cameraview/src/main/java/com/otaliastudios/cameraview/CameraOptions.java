@@ -52,7 +52,7 @@ public class CameraOptions {
 
     // Camera1Engine constructor.
     @SuppressWarnings("deprecation")
-    CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
+    public CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
         Mapper mapper = new Mapper1();
 

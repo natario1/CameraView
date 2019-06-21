@@ -3,24 +3,37 @@ package com.otaliastudios.cameraview.internal.utils;
 import android.content.Context;
 import android.hardware.SensorManager;
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+
 import android.view.Display;
 import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.WindowManager;
 
-class OrientationHelper {
+/**
+ * Helps with keeping track of both device orientation (which changes when device is rotated)
+ * and the display offset (which depends on the activity orientation wrt the device default orientation).
+ */
+public class OrientationHelper {
 
-    final OrientationEventListener mListener;
+    /**
+     * Receives callback about the device orientation changes.
+     */
+    public interface Callback {
+        void onDeviceOrientationChanged(int deviceOrientation);
+    }
 
+    @VisibleForTesting final OrientationEventListener mListener;
     private final Callback mCallback;
     private int mDeviceOrientation = -1;
     private int mDisplayOffset = -1;
 
-    interface Callback {
-        void onDeviceOrientationChanged(int deviceOrientation);
-    }
-
-    OrientationHelper(@NonNull Context context, @NonNull Callback callback) {
+    /**
+     * Creates a new orientation helper.
+     * @param context a valid context
+     * @param callback a {@link Callback}
+     */
+    public OrientationHelper(@NonNull Context context, @NonNull Callback callback) {
         mCallback = callback;
         mListener = new OrientationEventListener(context.getApplicationContext(), SensorManager.SENSOR_DELAY_NORMAL) {
 
@@ -48,7 +61,11 @@ class OrientationHelper {
         };
     }
 
-    void enable(@NonNull Context context) {
+    /**
+     * Enables this listener.
+     * @param context a context
+     */
+    public void enable(@NonNull Context context) {
         Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         switch (display.getRotation()) {
             case Surface.ROTATION_0: mDisplayOffset = 0; break;
@@ -60,16 +77,27 @@ class OrientationHelper {
         mListener.enable();
     }
 
-    void disable() {
+    /**
+     * Disables this listener.
+     */
+    public void disable() {
         mListener.disable();
         mDisplayOffset = -1;
         mDeviceOrientation = -1;
     }
 
+    /**
+     * Returns the current device orientation.
+     * @return device orientation
+     */
     int getDeviceOrientation() {
         return mDeviceOrientation;
     }
 
+    /**
+     * Returns the current display offset.
+     * @return display offset
+     */
     int getDisplayOffset() {
         return mDisplayOffset;
     }

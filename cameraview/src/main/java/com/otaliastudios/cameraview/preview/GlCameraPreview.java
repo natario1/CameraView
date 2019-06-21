@@ -57,7 +57,7 @@ import javax.microedition.khronos.opengles.GL10;
  * Callbacks are guaranteed to be called on the renderer thread, which means that we can fetch
  * the GL context that was created and is managed by the {@link GLSurfaceView}.
  */
-class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> implements GLSurfaceView.Renderer {
+public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> implements GLSurfaceView.Renderer {
 
     private boolean mDispatched;
     private final float[] mTransformMatrix = new float[16];

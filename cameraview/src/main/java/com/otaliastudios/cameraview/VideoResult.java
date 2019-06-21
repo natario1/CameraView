@@ -17,6 +17,26 @@ import java.io.File;
  */
 public class VideoResult {
 
+    public static class Stub {
+
+        Stub() {}
+
+        public boolean isSnapshot;
+        public Location location;
+        public int rotation;
+        public Size size;
+        public File file;
+        public Facing facing;
+        public VideoCodec videoCodec;
+        public Audio audio;
+        public long maxSize;
+        public int maxDuration;
+        public int endReason;
+        public int videoBitRate;
+        public int videoFrameRate;
+        public int audioBitRate;
+    }
+
     @SuppressWarnings({"WeakerAccess", "unused"})
     public static final int REASON_USER = 0;
 
@@ -26,22 +46,37 @@ public class VideoResult {
     @SuppressWarnings("WeakerAccess")
     public static final int REASON_MAX_DURATION_REACHED = 2;
 
-    boolean isSnapshot;
-    Location location;
-    int rotation;
-    Size size;
-    File file;
-    Facing facing;
-    VideoCodec codec;
-    Audio audio;
-    long maxSize;
-    int maxDuration;
-    int endReason;
-    int videoBitRate;
-    int videoFrameRate;
-    int audioBitRate;
+    private final boolean isSnapshot;
+    private final Location location;
+    private final int rotation;
+    private final Size size;
+    private final File file;
+    private final Facing facing;
+    private final VideoCodec videoCodec;
+    private final Audio audio;
+    private final long maxSize;
+    private final int maxDuration;
+    private final int endReason;
+    private final int videoBitRate;
+    private final int videoFrameRate;
+    private final int audioBitRate;
 
-    VideoResult() {}
+    VideoResult(@NonNull Stub builder) {
+        isSnapshot = builder.isSnapshot;
+        location = builder.location;
+        rotation = builder.rotation;
+        size = builder.size;
+        file = builder.file;
+        facing = builder.facing;
+        videoCodec = builder.videoCodec;
+        audio = builder.audio;
+        maxSize = builder.maxSize;
+        maxDuration = builder.maxDuration;
+        endReason = builder.endReason;
+        videoBitRate = builder.videoBitRate;
+        videoFrameRate = builder.videoFrameRate;
+        audioBitRate = builder.audioBitRate;
+    }
 
     /**
      * Returns whether this result comes from a snapshot.
@@ -111,7 +146,7 @@ public class VideoResult {
      */
     @NonNull
     public VideoCodec getVideoCodec() {
-        return codec;
+        return videoCodec;
     }
 
     /**

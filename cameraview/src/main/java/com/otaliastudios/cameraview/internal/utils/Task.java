@@ -9,53 +9,92 @@ import java.util.concurrent.TimeUnit;
  * A naive implementation of {@link java.util.concurrent.CountDownLatch}
  * to help in testing.
  */
-class Task<T> {
+public class Task<T> {
 
     private CountDownLatch mLatch;
     private T mResult;
     private int mCount;
 
-    Task() {
-    }
+    /**
+     * Creates an empty task.
+     *
+     * Listeners should:
+     * - call {@link #listen()} to notify they are interested in the next action
+     * - call {@link #await()} to know when the action is performed.
+     *
+     * Task owners should:
+     * - call {@link #start()} when task started
+     * - call {@link #end(Object)} when task ends
+     */
+    public Task() { }
 
-    Task(boolean startListening) {
+    /**
+     * Creates an empty task and starts listening.
+     * @param startListening whether to call listen
+     */
+    public Task(boolean startListening) {
         if (startListening) listen();
     }
 
-    private boolean listening() {
+    private boolean isListening() {
         return mLatch != null;
     }
 
-    void listen() {
-        if (listening()) throw new RuntimeException("Should not happen.");
-        mResult = null;
-        mLatch = new CountDownLatch(1);
+    /**
+     * Task owner method: notifies the action started.
+     */
+    public void start() {
+        if (!isListening()) mCount++;
     }
 
-    void start() {
-        if (!listening()) mCount++;
-    }
-
-    void end(T result) {
+    /**
+     * Task owner method: notifies the action ended.
+     * @param result the action result
+     */
+    public void end(T result) {
         if (mCount > 0) {
             mCount--;
             return;
         }
 
-        if (listening()) { // Should be always true.
+        if (isListening()) { // Should be always true.
             mResult = result;
             mLatch.countDown();
         }
     }
 
-    T await(long millis) {
+    /**
+     * Listener method: notifies we are interested in the next action.
+     */
+    public void listen() {
+        if (isListening()) throw new RuntimeException("Should not happen.");
+        mResult = null;
+        mLatch = new CountDownLatch(1);
+    }
+
+    /**
+     * Listener method: waits for next task action to end.
+     * @param millis milliseconds
+     * @return the action result
+     */
+    public T await(long millis) {
         return await(millis, TimeUnit.MILLISECONDS);
     }
 
-    T await() {
+    /**
+     * Listener method: waits 1 minute for next task action to end.
+     * @return the action result
+     */
+    public T await() {
         return await(1, TimeUnit.MINUTES);
     }
 
+    /**
+     * Listener method: waits for next task action to end.
+     * @param time time
+     * @param unit the time unit
+     * @return the action result
+     */
     private T await(long time, @NonNull TimeUnit unit) {
         try {
             mLatch.await(time, unit);

@@ -3,6 +3,8 @@ package com.otaliastudios.cameraview;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+
 import android.util.Log;
 
 import java.lang.annotation.Retention;
@@ -49,8 +51,8 @@ public final class CameraLogger {
         void log(@LogLevel int level, @NonNull String tag, @NonNull String message, @Nullable Throwable throwable);
     }
 
-    static String lastMessage;
-    static String lastTag;
+    @VisibleForTesting static String lastMessage;
+    @VisibleForTesting static String lastTag;
 
     private static int sLevel;
     private static List<Logger> sLoggers;
@@ -131,37 +133,46 @@ public final class CameraLogger {
     /**
      * Log to the verbose channel.
      * @param data log contents
+     * @return the log message, if logged
      */
-    public void v(@NonNull Object... data) {
-        log(LEVEL_VERBOSE, data);
+    @Nullable
+    public String v(@NonNull Object... data) {
+        return log(LEVEL_VERBOSE, data);
     }
 
     /**
      * Log to the info channel.
      * @param data log contents
+     * @return the log message, if logged
      */
-    public void i(@NonNull Object... data) {
-        log(LEVEL_INFO, data);
+    @Nullable
+    public String i(@NonNull Object... data) {
+        return log(LEVEL_INFO, data);
     }
 
     /**
      * Log to the warning channel.
      * @param data log contents
+     * @return the log message, if logged
      */
-    void w(@NonNull Object... data) {
-        log(LEVEL_WARNING, data);
+    @Nullable
+    public String w(@NonNull Object... data) {
+        return log(LEVEL_WARNING, data);
     }
 
     /**
      * Log to the error channel.
      * @param data log contents
+     * @return the log message, if logged
      */
-    void e(@NonNull Object... data) {
-        log(LEVEL_ERROR, data);
+    @Nullable
+    public String e(@NonNull Object... data) {
+        return log(LEVEL_ERROR, data);
     }
 
-    private void log(@LogLevel int level, @NonNull Object... data) {
-        if (!should(level)) return;
+    @Nullable
+    private String log(@LogLevel int level, @NonNull Object... data) {
+        if (!should(level)) return null;
 
         StringBuilder message = new StringBuilder();
         Throwable throwable = null;
@@ -178,6 +189,7 @@ public final class CameraLogger {
         }
         lastMessage = string;
         lastTag = mTag;
+        return string;
     }
 }
 

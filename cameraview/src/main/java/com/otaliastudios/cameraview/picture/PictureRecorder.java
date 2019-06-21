@@ -10,17 +10,17 @@ import androidx.annotation.Nullable;
  * Don't call start if already started. Don't call stop if already stopped.
  * Don't reuse.
  */
-abstract class PictureRecorder {
+public abstract class PictureRecorder {
 
-    /* tests */ PictureResult mResult;
+    /* tests */ PictureResult.Stub mResult;
     /* tests */ PictureResultListener mListener;
 
-    PictureRecorder(@NonNull PictureResult stub, @Nullable PictureResultListener listener) {
+    PictureRecorder(@NonNull PictureResult.Stub stub, @Nullable PictureResultListener listener) {
         mResult = stub;
         mListener = listener;
     }
 
-    abstract void take();
+    public abstract void take();
 
     @SuppressWarnings("WeakerAccess")
     protected void dispatchOnShutter(boolean didPlaySound) {
@@ -35,8 +35,8 @@ abstract class PictureRecorder {
         }
     }
 
-    interface PictureResultListener {
+    public interface PictureResultListener {
         void onPictureShutter(boolean didPlaySound);
-        void onPictureResult(@Nullable PictureResult result);
+        void onPictureResult(@Nullable PictureResult.Stub result);
     }
 }

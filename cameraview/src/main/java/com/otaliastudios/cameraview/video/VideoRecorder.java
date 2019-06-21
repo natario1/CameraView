@@ -1,5 +1,7 @@
 package com.otaliastudios.cameraview.video;
 
+import com.otaliastudios.cameraview.VideoResult;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -8,20 +10,20 @@ import androidx.annotation.Nullable;
  * Don't call start if already started. Don't call stop if already stopped.
  * Don't reuse.
  */
-abstract class VideoRecorder {
+public abstract class VideoRecorder {
 
-    /* tests */ VideoResult mResult;
+    /* tests */ VideoResult.Stub mResult;
     /* tests */ VideoResultListener mListener;
     protected Exception mError;
 
-    VideoRecorder(@NonNull VideoResult stub, @Nullable VideoResultListener listener) {
+    VideoRecorder(@NonNull VideoResult.Stub stub, @Nullable VideoResultListener listener) {
         mResult = stub;
         mListener = listener;
     }
 
-    abstract void start();
+    public abstract void start();
 
-    abstract void stop();
+    public abstract void stop();
 
     @SuppressWarnings("WeakerAccess")
     protected void dispatchResult() {
@@ -33,8 +35,7 @@ abstract class VideoRecorder {
         }
     }
 
-
-    interface VideoResultListener {
-        void onVideoResult(@Nullable VideoResult result, @Nullable Exception exception);
+    public interface VideoResultListener {
+        void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception);
     }
 }

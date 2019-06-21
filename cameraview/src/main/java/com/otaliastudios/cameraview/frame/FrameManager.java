@@ -23,9 +23,13 @@ import java.util.concurrent.LinkedBlockingQueue;
  * - Frame pool:
  *     We keep a list of mPoolSize recycled instances, to be reused when a new buffer is available.
  */
-class FrameManager {
+public class FrameManager {
 
-    interface BufferCallback {
+    /**
+     * Receives callbacks on buffer availability
+     * (when a Frame is released, we reuse its buffer).
+     */
+    public interface BufferCallback {
         void onBufferAvailable(@NonNull byte[] buffer);
     }
 
@@ -34,14 +38,45 @@ class FrameManager {
     private BufferCallback mCallback;
     private LinkedBlockingQueue<Frame> mQueue;
 
-    FrameManager(int poolSize, @Nullable BufferCallback callback) {
+    /**
+     * Construct a new frame manager.
+     * The construction must be followed by an {@link #allocateBuffers(int, Size)} call
+     * as soon as the parameters are known.
+     *
+     * @param poolSize the size of the backing pool.
+     * @param callback a callback
+     */
+    public FrameManager(int poolSize, @Nullable BufferCallback callback) {
         mPoolSize = poolSize;
         mCallback = callback;
         mQueue = new LinkedBlockingQueue<>(mPoolSize);
         mBufferSize = -1;
     }
 
-    void release() {
+    /**
+     * Allocates a {@link #mPoolSize} number of buffers. Should be called once
+     * the preview size and the bitsPerPixel value are known.
+     *
+     * This method can be called again after {@link #release()} has been called.
+     *
+     * @param bitsPerPixel bits per pixel, depends on image format
+     * @param previewSize the preview size
+     * @return the buffer size
+     */
+    public int allocateBuffers(int bitsPerPixel, @NonNull Size previewSize) {
+        // TODO throw if called twice without release?
+        mBufferSize = getBufferSize(bitsPerPixel, previewSize);
+        for (int i = 0; i < mPoolSize; i++) {
+            mCallback.onBufferAvailable(new byte[mBufferSize]);
+        }
+        return mBufferSize;
+    }
+
+    /**
+     * Releases all frames controlled by this manager and
+     * clears the pool.
+     */
+    public void release() {
         for (Frame frame : mQueue) {
             frame.releaseManager();
             frame.release();
@@ -69,8 +104,8 @@ class FrameManager {
 
     /**
      * Returns a new Frame for the given data. This must be called
-     * - after {@link #allocate(int, Size)}, which sets the buffer size
-     * - after the byte buffer given by allocate() has been filled.
+     * - after {@link #allocateBuffers(int, Size)}, which sets the buffer size
+     * - after the byte buffer given by allocateBuffers() has been filled.
      *   If this is called X times in a row without releasing frames, it will allocate
      *   X frames and that's bad. Callers must wait for the preview buffer to be available.
      *
@@ -78,19 +113,11 @@ class FrameManager {
      *
      * @return a new frame
      */
-    Frame getFrame(@NonNull byte[] data, long time, int rotation, @NonNull Size previewSize, int previewFormat) {
+    public Frame getFrame(@NonNull byte[] data, long time, int rotation, @NonNull Size previewSize, int previewFormat) {
         Frame frame = mQueue.poll();
         if (frame == null) frame = new Frame(this);
         frame.set(data, time, rotation, previewSize, previewFormat);
         return frame;
-    }
-
-    int allocate(int bitsPerPixel, @NonNull Size previewSize) {
-        mBufferSize = getBufferSize(bitsPerPixel, previewSize);
-        for (int i = 0; i < mPoolSize; i++) {
-            mCallback.onBufferAvailable(new byte[mBufferSize]);
-        }
-        return mBufferSize;
     }
 
     private int getBufferSize(int bitsPerPixel, @NonNull Size previewSize) {

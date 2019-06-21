@@ -8,6 +8,8 @@ import android.graphics.drawable.ColorDrawable;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
@@ -15,7 +17,10 @@ import android.view.View;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.internal.utils.Task;
 
-class GridLinesLayout extends View {
+/**
+ * A layout overlay that draws grid lines based on the {@link Grid} parameter.
+ */
+public class GridLinesLayout extends View {
 
     private final static float GOLDEN_RATIO_INV = 0.61803398874989f;
     public final static int DEFAULT_COLOR = Color.argb(160, 255, 255, 255);
@@ -27,7 +32,7 @@ class GridLinesLayout extends View {
     private ColorDrawable vert;
     private final float width;
 
-    Task<Integer> drawTask = new Task<>();
+    @VisibleForTesting Task<Integer> drawTask = new Task<>();
 
     public GridLinesLayout(@NonNull Context context) {
         this(context, null);
@@ -47,25 +52,41 @@ class GridLinesLayout extends View {
         vert.setBounds(0, top, (int) width, bottom);
     }
 
+    /**
+     * Returns the current grid value.
+     * @return the grid mode
+     */
     @NonNull
     public Grid getGridMode() {
         return gridMode;
     }
 
+    /**
+     * Sets a new grid value
+     * @param gridMode the new value
+     */
     public void setGridMode(@NonNull Grid gridMode) {
         this.gridMode = gridMode;
         postInvalidate();
     }
 
+    /**
+     * Returns the current grid color.
+     * @return the grid color
+     */
+    public int getGridColor() {
+        return gridColor;
+    }
+
+    /**
+     * Sets a new grid color.
+     * @param gridColor the new color
+     */
     public void setGridColor(@ColorInt int gridColor) {
         this.gridColor = gridColor;
         horiz.setColor(gridColor);
         vert.setColor(gridColor);
         postInvalidate();
-    }
-
-    public int getGridColor() {
-        return gridColor;
     }
 
     private int getLineCount() {

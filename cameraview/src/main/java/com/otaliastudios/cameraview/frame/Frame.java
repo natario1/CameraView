@@ -3,13 +3,14 @@ package com.otaliastudios.cameraview.frame;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 /**
  * A preview frame to be processed by {@link FrameProcessor}s.
  */
 public class Frame {
 
-    /* for tests */ FrameManager mManager;
+    @VisibleForTesting FrameManager mManager;
 
     private byte[] mData = null;
     private long mTime = -1;
@@ -21,6 +22,7 @@ public class Frame {
         mManager = manager;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isAlive() {
         return mData != null;
     }

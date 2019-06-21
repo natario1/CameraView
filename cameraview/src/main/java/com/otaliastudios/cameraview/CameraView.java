@@ -1238,7 +1238,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @see #takePictureSnapshot()
      */
     public void takePicture() {
-        mCameraEngine.takePicture();
+        PictureResult.Stub stub = new PictureResult.Stub();
+        mCameraEngine.takePicture(stub);
     }
 
 
@@ -1254,7 +1255,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void takePictureSnapshot() {
         if (getWidth() == 0 || getHeight() == 0) return;
-        mCameraEngine.takePictureSnapshot(AspectRatio.of(getWidth(), getHeight()));
+        PictureResult.Stub stub = new PictureResult.Stub();
+        mCameraEngine.takePictureSnapshot(stub, AspectRatio.of(getWidth(), getHeight()));
     }
 
 
@@ -1265,7 +1267,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param file a file where the video will be saved
      */
     public void takeVideo(@NonNull File file) {
-        mCameraEngine.takeVideo(file);
+        VideoResult.Stub stub = new VideoResult.Stub();
+        mCameraEngine.takeVideo(stub, file);
         mUiHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -1286,7 +1289,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void takeVideoSnapshot(@NonNull File file) {
         if (getWidth() == 0 || getHeight() == 0) return;
-        mCameraEngine.takeVideoSnapshot(file, AspectRatio.of(getWidth(), getHeight()));
+        VideoResult.Stub stub = new VideoResult.Stub();
+        mCameraEngine.takeVideoSnapshot(stub, file, AspectRatio.of(getWidth(), getHeight()));
         mUiHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -1609,20 +1613,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     //region Callbacks and dispatching
 
-    interface CameraCallbacks extends OrientationHelper.Callback {
-        void dispatchOnCameraOpened(CameraOptions options);
-        void dispatchOnCameraClosed();
-        void onCameraPreviewStreamSizeChanged();
-        void onShutter(boolean shouldPlaySound);
-        void dispatchOnVideoTaken(VideoResult result);
-        void dispatchOnPictureTaken(PictureResult result);
-        void dispatchOnFocusStart(@Nullable Gesture trigger, @NonNull PointF where);
-        void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, @NonNull PointF where);
-        void dispatchOnZoomChanged(final float newValue, @Nullable final PointF[] fingers);
-        void dispatchOnExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers);
-        void dispatchFrame(Frame frame);
-        void dispatchError(CameraException exception);
-    }
 
     private class Callbacks implements CameraCallbacks {
 

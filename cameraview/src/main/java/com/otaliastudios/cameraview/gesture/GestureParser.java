@@ -1,6 +1,5 @@
 package com.otaliastudios.cameraview.gesture;
 
-import android.content.Context;
 import android.content.res.TypedArray;
 
 import com.otaliastudios.cameraview.R;

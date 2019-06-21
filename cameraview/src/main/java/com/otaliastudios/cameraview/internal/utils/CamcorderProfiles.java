@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.media.CamcorderProfile;
 import android.os.Build;
 
+import com.otaliastudios.cameraview.size.Size;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;

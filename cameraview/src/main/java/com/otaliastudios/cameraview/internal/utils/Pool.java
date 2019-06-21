@@ -8,6 +8,10 @@ import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+/**
+ * Base class for pools of recycleable objects.
+ * @param <T> the object type
+ */
 class Pool<T> {
 
     private static final String TAG = Pool.class.getSimpleName();
@@ -18,27 +22,49 @@ class Pool<T> {
     private LinkedBlockingQueue<T> mQueue;
     private Factory<T> factory;
 
-    interface Factory<T> {
+    /**
+     * Used to create new instances of objects when needed.
+     * @param <T> object type
+     */
+    public interface Factory<T> {
         T create();
     }
 
-    Pool(int maxPoolSize, Factory<T> factory) {
+    /**
+     * Creates a new pool with the given pool size and factory.
+     * @param maxPoolSize the max pool size
+     * @param factory the factory
+     */
+    public Pool(int maxPoolSize, @NonNull Factory<T> factory) {
         this.maxPoolSize = maxPoolSize;
         this.mQueue = new LinkedBlockingQueue<>(maxPoolSize);
         this.factory = factory;
     }
 
-    boolean isEmpty() {
+    /**
+     * Whether the pool is empty. This means that {@link #get()} will return
+     * a null item, because all objects were reclaimed and not recycled yet.
+     *
+     * @return whether the pool is empty
+     */
+    public boolean isEmpty() {
         return count() >= maxPoolSize;
     }
 
+    /**
+     * Returns a new item, from the recycled pool if possible (if there are recycled items),
+     * or instantiating one through the factory (if we can respect the pool size).
+     * If these conditions are not met, this returns null.
+     *
+     * @return an item or null
+     */
     @Nullable
-    T get() {
-        T buffer = mQueue.poll();
-        if (buffer != null) {
+    public T get() {
+        T item = mQueue.poll();
+        if (item != null) {
             activeCount++; // poll decreases, this fixes
             LOG.v("GET: Reusing recycled item.", this);
-            return buffer;
+            return item;
         }
 
         if (isEmpty()) {
@@ -51,8 +77,13 @@ class Pool<T> {
         return factory.create();
     }
 
-
-    void recycle(@NonNull T item) {
+    /**
+     * Recycles an item after it has been used. The item should come from a previous
+     * {@link #get()} call.
+     *
+     * @param item used item
+     */
+    public void recycle(@NonNull T item) {
         LOG.v("RECYCLE: Recycling item.", this);
         if (--activeCount < 0) {
             throw new IllegalStateException("Trying to recycle an item which makes activeCount < 0." +
@@ -66,26 +97,49 @@ class Pool<T> {
         }
     }
 
-    @NonNull
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + " -- count:" + count() + ", active:" + activeCount() + ", cached:" + cachedCount();
+    /**
+     * Clears the pool of recycled items.
+     */
+    @CallSuper
+    public void clear() {
+        mQueue.clear();
     }
 
-    final int count() {
-        return activeCount() + cachedCount();
+    /**
+     * Returns the count of all items managed by this pool. Includes
+     * - active items: currently being used
+     * - recycled items: used and recycled, available for second use
+     *
+     * @return count
+     */
+    public final int count() {
+        return activeCount() + recycledCount();
     }
 
-    final int activeCount() {
+    /**
+     * Returns the active items managed by this pools, which means, items
+     * currently being used.
+     *
+     * @return active count
+     */
+    public final int activeCount() {
         return activeCount;
     }
 
-    final int cachedCount() {
+    /**
+     * Returns the recycled items managed by this pool, which means, items
+     * that were used and later recycled, and are currently available for
+     * second use.
+     *
+     * @return recycled count
+     */
+    public final int recycledCount() {
         return mQueue.size();
     }
 
-    @CallSuper
-    void clear() {
-        mQueue.clear();
+    @NonNull
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + " -- count:" + count() + ", active:" + activeCount() + ", recycled:" + recycledCount();
     }
 }

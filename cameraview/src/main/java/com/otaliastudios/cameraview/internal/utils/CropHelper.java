@@ -7,11 +7,14 @@ import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
 
-class CropHelper {
+/**
+ * Simply computes the crop between a full size and a desired aspect ratio.
+ */
+public class CropHelper {
 
     // It's important that size and aspect ratio belong to the same reference.
     @NonNull
-    static Rect computeCrop(@NonNull Size currentSize, @NonNull AspectRatio targetRatio) {
+    public static Rect computeCrop(@NonNull Size currentSize, @NonNull AspectRatio targetRatio) {
         int currentWidth = currentSize.getWidth();
         int currentHeight = currentSize.getHeight();
         if (targetRatio.matches(currentSize)) {

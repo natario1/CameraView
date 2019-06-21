@@ -16,14 +16,14 @@ import java.io.IOException;
 /**
  * A {@link PictureResult} that uses standard APIs.
  */
-class FullPictureRecorder extends PictureRecorder {
+public class FullPictureRecorder extends PictureRecorder {
 
     private static final String TAG = FullPictureRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private Camera mCamera;
 
-    FullPictureRecorder(@NonNull PictureResult stub, @Nullable PictureResultListener listener, @NonNull Camera camera) {
+    public FullPictureRecorder(@NonNull PictureResult.Stub stub, @Nullable PictureResultListener listener, @NonNull Camera camera) {
         super(stub, listener);
         mCamera = camera;
 

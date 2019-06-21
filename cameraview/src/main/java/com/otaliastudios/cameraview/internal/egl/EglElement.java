@@ -24,16 +24,16 @@ class EglElement {
     protected static void check(String opName) {
         int error = GLES20.glGetError();
         if (error != GLES20.GL_NO_ERROR) {
-            LOG.e("Error during", opName, "glError 0x", Integer.toHexString(error));
-            throw new RuntimeException(CameraLogger.lastMessage);
+            String message = LOG.e("Error during", opName, "glError 0x", Integer.toHexString(error));
+            throw new RuntimeException(message);
         }
     }
 
     // Check for valid location.
     protected static void checkLocation(int location, String label) {
         if (location < 0) {
-            LOG.e("Unable to locate", label, "in program");
-            throw new RuntimeException(CameraLogger.lastMessage);
+            String message = LOG.e("Unable to locate", label, "in program");
+            throw new RuntimeException(message);
         }
     }
 

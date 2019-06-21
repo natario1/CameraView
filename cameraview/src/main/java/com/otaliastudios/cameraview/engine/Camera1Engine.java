@@ -17,19 +17,8 @@ import android.view.SurfaceHolder;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
-import com.otaliastudios.cameraview.CameraView;
-import com.otaliastudios.cameraview.CropHelper;
 import com.otaliastudios.cameraview.frame.Frame;
-import com.otaliastudios.cameraview.FullPictureRecorder;
-import com.otaliastudios.cameraview.FullVideoRecorder;
-import com.otaliastudios.cameraview.GlCameraPreview;
-import com.otaliastudios.cameraview.Mapper1;
-import com.otaliastudios.cameraview.PictureRecorder;
 import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.SnapshotPictureRecorder;
-import com.otaliastudios.cameraview.SnapshotVideoRecorder;
-import com.otaliastudios.cameraview.Task;
-import com.otaliastudios.cameraview.VideoRecorder;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
@@ -38,8 +27,17 @@ import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.internal.utils.CropHelper;
+import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.picture.FullPictureRecorder;
+import com.otaliastudios.cameraview.picture.PictureRecorder;
+import com.otaliastudios.cameraview.picture.SnapshotPictureRecorder;
+import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.video.FullVideoRecorder;
+import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
+import com.otaliastudios.cameraview.video.VideoRecorder;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,9 +71,9 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
         }
     };
 
-    Camera1Engine(@NonNull CameraView.CameraCallbacks callback) {
+    Camera1Engine(@NonNull Callback callback) {
         super(callback);
-        mMapper = new Mapper1();
+        mMapper = Mapper.get();
     }
 
     private void schedule(@Nullable final Task<Void> task, final boolean ensureAvailable, final Runnable action) {
@@ -203,9 +201,12 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     // To be called when the preview size is setup or changed.
     private void startPreview(String log) {
         LOG.i(log, "Dispatching onCameraPreviewStreamSizeChanged.");
-        mCameraCallbacks.onCameraPreviewStreamSizeChanged();
+        mCallback.onCameraPreviewStreamSizeChanged();
 
         Size previewSize = getPreviewStreamSize(REF_VIEW);
+        if (previewSize == null) {
+            throw new IllegalStateException("previewStreamSize should not be null at this point.");
+        }
         boolean wasFlipped = flip(REF_SENSOR, REF_VIEW);
         mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight(), wasFlipped);
 
@@ -226,7 +227,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
-        mFrameManager.allocate(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewStreamSize);
+        mFrameManager.allocateBuffers(ImageFormat.getBitsPerPixel(mPreviewFormat), mPreviewStreamSize);
 
         LOG.i(log, "Starting preview with startPreview().");
         try {
@@ -363,8 +364,8 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
             return;
         }
 
-        LOG.e("Internal Camera1 error.", error);
-        Exception runtime = new RuntimeException(CameraLogger.lastMessage);
+        String message = LOG.e("Internal Camera1 error.", error);
+        Exception runtime = new RuntimeException(message);
         int reason;
         switch (error) {
             case Camera.CAMERA_ERROR_EVICTED: reason = CameraException.REASON_DISCONNECTED; break;
@@ -400,7 +401,8 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
         });
     }
 
-    private boolean applyLocation(@NonNull Camera.Parameters params, @Nullable Location oldLocation) {
+    private boolean applyLocation(@NonNull Camera.Parameters params,
+                                  @SuppressWarnings("unused") @Nullable Location oldLocation) {
         if (mLocation != null) {
             params.setGpsLatitude(mLocation.getLatitude());
             params.setGpsLongitude(mLocation.getLongitude());
@@ -563,23 +565,23 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
 
     @Override
     public void onPictureShutter(boolean didPlaySound) {
-        mCameraCallbacks.onShutter(!didPlaySound);
+        mCallback.onShutter(!didPlaySound);
     }
 
     @Override
-    public void onPictureResult(@Nullable PictureResult result) {
+    public void onPictureResult(@Nullable PictureResult.Stub result) {
         mPictureRecorder = null;
         if (result != null) {
-            mCameraCallbacks.dispatchOnPictureTaken(result);
+            mCallback.dispatchOnPictureTaken(result);
         } else {
             // Something went wrong.
-            mCameraCallbacks.dispatchError(new CameraException(CameraException.REASON_PICTURE_FAILED));
+            mCallback.dispatchError(new CameraException(CameraException.REASON_PICTURE_FAILED));
             LOG.e("onPictureResult", "result is null: something went wrong.");
         }
     }
 
     @Override
-    void takePicture() {
+    void takePicture(final @NonNull PictureResult.Stub stub) {
         LOG.v("takePicture: scheduling");
         schedule(null, true, new Runnable() {
             @Override
@@ -592,13 +594,12 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
 
                 LOG.v("takePicture: performing.", isTakingPicture());
                 if (isTakingPicture()) return;
-                PictureResult result = new PictureResult();
-                result.isSnapshot = false;
-                result.location = mLocation;
-                result.rotation = offset(REF_SENSOR, REF_OUTPUT);
-                result.size = getPictureSize(REF_OUTPUT);
-                result.facing = mFacing;
-                mPictureRecorder = new FullPictureRecorder(result, Camera1Engine.this, mCamera);
+                stub.isSnapshot = false;
+                stub.location = mLocation;
+                stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
+                stub.size = getPictureSize(REF_OUTPUT);
+                stub.facing = mFacing;
+                mPictureRecorder = new FullPictureRecorder(stub, Camera1Engine.this, mCamera);
                 mPictureRecorder.take();
             }
         });
@@ -609,7 +610,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
      * @param viewAspectRatio the view aspect ratio
      */
     @Override
-    void takePictureSnapshot(@NonNull final AspectRatio viewAspectRatio) {
+    void takePictureSnapshot(final @NonNull PictureResult.Stub stub, @NonNull final AspectRatio viewAspectRatio) {
         LOG.v("takePictureSnapshot: scheduling");
         schedule(null, true, new Runnable() {
             @Override
@@ -617,12 +618,11 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 LOG.v("takePictureSnapshot: performing.", isTakingPicture());
                 if (isTakingPicture()) return;
 
-                PictureResult result = new PictureResult();
-                result.location = mLocation;
-                result.isSnapshot = true;
-                result.facing = mFacing;
-                result.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
-                result.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
+                stub.location = mLocation;
+                stub.isSnapshot = true;
+                stub.facing = mFacing;
+                stub.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
+                stub.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
                 AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
                 // LOG.e("ROTBUG_pic", "aspectRatio (REF_VIEW):", viewAspectRatio);
                 // LOG.e("ROTBUG_pic", "aspectRatio (REF_OUTPUT):", outputRatio);
@@ -633,7 +633,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 LOG.v("Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
                 LOG.v("Rotations", "VO", offset(REF_VIEW, REF_OUTPUT), "OV", offset(REF_OUTPUT, REF_VIEW));
 
-                mPictureRecorder = new SnapshotPictureRecorder(result, Camera1Engine.this, mCamera, outputRatio);
+                mPictureRecorder = new SnapshotPictureRecorder(stub, Camera1Engine.this, mCamera, outputRatio);
                 mPictureRecorder.take();
             }
         });
@@ -646,7 +646,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 offset(REF_SENSOR, REF_OUTPUT),
                 mPreviewStreamSize,
                 mPreviewFormat);
-        mCameraCallbacks.dispatchFrame(frame);
+        mCallback.dispatchFrame(frame);
     }
 
     private boolean isCameraAvailable() {
@@ -673,19 +673,19 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     // Video recording stuff.
 
     @Override
-    public void onVideoResult(@Nullable VideoResult result, @Nullable Exception exception) {
+    public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
         mVideoRecorder = null;
         if (result != null) {
-            mCameraCallbacks.dispatchOnVideoTaken(result);
+            mCallback.dispatchOnVideoTaken(result);
         } else {
             // Something went wrong, lock the camera again.
-            mCameraCallbacks.dispatchError(new CameraException(exception, CameraException.REASON_VIDEO_FAILED));
+            mCallback.dispatchError(new CameraException(exception, CameraException.REASON_VIDEO_FAILED));
             mCamera.lock();
         }
     }
 
     @Override
-    void takeVideo(@NonNull final File videoFile) {
+    void takeVideo(final @NonNull VideoResult.Stub stub, @NonNull final File videoFile) {
         schedule(mStartVideoTask, true, new Runnable() {
             @Override
             public void run() {
@@ -696,19 +696,18 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 if (isTakingVideo()) return;
 
                 // Create the video result stub
-                VideoResult videoResult = new VideoResult();
-                videoResult.file = videoFile;
-                videoResult.isSnapshot = false;
-                videoResult.codec = mVideoCodec;
-                videoResult.location = mLocation;
-                videoResult.facing = mFacing;
-                videoResult.rotation = offset(REF_SENSOR, REF_OUTPUT);
-                videoResult.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
-                videoResult.audio = mAudio;
-                videoResult.maxSize = mVideoMaxSize;
-                videoResult.maxDuration = mVideoMaxDuration;
-                videoResult.videoBitRate = mVideoBitRate;
-                videoResult.audioBitRate = mAudioBitRate;
+                stub.file = videoFile;
+                stub.isSnapshot = false;
+                stub.videoCodec = mVideoCodec;
+                stub.location = mLocation;
+                stub.facing = mFacing;
+                stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
+                stub.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
+                stub.audio = mAudio;
+                stub.maxSize = mVideoMaxSize;
+                stub.maxDuration = mVideoMaxDuration;
+                stub.videoBitRate = mVideoBitRate;
+                stub.audioBitRate = mAudioBitRate;
 
                 // Unlock the camera and start recording.
                 try {
@@ -719,7 +718,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                     onVideoResult(null, e);
                     return;
                 }
-                mVideoRecorder = new FullVideoRecorder(videoResult, Camera1Engine.this,
+                mVideoRecorder = new FullVideoRecorder(stub, Camera1Engine.this,
                         Camera1Engine.this, mCamera, mCameraId);
                 mVideoRecorder.start();
             }
@@ -732,7 +731,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
      */
     @SuppressLint("NewApi")
     @Override
-    void takeVideoSnapshot(@NonNull final File file, @NonNull final AspectRatio viewAspectRatio) {
+    void takeVideoSnapshot(final @NonNull VideoResult.Stub stub, @NonNull final File file, @NonNull final AspectRatio viewAspectRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
@@ -745,17 +744,16 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 if (isTakingVideo()) return;
 
                 // Create the video result stub
-                VideoResult videoResult = new VideoResult();
-                videoResult.file = file;
-                videoResult.isSnapshot = true;
-                videoResult.codec = mVideoCodec;
-                videoResult.location = mLocation;
-                videoResult.facing = mFacing;
-                videoResult.videoBitRate = mVideoBitRate;
-                videoResult.audioBitRate = mAudioBitRate;
-                videoResult.audio = mAudio;
-                videoResult.maxSize = mVideoMaxSize;
-                videoResult.maxDuration = mVideoMaxDuration;
+                stub.file = file;
+                stub.isSnapshot = true;
+                stub.videoCodec = mVideoCodec;
+                stub.location = mLocation;
+                stub.facing = mFacing;
+                stub.videoBitRate = mVideoBitRate;
+                stub.audioBitRate = mAudioBitRate;
+                stub.audio = mAudio;
+                stub.maxSize = mVideoMaxSize;
+                stub.maxDuration = mVideoMaxDuration;
 
                 // Size and rotation turned out to be extremely tricky. In case of SnapshotPictureRecorder
                 // we use the preview size in REF_OUTPUT (cropped) and offset(REF_SENSOR, REF_OUTPUT) as rotation.
@@ -793,11 +791,14 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 // and maybe we can improve. The reason why this happen is beyond my understanding.
 
                 Size outputSize = getUncroppedSnapshotSize(REF_OUTPUT);
+                if (outputSize == null) {
+                    throw new IllegalStateException("outputSize should not be null.");
+                }
                 AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
                 Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
                 outputSize = new Size(outputCrop.width(), outputCrop.height());
-                videoResult.size = outputSize;
-                videoResult.rotation = offset(REF_VIEW, REF_OUTPUT);
+                stub.size = outputSize;
+                stub.rotation = offset(REF_VIEW, REF_OUTPUT);
                 // LOG.e("ROTBUG_video", "aspectRatio (REF_VIEW):", viewAspectRatio);
                 // LOG.e("ROTBUG_video", "aspectRatio (REF_OUTPUT):", outputRatio);
                 // LOG.e("ROTBUG_video", "sizeUncropped (REF_OUTPUT):", outputSize);
@@ -807,7 +808,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 // Reset facing and start.
                 mFacing = realFacing;
                 GlCameraPreview cameraPreview = (GlCameraPreview) mPreview;
-                mVideoRecorder = new SnapshotVideoRecorder(videoResult, Camera1Engine.this, cameraPreview);
+                mVideoRecorder = new SnapshotVideoRecorder(stub, Camera1Engine.this, cameraPreview);
                 mVideoRecorder.start();
             }
         });
@@ -845,7 +846,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 mCamera.setParameters(params);
 
                 if (notify) {
-                    mCameraCallbacks.dispatchOnZoomChanged(zoom, points);
+                    mCallback.dispatchOnZoomChanged(zoom, points);
                 }
             }
         });
@@ -870,7 +871,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 mCamera.setParameters(params);
 
                 if (notify) {
-                    mCameraCallbacks.dispatchOnExposureCorrectionChanged(value, bounds, points);
+                    mCallback.dispatchOnExposureCorrectionChanged(value, bounds, points);
                 }
             }
         });
@@ -908,14 +909,14 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                 if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
                 mCamera.setParameters(params);
-                mCameraCallbacks.dispatchOnFocusStart(gesture, p);
+                mCallback.dispatchOnFocusStart(gesture, p);
                 // TODO this is not guaranteed to be called... Fix.
                 try {
                     mCamera.autoFocus(new Camera.AutoFocusCallback() {
                         @Override
                         public void onAutoFocus(boolean success, Camera camera) {
                             // TODO lock auto exposure and white balance for a while
-                            mCameraCallbacks.dispatchOnFocusEnd(gesture, success, p);
+                            mCallback.dispatchOnFocusEnd(gesture, success, p);
                             mHandler.get().removeCallbacks(mPostFocusResetRunnable);
                             if (shouldResetAutoFocus()) {
                                 mHandler.get().postDelayed(mPostFocusResetRunnable, getAutoFocusResetDelay());
@@ -926,7 +927,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
                     // Handling random auto-focus exception on some devices
                     // See https://github.com/natario1/CameraView/issues/181
                     LOG.e("startAutoFocus:", "Error calling autoFocus", e);
-                    mCameraCallbacks.dispatchOnFocusEnd(gesture, false, p);
+                    mCallback.dispatchOnFocusEnd(gesture, false, p);
                 }
             }
         });
@@ -979,9 +980,8 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     // Size stuff.
 
 
-    @Nullable
-    private List<Size> sizesFromList(@Nullable List<Camera.Size> sizes) {
-        if (sizes == null) return null;
+    @NonNull
+    private List<Size> sizesFromList(@NonNull List<Camera.Size> sizes) {
         List<Size> result = new ArrayList<>(sizes.size());
         for (Camera.Size size : sizes) {
             Size add = new Size(size.width, size.height);

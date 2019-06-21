@@ -53,16 +53,16 @@ public class CameraException extends RuntimeException {
 
     private int reason = REASON_UNKNOWN;
 
-    CameraException(Throwable cause) {
+    public CameraException(Throwable cause) {
         super(cause);
     }
 
-    CameraException(Throwable cause, int reason) {
+    public CameraException(Throwable cause, int reason) {
         super(cause);
         this.reason = reason;
     }
 
-    CameraException(int reason) {
+    public CameraException(int reason) {
         super();
         this.reason = reason;
     }

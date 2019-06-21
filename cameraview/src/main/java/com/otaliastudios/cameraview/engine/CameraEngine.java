@@ -10,14 +10,14 @@ import android.os.Looper;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
+import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.VideoResult;
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameManager;
+import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.picture.PictureRecorder;
 import com.otaliastudios.cameraview.preview.CameraPreview;
-import com.otaliastudios.cameraview.CameraView;
-import com.otaliastudios.cameraview.FrameManager;
-import com.otaliastudios.cameraview.Mapper;
-import com.otaliastudios.cameraview.PictureRecorder;
-import com.otaliastudios.cameraview.Task;
-import com.otaliastudios.cameraview.VideoRecorder;
-import com.otaliastudios.cameraview.WorkerHandler;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
@@ -30,6 +30,7 @@ import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
 import com.otaliastudios.cameraview.size.SizeSelectors;
+import com.otaliastudios.cameraview.video.VideoRecorder;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -46,6 +47,21 @@ public abstract class CameraEngine implements
         FrameManager.BufferCallback,
         Thread.UncaughtExceptionHandler {
 
+    public interface Callback {
+        void dispatchOnCameraOpened(CameraOptions options);
+        void dispatchOnCameraClosed();
+        void onCameraPreviewStreamSizeChanged();
+        void onShutter(boolean shouldPlaySound);
+        void dispatchOnVideoTaken(VideoResult.Stub result);
+        void dispatchOnPictureTaken(PictureResult.Stub result);
+        void dispatchOnFocusStart(@Nullable Gesture trigger, @NonNull PointF where);
+        void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, @NonNull PointF where);
+        void dispatchOnZoomChanged(final float newValue, @Nullable final PointF[] fingers);
+        void dispatchOnExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers);
+        void dispatchFrame(Frame frame);
+        void dispatchError(CameraException exception);
+    }
+
     private static final String TAG = CameraEngine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
@@ -58,10 +74,10 @@ public abstract class CameraEngine implements
     static final int REF_VIEW = 1;
     static final int REF_OUTPUT = 2;
 
-    protected final CameraView.CameraCallbacks mCameraCallbacks;
+    protected final Callback mCallback;
     protected CameraPreview mPreview;
     protected WorkerHandler mHandler;
-    /* for tests */ Handler mCrashHandler;
+    @VisibleForTesting Handler mCrashHandler;
 
     protected Facing mFacing;
     protected Flash mFlash;
@@ -79,10 +95,8 @@ public abstract class CameraEngine implements
     private SizeSelector mPictureSizeSelector;
     private SizeSelector mVideoSizeSelector;
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+    @VisibleForTesting int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+    @VisibleForTesting int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
 
     protected int mCameraId;
     protected CameraOptions mCameraOptions;
@@ -106,17 +120,17 @@ public abstract class CameraEngine implements
     protected int mState = STATE_STOPPED;
 
     // Used for testing.
-    Task<Void> mZoomTask = new Task<>();
-    Task<Void> mExposureCorrectionTask = new Task<>();
-    Task<Void> mFlashTask = new Task<>();
-    Task<Void> mWhiteBalanceTask = new Task<>();
-    Task<Void> mHdrTask = new Task<>();
-    Task<Void> mLocationTask = new Task<>();
-    Task<Void> mStartVideoTask = new Task<>();
-    Task<Void> mPlaySoundsTask = new Task<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mZoomTask = new Task<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mExposureCorrectionTask = new Task<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mFlashTask = new Task<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mWhiteBalanceTask = new Task<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mHdrTask = new Task<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mLocationTask = new Task<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mStartVideoTask = new Task<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mPlaySoundsTask = new Task<>();
 
-    CameraEngine(CameraView.CameraCallbacks callback) {
-        mCameraCallbacks = callback;
+    CameraEngine(Callback callback) {
+        mCallback = callback;
         mCrashHandler = new Handler(Looper.getMainLooper());
         mHandler = WorkerHandler.get("CameraViewController");
         mHandler.getThread().setUncaughtExceptionHandler(this);
@@ -171,7 +185,7 @@ public abstract class CameraEngine implements
                 @Override
                 public void run() {
                     stopImmediately();
-                    mCameraCallbacks.dispatchError(error);
+                    mCallback.dispatchError(error);
                 }
             });
         }
@@ -215,7 +229,7 @@ public abstract class CameraEngine implements
                 onStart();
                 LOG.i("Start:", "returned from onStart().", "Dispatching.", ss());
                 mState = STATE_STARTED;
-                mCameraCallbacks.dispatchOnCameraOpened(mCameraOptions);
+                mCallback.dispatchOnCameraOpened(mCameraOptions);
             }
         });
     }
@@ -234,7 +248,7 @@ public abstract class CameraEngine implements
                 onStop();
                 LOG.i("Stop:", "returned from onStop().", "Dispatching.");
                 mState = STATE_STOPPED;
-                mCameraCallbacks.dispatchOnCameraClosed();
+                mCallback.dispatchOnCameraClosed();
             }
         });
     }
@@ -270,7 +284,7 @@ public abstract class CameraEngine implements
                     onStop();
                     mState = STATE_STOPPED;
                     LOG.i("Restart:", "stopped. Dispatching.", ss());
-                    mCameraCallbacks.dispatchOnCameraClosed();
+                    mCallback.dispatchOnCameraClosed();
                 }
 
                 LOG.i("Restart: about to start. State:", ss());
@@ -278,7 +292,7 @@ public abstract class CameraEngine implements
                 onStart();
                 mState = STATE_STARTED;
                 LOG.i("Restart: returned from start. Dispatching. State:", ss());
-                mCameraCallbacks.dispatchOnCameraOpened(mCameraOptions);
+                mCallback.dispatchOnCameraOpened(mCameraOptions);
             }
         });
     }
@@ -384,13 +398,13 @@ public abstract class CameraEngine implements
     // Just set.
     abstract void setAudio(@NonNull Audio audio);
 
-    abstract void takePicture();
+    abstract void takePicture(@NonNull PictureResult.Stub stub);
 
-    abstract void takePictureSnapshot(@NonNull AspectRatio viewAspectRatio);
+    abstract void takePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio);
 
-    abstract void takeVideo(@NonNull File file);
+    abstract void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file);
 
-    abstract void takeVideoSnapshot(@NonNull File file, @NonNull AspectRatio viewAspectRatio);
+    abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio);
 
     abstract void stopVideo();
 
