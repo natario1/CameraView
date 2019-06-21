@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.preview;
 
 
 import android.content.Context;
@@ -11,12 +11,12 @@ import com.otaliastudios.cameraview.preview.CameraPreview;
 
 public class MockCameraPreview extends CameraPreview<View, Void> {
 
-    MockCameraPreview(Context context, ViewGroup parent) {
+    public MockCameraPreview(Context context, ViewGroup parent) {
         super(context, parent, null);
     }
 
     @Override
-    boolean supportsCropping() {
+    public boolean supportsCropping() {
         return true;
     }
 
@@ -28,19 +28,20 @@ public class MockCameraPreview extends CameraPreview<View, Void> {
 
     @NonNull
     @Override
-    Class<Void> getOutputClass() {
+    public Class<Void> getOutputClass() {
         return null;
     }
 
     @NonNull
     @Override
-    Void getOutput() {
+    public Void getOutput() {
         return null;
     }
 
+
     @NonNull
     @Override
-    View getRootView() {
+    public View getRootView() {
         return null;
     }
 }

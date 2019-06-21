@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 @SmallTest
 public class PictureResultTest extends BaseTest {
 
-    private PictureResult result = new PictureResult();
+    private PictureResult.Stub stub = new PictureResult.Stub();
 
     @Test
     public void testResult() {
@@ -32,15 +32,16 @@ public class PictureResultTest extends BaseTest {
         boolean isSnapshot = true;
         Facing facing = Facing.FRONT;
 
-        result. format = format;
-        result.rotation = rotation;
-        result.size = size;
-        result.data = jpeg;
-        result.location = location;
-        result.facing = facing;
+        stub.format = format;
+        stub.rotation = rotation;
+        stub.size = size;
+        stub.data = jpeg;
+        stub.location = location;
+        stub.facing = facing;
         //noinspection ConstantConditions
-        result.isSnapshot = isSnapshot;
+        stub.isSnapshot = isSnapshot;
 
+        PictureResult result = new PictureResult(stub);
         assertEquals(result.getFormat(), format);
         assertEquals(result.getRotation(), rotation);
         assertEquals(result.getSize(), size);

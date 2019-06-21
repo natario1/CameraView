@@ -217,9 +217,12 @@ public class CameraUtils {
      * @param source a JPEG byte array
      * @param maxWidth the max allowed width
      * @param maxHeight the max allowed height
+     * @return decoded bitmap or null if error is encountered
      */
     @SuppressWarnings("SameParameterValue")
-    static Bitmap decodeBitmap(@NonNull byte[] source, int maxWidth, int maxHeight) {
+    @Nullable
+    @WorkerThread
+    public static Bitmap decodeBitmap(@NonNull byte[] source, int maxWidth, int maxHeight) {
         return decodeBitmap(source, maxWidth, maxHeight, new BitmapFactory.Options());
     }
 

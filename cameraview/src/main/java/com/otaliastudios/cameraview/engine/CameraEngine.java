@@ -129,7 +129,7 @@ public abstract class CameraEngine implements
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mStartVideoTask = new Task<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mPlaySoundsTask = new Task<>();
 
-    CameraEngine(Callback callback) {
+    protected CameraEngine(Callback callback) {
         mCallback = callback;
         mCrashHandler = new Handler(Looper.getMainLooper());
         mHandler = WorkerHandler.get("CameraViewController");
@@ -300,11 +300,11 @@ public abstract class CameraEngine implements
     // Starts the preview.
     // At the end of this method camera must be available, e.g. for setting parameters.
     @WorkerThread
-    abstract void onStart();
+    protected abstract void onStart();
 
     // Stops the preview.
     @WorkerThread
-    abstract void onStop();
+    protected abstract void onStop();
 
     // Returns current state.
     public final int getState() {

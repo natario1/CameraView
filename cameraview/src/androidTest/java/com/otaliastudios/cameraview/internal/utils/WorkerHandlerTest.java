@@ -1,6 +1,7 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.internal.utils;
 
 
+import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.internal.utils.Task;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 

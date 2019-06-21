@@ -28,6 +28,8 @@ import com.otaliastudios.cameraview.gesture.GestureParser;
 import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
 import com.otaliastudios.cameraview.gesture.ScrollGestureLayout;
 import com.otaliastudios.cameraview.gesture.TapGestureLayout;
+import com.otaliastudios.cameraview.engine.MockCameraEngine;
+import com.otaliastudios.cameraview.preview.MockCameraPreview;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
@@ -61,9 +63,11 @@ public class CameraViewTest extends BaseTest {
             public void run() {
                 Context context = context();
                 cameraView = new CameraView(context) {
+
+                    @NonNull
                     @Override
-                    protected CameraEngine instantiateCameraController(CameraCallbacks callbacks) {
-                        mockController = spy(new MockCameraEngine(callbacks));
+                    protected CameraEngine instantiateCameraController(@NonNull CameraEngine.Callback callback) {
+                        mockController = spy(new MockCameraEngine(callback));
                         return mockController;
                     }
 
@@ -141,6 +145,7 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getHdr(), controls.getHdr());
         assertEquals(cameraView.getAudio(), controls.getAudio());
         assertEquals(cameraView.getVideoCodec(), controls.getVideoCodec());
+        //noinspection SimplifiableJUnitAssertion
         assertEquals(cameraView.getLocation(), null);
         assertEquals(cameraView.getExposureCorrection(), 0f, 0f);
         assertEquals(cameraView.getZoom(), 0f, 0f);
@@ -476,11 +481,11 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testSetLocation() {
         cameraView.setLocation(50d, -50d);
-        assertEquals(50d, mockController.mLocation.getLatitude(), 0);
-        assertEquals(-50d, mockController.mLocation.getLongitude(), 0);
-        assertEquals(0, mockController.mLocation.getAltitude(), 0);
-        assertEquals("Unknown", mockController.mLocation.getProvider());
-        assertEquals(System.currentTimeMillis(), mockController.mLocation.getTime(), 1000f);
+        assertEquals(50d, mockController.getLocation().getLatitude(), 0);
+        assertEquals(-50d, mockController.getLocation().getLongitude(), 0);
+        assertEquals(0, mockController.getLocation().getAltitude(), 0);
+        assertEquals("Unknown", mockController.getLocation().getProvider());
+        assertEquals(System.currentTimeMillis(), mockController.getLocation().getTime(), 1000f);
 
         Location source = new Location("Provider");
         source.setTime(5000);
@@ -613,7 +618,7 @@ public class CameraViewTest extends BaseTest {
     public void testPreviewStreamSizeSelector() {
         SizeSelector source = SizeSelectors.minHeight(50);
         cameraView.setPreviewStreamSize(source);
-        SizeSelector result = mockController.getPreviewStreamSizeSelector();
+        SizeSelector result = mockController.getInternalPreviewStreamSizeSelector();
         assertNotNull(result);
         assertEquals(result, source);
     }
@@ -622,7 +627,7 @@ public class CameraViewTest extends BaseTest {
     public void testPictureSizeSelector() {
         SizeSelector source = SizeSelectors.minHeight(50);
         cameraView.setPictureSize(source);
-        SizeSelector result = mockController.getPictureSizeSelector();
+        SizeSelector result = mockController.getInternalPictureSizeSelector();
         assertNotNull(result);
         assertEquals(result, source);
     }
@@ -631,7 +636,7 @@ public class CameraViewTest extends BaseTest {
     public void testVideoSizeSelector() {
         SizeSelector source = SizeSelectors.minHeight(50);
         cameraView.setVideoSize(source);
-        SizeSelector result = mockController.getVideoSizeSelector();
+        SizeSelector result = mockController.getInternalVideoSizeSelector();
         assertNotNull(result);
         assertEquals(result, source);
     }
@@ -718,8 +723,8 @@ public class CameraViewTest extends BaseTest {
     public void testSetSnapshotMaxSize() {
         cameraView.setSnapshotMaxWidth(500);
         cameraView.setSnapshotMaxHeight(1000);
-        assertEquals(mockController.mSnapshotMaxWidth, 500);
-        assertEquals(mockController.mSnapshotMaxHeight, 1000);
+        assertEquals(mockController.getSnapshotMaxWidth(), 500);
+        assertEquals(mockController.getSnapshotMaxHeight(), 1000);
     }
 
     //endregion

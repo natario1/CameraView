@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.engine;
 
 
 import android.graphics.Bitmap;
@@ -6,6 +6,14 @@ import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
 
+import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.CameraListener;
+import com.otaliastudios.cameraview.CameraOptions;
+import com.otaliastudios.cameraview.CameraUtils;
+import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.TestActivity;
+import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -78,9 +86,11 @@ public class IntegrationTest extends BaseTest {
             @Override
             public void run() {
                 camera = new CameraView(rule.getActivity()) {
+
+                    @NonNull
                     @Override
-                    protected CameraEngine instantiateCameraController(CameraCallbacks callbacks) {
-                        controller = new Camera1Engine(callbacks);
+                    protected CameraEngine instantiateCameraController(@NonNull CameraEngine.Callback callback) {
+                        controller = new Camera1Engine(callback);
                         return controller;
                     }
                 };

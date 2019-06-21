@@ -1,10 +1,12 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.preview;
 
 
 import android.content.Context;
 import androidx.test.rule.ActivityTestRule;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.TestActivity;
 import com.otaliastudios.cameraview.internal.utils.Task;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;

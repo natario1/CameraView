@@ -1633,8 +1633,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     //region Callbacks and dispatching
 
-
-    private class CameraCallbacks implements CameraEngine.Callback, OrientationHelper.Callback {
+    @VisibleForTesting
+    class CameraCallbacks implements CameraEngine.Callback, OrientationHelper.Callback {
 
         private CameraLogger mLogger = CameraLogger.create(CameraCallbacks.class.getSimpleName());
 

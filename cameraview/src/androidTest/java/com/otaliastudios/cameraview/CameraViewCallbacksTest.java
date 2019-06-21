@@ -16,6 +16,8 @@ import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.engine.MockCameraEngine;
+import com.otaliastudios.cameraview.preview.MockCameraPreview;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 
 import org.junit.After;
@@ -38,6 +40,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+/**
+ * Tests {@link CameraView#mCameraCallbacks} dispatch functions.
+ */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 public class CameraViewCallbacksTest extends BaseTest {
@@ -58,9 +63,11 @@ public class CameraViewCallbacksTest extends BaseTest {
                 listener = mock(CameraListener.class);
                 processor = mock(FrameProcessor.class);
                 camera = new CameraView(context) {
+
+                    @NonNull
                     @Override
-                    protected CameraEngine instantiateCameraController(CameraCallbacks callbacks) {
-                        mockController = new MockCameraEngine(callbacks);
+                    protected CameraEngine instantiateCameraController(@NonNull CameraEngine.Callback callback) {
+                        mockController = new MockCameraEngine(callback);
                         return mockController;
                     }
 

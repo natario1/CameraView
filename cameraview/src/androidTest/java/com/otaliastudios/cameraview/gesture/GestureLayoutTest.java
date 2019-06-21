@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.gesture;
 
 
 import android.annotation.TargetApi;
@@ -10,6 +10,8 @@ import androidx.test.rule.ActivityTestRule;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.TestActivity;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureLayout;
 import com.otaliastudios.cameraview.internal.utils.Task;

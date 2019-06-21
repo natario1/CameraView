@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.preview;
 
 
 import android.content.Context;
@@ -8,6 +8,7 @@ import androidx.test.filters.SmallTest;
 import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.preview.CameraPreview;
+import com.otaliastudios.cameraview.preview.CameraPreviewTest;
 import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
 
 import org.junit.runner.RunWith;

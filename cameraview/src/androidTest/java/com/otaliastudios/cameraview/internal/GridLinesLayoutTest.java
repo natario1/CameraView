@@ -1,6 +1,8 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.internal;
 
 
+import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.TestActivity;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.internal.GridLinesLayout;
 

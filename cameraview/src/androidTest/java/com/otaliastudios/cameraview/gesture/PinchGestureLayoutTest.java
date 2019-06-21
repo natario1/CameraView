@@ -1,9 +1,10 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.gesture;
 
 
 import android.content.Context;
 
 import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.GestureLayoutTest;
 import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
 
 import androidx.test.espresso.ViewAction;
