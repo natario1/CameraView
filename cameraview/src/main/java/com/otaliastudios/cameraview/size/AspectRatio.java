@@ -100,6 +100,7 @@ public class AspectRatio implements Comparable<AspectRatio> {
         return false;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return mX + ":" + mY;

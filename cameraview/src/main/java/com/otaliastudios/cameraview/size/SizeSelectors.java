@@ -1,9 +1,5 @@
 package com.otaliastudios.cameraview.size;
 
-import com.otaliastudios.cameraview.size.AspectRatio;
-import com.otaliastudios.cameraview.size.Size;
-import com.otaliastudios.cameraview.size.SizeSelector;
-
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;

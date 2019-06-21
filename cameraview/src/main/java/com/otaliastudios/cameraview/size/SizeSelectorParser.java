@@ -1,18 +1,8 @@
 package com.otaliastudios.cameraview.size;
 
-import android.content.Context;
 import android.content.res.TypedArray;
 
 import com.otaliastudios.cameraview.R;
-import com.otaliastudios.cameraview.controls.Audio;
-import com.otaliastudios.cameraview.controls.Facing;
-import com.otaliastudios.cameraview.controls.Flash;
-import com.otaliastudios.cameraview.controls.Grid;
-import com.otaliastudios.cameraview.controls.Hdr;
-import com.otaliastudios.cameraview.controls.Mode;
-import com.otaliastudios.cameraview.controls.Preview;
-import com.otaliastudios.cameraview.controls.VideoCodec;
-import com.otaliastudios.cameraview.controls.WhiteBalance;
 
 import java.util.ArrayList;
 import java.util.List;
