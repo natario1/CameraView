@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * Utility class that can log traces and info.
  */
+@SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
 public final class CameraLogger {
 
     public final static int LEVEL_VERBOSE = 0;

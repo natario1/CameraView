@@ -46,7 +46,7 @@ import java.util.List;
 
 
 @SuppressWarnings("deprecation")
-class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Camera.ErrorCallback,
+public class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Camera.ErrorCallback,
         VideoRecorder.VideoResultListener,
         PictureRecorder.PictureResultListener {
 
@@ -71,7 +71,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
         }
     };
 
-    Camera1Engine(@NonNull Callback callback) {
+    public Camera1Engine(@NonNull Callback callback) {
         super(callback);
         mMapper = Mapper.get();
     }
@@ -376,7 +376,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void setMode(@NonNull Mode mode) {
+    public void setMode(@NonNull Mode mode) {
         if (mode != mMode) {
             mMode = mode;
             schedule(null, true, new Runnable() {
@@ -389,7 +389,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void setLocation(@Nullable Location location) {
+    public void setLocation(@Nullable Location location) {
         final Location oldLocation = mLocation;
         mLocation = location;
         schedule(mLocationTask, true, new Runnable() {
@@ -414,7 +414,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void setFacing(@NonNull Facing facing) {
+    public void setFacing(@NonNull Facing facing) {
         final Facing old = mFacing;
         if (facing != old) {
             mFacing = facing;
@@ -432,7 +432,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
+    public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
         final WhiteBalance old = mWhiteBalance;
         mWhiteBalance = whiteBalance;
         schedule(mWhiteBalanceTask, true, new Runnable() {
@@ -454,7 +454,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void setHdr(@NonNull Hdr hdr) {
+    public void setHdr(@NonNull Hdr hdr) {
         final Hdr old = mHdr;
         mHdr = hdr;
         schedule(mHdrTask, true, new Runnable() {
@@ -475,6 +475,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
         return false;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     @TargetApi(17)
     private boolean applyPlaySounds(boolean oldPlaySound) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -498,7 +499,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
 
 
     @Override
-    void setAudio(@NonNull Audio audio) {
+    public void setAudio(@NonNull Audio audio) {
         if (mAudio != audio) {
             if (isTakingVideo()) {
                 LOG.w("Audio setting was changed while recording. " +
@@ -509,7 +510,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void setFlash(@NonNull Flash flash) {
+    public void setFlash(@NonNull Flash flash) {
         final Flash old = mFlash;
         mFlash = flash;
         schedule(mFlashTask, true, new Runnable() {
@@ -581,7 +582,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void takePicture(final @NonNull PictureResult.Stub stub) {
+    public void takePicture(final @NonNull PictureResult.Stub stub) {
         LOG.v("takePicture: scheduling");
         schedule(null, true, new Runnable() {
             @Override
@@ -610,7 +611,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
      * @param viewAspectRatio the view aspect ratio
      */
     @Override
-    void takePictureSnapshot(final @NonNull PictureResult.Stub stub, @NonNull final AspectRatio viewAspectRatio) {
+    public void takePictureSnapshot(final @NonNull PictureResult.Stub stub, @NonNull final AspectRatio viewAspectRatio) {
         LOG.v("takePictureSnapshot: scheduling");
         schedule(null, true, new Runnable() {
             @Override
@@ -685,7 +686,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void takeVideo(final @NonNull VideoResult.Stub stub, @NonNull final File videoFile) {
+    public void takeVideo(final @NonNull VideoResult.Stub stub, @NonNull final File videoFile) {
         schedule(mStartVideoTask, true, new Runnable() {
             @Override
             public void run() {
@@ -731,7 +732,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
      */
     @SuppressLint("NewApi")
     @Override
-    void takeVideoSnapshot(final @NonNull VideoResult.Stub stub, @NonNull final File file, @NonNull final AspectRatio viewAspectRatio) {
+    public void takeVideoSnapshot(final @NonNull VideoResult.Stub stub, @NonNull final File file, @NonNull final AspectRatio viewAspectRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
@@ -815,7 +816,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void stopVideo() {
+    public void stopVideo() {
         schedule(null, false, new Runnable() {
             @Override
             public void run() {
@@ -833,7 +834,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
 
 
     @Override
-    void setZoom(final float zoom, @Nullable final PointF[] points, final boolean notify) {
+    public void setZoom(final float zoom, @Nullable final PointF[] points, final boolean notify) {
         schedule(mZoomTask, true, new Runnable() {
             @Override
             public void run() {
@@ -853,7 +854,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void setExposureCorrection(final float EVvalue, @NonNull final float[] bounds,
+    public void setExposureCorrection(final float EVvalue, @NonNull final float[] bounds,
                                @Nullable final PointF[] points, final boolean notify) {
         schedule(mExposureCorrectionTask, true, new Runnable() {
             @Override
@@ -882,7 +883,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
 
 
     @Override
-    void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
+    public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
         // Must get width and height from the UI thread.
         int viewWidth = 0, viewHeight = 0;
         if (mPreview != null && mPreview.hasSurface()) {
@@ -992,7 +993,7 @@ class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Came
     }
 
     @Override
-    void setPlaySounds(boolean playSounds) {
+    public void setPlaySounds(boolean playSounds) {
         final boolean old = mPlaySounds;
         mPlaySounds = playSounds;
         schedule(mPlaySoundsTask, true, new Runnable() {

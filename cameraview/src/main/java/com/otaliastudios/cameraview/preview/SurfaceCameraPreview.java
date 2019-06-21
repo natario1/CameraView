@@ -16,14 +16,14 @@ import com.otaliastudios.cameraview.R;
 // Currently this does NOT support cropping (e. g. the crop inside behavior),
 // so we return false in supportsCropping() in order to have proper measuring.
 // This means that CameraView is forced to be wrap_content.
-class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHolder> {
+public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHolder> {
 
     private final static CameraLogger LOG = CameraLogger.create(SurfaceCameraPreview.class.getSimpleName());
 
     private boolean mDispatched;
     private View mRootView;
 
-    SurfaceCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
+    public SurfaceCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         super(context, parent, callback);
     }
 

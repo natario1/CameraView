@@ -67,8 +67,9 @@ public class CameraViewTest extends BaseTest {
                         return mockController;
                     }
 
+                    @NonNull
                     @Override
-                    protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
+                    protected CameraPreview instantiatePreview(@NonNull Context context, @NonNull ViewGroup container) {
                         mockPreview = spy(new MockCameraPreview(context, container));
                         return mockPreview;
                     }

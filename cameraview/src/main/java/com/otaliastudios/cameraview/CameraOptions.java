@@ -1,16 +1,13 @@
 package com.otaliastudios.cameraview;
 
 
-import android.annotation.TargetApi;
 import android.hardware.Camera;
-import android.hardware.camera2.CameraCharacteristics;
 
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.engine.Mapper;
-import com.otaliastudios.cameraview.engine.Mapper1;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -54,7 +51,7 @@ public class CameraOptions {
     @SuppressWarnings("deprecation")
     public CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
-        Mapper mapper = new Mapper1();
+        Mapper mapper = Mapper.get();
 
         // Facing
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
@@ -132,12 +129,6 @@ public class CameraOptions {
             }
         }
     }
-
-
-    // Camera2 constructor.
-    @TargetApi(21)
-    CameraOptions(@NonNull CameraCharacteristics params) {}
-
 
     /**
      * Shorthand for getSupported*().contains(value).

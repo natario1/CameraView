@@ -70,7 +70,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
 
     private View mRootView;
 
-    GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
+    public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         super(context, parent, callback);
     }
 

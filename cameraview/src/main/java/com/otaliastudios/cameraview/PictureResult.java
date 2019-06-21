@@ -15,8 +15,12 @@ import androidx.annotation.Nullable;
  * Wraps the picture captured by {@link CameraView#takePicture()} or
  * {@link CameraView#takePictureSnapshot()}.
  */
+@SuppressWarnings("unused")
 public class PictureResult {
 
+    /**
+     * A result stub, for internal use only.
+     */
     public static class Stub {
 
         Stub() {}

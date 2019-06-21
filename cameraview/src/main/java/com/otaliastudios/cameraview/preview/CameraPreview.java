@@ -162,7 +162,7 @@ public abstract class CameraPreview<T extends View, Output> {
         mCropTask.end(null);
     }
 
-    boolean supportsCropping() {
+    public boolean supportsCropping() {
         return false;
     }
 

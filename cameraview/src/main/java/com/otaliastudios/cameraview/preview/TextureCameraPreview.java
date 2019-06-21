@@ -14,11 +14,11 @@ import com.otaliastudios.cameraview.R;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
-class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
+public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
     private View mRootView;
 
-    TextureCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
+    public TextureCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         super(context, parent, callback);
     }
 

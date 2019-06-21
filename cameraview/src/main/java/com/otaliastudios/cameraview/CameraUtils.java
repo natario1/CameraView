@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -9,7 +10,7 @@ import android.hardware.Camera;
 import android.os.Handler;
 
 import com.otaliastudios.cameraview.controls.Facing;
-import com.otaliastudios.cameraview.engine.Mapper1;
+import com.otaliastudios.cameraview.engine.Mapper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
 import androidx.annotation.NonNull;
@@ -28,6 +29,7 @@ import java.io.OutputStream;
 /**
  * Static utilities for dealing with camera I/O, orientations, etc.
  */
+@SuppressWarnings("unused")
 public class CameraUtils {
 
 
@@ -55,8 +57,9 @@ public class CameraUtils {
      * @param facing either {@link Facing#BACK} or {@link Facing#FRONT}
      * @return true if such sensor exists
      */
-    public static boolean hasCameraFacing(@NonNull Context context, @NonNull Facing facing) {
-        int internal = new Mapper1().map(facing);
+    public static boolean hasCameraFacing(@SuppressWarnings("unused") @NonNull Context context,
+                                          @NonNull Facing facing) {
+        int internal = Mapper.get().map(facing);
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
@@ -80,6 +83,7 @@ public class CameraUtils {
     @SuppressWarnings("WeakerAccess")
     @Nullable
     @WorkerThread
+    @SuppressLint("NewApi")
     public static File writeToFile(@NonNull final byte[] data, @NonNull File file) {
         if (file.exists() && !file.delete()) return null;
         try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(file))) {
@@ -213,6 +217,7 @@ public class CameraUtils {
      * @param maxWidth the max allowed width
      * @param maxHeight the max allowed height
      */
+    @SuppressWarnings("SameParameterValue")
     static Bitmap decodeBitmap(@NonNull byte[] source, int maxWidth, int maxHeight) {
         return decodeBitmap(source, maxWidth, maxHeight, new BitmapFactory.Options());
     }
@@ -237,10 +242,11 @@ public class CameraUtils {
         return decodeBitmap(source, maxWidth, maxHeight, options, -1);
     }
 
-    // Null: got OOM
-    // TODO ignores flipping. but it should be super rare.
+    // Null means we got OOM
+    // Ignores flipping, but it should be super rare.
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
     @Nullable
-    static Bitmap decodeBitmap(@NonNull byte[] source, int maxWidth, int maxHeight, @NonNull BitmapFactory.Options options, int rotation) {
+    private static Bitmap decodeBitmap(@NonNull byte[] source, int maxWidth, int maxHeight, @NonNull BitmapFactory.Options options, int rotation) {
         if (maxWidth <= 0) maxWidth = Integer.MAX_VALUE;
         if (maxHeight <= 0) maxHeight = Integer.MAX_VALUE;
         int orientation;
@@ -309,7 +315,7 @@ public class CameraUtils {
         return bitmap;
     }
 
-    static int readExifOrientation(int exifOrientation) {
+    private static int readExifOrientation(int exifOrientation) {
         int orientation;
         switch (exifOrientation) {
             case ExifInterface.ORIENTATION_NORMAL:

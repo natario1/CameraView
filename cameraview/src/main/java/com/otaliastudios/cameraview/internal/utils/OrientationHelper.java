@@ -90,7 +90,7 @@ public class OrientationHelper {
      * Returns the current device orientation.
      * @return device orientation
      */
-    int getDeviceOrientation() {
+    public int getDeviceOrientation() {
         return mDeviceOrientation;
     }
 
@@ -98,7 +98,7 @@ public class OrientationHelper {
      * Returns the current display offset.
      * @return display offset
      */
-    int getDisplayOffset() {
+    public int getDisplayOffset() {
         return mDisplayOffset;
     }
 }

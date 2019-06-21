@@ -1,7 +1,5 @@
 package com.otaliastudios.cameraview;
 
-import android.graphics.Bitmap;
-
 import java.io.File;
 
 import androidx.annotation.Nullable;

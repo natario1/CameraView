@@ -52,8 +52,8 @@ public abstract class CameraEngine implements
         void dispatchOnCameraClosed();
         void onCameraPreviewStreamSizeChanged();
         void onShutter(boolean shouldPlaySound);
-        void dispatchOnVideoTaken(VideoResult.Stub result);
-        void dispatchOnPictureTaken(PictureResult.Stub result);
+        void dispatchOnVideoTaken(VideoResult.Stub stub);
+        void dispatchOnPictureTaken(PictureResult.Stub stub);
         void dispatchOnFocusStart(@Nullable Gesture trigger, @NonNull PointF where);
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, @NonNull PointF where);
         void dispatchOnZoomChanged(final float newValue, @Nullable final PointF[] fingers);
@@ -66,13 +66,13 @@ public abstract class CameraEngine implements
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     static final int STATE_STOPPING = -1; // Camera is about to be stopped.
-    static final int STATE_STOPPED = 0; // Camera is stopped.
+    public static final int STATE_STOPPED = 0; // Camera is stopped.
     static final int STATE_STARTING = 1; // Camera is about to start.
-    static final int STATE_STARTED = 2; // Camera is available and we can set parameters.
+    public static final int STATE_STARTED = 2; // Camera is available and we can set parameters.
 
-    static final int REF_SENSOR = 0;
-    static final int REF_VIEW = 1;
-    static final int REF_OUTPUT = 2;
+    public static final int REF_SENSOR = 0;
+    public static final int REF_VIEW = 1;
+    public static final int REF_OUTPUT = 2;
 
     protected final Callback mCallback;
     protected CameraPreview mPreview;
@@ -137,7 +137,7 @@ public abstract class CameraEngine implements
         mFrameManager = new FrameManager(2, this);
     }
 
-    void setPreview(@NonNull CameraPreview cameraPreview) {
+    public void setPreview(@NonNull CameraPreview cameraPreview) {
         mPreview = cameraPreview;
         mPreview.setSurfaceCallback(this);
     }
@@ -217,7 +217,7 @@ public abstract class CameraEngine implements
     }
 
     // Starts the preview asynchronously.
-    final void start() {
+    public final void start() {
         LOG.i("Start:", "posting runnable. State:", ss());
         mHandler.post(new Runnable() {
             @Override
@@ -307,7 +307,7 @@ public abstract class CameraEngine implements
     abstract void onStop();
 
     // Returns current state.
-    final int getState() {
+    public final int getState() {
         return mState;
     }
 
@@ -316,198 +316,204 @@ public abstract class CameraEngine implements
     //region Simple setters
 
     // This is called before start() and never again.
-    final void setDisplayOffset(int displayOffset) {
+    public final void setDisplayOffset(int displayOffset) {
         mDisplayOffset = displayOffset;
     }
 
     // This can be called multiple times.
-    final void setDeviceOrientation(int deviceOrientation) {
+    public final void setDeviceOrientation(int deviceOrientation) {
         mDeviceOrientation = deviceOrientation;
     }
 
-    final void setPreviewStreamSizeSelector(@Nullable SizeSelector selector) {
+    public final void setPreviewStreamSizeSelector(@Nullable SizeSelector selector) {
         mPreviewStreamSizeSelector = selector;
     }
 
-    final void setPictureSizeSelector(@NonNull SizeSelector selector) {
+    public final void setPictureSizeSelector(@NonNull SizeSelector selector) {
         mPictureSizeSelector = selector;
     }
 
-    final void setVideoSizeSelector(@NonNull SizeSelector selector) {
+    public final void setVideoSizeSelector(@NonNull SizeSelector selector) {
         mVideoSizeSelector = selector;
     }
 
-    final void setVideoMaxSize(long videoMaxSizeBytes) {
+    public final void setVideoMaxSize(long videoMaxSizeBytes) {
         mVideoMaxSize = videoMaxSizeBytes;
     }
 
-    final void setVideoMaxDuration(int videoMaxDurationMillis) {
+    public final void setVideoMaxDuration(int videoMaxDurationMillis) {
         mVideoMaxDuration = videoMaxDurationMillis;
     }
 
-    final void setVideoCodec(@NonNull VideoCodec codec) {
+    public final void setVideoCodec(@NonNull VideoCodec codec) {
         mVideoCodec = codec;
     }
 
-    final void setVideoBitRate(int videoBitRate) {
+    public final void setVideoBitRate(int videoBitRate) {
         mVideoBitRate = videoBitRate;
     }
 
-    final void setAudioBitRate(int audioBitRate) {
+    public final void setAudioBitRate(int audioBitRate) {
         mAudioBitRate = audioBitRate;
     }
 
-    final void setSnapshotMaxWidth(int maxWidth) {
+    public final void setSnapshotMaxWidth(int maxWidth) {
         mSnapshotMaxWidth = maxWidth;
     }
 
-    final void setSnapshotMaxHeight(int maxHeight) {
+    public final void setSnapshotMaxHeight(int maxHeight) {
         mSnapshotMaxHeight = maxHeight;
     }
 
-    final void setAutoFocusResetDelay(long delayMillis) { mAutoFocusResetDelayMillis = delayMillis; }
+    public final void setAutoFocusResetDelay(long delayMillis) { mAutoFocusResetDelayMillis = delayMillis; }
 
     //endregion
 
     //region Abstract setters and APIs
 
     // Should restart the session if active.
-    abstract void setMode(@NonNull Mode mode);
+    public abstract void setMode(@NonNull Mode mode);
 
     // Should restart the session if active.
-    abstract void setFacing(@NonNull Facing facing);
+    public abstract void setFacing(@NonNull Facing facing);
 
     // If closed, no-op. If opened, check supported and apply.
-    abstract void setZoom(float zoom, @Nullable PointF[] points, boolean notify);
+    public abstract void setZoom(float zoom, @Nullable PointF[] points, boolean notify);
 
     // If closed, no-op. If opened, check supported and apply.
-    abstract void setExposureCorrection(float EVvalue, @NonNull float[] bounds, @Nullable PointF[] points, boolean notify);
+    public abstract void setExposureCorrection(float EVvalue, @NonNull float[] bounds, @Nullable PointF[] points, boolean notify);
 
     // If closed, keep. If opened, check supported and apply.
-    abstract void setFlash(@NonNull Flash flash);
+    public abstract void setFlash(@NonNull Flash flash);
 
     // If closed, keep. If opened, check supported and apply.
-    abstract void setWhiteBalance(@NonNull WhiteBalance whiteBalance);
+    public abstract void setWhiteBalance(@NonNull WhiteBalance whiteBalance);
 
     // If closed, keep. If opened, check supported and apply.
-    abstract void setHdr(@NonNull Hdr hdr);
+    public abstract void setHdr(@NonNull Hdr hdr);
 
     // If closed, keep. If opened, check supported and apply.
-    abstract void setLocation(@Nullable Location location);
+    public abstract void setLocation(@Nullable Location location);
 
     // Just set.
-    abstract void setAudio(@NonNull Audio audio);
+    public abstract void setAudio(@NonNull Audio audio);
 
-    abstract void takePicture(@NonNull PictureResult.Stub stub);
+    public abstract void takePicture(@NonNull PictureResult.Stub stub);
 
-    abstract void takePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio);
+    public abstract void takePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio);
 
-    abstract void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file);
+    public abstract void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file);
 
-    abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio);
+    public abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio);
 
-    abstract void stopVideo();
+    public abstract void stopVideo();
 
-    abstract void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point);
+    public abstract void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point);
 
-    abstract void setPlaySounds(boolean playSounds);
+    public abstract void setPlaySounds(boolean playSounds);
 
     //endregion
 
     //region final getters
 
     @Nullable
-    final CameraOptions getCameraOptions() {
+    public final CameraOptions getCameraOptions() {
         return mCameraOptions;
     }
 
     @NonNull
-    final Facing getFacing() {
+    public final Facing getFacing() {
         return mFacing;
     }
 
     @NonNull
-    final Flash getFlash() {
+    public final Flash getFlash() {
         return mFlash;
     }
 
     @NonNull
-    final WhiteBalance getWhiteBalance() {
+    public final WhiteBalance getWhiteBalance() {
         return mWhiteBalance;
     }
 
-    final VideoCodec getVideoCodec() {
+    public final VideoCodec getVideoCodec() {
         return mVideoCodec;
     }
 
-    final int getVideoBitRate() {
+    public final int getVideoBitRate() {
         return mVideoBitRate;
     }
 
-    final long getVideoMaxSize() {
+    public final long getVideoMaxSize() {
         return mVideoMaxSize;
     }
 
-    final int getVideoMaxDuration() {
+    public final int getVideoMaxDuration() {
         return mVideoMaxDuration;
     }
 
     @NonNull
-    final Mode getMode() {
+    public final Mode getMode() {
         return mMode;
     }
 
     @NonNull
-    final Hdr getHdr() {
+    public final Hdr getHdr() {
         return mHdr;
     }
 
     @Nullable
-    final Location getLocation() {
+    public final Location getLocation() {
         return mLocation;
     }
 
     @NonNull
-    final Audio getAudio() {
+    public final Audio getAudio() {
         return mAudio;
     }
 
-    final int getAudioBitRate() {
+    public final int getAudioBitRate() {
         return mAudioBitRate;
     }
 
+    @SuppressWarnings("unused")
     @Nullable
-    /* for tests */ final SizeSelector getPreviewStreamSizeSelector() {
+    @VisibleForTesting
+    final SizeSelector getPreviewStreamSizeSelector() {
         return mPreviewStreamSizeSelector;
     }
 
+    @SuppressWarnings("unused")
     @NonNull
-    /* for tests */ final SizeSelector getPictureSizeSelector() {
+    @VisibleForTesting
+    final SizeSelector getPictureSizeSelector() {
         return mPictureSizeSelector;
     }
 
+    @SuppressWarnings("unused")
     @NonNull
-    /* for tests */ final SizeSelector getVideoSizeSelector() {
+    @VisibleForTesting
+    final SizeSelector getVideoSizeSelector() {
         return mVideoSizeSelector;
     }
 
-    final float getZoomValue() {
+    public final float getZoomValue() {
         return mZoomValue;
     }
 
-    final float getExposureCorrectionValue() {
+    public final float getExposureCorrectionValue() {
         return mExposureCorrectionValue;
     }
 
-    final boolean isTakingVideo() {
+    public final boolean isTakingVideo() {
         return mVideoRecorder != null;
     }
 
-    final boolean isTakingPicture() {
+    public final boolean isTakingPicture() {
         return mPictureRecorder != null;
     }
 
-    final long getAutoFocusResetDelay() { return mAutoFocusResetDelayMillis; }
+    public final long getAutoFocusResetDelay() { return mAutoFocusResetDelayMillis; }
 
     final boolean shouldResetAutoFocus() {
         return mAutoFocusResetDelayMillis > 0 && mAutoFocusResetDelayMillis != Long.MAX_VALUE;
@@ -551,24 +557,24 @@ public abstract class CameraEngine implements
         return (offset(REF_SENSOR, toReference) - offset(REF_SENSOR, fromReference) + 360) % 360;
     }
 
-    final boolean flip(int reference1, int reference2) {
+    public final boolean flip(int reference1, int reference2) {
         return offset(reference1, reference2) % 180 != 0;
     }
 
     @Nullable
-    final Size getPictureSize(@SuppressWarnings("SameParameterValue") int reference) {
+    public final Size getPictureSize(@SuppressWarnings("SameParameterValue") int reference) {
         if (mCaptureSize == null || mMode == Mode.VIDEO) return null;
         return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
     @Nullable
-    final Size getVideoSize(@SuppressWarnings("SameParameterValue") int reference) {
+    public final Size getVideoSize(@SuppressWarnings("SameParameterValue") int reference) {
         if (mCaptureSize == null || mMode == Mode.PICTURE) return null;
         return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
     @Nullable
-    final Size getPreviewStreamSize(int reference) {
+    public final Size getPreviewStreamSize(int reference) {
         if (mPreviewStreamSize == null) return null;
         return flip(REF_SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
     }
@@ -601,7 +607,7 @@ public abstract class CameraEngine implements
      * apply, despite the capturing mechanism being different.
      */
     @Nullable
-    final Size getUncroppedSnapshotSize(int reference) {
+    public final Size getUncroppedSnapshotSize(int reference) {
         Size baseSize = getPreviewStreamSize(reference);
         if (baseSize == null) return null;
         boolean flip = flip(reference, REF_VIEW);
@@ -679,6 +685,7 @@ public abstract class CameraEngine implements
         // Create our own default selector, which will be used if the external mPreviewStreamSizeSelector
         // is null, or if it fails in finding a size.
         Size targetMinSize = getPreviewSurfaceSize(REF_VIEW);
+        if (targetMinSize == null) throw new IllegalStateException("targetMinSize should not be null here.");
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         if (flip) targetRatio = targetRatio.flip();
         LOG.i("size:", "computePreviewStreamSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);

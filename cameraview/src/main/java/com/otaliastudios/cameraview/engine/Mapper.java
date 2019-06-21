@@ -17,18 +17,35 @@ public abstract class Mapper {
 
     private Mapper() {}
 
-    abstract <T> T map(Flash flash);
-    abstract <T> T map(Facing facing);
-    abstract <T> T map(WhiteBalance whiteBalance);
-    abstract <T> T map(Hdr hdr);
-    abstract <T> Flash unmapFlash(T cameraConstant);
-    abstract <T> Facing unmapFacing(T cameraConstant);
-    abstract <T> WhiteBalance unmapWhiteBalance(T cameraConstant);
-    abstract <T> Hdr unmapHdr(T cameraConstant);
+    public abstract <T> T map(Flash flash);
+
+    public abstract <T> T map(Facing facing);
+
+    public abstract <T> T map(WhiteBalance whiteBalance);
+
+    public abstract <T> T map(Hdr hdr);
+
+    public abstract <T> Flash unmapFlash(T cameraConstant);
+
+    public abstract <T> Facing unmapFacing(T cameraConstant);
+
+    public abstract <T> WhiteBalance unmapWhiteBalance(T cameraConstant);
+
+    public abstract <T> Hdr unmapHdr(T cameraConstant);
+
+    @SuppressWarnings("WeakerAccess")
+    protected <T> T reverseLookup(HashMap<T, ?> map, Object object) {
+        for (T value : map.keySet()) {
+            if (object.equals(map.get(value))) {
+                return value;
+            }
+        }
+        return null;
+    }
 
     private static Mapper CAMERA1;
 
-    static Mapper get() {
+    public static Mapper get() {
         if (CAMERA1 == null) {
             CAMERA1 = new Camera1Mapper();
         }
@@ -64,51 +81,42 @@ public abstract class Mapper {
         }
 
         @Override
-        <T> T map(Flash flash) {
+        public <T> T map(Flash flash) {
             return (T) FLASH.get(flash);
         }
 
         @Override
-        <T> T map(Facing facing) {
+        public <T> T map(Facing facing) {
             return (T) FACING.get(facing);
         }
 
         @Override
-        <T> T map(WhiteBalance whiteBalance) {
+        public <T> T map(WhiteBalance whiteBalance) {
             return (T) WB.get(whiteBalance);
         }
 
         @Override
-        <T> T map(Hdr hdr) {
+        public <T> T map(Hdr hdr) {
             return (T) HDR.get(hdr);
         }
 
-        private <T> T reverseLookup(HashMap<T, ?> map, Object object) {
-            for (T value : map.keySet()) {
-                if (object.equals(map.get(value))) {
-                    return value;
-                }
-            }
-            return null;
-        }
-
         @Override
-        <T> Flash unmapFlash(T cameraConstant) {
+        public <T> Flash unmapFlash(T cameraConstant) {
             return reverseLookup(FLASH, cameraConstant);
         }
 
         @Override
-        <T> Facing unmapFacing(T cameraConstant) {
+        public <T> Facing unmapFacing(T cameraConstant) {
             return reverseLookup(FACING, cameraConstant);
         }
 
         @Override
-        <T> WhiteBalance unmapWhiteBalance(T cameraConstant) {
+        public <T> WhiteBalance unmapWhiteBalance(T cameraConstant) {
             return reverseLookup(WB, cameraConstant);
         }
 
         @Override
-        <T> Hdr unmapHdr(T cameraConstant) {
+        public <T> Hdr unmapHdr(T cameraConstant) {
             return reverseLookup(HDR, cameraConstant);
         }
     }

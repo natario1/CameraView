@@ -4,6 +4,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+
+import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
@@ -76,7 +78,10 @@ import static android.view.View.MeasureSpec.UNSPECIFIED;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
-
+/**
+ * Entry point for the whole library.
+ * Please read documentation for usage and full set of features.
+ */
 public class CameraView extends FrameLayout implements LifecycleObserver {
 
     private final static String TAG = CameraView.class.getSimpleName();
@@ -93,13 +98,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private Preview mPreview;
 
     // Components
-    /* for tests */ CameraCallbacks mCameraCallbacks;
+    @VisibleForTesting CameraCallbacks mCameraCallbacks;
     private CameraPreview mCameraPreview;
     private OrientationHelper mOrientationHelper;
     private CameraEngine mCameraEngine;
     private MediaActionSound mSound;
-    /* for tests */ List<CameraListener> mListeners = new CopyOnWriteArrayList<>();
-    /* for tests */ List<FrameProcessor> mFrameProcessors = new CopyOnWriteArrayList<>();
+    @VisibleForTesting List<CameraListener> mListeners = new CopyOnWriteArrayList<>();
+    @VisibleForTesting List<FrameProcessor> mFrameProcessors = new CopyOnWriteArrayList<>();
     private Lifecycle mLifecycle;
 
     // Views
@@ -108,6 +113,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     TapGestureLayout mTapGestureLayout;
     ScrollGestureLayout mScrollGestureLayout;
     private boolean mKeepScreenOn;
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private boolean mExperimental;
 
     // Threading
@@ -138,15 +144,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mPreview = controls.getPreview();
 
         // Camera controller params
-        Facing facing = Facing.fromValue(a.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT(context).value()));
-        Flash flash = Flash.fromValue(a.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value()));
-        Grid grid = Grid.fromValue(a.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value()));
         int gridColor = a.getColor(R.styleable.CameraView_cameraGridColor, GridLinesLayout.DEFAULT_COLOR);
-        WhiteBalance whiteBalance = WhiteBalance.fromValue(a.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value()));
-        Mode mode = Mode.fromValue(a.getInteger(R.styleable.CameraView_cameraMode, Mode.DEFAULT.value()));
-        Hdr hdr = Hdr.fromValue(a.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value()));
-        Audio audio = Audio.fromValue(a.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value()));
-        VideoCodec codec = VideoCodec.fromValue(a.getInteger(R.styleable.CameraView_cameraVideoCodec, VideoCodec.DEFAULT.value()));
         long videoMaxSize = (long) a.getFloat(R.styleable.CameraView_cameraVideoMaxSize, 0);
         int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
         int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
@@ -160,7 +158,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         a.recycle();
 
         // Components
-        mCameraCallbacks = new Callbacks();
+        mCameraCallbacks = new CameraCallbacks();
         mCameraEngine = instantiateCameraController(mCameraCallbacks);
         mUiHandler = new Handler(Looper.getMainLooper());
         mFrameProcessorsHandler = WorkerHandler.get("FrameProcessorsWorker");
@@ -208,11 +206,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
-    protected CameraEngine instantiateCameraController(CameraCallbacks callbacks) {
-        return new Camera1Engine(callbacks);
+    /**
+     * Instantiates the camera engine.
+     * @param callback the engine callback
+     * @return the engine
+     */
+    @NonNull
+    protected CameraEngine instantiateCameraController(@NonNull CameraEngine.Callback callback) {
+        return new Camera1Engine(callback);
     }
 
-    protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
+    /**
+     * Instantiates the camera preview.
+     * @param context a context
+     * @param container the container
+     * @return the preview
+     */
+    @NonNull
+    protected CameraPreview instantiatePreview(@NonNull Context context, @NonNull ViewGroup container) {
         LOG.w("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
         switch (mPreview) {
             case SURFACE:
@@ -230,7 +241,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
-    /* for tests */ void instantiatePreview() {
+    @VisibleForTesting
+    void instantiatePreview() {
         mCameraPreview = instantiatePreview(getContext(), this);
         mCameraEngine.setPreview(mCameraPreview);
     }
@@ -471,6 +483,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @NonNull
     public GestureAction getGestureAction(@NonNull Gesture gesture) {
+        //noinspection ConstantConditions
         return mGestureMap.get(gesture);
     }
 
@@ -481,12 +494,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (!isOpened()) return true;
 
         // Pass to our own GestureLayouts
         CameraOptions options = mCameraEngine.getCameraOptions(); // Non null
+        if (options == null) throw new IllegalStateException("Options should not be null here.");
         if (mPinchGestureLayout.onTouchEvent(event)) {
             LOG.i("onTouchEvent", "pinch!");
             onGesture(mPinchGestureLayout, options);
@@ -509,10 +524,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         GestureAction action = mGestureMap.get(gesture);
         PointF[] points = source.getPoints();
         float oldValue, newValue;
+        //noinspection ConstantConditions
         switch (action) {
 
             case CAPTURE:
-                mCameraEngine.takePicture();
+                takePicture();
                 break;
 
             case FOCUS:
@@ -629,9 +645,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                         return;
                     }
                 }
-                LOG.e("Permission error:", "When audio is enabled (Audio.ON),",
+                String message = LOG.e("Permission error:", "When audio is enabled (Audio.ON),",
                         "the RECORD_AUDIO permission should be added to the app manifest file.");
-                throw new IllegalStateException(CameraLogger.lastMessage);
+                throw new IllegalStateException(message);
             } catch (PackageManager.NameNotFoundException e) {
                 // Not possible.
             }
@@ -1040,6 +1056,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Returns the current delay in milliseconds to reset the focus after an autofocus process.
      * @return the current autofocus reset delay in milliseconds.
      */
+    @SuppressWarnings("unused")
     public long getAutoFocusResetDelay() { return mCameraEngine.getAutoFocusResetDelay(); }
 
 
@@ -1141,6 +1158,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Returns the current video bit rate.
      * @return current bit rate
      */
+    @SuppressWarnings("unused")
     public int getVideoBitRate() {
         return mCameraEngine.getVideoBitRate();
     }
@@ -1159,6 +1177,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Returns the current audio bit rate.
      * @return current bit rate
      */
+    @SuppressWarnings("unused")
     public int getAudioBitRate() {
         return mCameraEngine.getAudioBitRate();
     }
@@ -1422,6 +1441,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // Get the preview size and crop according to the current view size.
         // It's better to do calculations in the REF_VIEW reference, and then flip if needed.
         Size preview = mCameraEngine.getUncroppedSnapshotSize(CameraEngine.REF_VIEW);
+        if (preview == null) return null; // Should never happen.
         AspectRatio viewRatio = AspectRatio.of(getWidth(), getHeight());
         Rect crop = CropHelper.computeCrop(preview, viewRatio);
         Size cropSize = new Size(crop.width(), crop.height());
@@ -1479,7 +1499,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (requestCamera) permissions.add(Manifest.permission.CAMERA);
         if (requestAudio) permissions.add(Manifest.permission.RECORD_AUDIO);
         if (activity != null) {
-            activity.requestPermissions(permissions.toArray(new String[permissions.size()]),
+            activity.requestPermissions(permissions.toArray(new String[0]),
                     PERMISSION_REQUEST_CODE);
         }
     }
@@ -1614,11 +1634,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     //region Callbacks and dispatching
 
 
-    private class Callbacks implements CameraCallbacks {
+    private class CameraCallbacks implements CameraEngine.Callback, OrientationHelper.Callback {
 
         private CameraLogger mLogger = CameraLogger.create(CameraCallbacks.class.getSimpleName());
-
-        Callbacks() {}
 
         @Override
         public void dispatchOnCameraOpened(final CameraOptions options) {
@@ -1670,11 +1688,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void dispatchOnPictureTaken(final PictureResult result) {
-            mLogger.i("dispatchOnPictureTaken");
+        public void dispatchOnPictureTaken(final PictureResult.Stub stub) {
+            mLogger.i("dispatchOnPictureTaken", stub);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    PictureResult result = new PictureResult(stub);
                     for (CameraListener listener : mListeners) {
                         listener.onPictureTaken(result);
                     }
@@ -1683,13 +1702,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void dispatchOnVideoTaken(final VideoResult video) {
-            mLogger.i("dispatchOnVideoTaken", video);
+        public void dispatchOnVideoTaken(final VideoResult.Stub stub) {
+            mLogger.i("dispatchOnVideoTaken", stub);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    VideoResult result = new VideoResult(stub);
                     for (CameraListener listener : mListeners) {
-                        listener.onVideoTaken(video);
+                        listener.onVideoTaken(result);
                     }
                 }
             });
@@ -1811,10 +1831,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             });
         }
     }
-
-    //endregion
-
-    //region deprecated APIs
 
     //endregion
 }

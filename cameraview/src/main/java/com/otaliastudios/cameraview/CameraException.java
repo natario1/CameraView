@@ -53,6 +53,7 @@ public class CameraException extends RuntimeException {
 
     private int reason = REASON_UNKNOWN;
 
+    @SuppressWarnings("WeakerAccess")
     public CameraException(Throwable cause) {
         super(cause);
     }
@@ -78,6 +79,7 @@ public class CameraException extends RuntimeException {
      *
      * @return true if this error is unrecoverable
      */
+    @SuppressWarnings("unused")
     public boolean isUnrecoverable() {
         switch (getReason()) {
             case REASON_FAILED_TO_CONNECT: return true;

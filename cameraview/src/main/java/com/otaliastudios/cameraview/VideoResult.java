@@ -15,8 +15,12 @@ import java.io.File;
 /**
  * Wraps the result of a video recording started by {@link CameraView#takeVideo(File)}.
  */
+@SuppressWarnings("WeakerAccess")
 public class VideoResult {
 
+    /**
+     * A result stub, for internal use only.
+     */
     public static class Stub {
 
         Stub() {}
