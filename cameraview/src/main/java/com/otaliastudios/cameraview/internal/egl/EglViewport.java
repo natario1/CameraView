@@ -11,7 +11,7 @@ import java.nio.FloatBuffer;
 /**
  * This is a mix of 3 grafika classes, FullFrameRect, Texture2dProgram, Drawable2d.
  */
-class EglViewport extends EglElement {
+public class EglViewport extends EglElement {
 
     private final static CameraLogger LOG = CameraLogger.create(EglViewport.class.getSimpleName());
 
@@ -74,7 +74,7 @@ class EglViewport extends EglElement {
     // private int muTexOffsetLoc; // Used for filtering
     // private int muColorAdjustLoc; // Used for filtering
 
-    EglViewport() {
+    public EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
         mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
@@ -90,16 +90,16 @@ class EglViewport extends EglElement {
 
     }
 
-    void release(boolean doEglCleanup) {
+    public void release(boolean doEglCleanup) {
         if (doEglCleanup) GLES20.glDeleteProgram(mProgramHandle);
         mProgramHandle = -1;
     }
 
-    void release() {
+    public void release() {
         release(true);
     }
 
-    int createTexture() {
+    public int createTexture() {
         int[] textures = new int[1];
         GLES20.glGenTextures(1, textures, 0);
         check("glGenTextures");
@@ -117,7 +117,7 @@ class EglViewport extends EglElement {
         return texId;
     }
 
-    void drawFrame(int textureId, float[] textureMatrix) {
+    public void drawFrame(int textureId, float[] textureMatrix) {
         drawFrame(textureId, textureMatrix,
                 mVertexCoordinatesArray,
                 mTextureCoordinatesArray);

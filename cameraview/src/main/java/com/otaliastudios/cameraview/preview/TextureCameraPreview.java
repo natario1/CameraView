@@ -11,9 +11,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.R;
-import com.otaliastudios.cameraview.preview.CameraPreview;
+import com.otaliastudios.cameraview.internal.utils.Task;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
+/**
+ * A preview implementation based on {@link TextureView}.
+ * Better than {@link SurfaceCameraPreview} but much less powerful than {@link GlCameraPreview}.
+ */
 public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceTexture> {
 
     private View mRootView;
@@ -62,19 +66,19 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
 
     @NonNull
     @Override
-    Class<SurfaceTexture> getOutputClass() {
+    public Class<SurfaceTexture> getOutputClass() {
         return SurfaceTexture.class;
     }
 
     @NonNull
     @Override
-    SurfaceTexture getOutput() {
+    public SurfaceTexture getOutput() {
         return getView().getSurfaceTexture();
     }
 
     @TargetApi(15)
     @Override
-    void setStreamSize(int width, int height, boolean wasFlipped) {
+    public void setStreamSize(int width, int height, boolean wasFlipped) {
         super.setStreamSize(width, height, wasFlipped);
         if (getView().getSurfaceTexture() != null) {
             getView().getSurfaceTexture().setDefaultBufferSize(width, height);
@@ -82,19 +86,19 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
     }
 
     @Override
-    boolean supportsCropping() {
+    public boolean supportsCropping() {
         return true;
     }
 
     @Override
-    protected void crop() {
-        mCropTask.start();
+    protected void crop(final @NonNull Task<Void> task) {
+        task.start();
         getView().post(new Runnable() {
             @Override
             public void run() {
                 if (mInputStreamHeight == 0 || mInputStreamWidth == 0 ||
                         mOutputSurfaceHeight == 0 || mOutputSurfaceWidth == 0) {
-                    mCropTask.end(null);
+                    task.end(null);
                     return;
                 }
                 float scaleX = 1f, scaleY = 1f;
@@ -114,7 +118,7 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
                 mCropping = scaleX > 1.02f || scaleY > 1.02f;
                 LOG.i("crop:", "applied scaleX=", scaleX);
                 LOG.i("crop:", "applied scaleY=", scaleY);
-                mCropTask.end(null);
+                task.end(null);
             }
         });
     }

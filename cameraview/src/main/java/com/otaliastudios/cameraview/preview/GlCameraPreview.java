@@ -6,16 +6,16 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.otaliastudios.cameraview.EglViewport;
 import com.otaliastudios.cameraview.R;
-import com.otaliastudios.cameraview.RendererThread;
-import com.otaliastudios.cameraview.preview.CameraPreview;
+import com.otaliastudios.cameraview.internal.egl.EglViewport;
+import com.otaliastudios.cameraview.internal.utils.Task;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 import java.util.Collections;
@@ -65,10 +65,33 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     private SurfaceTexture mInputSurfaceTexture;
     private EglViewport mOutputViewport;
     private Set<RendererFrameCallback> mRendererFrameCallbacks = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
-    /* for tests */ float mScaleX = 1F;
-    /* for tests */ float mScaleY = 1F;
-
+    @VisibleForTesting float mScaleX = 1F;
+    @VisibleForTesting float mScaleY = 1F;
     private View mRootView;
+
+    /**
+     * Method specific to the GL preview. Adds a {@link RendererFrameCallback}
+     * to receive renderer frame events.
+     * @param callback a callback
+     */
+    public void addRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
+        getView().queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                mRendererFrameCallbacks.add(callback);
+                if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
+            }
+        });
+    }
+
+    /**
+     * Method specific to the GL preview. Removes a {@link RendererFrameCallback}
+     * that was previously added to receive renderer frame events.
+     * @param callback a callback
+     */
+    public void removeRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
+        mRendererFrameCallbacks.remove(callback);
+    }
 
     public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
         super(context, parent, callback);
@@ -205,18 +228,18 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
 
     @NonNull
     @Override
-    Class<SurfaceTexture> getOutputClass() {
+    public Class<SurfaceTexture> getOutputClass() {
         return SurfaceTexture.class;
     }
 
     @NonNull
     @Override
-    SurfaceTexture getOutput() {
+    public SurfaceTexture getOutput() {
         return mInputSurfaceTexture;
     }
 
     @Override
-    boolean supportsCropping() {
+    public boolean supportsCropping() {
         return true;
     }
 
@@ -233,8 +256,8 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
      * then drawing it with a scaled transformation matrix. See {@link #onDrawFrame(GL10)}.
      */
     @Override
-    protected void crop() {
-        mCropTask.start();
+    protected void crop(@NonNull Task<Void> task) {
+        task.start();
         if (mInputStreamWidth > 0 && mInputStreamHeight > 0 && mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0) {
             float scaleX = 1f, scaleY = 1f;
             AspectRatio current = AspectRatio.of(mOutputSurfaceWidth, mOutputSurfaceHeight);
@@ -251,44 +274,6 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             mScaleY = 1F / scaleY;
             getView().requestRender();
         }
-        mCropTask.end(null);
-    }
-
-    interface RendererFrameCallback {
-
-        /**
-         * Called on the renderer thread, hopefully only once, to notify that
-         * the texture was created (or to inform a new callback of the old texture).
-         *
-         * @param textureId the GL texture linked to the image stream
-         */
-        @RendererThread
-        void onRendererTextureCreated(int textureId);
-
-        /**
-         * Called on the renderer thread after each frame was drawn.
-         * You are not supposed to hold for too long onto this thread, because
-         * well, it is the rendering thread.
-         *
-         * @param surfaceTexture the texture to get transformation
-         * @param scaleX the scaleX (in REF_VIEW) value
-         * @param scaleY the scaleY (in REF_VIEW) value
-         */
-        @RendererThread
-        void onRendererFrame(SurfaceTexture surfaceTexture, float scaleX, float scaleY);
-    }
-
-    void addRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
-        getView().queueEvent(new Runnable() {
-            @Override
-            public void run() {
-                mRendererFrameCallbacks.add(callback);
-                if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
-            }
-        });
-    }
-
-    void removeRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
-        mRendererFrameCallbacks.remove(callback);
+        task.end(null);
     }
 }

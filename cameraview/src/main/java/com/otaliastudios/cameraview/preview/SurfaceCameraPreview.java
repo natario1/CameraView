@@ -12,10 +12,13 @@ import android.view.ViewGroup;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.R;
 
-// Fallback preview when hardware acceleration is off.
-// Currently this does NOT support cropping (e. g. the crop inside behavior),
-// so we return false in supportsCropping() in order to have proper measuring.
-// This means that CameraView is forced to be wrap_content.
+/**
+ * This is the fallback preview when hardware acceleration is off, and is the last resort.
+ * Currently does not support cropping, which means that {@link com.otaliastudios.cameraview.CameraView}
+ * is forced to be wrap_content.
+ *
+ * Do not use.
+ */
 public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHolder> {
 
     private final static CameraLogger LOG = CameraLogger.create(SurfaceCameraPreview.class.getSimpleName());
@@ -34,6 +37,7 @@ public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHold
         parent.addView(root, 0);
         SurfaceView surfaceView = root.findViewById(R.id.surface_view);
         final SurfaceHolder holder = surfaceView.getHolder();
+        //noinspection deprecation
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder.addCallback(new SurfaceHolder.Callback() {
 
@@ -73,13 +77,13 @@ public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHold
 
     @NonNull
     @Override
-    SurfaceHolder getOutput() {
+    public SurfaceHolder getOutput() {
         return getView().getHolder();
     }
 
     @NonNull
     @Override
-    Class<SurfaceHolder> getOutputClass() {
+    public Class<SurfaceHolder> getOutputClass() {
         return SurfaceHolder.class;
     }
 

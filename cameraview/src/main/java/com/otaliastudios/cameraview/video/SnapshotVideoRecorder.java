@@ -12,6 +12,7 @@ import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -23,7 +24,7 @@ import androidx.annotation.RequiresApi;
  * A {@link VideoRecorder} that uses {@link android.media.MediaCodec} APIs.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class SnapshotVideoRecorder extends VideoRecorder implements GlCameraPreview.RendererFrameCallback,
+public class SnapshotVideoRecorder extends VideoRecorder implements RendererFrameCallback,
         MediaEncoderEngine.Listener {
 
     private static final String TAG = SnapshotVideoRecorder.class.getSimpleName();

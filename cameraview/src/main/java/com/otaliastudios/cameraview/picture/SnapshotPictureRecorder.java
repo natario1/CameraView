@@ -25,6 +25,7 @@ import com.otaliastudios.cameraview.internal.utils.RotationHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
@@ -70,7 +71,7 @@ public class SnapshotPictureRecorder extends PictureRecorder {
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
     private void takeGl(@NonNull final GlCameraPreview preview) {
-        preview.addRendererFrameCallback(new GlCameraPreview.RendererFrameCallback() {
+        preview.addRendererFrameCallback(new RendererFrameCallback() {
 
             int mTextureId;
             SurfaceTexture mSurfaceTexture;
@@ -89,7 +90,7 @@ public class SnapshotPictureRecorder extends PictureRecorder {
 
             @RendererThread
             @Override
-            public void onRendererFrame(SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
+            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
                 preview.removeRendererFrameCallback(this);
 
                 // This kinda work but has drawbacks:
