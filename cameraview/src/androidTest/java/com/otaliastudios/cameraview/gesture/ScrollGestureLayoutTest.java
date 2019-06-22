@@ -63,7 +63,7 @@ public class ScrollGestureLayoutTest extends GestureLayoutTest<ScrollGestureLayo
 
         // How will this move our parameter?
         float curr = 0.5f, min = 0f, max = 1f;
-        float newValue = layout.getValue(curr, min, max);
+        float newValue = layout.computeValue(curr, min, max);
         if (increasing) {
             assertTrue(newValue > curr);
             assertTrue(newValue <= max);
