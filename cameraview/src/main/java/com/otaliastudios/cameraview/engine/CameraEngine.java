@@ -494,15 +494,13 @@ public abstract class CameraEngine implements
 
     @SuppressWarnings("unused")
     @NonNull
-    @VisibleForTesting
-    final SizeSelector getPictureSizeSelector() {
+    public final SizeSelector getPictureSizeSelector() {
         return mPictureSizeSelector;
     }
 
     @SuppressWarnings("unused")
     @NonNull
-    @VisibleForTesting
-    final SizeSelector getVideoSizeSelector() {
+    public final SizeSelector getVideoSizeSelector() {
         return mVideoSizeSelector;
     }
 

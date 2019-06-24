@@ -13,8 +13,10 @@ import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.ControlParser;
+import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
@@ -40,14 +42,10 @@ import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
 import com.otaliastudios.cameraview.size.SizeSelectors;
 
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -77,14 +75,14 @@ public class CameraViewTest extends BaseTest {
 
                     @NonNull
                     @Override
-                    protected CameraEngine instantiateCameraController(@NonNull CameraEngine.Callback callback) {
+                    protected CameraEngine instantiateCameraEngine(@NonNull Engine engine, @NonNull CameraEngine.Callback callback) {
                         mockController = spy(new MockCameraEngine(callback));
                         return mockController;
                     }
 
                     @NonNull
                     @Override
-                    protected CameraPreview instantiatePreview(@NonNull Context context, @NonNull ViewGroup container) {
+                    protected CameraPreview instantiatePreview(@NonNull Preview preview, @NonNull Context context, @NonNull ViewGroup container) {
                         mockPreview = spy(new MockCameraPreview(context, container));
                         return mockPreview;
                     }
@@ -95,7 +93,7 @@ public class CameraViewTest extends BaseTest {
                     }
                 };
                 // Instantiate preview now.
-                cameraView.instantiatePreview();
+                cameraView.doInstantiatePreview();
             }
         });
     }
