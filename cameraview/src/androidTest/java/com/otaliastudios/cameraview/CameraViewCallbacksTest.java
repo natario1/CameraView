@@ -10,6 +10,8 @@ import androidx.test.filters.MediumTest;
 import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Engine;
+import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
@@ -37,7 +39,6 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.floatThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -70,14 +71,14 @@ public class CameraViewCallbacksTest extends BaseTest {
 
                     @NonNull
                     @Override
-                    protected CameraEngine instantiateCameraController(@NonNull CameraEngine.Callback callback) {
+                    protected CameraEngine instantiateCameraEngine(@NonNull Engine engine, @NonNull CameraEngine.Callback callback) {
                         mockController = new MockCameraEngine(callback);
                         return mockController;
                     }
 
                     @NonNull
                     @Override
-                    protected CameraPreview instantiatePreview(@NonNull Context context, @NonNull ViewGroup container) {
+                    protected CameraPreview instantiatePreview(@NonNull Preview preview, @NonNull Context context, @NonNull ViewGroup container) {
                         mockPreview = new MockCameraPreview(context, container);
                         return mockPreview;
                     }
@@ -87,7 +88,7 @@ public class CameraViewCallbacksTest extends BaseTest {
                         return true;
                     }
                 };
-                camera.instantiatePreview();
+                camera.doInstantiatePreview();
                 camera.addCameraListener(listener);
                 camera.addFrameProcessor(processor);
                 task = new Task<>(true);

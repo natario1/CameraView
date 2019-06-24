@@ -5,6 +5,7 @@ import android.hardware.Camera;
 
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Control;
+import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.engine.Mapper;
@@ -183,6 +184,8 @@ public class CameraOptions {
             return (Collection<T>) Arrays.asList(VideoCodec.values());
         } else if (controlClass.equals(WhiteBalance.class)) {
             return (Collection<T>) getSupportedWhiteBalance();
+        } else if (controlClass.equals(Engine.class)) {
+            return (Collection<T>) Arrays.asList(Engine.values());
         }
         // Unrecognized control.
         return Collections.emptyList();
@@ -311,8 +314,7 @@ public class CameraOptions {
 
     /**
      * Whether auto focus is supported. This means you can map gestures to
-     * {@link GestureAction#FOCUS} or {@link GestureAction#FOCUS_WITH_MARKER}
-     * and focus will be changed on tap.
+     * {@link GestureAction#AUTO_FOCUS} and focus will be changed on tap.
      *
      * @return whether auto focus is supported.
      */

@@ -108,6 +108,11 @@
             <enum name="glSurface" value="2" />
         </attr>
 
+        <attr name="cameraEngine" format="enum">
+            <enum name="camera1" value="0" />
+            <enum name="camera2" value="1" />
+        </attr>
+
         <attr name="cameraPlaySounds" format="boolean" />
 
         <attr name="cameraVideoMaxSize" format="float" />

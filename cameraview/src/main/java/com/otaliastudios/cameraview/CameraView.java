@@ -33,6 +33,7 @@ import android.widget.FrameLayout;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.controls.ControlParser;
+import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.markers.MarkerLayout;
@@ -100,6 +101,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private boolean mPlaySounds;
     private HashMap<Gesture, GestureAction> mGestureMap = new HashMap<>(4);
     private Preview mPreview;
+    private Engine mEngine;
 
     // Components
     @VisibleForTesting CameraCallbacks mCameraCallbacks;
@@ -148,8 +150,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         boolean playSounds = a.getBoolean(R.styleable.CameraView_cameraPlaySounds, DEFAULT_PLAY_SOUNDS);
         mExperimental = a.getBoolean(R.styleable.CameraView_cameraExperimental, false);
         mPreview = controls.getPreview();
+        mEngine = controls.getEngine();
 
-        // Camera controller params
+        // Camera engine params
         int gridColor = a.getColor(R.styleable.CameraView_cameraGridColor, GridLinesLayout.DEFAULT_COLOR);
         long videoMaxSize = (long) a.getFloat(R.styleable.CameraView_cameraVideoMaxSize, 0);
         int videoMaxDuration = a.getInteger(R.styleable.CameraView_cameraVideoMaxDuration, 0);
@@ -166,7 +169,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Components
         mCameraCallbacks = new CameraCallbacks();
-        mCameraEngine = instantiateCameraController(mCameraCallbacks);
         mUiHandler = new Handler(Looper.getMainLooper());
         mFrameProcessorsHandler = WorkerHandler.get("FrameProcessorsWorker");
 
@@ -182,16 +184,20 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         addView(mScrollGestureLayout);
         addView(mMarkerLayout);
 
+        // Create the engine
+        doInstantiateEngine();
+
         // Apply self managed
         setPlaySounds(playSounds);
+        setGrid(controls.getGrid());
+        setGridColor(gridColor);
 
-        // Apply camera controller params
+        // Apply camera engine params
+        // Adding new ones? See setEngine().
         setFacing(controls.getFacing());
         setFlash(controls.getFlash());
         setMode(controls.getMode());
         setWhiteBalance(controls.getWhiteBalance());
-        setGrid(controls.getGrid());
-        setGridColor(gridColor);
         setHdr(controls.getHdr());
         setAudio(controls.getAudio());
         setAudioBitRate(audioBitRate);
@@ -220,24 +226,33 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     /**
      * Instantiates the camera engine.
+     *
+     * @param engine the engine preference
      * @param callback the engine callback
      * @return the engine
      */
     @NonNull
-    protected CameraEngine instantiateCameraController(@NonNull CameraEngine.Callback callback) {
-        return new Camera1Engine(callback);
+    protected CameraEngine instantiateCameraEngine(@NonNull Engine engine, @NonNull CameraEngine.Callback callback) {
+        if (mExperimental && engine == Engine.CAMERA2) {
+            throw new RuntimeException("TODO");
+        } else {
+            mEngine = Engine.CAMERA1;
+            return new Camera1Engine(callback);
+        }
     }
 
     /**
      * Instantiates the camera preview.
+     *
+     * @param preview current preview value
      * @param context a context
      * @param container the container
      * @return the preview
      */
     @NonNull
-    protected CameraPreview instantiatePreview(@NonNull Context context, @NonNull ViewGroup container) {
+    protected CameraPreview instantiatePreview(@NonNull Preview preview, @NonNull Context context, @NonNull ViewGroup container) {
         LOG.w("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
-        switch (mPreview) {
+        switch (preview) {
             case SURFACE:
                 return new SurfaceCameraPreview(context, container, null);
             case TEXTURE: {
@@ -254,9 +269,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     @VisibleForTesting
-    void instantiatePreview() {
-        mCameraPreview = instantiatePreview(getContext(), this);
+    void doInstantiatePreview() {
+        mCameraPreview = instantiatePreview(mPreview, getContext(), this);
         mCameraEngine.setPreview(mCameraPreview);
+    }
+
+    private void doInstantiateEngine() {
+        mCameraEngine = instantiateCameraEngine(mEngine, mCameraCallbacks);
     }
 
     @Override
@@ -265,7 +284,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (mCameraPreview == null) {
             // isHardwareAccelerated will return the real value only after we are
             // attached. That's why we instantiate the preview here.
-            instantiatePreview();
+            doInstantiatePreview();
         }
         if (!isInEditMode()) {
             mOrientationHelper.enable(getContext());
@@ -719,7 +738,61 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             setVideoCodec((VideoCodec) control);
         } else if (control instanceof Preview) {
             setPreview((Preview) control);
+        } else if (control instanceof Engine) {
+            setEngine((Engine) control);
         }
+    }
+
+
+    /**
+     * Controls the preview engine. Should only be called
+     * if this CameraView was never added to any window
+     * (like if you created it programmatically).
+     * Otherwise, it has no effect.
+     *
+     * @see Preview#SURFACE
+     * @see Preview#TEXTURE
+     * @see Preview#GL_SURFACE
+     *
+     * @param preview desired preview engine
+     */
+    public void setPreview(@NonNull Preview preview) {
+        mPreview = preview;
+    }
+
+
+    /**
+     * Controls the core engine. Should only be called
+     * if this CameraView is closed (open() was never called).
+     * Otherwise, it has no effect.
+     *
+     * @see Engine#CAMERA1
+     * @see Engine#CAMERA2
+     *
+     * @param engine desired engine
+     */
+    public void setEngine(@NonNull Engine engine) {
+        if (!isClosed()) return;
+        mEngine = engine;
+        CameraEngine oldEngine = mCameraEngine;
+        doInstantiateEngine();
+        if (mCameraPreview != null) mCameraEngine.setPreview(mCameraPreview);
+
+        // Set again all parameters
+        setFacing(oldEngine.getFacing());
+        setFlash(oldEngine.getFlash());
+        setMode(oldEngine.getMode());
+        setWhiteBalance(oldEngine.getWhiteBalance());
+        setHdr(oldEngine.getHdr());
+        setAudio(oldEngine.getAudio());
+        setAudioBitRate(oldEngine.getAudioBitRate());
+        setPictureSize(oldEngine.getPictureSizeSelector());
+        setVideoSize(oldEngine.getVideoSizeSelector());
+        setVideoCodec(oldEngine.getVideoCodec());
+        setVideoMaxSize(oldEngine.getVideoMaxSize());
+        setVideoMaxDuration(oldEngine.getVideoMaxDuration());
+        setVideoBitRate(oldEngine.getVideoBitRate());
+        setAutoFocusResetDelay(oldEngine.getAutoFocusResetDelay());
     }
 
 
@@ -851,23 +924,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setHdr(@NonNull Hdr hdr) {
         mCameraEngine.setHdr(hdr);
-    }
-
-
-    /**
-     * Controls the preview engine. Should only be called
-     * if this CameraView was never added to any window
-     * (like if you created it programmatically).
-     * Otherwise, it has no effect.
-     *
-     * @see Preview#SURFACE
-     * @see Preview#TEXTURE
-     * @see Preview#GL_SURFACE
-     *
-     * @param preview desired preview engine
-     */
-    public void setPreview(@NonNull Preview preview) {
-        mPreview = preview;
     }
 
 

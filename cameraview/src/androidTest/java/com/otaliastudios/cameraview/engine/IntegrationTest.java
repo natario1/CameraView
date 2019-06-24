@@ -15,6 +15,7 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.TestActivity;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
@@ -87,7 +88,7 @@ public class IntegrationTest extends BaseTest {
 
                     @NonNull
                     @Override
-                    protected CameraEngine instantiateCameraController(@NonNull CameraEngine.Callback callback) {
+                    protected CameraEngine instantiateCameraEngine(@NonNull Engine engine, @NonNull CameraEngine.Callback callback) {
                         controller = new Camera1Engine(callback);
                         return controller;
                     }
