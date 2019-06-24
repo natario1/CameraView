@@ -192,12 +192,12 @@ public class CameraViewCallbacksTest extends BaseTest {
         camera.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
 
         PointF point = new PointF();
-        completeTask().when(listener).onFocusStart(point);
+        completeTask().when(listener).onAutoFocusStart(point);
         camera.mCameraCallbacks.dispatchOnFocusStart(Gesture.TAP, point);
 
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onFocusStart(point);
-        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onFocusStart(point);
+        verify(listener, times(1)).onAutoFocusStart(point);
+        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onAutoFocusStart(point);
     }
 
     @Test
@@ -208,12 +208,12 @@ public class CameraViewCallbacksTest extends BaseTest {
 
         PointF point = new PointF();
         boolean success = true;
-        completeTask().when(listener).onFocusEnd(success, point);
+        completeTask().when(listener).onAutoFocusEnd(success, point);
         camera.mCameraCallbacks.dispatchOnFocusEnd(Gesture.TAP, success, point);
 
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onFocusEnd(success, point);
-        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onFocusEnd(success);
+        verify(listener, times(1)).onAutoFocusEnd(success, point);
+        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onAutoFocusEnd(success);
     }
 
     @Test

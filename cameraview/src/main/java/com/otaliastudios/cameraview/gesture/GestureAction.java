@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.gesture;
 
 
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.draw.AutoFocusMarker;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,18 +28,10 @@ public enum GestureAction {
      *
      * - {@link Gesture#TAP}
      * - {@link Gesture#LONG_TAP}
-     */
-    FOCUS(1, GestureType.ONE_SHOT),
-
-    /**
-     * Auto focus control, typically assigned to the tap gesture.
-     * On top of {@link #FOCUS}, this will draw a default marker on screen.
-     * This action can be mapped to one shot gestures:
      *
-     * - {@link Gesture#TAP}
-     * - {@link Gesture#LONG_TAP}
+     * To control marker drawing, please see {@link CameraView#setAutoFocusMarker(AutoFocusMarker)}
      */
-    FOCUS_WITH_MARKER(2, GestureType.ONE_SHOT),
+    AUTOFOCUS(1, GestureType.ONE_SHOT),
 
     /**
      * When triggered, this action will fire a picture shoot.
@@ -47,7 +40,7 @@ public enum GestureAction {
      * - {@link Gesture#TAP}
      * - {@link Gesture#LONG_TAP}
      */
-    CAPTURE(3, GestureType.ONE_SHOT),
+    TAKE_PICTURE(2, GestureType.ONE_SHOT),
 
     /**
      * Zoom control, typically assigned to the pinch gesture.
@@ -57,7 +50,7 @@ public enum GestureAction {
      * - {@link Gesture#SCROLL_HORIZONTAL}
      * - {@link Gesture#SCROLL_VERTICAL}
      */
-    ZOOM(4, GestureType.CONTINUOUS),
+    ZOOM(3, GestureType.CONTINUOUS),
 
     /**
      * Exposure correction control.
@@ -67,7 +60,7 @@ public enum GestureAction {
      * - {@link Gesture#SCROLL_HORIZONTAL}
      * - {@link Gesture#SCROLL_VERTICAL}
      */
-    EXPOSURE_CORRECTION(5, GestureType.CONTINUOUS);
+    EXPOSURE_CORRECTION(4, GestureType.CONTINUOUS);
 
 
     final static GestureAction DEFAULT_PINCH = NONE;

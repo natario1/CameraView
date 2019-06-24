@@ -21,7 +21,7 @@
         app:cameraGrid="off"
         app:cameraFlash="off"
         app:cameraAudio="on"
-        app:cameraGestureTap="focusWithMarker"
+        app:cameraGestureTap="autofocus"
         app:cameraGestureLongTap="none"
         app:cameraGesturePinch="zoom"
         app:cameraGestureScrollHorizontal="exposureCorrection"

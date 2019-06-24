@@ -30,9 +30,8 @@ public enum Gesture {
      * Single tap gesture, typically assigned to the focus control.
      * This gesture can be mapped to one shot actions:
      *
-     * - {@link GestureAction#FOCUS}
-     * - {@link GestureAction#FOCUS_WITH_MARKER}
-     * - {@link GestureAction#CAPTURE}
+     * - {@link GestureAction#AUTOFOCUS}
+     * - {@link GestureAction#TAKE_PICTURE}
      * - {@link GestureAction#NONE}
      */
     TAP(GestureType.ONE_SHOT),
@@ -41,9 +40,8 @@ public enum Gesture {
      * Long tap gesture.
      * This gesture can be mapped to one shot actions:
      *
-     * - {@link GestureAction#FOCUS}
-     * - {@link GestureAction#FOCUS_WITH_MARKER}
-     * - {@link GestureAction#CAPTURE}
+     * - {@link GestureAction#AUTOFOCUS}
+     * - {@link GestureAction#TAKE_PICTURE}
      * - {@link GestureAction#NONE}
      */
     LONG_TAP(GestureType.ONE_SHOT),

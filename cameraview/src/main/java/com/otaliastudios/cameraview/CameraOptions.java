@@ -150,10 +150,9 @@ public class CameraOptions {
      */
     public boolean supports(@NonNull GestureAction action) {
         switch (action) {
-            case FOCUS:
-            case FOCUS_WITH_MARKER:
+            case AUTOFOCUS:
                 return isAutoFocusSupported();
-            case CAPTURE:
+            case TAKE_PICTURE:
             case NONE:
                 return true;
             case ZOOM:

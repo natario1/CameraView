@@ -198,5 +198,3 @@ way for the future. These changes are listed below:
 - Default `Facing` value is not `BACK` anymore but rather a value that guarantees that you have cameras (if possible).
   If device has no `BACK` cameras, defaults to `FRONT`.  
 - Removed `ExtraProperties` as it was useless.
-
-TODO: improve the focus marker drawing, move out of XML (accept a drawable?)

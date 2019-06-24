@@ -88,7 +88,7 @@ public abstract class CameraListener {
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
     @UiThread
-    public void onFocusStart(@NonNull PointF point) { }
+    public void onAutoFocusStart(@NonNull PointF point) { }
 
 
     /**
@@ -101,7 +101,7 @@ public abstract class CameraListener {
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
     @UiThread
-    public void onFocusEnd(boolean successful, @NonNull PointF point) { }
+    public void onAutoFocusEnd(boolean successful, @NonNull PointF point) { }
 
 
     /**

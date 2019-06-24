@@ -20,6 +20,7 @@ import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
+import com.otaliastudios.cameraview.draw.DefaultAutoFocusMarker;
 
 import java.io.File;
 
@@ -41,6 +42,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera = findViewById(R.id.camera);
         camera.setLifecycleOwner(this);
         camera.addCameraListener(new Listener());
+        camera.setAutoFocusMarker(new DefaultAutoFocusMarker());
 
         findViewById(R.id.edit).setOnClickListener(this);
         findViewById(R.id.capturePicture).setOnClickListener(this);
