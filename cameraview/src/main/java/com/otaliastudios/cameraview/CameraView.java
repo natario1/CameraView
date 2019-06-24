@@ -117,7 +117,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     PinchGestureLayout mPinchGestureLayout;
     TapGestureLayout mTapGestureLayout;
     ScrollGestureLayout mScrollGestureLayout;
-    private MarkerLayout mMarkerLayout;
+    MarkerLayout mMarkerLayout;
     private boolean mKeepScreenOn;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private boolean mExperimental;
