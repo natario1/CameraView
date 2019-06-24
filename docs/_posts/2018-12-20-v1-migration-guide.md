@@ -165,6 +165,32 @@ The listener interface brings two breaking signature changes:
 The v2 version introduces a `cameraExperimental` XML flag that you can use to enable experimental features.
 Might be used in the future to speed up development.
 
+### Repackaging
+
+Some public classes have been moved to different subpackages, to rearrange code in a more meaningful
+way for the future. These changes are listed below:
+
+|Class name|Old package|New package|
+|----------|-----------|-----------|
+|`Audio`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`Control`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`Facing`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`Flash`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`Grid`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`Hdr`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`Mode`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`Preview`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`VideoCodec`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`WhiteBalance`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.controls`|
+|`Frame`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.frame`|
+|`FrameProcessor`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.frame`|
+|`Gesture`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.gesture`|
+|`GestureAction`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.gesture`|
+|`Size`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.size`|
+|`SizeSelector`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.size`|
+|`SizeSelectors`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.size`|
+|`AspectRatio`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.size`|
+
 ### Other improvements & changes
 
 - Added `@Nullable` and `@NonNull` annotations pretty much everywhere. This might **break** your Kotlin build.

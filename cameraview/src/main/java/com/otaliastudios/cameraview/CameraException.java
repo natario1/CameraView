@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import com.otaliastudios.cameraview.controls.Facing;
+
 /**
  * Holds an error with the camera configuration.
  */
@@ -51,16 +53,17 @@ public class CameraException extends RuntimeException {
 
     private int reason = REASON_UNKNOWN;
 
-    CameraException(Throwable cause) {
+    @SuppressWarnings("WeakerAccess")
+    public CameraException(Throwable cause) {
         super(cause);
     }
 
-    CameraException(Throwable cause, int reason) {
+    public CameraException(Throwable cause, int reason) {
         super(cause);
         this.reason = reason;
     }
 
-    CameraException(int reason) {
+    public CameraException(int reason) {
         super();
         this.reason = reason;
     }
@@ -76,6 +79,7 @@ public class CameraException extends RuntimeException {
      *
      * @return true if this error is unrecoverable
      */
+    @SuppressWarnings("unused")
     public boolean isUnrecoverable() {
         switch (getReason()) {
             case REASON_FAILED_TO_CONNECT: return true;

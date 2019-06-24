@@ -3,6 +3,11 @@ package com.otaliastudios.cameraview;
 
 import android.location.Location;
 
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.VideoCodec;
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
@@ -19,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 @SmallTest
 public class VideoResultTest extends BaseTest {
 
-    private VideoResult result = new VideoResult();
+    private VideoResult.Stub stub = new VideoResult.Stub();
 
     @Test
     public void testResult() {
@@ -38,21 +43,22 @@ public class VideoResultTest extends BaseTest {
         Audio audio = Audio.ON;
         Facing facing = Facing.FRONT;
 
-        result.file = file;
-        result.rotation = rotation;
-        result.size = size;
-        result.codec = codec;
-        result.location = location;
-        result.isSnapshot = isSnapshot;
-        result.maxDuration = maxDuration;
-        result.maxSize = maxFileSize;
-        result.endReason = reason;
-        result.videoFrameRate = videoFrameRate;
-        result.videoBitRate = videoBitRate;
-        result.audioBitRate = audioBitRate;
-        result.audio = audio;
-        result.facing = facing;
+        stub.file = file;
+        stub.rotation = rotation;
+        stub.size = size;
+        stub.videoCodec = codec;
+        stub.location = location;
+        stub.isSnapshot = isSnapshot;
+        stub.maxDuration = maxDuration;
+        stub.maxSize = maxFileSize;
+        stub.endReason = reason;
+        stub.videoFrameRate = videoFrameRate;
+        stub.videoBitRate = videoBitRate;
+        stub.audioBitRate = audioBitRate;
+        stub.audio = audio;
+        stub.facing = facing;
 
+        VideoResult result = new VideoResult(stub);
         assertEquals(result.getFile(), file);
         assertEquals(result.getRotation(), rotation);
         assertEquals(result.getSize(), size);

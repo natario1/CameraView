@@ -5,6 +5,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
+/**
+ * The base class for receiving updates from a {@link CameraView} instance.
+ * You can add and remove listeners using {@link CameraView#addCameraListener(CameraListener)}
+ * and {@link CameraView#removeCameraListener(CameraListener)}.
+ */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class CameraListener {
 
 
@@ -15,18 +21,14 @@ public abstract class CameraListener {
      * @param options camera supported options
      */
     @UiThread
-    public void onCameraOpened(@NonNull CameraOptions options) {
-
-    }
+    public void onCameraOpened(@NonNull CameraOptions options) { }
 
 
     /**
      * Notifies that the camera session was closed.
      */
     @UiThread
-    public void onCameraClosed() {
-
-    }
+    public void onCameraClosed() { }
 
 
     /**
@@ -39,9 +41,7 @@ public abstract class CameraListener {
      * @param exception the error
      */
     @UiThread
-    public void onCameraError(@NonNull CameraException exception) {
-
-    }
+    public void onCameraError(@NonNull CameraException exception) { }
 
 
     /**
@@ -54,9 +54,7 @@ public abstract class CameraListener {
      * @param result captured picture
      */
     @UiThread
-    public void onPictureTaken(@NonNull PictureResult result) {
-
-    }
+    public void onPictureTaken(@NonNull PictureResult result) { }
 
 
     /**
@@ -65,9 +63,7 @@ public abstract class CameraListener {
      * @param result the video result
      */
     @UiThread
-    public void onVideoTaken(@NonNull VideoResult result) {
-
-    }
+    public void onVideoTaken(@NonNull VideoResult result) { }
 
 
     /**
@@ -81,9 +77,7 @@ public abstract class CameraListener {
      * @param orientation either 0, 90, 180 or 270
      */
     @UiThread
-    public void onOrientationChanged(int orientation) {
-
-    }
+    public void onOrientationChanged(int orientation) { }
 
 
     /**
@@ -94,9 +88,7 @@ public abstract class CameraListener {
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
     @UiThread
-    public void onFocusStart(@NonNull PointF point) {
-
-    }
+    public void onFocusStart(@NonNull PointF point) { }
 
 
     /**
@@ -109,9 +101,7 @@ public abstract class CameraListener {
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
     @UiThread
-    public void onFocusEnd(boolean successful, @NonNull PointF point) {
-
-    }
+    public void onFocusEnd(boolean successful, @NonNull PointF point) { }
 
 
     /**
@@ -123,9 +113,7 @@ public abstract class CameraListener {
      * @param fingers finger positions that caused the event, null if not caused by touch
      */
     @UiThread
-    public void onZoomChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) {
-
-    }
+    public void onZoomChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) { }
 
 
     /**
@@ -137,8 +125,6 @@ public abstract class CameraListener {
      * @param fingers finger positions that caused the event, null if not caused by touch
      */
     @UiThread
-    public void onExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) {
-
-    }
+    public void onExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) { }
 
 }

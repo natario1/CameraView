@@ -9,6 +9,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameProcessor;
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.GestureAction;
+import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.engine.MockCameraEngine;
+import com.otaliastudios.cameraview.preview.MockCameraPreview;
+import com.otaliastudios.cameraview.preview.CameraPreview;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +40,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+/**
+ * Tests {@link CameraView#mCameraCallbacks} dispatch functions.
+ */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 public class CameraViewCallbacksTest extends BaseTest {
@@ -36,7 +50,7 @@ public class CameraViewCallbacksTest extends BaseTest {
     private CameraView camera;
     private CameraListener listener;
     private FrameProcessor processor;
-    private MockCameraController mockController;
+    private MockCameraEngine mockController;
     private MockCameraPreview mockPreview;
     private Task<Boolean> task;
 
@@ -49,14 +63,17 @@ public class CameraViewCallbacksTest extends BaseTest {
                 listener = mock(CameraListener.class);
                 processor = mock(FrameProcessor.class);
                 camera = new CameraView(context) {
+
+                    @NonNull
                     @Override
-                    protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
-                        mockController = new MockCameraController(callbacks);
+                    protected CameraEngine instantiateCameraController(@NonNull CameraEngine.Callback callback) {
+                        mockController = new MockCameraEngine(callback);
                         return mockController;
                     }
 
+                    @NonNull
                     @Override
-                    protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
+                    protected CameraPreview instantiatePreview(@NonNull Context context, @NonNull ViewGroup container) {
                         mockPreview = new MockCameraPreview(context, container);
                         return mockPreview;
                     }
@@ -133,19 +150,21 @@ public class CameraViewCallbacksTest extends BaseTest {
 
     @Test
     public void testDispatchOnVideoTaken() {
-        completeTask().when(listener).onVideoTaken(null);
-        camera.mCameraCallbacks.dispatchOnVideoTaken(null);
+        VideoResult.Stub stub = new VideoResult.Stub();
+        completeTask().when(listener).onVideoTaken(any(VideoResult.class));
+        camera.mCameraCallbacks.dispatchOnVideoTaken(stub);
 
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onVideoTaken(null);
+        verify(listener, times(1)).onVideoTaken(any(VideoResult.class));
     }
 
     @Test
     public void testDispatchOnPictureTaken() {
-        completeTask().when(listener).onPictureTaken(null);
-        camera.mCameraCallbacks.dispatchOnPictureTaken(null);
+        PictureResult.Stub stub = new PictureResult.Stub();
+        completeTask().when(listener).onPictureTaken(any(PictureResult.class));
+        camera.mCameraCallbacks.dispatchOnPictureTaken(stub);
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onPictureTaken(null);
+        verify(listener, times(1)).onPictureTaken(any(PictureResult.class));
     }
 
     @Test

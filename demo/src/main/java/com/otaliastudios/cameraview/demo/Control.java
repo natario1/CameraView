@@ -5,17 +5,17 @@ import androidx.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.otaliastudios.cameraview.Audio;
+import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
-import com.otaliastudios.cameraview.Flash;
-import com.otaliastudios.cameraview.Gesture;
-import com.otaliastudios.cameraview.GestureAction;
-import com.otaliastudios.cameraview.Grid;
-import com.otaliastudios.cameraview.Hdr;
-import com.otaliastudios.cameraview.Mode;
-import com.otaliastudios.cameraview.VideoCodec;
-import com.otaliastudios.cameraview.WhiteBalance;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.GestureAction;
+import com.otaliastudios.cameraview.controls.Grid;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.VideoCodec;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -157,7 +157,7 @@ public enum Control {
             case AUDIO:
             case VIDEO_CODEC:
             case HDR:
-                camera.set((com.otaliastudios.cameraview.Control) value);
+                camera.set((com.otaliastudios.cameraview.controls.Control) value);
                 break;
             case PINCH:
                 camera.mapGesture(Gesture.PINCH, (GestureAction) value);

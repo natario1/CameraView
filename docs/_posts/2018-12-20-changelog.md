@@ -8,6 +8,11 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+### v2.0.0-beta06 (to be released)
+
+- Improvement: we now choose a video recording profile that is compatible with the chosen size. Should fix some video recording issues. ([#477][477])
+- **Breaking change**: some public classes have been moved to different packages. See [table here](../extra/v1-migration-guide.html#repackaging). ([#482][482])
+
 ### v2.0.0-beta05
 
 - Fixed `FrameProcessor` freeze and release behavior, was broken ([#431][431])
@@ -46,3 +51,5 @@ This is the first beta release. For changes with respect to v1, please take a lo
 [431]: https://github.com/natario1/CameraView/pull/431
 [403]: https://github.com/natario1/CameraView/pull/403
 [435]: https://github.com/natario1/CameraView/pull/435
+[477]: https://github.com/natario1/CameraView/pull/477
+[482]: https://github.com/natario1/CameraView/pull/482

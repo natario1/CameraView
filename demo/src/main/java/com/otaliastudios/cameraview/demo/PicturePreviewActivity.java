@@ -9,7 +9,7 @@ import androidx.annotation.Nullable;
 import android.util.Log;
 import android.widget.ImageView;
 
-import com.otaliastudios.cameraview.AspectRatio;
+import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.BitmapCallback;
 import com.otaliastudios.cameraview.PictureResult;
 

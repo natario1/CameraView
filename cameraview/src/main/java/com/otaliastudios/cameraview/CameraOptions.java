@@ -1,9 +1,22 @@
 package com.otaliastudios.cameraview;
 
 
-import android.annotation.TargetApi;
 import android.hardware.Camera;
-import android.hardware.camera2.CameraCharacteristics;
+
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Control;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.engine.Mapper;
+import com.otaliastudios.cameraview.gesture.GestureAction;
+import com.otaliastudios.cameraview.controls.Grid;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.VideoCodec;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.size.AspectRatio;
+import com.otaliastudios.cameraview.size.Size;
+
 import androidx.annotation.NonNull;
 
 import java.util.Arrays;
@@ -34,11 +47,11 @@ public class CameraOptions {
     private boolean autoFocusSupported;
 
 
-    // Camera1 constructor.
+    // Camera1Engine constructor.
     @SuppressWarnings("deprecation")
-    CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
+    public CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
-        Mapper mapper = new Mapper1();
+        Mapper mapper = Mapper.get();
 
         // Facing
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
@@ -116,12 +129,6 @@ public class CameraOptions {
             }
         }
     }
-
-
-    // Camera2 constructor.
-    @TargetApi(21)
-    CameraOptions(@NonNull CameraCharacteristics params) {}
-
 
     /**
      * Shorthand for getSupported*().contains(value).
