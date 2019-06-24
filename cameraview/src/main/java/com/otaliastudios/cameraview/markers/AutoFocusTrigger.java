@@ -9,7 +9,7 @@ import com.otaliastudios.cameraview.gesture.GestureAction;
 public enum AutoFocusTrigger {
 
     /**
-     * Autofocus was triggered by {@link GestureAction#AUTOFOCUS}.
+     * Autofocus was triggered by {@link GestureAction#AUTO_FOCUS}.
      */
     GESTURE,
 

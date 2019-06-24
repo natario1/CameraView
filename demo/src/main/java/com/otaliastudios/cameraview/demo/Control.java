@@ -101,7 +101,7 @@ public enum Control {
                 ArrayList<GestureAction> list2 = new ArrayList<>();
                 addIfSupported(options, list2, GestureAction.NONE);
                 addIfSupported(options, list2, GestureAction.TAKE_PICTURE);
-                addIfSupported(options, list2, GestureAction.AUTOFOCUS);
+                addIfSupported(options, list2, GestureAction.AUTO_FOCUS);
                 return list2;
             case GRID_COLOR:
                 ArrayList<GridColor> list3 = new ArrayList<>();

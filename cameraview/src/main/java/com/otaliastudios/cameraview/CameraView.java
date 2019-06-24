@@ -543,7 +543,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 takePicture();
                 break;
 
-            case AUTOFOCUS:
+            case AUTO_FOCUS:
                 mCameraEngine.startAutoFocus(gesture, points[0]);
                 break;
 

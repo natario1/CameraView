@@ -31,7 +31,7 @@ public enum GestureAction {
      *
      * To control marker drawing, please see {@link CameraView#setAutoFocusMarker(AutoFocusMarker)}
      */
-    AUTOFOCUS(1, GestureType.ONE_SHOT),
+    AUTO_FOCUS(1, GestureType.ONE_SHOT),
 
     /**
      * When triggered, this action will fire a picture shoot.
