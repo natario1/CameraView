@@ -24,9 +24,6 @@ public class TapGestureLayout extends GestureLayout {
     private GestureDetector mDetector;
     private boolean mNotify;
 
-    private FrameLayout mFocusMarkerContainer;
-    private ImageView mFocusMarkerFill;
-
     public TapGestureLayout(@NonNull Context context) {
         super(context, 1);
         mDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
@@ -54,12 +51,6 @@ public class TapGestureLayout extends GestureLayout {
         });
 
         mDetector.setIsLongpressEnabled(true);
-
-
-        // Views to draw the focus marker.
-        LayoutInflater.from(getContext()).inflate(R.layout.cameraview_layout_focus_marker, this);
-        mFocusMarkerContainer = findViewById(R.id.focusMarkerContainer);
-        mFocusMarkerFill = findViewById(R.id.fill);
     }
 
     @Override
@@ -88,66 +79,4 @@ public class TapGestureLayout extends GestureLayout {
         return 0;
     }
 
-// Draw
-
-    private final Runnable mFocusMarkerHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            onFocusEnd(false);
-        }
-    };
-
-    public void onFocusStart(@NonNull PointF point) {
-        removeCallbacks(mFocusMarkerHideRunnable);
-        mFocusMarkerContainer.clearAnimation(); // animate().setListener(null).cancel();
-        mFocusMarkerFill.clearAnimation(); // animate().setListener(null).cancel();
-
-        float x = (int) (point.x - mFocusMarkerContainer.getWidth() / 2);
-        float y = (int) (point.y - mFocusMarkerContainer.getWidth() / 2);
-        mFocusMarkerContainer.setTranslationX(x);
-        mFocusMarkerContainer.setTranslationY(y);
-
-        mFocusMarkerContainer.setScaleX(1.36f);
-        mFocusMarkerContainer.setScaleY(1.36f);
-        mFocusMarkerContainer.setAlpha(1f);
-        mFocusMarkerFill.setScaleX(0);
-        mFocusMarkerFill.setScaleY(0);
-        mFocusMarkerFill.setAlpha(1f);
-
-        // Since onFocusEnd is not guaranteed to be called, we post a hide runnable just in case.
-        animate(mFocusMarkerContainer, 1, 1, 300, 0, null);
-        animate(mFocusMarkerFill, 1, 1, 300, 0, new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-                postDelayed(mFocusMarkerHideRunnable, 2000);
-            }
-        });
-    }
-
-    public void onFocusEnd(boolean success) {
-        if (success) {
-            animate(mFocusMarkerContainer, 1, 0, 500, 0, null);
-            animate(mFocusMarkerFill, 1, 0, 500, 0, null);
-        } else {
-            animate(mFocusMarkerFill, 0, 0, 500, 0, null);
-            animate(mFocusMarkerContainer, 1.36f, 1, 500, 0, new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    super.onAnimationEnd(animation);
-                    animate(mFocusMarkerContainer, 1.36f, 0, 200, 1000, null);
-                }
-            });
-        }
-    }
-
-    private static void animate(@NonNull View view, float scale, float alpha, long duration, long delay,
-                                @Nullable Animator.AnimatorListener listener) {
-        view.animate().scaleX(scale).scaleY(scale)
-                .alpha(alpha)
-                .setDuration(duration)
-                .setStartDelay(delay)
-                .setListener(listener)
-                .start();
-    }
 }

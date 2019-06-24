@@ -19,8 +19,6 @@ import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
-import com.otaliastudios.cameraview.engine.Camera1Engine;
-import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.internal.utils.Task;
@@ -466,7 +464,7 @@ public class IntegrationTest extends BaseTest {
         CameraOptions o = waitForOpen(true);
 
         final Task<PointF> focus = new Task<>(true);
-        doEndTask(focus, 0).when(listener).onFocusStart(any(PointF.class));
+        doEndTask(focus, 0).when(listener).onAutoFocusStart(any(PointF.class));
 
         camera.startAutoFocus(1, 1);
         PointF point = focus.await(300);

@@ -173,7 +173,7 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getGestureAction(Gesture.PINCH), GestureAction.ZOOM);
 
         // Not assignable: This is like clearing
-        cameraView.mapGesture(Gesture.PINCH, GestureAction.CAPTURE);
+        cameraView.mapGesture(Gesture.PINCH, GestureAction.TAKE_PICTURE);
         assertEquals(cameraView.getGestureAction(Gesture.PINCH), GestureAction.NONE);
 
         // Test clearing
@@ -197,7 +197,7 @@ public class CameraViewTest extends BaseTest {
         assertFalse(cameraView.mPinchGestureLayout.isActive());
 
         // TapGestureLayout
-        cameraView.mapGesture(Gesture.TAP, GestureAction.CAPTURE);
+        cameraView.mapGesture(Gesture.TAP, GestureAction.TAKE_PICTURE);
         assertTrue(cameraView.mTapGestureLayout.isActive());
         cameraView.clearGesture(Gesture.TAP);
         assertFalse(cameraView.mPinchGestureLayout.isActive());
@@ -230,7 +230,7 @@ public class CameraViewTest extends BaseTest {
                 };
             }
         });
-        cameraView.mapGesture(Gesture.TAP, GestureAction.CAPTURE);
+        cameraView.mapGesture(Gesture.TAP, GestureAction.TAKE_PICTURE);
         cameraView.dispatchTouchEvent(event);
         assertTrue(mockController.mPictureCaptured);
     }
@@ -253,13 +253,7 @@ public class CameraViewTest extends BaseTest {
             }
         });
         mockController.mFocusStarted = false;
-        cameraView.mapGesture(Gesture.TAP, GestureAction.FOCUS);
-        cameraView.dispatchTouchEvent(event);
-        assertTrue(mockController.mFocusStarted);
-
-        // Try with FOCUS_WITH_MARKER
-        mockController.mFocusStarted = false;
-        cameraView.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
+        cameraView.mapGesture(Gesture.TAP, GestureAction.AUTO_FOCUS);
         cameraView.dispatchTouchEvent(event);
         assertTrue(mockController.mFocusStarted);
     }

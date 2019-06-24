@@ -52,11 +52,13 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     private static final String TAG = Camera1Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
+    private static final int AUTOFOCUS_END_DELAY_MILLIS = 2500;
 
     private Camera mCamera;
     private boolean mIsBound = false;
 
-    private Runnable mPostFocusResetRunnable = new Runnable() {
+    private Runnable mFocusEndRunnable;
+    private final Runnable mFocusResetRunnable = new Runnable() {
         @Override
         public void run() {
             if (!isCameraAvailable()) return;
@@ -307,7 +309,10 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     @Override
     protected void onStop() {
         LOG.i("onStop:", "About to clean up.");
-        mHandler.get().removeCallbacks(mPostFocusResetRunnable);
+        mHandler.get().removeCallbacks(mFocusResetRunnable);
+        if (mFocusEndRunnable != null) {
+            mHandler.get().removeCallbacks(mFocusEndRunnable);
+        }
         if (mVideoRecorder != null) {
             mVideoRecorder.stop();
             mVideoRecorder = null;
@@ -911,24 +916,41 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
                 mCamera.setParameters(params);
                 mCallback.dispatchOnFocusStart(gesture, p);
-                // TODO this is not guaranteed to be called... Fix.
+
+                // The auto focus callback is not guaranteed to be called, but we really want it to be.
+                // So we remove the old runnable if still present and post a new one.
+                if (mFocusEndRunnable != null) mHandler.get().removeCallbacks(mFocusEndRunnable);
+                mFocusEndRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isCameraAvailable()) {
+                            mCallback.dispatchOnFocusEnd(gesture, false, p);
+                        }
+                    }
+                };
+                mHandler.get().postDelayed(mFocusEndRunnable, AUTOFOCUS_END_DELAY_MILLIS);
+
+                // Wrapping autoFocus in a try catch to handle some device specific exceptions,
+                // see See https://github.com/natario1/CameraView/issues/181.
                 try {
                     mCamera.autoFocus(new Camera.AutoFocusCallback() {
                         @Override
                         public void onAutoFocus(boolean success, Camera camera) {
-                            // TODO lock auto exposure and white balance for a while
+                            if (mFocusEndRunnable != null) {
+                                mHandler.get().removeCallbacks(mFocusEndRunnable);
+                                mFocusEndRunnable = null;
+                            }
                             mCallback.dispatchOnFocusEnd(gesture, success, p);
-                            mHandler.get().removeCallbacks(mPostFocusResetRunnable);
+                            mHandler.get().removeCallbacks(mFocusResetRunnable);
                             if (shouldResetAutoFocus()) {
-                                mHandler.get().postDelayed(mPostFocusResetRunnable, getAutoFocusResetDelay());
+                                mHandler.get().postDelayed(mFocusResetRunnable, getAutoFocusResetDelay());
                             }
                         }
                     });
                 } catch (RuntimeException e) {
-                    // Handling random auto-focus exception on some devices
-                    // See https://github.com/natario1/CameraView/issues/181
                     LOG.e("startAutoFocus:", "Error calling autoFocus", e);
-                    mCallback.dispatchOnFocusEnd(gesture, false, p);
+                    // Let the mFocusEndRunnable do its job. (could remove it and quickly dispatch
+                    // onFocusEnd here, but let's make it simpler).
                 }
             }
         });

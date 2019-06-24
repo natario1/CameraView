@@ -189,31 +189,31 @@ public class CameraViewCallbacksTest extends BaseTest {
     public void testDispatchOnFocusStart() {
         // Enable tap gesture.
         // Can't mock package protected. camera.mTapGestureLayout = mock(TapGestureLayout.class);
-        camera.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
+        camera.mapGesture(Gesture.TAP, GestureAction.AUTO_FOCUS);
 
         PointF point = new PointF();
-        completeTask().when(listener).onFocusStart(point);
+        completeTask().when(listener).onAutoFocusStart(point);
         camera.mCameraCallbacks.dispatchOnFocusStart(Gesture.TAP, point);
 
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onFocusStart(point);
-        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onFocusStart(point);
+        verify(listener, times(1)).onAutoFocusStart(point);
+        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onAutoFocusStart(point);
     }
 
     @Test
     public void testDispatchOnFocusEnd() {
         // Enable tap gesture.
         // Can't mock package protected. camera.mTapGestureLayout = mock(TapGestureLayout.class);
-        camera.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
+        camera.mapGesture(Gesture.TAP, GestureAction.AUTO_FOCUS);
 
         PointF point = new PointF();
         boolean success = true;
-        completeTask().when(listener).onFocusEnd(success, point);
+        completeTask().when(listener).onAutoFocusEnd(success, point);
         camera.mCameraCallbacks.dispatchOnFocusEnd(Gesture.TAP, success, point);
 
         assertNotNull(task.await(200));
-        verify(listener, times(1)).onFocusEnd(success, point);
-        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onFocusEnd(success);
+        verify(listener, times(1)).onAutoFocusEnd(success, point);
+        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onAutoFocusEnd(success);
     }
 
     @Test

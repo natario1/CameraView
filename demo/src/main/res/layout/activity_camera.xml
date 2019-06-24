@@ -21,12 +21,13 @@
         app:cameraGrid="off"
         app:cameraFlash="off"
         app:cameraAudio="on"
-        app:cameraGestureTap="focusWithMarker"
+        app:cameraGestureTap="autoFocus"
         app:cameraGestureLongTap="none"
         app:cameraGesturePinch="zoom"
         app:cameraGestureScrollHorizontal="exposureCorrection"
         app:cameraGestureScrollVertical="none"
-        app:cameraMode="picture" />
+        app:cameraMode="picture"
+        app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker"/>
 
 
     <ImageButton
