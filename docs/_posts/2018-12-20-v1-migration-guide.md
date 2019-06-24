@@ -191,6 +191,19 @@ way for the future. These changes are listed below:
 |`SizeSelectors`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.size`|
 |`AspectRatio`|`com.otaliastudios.cameraview`|`com.otaliastudios.cameraview.size`|
 
+### AutoFocus changes
+
+First, the listener methods `onFocusStart` and `onFocusEnd` are now called `onAutoFocusStart` and `onAutoFocusEnd`.
+
+Secondly, and most importantly, the gesture actions `focus` and `focusWithMarker` have been removed
+and replaced by `autoFocus`, which shows no marker. A new API, called `setAutoFocusMarker()`, has been
+added and can be used, if needed, to add back the old marker.
+
+|Old gesture action|New gesture action|Extra steps|
+|------------------|------------------|-----------|
+|`GestureAction.FOCUS`|`GestureAction.AUTO_FOCUS`|None|
+|`GestureAction.FOCUS_WITH_MARKER`|`GestureAction.AUTO_FOCUS`|You can use `app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker"` in XML or `cameraView.setAutoFocusMarker(new DefaultAutoFocusMarker())` to use the default marker.|
+
 ### Other improvements & changes
 
 - Added `@Nullable` and `@NonNull` annotations pretty much everywhere. This might **break** your Kotlin build.
