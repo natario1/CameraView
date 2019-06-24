@@ -17,6 +17,7 @@ import android.view.SurfaceHolder;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
+import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
@@ -75,7 +76,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     public Camera1Engine(@NonNull Callback callback) {
         super(callback);
-        mMapper = Mapper.get();
+        mMapper = Mapper.get(Engine.CAMERA1);
     }
 
     private void schedule(@Nullable final Task<Void> task, final boolean ensureAvailable, final Runnable action) {

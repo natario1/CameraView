@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.engine;
 import android.hardware.Camera;
 import android.os.Build;
 
+import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -10,10 +11,27 @@ import com.otaliastudios.cameraview.controls.WhiteBalance;
 
 import java.util.HashMap;
 
+import androidx.annotation.NonNull;
+
 /**
  * A Mapper maps camera engine constants to CameraView constants.
  */
 public abstract class Mapper {
+
+    private static Mapper CAMERA1;
+    private static Mapper CAMERA2;
+
+    public static Mapper get(@NonNull Engine engine) {
+        if (engine == Engine.CAMERA1) {
+            if (CAMERA1 == null) CAMERA1 = new Camera1Mapper();
+            return CAMERA1;
+        } else if (engine == Engine.CAMERA2) {
+            if (CAMERA2 == null) CAMERA2 = new Camera2Mapper();
+            return CAMERA2;
+        } else {
+            throw new IllegalArgumentException("Unknown engine.");
+        }
+    }
 
     private Mapper() {}
 
@@ -41,15 +59,6 @@ public abstract class Mapper {
             }
         }
         return null;
-    }
-
-    private static Mapper CAMERA1;
-
-    public static Mapper get() {
-        if (CAMERA1 == null) {
-            CAMERA1 = new Camera1Mapper();
-        }
-        return CAMERA1;
     }
 
     @SuppressWarnings("unchecked")
@@ -118,6 +127,49 @@ public abstract class Mapper {
         @Override
         public <T> Hdr unmapHdr(T cameraConstant) {
             return reverseLookup(HDR, cameraConstant);
+        }
+    }
+
+    private static class Camera2Mapper extends Mapper {
+
+        @Override
+        public <T> T map(Flash flash) {
+            return null;
+        }
+
+        @Override
+        public <T> T map(Facing facing) {
+            return null;
+        }
+
+        @Override
+        public <T> T map(WhiteBalance whiteBalance) {
+            return null;
+        }
+
+        @Override
+        public <T> T map(Hdr hdr) {
+            return null;
+        }
+
+        @Override
+        public <T> Flash unmapFlash(T cameraConstant) {
+            return null;
+        }
+
+        @Override
+        public <T> Facing unmapFacing(T cameraConstant) {
+            return null;
+        }
+
+        @Override
+        public <T> WhiteBalance unmapWhiteBalance(T cameraConstant) {
+            return null;
+        }
+
+        @Override
+        public <T> Hdr unmapHdr(T cameraConstant) {
+            return null;
         }
     }
 }

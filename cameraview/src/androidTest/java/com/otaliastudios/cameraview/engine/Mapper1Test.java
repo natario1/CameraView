@@ -4,6 +4,7 @@ package com.otaliastudios.cameraview.engine;
 import android.hardware.Camera;
 
 import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -22,7 +23,7 @@ import static org.junit.Assert.*;
 @SmallTest
 public class Mapper1Test extends BaseTest {
 
-    private Mapper mapper = Mapper.get();
+    private Mapper mapper = Mapper.get(Engine.CAMERA1);
 
     @Test
     public void testMap() {

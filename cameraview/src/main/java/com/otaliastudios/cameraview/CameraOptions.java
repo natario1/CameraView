@@ -52,7 +52,7 @@ public class CameraOptions {
     @SuppressWarnings("deprecation")
     public CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
-        Mapper mapper = Mapper.get();
+        Mapper mapper = Mapper.get(Engine.CAMERA1);
 
         // Facing
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();

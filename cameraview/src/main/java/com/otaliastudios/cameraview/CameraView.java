@@ -36,6 +36,7 @@ import com.otaliastudios.cameraview.controls.ControlParser;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.engine.Camera2Engine;
 import com.otaliastudios.cameraview.markers.MarkerLayout;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
@@ -233,8 +234,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @NonNull
     protected CameraEngine instantiateCameraEngine(@NonNull Engine engine, @NonNull CameraEngine.Callback callback) {
-        if (mExperimental && engine == Engine.CAMERA2) {
-            throw new RuntimeException("TODO");
+        if (mExperimental && engine == Engine.CAMERA2 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return new Camera2Engine(callback);
         } else {
             mEngine = Engine.CAMERA1;
             return new Camera1Engine(callback);
