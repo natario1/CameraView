@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.PointF;
 import android.location.Location;
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -29,16 +30,26 @@ import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
 import com.otaliastudios.cameraview.gesture.ScrollGestureLayout;
 import com.otaliastudios.cameraview.gesture.TapGestureLayout;
 import com.otaliastudios.cameraview.engine.MockCameraEngine;
+import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.markers.AutoFocusMarker;
+import com.otaliastudios.cameraview.markers.DefaultAutoFocusMarker;
+import com.otaliastudios.cameraview.markers.MarkerLayout;
 import com.otaliastudios.cameraview.preview.MockCameraPreview;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
 import com.otaliastudios.cameraview.size.SizeSelectors;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import static org.junit.Assert.*;
 
@@ -724,6 +735,37 @@ public class CameraViewTest extends BaseTest {
         cameraView.setSnapshotMaxHeight(1000);
         assertEquals(mockController.getSnapshotMaxWidth(), 500);
         assertEquals(mockController.getSnapshotMaxHeight(), 1000);
+    }
+
+    //endregion
+
+    //region MarkerLayout
+
+    @Test
+    public void testMarkerLayout_forAutoFocus_onMarker() {
+        MarkerLayout markerLayout = mock(MarkerLayout.class);
+        AutoFocusMarker marker = new DefaultAutoFocusMarker();
+        cameraView.mMarkerLayout = markerLayout;
+        cameraView.setAutoFocusMarker(marker);
+        verify(markerLayout, times(1)).onMarker(MarkerLayout.TYPE_AUTOFOCUS, marker);
+    }
+
+    @Test
+    public void testMarkerLayout_forAutoFocus_onEvent() {
+        MarkerLayout markerLayout = spy(cameraView.mMarkerLayout);
+        cameraView.mMarkerLayout = markerLayout;
+        final PointF point = new PointF(0, 0);
+        final PointF[] points = new PointF[]{ point };
+        final Task<Boolean> task = new Task<>(true);
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                task.end(true);
+                return null;
+            }
+        }).when(markerLayout).onEvent(MarkerLayout.TYPE_AUTOFOCUS, points);
+        cameraView.mCameraCallbacks.dispatchOnFocusStart(Gesture.TAP, point);
+        assertNotNull(task.await(100));
     }
 
     //endregion

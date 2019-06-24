@@ -16,7 +16,7 @@ import androidx.annotation.Nullable;
  * Manages markers and provides an hierarchy / Canvas for them.
  * It is responsible for calling {@link Marker#onAttach(Context, ViewGroup)}.
  */
-public final class MarkerLayout extends FrameLayout {
+public class MarkerLayout extends FrameLayout {
 
     public final static int TYPE_AUTOFOCUS = 1;
 
