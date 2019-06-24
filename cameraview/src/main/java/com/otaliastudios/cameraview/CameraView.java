@@ -35,7 +35,7 @@ import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.controls.ControlParser;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
-import com.otaliastudios.cameraview.draw.MarkerLayout;
+import com.otaliastudios.cameraview.markers.MarkerLayout;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.frame.Frame;
@@ -57,6 +57,7 @@ import com.otaliastudios.cameraview.internal.GridLinesLayout;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.OrientationHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.markers.MarkerParser;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
@@ -66,8 +67,8 @@ import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
 import com.otaliastudios.cameraview.size.SizeSelectorParser;
 import com.otaliastudios.cameraview.size.SizeSelectors;
-import com.otaliastudios.cameraview.draw.AutoFocusMarker;
-import com.otaliastudios.cameraview.draw.AutoFocusTrigger;
+import com.otaliastudios.cameraview.markers.AutoFocusMarker;
+import com.otaliastudios.cameraview.markers.AutoFocusTrigger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -159,6 +160,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // Size selectors and gestures
         SizeSelectorParser sizeSelectors = new SizeSelectorParser(a);
         GestureParser gestures = new GestureParser(a);
+        MarkerParser markers = new MarkerParser(a);
 
         a.recycle();
 
@@ -207,6 +209,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mapGesture(Gesture.PINCH, gestures.getPinchAction());
         mapGesture(Gesture.SCROLL_HORIZONTAL, gestures.getHorizontalScrollAction());
         mapGesture(Gesture.SCROLL_VERTICAL, gestures.getVerticalScrollAction());
+
+        // Apply markers
+        setAutoFocusMarker(markers.getAutoFocusMarker());
 
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);

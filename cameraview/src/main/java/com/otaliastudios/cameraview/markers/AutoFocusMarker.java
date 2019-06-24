@@ -1,14 +1,10 @@
-package com.otaliastudios.cameraview.draw;
+package com.otaliastudios.cameraview.markers;
 
-import android.content.Context;
 import android.graphics.PointF;
-import android.view.View;
 
 import com.otaliastudios.cameraview.CameraView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
 
 /**
  * A marker for the autofocus operations. Receives callback when focus starts,

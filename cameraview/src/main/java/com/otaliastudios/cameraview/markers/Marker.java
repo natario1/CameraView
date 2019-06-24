@@ -1,7 +1,6 @@
-package com.otaliastudios.cameraview.draw;
+package com.otaliastudios.cameraview.markers;
 
 import android.content.Context;
-import android.graphics.PointF;
 import android.view.View;
 import android.view.ViewGroup;
 

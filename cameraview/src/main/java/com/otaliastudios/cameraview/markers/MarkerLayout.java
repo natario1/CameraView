@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.draw;
+package com.otaliastudios.cameraview.markers;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

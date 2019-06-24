@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.draw;
+package com.otaliastudios.cameraview.markers;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -7,8 +7,6 @@ import android.graphics.PointF;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 
 import com.otaliastudios.cameraview.R;
 

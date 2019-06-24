@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview.gesture;
 
 
 import com.otaliastudios.cameraview.CameraView;
-import com.otaliastudios.cameraview.draw.AutoFocusMarker;
+import com.otaliastudios.cameraview.markers.AutoFocusMarker;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

@@ -30,13 +30,13 @@
 
         <attr name="cameraGestureTap" format="enum">
             <enum name="none" value="0" />
-            <enum name="autofocus" value="1" />
+            <enum name="autoFocus" value="1" />
             <enum name="takePicture" value="2" />
         </attr>
 
         <attr name="cameraGestureLongTap" format="enum">
             <enum name="none" value="0" />
-            <enum name="autofocus" value="1" />
+            <enum name="autoFocus" value="1" />
             <enum name="takePicture" value="2" />
         </attr>
 
@@ -123,6 +123,8 @@
         <attr name="cameraExperimental" format="boolean" />
 
         <attr name="cameraAutoFocusResetDelay" format="integer|reference"/>
+
+        <attr name="cameraAutoFocusMarker" format="string|reference"/>
 
     </declare-styleable>
 </resources>

@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.draw;
+package com.otaliastudios.cameraview.markers;
 
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.gesture.GestureAction;
