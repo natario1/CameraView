@@ -216,9 +216,8 @@ public class CameraOptions1Test extends BaseTest {
         when(params.getMinExposureCompensation()).thenReturn(0);
 
         CameraOptions o = new CameraOptions(params, false);
-        assertFalse(o.supports(GestureAction.FOCUS));
-        assertFalse(o.supports(GestureAction.FOCUS_WITH_MARKER));
-        assertTrue(o.supports(GestureAction.CAPTURE));
+        assertFalse(o.supports(GestureAction.AUTO_FOCUS));
+        assertTrue(o.supports(GestureAction.TAKE_PICTURE));
         assertTrue(o.supports(GestureAction.NONE));
         assertTrue(o.supports(GestureAction.ZOOM));
         assertFalse(o.supports(GestureAction.EXPOSURE_CORRECTION));

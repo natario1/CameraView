@@ -189,7 +189,7 @@ public class CameraViewCallbacksTest extends BaseTest {
     public void testDispatchOnFocusStart() {
         // Enable tap gesture.
         // Can't mock package protected. camera.mTapGestureLayout = mock(TapGestureLayout.class);
-        camera.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
+        camera.mapGesture(Gesture.TAP, GestureAction.AUTO_FOCUS);
 
         PointF point = new PointF();
         completeTask().when(listener).onAutoFocusStart(point);
@@ -204,7 +204,7 @@ public class CameraViewCallbacksTest extends BaseTest {
     public void testDispatchOnFocusEnd() {
         // Enable tap gesture.
         // Can't mock package protected. camera.mTapGestureLayout = mock(TapGestureLayout.class);
-        camera.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
+        camera.mapGesture(Gesture.TAP, GestureAction.AUTO_FOCUS);
 
         PointF point = new PointF();
         boolean success = true;
