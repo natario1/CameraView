@@ -1718,6 +1718,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         private CameraLogger mLogger = CameraLogger.create(CameraCallbacks.class.getSimpleName());
 
+        @NonNull
+        @Override
+        public Context getContext() {
+            return CameraView.this.getContext();
+        }
+
         @Override
         public void dispatchOnCameraOpened(final CameraOptions options) {
             mLogger.i("dispatchOnCameraOpened", options);

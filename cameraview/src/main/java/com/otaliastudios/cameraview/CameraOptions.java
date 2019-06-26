@@ -1,7 +1,15 @@
 package com.otaliastudios.cameraview;
 
 
+import android.graphics.ImageFormat;
 import android.hardware.Camera;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.ImageReader;
+import android.media.MediaRecorder;
+import android.os.Build;
 
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Control;
@@ -19,6 +27,7 @@ import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -128,6 +137,42 @@ public class CameraOptions {
                 supportedVideoSizes.add(new Size(width, height));
                 supportedVideoAspectRatio.add(AspectRatio.of(width, height));
             }
+        }
+    }
+    // Camera2Engine constructor.
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    @SuppressWarnings("deprecation")
+    public CameraOptions(@NonNull CameraManager manager, @NonNull CameraCharacteristics characteristics, boolean flipSizes) throws CameraAccessException {
+        Mapper mapper = Mapper.get(Engine.CAMERA2);
+
+        // Facing
+        for (String cameraId : manager.getCameraIdList()) {
+            CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(cameraId);
+            Integer cameraFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
+            if (cameraFacing != null) {
+                Facing value = mapper.unmapFacing(cameraFacing);
+                if (value != null) supportedFacing.add(value);
+            }
+        }
+
+        // Picture Sizes
+        StreamConfigurationMap streamMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        if (streamMap == null) throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
+        android.util.Size[] psizes = streamMap.getOutputSizes(ImageReader.class);
+        for (android.util.Size size : psizes) {
+            int width = flipSizes ? size.getHeight() : size.getWidth();
+            int height = flipSizes ? size.getWidth() : size.getHeight();
+            supportedPictureSizes.add(new Size(width, height));
+            supportedPictureAspectRatio.add(AspectRatio.of(width, height));
+        }
+
+        // Video Sizes
+        android.util.Size[] vsizes = streamMap.getOutputSizes(MediaRecorder.class);
+        for (android.util.Size size : vsizes) {
+            int width = flipSizes ? size.getHeight() : size.getWidth();
+            int height = flipSizes ? size.getWidth() : size.getHeight();
+            supportedVideoSizes.add(new Size(width, height));
+            supportedVideoAspectRatio.add(AspectRatio.of(width, height));
         }
     }
 

@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.engine;
 
 import android.hardware.Camera;
+import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.controls.Engine;
@@ -12,6 +13,7 @@ import com.otaliastudios.cameraview.controls.WhiteBalance;
 import java.util.HashMap;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 /**
  * A Mapper maps camera engine constants to CameraView constants.
@@ -25,11 +27,11 @@ public abstract class Mapper {
         if (engine == Engine.CAMERA1) {
             if (CAMERA1 == null) CAMERA1 = new Camera1Mapper();
             return CAMERA1;
-        } else if (engine == Engine.CAMERA2) {
+        } else if (engine == Engine.CAMERA2 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if (CAMERA2 == null) CAMERA2 = new Camera2Mapper();
             return CAMERA2;
         } else {
-            throw new IllegalArgumentException("Unknown engine.");
+            throw new IllegalArgumentException("Unknown engine or unsupported API level.");
         }
     }
 
@@ -130,7 +132,16 @@ public abstract class Mapper {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private static class Camera2Mapper extends Mapper {
+
+        private static final HashMap<Facing, Integer> FACING = new HashMap<>();
+
+        static {
+            FACING.put(Facing.BACK, CameraCharacteristics.LENS_FACING_BACK);
+            FACING.put(Facing.FRONT, CameraCharacteristics.LENS_FACING_FRONT);
+        }
 
         @Override
         public <T> T map(Flash flash) {
@@ -139,7 +150,7 @@ public abstract class Mapper {
 
         @Override
         public <T> T map(Facing facing) {
-            return null;
+            return (T) FACING.get(facing);
         }
 
         @Override
@@ -159,7 +170,7 @@ public abstract class Mapper {
 
         @Override
         public <T> Facing unmapFacing(T cameraConstant) {
-            return null;
+            return reverseLookup(FACING, cameraConstant);
         }
 
         @Override

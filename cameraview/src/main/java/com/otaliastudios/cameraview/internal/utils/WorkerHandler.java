@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 
 /**
  * Class holding a background handler.
@@ -60,12 +61,19 @@ public class WorkerHandler {
 
     private HandlerThread mThread;
     private Handler mHandler;
+    private Executor mExecutor;
 
     private WorkerHandler(@NonNull String name) {
         mThread = new HandlerThread(name);
         mThread.setDaemon(true);
         mThread.start();
         mHandler = new Handler(mThread.getLooper());
+        mExecutor = new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                post(command);
+            }
+        };
     }
 
     /**
@@ -77,10 +85,27 @@ public class WorkerHandler {
     }
 
     /**
+     * Post an action on this handler.
+     * @param delay the delay in millis
+     * @param runnable the action
+     */
+    public void post(long delay, @NonNull Runnable runnable) {
+        mHandler.postDelayed(runnable, delay);
+    }
+
+    /**
+     * Removes a previously added action from this handler.
+     * @param runnable the action
+     */
+    public void remove(@NonNull Runnable runnable) {
+        mHandler.removeCallbacks(runnable);
+    }
+
+    /**
      * Returns the android backing {@link Handler}.
      * @return the handler
      */
-    public Handler get() {
+    public Handler getHandler() {
         return mHandler;
     }
 
@@ -100,6 +125,15 @@ public class WorkerHandler {
     @NonNull
     public Looper getLooper() {
         return mThread.getLooper();
+    }
+
+    /**
+     * Returns an {@link Executor}.
+     * @return the executor
+     */
+    @NonNull
+    public Executor getExecutor() {
+        return mExecutor;
     }
 
     /**
