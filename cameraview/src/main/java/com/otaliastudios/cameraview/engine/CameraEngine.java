@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.engine;
 
+import android.content.Context;
 import android.graphics.PointF;
 import android.location.Location;
 
@@ -42,12 +43,47 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+
+/**
+ * PROCESS
+ * Setting up the Camera is usually a 4 steps process:
+ * 1. Setting up the Surface (done by {@link CameraPreview}
+ * 2. Opening the camera (done by us)
+ * 3. Binding the camera to the surface (done by us)
+ * 4. Starting the camera preview (done by us)
+ *
+ * The first two steps can actually happen at the same time, anyway
+ * the order is not guaranteed.
+ * So at the end of both step 1 and 2, the engine should check if both have
+ * been performed and trigger the steps 3 and 4.
+ *
+ *
+ * STATE
+ * In the {@link CameraEngine} notation,
+ * - START [Async] means doing step 2 (which will eventually trigger 3 and 4)
+ * - STOP [Async] means undoing 4 (if needed), undoing 3 (if needed), then undoing 2.
+ * - RESTART [Async] means completing a STOP then a START
+ * - DESTROY [Sync] means performing a silent and synchronous STOP, ignoring all exceptions. This can make the engine unusable.
+ *
+ * So the engine state will be:
+ * - {@link #STATE_STARTING} if we're into step 2
+ * - {@link #STATE_STARTED} if we've completed step 2. No clue about 3 or 4.
+ * - {@link #STATE_STOPPING} if we're undoing steps 4, 3 and 2.
+ * - {@link #STATE_STOPPED} if we have undone steps 4, 3 and 2 (or they never started at all).
+ *
+ *
+ * THREADING
+ * Subclasses should always execute code on the thread given by {@link #mHandler}.
+ * This thread has a special {@link Thread.UncaughtExceptionHandler} that handles exceptions
+ * and dispatches error to the callback (instead of crashing the app).
+ * This lets subclasses run code safely and directly throw {@link CameraException}s when needed.
+ */
 public abstract class CameraEngine implements
         CameraPreview.SurfaceCallback,
-        FrameManager.BufferCallback,
-        Thread.UncaughtExceptionHandler {
+        FrameManager.BufferCallback {
 
     public interface Callback {
+        @NonNull Context getContext();
         void dispatchOnCameraOpened(CameraOptions options);
         void dispatchOnCameraClosed();
         void onCameraPreviewStreamSizeChanged();
@@ -99,7 +135,6 @@ public abstract class CameraEngine implements
     @VisibleForTesting int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
     @VisibleForTesting int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
 
-    protected int mCameraId;
     protected CameraOptions mCameraOptions;
     protected Mapper mMapper;
     protected PictureRecorder mPictureRecorder;
@@ -117,7 +152,8 @@ public abstract class CameraEngine implements
     private int mDisplayOffset;
     private int mDeviceOrientation;
 
-    protected int mState = STATE_STOPPED;
+    // Subclasses should not change this. Use getState() instead.
+    @VisibleForTesting int mState = STATE_STOPPED;
 
     // Used for testing.
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Task<Void> mZoomTask = new Task<>();
@@ -132,18 +168,68 @@ public abstract class CameraEngine implements
     protected CameraEngine(Callback callback) {
         mCallback = callback;
         mCrashHandler = new Handler(Looper.getMainLooper());
-        mHandler = WorkerHandler.get("CameraViewController");
-        mHandler.getThread().setUncaughtExceptionHandler(this);
+        mHandler = WorkerHandler.get("CameraViewEngine");
+        mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
         mFrameManager = new FrameManager(2, this);
     }
 
     public void setPreview(@NonNull CameraPreview cameraPreview) {
+        if (mPreview != null) mPreview.setSurfaceCallback(null);
         mPreview = cameraPreview;
         mPreview.setSurfaceCallback(this);
     }
 
     //region Error handling
 
+    /**
+     * The base exception handler, which inspects the exception and
+     * decides what to do.
+     */
+    private class CrashExceptionHandler implements Thread.UncaughtExceptionHandler {
+        @Override
+        public void uncaughtException(final Thread thread, final Throwable throwable) {
+            // Something went wrong. Thread is terminated (about to?).
+            // Move to other thread and release resources.
+            if (!(throwable instanceof CameraException)) {
+                // This is unexpected, either a bug or something the developer should know.
+                // Release and crash the UI thread so we get bug reports.
+                LOG.e("uncaughtException:", "Unexpected exception:", throwable);
+                destroy();
+                mCrashHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        RuntimeException exception;
+                        if (throwable instanceof RuntimeException) {
+                            exception = (RuntimeException) throwable;
+                        } else {
+                            exception = new RuntimeException(throwable);
+                        }
+                        throw exception;
+                    }
+                });
+            } else {
+                final CameraException error = (CameraException) throwable;
+                LOG.e("uncaughtException:", "Interrupting thread with state:", ss(), "due to CameraException:", error);
+                final boolean unrecoverable = error.isUnrecoverable();
+                thread.interrupt();
+                // Restart handler.
+                mHandler = WorkerHandler.get("CameraViewEngine");
+                mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (unrecoverable) stopNow();
+                        mCallback.dispatchError(error);
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * A static exception handler used during destruction to avoid leaks,
+     * since the default handler is not static and the thread might survive the engine.
+     */
     private static class NoOpExceptionHandler implements Thread.UncaughtExceptionHandler {
         @Override
         public void uncaughtException(Thread t, Throwable e) {
@@ -151,54 +237,17 @@ public abstract class CameraEngine implements
         }
     }
 
-    @Override
-    public void uncaughtException(final Thread thread, final Throwable throwable) {
-        // Something went wrong. Thread is terminated (about to?).
-        // Move to other thread and release resources.
-        if (!(throwable instanceof CameraException)) {
-            // This is unexpected, either a bug or something the developer should know.
-            // Release and crash the UI thread so we get bug reports.
-            LOG.e("uncaughtException:", "Unexpected exception:", throwable);
-            destroy();
-            mCrashHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    RuntimeException exception;
-                    if (throwable instanceof RuntimeException) {
-                        exception = (RuntimeException) throwable;
-                    } else {
-                        exception = new RuntimeException(throwable);
-                    }
-                    throw exception;
-                }
-            });
-        } else {
-            // At the moment all CameraExceptions are unrecoverable, there was something
-            // wrong when starting, stopping, or binding the camera to the preview.
-            final CameraException error = (CameraException) throwable;
-            LOG.e("uncaughtException:", "Interrupting thread with state:", ss(), "due to CameraException:", error);
-            thread.interrupt();
-            mHandler = WorkerHandler.get("CameraViewController");
-            mHandler.getThread().setUncaughtExceptionHandler(this);
-            LOG.i("uncaughtException:", "Calling stopImmediately and notifying.");
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    stopImmediately();
-                    mCallback.dispatchError(error);
-                }
-            });
-        }
-    }
-
-    // Public & not final so we can verify with mockito in CameraViewTest
+    /**
+     * Not final due to mockito requirements, but this is basically
+     * it, nothing more to do.
+     */
     public void destroy() {
         LOG.i("destroy:", "state:", ss());
         // Prevent CameraEngine leaks. Don't set to null, or exceptions
         // inside the standard stop() method might crash the main thread.
         mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
         // Stop if needed.
-        stopImmediately();
+        stopNow();
     }
 
     //endregion
@@ -254,18 +303,18 @@ public abstract class CameraEngine implements
     }
 
     // Stops the preview synchronously, ensuring no exceptions are thrown.
-    final void stopImmediately() {
+    final void stopNow() {
         try {
             // Don't check, try stop again.
-            LOG.i("stopImmediately:", "State was:", ss());
+            LOG.i("stopNow:", "State was:", ss());
             if (mState == STATE_STOPPED) return;
             mState = STATE_STOPPING;
             onStop();
             mState = STATE_STOPPED;
-            LOG.i("stopImmediately:", "Stopped. State is:", ss());
+            LOG.i("stopNow:", "Stopped. State is:", ss());
         } catch (Exception e) {
             // Do nothing.
-            LOG.i("stopImmediately:", "Swallowing exception while stopping.", e);
+            LOG.i("stopNow:", "Swallowing exception while stopping.", e);
             mState = STATE_STOPPED;
         }
     }

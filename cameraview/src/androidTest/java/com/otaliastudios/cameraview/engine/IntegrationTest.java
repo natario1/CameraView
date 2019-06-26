@@ -109,7 +109,7 @@ public class IntegrationTest extends BaseTest {
                 uiExceptionTask.end(e);
             }
         });
-        controller.mCrashHandler = crashThread.get();
+        controller.mCrashHandler = crashThread.getHandler();
     }
 
     @After
@@ -393,6 +393,7 @@ public class IntegrationTest extends BaseTest {
         controller.mPlaySoundsTask.await(300);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+
             Camera.CameraInfo info = new Camera.CameraInfo();
             Camera.getCameraInfo(controller.mCameraId, info);
             if (info.canDisableShutterSound) {

@@ -17,6 +17,7 @@
         android:layout_marginBottom="88dp"
         android:keepScreenOn="true"
         app:cameraExperimental="true"
+        app:cameraEngine="camera2"
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
         app:cameraFlash="off"

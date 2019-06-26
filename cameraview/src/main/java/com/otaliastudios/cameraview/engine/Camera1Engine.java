@@ -11,6 +11,7 @@ import android.location.Location;
 import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 import android.view.SurfaceHolder;
 
@@ -56,6 +57,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     private static final int AUTOFOCUS_END_DELAY_MILLIS = 2500;
 
     private Camera mCamera;
+    @VisibleForTesting int mCameraId;
     private boolean mIsBound = false;
 
     private Runnable mFocusEndRunnable;
@@ -310,9 +312,9 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     @Override
     protected void onStop() {
         LOG.i("onStop:", "About to clean up.");
-        mHandler.get().removeCallbacks(mFocusResetRunnable);
+        mHandler.remove(mFocusResetRunnable);
         if (mFocusEndRunnable != null) {
-            mHandler.get().removeCallbacks(mFocusEndRunnable);
+            mHandler.remove(mFocusEndRunnable);
         }
         if (mVideoRecorder != null) {
             mVideoRecorder.stop();
@@ -329,11 +331,6 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         mCaptureSize = null;
         mIsBound = false;
         LOG.w("onStop:", "Clean up.", "Returning.");
-
-        // We were saving a reference to the exception here and throwing to the user.
-        // I don't think it's correct. We are closing and have already done our best
-        // to clean up resources. No need to throw.
-        // if (error != null) throw new CameraException(error);
     }
 
     private boolean collectCameraId() {
@@ -364,7 +361,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         if (error == Camera.CAMERA_ERROR_SERVER_DIED) {
             // Looks like this is recoverable.
             LOG.w("Recoverable error inside the onError callback.", "CAMERA_ERROR_SERVER_DIED");
-            stopImmediately();
+            stopNow();
             start();
             return;
         }
@@ -630,10 +627,6 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
                 stub.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
                 stub.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
                 AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
-                // LOG.e("ROTBUG_pic", "aspectRatio (REF_VIEW):", viewAspectRatio);
-                // LOG.e("ROTBUG_pic", "aspectRatio (REF_OUTPUT):", outputRatio);
-                // LOG.e("ROTBUG_pic", "sizeUncropped (REF_OUTPUT):", result.size);
-                // LOG.e("ROTBUG_pic", "rotation:", result.rotation);
 
                 LOG.v("Rotations", "SV", offset(REF_SENSOR, REF_VIEW), "VS", offset(REF_VIEW, REF_SENSOR));
                 LOG.v("Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
@@ -656,7 +649,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     }
 
     private boolean isCameraAvailable() {
-        switch (mState) {
+        switch (getState()) {
             // If we are stopped, don't.
             case STATE_STOPPED:
                 return false;
@@ -920,7 +913,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
                 // The auto focus callback is not guaranteed to be called, but we really want it to be.
                 // So we remove the old runnable if still present and post a new one.
-                if (mFocusEndRunnable != null) mHandler.get().removeCallbacks(mFocusEndRunnable);
+                if (mFocusEndRunnable != null) mHandler.remove(mFocusEndRunnable);
                 mFocusEndRunnable = new Runnable() {
                     @Override
                     public void run() {
@@ -929,7 +922,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
                         }
                     }
                 };
-                mHandler.get().postDelayed(mFocusEndRunnable, AUTOFOCUS_END_DELAY_MILLIS);
+                mHandler.post(AUTOFOCUS_END_DELAY_MILLIS, mFocusEndRunnable);
 
                 // Wrapping autoFocus in a try catch to handle some device specific exceptions,
                 // see See https://github.com/natario1/CameraView/issues/181.
@@ -938,13 +931,13 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
                         @Override
                         public void onAutoFocus(boolean success, Camera camera) {
                             if (mFocusEndRunnable != null) {
-                                mHandler.get().removeCallbacks(mFocusEndRunnable);
+                                mHandler.remove(mFocusEndRunnable);
                                 mFocusEndRunnable = null;
                             }
                             mCallback.dispatchOnFocusEnd(gesture, success, p);
-                            mHandler.get().removeCallbacks(mFocusResetRunnable);
+                            mHandler.remove(mFocusResetRunnable);
                             if (shouldResetAutoFocus()) {
-                                mHandler.get().postDelayed(mFocusResetRunnable, getAutoFocusResetDelay());
+                                mHandler.post(getAutoFocusResetDelay(), mFocusResetRunnable);
                             }
                         }
                     });

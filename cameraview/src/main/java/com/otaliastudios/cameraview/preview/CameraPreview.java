@@ -74,11 +74,11 @@ public abstract class CameraPreview<T extends View, Output> {
      * Sets a callback to be notified of surface events (creation, change, destruction)
      * @param callback a callback
      */
-    public final void setSurfaceCallback(@NonNull SurfaceCallback callback) {
+    public final void setSurfaceCallback(@Nullable SurfaceCallback callback) {
         mSurfaceCallback = callback;
         // If surface already available, dispatch.
         if (mOutputSurfaceWidth != 0 || mOutputSurfaceHeight != 0) {
-            mSurfaceCallback.onSurfaceAvailable();
+            if (callback != null) callback.onSurfaceAvailable();
         }
     }
 
