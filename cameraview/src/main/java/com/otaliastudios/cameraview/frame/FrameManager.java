@@ -40,7 +40,7 @@ public class FrameManager {
 
     /**
      * Construct a new frame manager.
-     * The construction must be followed by an {@link #allocateBuffers(int, Size)} call
+     * The construction must be followed by an {@link #setUp(int, Size)} call
      * as soon as the parameters are known.
      *
      * @param poolSize the size of the backing pool.
@@ -63,7 +63,7 @@ public class FrameManager {
      * @param previewSize the preview size
      * @return the buffer size
      */
-    public int allocateBuffers(int bitsPerPixel, @NonNull Size previewSize) {
+    public int setUp(int bitsPerPixel, @NonNull Size previewSize) {
         // TODO throw if called twice without release?
         mBufferSize = getBufferSize(bitsPerPixel, previewSize);
         for (int i = 0; i < mPoolSize; i++) {
@@ -104,8 +104,8 @@ public class FrameManager {
 
     /**
      * Returns a new Frame for the given data. This must be called
-     * - after {@link #allocateBuffers(int, Size)}, which sets the buffer size
-     * - after the byte buffer given by allocateBuffers() has been filled.
+     * - after {@link #setUp(int, Size)}, which sets the buffer size
+     * - after the byte buffer given by setUp() has been filled.
      *   If this is called X times in a row without releasing frames, it will allocate
      *   X frames and that's bad. Callers must wait for the preview buffer to be available.
      *

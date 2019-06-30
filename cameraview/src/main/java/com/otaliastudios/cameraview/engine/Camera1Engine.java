@@ -15,6 +15,8 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 import android.view.SurfaceHolder;
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
@@ -30,7 +32,7 @@ import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.picture.FullPictureRecorder;
 import com.otaliastudios.cameraview.picture.PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotPictureRecorder;
@@ -54,11 +56,10 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     private static final String TAG = Camera1Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
-    private static final int AUTOFOCUS_END_DELAY_MILLIS = 2500;
+    @VisibleForTesting static final int AUTOFOCUS_END_DELAY_MILLIS = 2500;
 
     private Camera mCamera;
     @VisibleForTesting int mCameraId;
-    private boolean mIsBound = false;
 
     private Runnable mFocusEndRunnable;
     private final Runnable mFocusResetRunnable = new Runnable() {
@@ -81,87 +82,62 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         mMapper = Mapper.get(Engine.CAMERA1);
     }
 
-    private void schedule(@Nullable final Task<Void> task, final boolean ensureAvailable, final Runnable action) {
+    private boolean isCameraAvailable() {
+        return getEngineState() == STATE_STARTED;
+    }
+
+    private void schedule(@Nullable final Op<Void> op, final boolean ensureAvailable, final Runnable action) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 if (ensureAvailable && !isCameraAvailable()) {
-                    if (task != null) task.end(null);
+                    if (op != null) op.end(null);
                 } else {
                     action.run();
-                    if (task != null) task.end(null);
+                    if (op != null) op.end(null);
                 }
             }
         });
     }
 
-    /**
-     * Preview surface is now available. If camera is open, set up.
-     * At this point we are sure that mPreview is not null.
-     */
-    @Override
-    public void onSurfaceAvailable() {
-        LOG.i("onSurfaceAvailable:", "Size is", getPreviewSurfaceSize(REF_VIEW));
-        schedule(null, false, new Runnable() {
-            @Override
-            public void run() {
-                LOG.i("onSurfaceAvailable:", "Inside handler. About to bind.");
-                if (shouldBindToSurface()) bindToSurface();
-                if (shouldStartPreview()) startPreview("onSurfaceAvailable");
-            }
-        });
-    }
-
-    /**
-     * Preview surface did change its size. Compute a new preview size.
-     * This requires stopping and restarting the preview.
-     * At this point we are sure that mPreview is not null.
-     */
-    @Override
-    public void onSurfaceChanged() {
-        LOG.i("onSurfaceChanged, size is", getPreviewSurfaceSize(REF_VIEW));
-        schedule(null, true, new Runnable() {
-            @Override
-            public void run() {
-                if (!mIsBound) return;
-
-                // Compute a new camera preview size.
-                Size newSize = computePreviewStreamSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
-                if (newSize.equals(mPreviewStreamSize)) return;
-
-                // Apply.
-                LOG.i("onSurfaceChanged:", "Computed a new preview size. Going on.");
-                mPreviewStreamSize = newSize;
-                stopPreview();
-                startPreview("onSurfaceChanged:");
-            }
-        });
-    }
-
-    @Override
-    public void onSurfaceDestroyed() {
-        LOG.i("onSurfaceDestroyed");
-        schedule(null, true, new Runnable() {
-            @Override
-            public void run() {
-                stopPreview();
-                if (mIsBound) unbindFromSurface();
-            }
-        });
-    }
-
-    private boolean shouldBindToSurface() {
-        return isCameraAvailable() && mPreview != null && mPreview.hasSurface() && !mIsBound;
-    }
-
-    /**
-     * The act of binding an "open" camera to a "ready" preview.
-     * These can happen at different times but we want to end up here.
-     * At this point we are sure that mPreview is not null.
-     */
+    @NonNull
     @WorkerThread
-    private void bindToSurface() {
-        LOG.i("bindToSurface:", "Started");
+    @Override
+    protected Task<Void> onStartEngine() {
+        if (collectCameraId()) {
+            try {
+                mCamera = Camera.open(mCameraId);
+            } catch (Exception e) {
+                LOG.e("onStartEngine:", "Failed to connect. Maybe in use by another app?");
+                throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
+            }
+            mCamera.setErrorCallback(this);
+
+            // Set parameters that might have been set before the camera was opened.
+            LOG.i("onStartEngine:", "Applying default parameters.");
+            Camera.Parameters params = mCamera.getParameters();
+            mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
+            applyDefaultFocus(params);
+            applyFlash(params, Flash.OFF);
+            applyLocation(params, null);
+            applyWhiteBalance(params, WhiteBalance.AUTO);
+            applyHdr(params, Hdr.OFF);
+            applyPlaySounds(mPlaySounds);
+            params.setRecordingHint(mMode == Mode.VIDEO);
+            mCamera.setParameters(params);
+            mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
+            LOG.i("onStartEngine:", "Ended");
+            return Tasks.forResult(null);
+        } else {
+            LOG.e("onStartEngine:", "No camera available for facing", mFacing);
+            throw new CameraException(CameraException.REASON_NO_CAMERA);
+        }
+    }
+
+    @NonNull
+    @Override
+    protected Task<Void> onStartBind() {
+        LOG.i("onStartBind:", "Started");
         Object output = mPreview.getOutput();
         try {
             if (output instanceof SurfaceHolder) {
@@ -172,40 +148,19 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
                 throw new RuntimeException("Unknown CameraPreview output class.");
             }
         } catch (IOException e) {
-            LOG.e("bindToSurface:", "Failed to bind.", e);
+            LOG.e("onStartBind:", "Failed to bind.", e);
             throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
         }
 
         mCaptureSize = computeCaptureSize();
-        mPreviewStreamSize = computePreviewStreamSize(sizesFromList(mCamera.getParameters().getSupportedPreviewSizes()));
-        mIsBound = true;
+        mPreviewStreamSize = computePreviewStreamSize();
+        return Tasks.forResult(null);
     }
 
-    @WorkerThread
-    private void unbindFromSurface() {
-        mIsBound = false;
-        mPreviewStreamSize = null;
-        mCaptureSize = null;
-        try {
-            if (mPreview.getOutputClass() == SurfaceHolder.class) {
-                mCamera.setPreviewDisplay(null);
-            } else if (mPreview.getOutputClass() == SurfaceTexture.class) {
-                mCamera.setPreviewTexture(null);
-            } else {
-                throw new RuntimeException("Unknown CameraPreview output class.");
-            }
-        } catch (IOException e) {
-            LOG.e("unbindFromSurface", "Could not release surface", e);
-        }
-    }
-
-    private boolean shouldStartPreview() {
-        return isCameraAvailable() && mIsBound;
-    }
-
-    // To be called when the preview size is setup or changed.
-    private void startPreview(String log) {
-        LOG.i(log, "Dispatching onCameraPreviewStreamSizeChanged.");
+    @NonNull
+    @Override
+    protected Task<Void> onStartPreview() {
+        LOG.i("onStartPreview", "Dispatching onCameraPreviewStreamSizeChanged.");
         mCallback.onCameraPreviewStreamSizeChanged();
 
         Size previewSize = getPreviewStreamSize(REF_VIEW);
@@ -231,106 +186,87 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
-        mFrameManager.allocateBuffers(ImageFormat.getBitsPerPixel(mPreviewStreamFormat), mPreviewStreamSize);
+        getFrameManager().setUp(ImageFormat.getBitsPerPixel(mPreviewStreamFormat), mPreviewStreamSize);
 
-        LOG.i(log, "Starting preview with startPreview().");
+        LOG.i("onStartPreview", "Starting preview with startPreview().");
         try {
             mCamera.startPreview();
         } catch (Exception e) {
-            LOG.e(log, "Failed to start preview.", e);
+            LOG.e("onStartPreview", "Failed to start preview.", e);
             throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
         }
-        LOG.i(log, "Started preview.");
+        LOG.i("onStartPreview", "Started preview.");
+        return Tasks.forResult(null);
     }
 
-    private void stopPreview() {
+    @NonNull
+    @Override
+    protected Task<Void> onStopPreview() {
+        if (mVideoRecorder != null) {
+            mVideoRecorder.stop();
+            mVideoRecorder = null;
+        }
         mPreviewStreamFormat = 0;
-        mFrameManager.release();
+        getFrameManager().release();
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         try {
             mCamera.stopPreview();
         } catch (Exception e) {
             LOG.e("stopPreview", "Could not stop preview", e);
         }
+        return Tasks.forResult(null);
     }
 
-    private void createCamera() {
+
+    @NonNull
+    @Override
+    protected Task<Void> onStopBind() {
+        mPreviewStreamSize = null;
+        mCaptureSize = null;
         try {
-            mCamera = Camera.open(mCameraId);
-        } catch (Exception e) {
-            LOG.e("createCamera:", "Failed to connect. Maybe in use by another app?");
-            throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
+            if (mPreview.getOutputClass() == SurfaceHolder.class) {
+                mCamera.setPreviewDisplay(null);
+            } else if (mPreview.getOutputClass() == SurfaceTexture.class) {
+                mCamera.setPreviewTexture(null);
+            } else {
+                throw new RuntimeException("Unknown CameraPreview output class.");
+            }
+        } catch (IOException e) {
+            LOG.e("unbindFromSurface", "Could not release surface", e);
         }
-        mCamera.setErrorCallback(this);
-
-        // Set parameters that might have been set before the camera was opened.
-        LOG.i("createCamera:", "Applying default parameters.");
-        Camera.Parameters params = mCamera.getParameters();
-        mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
-        applyDefaultFocus(params);
-        applyFlash(params, Flash.OFF);
-        applyLocation(params, null);
-        applyWhiteBalance(params, WhiteBalance.AUTO);
-        applyHdr(params, Hdr.OFF);
-        applyPlaySounds(mPlaySounds);
-        params.setRecordingHint(mMode == Mode.VIDEO);
-        mCamera.setParameters(params);
-        mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
+        return Tasks.forResult(null);
     }
 
-    private void destroyCamera() {
-        try {
-            LOG.i("destroyCamera:", "Clean up.", "Releasing camera.");
-            mCamera.release();
-            LOG.i("destroyCamera:", "Clean up.", "Released camera.");
-        } catch (Exception e) {
-            LOG.w("destroyCamera:", "Clean up.", "Exception while releasing camera.", e);
-        }
-        mCamera = null;
-        mCameraOptions = null;
-    }
-
+    @NonNull
     @WorkerThread
     @Override
-    protected void onStart() {
-        if (isCameraAvailable()) {
-            LOG.w("onStart:", "Camera not available. Should not happen.");
-            onStop(); // Should not happen.
-        }
-        if (collectCameraId()) {
-            createCamera();
-            if (shouldBindToSurface()) bindToSurface();
-            if (shouldStartPreview()) startPreview("onStart");
-            LOG.i("onStart:", "Ended");
-        } else {
-            LOG.e("onStart:", "No camera available for facing", mFacing);
-            throw new CameraException(CameraException.REASON_NO_CAMERA);
-        }
-    }
-
-    @WorkerThread
-    @Override
-    protected void onStop() {
-        LOG.i("onStop:", "About to clean up.");
+    protected Task<Void> onStopEngine() {
+        LOG.i("onStopEngine:", "About to clean up.");
         mHandler.remove(mFocusResetRunnable);
         if (mFocusEndRunnable != null) {
             mHandler.remove(mFocusEndRunnable);
         }
-        if (mVideoRecorder != null) {
-            mVideoRecorder.stop();
-            mVideoRecorder = null;
-        }
         if (mCamera != null) {
-            stopPreview();
-            if (mIsBound) unbindFromSurface();
-            destroyCamera();
+            try {
+                LOG.i("onStopEngine:", "Clean up.", "Releasing camera.");
+                mCamera.release();
+                LOG.i("onStopEngine:", "Clean up.", "Released camera.");
+            } catch (Exception e) {
+                LOG.w("onStopEngine:", "Clean up.", "Exception while releasing camera.", e);
+            }
+            mCamera = null;
+            mCameraOptions = null;
         }
         mCameraOptions = null;
         mCamera = null;
-        mPreviewStreamSize = null;
-        mCaptureSize = null;
-        mIsBound = false;
-        LOG.w("onStop:", "Clean up.", "Returning.");
+        LOG.w("onStopEngine:", "Clean up.", "Returning.");
+        return Tasks.forResult(null);
+    }
+
+    @WorkerThread
+    @Override
+    protected void onPreviewStreamSizeChanged() {
+        restartPreview();
     }
 
     private boolean collectCameraId() {
@@ -361,8 +297,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         if (error == Camera.CAMERA_ERROR_SERVER_DIED) {
             // Looks like this is recoverable.
             LOG.w("Recoverable error inside the onError callback.", "CAMERA_ERROR_SERVER_DIED");
-            stopNow();
-            start();
+            restart();
             return;
         }
 
@@ -394,7 +329,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     public void setLocation(@Nullable Location location) {
         final Location oldLocation = mLocation;
         mLocation = location;
-        schedule(mLocationTask, true, new Runnable() {
+        schedule(mLocationOp, true, new Runnable() {
             @Override
             public void run() {
                 Camera.Parameters params = mCamera.getParameters();
@@ -437,7 +372,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
         final WhiteBalance old = mWhiteBalance;
         mWhiteBalance = whiteBalance;
-        schedule(mWhiteBalanceTask, true, new Runnable() {
+        schedule(mWhiteBalanceOp, true, new Runnable() {
             @Override
             public void run() {
                 Camera.Parameters params = mCamera.getParameters();
@@ -459,7 +394,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     public void setHdr(@NonNull Hdr hdr) {
         final Hdr old = mHdr;
         mHdr = hdr;
-        schedule(mHdrTask, true, new Runnable() {
+        schedule(mHdrOp, true, new Runnable() {
             @Override
             public void run() {
                 Camera.Parameters params = mCamera.getParameters();
@@ -515,7 +450,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     public void setFlash(@NonNull Flash flash) {
         final Flash old = mFlash;
         mFlash = flash;
-        schedule(mFlashTask, true, new Runnable() {
+        schedule(mFlashOp, true, new Runnable() {
             @Override
             public void run() {
                 Camera.Parameters params = mCamera.getParameters();
@@ -640,32 +575,12 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     @Override
     public void onPreviewFrame(@NonNull byte[] data, Camera camera) {
-        Frame frame = mFrameManager.getFrame(data,
+        Frame frame = getFrameManager().getFrame(data,
                 System.currentTimeMillis(),
                 offset(REF_SENSOR, REF_OUTPUT),
                 mPreviewStreamSize,
                 mPreviewStreamFormat);
         mCallback.dispatchFrame(frame);
-    }
-
-    private boolean isCameraAvailable() {
-        switch (getState()) {
-            // If we are stopped, don't.
-            case STATE_STOPPED:
-                return false;
-            // If we are going to be closed, don't act on camera.
-            // Even if mCamera != null, it might have been released.
-            case STATE_STOPPING:
-                return false;
-            // If we are started, mCamera should never be null.
-            case STATE_STARTED:
-                return true;
-            // If we are starting, theoretically we could act.
-            // Just check that camera is available.
-            case STATE_STARTING:
-                return mCamera != null;
-        }
-        return false;
     }
 
     // -----------------
@@ -685,7 +600,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     @Override
     public void takeVideo(final @NonNull VideoResult.Stub stub, @NonNull final File videoFile) {
-        schedule(mStartVideoTask, true, new Runnable() {
+        schedule(mStartVideoOp, true, new Runnable() {
             @Override
             public void run() {
                 if (mMode == Mode.PICTURE) {
@@ -737,7 +652,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
             throw new IllegalStateException("Video snapshots are only supported starting from API 18.");
         }
-        schedule(mStartVideoTask, true, new Runnable() {
+        schedule(mStartVideoOp, true, new Runnable() {
             @Override
             public void run() {
                 if (isTakingVideo()) return;
@@ -798,11 +713,6 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
                 outputSize = new Size(outputCrop.width(), outputCrop.height());
                 stub.size = outputSize;
                 stub.rotation = offset(REF_VIEW, REF_OUTPUT);
-                // LOG.e("ROTBUG_video", "aspectRatio (REF_VIEW):", viewAspectRatio);
-                // LOG.e("ROTBUG_video", "aspectRatio (REF_OUTPUT):", outputRatio);
-                // LOG.e("ROTBUG_video", "sizeUncropped (REF_OUTPUT):", outputSize);
-                // LOG.e("ROTBUG_video", "sizeCropped (REF_OUTPUT):", videoResult.size);
-                // LOG.e("ROTBUG_video", "rotation:", videoResult.rotation);
 
                 // Reset facing and start.
                 mFacing = realFacing;
@@ -834,7 +744,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     @Override
     public void setZoom(final float zoom, @Nullable final PointF[] points, final boolean notify) {
-        schedule(mZoomTask, true, new Runnable() {
+        schedule(mZoomOp, true, new Runnable() {
             @Override
             public void run() {
                 if (!mCameraOptions.isZoomSupported()) return;
@@ -855,7 +765,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     @Override
     public void setExposureCorrection(final float EVvalue, @NonNull final float[] bounds,
                                @Nullable final PointF[] points, final boolean notify) {
-        schedule(mExposureCorrectionTask, true, new Runnable() {
+        schedule(mExposureCorrectionOp, true, new Runnable() {
             @Override
             public void run() {
                 if (!mCameraOptions.isExposureCorrectionSupported()) return;
@@ -998,13 +908,15 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
 
     @NonNull
-    private List<Size> sizesFromList(@NonNull List<Camera.Size> sizes) {
+    @Override
+    protected List<Size> getPreviewStreamAvailableSizes() {
+        List<Camera.Size> sizes = mCamera.getParameters().getSupportedPreviewSizes();
         List<Size> result = new ArrayList<>(sizes.size());
         for (Camera.Size size : sizes) {
             Size add = new Size(size.width, size.height);
             if (!result.contains(add)) result.add(add);
         }
-        LOG.i("size:", "sizesFromList:", result);
+        LOG.i("getPreviewStreamAvailableSizes:", result);
         return result;
     }
 
@@ -1012,7 +924,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     public void setPlaySounds(boolean playSounds) {
         final boolean old = mPlaySounds;
         mPlaySounds = playSounds;
-        schedule(mPlaySoundsTask, true, new Runnable() {
+        schedule(mPlaySoundsOp, true, new Runnable() {
             @Override
             public void run() {
                 applyPlaySounds(old);

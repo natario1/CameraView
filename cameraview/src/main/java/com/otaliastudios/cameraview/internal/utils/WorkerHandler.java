@@ -81,7 +81,11 @@ public class WorkerHandler {
      * @param runnable the action
      */
     public void post(@NonNull Runnable runnable) {
-        mHandler.post(runnable);
+        if (Thread.currentThread() == getThread()) {
+            runnable.run();
+        } else {
+            mHandler.post(runnable);
+        }
     }
 
     /**

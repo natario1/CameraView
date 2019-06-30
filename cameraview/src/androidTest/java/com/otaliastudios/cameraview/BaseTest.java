@@ -10,9 +10,10 @@ import android.os.PowerManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import android.util.Log;
 import android.view.View;
 
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -131,23 +132,23 @@ public class BaseTest {
         });
     }
 
-    public static <T> Stubber doEndTask(final Task<T> task, final T response) {
+    public static <T> Stubber doEndTask(final Op<T> op, final T response) {
         return doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                task.end(response);
+                op.end(response);
                 return null;
             }
         });
     }
 
-    public static Stubber doEndTask(final Task task, final int withReturnArgument) {
+    public static Stubber doEndTask(final Op op, final int withReturnArgument) {
         return doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 Object o = invocation.getArguments()[withReturnArgument];
                 //noinspection unchecked
-                task.end(o);
+                op.end(o);
                 return null;
             }
         });

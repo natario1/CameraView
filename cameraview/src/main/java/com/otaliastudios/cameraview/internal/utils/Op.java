@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
  * A naive implementation of {@link java.util.concurrent.CountDownLatch}
  * to help in testing.
  */
-public class Task<T> {
+public class Op<T> {
 
     private CountDownLatch mLatch;
     private T mResult;
@@ -22,17 +22,17 @@ public class Task<T> {
      * - call {@link #listen()} to notify they are interested in the next action
      * - call {@link #await()} to know when the action is performed.
      *
-     * Task owners should:
+     * Op owners should:
      * - call {@link #start()} when task started
      * - call {@link #end(Object)} when task ends
      */
-    public Task() { }
+    public Op() { }
 
     /**
      * Creates an empty task and starts listening.
      * @param startListening whether to call listen
      */
-    public Task(boolean startListening) {
+    public Op(boolean startListening) {
         if (startListening) listen();
     }
 
@@ -41,14 +41,14 @@ public class Task<T> {
     }
 
     /**
-     * Task owner method: notifies the action started.
+     * Op owner method: notifies the action started.
      */
     public void start() {
         if (!isListening()) mCount++;
     }
 
     /**
-     * Task owner method: notifies the action ended.
+     * Op owner method: notifies the action ended.
      * @param result the action result
      */
     public void end(T result) {

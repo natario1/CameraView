@@ -18,6 +18,7 @@
         android:keepScreenOn="true"
         app:cameraExperimental="true"
         app:cameraEngine="camera2"
+        app:cameraPreview="glSurface"
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
         app:cameraFlash="off"

@@ -15,7 +15,7 @@ import android.util.TypedValue;
 import android.view.View;
 
 import com.otaliastudios.cameraview.controls.Grid;
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 
 /**
  * A layout overlay that draws grid lines based on the {@link Grid} parameter.
@@ -32,7 +32,8 @@ public class GridLinesLayout extends View {
     private ColorDrawable vert;
     private final float width;
 
-    @VisibleForTesting Task<Integer> drawTask = new Task<>();
+    @VisibleForTesting
+    Op<Integer> drawOp = new Op<>();
 
     public GridLinesLayout(@NonNull Context context) {
         this(context, null);
@@ -115,7 +116,7 @@ public class GridLinesLayout extends View {
     @Override
     protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
-        drawTask.start();
+        drawOp.start();
         int count = getLineCount();
         for (int n = 0; n < count; n++) {
             float pos = getLinePosition(n);
@@ -130,6 +131,6 @@ public class GridLinesLayout extends View {
             vert.draw(canvas);
             canvas.translate(- pos * getWidth(), 0);
         }
-        drawTask.end(count);
+        drawOp.end(count);
     }
 }

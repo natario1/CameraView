@@ -34,18 +34,19 @@ android {
 
 dependencies {
     testImplementation 'junit:junit:4.12'
-    testImplementation 'org.mockito:mockito-core:2.23.0'
+    testImplementation 'org.mockito:mockito-core:2.28.2'
 
-    androidTestImplementation 'androidx.test:runner:1.1.1'
-    androidTestImplementation 'androidx.test:rules:1.1.1'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.0'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test:rules:1.2.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
     androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     api 'androidx.exifinterface:exifinterface:1.0.0'
     api 'androidx.lifecycle:lifecycle-common:2.1.0-alpha01'
-    implementation 'androidx.annotation:annotation:1.0.1'
+    api 'com.google.android.gms:play-services-tasks:17.0.0'
+    implementation 'androidx.annotation:annotation:1.1.0'
 }
 
 //endregion

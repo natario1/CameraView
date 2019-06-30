@@ -15,7 +15,7 @@ import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.R;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 import java.util.Collections;
@@ -65,8 +65,8 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     private SurfaceTexture mInputSurfaceTexture;
     private EglViewport mOutputViewport;
     private Set<RendererFrameCallback> mRendererFrameCallbacks = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
-    @VisibleForTesting float mScaleX = 1F;
-    @VisibleForTesting float mScaleY = 1F;
+    @VisibleForTesting float mCropScaleX = 1F;
+    @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
 
     /**
@@ -199,6 +199,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     @RendererThread
     @Override
     public void onDrawFrame(GL10 gl) {
+        if (mInputSurfaceTexture == null) return;
         // Latch the latest frame.  If there isn't anything new,
         // we'll just re-use whatever was there before.
         mInputSurfaceTexture.updateTexImage();
@@ -206,23 +207,31 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             // Skip drawing. Camera was not opened.
             return;
         }
-
         mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
+
+        // For Camera2, apply the draw rotation.
+        // See TextureCameraPreview.setDrawRotation() for info.
+        if (mDrawRotation != 0) {
+            Matrix.translateM(mTransformMatrix, 0, 0.5F, 0.5F, 0);
+            Matrix.rotateM(mTransformMatrix, 0, -mDrawRotation, 0, 0, 1);
+            Matrix.translateM(mTransformMatrix, 0, -0.5F, -0.5F, 0);
+        }
+
         if (isCropping()) {
             // Scaling is easy. However:
             // If the view is 10x1000 (very tall), it will show only the left strip of the preview (not the center one).
             // If the view is 1000x10 (very large), it will show only the bottom strip of the preview (not the center one).
             // So we must use Matrix.translateM, and it must happen before the crop.
-            float translX = (1F - mScaleX) / 2F;
-            float translY = (1F - mScaleY) / 2F;
+            float translX = (1F - mCropScaleX) / 2F;
+            float translY = (1F - mCropScaleY) / 2F;
             Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
-            Matrix.scaleM(mTransformMatrix, 0, mScaleX, mScaleY, 1);
+            Matrix.scaleM(mTransformMatrix, 0, mCropScaleX, mCropScaleY, 1);
         }
         // Future note: passing scale to the viewport?
         // They are scaleX an scaleY, but flipped based on mInputFlipped.
         mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
         for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-            callback.onRendererFrame(mInputSurfaceTexture, mScaleX, mScaleY);
+            callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
         }
     }
 
@@ -256,8 +265,8 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
      * then drawing it with a scaled transformation matrix. See {@link #onDrawFrame(GL10)}.
      */
     @Override
-    protected void crop(@NonNull Task<Void> task) {
-        task.start();
+    protected void crop(@NonNull Op<Void> op) {
+        op.start();
         if (mInputStreamWidth > 0 && mInputStreamHeight > 0 && mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0) {
             float scaleX = 1f, scaleY = 1f;
             AspectRatio current = AspectRatio.of(mOutputSurfaceWidth, mOutputSurfaceHeight);
@@ -270,10 +279,10 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
                 scaleX = target.toFloat() / current.toFloat();
             }
             mCropping = scaleX > 1.02f || scaleY > 1.02f;
-            mScaleX = 1F / scaleX;
-            mScaleY = 1F / scaleY;
+            mCropScaleX = 1F / scaleX;
+            mCropScaleY = 1F / scaleY;
             getView().requestRender();
         }
-        task.end(null);
+        op.end(null);
     }
 }

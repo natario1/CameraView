@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.CameraEngine;
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.size.Size;
 
 /**
@@ -46,7 +46,8 @@ public abstract class CameraPreview<T extends View, Output> {
         void onSurfaceDestroyed();
     }
 
-    @VisibleForTesting Task<Void> mCropTask = new Task<>();
+    @VisibleForTesting
+    Op<Void> mCropOp = new Op<>();
     private SurfaceCallback mSurfaceCallback;
     private T mView;
     boolean mCropping;
@@ -58,6 +59,9 @@ public abstract class CameraPreview<T extends View, Output> {
     // These are the preview stream dimensions, in REF_VIEW.
     int mInputStreamWidth;
     int mInputStreamHeight;
+
+    // The rotation, if any, to be applied when drawing.
+    int mDrawRotation;
 
     /**
      * Creates a new preview.
@@ -130,7 +134,6 @@ public abstract class CameraPreview<T extends View, Output> {
     /**
      * Called to notify the preview of the input stream size. The width and height must be
      * rotated before calling this, if needed, to be consistent with the VIEW reference.
-     *
      * @param width width of the preview stream, in view coordinates
      * @param height height of the preview stream, in view coordinates
      */
@@ -139,7 +142,7 @@ public abstract class CameraPreview<T extends View, Output> {
         mInputStreamWidth = width;
         mInputStreamHeight = height;
         if (mInputStreamWidth > 0 && mInputStreamHeight > 0) {
-            crop(mCropTask);
+            crop(mCropOp);
         }
     }
 
@@ -181,7 +184,7 @@ public abstract class CameraPreview<T extends View, Output> {
         mOutputSurfaceWidth = width;
         mOutputSurfaceHeight = height;
         if (mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0) {
-            crop(mCropTask);
+            crop(mCropOp);
         }
         mSurfaceCallback.onSurfaceAvailable();
     }
@@ -198,7 +201,7 @@ public abstract class CameraPreview<T extends View, Output> {
             mOutputSurfaceWidth = width;
             mOutputSurfaceHeight = height;
             if (width > 0 && height > 0) {
-                crop(mCropTask);
+                crop(mCropOp);
             }
             mSurfaceCallback.onSurfaceChanged();
         }
@@ -240,10 +243,10 @@ public abstract class CameraPreview<T extends View, Output> {
      * There might still be some absolute difference (e.g. same ratio but bigger / smaller).
      * However that should be already managed by the framework.
      */
-    protected void crop(@NonNull Task<Void> task) {
+    protected void crop(@NonNull Op<Void> op) {
         // The base implementation does not support cropping.
-        task.start();
-        task.end(null);
+        op.start();
+        op.end(null);
     }
 
     /**
@@ -262,5 +265,24 @@ public abstract class CameraPreview<T extends View, Output> {
      */
     public boolean isCropping() {
         return mCropping;
+    }
+
+
+    /**
+     * Should be called after {@link #setStreamSize(int, int)}!
+     *
+     * Sets the rotation, if any, to be applied when drawing.
+     * Sometimes we don't need this:
+     * - In Camera1, the buffer producer sets our Surface size and rotates it based on the value
+     *   that we pass to {@link android.hardware.Camera.Parameters#setDisplayOrientation(int)},
+     *   so the stream that comes in is already rotated.
+     * - In Camera2, for {@link android.view.SurfaceView} based previews, apparently it just works
+     *   out of the box. The producer might be doing something similar.
+     *
+     * But in all the other Camera2 cases, we need to apply this rotation when drawing the surface.
+     * @param drawRotation the rotation in degrees
+     */
+    public void setDrawRotation(int drawRotation) {
+        mDrawRotation = drawRotation;
     }
 }

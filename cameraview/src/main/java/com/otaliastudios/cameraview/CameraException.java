@@ -74,7 +74,7 @@ public class CameraException extends RuntimeException {
 
     /**
      * Whether this error is unrecoverable. If this function returns true,
-     * the Camera has been closed and it is likely showing a black preview.
+     * the Camera has been closed (or will be soon) and it is likely showing a black preview.
      * This is the right moment to show an error dialog to the user.
      *
      * @return true if this error is unrecoverable
