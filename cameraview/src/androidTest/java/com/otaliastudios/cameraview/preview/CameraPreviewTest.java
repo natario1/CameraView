@@ -7,8 +7,7 @@ import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
-import com.otaliastudios.cameraview.internal.utils.Task;
-import com.otaliastudios.cameraview.preview.CameraPreview;
+import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -37,13 +36,13 @@ public abstract class CameraPreviewTest extends BaseTest {
     protected Size surfaceSize;
     private CameraPreview.SurfaceCallback callback;
 
-    private Task<Boolean> available;
-    private Task<Boolean> destroyed;
+    private Op<Boolean> available;
+    private Op<Boolean> destroyed;
 
     @Before
     public void setUp() {
-        available = new Task<>(true);
-        destroyed = new Task<>(true);
+        available = new Op<>(true);
+        destroyed = new Op<>(true);
 
         ui(new Runnable() {
             @Override
@@ -152,17 +151,17 @@ public abstract class CameraPreviewTest extends BaseTest {
 
         // Since desired is 'desired', let's fake a new view size that is consistent with it.
         // Ensure crop is not happening anymore.
-        preview.mCropTask.listen();
+        preview.mCropOp.listen();
         preview.dispatchOnSurfaceSizeChanged((int) (50f * desired), 50); // Wait...
-        preview.mCropTask.await();
+        preview.mCropOp.await();
         assertEquals(desired, getViewAspectRatioWithScale(), 0.01f);
         assertFalse(preview.isCropping());
     }
 
     private void setDesiredAspectRatio(float desiredAspectRatio) {
-        preview.mCropTask.listen();
+        preview.mCropOp.listen();
         preview.setStreamSize((int) (10f * desiredAspectRatio), 10); // Wait...
-        preview.mCropTask.await();
+        preview.mCropOp.await();
         assertEquals(desiredAspectRatio, getViewAspectRatioWithScale(), 0.01f);
 
     }

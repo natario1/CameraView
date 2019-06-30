@@ -597,11 +597,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @return whether the camera has started
      */
     public boolean isOpened() {
-        return mCameraEngine.getState() >= CameraEngine.STATE_STARTED;
+        return mCameraEngine.getEngineState() >= CameraEngine.STATE_STARTED;
     }
 
     private boolean isClosed() {
-        return mCameraEngine.getState() == CameraEngine.STATE_STOPPED;
+        return mCameraEngine.getEngineState() == CameraEngine.STATE_STOPPED;
     }
 
     /**

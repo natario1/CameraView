@@ -2,6 +2,10 @@ package com.otaliastudios.cameraview.preview;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -10,9 +14,13 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.R;
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.size.AspectRatio;
+
+import java.util.concurrent.ExecutionException;
 
 /**
  * A preview implementation based on {@link TextureView}.
@@ -76,29 +84,20 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
         return getView().getSurfaceTexture();
     }
 
-    @TargetApi(15)
-    @Override
-    public void setStreamSize(int width, int height) {
-        super.setStreamSize(width, height);
-        if (getView().getSurfaceTexture() != null) {
-            getView().getSurfaceTexture().setDefaultBufferSize(width, height);
-        }
-    }
-
     @Override
     public boolean supportsCropping() {
         return true;
     }
 
     @Override
-    protected void crop(final @NonNull Task<Void> task) {
-        task.start();
+    protected void crop(final @NonNull Op<Void> op) {
+        op.start();
         getView().post(new Runnable() {
             @Override
             public void run() {
                 if (mInputStreamHeight == 0 || mInputStreamWidth == 0 ||
                         mOutputSurfaceHeight == 0 || mOutputSurfaceWidth == 0) {
-                    task.end(null);
+                    op.end(null);
                     return;
                 }
                 float scaleX = 1f, scaleY = 1f;
@@ -118,8 +117,34 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
                 mCropping = scaleX > 1.02f || scaleY > 1.02f;
                 LOG.i("crop:", "applied scaleX=", scaleX);
                 LOG.i("crop:", "applied scaleY=", scaleY);
-                task.end(null);
+                op.end(null);
             }
         });
+    }
+
+    @Override
+    public void setDrawRotation(final int drawRotation) {
+        super.setDrawRotation(drawRotation);
+        final TaskCompletionSource<Void> task = new TaskCompletionSource<>();
+        getView().post(new Runnable() {
+            @Override
+            public void run() {
+                Matrix matrix = new Matrix();
+                // Output surface coordinates
+                float outputCenterX = mOutputSurfaceWidth / 2F;
+                float outputCenterY = mOutputSurfaceHeight / 2F;
+                boolean flip = drawRotation % 180 != 0;
+                // If dimensions are swapped, we must also do extra work to flip
+                // the two dimensions, using the view width and height (to support cropping).
+                if (flip) {
+                    float scaleX = (float) mOutputSurfaceHeight / mOutputSurfaceWidth;
+                    matrix.postScale(scaleX, 1F / scaleX, outputCenterX, outputCenterY);
+                }
+                matrix.postRotate((float) -drawRotation, outputCenterX, outputCenterY);
+                getView().setTransform(matrix);
+                task.setResult(null);
+            }
+        });
+        try { Tasks.await(task.getTask()); } catch (InterruptedException | ExecutionException ignore) { }
     }
 }

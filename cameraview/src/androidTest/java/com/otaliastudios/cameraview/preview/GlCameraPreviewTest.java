@@ -7,10 +7,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import android.view.ViewGroup;
 
-import com.otaliastudios.cameraview.preview.CameraPreview;
-import com.otaliastudios.cameraview.preview.CameraPreviewTest;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
-
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
@@ -24,11 +20,11 @@ public class GlCameraPreviewTest extends CameraPreviewTest {
 
     @Override
     protected float getCropScaleY() {
-        return 1F / ((GlCameraPreview) preview).mScaleY;
+        return 1F / ((GlCameraPreview) preview).mCropScaleY;
     }
 
     @Override
     protected float getCropScaleX() {
-        return 1F / ((GlCameraPreview) preview).mScaleX;
+        return 1F / ((GlCameraPreview) preview).mCropScaleX;
     }
 }

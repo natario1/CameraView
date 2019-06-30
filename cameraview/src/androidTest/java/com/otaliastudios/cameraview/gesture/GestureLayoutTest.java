@@ -12,9 +12,7 @@ import android.view.View;
 
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
-import com.otaliastudios.cameraview.gesture.Gesture;
-import com.otaliastudios.cameraview.gesture.GestureLayout;
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -33,7 +31,7 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
     @SuppressWarnings("WeakerAccess")
     protected T layout;
     @SuppressWarnings("WeakerAccess")
-    protected Task<Gesture> touch;
+    protected Op<Gesture> touch;
 
     @Before
     public void setUp() {
@@ -45,7 +43,7 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
                 layout.setActive(true);
                 a.inflate(layout);
 
-                touch = new Task<>();
+                touch = new Op<>();
                 layout.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View view, MotionEvent motionEvent) {

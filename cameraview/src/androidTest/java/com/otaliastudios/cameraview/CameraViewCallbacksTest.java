@@ -17,7 +17,7 @@ import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureAction;
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.engine.MockCameraEngine;
 import com.otaliastudios.cameraview.markers.AutoFocusMarker;
 import com.otaliastudios.cameraview.markers.AutoFocusTrigger;
@@ -39,6 +39,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -57,7 +58,7 @@ public class CameraViewCallbacksTest extends BaseTest {
     private FrameProcessor processor;
     private MockCameraEngine mockController;
     private MockCameraPreview mockPreview;
-    private Task<Boolean> task;
+    private Op<Boolean> op;
 
     @Before
     public void setUp() {
@@ -91,7 +92,7 @@ public class CameraViewCallbacksTest extends BaseTest {
                 camera.doInstantiatePreview();
                 camera.addCameraListener(listener);
                 camera.addFrameProcessor(processor);
-                task = new Task<>(true);
+                op = new Op<>(true);
             }
         });
     }
@@ -104,12 +105,12 @@ public class CameraViewCallbacksTest extends BaseTest {
         listener = null;
     }
 
-    // Completes our task.
+    // Completes our op.
     private Stubber completeTask() {
         return doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                task.end(true);
+                op.end(true);
                 return null;
             }
         });
@@ -121,7 +122,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onCameraOpened(null);
         camera.mCameraCallbacks.dispatchOnCameraOpened(null);
 
-        assertNull(task.await(200));
+        assertNull(op.await(200));
         verify(listener, never()).onCameraOpened(null);
     }
 
@@ -131,7 +132,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onCameraOpened(null);
         camera.mCameraCallbacks.dispatchOnCameraOpened(null);
 
-        assertNull(task.await(200));
+        assertNull(op.await(200));
         verify(listener, never()).onCameraOpened(null);
     }
 
@@ -140,7 +141,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onCameraOpened(null);
         camera.mCameraCallbacks.dispatchOnCameraOpened(null);
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onCameraOpened(null);
     }
 
@@ -149,7 +150,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onCameraClosed();
         camera.mCameraCallbacks.dispatchOnCameraClosed();
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onCameraClosed();
     }
 
@@ -159,7 +160,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onVideoTaken(any(VideoResult.class));
         camera.mCameraCallbacks.dispatchOnVideoTaken(stub);
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onVideoTaken(any(VideoResult.class));
     }
 
@@ -168,7 +169,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         PictureResult.Stub stub = new PictureResult.Stub();
         completeTask().when(listener).onPictureTaken(any(PictureResult.class));
         camera.mCameraCallbacks.dispatchOnPictureTaken(stub);
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onPictureTaken(any(PictureResult.class));
     }
 
@@ -177,7 +178,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onZoomChanged(anyFloat(), any(float[].class), any(PointF[].class));
         camera.mCameraCallbacks.dispatchOnZoomChanged(0f, null);
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onZoomChanged(anyFloat(), any(float[].class), any(PointF[].class));
     }
 
@@ -186,7 +187,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onExposureCorrectionChanged(0f, null, null);
         camera.mCameraCallbacks.dispatchOnExposureCorrectionChanged(0f, null, null);
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onExposureCorrectionChanged(0f, null, null);
     }
 
@@ -204,10 +205,10 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onAutoFocusStart(point);
         camera.mCameraCallbacks.dispatchOnFocusStart(Gesture.TAP, point);
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onAutoFocusStart(point);
         verify(marker, times(1)).onAutoFocusStart(AutoFocusTrigger.GESTURE, point);
-        verify(markerLayout, times(1)).onEvent(MarkerLayout.TYPE_AUTOFOCUS, any(PointF[].class));
+        verify(markerLayout, times(1)).onEvent(eq(MarkerLayout.TYPE_AUTOFOCUS), any(PointF[].class));
     }
 
     @Test
@@ -223,7 +224,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onAutoFocusEnd(success, point);
         camera.mCameraCallbacks.dispatchOnFocusEnd(Gesture.TAP, success, point);
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onAutoFocusEnd(success, point);
         verify(marker, times(1)).onAutoFocusEnd(AutoFocusTrigger.GESTURE, success, point);
 
@@ -234,7 +235,7 @@ public class CameraViewCallbacksTest extends BaseTest {
     public void testOrientationCallbacks() {
         completeTask().when(listener).onOrientationChanged(anyInt());
         camera.mCameraCallbacks.onDeviceOrientationChanged(90);
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onOrientationChanged(anyInt());
     }
 
@@ -246,7 +247,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(listener).onCameraError(error);
 
         camera.mCameraCallbacks.dispatchError(error);
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(listener, times(1)).onCameraError(error);
     }
 
@@ -256,7 +257,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         completeTask().when(processor).process(mock);
         camera.mCameraCallbacks.dispatchFrame(mock);
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(200));
         verify(processor, times(1)).process(mock);
     }
 }

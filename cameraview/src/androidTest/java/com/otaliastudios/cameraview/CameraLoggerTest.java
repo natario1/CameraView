@@ -1,7 +1,7 @@
 package com.otaliastudios.cameraview;
 
 
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -109,27 +109,27 @@ public class CameraLoggerTest extends BaseTest {
         CameraLogger.Logger mock = mock(CameraLogger.Logger.class);
         CameraLogger.registerLogger(mock);
 
-        final Task<Throwable> task = new Task<>();
+        final Op<Throwable> op = new Op<>();
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 Throwable throwable = (Throwable) args[3];
-                task.end(throwable);
+                op.end(throwable);
                 return null;
             }
         }).when(mock).log(anyInt(), anyString(), anyString(), any(Throwable.class));
 
-        task.listen();
+        op.listen();
         logger.e("Got no error.");
-        assertNull(task.await(100));
+        assertNull(op.await(100));
 
-        task.listen();
+        op.listen();
         logger.e("Got error:", new RuntimeException(""));
-        assertNotNull(task.await(100));
+        assertNotNull(op.await(100));
 
-        task.listen();
+        op.listen();
         logger.e("Got", new RuntimeException(""), "while starting");
-        assertNotNull(task.await(100));
+        assertNotNull(op.await(100));
     }
 }

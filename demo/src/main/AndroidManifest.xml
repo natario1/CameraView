@@ -15,8 +15,7 @@
         <activity
             android:name=".CameraActivity"
             android:theme="@style/Theme.MainActivity"
-            android:configChanges="orientation|screenLayout|keyboardHidden"
-            android:screenOrientation="portrait"
+            android:configChanges="screenLayout|keyboardHidden"
             android:hardwareAccelerated="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -4,13 +4,14 @@ package com.otaliastudios.cameraview.engine;
 import android.graphics.PointF;
 import android.location.Location;
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
-import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
@@ -21,9 +22,10 @@ import com.otaliastudios.cameraview.size.SizeSelector;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MockCameraEngine extends CameraEngine {
 
@@ -36,12 +38,40 @@ public class MockCameraEngine extends CameraEngine {
         super(callback);
     }
 
+    @NonNull
     @Override
-    protected void onStart() {
+    protected Task<Void> onStartEngine() {
+        return Tasks.forResult(null);
     }
 
+    @NonNull
     @Override
-    protected void onStop() {
+    protected Task<Void> onStopEngine() {
+        return Tasks.forResult(null);
+    }
+
+    @NonNull
+    @Override
+    protected Task<Void> onStartBind() {
+        return Tasks.forResult(null);
+    }
+
+    @NonNull
+    @Override
+    protected Task<Void> onStopBind() {
+        return Tasks.forResult(null);
+    }
+
+    @NonNull
+    @Override
+    protected Task<Void> onStartPreview() {
+        return Tasks.forResult(null);
+    }
+
+    @NonNull
+    @Override
+    protected Task<Void> onStopPreview() {
+        return Tasks.forResult(null);
     }
 
     public void setMockCameraOptions(CameraOptions options) {
@@ -52,8 +82,8 @@ public class MockCameraEngine extends CameraEngine {
         mPreviewStreamSize = size;
     }
 
-    public void mockStarted(boolean started) {
-        mState = started ? STATE_STARTED : STATE_STOPPED;
+    public void setMockEngineState(boolean started) {
+        mEngineStep.setState(started ? STATE_STARTED : STATE_STOPPED);
     }
 
     public int getSnapshotMaxWidth() {
@@ -147,21 +177,19 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     @Override
+    protected void onPreviewStreamSizeChanged() {
+
+    }
+
+    @NonNull
+    @Override
+    protected List<Size> getPreviewStreamAvailableSizes() {
+        return new ArrayList<>();
+    }
+
+    @Override
     public void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point) {
         mFocusStarted = true;
-    }
-
-    @Override
-    public void onSurfaceChanged() {
-    }
-
-    @Override
-    public void onSurfaceAvailable() {
-    }
-
-    @Override
-    public void onSurfaceDestroyed() {
-
     }
 
     @Override

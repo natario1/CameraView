@@ -6,7 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -36,18 +36,18 @@ public class CameraUtilsTest extends BaseTest {
     }
 
     // Encodes bitmap and decodes again using our utility.
-    private Task<Bitmap> encodeDecodeTask(Bitmap source) {
+    private Op<Bitmap> encodeDecodeTask(Bitmap source) {
         return encodeDecodeTask(source, 0, 0);
     }
 
     // Encodes bitmap and decodes again using our utility.
-    private Task<Bitmap> encodeDecodeTask(Bitmap source, final int maxWidth, final int maxHeight) {
+    private Op<Bitmap> encodeDecodeTask(Bitmap source, final int maxWidth, final int maxHeight) {
         final ByteArrayOutputStream os = new ByteArrayOutputStream();
         // Using lossy JPG we can't have strict comparison of values after compression.
         source.compress(Bitmap.CompressFormat.PNG, 100, os);
         final byte[] data = os.toByteArray();
 
-        final Task<Bitmap> decode = new Task<>(true);
+        final Op<Bitmap> decode = new Op<>(true);
         final BitmapCallback callback = new BitmapCallback() {
             @Override
             public void onBitmapReady(Bitmap bitmap) {
@@ -75,7 +75,7 @@ public class CameraUtilsTest extends BaseTest {
         Bitmap source = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         source.setPixel(0, 0, color);
 
-        Task<Bitmap> decode = encodeDecodeTask(source);
+        Op<Bitmap> decode = encodeDecodeTask(source);
         Bitmap other = decode.await(800);
         assertNotNull(other);
         assertEquals(100, w);
@@ -93,23 +93,23 @@ public class CameraUtilsTest extends BaseTest {
     public void testDecodeDownscaledBitmap() {
         int width = 1000, height = 2000;
         Bitmap source = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Task<Bitmap> task;
+        Op<Bitmap> op;
         Bitmap other;
 
-        task = encodeDecodeTask(source, 100, 100);
-        other = task.await(800);
+        op = encodeDecodeTask(source, 100, 100);
+        other = op.await(800);
         assertNotNull(other);
         assertTrue(other.getWidth() <= 100);
         assertTrue(other.getHeight() <= 100);
 
-        task = encodeDecodeTask(source, Integer.MAX_VALUE, Integer.MAX_VALUE);
-        other = task.await(800);
+        op = encodeDecodeTask(source, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        other = op.await(800);
         assertNotNull(other);
         assertEquals(other.getWidth(), width);
         assertEquals(other.getHeight(), height);
 
-        task = encodeDecodeTask(source, 6000, 6000);
-        other = task.await(800);
+        op = encodeDecodeTask(source, 6000, 6000);
+        other = op.await(800);
         assertNotNull(other);
         assertEquals(other.getWidth(), width);
         assertEquals(other.getHeight(), height);

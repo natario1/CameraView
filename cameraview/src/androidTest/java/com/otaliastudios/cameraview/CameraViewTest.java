@@ -32,7 +32,7 @@ import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
 import com.otaliastudios.cameraview.gesture.ScrollGestureLayout;
 import com.otaliastudios.cameraview.gesture.TapGestureLayout;
 import com.otaliastudios.cameraview.engine.MockCameraEngine;
-import com.otaliastudios.cameraview.internal.utils.Task;
+import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.markers.AutoFocusMarker;
 import com.otaliastudios.cameraview.markers.DefaultAutoFocusMarker;
 import com.otaliastudios.cameraview.markers.MarkerLayout;
@@ -226,7 +226,7 @@ public class CameraViewTest extends BaseTest {
     public void testGestureAction_capture() {
         CameraOptions o = mock(CameraOptions.class);
         mockController.setMockCameraOptions(o);
-        mockController.mockStarted(true);
+        mockController.setMockEngineState(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -248,7 +248,7 @@ public class CameraViewTest extends BaseTest {
     public void testGestureAction_focus() {
         CameraOptions o = mock(CameraOptions.class);
         mockController.setMockCameraOptions(o);
-        mockController.mockStarted(true);
+        mockController.setMockEngineState(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         ui(new Runnable() {
             @Override
@@ -273,7 +273,7 @@ public class CameraViewTest extends BaseTest {
     public void testGestureAction_zoom() {
         CameraOptions o = mock(CameraOptions.class);
         mockController.setMockCameraOptions(o);
-        mockController.mockStarted(true);
+        mockController.setMockEngineState(true);
         mockController.mZoomChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         final FactorHolder factor = new FactorHolder();
@@ -314,7 +314,7 @@ public class CameraViewTest extends BaseTest {
         when(o.getExposureCorrectionMinValue()).thenReturn(-10f);
         when(o.getExposureCorrectionMaxValue()).thenReturn(10f);
         mockController.setMockCameraOptions(o);
-        mockController.mockStarted(true);
+        mockController.setMockEngineState(true);
         mockController.mExposureCorrectionChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         final FactorHolder factor = new FactorHolder();
@@ -754,16 +754,16 @@ public class CameraViewTest extends BaseTest {
         cameraView.mMarkerLayout = markerLayout;
         final PointF point = new PointF(0, 0);
         final PointF[] points = new PointF[]{ point };
-        final Task<Boolean> task = new Task<>(true);
+        final Op<Boolean> op = new Op<>(true);
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                task.end(true);
+                op.end(true);
                 return null;
             }
         }).when(markerLayout).onEvent(MarkerLayout.TYPE_AUTOFOCUS, points);
         cameraView.mCameraCallbacks.dispatchOnFocusStart(Gesture.TAP, point);
-        assertNotNull(task.await(100));
+        assertNotNull(op.await(100));
     }
 
     //endregion

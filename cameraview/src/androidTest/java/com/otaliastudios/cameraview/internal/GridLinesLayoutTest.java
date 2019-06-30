@@ -4,7 +4,6 @@ package com.otaliastudios.cameraview.internal;
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
 import com.otaliastudios.cameraview.controls.Grid;
-import com.otaliastudios.cameraview.internal.GridLinesLayout;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
@@ -34,18 +33,18 @@ public class GridLinesLayoutTest extends BaseTest {
                 TestActivity a = rule.getActivity();
                 layout = new GridLinesLayout(a);
                 layout.setGridMode(Grid.OFF);
-                layout.drawTask.listen();
+                layout.drawOp.listen();
                 a.getContentView().addView(layout);
             }
         });
         // Wait for first draw.
-        layout.drawTask.await(1000);
+        layout.drawOp.await(1000);
     }
 
     private int setGridAndWait(Grid value) {
-        layout.drawTask.listen();
+        layout.drawOp.listen();
         layout.setGridMode(value);
-        Integer result = layout.drawTask.await(1000);
+        Integer result = layout.drawOp.await(1000);
         assertNotNull(result);
         return result;
     }

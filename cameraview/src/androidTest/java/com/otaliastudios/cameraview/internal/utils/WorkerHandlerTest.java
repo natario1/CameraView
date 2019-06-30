@@ -2,8 +2,6 @@ package com.otaliastudios.cameraview.internal.utils;
 
 
 import com.otaliastudios.cameraview.BaseTest;
-import com.otaliastudios.cameraview.internal.utils.Task;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -28,15 +26,15 @@ public class WorkerHandlerTest extends BaseTest {
 
     @Test
     public void testStaticRun() {
-        final Task<Boolean> task = new Task<>(true);
+        final Op<Boolean> op = new Op<>(true);
         Runnable action = new Runnable() {
             @Override
             public void run() {
-                task.end(true);
+                op.end(true);
             }
         };
         WorkerHandler.run(action);
-        Boolean result = task.await(500);
+        Boolean result = op.await(500);
         assertNotNull(result);
         assertTrue(result);
     }
