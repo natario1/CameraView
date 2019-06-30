@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.engine;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -32,9 +33,14 @@ import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
+import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
+import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -48,7 +54,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
-
+// TODO parameters
+// TODO pictures
+// TODO videos
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine {
 
@@ -68,23 +76,7 @@ public class Camera2Engine extends CameraEngine {
         mManager = (CameraManager) mCallback.getContext().getSystemService(Context.CAMERA_SERVICE);
     }
 
-    private boolean isCameraAvailable() {
-        return getEngineState() == STATE_STARTED;
-    }
-
-    private void schedule(@Nullable final Op<Void> op, final boolean ensureAvailable, final Runnable action) {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (ensureAvailable && !isCameraAvailable()) {
-                    if (op != null) op.end(null);
-                } else {
-                    action.run();
-                    if (op != null) op.end(null);
-                }
-            }
-        });
-    }
+    //region Utilities
 
     @NonNull
     private <T> T readCharacteristic(@NonNull CameraCharacteristics characteristics,
@@ -122,6 +114,10 @@ public class Camera2Engine extends CameraEngine {
         return new CameraException(reason);
     }
 
+    //endregion
+
+    //region Protected APIs
+
     @NonNull
     @Override
     protected List<Size> getPreviewStreamAvailableSizes() {
@@ -144,8 +140,15 @@ public class Camera2Engine extends CameraEngine {
         }
     }
 
-    private boolean collectCameraId() {
-        int internalFacing = mMapper.map(mFacing);
+    @WorkerThread
+    @Override
+    protected void onPreviewStreamSizeChanged() {
+        restartBind();
+    }
+
+    @Override
+    protected boolean collectCameraInfo(@NonNull Facing facing) {
+        int internalFacing = mMapper.map(facing);
         String[] cameraIds = null;
         try {
             cameraIds = mManager.getCameraIdList();
@@ -154,7 +157,7 @@ public class Camera2Engine extends CameraEngine {
             // However, let's launch an unrecoverable exception.
             throw createCameraException(e);
         }
-        LOG.i("collectCameraId", "Facing:", mFacing, "Internal:", internalFacing, "Cameras:", cameraIds.length);
+        LOG.i("collectCameraInfo", "Facing:", facing, "Internal:", internalFacing, "Cameras:", cameraIds.length);
         for (String cameraId : cameraIds) {
             try {
                 CameraCharacteristics characteristics = mManager.getCameraCharacteristics(cameraId);
@@ -171,6 +174,9 @@ public class Camera2Engine extends CameraEngine {
         return false;
     }
 
+    //endregion
+
+    //region Start
 
     @SuppressLint("MissingPermission")
     @NonNull
@@ -178,12 +184,6 @@ public class Camera2Engine extends CameraEngine {
     protected Task<Void> onStartEngine() {
         final TaskCompletionSource<Void> task = new TaskCompletionSource<>();
         try {
-            boolean hasCamera = collectCameraId();
-            if (!hasCamera) {
-                LOG.e("onStartEngine:", "No camera available for facing", mFacing);
-                throw new CameraException(CameraException.REASON_NO_CAMERA);
-            }
-
             // We have a valid camera for this Facing. Go on.
             mManager.openCamera(mCameraId, new CameraDevice.StateCallback() {
                 @Override
@@ -340,6 +340,10 @@ public class Camera2Engine extends CameraEngine {
         return Tasks.forResult(null);
     }
 
+    //endregion
+
+    //region Stop
+
     @NonNull
     @Override
     protected Task<Void> onStopPreview() {
@@ -394,12 +398,58 @@ public class Camera2Engine extends CameraEngine {
         return Tasks.forResult(null);
     }
 
+    //endregion
+
+    //region Pictures
+
     @WorkerThread
     @Override
-    protected void onPreviewStreamSizeChanged() {
-        restartBind();
+    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
+        stub.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
+        stub.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
+        AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
+        if (mPreview instanceof GlCameraPreview) {
+            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio);
+        } else {
+            throw new RuntimeException("takePictureSnapshot with Camera2 is only supported with Preview.GL_SURFACE");
+        }
+        mPictureRecorder.take();
     }
 
+    //endregion
+
+    //region Videos
+
+    /**
+     * See {@link Camera1Engine#onTakeVideoSnapshot(VideoResult.Stub, File, AspectRatio)}
+     * to read about the size and rotation computation.
+     */
+    @WorkerThread
+    @Override
+    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio) {
+        if (!(mPreview instanceof GlCameraPreview)) {
+            throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
+        }
+        GlCameraPreview glPreview = (GlCameraPreview) mPreview;
+        Facing realFacing = mFacing;
+        mFacing = Facing.BACK;
+        Size outputSize = getUncroppedSnapshotSize(REF_OUTPUT);
+        if (outputSize == null) {
+            throw new IllegalStateException("outputSize should not be null.");
+        }
+        AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
+        Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
+        outputSize = new Size(outputCrop.width(), outputCrop.height());
+        stub.size = outputSize;
+        stub.rotation = offset(REF_VIEW, REF_OUTPUT);
+
+        // Reset facing and start.
+        mFacing = realFacing;
+        mVideoRecorder = new SnapshotVideoRecorder(stub, this, glPreview);
+        mVideoRecorder.start();
+    }
+
+    //endregion
 
 
 
@@ -420,24 +470,6 @@ public class Camera2Engine extends CameraEngine {
     @Override
     public void setMode(@NonNull Mode mode) {
 
-    }
-
-    @Override
-    public void setFacing(@NonNull Facing facing) {
-        final Facing old = mFacing;
-        if (facing != old) {
-            mFacing = facing;
-            schedule(null, true, new Runnable() {
-                @Override
-                public void run() {
-                    if (collectCameraId()) {
-                        restart();
-                    } else {
-                        mFacing = old;
-                    }
-                }
-            });
-        }
     }
 
     @Override
@@ -471,32 +503,13 @@ public class Camera2Engine extends CameraEngine {
     }
 
     @Override
-    public void setAudio(@NonNull Audio audio) {
-
-    }
-
-    @Override
     public void takePicture(@NonNull PictureResult.Stub stub) {
 
     }
 
-    @Override
-    public void takePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
-
-    }
 
     @Override
     public void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file) {
-
-    }
-
-    @Override
-    public void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio) {
-
-    }
-
-    @Override
-    public void stopVideo() {
 
     }
 

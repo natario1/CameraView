@@ -9,6 +9,8 @@ import androidx.annotation.RequiresApi;
 
 import android.view.Surface;
 
+import com.otaliastudios.cameraview.CameraLogger;
+
 import java.io.IOException;
 
 /**
@@ -19,6 +21,9 @@ import java.io.IOException;
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends MediaEncoder {
+
+    private static final String TAG = VideoMediaEncoder.class.getSimpleName();
+    private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     @SuppressWarnings("WeakerAccess")
     protected C mConfig;
@@ -67,7 +72,6 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, mConfig.frameRate);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, 6); // TODO
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2);
         format.setInteger("rotation-degrees", mConfig.rotation);
 
@@ -93,6 +97,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
     @EncoderThread
     @Override
     void onStop() {
+        LOG.i("onStop", "setting mFrameNum to 1 and signaling the end of input stream.");
         mFrameNum = -1;
         signalEndOfInputStream();
         drainOutput(true);

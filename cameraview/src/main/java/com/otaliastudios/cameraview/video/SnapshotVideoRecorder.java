@@ -46,9 +46,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
 
-    public SnapshotVideoRecorder(@NonNull VideoResult.Stub stub, @Nullable VideoResultListener listener,
-                                 @NonNull CameraEngine engine, @NonNull GlCameraPreview preview) {
-        super(stub, listener);
+    public SnapshotVideoRecorder(@NonNull VideoResult.Stub stub,
+                                 @NonNull CameraEngine engine,
+                                 @NonNull GlCameraPreview preview) {
+        super(stub, engine);
         mPreview = preview;
         mPreview.addRendererFrameCallback(this);
         mFlipped = engine.flip(CameraEngine.REF_SENSOR, CameraEngine.REF_VIEW);
@@ -74,6 +75,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     @Override
     public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
+            LOG.i("Starting the encoder engine.");
+
             // Set default options
             if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
             if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
@@ -118,6 +121,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         }
 
         if (mCurrentState == STATE_RECORDING) {
+            LOG.v("dispatching frame.");
             TextureMediaEncoder textureEncoder = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
             TextureMediaEncoder.TextureFrame textureFrame = textureEncoder.acquireFrame();
             textureFrame.timestamp = surfaceTexture.getTimestamp();
@@ -126,6 +130,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         }
 
         if (mCurrentState == STATE_RECORDING && mDesiredState == STATE_NOT_RECORDING) {
+            LOG.i("Stopping the encoder engine.");
             mCurrentState = STATE_NOT_RECORDING; // before nulling encoderEngine!
             mEncoderEngine.stop();
             mEncoderEngine = null;
@@ -146,9 +151,13 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mError = e;
         } else {
             if (stopReason == MediaEncoderEngine.STOP_BY_MAX_DURATION) {
+                LOG.i("onEncoderStop because of max duration.");
                 mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
             } else if (stopReason == MediaEncoderEngine.STOP_BY_MAX_SIZE) {
+                LOG.i("onEncoderStop because of max size.");
                 mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
+            } else {
+                LOG.i("onEncoderStop because of user.");
             }
         }
         // Cleanup

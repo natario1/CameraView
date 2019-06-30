@@ -55,7 +55,7 @@ public class WorkerHandler {
      *
      * @param action the action
      */
-    public static void run(@NonNull Runnable action) {
+    public static void execute(@NonNull Runnable action) {
         get("FallbackCameraThread").post(action);
     }
 
@@ -71,7 +71,7 @@ public class WorkerHandler {
         mExecutor = new Executor() {
             @Override
             public void execute(Runnable command) {
-                post(command);
+                WorkerHandler.this.run(command);
             }
         };
     }
@@ -80,12 +80,20 @@ public class WorkerHandler {
      * Post an action on this handler.
      * @param runnable the action
      */
-    public void post(@NonNull Runnable runnable) {
+    public void run(@NonNull Runnable runnable) {
         if (Thread.currentThread() == getThread()) {
             runnable.run();
         } else {
             mHandler.post(runnable);
         }
+    }
+
+    /**
+     * Post an action on this handler.
+     * @param runnable the action
+     */
+    public void post(@NonNull Runnable runnable) {
+        mHandler.post(runnable);
     }
 
     /**

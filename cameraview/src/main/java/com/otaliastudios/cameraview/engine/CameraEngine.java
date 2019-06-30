@@ -1,10 +1,13 @@
 package com.otaliastudios.cameraview.engine;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.location.Location;
 
 
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -22,9 +25,12 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
+import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.picture.PictureRecorder;
+import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
+import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
@@ -34,10 +40,12 @@ import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
 import com.otaliastudios.cameraview.size.SizeSelectors;
+import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 import com.otaliastudios.cameraview.video.VideoRecorder;
 
 import androidx.annotation.NonNull;
@@ -115,7 +123,9 @@ import java.util.concurrent.Executor;
  */
 public abstract class CameraEngine implements
         CameraPreview.SurfaceCallback,
-        FrameManager.BufferCallback {
+        FrameManager.BufferCallback,
+        PictureRecorder.PictureResultListener,
+        VideoRecorder.VideoResultListener {
 
     public interface Callback {
         @NonNull Context getContext();
@@ -213,8 +223,7 @@ public abstract class CameraEngine implements
     Op<Void> mHdrOp = new Op<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     Op<Void> mLocationOp = new Op<>();
-    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    Op<Void> mStartVideoOp = new Op<>();
+    @VisibleForTesting Op<Void> mStartVideoOp = new Op<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     Op<Void> mPlaySoundsOp = new Op<>();
 
@@ -368,6 +377,10 @@ public abstract class CameraEngine implements
             mEngineStep.doStart(false, new Callable<Task<Void>>() {
                 @Override
                 public Task<Void> call() {
+                    if (!collectCameraInfo(mFacing)) {
+                        LOG.e("onStartEngine:", "No camera available for facing", mFacing);
+                        throw new CameraException(CameraException.REASON_NO_CAMERA);
+                    }
                     return onStartEngine();
                 }
             }, new Runnable() {
@@ -470,7 +483,7 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess")
     protected void restartBind() {
         LOG.i("restartPreviewAndBind", "posting.");
-        mHandler.post(new Runnable() {
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
                 LOG.i("restartPreviewAndBind", "executing.");
@@ -533,7 +546,7 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess")
     protected void restartPreview() {
         LOG.i("restartPreview", "posting.");
-        mHandler.post(new Runnable() {
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
                 LOG.i("restartPreview", "executing.");
@@ -572,7 +585,7 @@ public abstract class CameraEngine implements
     @Override
     public final void onSurfaceAvailable() {
         LOG.i("onSurfaceAvailable:", "Size is", getPreviewSurfaceSize(REF_VIEW));
-        mHandler.post(new Runnable() {
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
                 startBind().onSuccessTask(mHandler.getExecutor(), new SuccessContinuation<Void, Void>() {
@@ -589,7 +602,7 @@ public abstract class CameraEngine implements
     @Override
     public final void onSurfaceChanged() {
         LOG.i("onSurfaceChanged:", "Size is", getPreviewSurfaceSize(REF_VIEW), "Posting.");
-        mHandler.post(new Runnable() {
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
                 LOG.i("onSurfaceChanged:",
@@ -620,7 +633,7 @@ public abstract class CameraEngine implements
     @Override
     public final void onSurfaceDestroyed() {
         LOG.i("onSurfaceDestroyed");
-        mHandler.post(new Runnable() {
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
                 stopPreview(false).onSuccessTask(mHandler.getExecutor(), new SuccessContinuation<Void, Void>() {
@@ -675,7 +688,7 @@ public abstract class CameraEngine implements
     public Task<Void> start() {
         LOG.i("Start:", "posting runnable. State:", getEngineStateName());
         final TaskCompletionSource<Void> outTask = new TaskCompletionSource<>();
-        mHandler.post(new Runnable() {
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
                 LOG.i("Start:", "executing runnable. State:", getEngineStateName());
@@ -722,7 +735,7 @@ public abstract class CameraEngine implements
     private Task<Void> stop(final boolean swallowExceptions) {
         LOG.i("Stop:", "posting runnable. State:", getEngineStateName());
         final TaskCompletionSource<Void> outTask = new TaskCompletionSource<>();
-        mHandler.post(new Runnable() {
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
                 LOG.i("Stop:", "executing runnable. State:", getEngineStateName());
@@ -765,7 +778,7 @@ public abstract class CameraEngine implements
 
     //endregion
 
-    //region Simple setters
+    //region final setters
 
     // This is called before start() and never again.
     public final void setDisplayOffset(int displayOffset) {
@@ -819,15 +832,61 @@ public abstract class CameraEngine implements
 
     public final void setAutoFocusResetDelay(long delayMillis) { mAutoFocusResetDelayMillis = delayMillis; }
 
+    /**
+     * Sets a new facing value. This will restart the session (if there's any)
+     * so that we can open the new facing camera.
+     * @param facing facing
+     */
+    public final void setFacing(final @NonNull Facing facing) {
+        final Facing old = mFacing;
+        if (facing != old) {
+            mFacing = facing;
+            mHandler.run(new Runnable() {
+                @Override
+                public void run() {
+                    if (getEngineState() < STATE_STARTED) return;
+                    if (collectCameraInfo(facing)) {
+                        restart();
+                    } else {
+                        mFacing = old;
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Sets a new audio value that will be used for video recordings.
+     * @param audio desired audio
+     */
+    public final void setAudio(@NonNull Audio audio) {
+        if (mAudio != audio) {
+            if (isTakingVideo()) {
+                LOG.w("Audio setting was changed while recording. " +
+                        "Changes will take place starting from next video");
+            }
+            mAudio = audio;
+        }
+    }
+
     //endregion
 
     //region Abstract setters and APIs
 
-    // Should restart the session if active.
-    public abstract void setMode(@NonNull Mode mode);
+    /**
+     * Camera is about to be opened. Implementors should look into available cameras
+     * and see if anyone matches the given {@link Facing value}.
+     *
+     * If so, implementors should set {@link #mSensorOffset} and any other information
+     * (like camera ID) needed to start teh engine.
+     *
+     * @param facing the facing value
+     * @return true if we have one
+     */
+    protected abstract boolean collectCameraInfo(@NonNull Facing facing);
 
     // Should restart the session if active.
-    public abstract void setFacing(@NonNull Facing facing);
+    public abstract void setMode(@NonNull Mode mode);
 
     // If closed, no-op. If opened, check supported and apply.
     public abstract void setZoom(float zoom, @Nullable PointF[] points, boolean notify);
@@ -847,22 +906,120 @@ public abstract class CameraEngine implements
     // If closed, keep. If opened, check supported and apply.
     public abstract void setLocation(@Nullable Location location);
 
-    // Just set.
-    public abstract void setAudio(@NonNull Audio audio);
-
-    public abstract void takePicture(@NonNull PictureResult.Stub stub);
-
-    public abstract void takePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio);
-
-    public abstract void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file);
-
-    public abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio);
-
-    public abstract void stopVideo();
-
     public abstract void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point);
 
     public abstract void setPlaySounds(boolean playSounds);
+
+    //endregion
+
+    //region picture and video control
+
+    public abstract void takePicture(@NonNull PictureResult.Stub stub);
+
+    /**
+     * The snapshot size is the {@link #getPreviewStreamSize(int)}, but cropped based on the
+     * view/surface aspect ratio.
+     * @param stub a picture stub
+     * @param viewAspectRatio the view aspect ratio
+     */
+    public final void takePictureSnapshot(final @NonNull PictureResult.Stub stub, @NonNull final AspectRatio viewAspectRatio) {
+        LOG.v("takePictureSnapshot", "scheduling");
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                LOG.v("takePictureSnapshot", "performing. Engine:", getEngineStateName(), "isTakingPicture:", isTakingPicture());
+                if (getEngineState() < STATE_STARTED) return;
+                if (isTakingPicture()) return;
+                stub.location = mLocation;
+                stub.isSnapshot = true;
+                stub.facing = mFacing;
+                // Leave the other parameters to subclasses.
+                LOG.v("takePictureSnapshot", "Rotations", "SV", offset(REF_SENSOR, REF_VIEW), "VS", offset(REF_VIEW, REF_SENSOR));
+                LOG.v("takePictureSnapshot", "Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
+                LOG.v("takePictureSnapshot", "Rotations", "VO", offset(REF_VIEW, REF_OUTPUT), "OV", offset(REF_OUTPUT, REF_VIEW));
+                onTakePictureSnapshot(stub, viewAspectRatio);
+            }
+        });
+    }
+
+    @Override
+    public void onPictureShutter(boolean didPlaySound) {
+        mCallback.onShutter(!didPlaySound);
+    }
+
+    @Override
+    public void onPictureResult(@Nullable PictureResult.Stub result) {
+        mPictureRecorder = null;
+        if (result != null) {
+            mCallback.dispatchOnPictureTaken(result);
+        } else {
+            // Something went wrong.
+            LOG.e("onPictureResult", "result is null: something went wrong.");
+            mCallback.dispatchError(new CameraException(CameraException.REASON_PICTURE_FAILED));
+        }
+    }
+
+    public abstract void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file);
+
+    /**
+     * @param stub a video stub
+     * @param file the output file
+     * @param viewAspectRatio the view aspect ratio
+     */
+    public final void takeVideoSnapshot(final @NonNull VideoResult.Stub stub, @NonNull final File file, @NonNull final AspectRatio viewAspectRatio) {
+        LOG.v("takeVideoSnapshot", "scheduling");
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                LOG.v("takeVideoSnapshot", "performing. Engine:", getEngineStateName(), "isTakingVideo:", isTakingVideo());
+                if (getEngineState() < STATE_STARTED) { mStartVideoOp.end(null); return; }
+                if (isTakingVideo()) { mStartVideoOp.end(null); return; }
+                stub.file = file;
+                stub.isSnapshot = true;
+                stub.videoCodec = mVideoCodec;
+                stub.location = mLocation;
+                stub.facing = mFacing;
+                stub.videoBitRate = mVideoBitRate;
+                stub.audioBitRate = mAudioBitRate;
+                stub.audio = mAudio;
+                stub.maxSize = mVideoMaxSize;
+                stub.maxDuration = mVideoMaxDuration;
+                onTakeVideoSnapshot(stub, file, viewAspectRatio);
+                mStartVideoOp.end(null);
+            }
+        });
+    }
+
+    public final void stopVideo() {
+        LOG.i("stopVideo", "posting");
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                LOG.i("stopVideo", "executing.", "has recorder?", mVideoRecorder != null);
+                if (mVideoRecorder != null) {
+                    mVideoRecorder.stop();
+                    mVideoRecorder = null;
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
+        mVideoRecorder = null;
+        if (result != null) {
+            mCallback.dispatchOnVideoTaken(result);
+        } else {
+            LOG.e("onVideoResult", "result is null: something went wrong.", exception);
+            mCallback.dispatchError(new CameraException(exception, CameraException.REASON_VIDEO_FAILED));
+        }
+    }
+
+    @WorkerThread
+    protected abstract void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio);
+
+    @WorkerThread
+    protected abstract void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio);
 
     //endregion
 

@@ -112,7 +112,8 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         }
 
         mFrameNum++;
-        LOG.v("Incoming frame timestamp:", frame.timestamp);
+        int thisFrameNum = mFrameNum;
+        LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "timestamp:", frame.timestamp);
         // We must scale this matrix like GlCameraPreview does, because it might have some cropping.
         // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
         float[] transform = frame.transform;
@@ -132,9 +133,11 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         Matrix.rotateM(transform, 0, mConfig.transformRotation, 0, 0, 1);
         Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
+        LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drainOutput.");
         drainOutput(false);
         // Future note: passing scale values to the viewport? They are scaleX and scaleY,
         // but flipped based on the mConfig.scaleFlipped boolean.
+        LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drawFrame.");
         mViewport.drawFrame(mConfig.textureId, transform);
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();

@@ -59,6 +59,11 @@ abstract class MediaEncoder {
     /**
      * This encoder was attached to the engine. Keep the controller
      * and run the internal thread.
+     *
+     * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
+     * The internal actions can cause a stop/release, and due to how {@link WorkerHandler#run(Runnable)}
+     * works, we might have {@link #onStop()} or {@link #onRelease()} to be executed before
+     * the previous step has completed.
      */
     final void prepare(@NonNull final MediaEncoderEngine.Controller controller, final long maxLengthMillis) {
         mController = controller;
@@ -79,6 +84,8 @@ abstract class MediaEncoder {
      * Start recording. This might be a lightweight operation
      * in case the encoder needs to wait for a certain event
      * like a "frame available".
+     *
+     * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
      */
     final void start() {
         LOG.i(getName(), "Start was called. Posting.");
@@ -94,6 +101,9 @@ abstract class MediaEncoder {
     /**
      * The caller notifying of a certain event occurring.
      * Should analyze the string and see if the event is important.
+     *
+     * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
+     *
      * @param event what happened
      * @param data object
      */
@@ -110,6 +120,8 @@ abstract class MediaEncoder {
 
     /**
      * Stop recording.
+     *
+     * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
      */
     final void stop() {
         LOG.i(getName(), "Stop was called. Posting.");

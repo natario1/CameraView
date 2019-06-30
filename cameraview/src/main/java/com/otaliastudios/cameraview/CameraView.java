@@ -1897,7 +1897,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 frame.release();
             } else {
                 mLogger.v("dispatchFrame:", frame.getTime(), "processors:", mFrameProcessors.size());
-                mFrameProcessorsHandler.post(new Runnable() {
+                mFrameProcessorsHandler.run(new Runnable() {
                     @Override
                     public void run() {
                         for (FrameProcessor processor : mFrameProcessors) {

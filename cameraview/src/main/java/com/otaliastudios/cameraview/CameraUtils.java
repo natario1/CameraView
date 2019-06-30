@@ -111,7 +111,7 @@ public class CameraUtils {
     @SuppressWarnings("WeakerAccess")
     public static void writeToFile(@NonNull final byte[] data, @NonNull final File file, @NonNull final FileCallback callback) {
         final Handler ui = new Handler();
-        WorkerHandler.run(new Runnable() {
+        WorkerHandler.execute(new Runnable() {
             @Override
             public void run() {
                 final File result = writeToFile(data, file);
@@ -194,7 +194,7 @@ public class CameraUtils {
     @SuppressWarnings("WeakerAccess")
     static void decodeBitmap(@NonNull final byte[] source, final int maxWidth, final int maxHeight, @NonNull final BitmapFactory.Options options, final int rotation, @NonNull final BitmapCallback callback) {
         final Handler ui = new Handler();
-        WorkerHandler.run(new Runnable() {
+        WorkerHandler.execute(new Runnable() {
             @Override
             public void run() {
                 final Bitmap bitmap = decodeBitmap(source, maxWidth, maxHeight, options, rotation);

@@ -33,7 +33,7 @@ public class WorkerHandlerTest extends BaseTest {
                 op.end(true);
             }
         };
-        WorkerHandler.run(action);
+        WorkerHandler.execute(action);
         Boolean result = op.await(500);
         assertNotNull(result);
         assertTrue(result);
