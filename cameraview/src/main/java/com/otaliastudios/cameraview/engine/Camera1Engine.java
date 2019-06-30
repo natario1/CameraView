@@ -35,7 +35,8 @@ import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.picture.FullPictureRecorder;
 import com.otaliastudios.cameraview.picture.PictureRecorder;
-import com.otaliastudios.cameraview.picture.SnapshotPictureRecorder;
+import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
+import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
@@ -50,9 +51,7 @@ import java.util.List;
 
 
 @SuppressWarnings("deprecation")
-public class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Camera.ErrorCallback,
-        VideoRecorder.VideoResultListener,
-        PictureRecorder.PictureResultListener {
+public class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Camera.ErrorCallback {
 
     private static final String TAG = Camera1Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -87,7 +86,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     }
 
     private void schedule(@Nullable final Op<Void> op, final boolean ensureAvailable, final Runnable action) {
-        mHandler.post(new Runnable() {
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
                 if (ensureAvailable && !isCameraAvailable()) {
@@ -104,34 +103,29 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     @WorkerThread
     @Override
     protected Task<Void> onStartEngine() {
-        if (collectCameraId()) {
-            try {
-                mCamera = Camera.open(mCameraId);
-            } catch (Exception e) {
-                LOG.e("onStartEngine:", "Failed to connect. Maybe in use by another app?");
-                throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
-            }
-            mCamera.setErrorCallback(this);
-
-            // Set parameters that might have been set before the camera was opened.
-            LOG.i("onStartEngine:", "Applying default parameters.");
-            Camera.Parameters params = mCamera.getParameters();
-            mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
-            applyDefaultFocus(params);
-            applyFlash(params, Flash.OFF);
-            applyLocation(params, null);
-            applyWhiteBalance(params, WhiteBalance.AUTO);
-            applyHdr(params, Hdr.OFF);
-            applyPlaySounds(mPlaySounds);
-            params.setRecordingHint(mMode == Mode.VIDEO);
-            mCamera.setParameters(params);
-            mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
-            LOG.i("onStartEngine:", "Ended");
-            return Tasks.forResult(null);
-        } else {
-            LOG.e("onStartEngine:", "No camera available for facing", mFacing);
-            throw new CameraException(CameraException.REASON_NO_CAMERA);
+        try {
+            mCamera = Camera.open(mCameraId);
+        } catch (Exception e) {
+            LOG.e("onStartEngine:", "Failed to connect. Maybe in use by another app?");
+            throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
         }
+        mCamera.setErrorCallback(this);
+
+        // Set parameters that might have been set before the camera was opened.
+        LOG.i("onStartEngine:", "Applying default parameters.");
+        Camera.Parameters params = mCamera.getParameters();
+        mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
+        applyDefaultFocus(params);
+        applyFlash(params, Flash.OFF);
+        applyLocation(params, null);
+        applyWhiteBalance(params, WhiteBalance.AUTO);
+        applyHdr(params, Hdr.OFF);
+        applyPlaySounds(mPlaySounds);
+        params.setRecordingHint(mMode == Mode.VIDEO);
+        mCamera.setParameters(params);
+        mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
+        LOG.i("onStartEngine:", "Ended");
+        return Tasks.forResult(null);
     }
 
     @NonNull
@@ -269,9 +263,10 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         restartPreview();
     }
 
-    private boolean collectCameraId() {
-        int internalFacing = mMapper.map(mFacing);
-        LOG.i("collectCameraId", "Facing:", mFacing, "Internal:", internalFacing, "Cameras:", Camera.getNumberOfCameras());
+    @Override
+    protected boolean collectCameraInfo(@NonNull Facing facing) {
+        int internalFacing = mMapper.map(facing);
+        LOG.i("collectCameraInfo", "Facing:", facing, "Internal:", internalFacing, "Cameras:", Camera.getNumberOfCameras());
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
@@ -283,6 +278,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         }
         return false;
     }
+
 
     @Override
     public void onBufferAvailable(@NonNull byte[] buffer) {
@@ -351,24 +347,6 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     }
 
     @Override
-    public void setFacing(@NonNull Facing facing) {
-        final Facing old = mFacing;
-        if (facing != old) {
-            mFacing = facing;
-            schedule(null, true, new Runnable() {
-                @Override
-                public void run() {
-                    if (collectCameraId()) {
-                        restart();
-                    } else {
-                        mFacing = old;
-                    }
-                }
-            });
-        }
-    }
-
-    @Override
     public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
         final WhiteBalance old = mWhiteBalance;
         mWhiteBalance = whiteBalance;
@@ -434,18 +412,6 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         return false;
     }
 
-
-    @Override
-    public void setAudio(@NonNull Audio audio) {
-        if (mAudio != audio) {
-            if (isTakingVideo()) {
-                LOG.w("Audio setting was changed while recording. " +
-                        "Changes will take place starting from next video");
-            }
-            mAudio = audio;
-        }
-    }
-
     @Override
     public void setFlash(@NonNull Flash flash) {
         final Flash old = mFlash;
@@ -500,24 +466,6 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     // -----------------
     // Picture recording stuff.
 
-
-    @Override
-    public void onPictureShutter(boolean didPlaySound) {
-        mCallback.onShutter(!didPlaySound);
-    }
-
-    @Override
-    public void onPictureResult(@Nullable PictureResult.Stub result) {
-        mPictureRecorder = null;
-        if (result != null) {
-            mCallback.dispatchOnPictureTaken(result);
-        } else {
-            // Something went wrong.
-            mCallback.dispatchError(new CameraException(CameraException.REASON_PICTURE_FAILED));
-            LOG.e("onPictureResult", "result is null: something went wrong.");
-        }
-    }
-
     @Override
     public void takePicture(final @NonNull PictureResult.Stub stub) {
         LOG.v("takePicture: scheduling");
@@ -543,34 +491,19 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         });
     }
 
-    /**
-     * Just a note about the snapshot size - it is the PreviewStreamSize, cropped with the view ratio.
-     * @param viewAspectRatio the view aspect ratio
-     */
+    @WorkerThread
     @Override
-    public void takePictureSnapshot(final @NonNull PictureResult.Stub stub, @NonNull final AspectRatio viewAspectRatio) {
-        LOG.v("takePictureSnapshot: scheduling");
-        schedule(null, true, new Runnable() {
-            @Override
-            public void run() {
-                LOG.v("takePictureSnapshot: performing.", isTakingPicture());
-                if (isTakingPicture()) return;
+    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
+        stub.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
+        stub.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
+        AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
 
-                stub.location = mLocation;
-                stub.isSnapshot = true;
-                stub.facing = mFacing;
-                stub.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
-                stub.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
-                AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
-
-                LOG.v("Rotations", "SV", offset(REF_SENSOR, REF_VIEW), "VS", offset(REF_VIEW, REF_SENSOR));
-                LOG.v("Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
-                LOG.v("Rotations", "VO", offset(REF_VIEW, REF_OUTPUT), "OV", offset(REF_OUTPUT, REF_VIEW));
-
-                mPictureRecorder = new SnapshotPictureRecorder(stub, Camera1Engine.this, mPreview, mCamera, outputRatio);
-                mPictureRecorder.take();
-            }
-        });
+        if (mPreview instanceof GlCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio);
+        } else {
+            mPictureRecorder = new Snapshot1PictureRecorder(stub, this, mCamera, outputRatio);
+        }
+        mPictureRecorder.take();
     }
 
     @Override
@@ -588,12 +521,8 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     @Override
     public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
-        mVideoRecorder = null;
-        if (result != null) {
-            mCallback.dispatchOnVideoTaken(result);
-        } else {
+        if (result == null) {
             // Something went wrong, lock the camera again.
-            mCallback.dispatchError(new CameraException(exception, CameraException.REASON_VIDEO_FAILED));
             mCamera.lock();
         }
     }
@@ -639,103 +568,67 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         });
     }
 
-    /**
-     * @param file the output file
-     * @param viewAspectRatio the view aspect ratio
-     */
     @SuppressLint("NewApi")
+    @WorkerThread
     @Override
-    public void takeVideoSnapshot(final @NonNull VideoResult.Stub stub, @NonNull final File file, @NonNull final AspectRatio viewAspectRatio) {
+    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
             throw new IllegalStateException("Video snapshots are only supported starting from API 18.");
         }
-        schedule(mStartVideoOp, true, new Runnable() {
-            @Override
-            public void run() {
-                if (isTakingVideo()) return;
+        GlCameraPreview glPreview = (GlCameraPreview) mPreview;
 
-                // Create the video result stub
-                stub.file = file;
-                stub.isSnapshot = true;
-                stub.videoCodec = mVideoCodec;
-                stub.location = mLocation;
-                stub.facing = mFacing;
-                stub.videoBitRate = mVideoBitRate;
-                stub.audioBitRate = mAudioBitRate;
-                stub.audio = mAudio;
-                stub.maxSize = mVideoMaxSize;
-                stub.maxDuration = mVideoMaxDuration;
+        // Size and rotation turned out to be extremely tricky. In case of Snapshot1PictureRecorder
+        // we use the preview size in REF_OUTPUT (cropped) and offset(REF_SENSOR, REF_OUTPUT) as rotation.
+        // These values mean that we expect input to be in the REF_SENSOR system.
 
-                // Size and rotation turned out to be extremely tricky. In case of SnapshotPictureRecorder
-                // we use the preview size in REF_OUTPUT (cropped) and offset(REF_SENSOR, REF_OUTPUT) as rotation.
-                // These values mean that we expect input to be in the REF_SENSOR system.
+        // Here everything seems different. We would expect a difference because the two snapshot
+        // recorders have different mechanics (the picture one uses a SurfaceTexture with setBufferSize,
+        // the video one here uses the MediaCodec input surface which we can't control).
 
-                // Here everything seems different. We would expect a difference because the two snapshot
-                // recorders have different mechanics (the picture one uses a SurfaceTexture with setBufferSize,
-                // the video one here uses the MediaCodec input surface which we can't control).
+        // The strangest thing is the fact that the correct angle seems to be the same for FRONT and
+        // BACK sensor, which means that our sensor correction actually screws things up. For this reason
+        // facing value is temporarily set to BACK.
+        Facing realFacing = mFacing;
+        mFacing = Facing.BACK;
 
-                // The strangest thing is the fact that the correct angle seems to be the same for FRONT and
-                // BACK sensor, which means that our sensor correction actually screws things up. For this reason
-                // facing value is temporarily set to BACK.
-                Facing realFacing = mFacing;
-                mFacing = Facing.BACK;
+        // These are the angles that make it work on a Nexus5X, compared to the offset() results.
+        // For instance, SV means offset(REF_SENSOR, REF_VIEW). The rest should be clear.
+        //    CONFIG   | WANTED |   SV   |   VS   |   VO   |   OV   |   SO   |   OS   |
+        // ------------|--------|--------|--------|--------|--------|--------|--------|
+        //   Vertical  |   0    |   270  |   90   |   0    |   0    |   270  |   90   |
+        //     Left    |   270  |   270  |   90   |  270   |   90   |   180  |   180  |
+        //    Right    |   90   |   270  |   90   |   90   |   270  |    0   |    0   |
+        // Upside down |   180  |   270  |   90   |  180   |   180  |   90   |   270  |
 
-                // These are the angles that make it work on a Nexus5X, compared to the offset() results.
-                // For instance, SV means offset(REF_SENSOR, REF_VIEW). The rest should be clear.
-                //    CONFIG   | WANTED |   SV   |   VS   |   VO   |   OV   |   SO   |   OS   |
-                // ------------|--------|--------|--------|--------|--------|--------|--------|
-                //   Vertical  |   0    |   270  |   90   |   0    |   0    |   270  |   90   |
-                //     Left    |   270  |   270  |   90   |  270   |   90   |   180  |   180  |
-                //    Right    |   90   |   270  |   90   |   90   |   270  |    0   |    0   |
-                // Upside down |   180  |   270  |   90   |  180   |   180  |   90   |   270  |
+        // The VO is the only correct value. Things change when using FRONT camera, in which case,
+        // no value is actually correct, and the needed values are the same of BACK!
+        //    CONFIG   | WANTED |   SV   |   VS   |   VO   |   OV   |   SO   |   OS   |
+        // ------------|--------|--------|--------|--------|--------|--------|--------|
+        //   Vertical  |   0    |   90   |   270  |  180   |   180  |   270  |   90   |
+        //     Left    |   270  |   90   |   270  |  270   |   90   |    0   |    0   |
+        //    Right    |   90   |   90   |   270  |   90   |   270  |   180  |   180  |
+        // Upside down |   180  |   90   |   270  |   0    |    0   |   90   |   270  |
 
-                // The VO is the only correct value. Things change when using FRONT camera, in which case,
-                // no value is actually correct, and the needed values are the same of BACK!
-                //    CONFIG   | WANTED |   SV   |   VS   |   VO   |   OV   |   SO   |   OS   |
-                // ------------|--------|--------|--------|--------|--------|--------|--------|
-                //   Vertical  |   0    |   90   |   270  |  180   |   180  |   270  |   90   |
-                //     Left    |   270  |   90   |   270  |  270   |   90   |    0   |    0   |
-                //    Right    |   90   |   90   |   270  |   90   |   270  |   180  |   180  |
-                // Upside down |   180  |   90   |   270  |   0    |    0   |   90   |   270  |
+        // Based on this we will use VO for everything. See if we get issues about distortion
+        // and maybe we can improve. The reason why this happen is beyond my understanding.
 
-                // Based on this we will use VO for everything. See if we get issues about distortion
-                // and maybe we can improve. The reason why this happen is beyond my understanding.
+        Size outputSize = getUncroppedSnapshotSize(REF_OUTPUT);
+        if (outputSize == null) {
+            throw new IllegalStateException("outputSize should not be null.");
+        }
+        AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
+        Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
+        outputSize = new Size(outputCrop.width(), outputCrop.height());
+        stub.size = outputSize;
+        stub.rotation = offset(REF_VIEW, REF_OUTPUT);
 
-                Size outputSize = getUncroppedSnapshotSize(REF_OUTPUT);
-                if (outputSize == null) {
-                    throw new IllegalStateException("outputSize should not be null.");
-                }
-                AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
-                Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
-                outputSize = new Size(outputCrop.width(), outputCrop.height());
-                stub.size = outputSize;
-                stub.rotation = offset(REF_VIEW, REF_OUTPUT);
-
-                // Reset facing and start.
-                mFacing = realFacing;
-                GlCameraPreview cameraPreview = (GlCameraPreview) mPreview;
-                mVideoRecorder = new SnapshotVideoRecorder(stub,
-                        Camera1Engine.this, Camera1Engine.this, cameraPreview);
-                mVideoRecorder.start();
-            }
-        });
-    }
-
-    @Override
-    public void stopVideo() {
-        schedule(null, false, new Runnable() {
-            @Override
-            public void run() {
-                LOG.i("stopVideo", "mVideoRecorder is null?", mVideoRecorder == null);
-                if (mVideoRecorder != null) {
-                    mVideoRecorder.stop();
-                    mVideoRecorder = null;
-                }
-            }
-        });
+        // Reset facing and start.
+        mFacing = realFacing;
+        mVideoRecorder = new SnapshotVideoRecorder(stub, Camera1Engine.this, glPreview);
+        mVideoRecorder.start();
     }
 
     // -----------------

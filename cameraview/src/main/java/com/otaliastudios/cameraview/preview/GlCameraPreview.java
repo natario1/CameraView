@@ -32,7 +32,7 @@ import javax.microedition.khronos.opengles.GL10;
  *
  * - The SurfaceTexture is linked to the Camera1Engine object. The camera will pass down buffers of data with
  *   a specified size (that is, the Camera1Engine preview size). For this reason we don't have to specify
- *   surfaceTexture.setDefaultBufferSize() (like we do, for example, in SnapshotPictureRecorder).
+ *   surfaceTexture.setDefaultBufferSize() (like we do, for example, in Snapshot1PictureRecorder).
  *
  * - When SurfaceTexture.updateTexImage() is called, it will fetch the latest texture image from the
  *   camera stream and assign it to the GL texture that was passed.

@@ -160,7 +160,8 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     @Override
-    public void takePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
+    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
+
     }
 
     @Override
@@ -168,12 +169,8 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     @Override
-    public void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio) {
-    }
+    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio) {
 
-
-    @Override
-    public void stopVideo() {
     }
 
     @Override
