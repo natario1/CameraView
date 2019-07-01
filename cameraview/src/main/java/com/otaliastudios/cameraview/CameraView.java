@@ -1301,6 +1301,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void addFrameProcessor(@Nullable FrameProcessor processor) {
         if (processor != null) {
             mFrameProcessors.add(processor);
+            if (mFrameProcessors.size() == 1) {
+                mCameraEngine.setHasFrameProcessors(true);
+            }
         }
     }
 
@@ -1313,6 +1316,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void removeFrameProcessor(@Nullable FrameProcessor processor) {
         if (processor != null) {
             mFrameProcessors.remove(processor);
+            if (mFrameProcessors.size() == 0) {
+                mCameraEngine.setHasFrameProcessors(false);
+            }
         }
     }
 
@@ -1322,7 +1328,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * to preview frames.
      */
     public void clearFrameProcessors() {
+        boolean had = mFrameProcessors.size() > 0;
         mFrameProcessors.clear();
+        if (had) {
+            mCameraEngine.setHasFrameProcessors(false);
+        }
     }
 
 

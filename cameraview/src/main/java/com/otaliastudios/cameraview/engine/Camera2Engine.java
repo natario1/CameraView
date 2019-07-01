@@ -437,6 +437,11 @@ public class Camera2Engine extends CameraEngine {
         mPictureRecorder.take();
     }
 
+    @Override
+    public void takePicture(@NonNull PictureResult.Stub stub) {
+        // TODO
+    }
+
     //endregion
 
     //region Videos
@@ -726,32 +731,39 @@ public class Camera2Engine extends CameraEngine {
         mPlaySoundsOp.end(null);
     }
 
-    //endregion
-
-
-    @Override
-    public void onBufferAvailable(@NonNull byte[] buffer) {
-
-    }
-
     @Override
     public void setZoom(float zoom, @Nullable PointF[] points, boolean notify) {
-
+        // TODO
     }
 
     @Override
     public void setExposureCorrection(float EVvalue, @NonNull float[] bounds, @Nullable PointF[] points, boolean notify) {
+        // TODO
+    }
 
+    //endregion
+
+    //region FrameProcessing
+
+    @Override
+    public void onBufferAvailable(@NonNull byte[] buffer) {
+        // TODO
     }
 
     @Override
-    public void takePicture(@NonNull PictureResult.Stub stub) {
-
+    public void setHasFrameProcessors(boolean hasFrameProcessors) {
+        mHasFrameProcessors = hasFrameProcessors;
     }
+
+    //endregion
+
+    //region Auto focus
 
     @Override
     public void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point) {
-
+        // TODO
     }
+
+    //endregion
 }
 
