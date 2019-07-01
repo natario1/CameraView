@@ -7,6 +7,7 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
 import android.os.Build;
@@ -23,6 +24,7 @@ import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -142,13 +144,14 @@ public class CameraOptions {
     // Camera2Engine constructor.
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     @SuppressWarnings("deprecation")
-    public CameraOptions(@NonNull CameraManager manager, @NonNull CameraCharacteristics characteristics, boolean flipSizes) throws CameraAccessException {
+    public CameraOptions(@NonNull CameraManager manager, @NonNull String  cameraId, boolean flipSizes) throws CameraAccessException {
         Mapper mapper = Mapper.get(Engine.CAMERA2);
+        CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(cameraId);
 
         // Facing
-        for (String cameraId : manager.getCameraIdList()) {
-            CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(cameraId);
-            Integer cameraFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
+        for (String cameraId1 : manager.getCameraIdList()) {
+            CameraCharacteristics cameraCharacteristics1 = manager.getCameraCharacteristics(cameraId1);
+            Integer cameraFacing = cameraCharacteristics1.get(CameraCharacteristics.LENS_FACING);
             if (cameraFacing != null) {
                 Facing value = mapper.unmapFacing(cameraFacing);
                 if (value != null) supportedFacing.add(value);
@@ -156,7 +159,7 @@ public class CameraOptions {
         }
 
         // Picture Sizes
-        StreamConfigurationMap streamMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        StreamConfigurationMap streamMap = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         if (streamMap == null) throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
         android.util.Size[] psizes = streamMap.getOutputSizes(ImageReader.class);
         for (android.util.Size size : psizes) {
@@ -167,12 +170,18 @@ public class CameraOptions {
         }
 
         // Video Sizes
+        // As a safety measure, remove Sizes bigger than CamcorderProfile.highest
+        CamcorderProfile profile = CamcorderProfiles.get(cameraId,
+                new Size(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        Size videoMaxSize = new Size(profile.videoFrameWidth, profile.videoFrameHeight);
         android.util.Size[] vsizes = streamMap.getOutputSizes(MediaRecorder.class);
         for (android.util.Size size : vsizes) {
-            int width = flipSizes ? size.getHeight() : size.getWidth();
-            int height = flipSizes ? size.getWidth() : size.getHeight();
-            supportedVideoSizes.add(new Size(width, height));
-            supportedVideoAspectRatio.add(AspectRatio.of(width, height));
+            if (size.getWidth() <= videoMaxSize.getWidth() && size.getHeight() <= videoMaxSize.getHeight()) {
+                int width = flipSizes ? size.getHeight() : size.getWidth();
+                int height = flipSizes ? size.getWidth() : size.getHeight();
+                supportedVideoSizes.add(new Size(width, height));
+                supportedVideoAspectRatio.add(AspectRatio.of(width, height));
+            }
         }
     }
 

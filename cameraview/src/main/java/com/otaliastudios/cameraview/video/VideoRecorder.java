@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.video;
 
 import com.otaliastudios.cameraview.VideoResult;
 
+import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -9,7 +10,6 @@ import androidx.annotation.VisibleForTesting;
 /**
  * Interface for video recording.
  * Don't call start if already started. Don't call stop if already stopped.
- * Don't reuse.
  */
 public abstract class VideoRecorder {
 
@@ -27,40 +27,57 @@ public abstract class VideoRecorder {
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) VideoResult.Stub mResult;
-    @VisibleForTesting VideoResultListener mListener;
+    @VisibleForTesting final VideoResultListener mListener;
+    @SuppressWarnings("WeakerAccess")
     protected Exception mError;
+    private boolean mIsRecording;
 
     /**
      * Creates a new video recorder.
-     * @param stub a video stub
      * @param listener a listener
      */
-    VideoRecorder(@NonNull VideoResult.Stub stub, @Nullable VideoResultListener listener) {
-        mResult = stub;
+    VideoRecorder(@Nullable VideoResultListener listener) {
         mListener = listener;
     }
 
     /**
      * Starts recording a video.
      */
-    public abstract void start();
+    public final void start(@NonNull VideoResult.Stub stub) {
+        mResult = stub;
+        mIsRecording = true;
+        onStart();
+    }
 
     /**
      * Stops recording.
      */
-    public abstract void stop();
+    public final void stop() {
+        onStop();
+    }
+
+    /**
+     * Returns true if it is currently recording.
+     * @return true if recording
+     */
+    public boolean isRecording() {
+        return mIsRecording;
+    }
+
+    protected abstract void onStart();
+
+    protected abstract void onStop();
 
     /**
      * Subclasses can call this to notify that the result was obtained,
      * either with some error (null result) or with the actual stub, filled.
      */
     @SuppressWarnings("WeakerAccess")
+    @CallSuper
     protected void dispatchResult() {
-        if (mListener != null) {
-            mListener.onVideoResult(mResult, mError);
-            mListener = null;
-            mResult = null;
-            mError = null;
-        }
+        mIsRecording = false;
+        if (mListener != null) mListener.onVideoResult(mResult, mError);
+        mResult = null;
+        mError = null;
     }
 }

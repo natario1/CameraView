@@ -24,7 +24,6 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
-import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -34,17 +33,14 @@ import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.picture.FullPictureRecorder;
-import com.otaliastudios.cameraview.picture.PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
-import com.otaliastudios.cameraview.video.FullVideoRecorder;
+import com.otaliastudios.cameraview.video.Full1VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
-import com.otaliastudios.cameraview.video.VideoRecorder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -251,6 +247,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
             mCamera = null;
             mCameraOptions = null;
         }
+        mVideoRecorder = null;
         mCameraOptions = null;
         mCamera = null;
         LOG.w("onStopEngine:", "Clean up.", "Returning.");
@@ -306,19 +303,6 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
             default: reason = CameraException.REASON_UNKNOWN;
         }
         throw new CameraException(runtime, reason);
-    }
-
-    @Override
-    public void setMode(@NonNull Mode mode) {
-        if (mode != mMode) {
-            mMode = mode;
-            schedule(null, true, new Runnable() {
-                @Override
-                public void run() {
-                    restart();
-                }
-            });
-        }
     }
 
     @Override
@@ -528,50 +512,28 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     }
 
     @Override
-    public void takeVideo(final @NonNull VideoResult.Stub stub, @NonNull final File videoFile) {
-        schedule(mStartVideoOp, true, new Runnable() {
-            @Override
-            public void run() {
-                if (mMode == Mode.PICTURE) {
-                    throw new IllegalStateException("Can't record video while in PICTURE mode");
-                }
-
-                if (isTakingVideo()) return;
-
-                // Create the video result stub
-                stub.file = videoFile;
-                stub.isSnapshot = false;
-                stub.videoCodec = mVideoCodec;
-                stub.location = mLocation;
-                stub.facing = mFacing;
-                stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
-                stub.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
-                stub.audio = mAudio;
-                stub.maxSize = mVideoMaxSize;
-                stub.maxDuration = mVideoMaxDuration;
-                stub.videoBitRate = mVideoBitRate;
-                stub.audioBitRate = mAudioBitRate;
-
-                // Unlock the camera and start recording.
-                try {
-                    mCamera.unlock();
-                } catch (Exception e) {
-                    // If this failed, we are unlikely able to record the video.
-                    // Dispatch an error.
-                    onVideoResult(null, e);
-                    return;
-                }
-                mVideoRecorder = new FullVideoRecorder(stub, Camera1Engine.this,
-                        Camera1Engine.this, mCamera, mCameraId);
-                mVideoRecorder.start();
-            }
-        });
+    protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
+        stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
+        stub.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
+        // Unlock the camera and start recording.
+        try {
+            mCamera.unlock();
+        } catch (Exception e) {
+            // If this failed, we are unlikely able to record the video.
+            // Dispatch an error.
+            onVideoResult(null, e);
+            return;
+        }
+        if (!(mVideoRecorder instanceof Full1VideoRecorder)) {
+            mVideoRecorder = new Full1VideoRecorder(Camera1Engine.this, mCamera, mCameraId);
+        }
+        mVideoRecorder.start(stub);
     }
 
     @SuppressLint("NewApi")
     @WorkerThread
     @Override
-    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio) {
+    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
@@ -627,8 +589,10 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
         // Reset facing and start.
         mFacing = realFacing;
-        mVideoRecorder = new SnapshotVideoRecorder(stub, Camera1Engine.this, glPreview);
-        mVideoRecorder.start();
+        if (!(mVideoRecorder instanceof SnapshotVideoRecorder)) {
+            mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview);
+        }
+        mVideoRecorder.start(stub);
     }
 
     // -----------------
