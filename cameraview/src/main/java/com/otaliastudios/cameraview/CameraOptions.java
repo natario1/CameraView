@@ -6,6 +6,7 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
@@ -102,7 +103,10 @@ public class CameraOptions {
             }
         }
 
+        // zoom
         zoomSupported = params.isZoomSupported();
+
+        // autofocus
         autoFocusSupported = params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
 
         // Exposure correction
@@ -157,6 +161,50 @@ public class CameraOptions {
                 if (value != null) supportedFacing.add(value);
             }
         }
+
+        // WB
+        int[] awbModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES);
+        //noinspection ConstantConditions
+        for (int awbMode : awbModes) {
+            WhiteBalance value = mapper.unmapWhiteBalance(awbMode);
+            if (value != null) supportedWhiteBalance.add(value);
+        }
+
+        // Flash
+        supportedFlash.add(Flash.OFF);
+        Boolean hasFlash = cameraCharacteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+        if (hasFlash != null && hasFlash) {
+            int[] aeModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
+            //noinspection ConstantConditions
+            for (int aeMode : aeModes) {
+                Flash value = mapper.unmapFlash(aeMode);
+                if (value != null) supportedFlash.add(value);
+            }
+        }
+
+        // HDR
+        supportedHdr.add(Hdr.OFF);
+        int[] sceneModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES);
+        //noinspection ConstantConditions
+        for (int sceneMode : sceneModes) {
+            Hdr value = mapper.unmapHdr(sceneMode);
+            if (value != null) supportedHdr.add(value);
+        }
+
+        // TODO zoom
+
+        // autofocus
+        int[] afModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
+        autoFocusSupported = false;
+        //noinspection ConstantConditions
+        for (int afMode : afModes) {
+            if (afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO) {
+                autoFocusSupported = true;
+            }
+        }
+
+        // TODO exposure correction
+
 
         // Picture Sizes
         StreamConfigurationMap streamMap = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);

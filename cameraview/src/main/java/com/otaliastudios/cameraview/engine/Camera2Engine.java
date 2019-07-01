@@ -42,7 +42,6 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -53,7 +52,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
-// TODO parameters
+// TODO fix flash, it's not that simple
+// TODO zoom
+// TODO exposure correction
+// TODO autofocus
 // TODO pictures
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine {
@@ -64,6 +66,7 @@ public class Camera2Engine extends CameraEngine {
     private final CameraManager mManager;
     private String mCameraId;
     private CameraDevice mCamera;
+    private CameraCharacteristics mCameraCharacteristics;
     private CameraCaptureSession mSession;
     private CaptureRequest.Builder mPreviewStreamRequestBuilder;
     private CaptureRequest mPreviewStreamRequest;
@@ -198,16 +201,10 @@ public class Camera2Engine extends CameraEngine {
                     // Set parameters that might have been set before the camera was opened.
                     try {
                         LOG.i("createCamera:", "Applying default parameters.");
-                        CameraCharacteristics characteristics = mManager.getCameraCharacteristics(mCameraId);
+                        mCameraCharacteristics = mManager.getCameraCharacteristics(mCameraId);
                         mCameraOptions = new CameraOptions(mManager, mCameraId, flip(REF_SENSOR, REF_VIEW));
-                        // applyDefaultFocus(params); TODO
-                        // applyFlash(params, Flash.OFF);
-                        // applyLocation(params, null);
-                        // applyWhiteBalance(params, WhiteBalance.AUTO);
-                        // applyHdr(params, Hdr.OFF);
-                        // applyPlaySounds(mPlaySounds);
-                        // params.setRecordingHint(mMode == Mode.VIDEO);
-                        // mCamera.setParameters(params);
+                        mPreviewStreamRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                        applyAll(mPreviewStreamRequestBuilder);
                     } catch (CameraAccessException e) {
                         task.trySetException(createCameraException(e));
                         return;
@@ -294,7 +291,6 @@ public class Camera2Engine extends CameraEngine {
         if (captureSurface != null) outputSurfaces.add(captureSurface);
 
         try {
-            mPreviewStreamRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewStreamRequestBuilder.addTarget(mPreviewStreamSurface);
 
             // null handler means using the current looper which is totally ok.
@@ -394,8 +390,8 @@ public class Camera2Engine extends CameraEngine {
             mFullVideoPersistentSurface.release();
             mFullVideoPersistentSurface = null;
         }
+        mPreviewStreamRequestBuilder.removeTarget(mPreviewStreamSurface);
         mPreviewStreamSurface = null;
-        mPreviewStreamRequestBuilder = null;
         mPreviewStreamSize = null;
         mCaptureSize = null;
         mSession.close();
@@ -418,6 +414,7 @@ public class Camera2Engine extends CameraEngine {
         mCamera = null;
         mCameraOptions = null;
         mVideoRecorder = null;
+        mPreviewStreamRequestBuilder = null;
         LOG.w("onStopEngine:", "Returning.");
         return Tasks.forResult(null);
     }
@@ -472,6 +469,7 @@ public class Camera2Engine extends CameraEngine {
         Full2VideoRecorder recorder = (Full2VideoRecorder) mVideoRecorder;
         try {
             CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+            applyAll(builder);
             //noinspection ConstantConditions
             builder.addTarget(recorder.getInputSurface());
             builder.addTarget(mPreviewStreamSurface);
@@ -541,6 +539,179 @@ public class Camera2Engine extends CameraEngine {
 
     //endregion
 
+    //region Parameters
+
+    private void syncStream() {
+        if (getPreviewState() == STATE_STARTED) {
+            try {
+                // TODO if we are capturing a video or a picture, this is not what we should do!
+                mPreviewStreamRequest = mPreviewStreamRequestBuilder.build();
+                mSession.setRepeatingRequest(mPreviewStreamRequest, null, null);
+            } catch (Exception e) {
+                throw new CameraException(e, CameraException.REASON_DISCONNECTED);
+            }
+        }
+    }
+
+    private void applyAll(@NonNull CaptureRequest.Builder builder) {
+        builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+        applyDefaultFocus(builder);
+        applyFlash(builder, Flash.OFF);
+        applyLocation(builder, null);
+        applyWhiteBalance(builder, WhiteBalance.AUTO);
+        applyHdr(builder, Hdr.OFF);
+    }
+
+    private void applyDefaultFocus(@NonNull CaptureRequest.Builder builder) {
+        int[] modesArray = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
+        List<Integer> modes = new ArrayList<>();
+        for (int mode : modesArray) { modes.add(mode); }
+        if (mMode == Mode.VIDEO &&
+                modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+            return;
+        }
+
+        if (modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) {
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            return;
+        }
+
+        if (modes.contains(CaptureRequest.CONTROL_AF_MODE_AUTO)) {
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+            return;
+        }
+
+        if (modes.contains(CaptureRequest.CONTROL_AF_MODE_OFF)) {
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
+            builder.set(CaptureRequest.LENS_FOCUS_DISTANCE, 0F);
+            //noinspection UnnecessaryReturnStatement
+            return;
+        }
+    }
+
+    @Override
+    public void setFlash(@NonNull Flash flash) {
+        final Flash old = mFlash;
+        mFlash = flash;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    if (applyFlash(mPreviewStreamRequestBuilder, old)) syncStream();
+                }
+                mFlashOp.end(null);
+            }
+        });
+    }
+
+    /**
+     * This sets the CONTROL_AE_MODE to either:
+     * - {@link CaptureRequest#CONTROL_AE_MODE_ON}
+     * - {@link CaptureRequest#CONTROL_AE_MODE_ON_AUTO_FLASH}
+     * - {@link CaptureRequest#CONTROL_AE_MODE_ON_ALWAYS_FLASH}
+     */
+    private boolean applyFlash(@NonNull CaptureRequest.Builder builder,
+                               @NonNull Flash oldFlash) {
+        if (mCameraOptions.supports(mFlash)) {
+            List<Integer> modes = mMapper.map(mFlash);
+            int[] availableModes = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES, new int[]{});
+            for (int mode : modes) {
+                for (int availableMode : availableModes) {
+                    if (mode == availableMode) {
+                        builder.set(CaptureRequest.CONTROL_AE_MODE, mode);
+                        return true;
+                    }
+                }
+            }
+        }
+        mFlash = oldFlash;
+        return false;
+    }
+
+    @Override
+    public void setLocation(@Nullable Location location) {
+        final Location old = mLocation;
+        mLocation = location;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    if (applyLocation(mPreviewStreamRequestBuilder, old)) syncStream();
+                }
+                mLocationOp.end(null);
+            }
+        });
+    }
+
+    private boolean applyLocation(@NonNull CaptureRequest.Builder builder,
+                                  @SuppressWarnings("unused") @Nullable Location oldLocation) {
+        if (mLocation != null) {
+            builder.set(CaptureRequest.JPEG_GPS_LOCATION, mLocation);
+        }
+        return true;
+    }
+
+    @Override
+    public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
+        final WhiteBalance old = mWhiteBalance;
+        mWhiteBalance = whiteBalance;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    if (applyWhiteBalance(mPreviewStreamRequestBuilder, old)) syncStream();
+                }
+                mWhiteBalanceOp.end(null);
+            }
+        });
+    }
+
+    private boolean applyWhiteBalance(@NonNull CaptureRequest.Builder builder,
+                                      @NonNull WhiteBalance oldWhiteBalance) {
+        if (mCameraOptions.supports(mWhiteBalance)) {
+            Integer whiteBalance = mMapper.map(mWhiteBalance);
+            builder.set(CaptureRequest.CONTROL_AWB_MODE, whiteBalance);
+            return true;
+        }
+        mWhiteBalance = oldWhiteBalance;
+        return false;
+    }
+
+    @Override
+    public void setHdr(@NonNull Hdr hdr) {
+        final Hdr old = mHdr;
+        mHdr = hdr;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    if (applyHdr(mPreviewStreamRequestBuilder, old)) syncStream();
+                }
+                mHdrOp.end(null);
+            }
+        });
+    }
+
+
+    private boolean applyHdr( @NonNull CaptureRequest.Builder builder, @NonNull Hdr oldHdr) {
+        if (mCameraOptions.supports(mHdr)) {
+            Integer hdr = mMapper.map(mHdr);
+            builder.set(CaptureRequest.CONTROL_SCENE_MODE, hdr);
+            return true;
+        }
+        mHdr = oldHdr;
+        return false;
+    }
+
+    @Override
+    public void setPlaySounds(boolean playSounds) {
+        mPlaySounds = playSounds;
+        mPlaySoundsOp.end(null);
+    }
+
+    //endregion
+
 
     @Override
     public void onBufferAvailable(@NonNull byte[] buffer) {
@@ -558,37 +729,12 @@ public class Camera2Engine extends CameraEngine {
     }
 
     @Override
-    public void setFlash(@NonNull Flash flash) {
-
-    }
-
-    @Override
-    public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
-
-    }
-
-    @Override
-    public void setHdr(@NonNull Hdr hdr) {
-
-    }
-
-    @Override
-    public void setLocation(@Nullable Location location) {
-
-    }
-
-    @Override
     public void takePicture(@NonNull PictureResult.Stub stub) {
 
     }
 
     @Override
     public void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point) {
-
-    }
-
-    @Override
-    public void setPlaySounds(boolean playSounds) {
 
     }
 }
