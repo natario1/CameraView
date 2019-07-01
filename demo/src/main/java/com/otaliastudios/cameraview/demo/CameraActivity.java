@@ -20,6 +20,7 @@ import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
+import com.otaliastudios.cameraview.size.SizeSelectors;
 
 import java.io.File;
 

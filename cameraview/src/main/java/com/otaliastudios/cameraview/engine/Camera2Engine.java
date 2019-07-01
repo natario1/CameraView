@@ -13,6 +13,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
+import android.media.MediaCodec;
 import android.os.Build;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -25,7 +26,6 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
-import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
@@ -34,20 +34,19 @@ import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
-import com.otaliastudios.cameraview.internal.utils.Op;
-import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -56,7 +55,6 @@ import androidx.annotation.WorkerThread;
 
 // TODO parameters
 // TODO pictures
-// TODO videos
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine {
 
@@ -69,6 +67,13 @@ public class Camera2Engine extends CameraEngine {
     private CameraCaptureSession mSession;
     private CaptureRequest.Builder mPreviewStreamRequestBuilder;
     private CaptureRequest mPreviewStreamRequest;
+    private Surface mPreviewStreamSurface;
+
+    // API 23+ for full video recording. The surface is created before.
+    private Surface mFullVideoPersistentSurface;
+
+    // API 21-22 for full video recording. When takeVideo is called, we have to reset the session.
+    private VideoResult.Stub mFullVideoPendingStub;
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -194,7 +199,7 @@ public class Camera2Engine extends CameraEngine {
                     try {
                         LOG.i("createCamera:", "Applying default parameters.");
                         CameraCharacteristics characteristics = mManager.getCameraCharacteristics(mCameraId);
-                        mCameraOptions = new CameraOptions(mManager, characteristics, flip(REF_SENSOR, REF_VIEW));
+                        mCameraOptions = new CameraOptions(mManager, mCameraId, flip(REF_SENSOR, REF_VIEW));
                         // applyDefaultFocus(params); TODO
                         // applyFlash(params, Flash.OFF);
                         // applyLocation(params, null);
@@ -245,7 +250,6 @@ public class Camera2Engine extends CameraEngine {
         // Create a preview surface with the correct size.In Camera2, instead of applying it to
         // the camera params object, we must resize our own surfaces.
         final Object output = mPreview.getOutput();
-        Surface previewSurface;
         if (output instanceof SurfaceHolder) {
             try {
                 // This must be called from the UI thread...
@@ -259,37 +263,46 @@ public class Camera2Engine extends CameraEngine {
             } catch (ExecutionException | InterruptedException e) {
                 throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
             }
-            previewSurface = ((SurfaceHolder) output).getSurface();
+            mPreviewStreamSurface = ((SurfaceHolder) output).getSurface();
         } else if (output instanceof SurfaceTexture) {
             ((SurfaceTexture) output).setDefaultBufferSize(mPreviewStreamSize.getWidth(), mPreviewStreamSize.getHeight());
-            previewSurface = new Surface((SurfaceTexture) output);
+            mPreviewStreamSurface = new Surface((SurfaceTexture) output);
         } else {
             throw new RuntimeException("Unknown CameraPreview output class.");
         }
 
-        // TODO: captureSize
-        /* if (mMode == Mode.PICTURE) {
-            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
+        Surface captureSurface = null;
+        if (mMode == Mode.PICTURE) {
+            // TODO picture recorder
         } else {
-            // mCaptureSize in this case is a video size. The available video sizes are not necessarily
-            // a subset of the picture sizes, so we can't use the mCaptureSize value: it might crash.
-            // However, the setPictureSize() passed here is useless : we don't allow HQ pictures in video mode.
-            // While this might be lifted in the future, for now, just use a picture capture size.
-            Size pictureSize = computeCaptureSize(Mode.PICTURE);
-            params.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
-        } */
+            if (Full2VideoRecorder.SUPPORTS_PERSISTENT_SURFACE) {
+                mFullVideoPersistentSurface = MediaCodec.createPersistentInputSurface();
+                captureSurface = mFullVideoPersistentSurface;
+            } else if (mFullVideoPendingStub != null) {
+                Full2VideoRecorder recorder = new Full2VideoRecorder(this, mCameraId, null);
+                try {
+                    captureSurface = recorder.createInputSurface(mFullVideoPendingStub);
+                } catch (Full2VideoRecorder.PrepareException e) {
+                    throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
+                }
+                mVideoRecorder = recorder;
+            }
+        }
 
-        //noinspection ArraysAsListWithZeroOrOneArgument
-        List<Surface> outputSurfaces = Arrays.asList(previewSurface);
+        List<Surface> outputSurfaces = new ArrayList<>();
+        outputSurfaces.add(mPreviewStreamSurface);
+        if (captureSurface != null) outputSurfaces.add(captureSurface);
+
         try {
             mPreviewStreamRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mPreviewStreamRequestBuilder.addTarget(previewSurface);
+            mPreviewStreamRequestBuilder.addTarget(mPreviewStreamSurface);
 
             // null handler means using the current looper which is totally ok.
             mCamera.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession session) {
                     mSession = session;
+                    LOG.i("onStartBind:", "Completed");
                     task.trySetResult(null);
                 }
 
@@ -299,7 +312,6 @@ public class Camera2Engine extends CameraEngine {
                     String message = LOG.e("onConfigureFailed! Session", session);
                     throw new RuntimeException(message);
                 }
-
             }, null);
         } catch (CameraAccessException e) {
             throw createCameraException(e);
@@ -337,6 +349,12 @@ public class Camera2Engine extends CameraEngine {
             throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
         }
         LOG.i("onStartPreview", "Started preview.");
+
+        // Start delayed video if needed.
+        if (mFullVideoPendingStub != null) {
+            // Do not call takeVideo. It will reset some stub parameters that the recorder sets.
+            onTakeVideo(mFullVideoPendingStub);
+        }
         return Tasks.forResult(null);
     }
 
@@ -372,6 +390,11 @@ public class Camera2Engine extends CameraEngine {
     @NonNull
     @Override
     protected Task<Void> onStopBind() {
+        if (mFullVideoPersistentSurface != null) {
+            mFullVideoPersistentSurface.release();
+            mFullVideoPersistentSurface = null;
+        }
+        mPreviewStreamSurface = null;
         mPreviewStreamRequestBuilder = null;
         mPreviewStreamSize = null;
         mCaptureSize = null;
@@ -394,6 +417,7 @@ public class Camera2Engine extends CameraEngine {
         }
         mCamera = null;
         mCameraOptions = null;
+        mVideoRecorder = null;
         LOG.w("onStopEngine:", "Returning.");
         return Tasks.forResult(null);
     }
@@ -420,13 +444,58 @@ public class Camera2Engine extends CameraEngine {
 
     //region Videos
 
+    @WorkerThread
+    @Override
+    protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
+        stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
+        stub.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
+        if (!Full2VideoRecorder.SUPPORTS_PERSISTENT_SURFACE) {
+            // On API 21 and 22, we must restart the session at each time.
+            if (stub == mFullVideoPendingStub) {
+                // We have restarted and are ready to take the video.
+                doTakeVideo(mFullVideoPendingStub);
+                mFullVideoPendingStub = null;
+            } else {
+                // Save the pending data and restart the session.
+                mFullVideoPendingStub = stub;
+                restartBind();
+            }
+        } else {
+            doTakeVideo(stub);
+        }
+    }
+
+    private void doTakeVideo(@NonNull final VideoResult.Stub stub) {
+        if (!(mVideoRecorder instanceof Full2VideoRecorder)) {
+            mVideoRecorder = new Full2VideoRecorder(this, mCameraId, mFullVideoPersistentSurface);
+        }
+        Full2VideoRecorder recorder = (Full2VideoRecorder) mVideoRecorder;
+        try {
+            CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+            //noinspection ConstantConditions
+            builder.addTarget(recorder.getInputSurface());
+            builder.addTarget(mPreviewStreamSurface);
+
+            final AtomicBoolean started = new AtomicBoolean(false);
+            mSession.setRepeatingRequest(builder.build(), new CameraCaptureSession.CaptureCallback() {
+                @Override
+                public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
+                    if (started.compareAndSet(false, true)) mVideoRecorder.start(stub);
+                }
+            }, null);
+        } catch (CameraAccessException e) {
+            onVideoResult(null, e);
+            throw createCameraException(e);
+        }
+    }
+
     /**
-     * See {@link Camera1Engine#onTakeVideoSnapshot(VideoResult.Stub, File, AspectRatio)}
+     * See {@link CameraEngine#onTakeVideoSnapshot(VideoResult.Stub, AspectRatio)}
      * to read about the size and rotation computation.
      */
     @WorkerThread
     @Override
-    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio) {
+    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
@@ -445,30 +514,36 @@ public class Camera2Engine extends CameraEngine {
 
         // Reset facing and start.
         mFacing = realFacing;
-        mVideoRecorder = new SnapshotVideoRecorder(stub, this, glPreview);
-        mVideoRecorder.start();
+        if (!(mVideoRecorder instanceof SnapshotVideoRecorder)) {
+            mVideoRecorder = new SnapshotVideoRecorder(this, glPreview);
+        }
+        mVideoRecorder.start(stub);
+    }
+
+    @Override
+    public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
+        if (mVideoRecorder instanceof Full2VideoRecorder) {
+            // We have to stop all repeating requests and restart them.
+            try {
+                if (getBindState() == STATE_STARTED) {
+                    mSession.stopRepeating();
+                }
+                if (getPreviewState() == STATE_STARTED) {
+                    mPreviewStreamRequest = mPreviewStreamRequestBuilder.build();
+                    mSession.setRepeatingRequest(mPreviewStreamRequest, null, null);
+                }
+            } catch (CameraAccessException e) {
+                throw createCameraException(e);
+            }
+        }
+        super.onVideoResult(result, exception);
     }
 
     //endregion
 
 
-
-
-
-
-
-
-
-
-
-
     @Override
     public void onBufferAvailable(@NonNull byte[] buffer) {
-
-    }
-
-    @Override
-    public void setMode(@NonNull Mode mode) {
 
     }
 
@@ -504,12 +579,6 @@ public class Camera2Engine extends CameraEngine {
 
     @Override
     public void takePicture(@NonNull PictureResult.Stub stub) {
-
-    }
-
-
-    @Override
-    public void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file) {
 
     }
 

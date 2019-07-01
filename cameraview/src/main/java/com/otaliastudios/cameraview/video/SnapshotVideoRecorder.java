@@ -4,6 +4,7 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
 
+import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
@@ -39,6 +40,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private static final int STATE_NOT_RECORDING = 1;
 
     private MediaEncoderEngine mEncoderEngine;
+    private CameraEngine mEngine;
     private GlCameraPreview mPreview;
     private boolean mFlipped;
 
@@ -46,22 +48,22 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
 
-    public SnapshotVideoRecorder(@NonNull VideoResult.Stub stub,
-                                 @NonNull CameraEngine engine,
+    public SnapshotVideoRecorder(@NonNull CameraEngine engine,
                                  @NonNull GlCameraPreview preview) {
-        super(stub, engine);
+        super(engine);
         mPreview = preview;
-        mPreview.addRendererFrameCallback(this);
-        mFlipped = engine.flip(CameraEngine.REF_SENSOR, CameraEngine.REF_VIEW);
+        mEngine = engine;
     }
 
     @Override
-    public void start() {
+    protected void onStart() {
+        mPreview.addRendererFrameCallback(this);
+        mFlipped = mEngine.flip(CameraEngine.REF_SENSOR, CameraEngine.REF_VIEW);
         mDesiredState = STATE_RECORDING;
     }
 
     @Override
-    public void stop() {
+    protected void onStop() {
         mDesiredState = STATE_NOT_RECORDING;
     }
 
@@ -163,10 +165,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         // Cleanup
         mCurrentState = STATE_NOT_RECORDING;
         mDesiredState = STATE_NOT_RECORDING;
-        if (mPreview != null) {
-            mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
-            mPreview = null;
-        }
+        mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
         mEncoderEngine = null;
         dispatchResult();
     }

@@ -1,13 +1,10 @@
 package com.otaliastudios.cameraview.engine;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.location.Location;
 
 
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -17,7 +14,6 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.SuccessContinuation;
 import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
@@ -25,12 +21,9 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
-import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.picture.PictureRecorder;
-import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
-import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
@@ -40,12 +33,10 @@ import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
 import com.otaliastudios.cameraview.size.SizeSelectors;
-import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 import com.otaliastudios.cameraview.video.VideoRecorder;
 
 import androidx.annotation.NonNull;
@@ -59,7 +50,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 
@@ -869,6 +859,24 @@ public abstract class CameraEngine implements
         }
     }
 
+    /**
+     * Sets the desired mode (either picture or video).
+     * @param mode desired mode.
+     */
+    public final void setMode(@NonNull Mode mode) {
+        if (mode != mMode) {
+            mMode = mode;
+            mHandler.run(new Runnable() {
+                @Override
+                public void run() {
+                    if (getEngineState() == STATE_STARTED) {
+                        restart();
+                    }
+                }
+            });
+        }
+    }
+
     //endregion
 
     //region Abstract setters and APIs
@@ -884,9 +892,6 @@ public abstract class CameraEngine implements
      * @return true if we have one
      */
     protected abstract boolean collectCameraInfo(@NonNull Facing facing);
-
-    // Should restart the session if active.
-    public abstract void setMode(@NonNull Mode mode);
 
     // If closed, no-op. If opened, check supported and apply.
     public abstract void setZoom(float zoom, @Nullable PointF[] points, boolean notify);
@@ -959,7 +964,32 @@ public abstract class CameraEngine implements
         }
     }
 
-    public abstract void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file);
+    public final void takeVideo(final @NonNull VideoResult.Stub stub, final @NonNull File file) {
+        LOG.v("takeVideo", "scheduling");
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                LOG.v("takeVideo", "performing. Engine:", getEngineStateName(), "isTakingVideo:", isTakingVideo());
+                if (getEngineState() < STATE_STARTED) { mStartVideoOp.end(null); return; }
+                if (isTakingVideo()) { mStartVideoOp.end(null); return; }
+                if (mMode == Mode.PICTURE) {
+                    throw new IllegalStateException("Can't record video while in PICTURE mode");
+                }
+                stub.file = file;
+                stub.isSnapshot = false;
+                stub.videoCodec = mVideoCodec;
+                stub.location = mLocation;
+                stub.facing = mFacing;
+                stub.audio = mAudio;
+                stub.maxSize = mVideoMaxSize;
+                stub.maxDuration = mVideoMaxDuration;
+                stub.videoBitRate = mVideoBitRate;
+                stub.audioBitRate = mAudioBitRate;
+                onTakeVideo(stub);
+                mStartVideoOp.end(null);
+            }
+        });
+    }
 
     /**
      * @param stub a video stub
@@ -984,7 +1014,7 @@ public abstract class CameraEngine implements
                 stub.audio = mAudio;
                 stub.maxSize = mVideoMaxSize;
                 stub.maxDuration = mVideoMaxDuration;
-                onTakeVideoSnapshot(stub, file, viewAspectRatio);
+                onTakeVideoSnapshot(stub, viewAspectRatio);
                 mStartVideoOp.end(null);
             }
         });
@@ -995,10 +1025,9 @@ public abstract class CameraEngine implements
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("stopVideo", "executing.", "has recorder?", mVideoRecorder != null);
+                LOG.i("stopVideo", "executing.", "isTakingVideo?", isTakingVideo());
                 if (mVideoRecorder != null) {
                     mVideoRecorder.stop();
-                    mVideoRecorder = null;
                 }
             }
         });
@@ -1019,7 +1048,10 @@ public abstract class CameraEngine implements
     protected abstract void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio);
 
     @WorkerThread
-    protected abstract void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file, @NonNull AspectRatio viewAspectRatio);
+    protected abstract void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio viewAspectRatio);
+
+    @WorkerThread
+    protected abstract void onTakeVideo(@NonNull VideoResult.Stub stub);
 
     //endregion
 
@@ -1122,7 +1154,7 @@ public abstract class CameraEngine implements
     }
 
     public final boolean isTakingVideo() {
-        return mVideoRecorder != null;
+        return mVideoRecorder != null && mVideoRecorder.isRecording();
     }
 
     public final boolean isTakingPicture() {

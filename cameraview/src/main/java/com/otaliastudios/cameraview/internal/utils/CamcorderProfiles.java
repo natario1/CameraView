@@ -35,6 +35,26 @@ public class CamcorderProfiles {
         }
     }
 
+
+    /**
+     * Returns a CamcorderProfile that's somewhat coherent with the target size,
+     * to ensure we get acceptable video/audio parameters for MediaRecorders (most notably the bitrate).
+     *
+     * @param cameraId the camera2 id
+     * @param targetSize the target video size
+     * @return a profile
+     */
+    @NonNull
+    public static CamcorderProfile get(@NonNull String cameraId, @NonNull Size targetSize) {
+        // It seems that the way to do this is to use Integer.parseInt().
+        try {
+            int camera1Id = Integer.parseInt(cameraId);
+            return get(camera1Id, targetSize);
+        } catch (NumberFormatException e) {
+            return CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
+        }
+    }
+
     /**
      * Returns a CamcorderProfile that's somewhat coherent with the target size,
      * to ensure we get acceptable video/audio parameters for MediaRecorders (most notably the bitrate).
@@ -45,13 +65,13 @@ public class CamcorderProfiles {
      */
     @NonNull
     public static CamcorderProfile get(int cameraId, @NonNull Size targetSize) {
-        final int targetArea = targetSize.getWidth() * targetSize.getHeight();
+        final long targetArea = (long) targetSize.getWidth() * targetSize.getHeight();
         List<Size> sizes = new ArrayList<>(sizeToProfileMap.keySet());
         Collections.sort(sizes, new Comparator<Size>() {
             @Override
             public int compare(Size s1, Size s2) {
-                int a1 = Math.abs(s1.getWidth() * s1.getHeight() - targetArea);
-                int a2 = Math.abs(s2.getWidth() * s2.getHeight() - targetArea);
+                long a1 = Math.abs(s1.getWidth() * s1.getHeight() - targetArea);
+                long a2 = Math.abs(s2.getWidth() * s2.getHeight() - targetArea);
                 //noinspection UseCompareMethod
                 return (a1 < a2) ? -1 : ((a1 == a2) ? 0 : 1);
             }

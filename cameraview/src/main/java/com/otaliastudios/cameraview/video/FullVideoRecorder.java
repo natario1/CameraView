@@ -1,14 +1,11 @@
 package com.otaliastudios.cameraview.video;
 
-import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
-import com.otaliastudios.cameraview.engine.Camera1Engine;
-import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -16,78 +13,84 @@ import androidx.annotation.Nullable;
 
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaRecorder} APIs.
+ *
+ * When started, the media recorder will be prepared in {@link #onPrepareMediaRecorder(VideoResult.Stub, MediaRecorder)}.
+ * Subclasses should override this method and, before calling super(), do two things:
+ * - set the media recorder VideoSource
+ * - define {@link #mProfile}
+ *
+ * Subclasses can also call {@link #prepareMediaRecorder(VideoResult.Stub)} before start happens,
+ * in which case it will not be prepared twice. This can be used for example to test some
+ * configurations.
  */
-public class FullVideoRecorder extends VideoRecorder {
+public abstract class FullVideoRecorder extends VideoRecorder {
 
     private static final String TAG = FullVideoRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    private MediaRecorder mMediaRecorder;
-    private CamcorderProfile mProfile;
-    private Camera1Engine mController;
-    private Camera mCamera;
-    private Size mSize;
+    @SuppressWarnings("WeakerAccess") protected MediaRecorder mMediaRecorder;
+    @SuppressWarnings("WeakerAccess") protected CamcorderProfile mProfile;
+    private boolean mMediaRecorderPrepared;
 
-    public FullVideoRecorder(@NonNull VideoResult.Stub stub, @Nullable VideoResultListener listener,
-                      @NonNull Camera1Engine controller, @NonNull Camera camera, int cameraId) {
-        super(stub, listener);
-        mCamera = camera;
-        mController = controller;
-        mMediaRecorder = new MediaRecorder();
-        mMediaRecorder.setCamera(camera);
-        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
-        // Get a profile of quality compatible with the chosen size.
-        mSize = mResult.rotation % 180 != 0 ? mResult.size.flip() : mResult.size;
-        mProfile = CamcorderProfiles.get(cameraId, mSize);
+    FullVideoRecorder(@Nullable VideoResultListener listener) {
+        super(listener);
     }
 
-    @Override
-    public void start() {
-        if (mResult.audio == Audio.ON) {
+    @SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "BooleanMethodIsAlwaysInverted"})
+    protected boolean prepareMediaRecorder(@NonNull VideoResult.Stub stub) {
+        if (mMediaRecorderPrepared) return true;
+        return onPrepareMediaRecorder(stub, new MediaRecorder());
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected boolean onPrepareMediaRecorder(@NonNull VideoResult.Stub stub, @NonNull MediaRecorder mediaRecorder) {
+        mMediaRecorder = mediaRecorder;
+        Size size = stub.rotation % 180 != 0 ? stub.size.flip() : stub.size;
+        if (stub.audio == Audio.ON) {
             // Must be called before setOutputFormat.
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         }
 
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
-        if (mResult.videoFrameRate <= 0) {
+        if (stub.videoFrameRate <= 0) {
             mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
-            mResult.videoFrameRate = mProfile.videoFrameRate;
+            stub.videoFrameRate = mProfile.videoFrameRate;
         } else {
-            mMediaRecorder.setVideoFrameRate(mResult.videoFrameRate);
+            mMediaRecorder.setVideoFrameRate(stub.videoFrameRate);
         }
-        mMediaRecorder.setVideoSize(mSize.getWidth(), mSize.getHeight());
-        switch (mResult.videoCodec) {
+        mMediaRecorder.setVideoSize(size.getWidth(), size.getHeight());
+        switch (stub.videoCodec) {
             case H_263: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263); break;
             case H_264: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264); break;
             case DEVICE_DEFAULT: mMediaRecorder.setVideoEncoder(mProfile.videoCodec); break;
         }
-        if (mResult.videoBitRate <= 0) {
+        if (stub.videoBitRate <= 0) {
             mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
-            mResult.videoBitRate = mProfile.videoBitRate;
+            stub.videoBitRate = mProfile.videoBitRate;
         } else {
-            mMediaRecorder.setVideoEncodingBitRate(mResult.videoBitRate);
+            mMediaRecorder.setVideoEncodingBitRate(stub.videoBitRate);
         }
-        if (mResult.audio == Audio.ON) {
+        if (stub.audio == Audio.ON) {
             mMediaRecorder.setAudioChannels(mProfile.audioChannels);
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
             mMediaRecorder.setAudioEncoder(mProfile.audioCodec);
-            if (mResult.audioBitRate <= 0) {
+            if (stub.audioBitRate <= 0) {
                 mMediaRecorder.setAudioEncodingBitRate(mProfile.audioBitRate);
-                mResult.audioBitRate = mProfile.audioBitRate;
+                stub.audioBitRate = mProfile.audioBitRate;
             } else {
-                mMediaRecorder.setAudioEncodingBitRate(mResult.audioBitRate);
+                mMediaRecorder.setAudioEncodingBitRate(stub.audioBitRate);
             }
         }
-        if (mResult.location != null) {
+        if (stub.location != null) {
             mMediaRecorder.setLocation(
-                    (float) mResult.location.getLatitude(),
-                    (float) mResult.location.getLongitude());
+                    (float) stub.location.getLatitude(),
+                    (float) stub.location.getLongitude());
         }
-        mMediaRecorder.setOutputFile(mResult.file.getAbsolutePath());
-        mMediaRecorder.setOrientationHint(mResult.rotation);
-        mMediaRecorder.setMaxFileSize(mResult.maxSize);
-        mMediaRecorder.setMaxDuration(mResult.maxDuration);
+        mMediaRecorder.setOutputFile(stub.file.getAbsolutePath());
+        mMediaRecorder.setOrientationHint(stub.rotation);
+        mMediaRecorder.setMaxFileSize(stub.maxSize);
+        mMediaRecorder.setMaxDuration(stub.maxDuration);
         mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
             @Override
             public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
@@ -103,13 +106,32 @@ public class FullVideoRecorder extends VideoRecorder {
                 }
             }
         });
-        // Not needed. mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
 
         try {
             mMediaRecorder.prepare();
+            mMediaRecorderPrepared = true;
+            mError = null;
+            return true;
+        } catch (Exception e) {
+            LOG.w("prepareMediaRecorder:", "Error while preparing media recorder.", e);
+            mMediaRecorderPrepared = false;
+            mError = e;
+            return false;
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        if (!prepareMediaRecorder(mResult)) {
+            mResult = null;
+            stop();
+            return;
+        }
+
+        try {
             mMediaRecorder.start();
         } catch (Exception e) {
-            LOG.w("stop:", "Error while starting media recorder.", e);
+            LOG.w("start:", "Error while starting media recorder.", e);
             mResult = null;
             mError = e;
             stop();
@@ -117,7 +139,7 @@ public class FullVideoRecorder extends VideoRecorder {
     }
 
     @Override
-    public void stop() {
+    protected void onStop() {
         if (mMediaRecorder != null) {
             try {
                 mMediaRecorder.stop();
@@ -130,15 +152,11 @@ public class FullVideoRecorder extends VideoRecorder {
                 if (mError == null) mError = e;
             }
             mMediaRecorder.release();
-            if (mController != null) {
-                // Restore frame processing.
-                mCamera.setPreviewCallbackWithBuffer(mController);
-            }
         }
         mProfile = null;
         mMediaRecorder = null;
-        mCamera = null;
-        mController = null;
+        mMediaRecorderPrepared = false;
         dispatchResult();
     }
+
 }

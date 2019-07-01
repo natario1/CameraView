@@ -4,11 +4,15 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraLogger;
 
 import androidx.annotation.NonNull;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
@@ -84,7 +88,23 @@ public class WorkerHandler {
         if (Thread.currentThread() == getThread()) {
             runnable.run();
         } else {
-            mHandler.post(runnable);
+            post(runnable);
+        }
+    }
+
+    /**
+     * Post an action on this handler.
+     * @param callable the action
+     */
+    public <T> Task<T> run(@NonNull Callable<T> callable) {
+        if (Thread.currentThread() == getThread()) {
+            try {
+                return Tasks.forResult(callable.call());
+            } catch (Exception e) {
+                return Tasks.forException(e);
+            }
+        } else {
+            return post(callable);
         }
     }
 
@@ -94,6 +114,25 @@ public class WorkerHandler {
      */
     public void post(@NonNull Runnable runnable) {
         mHandler.post(runnable);
+    }
+
+    /**
+     * Post an action on this handler.
+     * @param callable the action
+     */
+    public <T> Task<T> post(@NonNull final Callable<T> callable) {
+        final TaskCompletionSource<T> source = new TaskCompletionSource<>();
+        post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    source.trySetResult(callable.call());
+                } catch (Exception e) {
+                    source.trySetException(e);
+                }
+            }
+        });
+        return source.getTask();
     }
 
     /**
