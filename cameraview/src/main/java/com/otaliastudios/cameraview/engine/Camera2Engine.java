@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview.engine;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.ImageFormat;
+import android.graphics.Camera;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -69,9 +69,11 @@ public class Camera2Engine extends CameraEngine {
     private CameraDevice mCamera;
     private CameraCharacteristics mCameraCharacteristics;
     private CameraCaptureSession mSession;
-    private CaptureRequest.Builder mPreviewStreamRequestBuilder;
-    private CaptureRequest mPreviewStreamRequest;
+    private CaptureRequest.Builder mRepeatingRequestBuilder;
+    private CaptureRequest mRepeatingRequest;
+
     private Surface mPreviewStreamSurface;
+    private Surface mFrameProcessingSurface;
 
     // API 23+ for full video recording. The surface is created before.
     private Surface mFullVideoPersistentSurface;
@@ -123,6 +125,77 @@ public class Camera2Engine extends CameraEngine {
         return new CameraException(reason);
     }
 
+    /**
+     * When creating a new builder, we want to
+     * - set it to {@link #mRepeatingRequestBuilder}, the current one
+     * - add a tag for the template just in case
+     * - apply all the current parameters
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    @NonNull
+    private CaptureRequest.Builder createRepeatingRequestBuilder(int template) throws CameraAccessException {
+        mRepeatingRequestBuilder = mCamera.createCaptureRequest(template);
+        mRepeatingRequestBuilder.setTag(template);
+        applyAll(mRepeatingRequestBuilder);
+        return mRepeatingRequestBuilder;
+    }
+
+    /**
+     * Sets up the repeating request builder with default surfaces and extra ones
+     * if needed (like a video recording surface).
+     */
+    private void addRepeatingRequestBuilderSurfaces(@NonNull Surface... extraSurfaces) {
+        mRepeatingRequestBuilder.addTarget(mPreviewStreamSurface);
+        if (mFrameProcessingSurface != null) {
+            mRepeatingRequestBuilder.addTarget(mFrameProcessingSurface);
+        }
+        for (Surface extraSurface : extraSurfaces) {
+            mRepeatingRequestBuilder.addTarget(extraSurface);
+        }
+    }
+
+    /**
+     * Sets up the repeating request builder with default surfaces and extra ones
+     * if needed (like a video recording surface).
+     */
+    private void removeRepeatingRequestBuilderSurfaces() {
+        mRepeatingRequestBuilder.removeTarget(mPreviewStreamSurface);
+        if (mFrameProcessingSurface != null) {
+            mRepeatingRequestBuilder.removeTarget(mFrameProcessingSurface);
+        }
+    }
+
+    /**
+     * Applies the repeating request builder to the preview, assuming we actually have a preview
+     * running. Can be called after changing parameters to the builder.
+     *
+     * To apply a new builder (for example switch between TEMPLATE_PREVIEW and TEMPLATE_RECORD)
+     * it should be set before calling this method, for example by calling
+     * {@link #createRepeatingRequestBuilder(int)}.
+     */
+    private void applyRepeatingRequestBuilder() {
+        applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED, null);
+    }
+
+    private void applyRepeatingRequestBuilder(boolean checkStarted, int errorReason, @Nullable final Runnable onFirstFrame) {
+        if (!checkStarted || getPreviewState() == STATE_STARTED) {
+            try {
+                mRepeatingRequest = mRepeatingRequestBuilder.build();
+                final AtomicBoolean firstFrame = new AtomicBoolean(false);
+                mSession.setRepeatingRequest(mRepeatingRequest, new CameraCaptureSession.CaptureCallback() {
+                    @Override
+                    public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
+                        super.onCaptureStarted(session, request, timestamp, frameNumber);
+                        if (firstFrame.compareAndSet(false, true) && onFirstFrame != null) {
+                            onFirstFrame.run();
+                        }
+                    }
+                }, null);
+            } catch (CameraAccessException e) {
+                throw new CameraException(e, errorReason);
+            }
+        }
+    }
     //endregion
 
     //region Protected APIs
@@ -204,8 +277,7 @@ public class Camera2Engine extends CameraEngine {
                         LOG.i("createCamera:", "Applying default parameters.");
                         mCameraCharacteristics = mManager.getCameraCharacteristics(mCameraId);
                         mCameraOptions = new CameraOptions(mManager, mCameraId, flip(REF_SENSOR, REF_VIEW));
-                        mPreviewStreamRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                        applyAll(mPreviewStreamRequestBuilder);
+                        createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
                     } catch (CameraAccessException e) {
                         task.trySetException(createCameraException(e));
                         return;
@@ -245,8 +317,13 @@ public class Camera2Engine extends CameraEngine {
         mCaptureSize = computeCaptureSize();
         mPreviewStreamSize = computePreviewStreamSize();
 
-        // Create a preview surface with the correct size.In Camera2, instead of applying it to
-        // the camera params object, we must resize our own surfaces.
+        // Deal with surfaces.
+        // In Camera2, instead of applying the size to the camera params object,
+        // we must resize our own surfaces and configure them before opening the session.
+        List<Surface> outputSurfaces = new ArrayList<>();
+
+        // 1. PREVIEW
+        // Create a preview surface with the correct size.
         final Object output = mPreview.getOutput();
         if (output instanceof SurfaceHolder) {
             try {
@@ -254,7 +331,9 @@ public class Camera2Engine extends CameraEngine {
                 Tasks.await(Tasks.call(new Callable<Void>() {
                     @Override
                     public Void call() {
-                        ((SurfaceHolder) output).setFixedSize(mPreviewStreamSize.getWidth(), mPreviewStreamSize.getHeight());
+                        ((SurfaceHolder) output).setFixedSize(
+                                mPreviewStreamSize.getWidth(),
+                                mPreviewStreamSize.getHeight());
                         return null;
                     }
                 }));
@@ -263,23 +342,24 @@ public class Camera2Engine extends CameraEngine {
             }
             mPreviewStreamSurface = ((SurfaceHolder) output).getSurface();
         } else if (output instanceof SurfaceTexture) {
-            ((SurfaceTexture) output).setDefaultBufferSize(mPreviewStreamSize.getWidth(), mPreviewStreamSize.getHeight());
+            ((SurfaceTexture) output).setDefaultBufferSize(
+                    mPreviewStreamSize.getWidth(),
+                    mPreviewStreamSize.getHeight());
             mPreviewStreamSurface = new Surface((SurfaceTexture) output);
         } else {
             throw new RuntimeException("Unknown CameraPreview output class.");
         }
+        outputSurfaces.add(mPreviewStreamSurface);
 
-        Surface captureSurface = null;
-        if (mMode == Mode.PICTURE) {
-            // TODO picture recorder
-        } else {
+        // 2. VIDEO RECORDING
+        if (mMode == Mode.VIDEO) {
             if (Full2VideoRecorder.SUPPORTS_PERSISTENT_SURFACE) {
                 mFullVideoPersistentSurface = MediaCodec.createPersistentInputSurface();
-                captureSurface = mFullVideoPersistentSurface;
+                outputSurfaces.add(mFullVideoPersistentSurface);
             } else if (mFullVideoPendingStub != null) {
                 Full2VideoRecorder recorder = new Full2VideoRecorder(this, mCameraId, null);
                 try {
-                    captureSurface = recorder.createInputSurface(mFullVideoPendingStub);
+                    outputSurfaces.add(recorder.createInputSurface(mFullVideoPendingStub));
                 } catch (Full2VideoRecorder.PrepareException e) {
                     throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
                 }
@@ -287,13 +367,20 @@ public class Camera2Engine extends CameraEngine {
             }
         }
 
-        List<Surface> outputSurfaces = new ArrayList<>();
-        outputSurfaces.add(mPreviewStreamSurface);
-        if (captureSurface != null) outputSurfaces.add(captureSurface);
+        // 3. PICTURE RECORDING
+        if (mMode == Mode.PICTURE) {
+            // TODO picture recorder
+        }
+
+        // 4. FRAME PROCESSING
+        if (mHasFrameProcessors) {
+            // TODO
+            outputSurfaces.add(mFrameProcessingSurface);
+        } else {
+            mFrameProcessingSurface = null;
+        }
 
         try {
-            mPreviewStreamRequestBuilder.addTarget(mPreviewStreamSurface);
-
             // null handler means using the current looper which is totally ok.
             mCamera.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
                 @Override
@@ -336,14 +423,8 @@ public class Camera2Engine extends CameraEngine {
         // TODO mFrameManager.setUp(ImageFormat.getBitsPerPixel(mPreviewStreamFormat), mPreviewStreamSize);
 
         LOG.i("onStartPreview", "Starting preview with startPreview().");
-        try {
-            mPreviewStreamRequest = mPreviewStreamRequestBuilder.build();
-            mSession.setRepeatingRequest(mPreviewStreamRequest, null, null);
-        } catch (Exception e) {
-            // This is an unrecoverable exception that will stop everything.
-            LOG.e("onStartPreview", "Failed to start preview.", e);
-            throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
-        }
+        addRepeatingRequestBuilderSurfaces();
+        applyRepeatingRequestBuilder(false, CameraException.REASON_FAILED_TO_START_PREVIEW, null);
         LOG.i("onStartPreview", "Started preview.");
 
         // Start delayed video if needed.
@@ -362,6 +443,8 @@ public class Camera2Engine extends CameraEngine {
     @Override
     protected Task<Void> onStopPreview() {
         if (mVideoRecorder != null) {
+            // This should synchronously call onVideoResult that will reset the repeating builder
+            // to the PREVIEW template. This is very important.
             mVideoRecorder.stop();
             mVideoRecorder = null;
         }
@@ -378,7 +461,8 @@ public class Camera2Engine extends CameraEngine {
             LOG.w("stopRepeating failed!", e);
             throw createCameraException(e);
         }
-        mPreviewStreamRequest = null;
+        removeRepeatingRequestBuilderSurfaces();
+        mRepeatingRequest = null;
         return Tasks.forResult(null);
     }
 
@@ -390,7 +474,7 @@ public class Camera2Engine extends CameraEngine {
             mFullVideoPersistentSurface.release();
             mFullVideoPersistentSurface = null;
         }
-        mPreviewStreamRequestBuilder.removeTarget(mPreviewStreamSurface);
+        mFrameProcessingSurface = null;
         mPreviewStreamSurface = null;
         mPreviewStreamSize = null;
         mCaptureSize = null;
@@ -414,7 +498,7 @@ public class Camera2Engine extends CameraEngine {
         mCamera = null;
         mCameraOptions = null;
         mVideoRecorder = null;
-        mPreviewStreamRequestBuilder = null;
+        mRepeatingRequestBuilder = null;
         LOG.w("onStopEngine:", "Returning.");
         return Tasks.forResult(null);
     }
@@ -473,22 +557,20 @@ public class Camera2Engine extends CameraEngine {
         }
         Full2VideoRecorder recorder = (Full2VideoRecorder) mVideoRecorder;
         try {
-            CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
-            applyAll(builder);
-            //noinspection ConstantConditions
-            builder.addTarget(recorder.getInputSurface());
-            builder.addTarget(mPreviewStreamSurface);
-
-            final AtomicBoolean started = new AtomicBoolean(false);
-            mSession.setRepeatingRequest(builder.build(), new CameraCaptureSession.CaptureCallback() {
+            createRepeatingRequestBuilder(CameraDevice.TEMPLATE_RECORD);
+            addRepeatingRequestBuilderSurfaces(recorder.getInputSurface());
+            applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED, new Runnable() {
                 @Override
-                public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
-                    if (started.compareAndSet(false, true)) mVideoRecorder.start(stub);
+                public void run() {
+                    mVideoRecorder.start(stub);
                 }
-            }, null);
+            });
         } catch (CameraAccessException e) {
             onVideoResult(null, e);
             throw createCameraException(e);
+        } catch (CameraException e) {
+            onVideoResult(null, e);
+            throw e;
         }
     }
 
@@ -525,38 +607,23 @@ public class Camera2Engine extends CameraEngine {
 
     @Override
     public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
-        if (mVideoRecorder instanceof Full2VideoRecorder) {
+        boolean wasRecordingFullVideo = mVideoRecorder instanceof Full2VideoRecorder;
+        super.onVideoResult(result, exception);
+        if (wasRecordingFullVideo) {
             // We have to stop all repeating requests and restart them.
             try {
-                if (getBindState() == STATE_STARTED) {
-                    mSession.stopRepeating();
-                }
-                if (getPreviewState() == STATE_STARTED) {
-                    mPreviewStreamRequest = mPreviewStreamRequestBuilder.build();
-                    mSession.setRepeatingRequest(mPreviewStreamRequest, null, null);
-                }
+                createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
+                addRepeatingRequestBuilderSurfaces();
+                applyRepeatingRequestBuilder();
             } catch (CameraAccessException e) {
                 throw createCameraException(e);
             }
         }
-        super.onVideoResult(result, exception);
     }
 
     //endregion
 
     //region Parameters
-
-    private void syncStream() {
-        if (getPreviewState() == STATE_STARTED) {
-            try {
-                // TODO if we are capturing a video or a picture, this is not what we should do!
-                mPreviewStreamRequest = mPreviewStreamRequestBuilder.build();
-                mSession.setRepeatingRequest(mPreviewStreamRequest, null, null);
-            } catch (Exception e) {
-                throw new CameraException(e, CameraException.REASON_DISCONNECTED);
-            }
-        }
-    }
 
     private void applyAll(@NonNull CaptureRequest.Builder builder) {
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
@@ -603,7 +670,9 @@ public class Camera2Engine extends CameraEngine {
             @Override
             public void run() {
                 if (getEngineState() == STATE_STARTED) {
-                    if (applyFlash(mPreviewStreamRequestBuilder, old)) syncStream();
+                    if (applyFlash(mRepeatingRequestBuilder, old)) {
+                        applyRepeatingRequestBuilder();
+                    }
                 }
                 mFlashOp.end(null);
             }
@@ -658,7 +727,9 @@ public class Camera2Engine extends CameraEngine {
             @Override
             public void run() {
                 if (getEngineState() == STATE_STARTED) {
-                    if (applyLocation(mPreviewStreamRequestBuilder, old)) syncStream();
+                    if (applyLocation(mRepeatingRequestBuilder, old)) {
+                        applyRepeatingRequestBuilder();
+                    }
                 }
                 mLocationOp.end(null);
             }
@@ -681,7 +752,9 @@ public class Camera2Engine extends CameraEngine {
             @Override
             public void run() {
                 if (getEngineState() == STATE_STARTED) {
-                    if (applyWhiteBalance(mPreviewStreamRequestBuilder, old)) syncStream();
+                    if (applyWhiteBalance(mRepeatingRequestBuilder, old)) {
+                        applyRepeatingRequestBuilder();
+                    }
                 }
                 mWhiteBalanceOp.end(null);
             }
@@ -707,7 +780,9 @@ public class Camera2Engine extends CameraEngine {
             @Override
             public void run() {
                 if (getEngineState() == STATE_STARTED) {
-                    if (applyHdr(mPreviewStreamRequestBuilder, old)) syncStream();
+                    if (applyHdr(mRepeatingRequestBuilder, old)) {
+                        applyRepeatingRequestBuilder();
+                    }
                 }
                 mHdrOp.end(null);
             }
@@ -751,8 +826,22 @@ public class Camera2Engine extends CameraEngine {
     }
 
     @Override
-    public void setHasFrameProcessors(boolean hasFrameProcessors) {
+    public void setHasFrameProcessors(final boolean hasFrameProcessors) {
+        LOG.i("setHasFrameProcessors", "changed to", hasFrameProcessors, "posting.");
         mHasFrameProcessors = hasFrameProcessors;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                LOG.i("setHasFrameProcessors", "changed to", hasFrameProcessors, "executing. BindState:", getBindState());
+                if (getBindState() == STATE_STARTED) {
+                    LOG.i("setHasFrameProcessors", "triggering a restart.");
+                    // TODO if taking video, this stops it.
+                    restartBind();
+                } else {
+                    LOG.i("setHasFrameProcessors", "not bound so won't restart.");
+                }
+            }
+        });
     }
 
     //endregion
