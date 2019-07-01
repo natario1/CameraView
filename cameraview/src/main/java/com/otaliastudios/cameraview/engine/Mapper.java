@@ -4,13 +4,17 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
 
+import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -54,10 +58,24 @@ public abstract class Mapper {
     public abstract <T> Hdr unmapHdr(T cameraConstant);
 
     @SuppressWarnings("WeakerAccess")
-    protected <T> T reverseLookup(HashMap<T, ?> map, Object object) {
-        for (T value : map.keySet()) {
+    protected <C extends Control, T> C reverseLookup(HashMap<C, T> map, T object) {
+        for (C value : map.keySet()) {
             if (object.equals(map.get(value))) {
                 return value;
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected <C extends Control, T> C reverseListLookup(HashMap<C, List<T>> map, T object) {
+        for (C value : map.keySet()) {
+            List<T> list = map.get(value);
+            if (list == null) continue;
+            for (T candidate : list) {
+                if (object.equals(candidate)) {
+                    return value;
+                }
             }
         }
         return null;
@@ -113,22 +131,22 @@ public abstract class Mapper {
 
         @Override
         public <T> Flash unmapFlash(T cameraConstant) {
-            return reverseLookup(FLASH, cameraConstant);
+            return reverseLookup(FLASH, (String) cameraConstant);
         }
 
         @Override
         public <T> Facing unmapFacing(T cameraConstant) {
-            return reverseLookup(FACING, cameraConstant);
+            return reverseLookup(FACING, (Integer) cameraConstant);
         }
 
         @Override
         public <T> WhiteBalance unmapWhiteBalance(T cameraConstant) {
-            return reverseLookup(WB, cameraConstant);
+            return reverseLookup(WB, (String) cameraConstant);
         }
 
         @Override
         public <T> Hdr unmapHdr(T cameraConstant) {
-            return reverseLookup(HDR, cameraConstant);
+            return reverseLookup(HDR, (String) cameraConstant);
         }
     }
 
@@ -136,16 +154,30 @@ public abstract class Mapper {
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private static class Camera2Mapper extends Mapper {
 
+        private static final HashMap<Flash, List<Integer>> FLASH = new HashMap<>();
         private static final HashMap<Facing, Integer> FACING = new HashMap<>();
+        private static final HashMap<WhiteBalance, Integer> WB = new HashMap<>();
+        private static final HashMap<Hdr, Integer> HDR = new HashMap<>();
 
         static {
+            FLASH.put(Flash.OFF, Arrays.asList(CameraCharacteristics.CONTROL_AE_MODE_ON, CameraCharacteristics.CONTROL_AE_MODE_OFF));
+            FLASH.put(Flash.AUTO, Arrays.asList(CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH, CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE));
+            FLASH.put(Flash.ON, Collections.singletonList(CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH));
             FACING.put(Facing.BACK, CameraCharacteristics.LENS_FACING_BACK);
             FACING.put(Facing.FRONT, CameraCharacteristics.LENS_FACING_FRONT);
+            WB.put(WhiteBalance.AUTO, CameraCharacteristics.CONTROL_AWB_MODE_AUTO);
+            WB.put(WhiteBalance.CLOUDY, CameraCharacteristics.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT);
+            WB.put(WhiteBalance.DAYLIGHT, CameraCharacteristics.CONTROL_AWB_MODE_DAYLIGHT);
+            WB.put(WhiteBalance.FLUORESCENT, CameraCharacteristics.CONTROL_AWB_MODE_FLUORESCENT);
+            WB.put(WhiteBalance.INCANDESCENT, CameraCharacteristics.CONTROL_AWB_MODE_INCANDESCENT);
+            HDR.put(Hdr.OFF, CameraCharacteristics.CONTROL_SCENE_MODE_DISABLED);
+            HDR.put(Hdr.ON, 18 /* CameraCharacteristics.CONTROL_SCENE_MODE_HDR */);
         }
 
+        @SuppressWarnings("ConstantConditions")
         @Override
         public <T> T map(Flash flash) {
-            return null;
+            return (T) FLASH.get(flash);
         }
 
         @Override
@@ -155,32 +187,32 @@ public abstract class Mapper {
 
         @Override
         public <T> T map(WhiteBalance whiteBalance) {
-            return null;
+            return (T) WB.get(whiteBalance);
         }
 
         @Override
         public <T> T map(Hdr hdr) {
-            return null;
+            return (T) HDR.get(hdr);
         }
 
         @Override
         public <T> Flash unmapFlash(T cameraConstant) {
-            return null;
+            return reverseListLookup(FLASH, (Integer) cameraConstant);
         }
 
         @Override
         public <T> Facing unmapFacing(T cameraConstant) {
-            return reverseLookup(FACING, cameraConstant);
+            return reverseLookup(FACING, (Integer) cameraConstant);
         }
 
         @Override
         public <T> WhiteBalance unmapWhiteBalance(T cameraConstant) {
-            return null;
+            return reverseLookup(WB, (Integer) cameraConstant);
         }
 
         @Override
         public <T> Hdr unmapHdr(T cameraConstant) {
-            return null;
+            return reverseLookup(HDR, (Integer) cameraConstant);
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.otaliastudios.cameraview.engine;
 
 import android.content.Context;
+import android.graphics.Camera;
 import android.graphics.PointF;
+import android.hardware.camera2.CameraCharacteristics;
 import android.location.Location;
 
 
