@@ -119,10 +119,6 @@ public class MockCameraEngine extends CameraEngine {
         mExposureCorrectionChanged = true;
     }
 
-    @Override
-    public void setFacing(@NonNull Facing facing) {
-        mFacing = facing;
-    }
 
     @Override
     public void setFlash(@NonNull Flash flash) {
@@ -135,18 +131,8 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     @Override
-    public void setMode(@NonNull Mode mode) {
-        mMode = mode;
-    }
-
-    @Override
     public void setHdr(@NonNull Hdr hdr) {
         mHdr = hdr;
-    }
-
-    @Override
-    public void setAudio(@NonNull Audio audio) {
-        mAudio = audio;
     }
 
     @Override
@@ -165,7 +151,8 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     @Override
-    public void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file) {
+    protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
+
     }
 
     @Override
@@ -197,4 +184,33 @@ public class MockCameraEngine extends CameraEngine {
     public void setPlaySounds(boolean playSounds) {
 
     }
+
+    @Override
+    public void setHasFrameProcessors(boolean hasFrameProcessors) {
+
+    }
+
+    @Override
+    protected boolean collectCameraInfo(@NonNull Facing facing) {
+        return true;
+    }
+
+    /*
+
+    @Override
+    public void setFacing(@NonNull Facing facing) {
+        mFacing = facing;
+    }
+
+    @Override
+    public void setMode(@NonNull Mode mode) {
+        mMode = mode;
+    }
+
+    @Override
+    public void setAudio(@NonNull Audio audio) {
+        mAudio = audio;
+    }
+
+    */
 }

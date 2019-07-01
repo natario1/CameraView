@@ -279,6 +279,10 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
         return false;
     }
 
+    @Override
+    public void setHasFrameProcessors(boolean hasFrameProcessors) {
+        mHasFrameProcessors = hasFrameProcessors;
+    }
 
     @Override
     public void onBufferAvailable(@NonNull byte[] buffer) {

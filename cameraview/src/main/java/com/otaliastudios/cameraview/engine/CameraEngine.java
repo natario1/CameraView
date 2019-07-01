@@ -166,6 +166,7 @@ public abstract class CameraEngine implements
     protected float mZoomValue;
     protected float mExposureCorrectionValue;
     protected boolean mPlaySounds;
+    protected boolean mHasFrameProcessors;
 
     @Nullable private SizeSelector mPreviewStreamSizeSelector;
     private SizeSelector mPictureSizeSelector;
@@ -916,6 +917,8 @@ public abstract class CameraEngine implements
 
     public abstract void setPlaySounds(boolean playSounds);
 
+    public abstract void setHasFrameProcessors(boolean hasFrameProcessors);
+
     //endregion
 
     //region picture and video control
@@ -1160,11 +1163,15 @@ public abstract class CameraEngine implements
 
     public final long getAutoFocusResetDelay() { return mAutoFocusResetDelayMillis; }
 
-    final boolean shouldResetAutoFocus() {
-        return mAutoFocusResetDelayMillis > 0 && mAutoFocusResetDelayMillis != Long.MAX_VALUE;
+    public boolean getHasFrameProcessors() {
+        return mHasFrameProcessors;
     }
 
     //endregion
+
+    final boolean shouldResetAutoFocus() {
+        return mAutoFocusResetDelayMillis > 0 && mAutoFocusResetDelayMillis != Long.MAX_VALUE;
+    }
 
     //region Orientation utils
 
