@@ -55,6 +55,8 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     private Camera mCamera;
     @VisibleForTesting int mCameraId;
+    private int mPreviewStreamFormat;
+
 
     private Runnable mFocusEndRunnable;
     private final Runnable mFocusResetRunnable = new Runnable() {
@@ -196,6 +198,7 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
             mVideoRecorder.stop();
             mVideoRecorder = null;
         }
+        mPictureRecorder = null;
         mPreviewStreamFormat = 0;
         getFrameManager().release();
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
@@ -762,6 +765,10 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
 
     // -----------------
     // Size stuff.
+
+    public final int getPreviewStreamFormat() {
+        return mPreviewStreamFormat;
+    }
 
 
     @NonNull

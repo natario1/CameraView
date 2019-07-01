@@ -184,7 +184,6 @@ public abstract class CameraEngine implements
     protected int mAudioBitRate;
     protected Size mCaptureSize;
     protected Size mPreviewStreamSize;
-    protected int mPreviewStreamFormat;
     protected long mAutoFocusResetDelayMillis;
 
     protected int mSensorOffset;
@@ -1062,10 +1061,6 @@ public abstract class CameraEngine implements
     @NonNull
     public final FrameManager getFrameManager() {
         return mFrameManager;
-    }
-
-    public final int getPreviewStreamFormat() {
-        return mPreviewStreamFormat;
     }
 
     @Nullable

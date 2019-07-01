@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.engine;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.ImageFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -52,11 +53,11 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
-// TODO fix flash, it's not that simple
 // TODO zoom
 // TODO exposure correction
 // TODO autofocus
 // TODO pictures
+// TODO frame processor
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine {
 
@@ -330,7 +331,6 @@ public class Camera2Engine extends CameraEngine {
         // Set the preview rotation.
         mPreview.setDrawRotation(mDisplayOffset);
 
-        // TODO mPreviewStreamFormat = params.getPreviewFormat();
         // TODO mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         // TODO mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
         // TODO mFrameManager.setUp(ImageFormat.getBitsPerPixel(mPreviewStreamFormat), mPreviewStreamSize);
@@ -365,7 +365,7 @@ public class Camera2Engine extends CameraEngine {
             mVideoRecorder.stop();
             mVideoRecorder = null;
         }
-        mPreviewStreamFormat = 0;
+        mPictureRecorder = null;
         getFrameManager().release();
         // TODO mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         try {
@@ -610,6 +610,17 @@ public class Camera2Engine extends CameraEngine {
      * - {@link CaptureRequest#CONTROL_AE_MODE_ON}
      * - {@link CaptureRequest#CONTROL_AE_MODE_ON_AUTO_FLASH}
      * - {@link CaptureRequest#CONTROL_AE_MODE_ON_ALWAYS_FLASH}
+     *
+     * The API offers a high level control through {@link CaptureRequest#CONTROL_AE_MODE},
+     * which is what the mapper looks at. It will trigger (if specified) flash only for still captures
+     * which is exactly what we want.
+     *
+     * However, we set CONTROL_AE_MODE to ON/OFF (depending
+     * on which is available) with both {@link Flash#OFF} and {@link Flash#TORCH}.
+     *
+     * When CONTROL_AE_MODE is ON or OFF, the low level control, called {@link CaptureRequest#FLASH_MODE},
+     * becomes effective, and that's where we can actually distinguish between a turned off flash
+     * and a torch flash.
      */
     private boolean applyFlash(@NonNull CaptureRequest.Builder builder,
                                @NonNull Flash oldFlash) {
@@ -620,6 +631,11 @@ public class Camera2Engine extends CameraEngine {
                 for (int availableMode : availableModes) {
                     if (mode == availableMode) {
                         builder.set(CaptureRequest.CONTROL_AE_MODE, mode);
+                        if (mFlash == Flash.TORCH) {
+                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+                        } else if (mFlash == Flash.OFF) {
+                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+                        }
                         return true;
                     }
                 }
