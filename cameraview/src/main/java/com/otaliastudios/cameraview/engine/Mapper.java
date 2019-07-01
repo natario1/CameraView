@@ -160,7 +160,10 @@ public abstract class Mapper {
         private static final HashMap<Hdr, Integer> HDR = new HashMap<>();
 
         static {
+            // OFF and TORCH have also a second condition - to CameraCharacteristics.CONTROL_FLASH_MODE - but that does not
+            // fit into the Mapper interface. TODO review this
             FLASH.put(Flash.OFF, Arrays.asList(CameraCharacteristics.CONTROL_AE_MODE_ON, CameraCharacteristics.CONTROL_AE_MODE_OFF));
+            FLASH.put(Flash.TORCH, Arrays.asList(CameraCharacteristics.CONTROL_AE_MODE_ON, CameraCharacteristics.CONTROL_AE_MODE_OFF));
             FLASH.put(Flash.AUTO, Arrays.asList(CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH, CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE));
             FLASH.put(Flash.ON, Collections.singletonList(CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH));
             FACING.put(Facing.BACK, CameraCharacteristics.LENS_FACING_BACK);
