@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -20,6 +21,8 @@ import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.size.SizeSelectors;
 
 import java.io.File;
@@ -42,6 +45,16 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera = findViewById(R.id.camera);
         camera.setLifecycleOwner(this);
         camera.addCameraListener(new Listener());
+        camera.addFrameProcessor(new FrameProcessor() {
+            private long lastTime = System.currentTimeMillis();
+            @Override
+            public void process(@NonNull Frame frame) {
+                long newTime = frame.getTime();
+                long delay = newTime - lastTime;
+                lastTime = newTime;
+                Log.e("Frames", "Delay: " + delay + "millis, FPS: " + 1000 / delay);
+            }
+        });
 
         findViewById(R.id.edit).setOnClickListener(this);
         findViewById(R.id.capturePicture).setOnClickListener(this);

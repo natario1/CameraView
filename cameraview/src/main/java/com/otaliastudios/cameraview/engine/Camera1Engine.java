@@ -26,6 +26,7 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
@@ -47,7 +48,10 @@ import java.util.List;
 
 
 @SuppressWarnings("deprecation")
-public class Camera1Engine extends CameraEngine implements Camera.PreviewCallback, Camera.ErrorCallback {
+public class Camera1Engine extends CameraEngine implements
+        Camera.PreviewCallback,
+        Camera.ErrorCallback,
+        FrameManager.BufferCallback {
 
     private static final String TAG = Camera1Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -282,6 +286,12 @@ public class Camera1Engine extends CameraEngine implements Camera.PreviewCallbac
     @Override
     public void setHasFrameProcessors(boolean hasFrameProcessors) {
         mHasFrameProcessors = hasFrameProcessors;
+    }
+
+    @NonNull
+    @Override
+    protected FrameManager instantiateFrameManager() {
+        return new FrameManager(2, this);
     }
 
     @Override

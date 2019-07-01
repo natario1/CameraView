@@ -3,6 +3,8 @@ package com.otaliastudios.cameraview.engine;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Camera;
+import android.graphics.ImageFormat;
+import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -14,6 +16,8 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
+import android.media.Image;
+import android.media.ImageReader;
 import android.media.MediaCodec;
 import android.os.Build;
 import android.view.Surface;
@@ -33,14 +37,20 @@ import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
+import com.otaliastudios.cameraview.internal.utils.ImageHelper;
+import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.size.SizeSelectors;
 import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
+import com.otaliastudios.cameraview.video.VideoRecorder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,12 +67,14 @@ import androidx.annotation.WorkerThread;
 // TODO exposure correction
 // TODO autofocus
 // TODO pictures
-// TODO frame processor
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class Camera2Engine extends CameraEngine {
+public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener {
 
     private static final String TAG = Camera2Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
+
+    private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
+    private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
 
     private final CameraManager mManager;
     private String mCameraId;
@@ -71,6 +83,11 @@ public class Camera2Engine extends CameraEngine {
     private CameraCaptureSession mSession;
     private CaptureRequest.Builder mRepeatingRequestBuilder;
     private CaptureRequest mRepeatingRequest;
+
+    // Frame processing
+    private Size mFrameProcessingSize;
+    private ImageReader mFrameProcessingReader; // need this or the reader surface is collected
+    private final WorkerHandler mFrameConversionHandler;
 
     private Surface mPreviewStreamSurface;
     private Surface mFrameProcessingSurface;
@@ -85,6 +102,7 @@ public class Camera2Engine extends CameraEngine {
         super(callback);
         mMapper = Mapper.get(Engine.CAMERA2);
         mManager = (CameraManager) mCallback.getContext().getSystemService(Context.CAMERA_SERVICE);
+        mFrameConversionHandler = WorkerHandler.get("CameraViewFrameConversion");
     }
 
     //region Utilities
@@ -374,9 +392,29 @@ public class Camera2Engine extends CameraEngine {
 
         // 4. FRAME PROCESSING
         if (mHasFrameProcessors) {
-            // TODO
+            // Choose the size.
+            StreamConfigurationMap streamMap = mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (streamMap == null) throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
+            android.util.Size[] aSizes = streamMap.getOutputSizes(FRAME_PROCESSING_INPUT_FORMAT);
+            List<Size> sizes = new ArrayList<>();
+            for (android.util.Size aSize : aSizes) {
+                sizes.add(new Size(aSize.getWidth(), aSize.getHeight()));
+            }
+            mFrameProcessingSize = SizeSelectors.and(
+                    SizeSelectors.maxWidth(Math.min(700, mPreviewStreamSize.getWidth())),
+                    SizeSelectors.maxHeight(Math.min(700, mPreviewStreamSize.getHeight())),
+                    SizeSelectors.biggest()).select(sizes).get(0);
+            mFrameProcessingReader = ImageReader.newInstance(
+                    mFrameProcessingSize.getWidth(),
+                    mFrameProcessingSize.getHeight(),
+                    FRAME_PROCESSING_INPUT_FORMAT,
+                    2);
+            mFrameProcessingReader.setOnImageAvailableListener(this, mFrameConversionHandler.getHandler());
+            mFrameProcessingSurface = mFrameProcessingReader.getSurface();
             outputSurfaces.add(mFrameProcessingSurface);
         } else {
+            mFrameProcessingReader = null;
+            mFrameProcessingSize = null;
             mFrameProcessingSurface = null;
         }
 
@@ -414,23 +452,28 @@ public class Camera2Engine extends CameraEngine {
             throw new IllegalStateException("previewStreamSize should not be null at this point.");
         }
         mPreview.setStreamSize(previewSizeForView.getWidth(), previewSizeForView.getHeight());
-
-        // Set the preview rotation.
         mPreview.setDrawRotation(mDisplayOffset);
+        if (mHasFrameProcessors) {
+            getFrameManager().setUp(ImageFormat.getBitsPerPixel(FRAME_PROCESSING_FORMAT), mFrameProcessingSize);
+        }
 
-        // TODO mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
-        // TODO mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
-        // TODO mFrameManager.setUp(ImageFormat.getBitsPerPixel(mPreviewStreamFormat), mPreviewStreamSize);
-
-        LOG.i("onStartPreview", "Starting preview with startPreview().");
+        LOG.i("onStartPreview", "Starting preview.");
         addRepeatingRequestBuilderSurfaces();
         applyRepeatingRequestBuilder(false, CameraException.REASON_FAILED_TO_START_PREVIEW, null);
         LOG.i("onStartPreview", "Started preview.");
 
         // Start delayed video if needed.
         if (mFullVideoPendingStub != null) {
-            // Do not call takeVideo. It will reset some stub parameters that the recorder sets.
-            onTakeVideo(mFullVideoPendingStub);
+            // Do not call takeVideo/onTakeVideo. It will reset some stub parameters that the recorder sets.
+            // Also we are posting this so that doTakeVideo sees a started preview.
+            final VideoResult.Stub stub = mFullVideoPendingStub;
+            mFullVideoPendingStub = null;
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    doTakeVideo(stub);
+                }
+            });
         }
         return Tasks.forResult(null);
     }
@@ -449,8 +492,9 @@ public class Camera2Engine extends CameraEngine {
             mVideoRecorder = null;
         }
         mPictureRecorder = null;
-        getFrameManager().release();
-        // TODO mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
+        if (mHasFrameProcessors) {
+            getFrameManager().release();
+        }
         try {
             // NOTE: should we wait for onReady() like docs say?
             // Leaving this synchronous for now.
@@ -478,6 +522,11 @@ public class Camera2Engine extends CameraEngine {
         mPreviewStreamSurface = null;
         mPreviewStreamSize = null;
         mCaptureSize = null;
+        mFrameProcessingSize = null;
+        if (mFrameProcessingReader != null) {
+            mFrameProcessingReader.close();
+            mFrameProcessingReader = null;
+        }
         mSession.close();
         mSession = null;
         return Tasks.forResult(null);
@@ -537,15 +586,9 @@ public class Camera2Engine extends CameraEngine {
         stub.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
         if (!Full2VideoRecorder.SUPPORTS_PERSISTENT_SURFACE) {
             // On API 21 and 22, we must restart the session at each time.
-            if (stub == mFullVideoPendingStub) {
-                // We have restarted and are ready to take the video.
-                doTakeVideo(mFullVideoPendingStub);
-                mFullVideoPendingStub = null;
-            } else {
-                // Save the pending data and restart the session.
-                mFullVideoPendingStub = stub;
-                restartBind();
-            }
+            // Save the pending data and restart the session.
+            mFullVideoPendingStub = stub;
+            restartBind();
         } else {
             doTakeVideo(stub);
         }
@@ -820,9 +863,48 @@ public class Camera2Engine extends CameraEngine {
 
     //region FrameProcessing
 
+    @NonNull
     @Override
-    public void onBufferAvailable(@NonNull byte[] buffer) {
-        // TODO
+    protected FrameManager instantiateFrameManager() {
+        return new FrameManager(2, null);
+    }
+
+    @Override
+    public void onImageAvailable(ImageReader reader) {
+        byte[] data = getFrameManager().getBuffer();
+        if (data == null) {
+            LOG.w("onImageAvailable", "no byte buffer!");
+            return;
+        }
+        Image image = null;
+        try {
+            image = reader.acquireLatestImage();
+        } catch (IllegalStateException ignore) { }
+        if (image == null) {
+            LOG.w("onImageAvailable", "we have a byte buffer but no Image!");
+            getFrameManager().onBufferUnused(data);
+            return;
+        }
+        LOG.i("onImageAvailable", "we have both a byte buffer and an Image.");
+        try {
+            ImageHelper.convertToNV21(image, data);
+        } catch (Exception e) {
+            LOG.w("onImageAvailable", "error while converting.");
+            getFrameManager().onBufferUnused(data);
+            image.close();
+            return;
+        }
+        image.close();
+        if (getEngineState() == STATE_STARTED) {
+            Frame frame = getFrameManager().getFrame(data,
+                    System.currentTimeMillis(),
+                    offset(REF_SENSOR, REF_OUTPUT),
+                    mFrameProcessingSize,
+                    FRAME_PROCESSING_FORMAT);
+            mCallback.dispatchFrame(frame);
+        } else {
+            getFrameManager().onBufferUnused(data);
+        }
     }
 
     @Override

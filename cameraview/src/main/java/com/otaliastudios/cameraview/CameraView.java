@@ -1911,7 +1911,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     @Override
                     public void run() {
                         for (FrameProcessor processor : mFrameProcessors) {
-                            processor.process(frame);
+                            try {
+                                processor.process(frame);
+                            } catch (Exception e) {
+                                mLogger.w("dispatchFrame:", "Error during processor implementation.",
+                                        "Can happen when camera is closed while processors are running.",
+                                        e);
+                            }
                         }
                         frame.release();
                     }
