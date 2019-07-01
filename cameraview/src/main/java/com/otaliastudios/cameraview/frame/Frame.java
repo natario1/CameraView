@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.frame;
 
+import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -10,10 +11,14 @@ import androidx.annotation.VisibleForTesting;
  */
 public class Frame {
 
+    private final static String TAG = Frame.class.getSimpleName();
+    private final static CameraLogger LOG = CameraLogger.create(TAG);
+
     @VisibleForTesting FrameManager mManager;
 
     private byte[] mData = null;
     private long mTime = -1;
+    private long mLastTime = -1;
     private int mRotation = 0;
     private Size mSize = null;
     private int mFormat = -1;
@@ -29,6 +34,7 @@ public class Frame {
 
     private void ensureAlive() {
         if (!isAlive()) {
+            LOG.e("Frame is dead! time:", mTime, "lastTime:", mLastTime);
             throw new RuntimeException("You should not access a released frame. " +
                     "If this frame was passed to a FrameProcessor, you can only use its contents synchronously," +
                     "for the duration of the process() method.");
@@ -38,6 +44,7 @@ public class Frame {
     void set(@NonNull byte[] data, long time, int rotation, @NonNull Size size, int format) {
         this.mData = data;
         this.mTime = time;
+        this.mLastTime = time;
         this.mRotation = rotation;
         this.mSize = size;
         this.mFormat = format;
@@ -73,6 +80,7 @@ public class Frame {
      */
     public void release() {
         if (!isAlive()) return;
+        LOG.v("Frame with time", mTime, "is being released. Has manager:", mManager != null);
 
         if (mManager != null) {
             // If needed, the manager will call releaseManager on us.

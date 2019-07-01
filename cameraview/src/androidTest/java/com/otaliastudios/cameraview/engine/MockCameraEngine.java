@@ -12,6 +12,7 @@ import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
@@ -176,8 +177,10 @@ public class MockCameraEngine extends CameraEngine {
         mFocusStarted = true;
     }
 
+    @NonNull
     @Override
-    public void onBufferAvailable(@NonNull byte[] buffer) {
+    protected FrameManager instantiateFrameManager() {
+        return new FrameManager(2, null);
     }
 
     @Override

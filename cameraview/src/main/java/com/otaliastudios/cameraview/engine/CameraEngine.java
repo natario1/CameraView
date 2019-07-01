@@ -115,7 +115,6 @@ import java.util.concurrent.Executor;
  */
 public abstract class CameraEngine implements
         CameraPreview.SurfaceCallback,
-        FrameManager.BufferCallback,
         PictureRecorder.PictureResultListener,
         VideoRecorder.VideoResultListener {
 
@@ -224,7 +223,7 @@ public abstract class CameraEngine implements
         mCrashHandler = new Handler(Looper.getMainLooper());
         mHandler = WorkerHandler.get("CameraViewEngine");
         mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
-        mFrameManager = new FrameManager(2, this);
+        mFrameManager = instantiateFrameManager();
     }
 
     public void setPreview(@NonNull CameraPreview cameraPreview) {
@@ -474,11 +473,11 @@ public abstract class CameraEngine implements
 
     @SuppressWarnings("WeakerAccess")
     protected void restartBind() {
-        LOG.i("restartPreviewAndBind", "posting.");
+        LOG.i("restartBind", "posting.");
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("restartPreviewAndBind", "executing.");
+                LOG.i("restartBind", "executing.");
                 stopPreview(false).continueWithTask(mHandler.getExecutor(), new Continuation<Void, Task<Void>>() {
                     @Override
                     public Task<Void> then(@NonNull Task<Void> task) {
@@ -605,10 +604,13 @@ public abstract class CameraEngine implements
 
                 // Compute a new camera preview size and apply.
                 Size newSize = computePreviewStreamSize();
-                if (newSize.equals(mPreviewStreamSize)) return;
-                LOG.i("onSurfaceChanged:", "Computed a new preview size. Going on.");
-                mPreviewStreamSize = newSize;
-                onPreviewStreamSizeChanged();
+                if (newSize.equals(mPreviewStreamSize)) {
+                    LOG.i("onSurfaceChanged:", "The computed preview size is identical. No op.");
+                } else {
+                    LOG.i("onSurfaceChanged:", "Computed a new preview size. Calling onPreviewStreamSizeChanged().");
+                    mPreviewStreamSize = newSize;
+                    onPreviewStreamSizeChanged();
+                }
             }
         });
     }
@@ -894,6 +896,14 @@ public abstract class CameraEngine implements
      * @return true if we have one
      */
     protected abstract boolean collectCameraInfo(@NonNull Facing facing);
+
+    /**
+     * Called at construction time to get a frame manager that can later be
+     * accessed through {@link #getFrameManager()}.
+     * @return a frame manager
+     */
+    @NonNull
+    protected abstract FrameManager instantiateFrameManager();
 
     // If closed, no-op. If opened, check supported and apply.
     public abstract void setZoom(float zoom, @Nullable PointF[] points, boolean notify);
@@ -1353,7 +1363,7 @@ public abstract class CameraEngine implements
         if (targetMinSize == null) throw new IllegalStateException("targetMinSize should not be null here.");
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         if (flip) targetRatio = targetRatio.flip();
-        LOG.i("size:", "computePreviewStreamSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
+        LOG.i("computePreviewStreamSize:", "targetRatio:", targetRatio, "targetMinSize:", targetMinSize);
         SizeSelector matchRatio = SizeSelectors.and( // Match this aspect ratio and sort by biggest
                 SizeSelectors.aspectRatio(targetRatio, 0),
                 SizeSelectors.biggest());
