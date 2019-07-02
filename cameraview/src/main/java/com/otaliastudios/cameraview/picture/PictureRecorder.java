@@ -29,11 +29,13 @@ public abstract class PictureRecorder {
          * the result is null.
          * @param result the result or null if there was some error.
          */
-        void onPictureResult(@Nullable PictureResult.Stub result);
+        void onPictureResult(@Nullable PictureResult.Stub result, @Nullable Exception error);
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) PictureResult.Stub mResult;
     @VisibleForTesting PictureResultListener mListener;
+    @SuppressWarnings("WeakerAccess")
+    protected Exception mError;
 
     /**
      * Creates a new picture recorder.
@@ -67,7 +69,7 @@ public abstract class PictureRecorder {
      */
     protected void dispatchResult() {
         if (mListener != null) {
-            mListener.onPictureResult(mResult);
+            mListener.onPictureResult(mResult, mError);
             mListener = null;
             mResult = null;
         }

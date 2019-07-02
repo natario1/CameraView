@@ -10,19 +10,35 @@ import androidx.annotation.Nullable;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * This class manages the allocation of buffers and Frame objects.
- * We are interested in both recycling byte[] buffers so they are not allocated for each
- * preview frame, and in recycling Frame instances (so we don't instantiate a lot).
+ * This class manages the allocation of byte buffers and {@link Frame} objects.
+ * We are interested in recycling both of them, especially byte[] buffers which can create a lot
+ * of overhead.
  *
- * For this, we keep a mPoolSize integer that defines the size of instances to keep.
- * Whether this does make sense, it depends on how slow the frame processors are.
- * If they are very slow, it is possible that some frames will be skipped.
+ * The FrameManager keeps a {@link #mPoolSize} integer that defines the number of instances to keep.
+ * The pool size applies to both the {@link Frame} pool and the byte[] pool - it makes sense to use
+ * the same number since they are consumed at the same time.
  *
- * - byte[] buffer pool:
- *     this is not kept here, because Camera1 internals already have one that we can't control, but
- *     it should be OK. The only thing we do is allocate mPoolSize buffers when requested.
- * - Frame pool:
- *     We keep a list of mPoolSize recycled instances, to be reused when a new buffer is available.
+ * Main methods are:
+ * - {@link #setUp(int, Size)}: to set up with size and allocate buffers
+ * - {@link #release()}: to release. After release, a manager can be setUp again.
+ * - {@link #getFrame(byte[], long, int, Size, int)}: gets a new {@link Frame}.
+ *
+ * For both byte buffers and frames to get back to the FrameManager pool, all you have to do
+ * is call {@link Frame#release()} when done.
+ *
+ * Other than this, the FrameManager can work in two modes, depending on whether a {@link BufferCallback}
+ * is passed to the constructor. The modes changes the buffer behavior.
+ *
+ * 1. {@link #BUFFER_MODE_DISPATCH}: in this mode, as soon as we have a buffer, it is dispatched to
+ *    the {@link BufferCallback}. The callback should then fill the buffer, and finally call
+ *    {@link #getFrame(byte[], long, int, Size, int)} to receive a frame.
+ *    This is used for Camera1.
+ *
+ * 2. {@link #BUFFER_MODE_ENQUEUE}: in this mode, the manager internally keeps a queue of byte buffers,
+ *    instead of handing them to the callback. The users can ask for buffers through {@link #getBuffer()}.
+ *    This buffer can be filled with data and used to get a frame {@link #getFrame(byte[], long, int, Size, int)},
+ *    or, in case it was not filled, returned to the queue using {@link #onBufferUnused(byte[])}.
+ *    This is used for Camera2.
  */
 public class FrameManager {
 
