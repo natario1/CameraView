@@ -23,6 +23,11 @@ import android.os.Build;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.WorkerThread;
+
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
@@ -57,11 +62,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.WorkerThread;
 
 // TODO full2picture fix rotation
 // TODO full2picture add shutter
@@ -902,8 +902,44 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void setZoom(float zoom, @Nullable PointF[] points, boolean notify) {
-        // TODO
+    public void setZoom(final float zoom, final @Nullable PointF[] points, final boolean notify) {
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (!mCameraOptions.isZoomSupported()) return;
+
+                Rect newRect = getZoomRect(zoom);
+                if(newRect != null){
+                    mRepeatingRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, newRect);
+                    applyRepeatingRequestBuilder();
+                    mZoomValue = zoom;
+
+                    if (notify) {
+                        mCallback.dispatchOnZoomChanged(zoom, points);
+                    }
+                }
+            }
+        });
+    }
+
+    private Rect getZoomRect(float zoomLevel) {
+
+        float maxZoom = mCameraOptions.getMaxZoomValue() * 10;
+        Rect activeRect = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        if ((zoomLevel <= maxZoom) && (zoomLevel > 1) && activeRect != null) {
+            int minW = (int) (activeRect.width() / maxZoom);
+            int minH = (int) (activeRect.height() / maxZoom);
+            int difW = activeRect.width() - minW;
+            int difH = activeRect.height() - minH;
+            int cropW = difW / 100 * (int) zoomLevel;
+            int cropH = difH / 100 * (int) zoomLevel;
+            cropW -= cropW & 3;
+            cropH -= cropH & 3;
+            return new Rect(cropW, cropH, activeRect.width() - cropW, activeRect.height() - cropH);
+        } else if (zoomLevel == 0) {
+            return new Rect(0, 0, activeRect.width(), activeRect.height());
+        }
+        return null;
     }
 
     @Override
