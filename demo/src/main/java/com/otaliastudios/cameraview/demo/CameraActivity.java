@@ -119,7 +119,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             PicturePreviewActivity.setPictureResult(result);
             Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
             intent.putExtra("delay", callbackTime - mCaptureTime);
-            // TODO temp startActivity(intent);
+            Log.e("CameraActivity", "Picture delay: " + (callbackTime - mCaptureTime));
+            startActivity(intent);
             mCaptureTime = 0;
         }
 
