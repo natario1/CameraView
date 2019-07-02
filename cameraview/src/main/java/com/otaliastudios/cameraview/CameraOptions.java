@@ -200,7 +200,10 @@ public class CameraOptions {
             if (value != null) supportedHdr.add(value);
         }
 
-        // TODO zoom
+        //zoom
+        Float maxZoom = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+        zoomSupported = maxZoom != null && maxZoom > 1;
+
 
         // autofocus
         int[] afModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
@@ -219,8 +222,7 @@ public class CameraOptions {
             exposureCorrectionMaxValue = exposureRange.getUpper();
         }
 
-        exposureCorrectionSupported = exposureCorrectionMinValue != 0
-                || exposureCorrectionMaxValue != 0;
+        exposureCorrectionSupported = exposureCorrectionMinValue != 0 && exposureCorrectionMaxValue != 0;
 
 
         // Picture Sizes
