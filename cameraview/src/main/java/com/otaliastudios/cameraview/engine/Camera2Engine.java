@@ -63,9 +63,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
-// TODO full2picture fix rotation
-// TODO full2picture add shutter
-// TODO full2picture see if we don't launch activity
 // TODO zoom
 // TODO exposure correction
 // TODO autofocus
@@ -102,6 +99,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     // Picture capturing
     private ImageReader mPictureReader;
+    private final boolean mPictureCaptureStopsPreview = false; // can make configurable at some point
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -212,13 +210,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (firstFrame.compareAndSet(false, true) && onFirstFrame != null) {
                             onFirstFrame.run();
                         }
+                        if (mPictureRecorder instanceof Full2PictureRecorder) {
+                            ((Full2PictureRecorder) mPictureRecorder).onCaptureStarted(request);
+                        }
                     }
 
                     @Override
                     public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
                         super.onCaptureProgressed(session, request, partialResult);
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).process(partialResult);
+                            ((Full2PictureRecorder) mPictureRecorder).onCaptureProgressed(partialResult);
                         }
                     }
 
@@ -226,7 +227,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                         super.onCaptureCompleted(session, request, result);
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).process(result);
+                            ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
                         }
                     }
 
@@ -614,7 +615,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     mRepeatingRequestBuilder,
                     mRepeatingRequestCallback,
                     builder,
-                    mPictureReader);
+                    mPictureReader,
+                    mPictureCaptureStopsPreview);
             mPictureRecorder.take();
         } catch (CameraAccessException e) {
             throw createCameraException(e);
@@ -623,8 +625,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void onPictureResult(@Nullable PictureResult.Stub result, @Nullable Exception error) {
+        boolean fullPicture = mPictureRecorder instanceof Full2PictureRecorder;
         super.onPictureResult(result, error);
-        applyRepeatingRequestBuilder();
+        //noinspection StatementWithEmptyBody
+        if (fullPicture && mPictureCaptureStopsPreview) {
+            // See comments in Full2PictureRecorder.
+            applyRepeatingRequestBuilder();
+        }
     }
 
     //endregion

@@ -1225,7 +1225,8 @@ public abstract class CameraEngine implements
     // displayOffset - deviceOrientation
 
     // Returns the offset between two reference systems.
-    final int offset(int fromReference, int toReference) {
+    @SuppressWarnings("WeakerAccess")
+    public final int offset(int fromReference, int toReference) {
         if (fromReference == toReference) return 0;
         // We only know how to compute offsets with respect to REF_SENSOR.
         // That's why we separate the two cases.
