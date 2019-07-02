@@ -2,9 +2,7 @@ package com.otaliastudios.cameraview.engine;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Camera;
 import android.graphics.ImageFormat;
-import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -14,6 +12,8 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
 import android.media.Image;
@@ -43,6 +43,7 @@ import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.ImageHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
@@ -50,7 +51,6 @@ import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelectors;
 import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
-import com.otaliastudios.cameraview.video.VideoRecorder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,10 +63,12 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
+// TODO full2picture fix rotation
+// TODO full2picture add shutter
+// TODO full2picture see if we don't launch activity
 // TODO zoom
 // TODO exposure correction
 // TODO autofocus
-// TODO pictures
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener {
 
@@ -83,20 +85,23 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private CameraCaptureSession mSession;
     private CaptureRequest.Builder mRepeatingRequestBuilder;
     private CaptureRequest mRepeatingRequest;
+    private CameraCaptureSession.CaptureCallback mRepeatingRequestCallback;
 
     // Frame processing
     private Size mFrameProcessingSize;
     private ImageReader mFrameProcessingReader; // need this or the reader surface is collected
     private final WorkerHandler mFrameConversionHandler;
-
-    private Surface mPreviewStreamSurface;
     private Surface mFrameProcessingSurface;
 
-    // API 23+ for full video recording. The surface is created before.
-    private Surface mFullVideoPersistentSurface;
+    // Preview
+    private Surface mPreviewStreamSurface;
 
-    // API 21-22 for full video recording. When takeVideo is called, we have to reset the session.
-    private VideoResult.Stub mFullVideoPendingStub;
+    // Video recording
+    private Surface mFullVideoPersistentSurface; // API 23+. The surface is created before.
+    private VideoResult.Stub mFullVideoPendingStub; // API 21-22. When takeVideo is called, we have to reset the session.
+
+    // Picture capturing
+    private ImageReader mPictureReader;
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -154,7 +159,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private CaptureRequest.Builder createRepeatingRequestBuilder(int template) throws CameraAccessException {
         mRepeatingRequestBuilder = mCamera.createCaptureRequest(template);
         mRepeatingRequestBuilder.setTag(template);
-        applyAll(mRepeatingRequestBuilder);
+        applyAllParameters(mRepeatingRequestBuilder);
         return mRepeatingRequestBuilder;
     }
 
@@ -200,7 +205,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             try {
                 mRepeatingRequest = mRepeatingRequestBuilder.build();
                 final AtomicBoolean firstFrame = new AtomicBoolean(false);
-                mSession.setRepeatingRequest(mRepeatingRequest, new CameraCaptureSession.CaptureCallback() {
+                mRepeatingRequestCallback = new CameraCaptureSession.CaptureCallback() {
                     @Override
                     public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
                         super.onCaptureStarted(session, request, timestamp, frameNumber);
@@ -208,7 +213,25 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                             onFirstFrame.run();
                         }
                     }
-                }, null);
+
+                    @Override
+                    public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
+                        super.onCaptureProgressed(session, request, partialResult);
+                        if (mPictureRecorder instanceof Full2PictureRecorder) {
+                            ((Full2PictureRecorder) mPictureRecorder).process(partialResult);
+                        }
+                    }
+
+                    @Override
+                    public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+                        super.onCaptureCompleted(session, request, result);
+                        if (mPictureRecorder instanceof Full2PictureRecorder) {
+                            ((Full2PictureRecorder) mPictureRecorder).process(result);
+                        }
+                    }
+
+                };
+                mSession.setRepeatingRequest(mRepeatingRequest, mRepeatingRequestCallback, null);
             } catch (CameraAccessException e) {
                 throw new CameraException(e, errorReason);
             }
@@ -387,7 +410,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
         // 3. PICTURE RECORDING
         if (mMode == Mode.PICTURE) {
-            // TODO picture recorder
+            mPictureReader = ImageReader.newInstance(
+                    mCaptureSize.getWidth(),
+                    mCaptureSize.getHeight(),
+                    ImageFormat.JPEG,
+                    2
+            );
+            outputSurfaces.add(mPictureReader.getSurface());
         }
 
         // 4. FRAME PROCESSING
@@ -527,6 +556,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             mFrameProcessingReader.close();
             mFrameProcessingReader = null;
         }
+        if (mPictureReader != null) {
+            mPictureReader.close();
+            mPictureReader = null;
+        }
         mSession.close();
         mSession = null;
         return Tasks.forResult(null);
@@ -571,8 +604,27 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void takePicture(@NonNull PictureResult.Stub stub) {
-        // TODO
+    protected void onTakePicture(@NonNull PictureResult.Stub stub) {
+        stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
+        stub.size = getPictureSize(REF_OUTPUT);
+        try {
+            CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            applyAllParameters(builder);
+            mPictureRecorder = new Full2PictureRecorder(stub, this, mSession,
+                    mRepeatingRequestBuilder,
+                    mRepeatingRequestCallback,
+                    builder,
+                    mPictureReader);
+            mPictureRecorder.take();
+        } catch (CameraAccessException e) {
+            throw createCameraException(e);
+        }
+    }
+
+    @Override
+    public void onPictureResult(@Nullable PictureResult.Stub result, @Nullable Exception error) {
+        super.onPictureResult(result, error);
+        applyRepeatingRequestBuilder();
     }
 
     //endregion
@@ -668,7 +720,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Parameters
 
-    private void applyAll(@NonNull CaptureRequest.Builder builder) {
+    private void applyAllParameters(@NonNull CaptureRequest.Builder builder) {
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         applyDefaultFocus(builder);
         applyFlash(builder, Flash.OFF);
@@ -932,7 +984,15 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point) {
-        // TODO
+        LOG.i("startAutoFocus", "dispatching. Gesture:", gesture);
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                LOG.i("startAutoFocus", "executing. Engine state:", getEngineState());
+                if (getEngineState() < STATE_STARTED) return;
+                // TODO
+            }
+        });
     }
 
     //endregion

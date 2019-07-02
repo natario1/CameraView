@@ -1902,27 +1902,27 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchFrame(final Frame frame) {
+            mLogger.v("dispatchFrame:", frame.getTime(), "processors:", mFrameProcessors.size());
             if (mFrameProcessors.isEmpty()) {
                 // Mark as released. This instance will be reused.
                 frame.release();
-            } else {
-                mLogger.v("dispatchFrame:", frame.getTime(), "processors:", mFrameProcessors.size());
-                mFrameProcessorsHandler.run(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (FrameProcessor processor : mFrameProcessors) {
-                            try {
-                                processor.process(frame);
-                            } catch (Exception e) {
-                                mLogger.w("dispatchFrame:", "Error during processor implementation.",
-                                        "Can happen when camera is closed while processors are running.",
-                                        e);
-                            }
-                        }
-                        frame.release();
-                    }
-                });
+                return;
             }
+            mFrameProcessorsHandler.run(new Runnable() {
+                @Override
+                public void run() {
+                    for (FrameProcessor processor : mFrameProcessors) {
+                        try {
+                            processor.process(frame);
+                        } catch (Exception e) {
+                            mLogger.w("dispatchFrame:",
+                                    "Error during processor implementation.",
+                                    "Can happen when camera is closed while processors are running.", e);
+                        }
+                    }
+                    frame.release();
+                }
+            });
         }
 
         @Override

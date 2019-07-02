@@ -933,7 +933,25 @@ public abstract class CameraEngine implements
 
     //region picture and video control
 
-    public abstract void takePicture(@NonNull PictureResult.Stub stub);
+    public final void takePicture(final @NonNull PictureResult.Stub stub) {
+        LOG.v("takePicture", "scheduling");
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                LOG.v("takePicture", "performing. Engine:", getEngineStateName(), "isTakingPicture:", isTakingPicture());
+                if (mMode == Mode.VIDEO) {
+                    // Could redirect to takePictureSnapshot, but it's better if people know what they are doing.
+                    throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
+                }
+                if (getEngineState() < STATE_STARTED) return;
+                if (isTakingPicture()) return;
+                stub.isSnapshot = false;
+                stub.location = mLocation;
+                stub.facing = mFacing;
+                onTakePicture(stub);
+            }
+        });
+    };
 
     /**
      * The snapshot size is the {@link #getPreviewStreamSize(int)}, but cropped based on the
@@ -967,14 +985,13 @@ public abstract class CameraEngine implements
     }
 
     @Override
-    public void onPictureResult(@Nullable PictureResult.Stub result) {
+    public void onPictureResult(@Nullable PictureResult.Stub result, @Nullable Exception error) {
         mPictureRecorder = null;
         if (result != null) {
             mCallback.dispatchOnPictureTaken(result);
         } else {
-            // Something went wrong.
-            LOG.e("onPictureResult", "result is null: something went wrong.");
-            mCallback.dispatchError(new CameraException(CameraException.REASON_PICTURE_FAILED));
+            LOG.e("onPictureResult", "result is null: something went wrong.", error);
+            mCallback.dispatchError(new CameraException(error, CameraException.REASON_PICTURE_FAILED));
         }
     }
 
@@ -1057,6 +1074,9 @@ public abstract class CameraEngine implements
             mCallback.dispatchError(new CameraException(exception, CameraException.REASON_VIDEO_FAILED));
         }
     }
+
+    @WorkerThread
+    protected abstract void onTakePicture(@NonNull PictureResult.Stub stub);
 
     @WorkerThread
     protected abstract void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio);

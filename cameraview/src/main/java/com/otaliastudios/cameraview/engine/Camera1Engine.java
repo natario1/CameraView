@@ -33,7 +33,7 @@ import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.Op;
-import com.otaliastudios.cameraview.picture.FullPictureRecorder;
+import com.otaliastudios.cameraview.picture.Full1PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
@@ -467,29 +467,13 @@ public class Camera1Engine extends CameraEngine implements
     // -----------------
     // Picture recording stuff.
 
+    @WorkerThread
     @Override
-    public void takePicture(final @NonNull PictureResult.Stub stub) {
-        LOG.v("takePicture: scheduling");
-        schedule(null, true, new Runnable() {
-            @Override
-            public void run() {
-                if (mMode == Mode.VIDEO) {
-                    // Could redirect to takePictureSnapshot, but it's better if people know
-                    // what they are doing.
-                    throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
-                }
-
-                LOG.v("takePicture: performing.", isTakingPicture());
-                if (isTakingPicture()) return;
-                stub.isSnapshot = false;
-                stub.location = mLocation;
-                stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
-                stub.size = getPictureSize(REF_OUTPUT);
-                stub.facing = mFacing;
-                mPictureRecorder = new FullPictureRecorder(stub, Camera1Engine.this, mCamera);
-                mPictureRecorder.take();
-            }
-        });
+    protected void onTakePicture(@NonNull PictureResult.Stub stub) {
+        stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
+        stub.size = getPictureSize(REF_OUTPUT);
+        mPictureRecorder = new Full1PictureRecorder(stub, Camera1Engine.this, mCamera);
+        mPictureRecorder.take();
     }
 
     @WorkerThread

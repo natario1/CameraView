@@ -45,7 +45,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera = findViewById(R.id.camera);
         camera.setLifecycleOwner(this);
         camera.addCameraListener(new Listener());
-        camera.addFrameProcessor(new FrameProcessor() {
+
+        /* camera.addFrameProcessor(new FrameProcessor() {
             private long lastTime = System.currentTimeMillis();
             @Override
             public void process(@NonNull Frame frame) {
@@ -54,7 +55,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 lastTime = newTime;
                 Log.e("Frames", "Delay: " + delay + "millis, FPS: " + 1000 / delay);
             }
-        });
+        }); */
 
         findViewById(R.id.edit).setOnClickListener(this);
         findViewById(R.id.capturePicture).setOnClickListener(this);
@@ -118,7 +119,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             PicturePreviewActivity.setPictureResult(result);
             Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
             intent.putExtra("delay", callbackTime - mCaptureTime);
-            startActivity(intent);
+            // TODO temp startActivity(intent);
             mCaptureTime = 0;
         }
 

@@ -145,6 +145,7 @@ public class CameraOptions {
             }
         }
     }
+
     // Camera2Engine constructor.
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     @SuppressWarnings("deprecation")
@@ -215,7 +216,7 @@ public class CameraOptions {
         // Picture Sizes
         StreamConfigurationMap streamMap = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         if (streamMap == null) throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
-        android.util.Size[] psizes = streamMap.getOutputSizes(ImageReader.class);
+        android.util.Size[] psizes = streamMap.getOutputSizes(ImageFormat.JPEG);
         for (android.util.Size size : psizes) {
             int width = flipSizes ? size.getHeight() : size.getWidth();
             int height = flipSizes ? size.getWidth() : size.getHeight();

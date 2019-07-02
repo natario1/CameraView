@@ -68,10 +68,6 @@ public class EglBaseSurface extends EglElement {
 
         // Don't cache width/height here, because the size of the underlying surface can change
         // out from under us (see e.g. HardwareScalerActivity).
-        int tempWidth = mEglCore.querySurface(mEGLSurface, EGL14.EGL_WIDTH);
-        int tempHeight = mEglCore.querySurface(mEGLSurface, EGL14.EGL_HEIGHT);
-        // TODO remove these logs
-        LOG.e("ROTBUG", "eglSurfaceWidth:", tempWidth, "eglSurfaceHeight:", tempHeight);
         //mWidth = mEglCore.querySurface(mEGLSurface, EGL14.EGL_WIDTH);
         //mHeight = mEglCore.querySurface(mEGLSurface, EGL14.EGL_HEIGHT);
     }
