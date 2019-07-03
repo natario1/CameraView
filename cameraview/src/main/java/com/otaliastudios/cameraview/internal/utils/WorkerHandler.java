@@ -53,6 +53,15 @@ public class WorkerHandler {
     }
 
     /**
+     * Returns a fallback WorkerHandler.
+     * @return a fallback handler
+     */
+    @NonNull
+    public static WorkerHandler get() {
+        return get("FallbackCameraThread");
+    }
+
+    /**
      * Handy utility to perform an action in a fallback thread.
      * Not to be used for long-running operations since they will block
      * the fallback thread.
@@ -60,7 +69,7 @@ public class WorkerHandler {
      * @param action the action
      */
     public static void execute(@NonNull Runnable action) {
-        get("FallbackCameraThread").post(action);
+        get().post(action);
     }
 
     private HandlerThread mThread;

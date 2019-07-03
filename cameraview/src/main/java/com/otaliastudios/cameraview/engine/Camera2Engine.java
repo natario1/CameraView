@@ -14,6 +14,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
 import android.media.Image;
@@ -22,11 +23,6 @@ import android.media.MediaCodec;
 import android.os.Build;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.WorkerThread;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
@@ -58,17 +54,19 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-// TODO full2picture fix rotation
-// TODO full2picture add shutter
-// TODO full2picture see if we don't launch activity
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.WorkerThread;
+
 // TODO zoom
 // TODO exposure correction
-// TODO autofocus
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener {
 
@@ -102,12 +100,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     // Picture capturing
     private ImageReader mPictureReader;
+    private final boolean mPictureCaptureStopsPreview = false; // can make configurable at some point
+
+    // Autofocus
+    private PointF mAutoFocusPoint;
+    private Gesture mAutoFocusGesture;
 
     public Camera2Engine(Callback callback) {
         super(callback);
         mMapper = Mapper.get(Engine.CAMERA2);
         mManager = (CameraManager) mCallback.getContext().getSystemService(Context.CAMERA_SERVICE);
-        mFrameConversionHandler = WorkerHandler.get("CameraViewFrameConversion");
+        mFrameConversionHandler = WorkerHandler.get("CameraFrameConversion");
     }
 
     //region Utilities
@@ -212,22 +215,27 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (firstFrame.compareAndSet(false, true) && onFirstFrame != null) {
                             onFirstFrame.run();
                         }
+                        if (mPictureRecorder instanceof Full2PictureRecorder) {
+                            ((Full2PictureRecorder) mPictureRecorder).onCaptureStarted(request);
+                        }
                     }
 
                     @Override
                     public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
                         super.onCaptureProgressed(session, request, partialResult);
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).process(partialResult);
+                            ((Full2PictureRecorder) mPictureRecorder).onCaptureProgressed(partialResult);
                         }
+                        if (isInAutoFocus()) onAutoFocusCapture(partialResult);
                     }
 
                     @Override
                     public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                         super.onCaptureCompleted(session, request, result);
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).process(result);
+                            ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
                         }
+                        if (isInAutoFocus()) onAutoFocusCapture(result);
                     }
 
                 };
@@ -536,6 +544,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
         removeRepeatingRequestBuilderSurfaces();
         mRepeatingRequest = null;
+        mAutoFocusPoint = null;
+        mAutoFocusGesture = null;
         return Tasks.forResult(null);
     }
 
@@ -614,7 +624,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     mRepeatingRequestBuilder,
                     mRepeatingRequestCallback,
                     builder,
-                    mPictureReader);
+                    mPictureReader,
+                    mPictureCaptureStopsPreview);
             mPictureRecorder.take();
         } catch (CameraAccessException e) {
             throw createCameraException(e);
@@ -623,8 +634,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void onPictureResult(@Nullable PictureResult.Stub result, @Nullable Exception error) {
+        boolean fullPicture = mPictureRecorder instanceof Full2PictureRecorder;
         super.onPictureResult(result, error);
-        applyRepeatingRequestBuilder();
+        //noinspection StatementWithEmptyBody
+        if (fullPicture && mPictureCaptureStopsPreview) {
+            // See comments in Full2PictureRecorder.
+            applyRepeatingRequestBuilder();
+        }
     }
 
     //endregion
@@ -951,7 +967,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //endregion
 
-    //region FrameProcessing
+    //region Frame Processing
 
     @NonNull
     @Override
@@ -1018,20 +1034,234 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //endregion
 
-    //region Auto focus
+    //region Auto Focus
 
     @Override
-    public void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point) {
+    public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
         LOG.i("startAutoFocus", "dispatching. Gesture:", gesture);
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("startAutoFocus", "executing. Engine state:", getEngineState());
-                if (getEngineState() < STATE_STARTED) return;
-                // TODO
+                LOG.i("startAutoFocus", "executing. Preview state:", getPreviewState());
+                // This will only work when we have a preview, since it launches the preview in the end.
+                // Even without this it would need the bind state at least, since we need the preview size.
+                if (!mCameraOptions.isAutoFocusSupported()) return;
+                if (getPreviewState() < STATE_STARTED) return;
+                mAutoFocusPoint = point;
+                mAutoFocusGesture = gesture;
+
+                // This is a good Q/A. https://stackoverflow.com/a/33181620/4288782
+                // At first, the point is relative to the View system and does not account our own cropping.
+                // Will keep updating these two below.
+                //noinspection UnnecessaryLocalVariable
+                PointF referencePoint = new PointF(point.x, point.y);
+                Size referenceSize /* = previewSurfaceSize */;
+
+                // 1. Account for cropping.
+                Size previewStreamSize = getPreviewStreamSize(REF_VIEW);
+                Size previewSurfaceSize = mPreview.getSurfaceSize();
+                if (previewStreamSize == null) throw new IllegalStateException("getPreviewStreamSize should not be null at this point.");
+                AspectRatio previewStreamAspectRatio = AspectRatio.of(previewStreamSize);
+                AspectRatio previewSurfaceAspectRatio = AspectRatio.of(previewSurfaceSize);
+                if (mPreview.isCropping()) {
+                    if (previewStreamAspectRatio.toFloat() > previewSurfaceAspectRatio.toFloat()) {
+                        // Stream is larger. The x coordinate must be increased: a touch on the left side
+                        // of the surface is not on the left size of stream (it's more to the right).
+                        float scale = previewStreamAspectRatio.toFloat() / previewSurfaceAspectRatio.toFloat();
+                        referencePoint.x += previewSurfaceSize.getWidth() * (scale - 1F) / 2F;
+
+                    } else {
+                        // Stream is taller. The y coordinate must be increased: a touch on the top side
+                        // of the surface is not on the top size of stream (it's a bit lower).
+                        float scale = previewSurfaceAspectRatio.toFloat() / previewStreamAspectRatio.toFloat();
+                        referencePoint.x += previewSurfaceSize.getHeight() * (scale - 1F) / 2F;
+                    }
+                }
+
+                // 2. Scale to the stream coordinates (not the surface).
+                referencePoint.x *= (float) previewStreamSize.getWidth() / previewSurfaceSize.getWidth();
+                referencePoint.y *= (float) previewStreamSize.getHeight() / previewSurfaceSize.getHeight();
+                referenceSize = previewStreamSize;
+
+                // 3. Rotate to the stream coordinate system.
+                // Not elegant, but the sin/cos way was failing.
+                int angle = offset(REF_SENSOR, REF_VIEW);
+                boolean flip = angle % 180 != 0;
+                float tempX = referencePoint.x; float tempY = referencePoint.y;
+                if (angle == 0) {
+                    referencePoint.x = tempX;
+                    referencePoint.y = tempY;
+                } else if (angle == 90) {
+                    //noinspection SuspiciousNameCombination
+                    referencePoint.x = tempY;
+                    referencePoint.y = referenceSize.getWidth() - tempX;
+                } else if (angle == 180) {
+                    referencePoint.x = referenceSize.getWidth() - tempX;
+                    referencePoint.y = referenceSize.getHeight() - tempY;
+                } else if (angle == 270) {
+                    referencePoint.x = referenceSize.getHeight() - tempY;
+                    //noinspection SuspiciousNameCombination
+                    referencePoint.y = tempX;
+                } else {
+                    throw new IllegalStateException("Unexpected angle " + angle);
+                }
+                referenceSize = flip ? referenceSize.flip() : referenceSize;
+
+                // These points are now referencing the stream rect on the sensor array.
+                // But we still have to figure out how the stream rect is laid on the sensor array.
+                // https://source.android.com/devices/camera/camera3_crop_reprocess.html
+                // For sanity, let's assume it is centered.
+                // For sanity, let's also assume that the crop region is equal to the stream region.
+
+                // 4. Move to the active sensor array coordinate system.
+                Rect activeRect = readCharacteristic(mCameraCharacteristics,
+                        CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+                        new Rect(0, 0, referenceSize.getWidth(), referenceSize.getHeight()));
+                referencePoint.x += (activeRect.width() - referenceSize.getWidth()) / 2F;
+                referencePoint.y += (activeRect.height() - referenceSize.getHeight()) / 2F;
+                referenceSize = new Size(activeRect.width(), activeRect.height());
+
+                // 5. Account for zoom! This only works for mZoomValue = 0.
+                // We must scale down with respect to the reference size center. If mZoomValue = 1,
+                // This must leave everything unchanged.
+                float maxZoom = readCharacteristic(mCameraCharacteristics,
+                        CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM, 1F /* no zoom */);
+                float currZoom = 1 + mZoomValue * (maxZoom - 1); // 1 ... maxZoom
+                float currReduction = 1 / currZoom;
+                float referenceCenterX = referenceSize.getWidth() / 2F;
+                float referenceCenterY = referenceSize.getHeight() / 2F;
+                referencePoint.x = referenceCenterX + currReduction * (referencePoint.x - referenceCenterX);
+                referencePoint.y = referenceCenterY + currReduction * (referencePoint.y - referenceCenterY);
+
+                // 6. NOW we can compute the metering regions.
+                float visibleWidth = referenceSize.getWidth() * currReduction;
+                float visibleHeight = referenceSize.getHeight() * currReduction;
+                MeteringRectangle area1 = createMeteringRectangle(referencePoint, referenceSize, visibleWidth, visibleHeight, 0.05F, 1000);
+                MeteringRectangle area2 = createMeteringRectangle(referencePoint, referenceSize, visibleWidth, visibleHeight, 0.1F, 100);
+
+                // 7. And finally dispatch them...
+                List<MeteringRectangle> areas = Arrays.asList(area1, area2);
+                int maxReagionsAf = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
+                int maxReagionsAe = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
+                int maxReagionsAwb = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
+                if (maxReagionsAf > 0) {
+                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
+                            areas.subList(0, maxReagionsAf).toArray(new MeteringRectangle[]{}));
+                }
+                if (maxReagionsAe > 0) {
+                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
+                            areas.subList(0, maxReagionsAe).toArray(new MeteringRectangle[]{}));
+                }
+                if (maxReagionsAwb > 0) {
+                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
+                            areas.subList(0, maxReagionsAwb).toArray(new MeteringRectangle[]{}));
+                }
+
+                // 8. Set AF mode to AUTO so it doesn't use the CONTINUOUS schedule.
+                // When this ends, we will reset everything. We know CONTROL_AF_MODE_AUTO is available
+                // because we have called cameraOptions.isAutoFocusSupported().
+                mCallback.dispatchOnFocusStart(gesture, point);
+                mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+                mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
+                mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+                applyRepeatingRequestBuilder();
             }
         });
     }
+
+    /**
+     * Creates a metering rectangle around the center point.
+     * The rectangle will have a size that's a factor of the visible width and height.
+     * The rectangle will also be constrained to be inside the given boundaries,
+     * so we don't exceed them in case the center point is exactly on one side for example.
+     * @return a new rectangle
+     */
+    @NonNull
+    private MeteringRectangle createMeteringRectangle(
+            @NonNull PointF center, @NonNull Size boundaries,
+            float visibleWidth, float visibleHeight,
+            float factor, int weight) {
+        float halfWidth = factor * visibleWidth / 2F;
+        float halfHeight = factor * visibleHeight / 2F;
+        return new MeteringRectangle(
+                (int) Math.max(0, center.x - halfWidth),
+                (int) Math.max(0, center.y - halfHeight),
+                (int) Math.min(boundaries.getWidth(), halfWidth * 2F),
+                (int) Math.min(boundaries.getHeight(), halfHeight * 2F),
+                weight
+        );
+    }
+
+    /**
+     * Whether we are in an auto focus operation, which means that
+     * {@link CaptureResult#CONTROL_AF_MODE} is set to {@link CaptureResult#CONTROL_AF_MODE_AUTO}.
+     * @return true if we're in auto focus
+     */
+    private boolean isInAutoFocus() {
+        return mAutoFocusPoint != null;
+    }
+
+    /**
+     * If this is called, we're in autofocus and {@link CaptureResult#CONTROL_AF_MODE}
+     * is set to {@link CaptureResult#CONTROL_AF_MODE_AUTO}.
+     * @param result the result
+     */
+    private void onAutoFocusCapture(@NonNull CaptureResult result) {
+        Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
+        if (afState == null) {
+            LOG.e("onAutoFocusCapture", "afState is null! Assuming AF failed.");
+            afState = CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
+        }
+        switch (afState) {
+            case CaptureRequest.CONTROL_AF_STATE_FOCUSED_LOCKED: {
+                onAutoFocusEnd(true);
+                break;
+            }
+            case CaptureRequest.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED: {
+                onAutoFocusEnd(false);
+                break;
+            }
+            case CaptureRequest.CONTROL_AF_STATE_INACTIVE: break;
+            case CaptureRequest.CONTROL_AF_STATE_ACTIVE_SCAN: break;
+            default: break;
+        }
+    }
+
+    /**
+     * Called by {@link #onAutoFocusCapture(CaptureResult)} when we detect that the
+     * auto focus operataion has ended.
+     * @param success true if success
+     */
+    private void onAutoFocusEnd(boolean success) {
+        Gesture gesture = mAutoFocusGesture;
+        PointF point = mAutoFocusPoint;
+        mAutoFocusGesture = null;
+        mAutoFocusPoint = null;
+        if (point == null) return;
+        mCallback.dispatchOnFocusEnd(gesture, success, point);
+        mHandler.remove(mAutoFocusResetRunnable);
+        if (shouldResetAutoFocus()) {
+            mHandler.post(getAutoFocusResetDelay(), mAutoFocusResetRunnable);
+        }
+    }
+
+    private Runnable mAutoFocusResetRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (getEngineState() < STATE_STARTED) return;
+            Rect whole = readCharacteristic(mCameraCharacteristics,
+                    CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE, new Rect());
+            MeteringRectangle[] rectangle = new MeteringRectangle[]{new MeteringRectangle(whole, MeteringRectangle.METERING_WEIGHT_DONT_CARE)};
+            int maxReagionsAf = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
+            int maxReagionsAe = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
+            int maxReagionsAwb = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
+            if (maxReagionsAf > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, rectangle);
+            if (maxReagionsAe > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, rectangle);
+            if (maxReagionsAwb > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, rectangle);
+            applyDefaultFocus(mRepeatingRequestBuilder);
+            applyRepeatingRequestBuilder(); // only if preview started already
+        }
+    };
 
     //endregion
 }
