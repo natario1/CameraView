@@ -906,10 +906,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                if (!mCameraOptions.isZoomSupported()) return;
 
-                Rect newRect = getZoomRect(zoom);
-                if(newRect != null){
+                if (getEngineState() == STATE_STARTED && mCameraOptions.isZoomSupported()) {
+                    Rect newRect = getZoomRect(zoom * mCameraOptions.getMaxZoomValue());
+
                     mRepeatingRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, newRect);
                     applyRepeatingRequestBuilder();
                     mZoomValue = zoom;
@@ -917,14 +917,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     if (notify) {
                         mCallback.dispatchOnZoomChanged(zoom, points);
                     }
+
                 }
+                mZoomOp.end(null);
             }
         });
     }
 
+    @NonNull
     private Rect getZoomRect(float zoomLevel) {
 
-        float maxZoom = mCameraOptions.getMaxZoomValue() * 10;
+        float maxZoom = mCameraOptions.getMaxZoomValue();
         Rect activeRect = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
         if ((zoomLevel <= maxZoom) && (zoomLevel > 1) && activeRect != null) {
             int minW = (int) (activeRect.width() / maxZoom);
@@ -936,10 +939,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             cropW -= cropW & 3;
             cropH -= cropH & 3;
             return new Rect(cropW, cropH, activeRect.width() - cropW, activeRect.height() - cropH);
-        } else if (zoomLevel == 0) {
-            return new Rect(0, 0, activeRect.width(), activeRect.height());
         }
-        return null;
+
+        return new Rect(0, 0, activeRect.width(), activeRect.height());
     }
 
     @Override
