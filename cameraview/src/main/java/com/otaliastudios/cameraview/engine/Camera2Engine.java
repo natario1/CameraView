@@ -21,6 +21,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaCodec;
 import android.os.Build;
+import android.util.Rational;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
@@ -64,11 +65,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.WorkerThread;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener {
@@ -117,6 +113,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     //region Utilities
+
+    @NonNull
+    private <T> T readCharacteristic(@NonNull CameraCharacteristics.Key<T> key,
+                                     @NonNull T fallback) {
+        return readCharacteristic(mCameraCharacteristics, key, fallback);
+    }
 
     @NonNull
     private <T> T readCharacteristic(@NonNull CameraCharacteristics characteristics,
@@ -754,10 +756,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         applyLocation(builder, null);
         applyWhiteBalance(builder, WhiteBalance.AUTO);
         applyHdr(builder, Hdr.OFF);
+        applyZoom(builder, 0F);
+        applyExposureCorrection(builder, 0F);
     }
 
     private void applyDefaultFocus(@NonNull CaptureRequest.Builder builder) {
-        int[] modesArray = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
+        int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
         List<Integer> modes = new ArrayList<>();
         for (int mode : modesArray) { modes.add(mode); }
         if (mMode == Mode.VIDEO &&
@@ -822,7 +826,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                                @NonNull Flash oldFlash) {
         if (mCameraOptions.supports(mFlash)) {
             List<Integer> modes = mMapper.map(mFlash);
-            int[] availableModes = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES, new int[]{});
+            int[] availableModes = readCharacteristic(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES, new int[]{});
             for (int mode : modes) {
                 for (int availableMode : availableModes) {
                     if (mode == availableMode) {
@@ -912,7 +916,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
 
-    private boolean applyHdr( @NonNull CaptureRequest.Builder builder, @NonNull Hdr oldHdr) {
+    private boolean applyHdr(@NonNull CaptureRequest.Builder builder, @NonNull Hdr oldHdr) {
         if (mCameraOptions.supports(mHdr)) {
             Integer hdr = mMapper.map(mHdr);
             builder.set(CaptureRequest.CONTROL_SCENE_MODE, hdr);
@@ -923,54 +927,50 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void setPlaySounds(boolean playSounds) {
-        mPlaySounds = playSounds;
-        mPlaySoundsOp.end(null);
-    }
-
-    @Override
     public void setZoom(final float zoom, final @Nullable PointF[] points, final boolean notify) {
+        final float old = mZoomValue;
+        mZoomValue = zoom;
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-
-                if (getEngineState() == STATE_STARTED && mCameraOptions.isZoomSupported()) {
-
-                    Float maxZoom = mCameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
-
-                    if (maxZoom != null) {
-                        //converting 0.0f-1.0f zoom scale to the actual camera digital zoom scale
-                        //(which will be for example, 1.0-10.0)
-                        float calculatedZoom = (zoom * (maxZoom - 1.0f)) + 1.0f;
-
-                        Rect newRect = getZoomRect(calculatedZoom, maxZoom);
-                        mRepeatingRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, newRect);
+                if (getEngineState() == STATE_STARTED) {
+                    if (applyZoom(mRepeatingRequestBuilder, old)) {
                         applyRepeatingRequestBuilder();
-                        mZoomValue = zoom;
-
                         if (notify) {
                             mCallback.dispatchOnZoomChanged(zoom, points);
                         }
                     }
-
                 }
                 mZoomOp.end(null);
             }
         });
     }
 
+    private boolean applyZoom(@NonNull CaptureRequest.Builder builder, float oldZoom) {
+        if (mCameraOptions.isZoomSupported()) {
+            float maxZoom = readCharacteristic(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM, 1F);
+            // converting 0.0f-1.0f zoom scale to the actual camera digital zoom scale
+            // (which will be for example, 1.0-10.0)
+            float calculatedZoom = (mZoomValue * (maxZoom - 1.0f)) + 1.0f;
+            Rect newRect = getZoomRect(calculatedZoom, maxZoom);
+            builder.set(CaptureRequest.SCALER_CROP_REGION, newRect);
+            return true;
+        }
+        mZoomValue = oldZoom;
+        return false;
+    }
+
     @NonNull
     private Rect getZoomRect(float zoomLevel, float maxDigitalZoom) {
-
-        Rect activeRect = readCharacteristic(mCameraCharacteristics,
-                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
-                new Rect());
+        Rect activeRect = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE, new Rect());
 
         int minW = (int) (activeRect.width() / maxDigitalZoom);
         int minH = (int) (activeRect.height() / maxDigitalZoom);
         int difW = activeRect.width() - minW;
         int difH = activeRect.height() - minH;
 
+        // When zoom is 1, we want to return new Rect(0, 0, width, height).
+        // When zoom is maxZoom, we want to return a centered rect with minW and minH
         int cropW = (int) (difW * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2F);
         int cropH = (int) (difH * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2F);
         return new Rect(cropW, cropH, activeRect.width() - cropW, activeRect.height() - cropH);
@@ -978,22 +978,40 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void setExposureCorrection(final float EVvalue, @NonNull final float[] bounds, @Nullable final PointF[] points, final boolean notify) {
+        final float old = mExposureCorrectionValue;
+        mExposureCorrectionValue = EVvalue;
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-
-                if (getEngineState() == STATE_STARTED && mCameraOptions.isExposureCorrectionSupported()) {
-                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, (int) EVvalue);
-                    applyRepeatingRequestBuilder();
-
-                    mExposureCorrectionValue = EVvalue;
-                    if (notify) {
-                        mCallback.dispatchOnExposureCorrectionChanged(EVvalue, bounds, points);
+                if (getEngineState() == STATE_STARTED) {
+                    if (applyExposureCorrection(mRepeatingRequestBuilder, old)) {
+                        applyRepeatingRequestBuilder();
+                        if (notify) {
+                            mCallback.dispatchOnExposureCorrectionChanged(EVvalue, bounds, points);
+                        }
                     }
                 }
                 mExposureCorrectionOp.end(null);
             }
         });
+    }
+
+    private boolean applyExposureCorrection(@NonNull CaptureRequest.Builder builder, float oldEVvalue) {
+        if (mCameraOptions.isExposureCorrectionSupported()) {
+            Rational exposureCorrectionStep = readCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP,
+                    new Rational(1, 1));
+            int exposureCorrectionSteps = Math.round(mExposureCorrectionValue * exposureCorrectionStep.floatValue());
+            builder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, exposureCorrectionSteps);
+            return true;
+        }
+        mExposureCorrectionValue = oldEVvalue;
+        return false;
+    }
+
+    @Override
+    public void setPlaySounds(boolean playSounds) {
+        mPlaySounds = playSounds;
+        mPlaySoundsOp.end(null);
     }
 
     //endregion
@@ -1145,8 +1163,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // For sanity, let's also assume that the crop region is equal to the stream region.
 
                 // 4. Move to the active sensor array coordinate system.
-                Rect activeRect = readCharacteristic(mCameraCharacteristics,
-                        CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+                Rect activeRect = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
                         new Rect(0, 0, referenceSize.getWidth(), referenceSize.getHeight()));
                 referencePoint.x += (activeRect.width() - referenceSize.getWidth()) / 2F;
                 referencePoint.y += (activeRect.height() - referenceSize.getHeight()) / 2F;
@@ -1155,8 +1172,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // 5. Account for zoom! This only works for mZoomValue = 0.
                 // We must scale down with respect to the reference size center. If mZoomValue = 1,
                 // This must leave everything unchanged.
-                float maxZoom = readCharacteristic(mCameraCharacteristics,
-                        CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM, 1F /* no zoom */);
+                float maxZoom = readCharacteristic(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
+                        1F /* no zoom */);
                 float currZoom = 1 + mZoomValue * (maxZoom - 1); // 1 ... maxZoom
                 float currReduction = 1 / currZoom;
                 float referenceCenterX = referenceSize.getWidth() / 2F;
@@ -1172,9 +1189,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
                 // 7. And finally dispatch them...
                 List<MeteringRectangle> areas = Arrays.asList(area1, area2);
-                int maxReagionsAf = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
-                int maxReagionsAe = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
-                int maxReagionsAwb = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
+                int maxReagionsAf = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
+                int maxReagionsAe = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
+                int maxReagionsAwb = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
                 if (maxReagionsAf > 0) {
                     mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
                             areas.subList(0, maxReagionsAf).toArray(new MeteringRectangle[]{}));
@@ -1280,12 +1297,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         @Override
         public void run() {
             if (getEngineState() < STATE_STARTED) return;
-            Rect whole = readCharacteristic(mCameraCharacteristics,
-                    CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE, new Rect());
+            Rect whole = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE, new Rect());
             MeteringRectangle[] rectangle = new MeteringRectangle[]{new MeteringRectangle(whole, MeteringRectangle.METERING_WEIGHT_DONT_CARE)};
-            int maxReagionsAf = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
-            int maxReagionsAe = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
-            int maxReagionsAwb = readCharacteristic(mCameraCharacteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
+            int maxReagionsAf = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
+            int maxReagionsAe = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
+            int maxReagionsAwb = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
             if (maxReagionsAf > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, rectangle);
             if (maxReagionsAe > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, rectangle);
             if (maxReagionsAwb > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, rectangle);
