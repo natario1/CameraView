@@ -92,6 +92,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
                     }
                 };
                 listener = mock(CameraListener.class);
+                camera.setExperimental(true);
+                camera.setEngine(getEngine());
                 camera.addCameraListener(listener);
                 rule.getActivity().inflate(camera);
 
@@ -117,8 +119,10 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     private void waitForUiException() throws Throwable {
-        Throwable throwable = uiExceptionOp.await(2500);
-        if (throwable != null) throw throwable;
+        Throwable throwable = uiExceptionOp.await(5000);
+        if (throwable != null) {
+            throw throwable;
+        }
     }
 
     private CameraOptions waitForOpen(boolean expectSuccess) {
@@ -128,6 +132,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
         CameraOptions result = open.await(4000);
         if (expectSuccess) {
             assertNotNull("Can open", result);
+            // Extra wait for the bind state.
+            while (controller.getBindState() != CameraEngine.STATE_STARTED) {}
         } else {
             assertNull("Should not open", result);
         }
@@ -149,7 +155,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     private void waitForVideoEnd(boolean expectSuccess) {
         final Op<Boolean> video = new Op<>(true);
         doEndTask(video, true).when(listener).onVideoTaken(any(VideoResult.class));
-        Boolean result = video.await(8000);
+        Boolean result = video.await(12000);
         if (expectSuccess) {
             assertNotNull("Should end video", result);
         } else {
@@ -173,7 +179,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         controller.mStartVideoOp.listen();
         File file = new File(context().getFilesDir(), "video.mp4");
         camera.takeVideo(file);
-        controller.mStartVideoOp.await(400);
+        controller.mStartVideoOp.await(1000);
     }
 
     //region test open/close
@@ -593,7 +599,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         // Expect 30 frames
         CountDownLatch latch = new CountDownLatch(30);
         doCountDown(latch).when(mock).process(any(Frame.class));
-        boolean did = latch.await(4, TimeUnit.SECONDS);
+        boolean did = latch.await(60, TimeUnit.SECONDS);
         assertTrue(did);
     }
 
@@ -640,7 +646,6 @@ public abstract class CameraIntegrationTest extends BaseTest {
         waitForOpen(true);
         camera.takeVideo(new File(context().getFilesDir(), "video.mp4"), 4000);
         waitForVideoEnd(true);
-
         assert30Frames(processor);
     }
 

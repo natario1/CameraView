@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
+
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import com.google.android.gms.tasks.Task;
@@ -506,6 +508,7 @@ public class Camera1Engine extends CameraEngine implements
 
     @Override
     public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
+        super.onVideoResult(result, exception);
         if (result == null) {
             // Something went wrong, lock the camera again.
             mCamera.lock();

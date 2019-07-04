@@ -41,6 +41,7 @@ import com.otaliastudios.cameraview.size.SizeSelector;
 import com.otaliastudios.cameraview.size.SizeSelectors;
 import com.otaliastudios.cameraview.video.VideoRecorder;
 
+import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -53,6 +54,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -477,22 +479,25 @@ public abstract class CameraEngine implements
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("restartBind", "executing.");
+                LOG.w("restartBind", "executing stopPreview.");
                 stopPreview(false).continueWithTask(mHandler.getExecutor(), new Continuation<Void, Task<Void>>() {
                     @Override
                     public Task<Void> then(@NonNull Task<Void> task) {
+                        LOG.w("restartBind", "executing stopBind.");
                         return stopBind(false);
                     }
                 }).onSuccessTask(mHandler.getExecutor(), new SuccessContinuation<Void, Void>() {
                     @NonNull
                     @Override
                     public Task<Void> then(@Nullable Void aVoid) {
+                        LOG.w("restartBind", "executing startBind.");
                         return startBind();
                     }
                 }).onSuccessTask(mHandler.getExecutor(), new SuccessContinuation<Void, Void>() {
                     @NonNull
                     @Override
                     public Task<Void> then(@Nullable Void aVoid) {
+                        LOG.w("restartBind", "executing startPreview.");
                         return startPreview();
                     }
                 });
@@ -667,7 +672,12 @@ public abstract class CameraEngine implements
             }
         });
         try {
-            latch.await();
+            boolean success = latch.await(3, TimeUnit.SECONDS);
+            if (!success) {
+                LOG.e("Probably some deadlock in destroy.",
+                        "Current thread:", Thread.currentThread(),
+                        "Handler thread: ", mHandler.getThread());
+            }
         } catch (InterruptedException ignore) {}
     }
 
@@ -685,8 +695,11 @@ public abstract class CameraEngine implements
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("Start:", "executing runnable. State:", getEngineStateName());
-                if (mAllStep.isStoppingOrStopped()) {
+                LOG.w("Start:", "executing runnable. AllState is", mAllStep.getState());
+                // It's better to schedule anyway. allStep might be STARTING and we might be tempted to early return here,
+                // But the truth is that there might be a stop already scheduled when the STARTING op ends.
+                // if (mAllStep.isStoppingOrStopped()) {
+                //     LOG.i("Start:", "executing runnable. AllState is STOPPING or STOPPED, so we schedule a start.");
                     mAllStep.doStart(false, new Callable<Task<Void>>() {
                         @Override
                         public Task<Void> call() {
@@ -711,10 +724,11 @@ public abstract class CameraEngine implements
                             });
                         }
                     });
-                } else {
-                    // NOTE: this returns early if we were STARTING.
-                    outTask.trySetResult(null);
-                }
+                // } else {
+                //     // NOTE: this returns early if we were STARTING.
+                //     LOG.i("Start:", "executing runnable. AllState is STARTING or STARTED, so we return early.");
+                //     outTask.trySetResult(null);
+                // }
             }
         });
         return outTask.getTask();
@@ -732,8 +746,11 @@ public abstract class CameraEngine implements
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("Stop:", "executing runnable. State:", getEngineStateName());
-                if (mAllStep.isStartedOrStarting()) {
+                LOG.w("Stop:", "executing runnable. AllState is", mAllStep.getState());
+                // It's better to schedule anyway. allStep might be STOPPING and we might be tempted to early return here,
+                // But the truth is that there might be a start already scheduled when the STOPPING op ends.
+                // if (mAllStep.isStartedOrStarting()) {
+                //     LOG.i("Stop:", "executing runnable. AllState is STARTING or STARTED, so we schedule a stop.");
                     mAllStep.doStop(swallowExceptions, new Callable<Task<Void>>() {
                         @Override
                         public Task<Void> call() {
@@ -761,10 +778,11 @@ public abstract class CameraEngine implements
                             });
                         }
                     });
-                } else {
-                    // NOTE: this returns early if we were STOPPING.
-                    outTask.trySetResult(null);
-                }
+                // } else {
+                //     // NOTE: this returns early if we were STOPPING.
+                //     LOG.i("Stop:", "executing runnable. AllState is STOPPING or STOPPED, so we return early.");
+                //     outTask.trySetResult(null);
+                // }
             }
         });
         return outTask.getTask();
@@ -933,17 +951,18 @@ public abstract class CameraEngine implements
 
     //region picture and video control
 
-    public final void takePicture(final @NonNull PictureResult.Stub stub) {
+    /* not final for tests */
+    public void takePicture(final @NonNull PictureResult.Stub stub) {
         LOG.v("takePicture", "scheduling");
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.v("takePicture", "performing. Engine:", getEngineStateName(), "isTakingPicture:", isTakingPicture());
+                LOG.v("takePicture", "performing. BindState:", getBindState(), "isTakingPicture:", isTakingPicture());
                 if (mMode == Mode.VIDEO) {
                     // Could redirect to takePictureSnapshot, but it's better if people know what they are doing.
                     throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
                 }
-                if (getEngineState() < STATE_STARTED) return;
+                if (getBindState() < STATE_STARTED) return;
                 if (isTakingPicture()) return;
                 stub.isSnapshot = false;
                 stub.location = mLocation;
@@ -964,8 +983,8 @@ public abstract class CameraEngine implements
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.v("takePictureSnapshot", "performing. Engine:", getEngineStateName(), "isTakingPicture:", isTakingPicture());
-                if (getEngineState() < STATE_STARTED) return;
+                LOG.v("takePictureSnapshot", "performing. BindState:", getBindState(), "isTakingPicture:", isTakingPicture());
+                if (getBindState() < STATE_STARTED) return;
                 if (isTakingPicture()) return;
                 stub.location = mLocation;
                 stub.isSnapshot = true;
@@ -1000,8 +1019,8 @@ public abstract class CameraEngine implements
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.v("takeVideo", "performing. Engine:", getEngineStateName(), "isTakingVideo:", isTakingVideo());
-                if (getEngineState() < STATE_STARTED) { mStartVideoOp.end(null); return; }
+                LOG.v("takeVideo", "performing. BindState:", getBindState(), "isTakingVideo:", isTakingVideo());
+                if (getBindState() < STATE_STARTED) { mStartVideoOp.end(null); return; }
                 if (isTakingVideo()) { mStartVideoOp.end(null); return; }
                 if (mMode == Mode.PICTURE) {
                     throw new IllegalStateException("Can't record video while in PICTURE mode");
@@ -1032,8 +1051,8 @@ public abstract class CameraEngine implements
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.v("takeVideoSnapshot", "performing. Engine:", getEngineStateName(), "isTakingVideo:", isTakingVideo());
-                if (getEngineState() < STATE_STARTED) { mStartVideoOp.end(null); return; }
+                LOG.v("takeVideoSnapshot", "performing. BindState:", getBindState(), "isTakingVideo:", isTakingVideo());
+                if (getBindState() < STATE_STARTED) { mStartVideoOp.end(null); return; }
                 if (isTakingVideo()) { mStartVideoOp.end(null); return; }
                 stub.file = file;
                 stub.isSnapshot = true;
@@ -1059,11 +1078,13 @@ public abstract class CameraEngine implements
                 LOG.i("stopVideo", "executing.", "isTakingVideo?", isTakingVideo());
                 if (mVideoRecorder != null) {
                     mVideoRecorder.stop();
+                    mVideoRecorder = null;
                 }
             }
         });
     }
 
+    @CallSuper
     @Override
     public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
         mVideoRecorder = null;

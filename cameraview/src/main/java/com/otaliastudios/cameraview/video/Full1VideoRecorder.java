@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.video;
 
 import android.hardware.Camera;
 import android.media.MediaRecorder;
+import android.util.Log;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
@@ -44,9 +45,9 @@ public class Full1VideoRecorder extends FullVideoRecorder {
     }
 
     @Override
-    protected void onStop() {
+    protected void dispatchResult() {
         // Restore frame processing.
         mCamera.setPreviewCallbackWithBuffer(mEngine);
-        super.onStop();
+        super.dispatchResult();
     }
 }

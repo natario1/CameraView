@@ -503,11 +503,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (mFullVideoPendingStub != null) {
             // Do not call takeVideo/onTakeVideo. It will reset some stub parameters that the recorder sets.
             // Also we are posting this so that doTakeVideo sees a started preview.
+            LOG.i("onStartPreview", "Posting doTakeVideo call.");
             final VideoResult.Stub stub = mFullVideoPendingStub;
             mFullVideoPendingStub = null;
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    LOG.i("onStartPreview", "Executing doTakeVideo call.");
                     doTakeVideo(stub);
                 }
             });
@@ -522,6 +524,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @NonNull
     @Override
     protected Task<Void> onStopPreview() {
+        LOG.i("onStopPreview:", "About to clean up.");
         if (mVideoRecorder != null) {
             // This should synchronously call onVideoResult that will reset the repeating builder
             // to the PREVIEW template. This is very important.
@@ -546,6 +549,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         mRepeatingRequest = null;
         mAutoFocusPoint = null;
         mAutoFocusGesture = null;
+        LOG.i("onStopPreview:", "Returning.");
         return Tasks.forResult(null);
     }
 
@@ -553,6 +557,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @NonNull
     @Override
     protected Task<Void> onStopBind() {
+        LOG.i("onStopBind:", "About to clean up.");
         if (mFullVideoPersistentSurface != null) {
             mFullVideoPersistentSurface.release();
             mFullVideoPersistentSurface = null;
@@ -572,6 +577,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
         mSession.close();
         mSession = null;
+        LOG.i("onStopBind:", "Returning.");
         return Tasks.forResult(null);
     }
 
@@ -650,11 +656,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @WorkerThread
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
+        LOG.i("onTakeVideo", "called.");
         stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
         stub.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
         if (!Full2VideoRecorder.SUPPORTS_PERSISTENT_SURFACE) {
             // On API 21 and 22, we must restart the session at each time.
             // Save the pending data and restart the session.
+            LOG.w("onTakeVideo", "calling restartBind.");
             mFullVideoPendingStub = stub;
             restartBind();
         } else {

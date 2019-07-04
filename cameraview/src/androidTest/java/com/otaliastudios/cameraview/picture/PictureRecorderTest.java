@@ -31,7 +31,7 @@ public class PictureRecorderTest extends BaseTest {
             }
         };
         recorder.take();
-        Mockito.verify(listener, Mockito.times(1)).onPictureResult(result);
+        Mockito.verify(listener, Mockito.times(1)).onPictureResult(result, null);
         assertNull(recorder.mListener);
         assertNull(recorder.mResult);
     }

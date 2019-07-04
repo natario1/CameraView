@@ -143,7 +143,13 @@ public class MockCameraEngine extends CameraEngine {
 
     @Override
     public void takePicture(@NonNull PictureResult.Stub stub) {
+        super.takePicture(stub);
         mPictureCaptured = true;
+    }
+
+    @Override
+    protected void onTakePicture(@NonNull PictureResult.Stub stub) {
+
     }
 
     @Override

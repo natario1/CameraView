@@ -713,6 +713,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     //region Public APIs for controls
 
+    /**
+     * Sets the experimental flag which occasionally can enable
+     * new, unstable beta features.
+     * @param experimental true to enable new features
+     */
+    public void setExperimental(boolean experimental) {
+        mExperimental = experimental;
+    }
 
     /**
      * Shorthand for the appropriate set* method.
