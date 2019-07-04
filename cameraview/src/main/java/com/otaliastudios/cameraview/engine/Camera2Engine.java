@@ -24,6 +24,11 @@ import android.os.Build;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.WorkerThread;
+
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
@@ -59,11 +64,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.WorkerThread;
 
 // TODO zoom
 // TODO exposure correction
@@ -951,18 +951,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @NonNull
     private Rect getZoomRect(float zoomLevel, float maxDigitalZoom) {
 
-        Rect activeRect = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-        if ((zoomLevel <= maxDigitalZoom) && (zoomLevel > 1) && activeRect != null) {
-            int minW = (int) (activeRect.width() / maxDigitalZoom);
-            int minH = (int) (activeRect.height() / maxDigitalZoom);
-            int difW = activeRect.width() - minW;
-            int difH = activeRect.height() - minH;
-            int cropW = difW / 20 * (int) zoomLevel;
-            int cropH = difH / 20 * (int) zoomLevel;
-            return new Rect(cropW, cropH, activeRect.width() - cropW, activeRect.height() - cropH);
-        }
+        Rect activeRect = readCharacteristic(mCameraCharacteristics,
+                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+                new Rect());
 
-        return new Rect(0, 0, activeRect.width(), activeRect.height());
+        int minW = (int) (activeRect.width() / maxDigitalZoom);
+        int minH = (int) (activeRect.height() / maxDigitalZoom);
+        int difW = activeRect.width() - minW;
+        int difH = activeRect.height() - minH;
+
+        int cropW = (int) (difW * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2F);
+        int cropH = (int) (difH * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2F);
+        return new Rect(cropW, cropH, activeRect.width() - cropW, activeRect.height() - cropH);
     }
 
     @Override
