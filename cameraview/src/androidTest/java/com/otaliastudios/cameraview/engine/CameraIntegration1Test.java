@@ -18,7 +18,7 @@ import androidx.test.filters.LargeTest;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-// @Ignore
+@Ignore
 public class CameraIntegration1Test extends CameraIntegrationTest {
 
     @NonNull
