@@ -8,6 +8,8 @@ group = 'com.otaliastudios'
 
 //region android dependencies
 
+def travis = System.getenv("TRAVIS")
+
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     // buildToolsVersion rootProject.ext.buildToolsVersion
@@ -18,6 +20,9 @@ android {
         versionCode 1
         versionName project.version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        if (travis) {
+            testInstrumentationRunnerArgument "notAnnotation", "com.otaliastudios.cameraview.DoNotRunOnTravis"
+        }
     }
 
     buildTypes {
@@ -34,13 +39,12 @@ android {
 
 dependencies {
     testImplementation 'junit:junit:4.12'
-    testImplementation 'org.mockito:mockito-core:2.28.2'
+    testImplementation 'org.mockito:mockito-inline:2.28.2'
 
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test:rules:1.2.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
-    androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
+    androidTestImplementation 'org.mockito:mockito-android:2.28.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     api 'androidx.exifinterface:exifinterface:1.0.0'
@@ -90,7 +94,6 @@ install {
 
 def bintrayUser
 def bintrayKey
-def travis = System.getenv("TRAVIS")
 if (travis) {
     bintrayUser = System.getenv("BINTRAY_USER")
     bintrayKey = System.getenv("BINTRAY_KEY")
@@ -215,8 +218,9 @@ task mergedCoverageReport(type: JacocoReport) {
     ]
     if (travis) {
         // Since this is not testable on the emulator...
-        classFilter.add('com.otaliastudios.cameraview.engine.Camera1Engine')
-        classFilter.add('com.otaliastudios.cameraview.engine.Camera2Engine')
+        classFilter.add('com.otaliastudios.cameraview.engine.CameraEngine.*')
+        classFilter.add('com.otaliastudios.cameraview.engine.Camera1Engine.*')
+        classFilter.add('com.otaliastudios.cameraview.engine.Camera2Engine.*')
     }
     classDirectories = fileTree(dir: classDir, excludes: classFilter);
 
