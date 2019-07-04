@@ -14,11 +14,11 @@ import androidx.test.filters.LargeTest;
  * These tests work great on real devices, and are the only way to test actual CameraEngine
  * implementation - we really need to open the camera device.
  * Unfortunately they fail unreliably on emulated devices, due to some bug with the
- * emulated camera controller. Waiting for it to be fixed.
+ * emulated camera controller.
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-@Ignore
+@Ignore("These do work but fail on CI emulators, due to bugs in the Camera1 emulated devices.")
 public class CameraIntegration1Test extends CameraIntegrationTest {
 
     @NonNull
