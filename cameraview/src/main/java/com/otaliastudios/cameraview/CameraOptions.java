@@ -218,12 +218,12 @@ public class CameraOptions {
         }
 
         // Exposure correction
-        Range<Integer> exposureRange  = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
-        if(exposureRange != null) {
-            exposureCorrectionMinValue = exposureRange.getLower();
-            exposureCorrectionMaxValue = exposureRange.getUpper();
+        Range<Integer> exposureRange = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
+        Rational exposureStep = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP);
+        if (exposureRange != null && exposureStep != null && exposureStep.floatValue() != 0) {
+            exposureCorrectionMinValue = exposureRange.getLower() / exposureStep.floatValue();
+            exposureCorrectionMaxValue = exposureRange.getUpper() / exposureStep.floatValue();
         }
-
         exposureCorrectionSupported = exposureCorrectionMinValue != 0 && exposureCorrectionMaxValue != 0;
 
 
