@@ -924,14 +924,22 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             public void run() {
 
                 if (getEngineState() == STATE_STARTED && mCameraOptions.isZoomSupported()) {
-                    Rect newRect = getZoomRect(zoom * mCameraOptions.getMaxZoomValue());
 
-                    mRepeatingRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, newRect);
-                    applyRepeatingRequestBuilder();
-                    mZoomValue = zoom;
+                    Float maxZoom = mCameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
 
-                    if (notify) {
-                        mCallback.dispatchOnZoomChanged(zoom, points);
+                    if (maxZoom != null) {
+                        //converting 0.0f-1.0f zoom scale to the actual camera digital zoom scale
+                        //(which will be for example, 1.0-10.0)
+                        float calculatedZoom = (zoom * (maxZoom - 1.0f)) + 1.0f;
+
+                        Rect newRect = getZoomRect(calculatedZoom, maxZoom);
+                        mRepeatingRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, newRect);
+                        applyRepeatingRequestBuilder();
+                        mZoomValue = zoom;
+
+                        if (notify) {
+                            mCallback.dispatchOnZoomChanged(zoom, points);
+                        }
                     }
 
                 }
@@ -941,19 +949,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @NonNull
-    private Rect getZoomRect(float zoomLevel) {
+    private Rect getZoomRect(float zoomLevel, float maxDigitalZoom) {
 
-        float maxZoom = mCameraOptions.getMaxZoomValue();
         Rect activeRect = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-        if ((zoomLevel <= maxZoom) && (zoomLevel > 1) && activeRect != null) {
-            int minW = (int) (activeRect.width() / maxZoom);
-            int minH = (int) (activeRect.height() / maxZoom);
+        if ((zoomLevel <= maxDigitalZoom) && (zoomLevel > 1) && activeRect != null) {
+            int minW = (int) (activeRect.width() / maxDigitalZoom);
+            int minH = (int) (activeRect.height() / maxDigitalZoom);
             int difW = activeRect.width() - minW;
             int difH = activeRect.height() - minH;
-            int cropW = difW / 100 * (int) zoomLevel;
-            int cropH = difH / 100 * (int) zoomLevel;
-            cropW -= cropW & 3;
-            cropH -= cropH & 3;
+            int cropW = difW / 20 * (int) zoomLevel;
+            int cropH = difH / 20 * (int) zoomLevel;
             return new Rect(cropW, cropH, activeRect.width() - cropW, activeRect.height() - cropH);
         }
 
@@ -961,8 +966,23 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void setExposureCorrection(float EVvalue, @NonNull float[] bounds, @Nullable PointF[] points, boolean notify) {
-        // TODO
+    public void setExposureCorrection(final float EVvalue, @NonNull final float[] bounds, @Nullable final PointF[] points, final boolean notify) {
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+
+                if (getEngineState() == STATE_STARTED && mCameraOptions.isExposureCorrectionSupported()) {
+                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, (int) EVvalue);
+                    applyRepeatingRequestBuilder();
+
+                    mExposureCorrectionValue = EVvalue;
+                    if (notify) {
+                        mCallback.dispatchOnExposureCorrectionChanged(EVvalue, bounds, points);
+                    }
+                }
+                mExposureCorrectionOp.end(null);
+            }
+        });
     }
 
     //endregion
@@ -1265,4 +1285,3 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //endregion
 }
-

@@ -56,7 +56,6 @@ public class CameraOptions {
     private Set<AspectRatio> supportedVideoAspectRatio = new HashSet<>(3);
 
     private boolean zoomSupported;
-    private float maxZoomValue;
     private boolean exposureCorrectionSupported;
     private float exposureCorrectionMinValue;
     private float exposureCorrectionMaxValue;
@@ -204,8 +203,7 @@ public class CameraOptions {
         //zoom
         Float maxZoom = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
         if(maxZoom != null) {
-            maxZoomValue = maxZoom;
-            zoomSupported = maxZoomValue > 1;
+            zoomSupported = maxZoom > 1;
         }
 
 
@@ -484,16 +482,5 @@ public class CameraOptions {
     @SuppressWarnings("WeakerAccess")
     public float getExposureCorrectionMaxValue() {
         return exposureCorrectionMaxValue;
-    }
-
-    /**
-     * The maximum value of digital zoom available by Hardware.
-     * This is presumably 1 and above than 1 in case zoom is avaible.
-     *
-     * @return max zoom value
-     */
-    @SuppressWarnings("WeakerAccess")
-    public float getMaxZoomValue() {
-        return maxZoomValue;
     }
 }
