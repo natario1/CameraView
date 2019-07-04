@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.controls;
 
 import com.otaliastudios.cameraview.CameraView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
@@ -34,7 +35,7 @@ public enum Hdr implements Control {
         return value;
     }
 
-    @Nullable
+    @NonNull
     static Hdr fromValue(int value) {
         Hdr[] list = Hdr.values();
         for (Hdr action : list) {
@@ -42,6 +43,6 @@ public enum Hdr implements Control {
                 return action;
             }
         }
-        return null;
+        return DEFAULT;
     }
 }

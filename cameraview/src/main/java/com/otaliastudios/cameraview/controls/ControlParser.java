@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import com.otaliastudios.cameraview.R;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * Parses controls from XML attributes.
@@ -36,42 +37,53 @@ public class ControlParser {
         this.engine = array.getInteger(R.styleable.CameraView_cameraEngine, Engine.DEFAULT.value());
     }
 
+    @NonNull
     public Preview getPreview() {
         return Preview.fromValue(preview);
     }
 
+    @NonNull
     public Facing getFacing() {
+        //noinspection ConstantConditions
         return Facing.fromValue(facing);
     }
 
+    @NonNull
     public Flash getFlash() {
         return Flash.fromValue(flash);
     }
 
+    @NonNull
     public Grid getGrid() {
         return Grid.fromValue(grid);
     }
 
+    @NonNull
     public Mode getMode() {
         return Mode.fromValue(mode);
     }
 
+    @NonNull
     public WhiteBalance getWhiteBalance() {
         return WhiteBalance.fromValue(whiteBalance);
     }
 
+    @NonNull
     public Hdr getHdr() {
         return Hdr.fromValue(hdr);
     }
 
+    @NonNull
     public Audio getAudio() {
         return Audio.fromValue(audio);
     }
 
+    @NonNull
     public VideoCodec getVideoCodec() {
         return VideoCodec.fromValue(videoCodec);
     }
 
+    @NonNull
     public Engine getEngine() {
         return Engine.fromValue(engine);
     }

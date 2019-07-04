@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.controls;
 
 import com.otaliastudios.cameraview.CameraView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
@@ -41,7 +42,7 @@ public enum VideoCodec implements Control {
         return value;
     }
 
-    @Nullable
+    @NonNull
     static VideoCodec fromValue(int value) {
         VideoCodec[] list = VideoCodec.values();
         for (VideoCodec action : list) {
@@ -49,6 +50,6 @@ public enum VideoCodec implements Control {
                 return action;
             }
         }
-        return null;
+        return DEFAULT;
     }
 }
