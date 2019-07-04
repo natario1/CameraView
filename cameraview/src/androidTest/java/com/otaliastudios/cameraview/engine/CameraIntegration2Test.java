@@ -17,12 +17,12 @@ import androidx.test.filters.LargeTest;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-@Ignore
-public class Camera2IntegrationTest extends CameraIntegrationTest {
+// @Ignore
+public class CameraIntegration2Test extends CameraIntegrationTest {
 
     @NonNull
     @Override
     protected Engine getEngine() {
-        return Engine.CAMERA1;
+        return Engine.CAMERA2;
     }
 }

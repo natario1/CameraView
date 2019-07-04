@@ -27,17 +27,19 @@ public class VideoRecorderTest extends BaseTest {
     public void testRecorder() throws Exception {
         VideoResult.Stub result = createStub();
         VideoRecorder.VideoResultListener listener = Mockito.mock(VideoRecorder.VideoResultListener.class);
-        VideoRecorder recorder = new VideoRecorder(result, listener) {
-            public void start() {}
-            public void stop() {
+        VideoRecorder recorder = new VideoRecorder(listener) {
+            @Override
+            protected void onStart() { }
+
+            @Override
+            protected void onStop() {
                 dispatchResult();
             }
         };
-        recorder.start();
+        recorder.start(result);
         recorder.stop();
-        Mockito.verify(listener, Mockito.times(1)).onVideoResult(result, null);
-        assertNull(recorder.mListener);
-        assertNull(recorder.mResult);
+        Mockito.verify(listener, Mockito.times(1))
+                .onVideoResult(result, null);
     }
 
     private VideoResult.Stub createStub() throws Exception {

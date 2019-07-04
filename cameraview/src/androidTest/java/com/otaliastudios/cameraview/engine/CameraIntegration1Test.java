@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.engine;
 import com.otaliastudios.cameraview.controls.Engine;
 
 import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import androidx.annotation.NonNull;
@@ -17,12 +18,12 @@ import androidx.test.filters.LargeTest;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-@Ignore
-public class Camera1IntegrationTest extends CameraIntegrationTest {
+// @Ignore
+public class CameraIntegration1Test extends CameraIntegrationTest {
 
     @NonNull
     @Override
     protected Engine getEngine() {
-        return Engine.CAMERA2;
+        return Engine.CAMERA1;
     }
 }

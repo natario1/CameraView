@@ -76,7 +76,9 @@ public abstract class VideoRecorder {
     @CallSuper
     protected void dispatchResult() {
         mIsRecording = false;
-        if (mListener != null) mListener.onVideoResult(mResult, mError);
+        if (mListener != null) {
+            mListener.onVideoResult(mResult, mError);
+        }
         mResult = null;
         mError = null;
     }
