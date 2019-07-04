@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.controls;
 
 import com.otaliastudios.cameraview.CameraView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.File;
@@ -46,7 +47,7 @@ public enum Mode implements Control {
         return value;
     }
 
-    @Nullable
+    @NonNull
     static Mode fromValue(int value) {
         Mode[] list = Mode.values();
         for (Mode action : list) {
@@ -54,6 +55,6 @@ public enum Mode implements Control {
                 return action;
             }
         }
-        return null;
+        return DEFAULT;
     }
 }

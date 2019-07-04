@@ -4,6 +4,7 @@ package com.otaliastudios.cameraview.controls;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
@@ -65,7 +66,7 @@ public enum WhiteBalance implements Control {
         return value;
     }
 
-    @Nullable
+    @NonNull
     static WhiteBalance fromValue(int value) {
         WhiteBalance[] list = WhiteBalance.values();
         for (WhiteBalance action : list) {
@@ -73,6 +74,6 @@ public enum WhiteBalance implements Control {
                 return action;
             }
         }
-        return null;
+        return DEFAULT;
     }
 }

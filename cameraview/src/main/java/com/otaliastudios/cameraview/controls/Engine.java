@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.controls;
 
 import com.otaliastudios.cameraview.CameraView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
@@ -35,7 +36,7 @@ public enum Engine implements Control {
         return value;
     }
 
-    @Nullable
+    @NonNull
     static Engine fromValue(int value) {
         Engine[] list = Engine.values();
         for (Engine action : list) {
@@ -43,6 +44,6 @@ public enum Engine implements Control {
                 return action;
             }
         }
-        return null;
+        return DEFAULT;
     }
 }

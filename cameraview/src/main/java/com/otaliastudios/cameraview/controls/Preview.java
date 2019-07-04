@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.controls;
 
 import com.otaliastudios.cameraview.CameraView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
@@ -44,7 +45,7 @@ public enum Preview implements Control {
         return value;
     }
 
-    @Nullable
+    @NonNull
     static Preview fromValue(int value) {
         Preview[] list = Preview.values();
         for (Preview action : list) {
@@ -52,6 +53,6 @@ public enum Preview implements Control {
                 return action;
             }
         }
-        return null;
+        return DEFAULT;
     }
 }

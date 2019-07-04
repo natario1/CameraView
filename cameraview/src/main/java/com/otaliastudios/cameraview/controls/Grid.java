@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.controls;
 
 import com.otaliastudios.cameraview.CameraView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
@@ -46,7 +47,7 @@ public enum Grid implements Control {
         return value;
     }
 
-    @Nullable
+    @NonNull
     static Grid fromValue(int value) {
         Grid[] list = Grid.values();
         for (Grid action : list) {
@@ -54,6 +55,6 @@ public enum Grid implements Control {
                 return action;
             }
         }
-        return null;
+        return DEFAULT;
     }
 }
