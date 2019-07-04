@@ -213,6 +213,11 @@ task mergedCoverageReport(type: JacocoReport) {
             '**/Dagger*Component$Builder.class',
             '**/*Module_*Factory.class',
     ]
+    if (travis) {
+        // Since this is not testable on the emulator...
+        classFilter.add('com.otaliastudios.cameraview.engine.Camera1Engine')
+        classFilter.add('com.otaliastudios.cameraview.engine.Camera2Engine')
+    }
     classDirectories = fileTree(dir: classDir, excludes: classFilter);
 
     reports.html.enabled = true
