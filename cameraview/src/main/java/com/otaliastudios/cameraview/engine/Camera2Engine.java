@@ -24,6 +24,11 @@ import android.os.Build;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.WorkerThread;
+
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
@@ -59,11 +64,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.WorkerThread;
 
 // TODO zoom
 // TODO exposure correction
@@ -926,13 +926,71 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void setZoom(float zoom, @Nullable PointF[] points, boolean notify) {
-        // TODO
+    public void setZoom(final float zoom, final @Nullable PointF[] points, final boolean notify) {
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+
+                if (getEngineState() == STATE_STARTED && mCameraOptions.isZoomSupported()) {
+
+                    Float maxZoom = mCameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+
+                    if (maxZoom != null) {
+                        //converting 0.0f-1.0f zoom scale to the actual camera digital zoom scale
+                        //(which will be for example, 1.0-10.0)
+                        float calculatedZoom = (zoom * (maxZoom - 1.0f)) + 1.0f;
+
+                        Rect newRect = getZoomRect(calculatedZoom, maxZoom);
+                        mRepeatingRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, newRect);
+                        applyRepeatingRequestBuilder();
+                        mZoomValue = zoom;
+
+                        if (notify) {
+                            mCallback.dispatchOnZoomChanged(zoom, points);
+                        }
+                    }
+
+                }
+                mZoomOp.end(null);
+            }
+        });
+    }
+
+    @NonNull
+    private Rect getZoomRect(float zoomLevel, float maxDigitalZoom) {
+
+        Rect activeRect = readCharacteristic(mCameraCharacteristics,
+                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+                new Rect());
+
+        int minW = (int) (activeRect.width() / maxDigitalZoom);
+        int minH = (int) (activeRect.height() / maxDigitalZoom);
+        int difW = activeRect.width() - minW;
+        int difH = activeRect.height() - minH;
+
+        int cropW = (int) (difW * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2F);
+        int cropH = (int) (difH * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2F);
+        return new Rect(cropW, cropH, activeRect.width() - cropW, activeRect.height() - cropH);
     }
 
     @Override
-    public void setExposureCorrection(float EVvalue, @NonNull float[] bounds, @Nullable PointF[] points, boolean notify) {
-        // TODO
+    public void setExposureCorrection(final float EVvalue, @NonNull final float[] bounds, @Nullable final PointF[] points, final boolean notify) {
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+
+                if (getEngineState() == STATE_STARTED && mCameraOptions.isExposureCorrectionSupported()) {
+                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, (int) EVvalue);
+                    applyRepeatingRequestBuilder();
+
+                    mExposureCorrectionValue = EVvalue;
+                    if (notify) {
+                        mCallback.dispatchOnExposureCorrectionChanged(EVvalue, bounds, points);
+                    }
+                }
+                mExposureCorrectionOp.end(null);
+            }
+        });
     }
 
     //endregion
@@ -1235,4 +1293,3 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //endregion
 }
-

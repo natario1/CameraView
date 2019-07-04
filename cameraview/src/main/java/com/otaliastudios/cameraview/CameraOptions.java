@@ -12,6 +12,8 @@ import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.util.Range;
+import android.util.Rational;
 
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Control;
@@ -198,7 +200,12 @@ public class CameraOptions {
             if (value != null) supportedHdr.add(value);
         }
 
-        // TODO zoom
+        //zoom
+        Float maxZoom = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+        if(maxZoom != null) {
+            zoomSupported = maxZoom > 1;
+        }
+
 
         // autofocus
         int[] afModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
@@ -210,7 +217,14 @@ public class CameraOptions {
             }
         }
 
-        // TODO exposure correction
+        // Exposure correction
+        Range<Integer> exposureRange  = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
+        if(exposureRange != null) {
+            exposureCorrectionMinValue = exposureRange.getLower();
+            exposureCorrectionMaxValue = exposureRange.getUpper();
+        }
+
+        exposureCorrectionSupported = exposureCorrectionMinValue != 0 && exposureCorrectionMaxValue != 0;
 
 
         // Picture Sizes
