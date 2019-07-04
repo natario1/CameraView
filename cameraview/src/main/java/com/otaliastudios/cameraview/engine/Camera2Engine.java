@@ -65,8 +65,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-// TODO zoom
-// TODO exposure correction
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.WorkerThread;
+
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener {
 
