@@ -36,6 +36,7 @@ import org.mockito.stubbing.Stubber;
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Matchers.anyInt;
@@ -175,11 +176,11 @@ public class CameraViewCallbacksTest extends BaseTest {
 
     @Test
     public void testDispatchOnZoomChanged() {
-        completeTask().when(listener).onZoomChanged(anyFloat(), any(float[].class), any(PointF[].class));
+        completeTask().when(listener).onZoomChanged(eq(0f), eq(new float[]{0, 1}), nullable(PointF[].class));
         camera.mCameraCallbacks.dispatchOnZoomChanged(0f, null);
 
         assertNotNull(op.await(500));
-        verify(listener, times(1)).onZoomChanged(anyFloat(), any(float[].class), any(PointF[].class));
+        verify(listener, times(1)).onZoomChanged(eq(0f), eq(new float[]{0, 1}), nullable(PointF[].class));
     }
 
     @Test
