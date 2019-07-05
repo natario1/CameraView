@@ -218,9 +218,9 @@ task mergedCoverageReport(type: JacocoReport) {
     ]
     if (travis) {
         // Since this is not testable on the emulator...
-        classFilter.add('com.otaliastudios.cameraview.engine.CameraEngine.*')
-        classFilter.add('com.otaliastudios.cameraview.engine.Camera1Engine.*')
-        classFilter.add('com.otaliastudios.cameraview.engine.Camera2Engine.*')
+        classFilter.add('com/otaliastudios/cameraview/engine/CameraEngine.*')
+        classFilter.add('com/otaliastudios/cameraview/engine/Camera1Engine.*')
+        classFilter.add('com/otaliastudios/cameraview/engine/Camera2Engine.*')
     }
     classDirectories = fileTree(dir: classDir, excludes: classFilter);
 
