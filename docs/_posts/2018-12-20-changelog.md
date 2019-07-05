@@ -10,6 +10,7 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 
 ### v2.0.0-beta06 (to be released)
 
+- New: Full featured Camera2 integration! Use `cameraExperimental="true"` and `cameraEngine="camera2"` to test this out. ([#490][490])
 - Improvement: we now choose a video recording profile that is compatible with the chosen size. Should fix some video recording issues. ([#477][477])
 - **Breaking change**: some public classes have been moved to different packages. See [table here](../extra/v1-migration-guide.html#repackaging). ([#482][482])
 - **Breaking change**: the listener methods `onFocusStart` and `onFocusEnd` are now called `onAutoFocusStart` and `onAutoFocusEnd`. ([#484][484])
@@ -62,3 +63,4 @@ This is the first beta release. For changes with respect to v1, please take a lo
 [477]: https://github.com/natario1/CameraView/pull/477
 [482]: https://github.com/natario1/CameraView/pull/482
 [484]: https://github.com/natario1/CameraView/pull/484
+[490]: https://github.com/natario1/CameraView/pull/490

@@ -10,13 +10,14 @@ addressing most of the common issues and needs, and still leaving you with flexi
 
 - Fast & reliable
 - Gestures support
+- Camera1 or Camera2 powered engine
 - Frame processing support
 - OpenGL powered preview
 - Take high-quality content with `takePicture` and `takeVideo`
 - Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot`
 - Smart sizing: create a `CameraView` of any size
 - Control HDR, flash, zoom, white balance, exposure, location, grid drawing & more
-- Lightweight: the only dep. is support `ExifInterface`
+- Lightweight
 - Works down to API level 15
 - Well tested
 
