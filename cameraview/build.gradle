@@ -8,7 +8,7 @@ group = 'com.otaliastudios'
 
 //region android dependencies
 
-def travis = System.getenv("TRAVIS")
+def travis = true // TODO System.getenv("TRAVIS")
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -188,7 +188,7 @@ task mergedCoverageReport(type: JacocoReport) {
     // Merge unit tests and android tests data
     executionData = fileTree(dir: "$buildDir", includes: [
             "jacoco/testDebugUnitTest.exec", // Unit tests
-            "outputs/code-coverage/connected/*coverage.ec" // Android tests
+            "outputs/code_coverage/debugAndroidTest/connected/*coverage.ec" // Android tests
     ])
 
     // Sources
