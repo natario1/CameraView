@@ -65,10 +65,10 @@ public class ScrollGestureLayoutTest extends GestureLayoutTest<ScrollGestureLayo
         float curr = 0.5f, min = 0f, max = 1f;
         float newValue = layout.computeValue(curr, min, max);
         if (increasing) {
-            assertTrue(newValue > curr);
+            assertTrue(newValue >= curr);
             assertTrue(newValue <= max);
         } else {
-            assertTrue(newValue < curr);
+            assertTrue(newValue <= curr);
             assertTrue(newValue >= min);
         }
     }
