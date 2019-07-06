@@ -25,6 +25,8 @@ import static org.mockito.Mockito.*;
 
 public abstract class CameraPreviewTest extends BaseTest {
 
+    private final static long DELAY = 4000;
+
     protected abstract CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback);
 
     @Rule
@@ -74,7 +76,7 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     // Wait for surface to be available.
     protected void ensureAvailable() {
-        assertNotNull(available.await(2000));
+        assertNotNull(available.await(DELAY));
     }
 
     // Trigger a destroy.
@@ -85,7 +87,7 @@ public abstract class CameraPreviewTest extends BaseTest {
                 rule.getActivity().getContentView().removeView(preview.getRootView());
             }
         });
-        assertNotNull(destroyed.await(2000));
+        assertNotNull(destroyed.await(DELAY));
     }
 
     @After

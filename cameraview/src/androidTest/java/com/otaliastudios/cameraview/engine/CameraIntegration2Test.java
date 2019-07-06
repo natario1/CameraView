@@ -4,6 +4,7 @@ import com.otaliastudios.cameraview.DoNotRunOnTravis;
 import com.otaliastudios.cameraview.controls.Engine;
 
 import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import androidx.annotation.NonNull;

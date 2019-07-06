@@ -8,10 +8,12 @@ import android.os.Build;
 import android.util.Log;
 
 import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraUtils;
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.DoNotRunOnTravis;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.TestActivity;
 import com.otaliastudios.cameraview.VideoResult;
@@ -41,6 +43,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
@@ -51,13 +54,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-
 public abstract class CameraIntegrationTest extends BaseTest {
+
+    private final static long DELAY = 9000;
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
@@ -119,7 +124,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     private void waitForUiException() throws Throwable {
-        Throwable throwable = uiExceptionOp.await(5000);
+        Throwable throwable = uiExceptionOp.await(DELAY);
         if (throwable != null) {
             throw throwable;
         }
@@ -129,7 +134,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         camera.open();
         final Op<CameraOptions> open = new Op<>(true);
         doEndTask(open, 0).when(listener).onCameraOpened(any(CameraOptions.class));
-        CameraOptions result = open.await(4000);
+        CameraOptions result = open.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Can open", result);
             // Extra wait for the bind state.
@@ -144,7 +149,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         camera.close();
         final Op<Boolean> close = new Op<>(true);
         doEndTask(close, true).when(listener).onCameraClosed();
-        Boolean result = close.await(4000);
+        Boolean result = close.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Can close", result);
         } else {
@@ -155,9 +160,16 @@ public abstract class CameraIntegrationTest extends BaseTest {
     private void waitForVideoEnd(boolean expectSuccess) {
         final Op<Boolean> video = new Op<>(true);
         doEndTask(video, true).when(listener).onVideoTaken(any(VideoResult.class));
-        Boolean result = video.await(12000);
+        doEndTask(video, false).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
+            @Override
+            public boolean matches(CameraException argument) {
+                return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
+            }
+        }));
+        Boolean result = video.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Should end video", result);
+            assertTrue("Should end video without errors", result);
         } else {
             assertNull("Should not end video", result);
         }
@@ -166,7 +178,13 @@ public abstract class CameraIntegrationTest extends BaseTest {
     private PictureResult waitForPicture(boolean expectSuccess) {
         final Op<PictureResult> pic = new Op<>(true);
         doEndTask(pic, 0).when(listener).onPictureTaken(any(PictureResult.class));
-        PictureResult result = pic.await(5000);
+        doEndTask(pic, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
+            @Override
+            public boolean matches(CameraException argument) {
+                return argument.getReason() == CameraException.REASON_PICTURE_FAILED;
+            }
+        }));
+        PictureResult result = pic.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Can take picture", result);
         } else {
@@ -179,7 +197,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
         controller.mStartVideoOp.listen();
         File file = new File(context().getFilesDir(), "video.mp4");
         camera.takeVideo(file);
-        controller.mStartVideoOp.await(1000);
+        controller.mStartVideoOp.await(DELAY);
+        // TODO assert!
     }
 
     //region test open/close

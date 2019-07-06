@@ -12,7 +12,6 @@ def travis = System.getenv("TRAVIS")
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    // buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
@@ -217,10 +216,14 @@ task mergedCoverageReport(type: JacocoReport) {
             '**/*Module_*Factory.class',
     ]
     if (travis) {
-        // Since this is not testable on the emulator...
-        classFilter.add('com/otaliastudios/cameraview/engine/CameraEngine.*')
-        classFilter.add('com/otaliastudios/cameraview/engine/Camera1Engine.*')
-        classFilter.add('com/otaliastudios/cameraview/engine/Camera2Engine.*')
+        // All these classes are tested by the integration tests that we are not able to
+        // run on the travis emulator.
+        classFilter.add('**/com/otaliastudios/cameraview/engine/CameraEngine**.*')
+        classFilter.add('**/com/otaliastudios/cameraview/engine/Camera1Engine**.*')
+        classFilter.add('**/com/otaliastudios/cameraview/engine/Camera2Engine**.*')
+        classFilter.add('**/com/otaliastudios/cameraview/picture/**.*')
+        classFilter.add('**/com/otaliastudios/cameraview/video/**.*')
+        classFilter.add('**/com/otaliastudios/cameraview/video/encoding/**.*')
     }
     classDirectories = fileTree(dir: classDir, excludes: classFilter);
 

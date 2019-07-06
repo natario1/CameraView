@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.manipulation.Filter;
 import org.mockito.Mockito;
 
 import androidx.test.annotation.UiThreadTest;
@@ -40,6 +41,7 @@ public class MarkerLayoutTest extends BaseTest {
     }
 
     @Test
+    @UiThreadTest
     public void testOnMarker_callsOnAttach() {
         markerLayout.onMarker(MarkerLayout.TYPE_AUTOFOCUS, autoFocusMarker);
         Mockito.verify(autoFocusMarker, Mockito.times(1)).onAttach(
@@ -48,6 +50,7 @@ public class MarkerLayoutTest extends BaseTest {
     }
 
     @Test
+    @UiThreadTest
     public void testOnMarker_addsView() {
         Assert.assertEquals(markerLayout.getChildCount(), 0);
         markerLayout.onMarker(MarkerLayout.TYPE_AUTOFOCUS, autoFocusMarker);
