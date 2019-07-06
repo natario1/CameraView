@@ -19,7 +19,7 @@ import androidx.test.filters.LargeTest;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-@DoNotRunOnTravis(because = "These do work but fail on CI emulators.")
+// @DoNotRunOnTravis(because = "These do work but fail on CI emulators.")
 public class CameraIntegration2Test extends CameraIntegrationTest {
 
     @NonNull
