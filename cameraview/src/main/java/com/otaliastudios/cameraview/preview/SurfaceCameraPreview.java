@@ -26,8 +26,8 @@ public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHold
     private boolean mDispatched;
     private View mRootView;
 
-    public SurfaceCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
-        super(context, parent, callback);
+    public SurfaceCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
+        super(context, parent);
     }
 
     @NonNull
@@ -37,7 +37,6 @@ public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHold
         parent.addView(root, 0);
         SurfaceView surfaceView = root.findViewById(R.id.surface_view);
         final SurfaceHolder holder = surfaceView.getHolder();
-        //noinspection deprecation
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder.addCallback(new SurfaceHolder.Callback() {
 

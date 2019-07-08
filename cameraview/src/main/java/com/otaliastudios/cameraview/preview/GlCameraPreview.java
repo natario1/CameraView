@@ -57,7 +57,7 @@ import javax.microedition.khronos.opengles.GL10;
  * Callbacks are guaranteed to be called on the renderer thread, which means that we can fetch
  * the GL context that was created and is managed by the {@link GLSurfaceView}.
  */
-public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> implements GLSurfaceView.Renderer {
+public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> {
 
     private boolean mDispatched;
     private final float[] mTransformMatrix = new float[16];
@@ -68,33 +68,11 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     @VisibleForTesting float mCropScaleX = 1F;
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
+    private final GLSurfaceView.Renderer mRenderer;
 
-    /**
-     * Method specific to the GL preview. Adds a {@link RendererFrameCallback}
-     * to receive renderer frame events.
-     * @param callback a callback
-     */
-    public void addRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
-        getView().queueEvent(new Runnable() {
-            @Override
-            public void run() {
-                mRendererFrameCallbacks.add(callback);
-                if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
-            }
-        });
-    }
-
-    /**
-     * Method specific to the GL preview. Removes a {@link RendererFrameCallback}
-     * that was previously added to receive renderer frame events.
-     * @param callback a callback
-     */
-    public void removeRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
-        mRendererFrameCallbacks.remove(callback);
-    }
-
-    public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
-        super(context, parent, callback);
+    public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
+        super(context, parent);
+        mRenderer = new Renderer();
     }
 
     @NonNull
@@ -103,11 +81,8 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         ViewGroup root = (ViewGroup) LayoutInflater.from(context).inflate(R.layout.cameraview_gl_view, parent, false);
         GLSurfaceView glView = root.findViewById(R.id.gl_surface_view);
         glView.setEGLContextClientVersion(2);
-        glView.setRenderer(this);
+        glView.setRenderer(mRenderer);
         glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        // Tried these 2 to remove the black background, does not work.
-        // glView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
-        // glView.setZOrderMediaOverlay(true);
         glView.getHolder().addCallback(new SurfaceHolder.Callback() {
             public void surfaceCreated(SurfaceHolder holder) {}
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) { }
@@ -158,80 +133,84 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         }
     }
 
-    @RendererThread
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        mOutputViewport = new EglViewport();
-        mOutputTextureId = mOutputViewport.createTexture();
-        mInputSurfaceTexture = new SurfaceTexture(mOutputTextureId);
-        getView().queueEvent(new Runnable() {
-            @Override
-            public void run() {
-                for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                    callback.onRendererTextureCreated(mOutputTextureId);
+    /**
+     * The core renderer that performs the actual drawing operations.
+     */
+    public class Renderer implements GLSurfaceView.Renderer {
+
+        @RendererThread
+        @Override
+        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+            mOutputViewport = new EglViewport();
+            mOutputTextureId = mOutputViewport.createTexture();
+            mInputSurfaceTexture = new SurfaceTexture(mOutputTextureId);
+            getView().queueEvent(new Runnable() {
+                @Override
+                public void run() {
+                    for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                        callback.onRendererTextureCreated(mOutputTextureId);
+                    }
                 }
+            });
+
+            // Since we are using GLSurfaceView.RENDERMODE_WHEN_DIRTY, we must notify the SurfaceView
+            // of dirtyness, so that it draws again. This is how it's done.
+            mInputSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
+                @Override
+                public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+                    getView().requestRender(); // requestRender is thread-safe.
+                }
+            });
+        }
+
+        @RendererThread
+        @Override
+        public void onSurfaceChanged(GL10 gl, final int width, final int height) {
+            gl.glViewport(0, 0, width, height);
+            if (!mDispatched) {
+                dispatchOnSurfaceAvailable(width, height);
+                mDispatched = true;
+            } else if (width != mOutputSurfaceWidth || height != mOutputSurfaceHeight) {
+                dispatchOnSurfaceSizeChanged(width, height);
             }
-        });
+        }
 
-        // Since we are using GLSurfaceView.RENDERMODE_WHEN_DIRTY, we must notify the SurfaceView
-        // of dirtyness, so that it draws again. This is how it's done.
-        mInputSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
-            @Override
-            public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                getView().requestRender(); // requestRender is thread-safe.
+        @RendererThread
+        @Override
+        public void onDrawFrame(GL10 gl) {
+            if (mInputSurfaceTexture == null) return;
+            // Latch the latest frame.  If there isn't anything new,
+            // we'll just re-use whatever was there before.
+            mInputSurfaceTexture.updateTexImage();
+            if (mInputStreamWidth <= 0 || mInputStreamHeight <= 0) {
+                // Skip drawing. Camera was not opened.
+                return;
             }
-        });
-    }
+            mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
 
-    @RendererThread
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public void onSurfaceChanged(GL10 gl, final int width, final int height) {
-        gl.glViewport(0, 0, width, height);
-        if (!mDispatched) {
-            dispatchOnSurfaceAvailable(width, height);
-            mDispatched = true;
-        } else if (width != mOutputSurfaceWidth || height != mOutputSurfaceHeight){
-            dispatchOnSurfaceSizeChanged(width, height);
-        }
-    }
+            // For Camera2, apply the draw rotation.
+            // See TextureCameraPreview.setDrawRotation() for info.
+            if (mDrawRotation != 0) {
+                Matrix.translateM(mTransformMatrix, 0, 0.5F, 0.5F, 0);
+                Matrix.rotateM(mTransformMatrix, 0, -mDrawRotation, 0, 0, 1);
+                Matrix.translateM(mTransformMatrix, 0, -0.5F, -0.5F, 0);
+            }
 
-    @RendererThread
-    @Override
-    public void onDrawFrame(GL10 gl) {
-        if (mInputSurfaceTexture == null) return;
-        // Latch the latest frame.  If there isn't anything new,
-        // we'll just re-use whatever was there before.
-        mInputSurfaceTexture.updateTexImage();
-        if (mInputStreamWidth <= 0 || mInputStreamHeight <= 0) {
-            // Skip drawing. Camera was not opened.
-            return;
-        }
-        mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
-
-        // For Camera2, apply the draw rotation.
-        // See TextureCameraPreview.setDrawRotation() for info.
-        if (mDrawRotation != 0) {
-            Matrix.translateM(mTransformMatrix, 0, 0.5F, 0.5F, 0);
-            Matrix.rotateM(mTransformMatrix, 0, -mDrawRotation, 0, 0, 1);
-            Matrix.translateM(mTransformMatrix, 0, -0.5F, -0.5F, 0);
-        }
-
-        if (isCropping()) {
-            // Scaling is easy. However:
-            // If the view is 10x1000 (very tall), it will show only the left strip of the preview (not the center one).
-            // If the view is 1000x10 (very large), it will show only the bottom strip of the preview (not the center one).
-            // So we must use Matrix.translateM, and it must happen before the crop.
-            float translX = (1F - mCropScaleX) / 2F;
-            float translY = (1F - mCropScaleY) / 2F;
-            Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
-            Matrix.scaleM(mTransformMatrix, 0, mCropScaleX, mCropScaleY, 1);
-        }
-        // Future note: passing scale to the viewport?
-        // They are scaleX an scaleY, but flipped based on mInputFlipped.
-        mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
-        for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-            callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
+            if (isCropping()) {
+                // Scaling is easy, but we must also translate before:
+                // If the view is 10x1000 (very tall), it will show only the left strip of the preview (not the center one).
+                // If the view is 1000x10 (very large), it will show only the bottom strip of the preview (not the center one).
+                float translX = (1F - mCropScaleX) / 2F;
+                float translY = (1F - mCropScaleY) / 2F;
+                Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
+                Matrix.scaleM(mTransformMatrix, 0, mCropScaleX, mCropScaleY, 1);
+            }
+            // Future note: passing scale to the viewport?
+            // They are scaleX an scaleY, but flipped based on mInputFlipped.
+            mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
+            for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
+            }
         }
     }
 
@@ -262,7 +241,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
      *   platform when its window is positioned asynchronously.
      *
      * But to support older platforms, this seem to work - computing scale values and requesting a new frame,
-     * then drawing it with a scaled transformation matrix. See {@link #onDrawFrame(GL10)}.
+     * then drawing it with a scaled transformation matrix. See {@link Renderer#onDrawFrame(GL10)}.
      */
     @Override
     protected void crop(@NonNull Op<Void> op) {
@@ -284,5 +263,48 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             getView().requestRender();
         }
         op.end(null);
+    }
+
+    /**
+     * Method specific to the GL preview. Adds a {@link RendererFrameCallback}
+     * to receive renderer frame events.
+     * @param callback a callback
+     */
+    public void addRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
+        getView().queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                mRendererFrameCallbacks.add(callback);
+                if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
+            }
+        });
+    }
+
+    /**
+     * Method specific to the GL preview. Removes a {@link RendererFrameCallback}
+     * that was previously added to receive renderer frame events.
+     * @param callback a callback
+     */
+    public void removeRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
+        mRendererFrameCallbacks.remove(callback);
+    }
+
+    /**
+     * Returns the output GL texture id.
+     * @return the output GL texture id
+     */
+    @SuppressWarnings("unused")
+    protected int getTextureId() {
+        return mOutputTextureId;
+    }
+
+    /**
+     * Returns the GL renderer.
+     * @return the GL renderer
+     */
+    @SuppressWarnings("unused")
+    @NonNull
+    protected GLSurfaceView.Renderer getRenderer() {
+        return mRenderer;
     }
 }

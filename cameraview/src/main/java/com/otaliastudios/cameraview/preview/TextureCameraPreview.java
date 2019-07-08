@@ -30,8 +30,8 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
 
     private View mRootView;
 
-    public TextureCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
-        super(context, parent, callback);
+    public TextureCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
+        super(context, parent);
     }
 
     @NonNull

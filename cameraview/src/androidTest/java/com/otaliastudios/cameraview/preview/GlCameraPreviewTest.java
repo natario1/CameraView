@@ -14,8 +14,8 @@ import org.junit.runner.RunWith;
 public class GlCameraPreviewTest extends CameraPreviewTest {
 
     @Override
-    protected CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback) {
-        return new GlCameraPreview(context, parent, callback);
+    protected CameraPreview createPreview(Context context, ViewGroup parent) {
+        return new GlCameraPreview(context, parent);
     }
 
     @Override

@@ -18,8 +18,8 @@ import org.junit.runner.RunWith;
 public class TextureCameraPreviewTest extends CameraPreviewTest {
 
     @Override
-    protected CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback) {
-        return new TextureCameraPreview(context, parent, callback);
+    protected CameraPreview createPreview(Context context, ViewGroup parent) {
+        return new TextureCameraPreview(context, parent);
     }
 
     @Override

@@ -27,7 +27,7 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     private final static long DELAY = 4000;
 
-    protected abstract CameraPreview createPreview(Context context, ViewGroup parent, CameraPreview.SurfaceCallback callback);
+    protected abstract CameraPreview createPreview(Context context, ViewGroup parent);
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
@@ -69,7 +69,8 @@ public abstract class CameraPreviewTest extends BaseTest {
                     }
                 }).when(callback).onSurfaceDestroyed();
 
-                preview = createPreview(a, a.getContentView(), callback);
+                preview = createPreview(a, a.getContentView());
+                preview.setSurfaceCallback(callback);
             }
         });
     }
