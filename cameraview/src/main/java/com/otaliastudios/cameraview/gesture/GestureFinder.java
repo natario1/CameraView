@@ -7,20 +7,28 @@ import android.view.MotionEvent;
 import android.widget.FrameLayout;
 
 /**
- * Base class for gesture layouts, that is, layouts that will capture
- * gestures.
+ * Base class for gesture finders.
+ * Gesture finders are passed down touch events to detect gestures.
  */
-public abstract class GestureLayout extends FrameLayout {
+public abstract class GestureFinder {
+
+    public interface Controller {
+        @NonNull Context getContext();
+        int getWidth();
+        int getHeight();
+    }
 
     // The number of possible values between minValue and maxValue, for the getValue method.
     // We could make this non-static (e.g. larger granularity for exposure correction).
     private final static int GRANULARITY = 50;
+
     private boolean mActive;
     private Gesture mType;
     private PointF[] mPoints;
+    private Controller mController;
 
-    GestureLayout(@NonNull Context context, int points) {
-        super(context);
+    GestureFinder(@NonNull Controller controller, int points) {
+        mController = controller;
         mPoints = new PointF[points];
         for (int i = 0; i < points; i++) {
             mPoints[i] = new PointF(0, 0);
@@ -108,6 +116,7 @@ public abstract class GestureLayout extends FrameLayout {
      * @param which the array position
      * @return the point
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     protected final PointF getPoint(int which) {
         return mPoints[which];

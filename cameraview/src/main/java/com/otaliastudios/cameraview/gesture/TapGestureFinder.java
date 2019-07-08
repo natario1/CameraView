@@ -1,32 +1,22 @@
 package com.otaliastudios.cameraview.gesture;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.content.Context;
-import android.graphics.PointF;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import android.view.GestureDetector;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 
-import com.otaliastudios.cameraview.R;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 
 /**
- * A {@link GestureLayout} that detects {@link Gesture#TAP}
+ * A {@link GestureFinder} that detects {@link Gesture#TAP}
  * and {@link Gesture#LONG_TAP} gestures.
  */
-public class TapGestureLayout extends GestureLayout {
+public class TapGestureFinder extends GestureFinder {
 
     private GestureDetector mDetector;
     private boolean mNotify;
 
-    public TapGestureLayout(@NonNull Context context) {
-        super(context, 1);
-        mDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+    public TapGestureFinder(@NonNull Controller controller) {
+        super(controller, 1);
+        mDetector = new GestureDetector(controller.getContext(), new GestureDetector.SimpleOnGestureListener() {
 
             @Override
             public boolean onSingleTapUp(MotionEvent e) {

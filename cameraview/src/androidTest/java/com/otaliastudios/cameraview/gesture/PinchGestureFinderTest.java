@@ -3,10 +3,7 @@ package com.otaliastudios.cameraview.gesture;
 
 import android.content.Context;
 
-import com.otaliastudios.cameraview.gesture.Gesture;
-import com.otaliastudios.cameraview.gesture.GestureLayoutTest;
-import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
-
+import androidx.annotation.NonNull;
 import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -22,21 +19,21 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class PinchGestureLayoutTest extends GestureLayoutTest<PinchGestureLayout> {
+public class PinchGestureFinderTest extends GestureFinderTest<PinchGestureFinder> {
 
     @Override
-    protected PinchGestureLayout create(Context context) {
-        return new PinchGestureLayout(context);
+    protected PinchGestureFinder createFinder(@NonNull GestureFinder.Controller controller) {
+        return new PinchGestureFinder(controller);
     }
 
     @Test
     public void testDefaults() {
-        assertEquals(layout.getGesture(), Gesture.PINCH);
-        assertEquals(layout.getPoints().length, 2);
-        assertEquals(layout.getPoints()[0].x, 0, 0);
-        assertEquals(layout.getPoints()[0].y, 0, 0);
-        assertEquals(layout.getPoints()[1].x, 0, 0);
-        assertEquals(layout.getPoints()[1].y, 0, 0);
+        assertEquals(finder.getGesture(), Gesture.PINCH);
+        assertEquals(finder.getPoints().length, 2);
+        assertEquals(finder.getPoints()[0].x, 0, 0);
+        assertEquals(finder.getPoints()[0].y, 0, 0);
+        assertEquals(finder.getPoints()[1].x, 0, 0);
+        assertEquals(finder.getPoints()[1].y, 0, 0);
     }
 
     // TODO: test pinch open
@@ -51,15 +48,15 @@ public class PinchGestureLayoutTest extends GestureLayoutTest<PinchGestureLayout
     }
 
     private void testPinch(ViewAction action, boolean increasing) {
-        touch.listen();
-        touch.start();
+        touchOp.listen();
+        touchOp.start();
         onLayout().perform(action);
-        Gesture found = touch.await(10000);
+        Gesture found = touchOp.await(10000);
         assertNotNull(found);
 
         // How will this move  our parameter?
         float curr = 0.5f, min = 0f, max = 1f;
-        float newValue = layout.computeValue(curr, min, max);
+        float newValue = finder.computeValue(curr, min, max);
         if (increasing) {
             assertTrue(newValue > curr);
             assertTrue(newValue <= max);

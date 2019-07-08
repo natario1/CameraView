@@ -28,9 +28,9 @@ import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.gesture.GestureParser;
-import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
-import com.otaliastudios.cameraview.gesture.ScrollGestureLayout;
-import com.otaliastudios.cameraview.gesture.TapGestureLayout;
+import com.otaliastudios.cameraview.gesture.PinchGestureFinder;
+import com.otaliastudios.cameraview.gesture.ScrollGestureFinder;
+import com.otaliastudios.cameraview.gesture.TapGestureFinder;
 import com.otaliastudios.cameraview.engine.MockCameraEngine;
 import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.markers.AutoFocusMarker;
@@ -201,21 +201,21 @@ public class CameraViewTest extends BaseTest {
 
         // PinchGestureLayout
         cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
-        assertTrue(cameraView.mPinchGestureLayout.isActive());
+        assertTrue(cameraView.mPinchGestureFinder.isActive());
         cameraView.clearGesture(Gesture.PINCH);
-        assertFalse(cameraView.mPinchGestureLayout.isActive());
+        assertFalse(cameraView.mPinchGestureFinder.isActive());
 
         // TapGestureLayout
         cameraView.mapGesture(Gesture.TAP, GestureAction.TAKE_PICTURE);
-        assertTrue(cameraView.mTapGestureLayout.isActive());
+        assertTrue(cameraView.mTapGestureFinder.isActive());
         cameraView.clearGesture(Gesture.TAP);
-        assertFalse(cameraView.mPinchGestureLayout.isActive());
+        assertFalse(cameraView.mPinchGestureFinder.isActive());
 
         // ScrollGestureLayout
         cameraView.mapGesture(Gesture.SCROLL_HORIZONTAL, GestureAction.ZOOM);
-        assertTrue(cameraView.mScrollGestureLayout.isActive());
+        assertTrue(cameraView.mScrollGestureFinder.isActive());
         cameraView.clearGesture(Gesture.SCROLL_HORIZONTAL);
-        assertFalse(cameraView.mScrollGestureLayout.isActive());
+        assertFalse(cameraView.mScrollGestureFinder.isActive());
     }
 
     //endregion
@@ -231,7 +231,7 @@ public class CameraViewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                cameraView.mTapGestureLayout = new TapGestureLayout(cameraView.getContext()) {
+                cameraView.mTapGestureFinder = new TapGestureFinder(cameraView.getContext()) {
                     protected boolean handleTouchEvent(@NonNull MotionEvent event) {
                         setGesture(Gesture.TAP);
                         return true;
@@ -253,7 +253,7 @@ public class CameraViewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                cameraView.mTapGestureLayout = new TapGestureLayout(cameraView.getContext()) {
+                cameraView.mTapGestureFinder = new TapGestureFinder(cameraView.getContext()) {
                     protected boolean handleTouchEvent(@NonNull MotionEvent event) {
                         setGesture(Gesture.TAP);
                         return true;
@@ -280,7 +280,7 @@ public class CameraViewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                cameraView.mPinchGestureLayout = new PinchGestureLayout(cameraView.getContext()) {
+                cameraView.mPinchGestureFinder = new PinchGestureFinder(cameraView.getContext()) {
                     @Override
                     protected boolean handleTouchEvent(@NonNull MotionEvent event) {
                         setGesture(Gesture.PINCH);
@@ -321,7 +321,7 @@ public class CameraViewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                cameraView.mScrollGestureLayout = new ScrollGestureLayout(cameraView.getContext()) {
+                cameraView.mScrollGestureFinder = new ScrollGestureFinder(cameraView.getContext()) {
                     @Override
                     protected boolean handleTouchEvent(@NonNull MotionEvent event) {
                         setGesture(Gesture.SCROLL_HORIZONTAL);

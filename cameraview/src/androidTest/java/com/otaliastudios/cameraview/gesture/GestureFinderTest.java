@@ -4,11 +4,14 @@ package com.otaliastudios.cameraview.gesture;
 import android.annotation.TargetApi;
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.rule.ActivityTestRule;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
@@ -21,17 +24,19 @@ import org.junit.Rule;
 import static androidx.test.espresso.Espresso.onView;
 
 @TargetApi(17)
-public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTest {
+public abstract class GestureFinderTest<T extends GestureFinder> extends BaseTest {
 
-    protected abstract T create(Context context);
+    protected abstract T createFinder(@NonNull GestureFinder.Controller controller);
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
     @SuppressWarnings("WeakerAccess")
-    protected T layout;
+    protected T finder;
     @SuppressWarnings("WeakerAccess")
-    protected Op<Gesture> touch;
+    protected Op<Gesture> touchOp;
+    @SuppressWarnings("WeakerAccess")
+    protected ViewGroup layout;
 
     @Before
     public void setUp() {
@@ -39,16 +44,17 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
             @Override
             public void run() {
                 TestActivity a = rule.getActivity();
-                layout = create(a);
-                layout.setActive(true);
+                layout = new FrameLayout(a);
+                finder = createFinder(new Controller());
+                finder.setActive(true);
                 a.inflate(layout);
 
-                touch = new Op<>();
+                touchOp = new Op<>();
                 layout.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View view, MotionEvent motionEvent) {
-                        boolean found = layout.onTouchEvent(motionEvent);
-                        if (found) touch.end(layout.getGesture());
+                        boolean found = finder.onTouchEvent(motionEvent);
+                        if (found) touchOp.end(finder.getGesture());
                         return true;
                     }
                 });
@@ -61,5 +67,24 @@ public abstract class GestureLayoutTest<T extends GestureLayout> extends BaseTes
         return onView(Matchers.<View>is(layout))
                 .inRoot(RootMatchers.withDecorView(
                         Matchers.is(rule.getActivity().getWindow().getDecorView())));
+    }
+
+    private class Controller implements GestureFinder.Controller {
+
+        @NonNull
+        @Override
+        public Context getContext() {
+            return layout.getContext();
+        }
+
+        @Override
+        public int getWidth() {
+            return layout.getWidth();
+        }
+
+        @Override
+        public int getHeight() {
+            return layout.getHeight();
+        }
     }
 }

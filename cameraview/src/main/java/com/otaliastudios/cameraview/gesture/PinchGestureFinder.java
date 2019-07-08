@@ -1,26 +1,25 @@
 package com.otaliastudios.cameraview.gesture;
 
-import android.content.Context;
 import android.os.Build;
 import androidx.annotation.NonNull;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 
 /**
- * A {@link GestureLayout} that detects {@link Gesture#PINCH} gestures.
+ * A {@link GestureFinder} that detects {@link Gesture#PINCH} gestures.
  */
-public class PinchGestureLayout extends GestureLayout {
+public class PinchGestureFinder extends GestureFinder {
 
     private final static float ADD_SENSITIVITY = 2f;
 
-    ScaleGestureDetector mDetector;
+    private ScaleGestureDetector mDetector;
     private boolean mNotify;
     private float mFactor = 0;
 
-    public PinchGestureLayout(@NonNull Context context) {
-        super(context, 2);
+    public PinchGestureFinder(@NonNull Controller controller) {
+        super(controller, 2);
         setGesture(Gesture.PINCH);
-        mDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        mDetector = new ScaleGestureDetector(controller.getContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
                 mNotify = true;
