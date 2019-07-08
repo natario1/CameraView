@@ -406,7 +406,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         outputSurfaces.add(mPreviewStreamSurface);
 
         // 2. VIDEO RECORDING
-        if (mMode == Mode.VIDEO) {
+        if (getMode() == Mode.VIDEO) {
             if (Full2VideoRecorder.SUPPORTS_PERSISTENT_SURFACE) {
                 mFullVideoPersistentSurface = MediaCodec.createPersistentInputSurface();
                 outputSurfaces.add(mFullVideoPersistentSurface);
@@ -422,7 +422,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
 
         // 3. PICTURE RECORDING
-        if (mMode == Mode.PICTURE) {
+        if (getMode() == Mode.PICTURE) {
             mPictureReader = ImageReader.newInstance(
                     mCaptureSize.getWidth(),
                     mCaptureSize.getHeight(),
@@ -433,7 +433,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
 
         // 4. FRAME PROCESSING
-        if (mHasFrameProcessors) {
+        if (hasFrameProcessors()) {
             // Choose the size.
             StreamConfigurationMap streamMap = mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (streamMap == null) throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
@@ -494,8 +494,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             throw new IllegalStateException("previewStreamSize should not be null at this point.");
         }
         mPreview.setStreamSize(previewSizeForView.getWidth(), previewSizeForView.getHeight());
-        mPreview.setDrawRotation(mDisplayOffset);
-        if (mHasFrameProcessors) {
+        mPreview.setDrawRotation(getDisplayOffset());
+        if (hasFrameProcessors()) {
             getFrameManager().setUp(ImageFormat.getBitsPerPixel(FRAME_PROCESSING_FORMAT), mFrameProcessingSize);
         }
 
@@ -537,7 +537,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             mVideoRecorder = null;
         }
         mPictureRecorder = null;
-        if (mHasFrameProcessors) {
+        if (hasFrameProcessors()) {
             getFrameManager().release();
         }
         try {
@@ -764,7 +764,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
         List<Integer> modes = new ArrayList<>();
         for (int mode : modesArray) { modes.add(mode); }
-        if (mMode == Mode.VIDEO &&
+        if (getMode() == Mode.VIDEO &&
                 modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
             builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
             return;
@@ -1064,8 +1064,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void setHasFrameProcessors(final boolean hasFrameProcessors) {
+        super.setHasFrameProcessors(hasFrameProcessors);
         LOG.i("setHasFrameProcessors", "changed to", hasFrameProcessors, "posting.");
-        mHasFrameProcessors = hasFrameProcessors;
         mHandler.run(new Runnable() {
             @Override
             public void run() {

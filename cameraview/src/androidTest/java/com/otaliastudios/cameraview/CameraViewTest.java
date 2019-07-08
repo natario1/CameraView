@@ -231,7 +231,7 @@ public class CameraViewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                cameraView.mTapGestureFinder = new TapGestureFinder(cameraView.getContext()) {
+                cameraView.mTapGestureFinder = new TapGestureFinder(cameraView.mCameraCallbacks) {
                     protected boolean handleTouchEvent(@NonNull MotionEvent event) {
                         setGesture(Gesture.TAP);
                         return true;
@@ -253,7 +253,7 @@ public class CameraViewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                cameraView.mTapGestureFinder = new TapGestureFinder(cameraView.getContext()) {
+                cameraView.mTapGestureFinder = new TapGestureFinder(cameraView.mCameraCallbacks) {
                     protected boolean handleTouchEvent(@NonNull MotionEvent event) {
                         setGesture(Gesture.TAP);
                         return true;
@@ -280,7 +280,7 @@ public class CameraViewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                cameraView.mPinchGestureFinder = new PinchGestureFinder(cameraView.getContext()) {
+                cameraView.mPinchGestureFinder = new PinchGestureFinder(cameraView.mCameraCallbacks) {
                     @Override
                     protected boolean handleTouchEvent(@NonNull MotionEvent event) {
                         setGesture(Gesture.PINCH);
@@ -321,7 +321,7 @@ public class CameraViewTest extends BaseTest {
         ui(new Runnable() {
             @Override
             public void run() {
-                cameraView.mScrollGestureFinder = new ScrollGestureFinder(cameraView.getContext()) {
+                cameraView.mScrollGestureFinder = new ScrollGestureFinder(cameraView.mCameraCallbacks) {
                     @Override
                     protected boolean handleTouchEvent(@NonNull MotionEvent event) {
                         setGesture(Gesture.SCROLL_HORIZONTAL);
@@ -626,7 +626,7 @@ public class CameraViewTest extends BaseTest {
     public void testPreviewStreamSizeSelector() {
         SizeSelector source = SizeSelectors.minHeight(50);
         cameraView.setPreviewStreamSize(source);
-        SizeSelector result = mockController.getInternalPreviewStreamSizeSelector();
+        SizeSelector result = mockController.getPreviewStreamSizeSelector();
         assertNotNull(result);
         assertEquals(result, source);
     }
@@ -635,7 +635,7 @@ public class CameraViewTest extends BaseTest {
     public void testPictureSizeSelector() {
         SizeSelector source = SizeSelectors.minHeight(50);
         cameraView.setPictureSize(source);
-        SizeSelector result = mockController.getInternalPictureSizeSelector();
+        SizeSelector result = mockController.getPictureSizeSelector();
         assertNotNull(result);
         assertEquals(result, source);
     }
@@ -644,7 +644,7 @@ public class CameraViewTest extends BaseTest {
     public void testVideoSizeSelector() {
         SizeSelector source = SizeSelectors.minHeight(50);
         cameraView.setVideoSize(source);
-        SizeSelector result = mockController.getInternalVideoSizeSelector();
+        SizeSelector result = mockController.getVideoSizeSelector();
         assertNotNull(result);
         assertEquals(result, source);
     }

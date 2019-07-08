@@ -87,27 +87,6 @@ public class MockCameraEngine extends CameraEngine {
         mEngineStep.setState(started ? STATE_STARTED : STATE_STOPPED);
     }
 
-    public int getSnapshotMaxWidth() {
-        return mSnapshotMaxWidth;
-    }
-
-    public int getSnapshotMaxHeight() {
-        return mSnapshotMaxHeight;
-    }
-
-    public SizeSelector getInternalPreviewStreamSizeSelector() {
-        return super.getPreviewStreamSizeSelector();
-    }
-
-    public SizeSelector getInternalPictureSizeSelector() {
-        return super.getPictureSizeSelector();
-    }
-
-    public SizeSelector getInternalVideoSizeSelector() {
-        return super.getVideoSizeSelector();
-    }
-
-
     @Override
     public void setZoom(float zoom, @Nullable PointF[] points, boolean notify) {
         mZoomValue = zoom;
@@ -191,11 +170,6 @@ public class MockCameraEngine extends CameraEngine {
 
     @Override
     public void setPlaySounds(boolean playSounds) {
-
-    }
-
-    @Override
-    public void setHasFrameProcessors(boolean hasFrameProcessors) {
 
     }
 

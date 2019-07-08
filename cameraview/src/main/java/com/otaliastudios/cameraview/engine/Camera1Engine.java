@@ -125,7 +125,7 @@ public class Camera1Engine extends CameraEngine implements
         applyWhiteBalance(params, WhiteBalance.AUTO);
         applyHdr(params, Hdr.OFF);
         applyPlaySounds(mPlaySounds);
-        params.setRecordingHint(mMode == Mode.VIDEO);
+        params.setRecordingHint(getMode() == Mode.VIDEO);
         mCamera.setParameters(params);
         mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
         LOG.i("onStartEngine:", "Ended");
@@ -170,7 +170,7 @@ public class Camera1Engine extends CameraEngine implements
         Camera.Parameters params = mCamera.getParameters();
         mPreviewStreamFormat = params.getPreviewFormat();
         params.setPreviewSize(mPreviewStreamSize.getWidth(), mPreviewStreamSize.getHeight()); // <- not allowed during preview
-        if (mMode == Mode.PICTURE) {
+        if (getMode() == Mode.PICTURE) {
             params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
         } else {
             // mCaptureSize in this case is a video size. The available video sizes are not necessarily
@@ -283,11 +283,6 @@ public class Camera1Engine extends CameraEngine implements
             }
         }
         return false;
-    }
-
-    @Override
-    public void setHasFrameProcessors(boolean hasFrameProcessors) {
-        mHasFrameProcessors = hasFrameProcessors;
     }
 
     @NonNull
@@ -443,7 +438,7 @@ public class Camera1Engine extends CameraEngine implements
     private void applyDefaultFocus(@NonNull Camera.Parameters params) {
         List<String> modes = params.getSupportedFocusModes();
 
-        if (mMode == Mode.VIDEO &&
+        if (getMode() == Mode.VIDEO &&
                 modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
             params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
             return;
