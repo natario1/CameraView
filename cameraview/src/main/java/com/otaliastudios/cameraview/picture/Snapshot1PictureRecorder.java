@@ -1,32 +1,17 @@
 package com.otaliastudios.cameraview.picture;
 
-import android.annotation.TargetApi;
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
-import android.opengl.EGL14;
-import android.opengl.EGLContext;
-import android.opengl.Matrix;
-import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
-import com.otaliastudios.cameraview.internal.egl.EglCore;
-import com.otaliastudios.cameraview.internal.egl.EglViewport;
-import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.RotationHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
-import com.otaliastudios.cameraview.preview.CameraPreview;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
-import com.otaliastudios.cameraview.preview.RendererFrameCallback;
-import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -40,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 public class Snapshot1PictureRecorder extends PictureRecorder {
 
     private static final String TAG = Snapshot1PictureRecorder.class.getSimpleName();
+    @SuppressWarnings("unused")
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private Camera1Engine mEngine1;
@@ -47,9 +33,6 @@ public class Snapshot1PictureRecorder extends PictureRecorder {
     private AspectRatio mOutputRatio;
     private int mFormat;
 
-    /**
-     * Camera1 constructor.
-     */
     public Snapshot1PictureRecorder(
             @NonNull PictureResult.Stub stub,
             @NonNull Camera1Engine engine,

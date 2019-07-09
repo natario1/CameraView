@@ -9,6 +9,7 @@ import android.location.Location;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -84,8 +85,8 @@ import java.util.concurrent.TimeUnit;
  * - {@link #start()}: ASYNC - starts the engine (S2). When possible, at a later time, S3 and S4 are also performed.
  * - {@link #stop()}: ASYNC - stops everything: undoes S4, then S3, then S2.
  * - {@link #restart()}: ASYNC - completes a stop then a start.
- * - {@link #destroy()}: ASYNC - performs a {@link #stop()} that will go on no matter the exceptions, without throwing.
- *                               Makes the engine unusable and clears resources.
+ * - {@link #destroy()}: SYNC - performs a {@link #stop()} that will go on no matter the exceptions, without throwing.
+ *                              Makes the engine unusable and clears resources.
  *
  * For example, we expose the engine (S2) state through {@link #getEngineState()}. It will be:
  * - {@link #STATE_STARTING} if we're into step 2
@@ -650,7 +651,7 @@ public abstract class CameraEngine implements
      * that would cause deadlocks due to us awaiting for {@link #stop()} to return.
      */
     public void destroy() {
-        LOG.i("destroy:", "state:", getEngineStateName());
+        LOG.i("destroy:", "state:", getEngineStateName(), "thread:", Thread.currentThread());
         // Prevent CameraEngine leaks. Don't set to null, or exceptions
         // inside the standard stop() method might crash the main thread.
         mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());

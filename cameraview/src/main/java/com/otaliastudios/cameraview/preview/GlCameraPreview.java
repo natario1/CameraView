@@ -68,11 +68,9 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     @VisibleForTesting float mCropScaleX = 1F;
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
-    private final GLSurfaceView.Renderer mRenderer;
 
     public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
         super(context, parent);
-        mRenderer = new Renderer();
     }
 
     @NonNull
@@ -81,7 +79,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         ViewGroup root = (ViewGroup) LayoutInflater.from(context).inflate(R.layout.cameraview_gl_view, parent, false);
         GLSurfaceView glView = root.findViewById(R.id.gl_surface_view);
         glView.setEGLContextClientVersion(2);
-        glView.setRenderer(mRenderer);
+        glView.setRenderer(instantiateRenderer());
         glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         glView.getHolder().addCallback(new SurfaceHolder.Callback() {
             public void surfaceCreated(SurfaceHolder holder) {}
@@ -299,12 +297,11 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     }
 
     /**
-     * Returns the GL renderer.
-     * @return the GL renderer
+     * Creates the renderer for this GL surface.
+     * @return the renderer for this GL surface
      */
-    @SuppressWarnings("unused")
     @NonNull
-    protected GLSurfaceView.Renderer getRenderer() {
-        return mRenderer;
+    protected Renderer instantiateRenderer() {
+        return new Renderer();
     }
 }
