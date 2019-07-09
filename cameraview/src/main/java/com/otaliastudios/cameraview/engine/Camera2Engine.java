@@ -647,7 +647,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void onPictureResult(@Nullable PictureResult.Stub result, @Nullable Exception error) {
         boolean fullPicture = mPictureRecorder instanceof Full2PictureRecorder;
         super.onPictureResult(result, error);
-        //noinspection StatementWithEmptyBody
         if (fullPicture && mPictureCaptureStopsPreview) {
             // See comments in Full2PictureRecorder.
             applyRepeatingRequestBuilder();

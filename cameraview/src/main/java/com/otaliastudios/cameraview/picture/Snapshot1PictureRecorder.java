@@ -59,7 +59,7 @@ public class Snapshot1PictureRecorder extends PictureRecorder {
         mEngine1 = engine;
         mCamera = camera;
         mOutputRatio = outputRatio;
-        mFormat = engine.getPreviewStreamFormat();
+        mFormat = camera.getParameters().getPreviewFormat();
     }
 
     @Override

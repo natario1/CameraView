@@ -40,16 +40,16 @@ public class EglViewport extends EglElement {
     // Stuff from Drawable2d.FULL_RECTANGLE
     // A full square, extending from -1 to +1 in both dimensions.
     // When the model/view/projection matrix is identity, this will exactly cover the viewport.
-    private static final float FULL_RECTANGLE_COORDS[] = {
+    private static final float[] FULL_RECTANGLE_COORDS = {
             -1.0f, -1.0f,   // 0 bottom left
             1.0f, -1.0f,   // 1 bottom right
-            -1.0f,  1.0f,   // 2 top left
-            1.0f,  1.0f,   // 3 top right
+            -1.0f, 1.0f,   // 2 top left
+            1.0f, 1.0f,   // 3 top right
     };
 
     // Stuff from Drawable2d.FULL_RECTANGLE
     // A full square, extending from -1 to +1 in both dimensions.
-    private static final float FULL_RECTANGLE_TEX_COORDS[] = {
+    private static final float[] FULL_RECTANGLE_TEX_COORDS = {
             0.0f, 0.0f,     // 0 bottom left
             1.0f, 0.0f,     // 1 bottom right
             0.0f, 1.0f,     // 2 top left

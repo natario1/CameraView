@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.engine;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.graphics.ImageFormat;
+import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -57,51 +58,83 @@ public class Camera1Engine extends CameraEngine implements
 
     private static final String TAG = Camera1Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
+
+    private static final int PREVIEW_FORMAT = ImageFormat.NV21;
     @VisibleForTesting static final int AUTOFOCUS_END_DELAY_MILLIS = 2500;
 
     private Camera mCamera;
     @VisibleForTesting int mCameraId;
-    private int mPreviewStreamFormat;
-
-
     private Runnable mFocusEndRunnable;
-    private final Runnable mFocusResetRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (!isCameraAvailable()) return;
-            mCamera.cancelAutoFocus();
-            Camera.Parameters params = mCamera.getParameters();
-            int maxAF = params.getMaxNumFocusAreas();
-            int maxAE = params.getMaxNumMeteringAreas();
-            if (maxAF > 0) params.setFocusAreas(null);
-            if (maxAE > 0) params.setMeteringAreas(null);
-            applyDefaultFocus(params); // Revert to internal focus.
-            mCamera.setParameters(params);
-        }
-    };
 
     public Camera1Engine(@NonNull Callback callback) {
         super(callback);
         mMapper = Mapper.get(Engine.CAMERA1);
     }
 
-    private boolean isCameraAvailable() {
-        return getEngineState() == STATE_STARTED;
+    //region Utilities
+
+    @Override
+    public void onError(int error, Camera camera) {
+        if (error == Camera.CAMERA_ERROR_SERVER_DIED) {
+            // Looks like this is recoverable.
+            LOG.w("Recoverable error inside the onError callback.", "CAMERA_ERROR_SERVER_DIED");
+            restart();
+            return;
+        }
+
+        String message = LOG.e("Internal Camera1 error.", error);
+        Exception runtime = new RuntimeException(message);
+        int reason;
+        switch (error) {
+            case Camera.CAMERA_ERROR_EVICTED: reason = CameraException.REASON_DISCONNECTED; break;
+            case Camera.CAMERA_ERROR_UNKNOWN: reason = CameraException.REASON_UNKNOWN; break;
+            default: reason = CameraException.REASON_UNKNOWN;
+        }
+        throw new CameraException(runtime, reason);
     }
 
-    private void schedule(@Nullable final Op<Void> op, final boolean ensureAvailable, final Runnable action) {
-        mHandler.run(new Runnable() {
-            @Override
-            public void run() {
-                if (ensureAvailable && !isCameraAvailable()) {
-                    if (op != null) op.end(null);
-                } else {
-                    action.run();
-                    if (op != null) op.end(null);
-                }
-            }
-        });
+    //endregion
+
+    //region Protected APIs
+
+    @NonNull
+    @Override
+    protected List<Size> getPreviewStreamAvailableSizes() {
+        List<Camera.Size> sizes = mCamera.getParameters().getSupportedPreviewSizes();
+        List<Size> result = new ArrayList<>(sizes.size());
+        for (Camera.Size size : sizes) {
+            Size add = new Size(size.width, size.height);
+            if (!result.contains(add)) result.add(add);
+        }
+        LOG.i("getPreviewStreamAvailableSizes:", result);
+        return result;
     }
+
+    @WorkerThread
+    @Override
+    protected void onPreviewStreamSizeChanged() {
+        restartPreview();
+    }
+
+    @Override
+    protected boolean collectCameraInfo(@NonNull Facing facing) {
+        int internalFacing = mMapper.map(facing);
+        LOG.i("collectCameraInfo", "Facing:", facing, "Internal:", internalFacing, "Cameras:", Camera.getNumberOfCameras());
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
+            Camera.getCameraInfo(i, cameraInfo);
+            if (cameraInfo.facing == internalFacing) {
+                mSensorOffset = cameraInfo.orientation;
+                mCameraId = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //endregion
+
+    //region Start
 
     @NonNull
     @WorkerThread
@@ -119,13 +152,7 @@ public class Camera1Engine extends CameraEngine implements
         LOG.i("onStartEngine:", "Applying default parameters.");
         Camera.Parameters params = mCamera.getParameters();
         mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
-        applyDefaultFocus(params);
-        applyFlash(params, Flash.OFF);
-        applyLocation(params, null);
-        applyWhiteBalance(params, WhiteBalance.AUTO);
-        applyHdr(params, Hdr.OFF);
-        applyPlaySounds(mPlaySounds);
-        params.setRecordingHint(getMode() == Mode.VIDEO);
+        applyAllParameters(params);
         mCamera.setParameters(params);
         mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
         LOG.i("onStartEngine:", "Ended");
@@ -168,10 +195,10 @@ public class Camera1Engine extends CameraEngine implements
         mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
 
         Camera.Parameters params = mCamera.getParameters();
-        mPreviewStreamFormat = params.getPreviewFormat();
-        params.setPreviewSize(mPreviewStreamSize.getWidth(), mPreviewStreamSize.getHeight()); // <- not allowed during preview
+        params.setPreviewFormat(ImageFormat.NV21); // should be the default, but let's make sure, since YuvImage will only support this & a few others
+        params.setPreviewSize(mPreviewStreamSize.getWidth(), mPreviewStreamSize.getHeight()); // not allowed during preview
         if (getMode() == Mode.PICTURE) {
-            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // <- allowed
+            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight()); // allowed during preview
         } else {
             // mCaptureSize in this case is a video size. The available video sizes are not necessarily
             // a subset of the picture sizes, so we can't use the mCaptureSize value: it might crash.
@@ -184,7 +211,7 @@ public class Camera1Engine extends CameraEngine implements
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
-        getFrameManager().setUp(ImageFormat.getBitsPerPixel(mPreviewStreamFormat), mPreviewStreamSize);
+        getFrameManager().setUp(ImageFormat.getBitsPerPixel(PREVIEW_FORMAT), mPreviewStreamSize);
 
         LOG.i("onStartPreview", "Starting preview with startPreview().");
         try {
@@ -197,6 +224,10 @@ public class Camera1Engine extends CameraEngine implements
         return Tasks.forResult(null);
     }
 
+    //endregion
+
+    //region Stop
+
     @NonNull
     @Override
     protected Task<Void> onStopPreview() {
@@ -205,7 +236,6 @@ public class Camera1Engine extends CameraEngine implements
             mVideoRecorder = null;
         }
         mPictureRecorder = null;
-        mPreviewStreamFormat = 0;
         getFrameManager().release();
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         try {
@@ -215,7 +245,6 @@ public class Camera1Engine extends CameraEngine implements
         }
         return Tasks.forResult(null);
     }
-
 
     @NonNull
     @Override
@@ -263,206 +292,9 @@ public class Camera1Engine extends CameraEngine implements
         return Tasks.forResult(null);
     }
 
-    @WorkerThread
-    @Override
-    protected void onPreviewStreamSizeChanged() {
-        restartPreview();
-    }
+    //endregion
 
-    @Override
-    protected boolean collectCameraInfo(@NonNull Facing facing) {
-        int internalFacing = mMapper.map(facing);
-        LOG.i("collectCameraInfo", "Facing:", facing, "Internal:", internalFacing, "Cameras:", Camera.getNumberOfCameras());
-        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-        for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
-            Camera.getCameraInfo(i, cameraInfo);
-            if (cameraInfo.facing == internalFacing) {
-                mSensorOffset = cameraInfo.orientation;
-                mCameraId = i;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @NonNull
-    @Override
-    protected FrameManager instantiateFrameManager() {
-        return new FrameManager(2, this);
-    }
-
-    @Override
-    public void onBufferAvailable(@NonNull byte[] buffer) {
-        // TODO: sync with handler?
-        if (isCameraAvailable()) {
-            mCamera.addCallbackBuffer(buffer);
-        }
-    }
-
-    @Override
-    public void onError(int error, Camera camera) {
-        if (error == Camera.CAMERA_ERROR_SERVER_DIED) {
-            // Looks like this is recoverable.
-            LOG.w("Recoverable error inside the onError callback.", "CAMERA_ERROR_SERVER_DIED");
-            restart();
-            return;
-        }
-
-        String message = LOG.e("Internal Camera1 error.", error);
-        Exception runtime = new RuntimeException(message);
-        int reason;
-        switch (error) {
-            case Camera.CAMERA_ERROR_EVICTED: reason = CameraException.REASON_DISCONNECTED; break;
-            case Camera.CAMERA_ERROR_UNKNOWN: reason = CameraException.REASON_UNKNOWN; break;
-            default: reason = CameraException.REASON_UNKNOWN;
-        }
-        throw new CameraException(runtime, reason);
-    }
-
-    @Override
-    public void setLocation(@Nullable Location location) {
-        final Location oldLocation = mLocation;
-        mLocation = location;
-        schedule(mLocationOp, true, new Runnable() {
-            @Override
-            public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyLocation(params, oldLocation)) mCamera.setParameters(params);
-            }
-        });
-    }
-
-    private boolean applyLocation(@NonNull Camera.Parameters params,
-                                  @SuppressWarnings("unused") @Nullable Location oldLocation) {
-        if (mLocation != null) {
-            params.setGpsLatitude(mLocation.getLatitude());
-            params.setGpsLongitude(mLocation.getLongitude());
-            params.setGpsAltitude(mLocation.getAltitude());
-            params.setGpsTimestamp(mLocation.getTime());
-            params.setGpsProcessingMethod(mLocation.getProvider());
-        }
-        return true;
-    }
-
-    @Override
-    public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
-        final WhiteBalance old = mWhiteBalance;
-        mWhiteBalance = whiteBalance;
-        schedule(mWhiteBalanceOp, true, new Runnable() {
-            @Override
-            public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyWhiteBalance(params, old)) mCamera.setParameters(params);
-            }
-        });
-    }
-
-    private boolean applyWhiteBalance(@NonNull Camera.Parameters params, @NonNull WhiteBalance oldWhiteBalance) {
-        if (mCameraOptions.supports(mWhiteBalance)) {
-            params.setWhiteBalance((String) mMapper.map(mWhiteBalance));
-            return true;
-        }
-        mWhiteBalance = oldWhiteBalance;
-        return false;
-    }
-
-    @Override
-    public void setHdr(@NonNull Hdr hdr) {
-        final Hdr old = mHdr;
-        mHdr = hdr;
-        schedule(mHdrOp, true, new Runnable() {
-            @Override
-            public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyHdr(params, old)) mCamera.setParameters(params);
-            }
-        });
-    }
-
-    private boolean applyHdr(@NonNull Camera.Parameters params, @NonNull Hdr oldHdr) {
-        if (mCameraOptions.supports(mHdr)) {
-            params.setSceneMode((String) mMapper.map(mHdr));
-            return true;
-        }
-        mHdr = oldHdr;
-        return false;
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    @TargetApi(17)
-    private boolean applyPlaySounds(boolean oldPlaySound) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            Camera.CameraInfo info = new Camera.CameraInfo();
-            Camera.getCameraInfo(mCameraId, info);
-            if (info.canDisableShutterSound) {
-                try {
-                    // this method is documented to throw on some occasions. #377
-                    return mCamera.enableShutterSound(mPlaySounds);
-                } catch (RuntimeException exception) {
-                    return false;
-                }
-            }
-        }
-        if (mPlaySounds) {
-            return true;
-        }
-        mPlaySounds = oldPlaySound;
-        return false;
-    }
-
-    @Override
-    public void setFlash(@NonNull Flash flash) {
-        final Flash old = mFlash;
-        mFlash = flash;
-        schedule(mFlashOp, true, new Runnable() {
-            @Override
-            public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyFlash(params, old)) mCamera.setParameters(params);
-            }
-        });
-    }
-
-
-    private boolean applyFlash(@NonNull Camera.Parameters params, @NonNull Flash oldFlash) {
-        if (mCameraOptions.supports(mFlash)) {
-            params.setFlashMode((String) mMapper.map(mFlash));
-            return true;
-        }
-        mFlash = oldFlash;
-        return false;
-    }
-
-
-    // Choose the best default focus, based on session type.
-    private void applyDefaultFocus(@NonNull Camera.Parameters params) {
-        List<String> modes = params.getSupportedFocusModes();
-
-        if (getMode() == Mode.VIDEO &&
-                modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
-            return;
-        }
-
-        if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-            return;
-        }
-
-        if (modes.contains(Camera.Parameters.FOCUS_MODE_INFINITY)) {
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
-            return;
-        }
-
-        if (modes.contains(Camera.Parameters.FOCUS_MODE_FIXED)) {
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
-            //noinspection UnnecessaryReturnStatement
-            return;
-        }
-    }
-
-    // -----------------
-    // Picture recording stuff.
+    //region Pictures
 
     @WorkerThread
     @Override
@@ -488,27 +320,9 @@ public class Camera1Engine extends CameraEngine implements
         mPictureRecorder.take();
     }
 
-    @Override
-    public void onPreviewFrame(@NonNull byte[] data, Camera camera) {
-        Frame frame = getFrameManager().getFrame(data,
-                System.currentTimeMillis(),
-                offset(REF_SENSOR, REF_OUTPUT),
-                mPreviewStreamSize,
-                mPreviewStreamFormat);
-        mCallback.dispatchFrame(frame);
-    }
+    //endregion
 
-    // -----------------
-    // Video recording stuff.
-
-    @Override
-    public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
-        super.onVideoResult(result, exception);
-        if (result == null) {
-            // Something went wrong, lock the camera again.
-            mCamera.lock();
-        }
-    }
+    //region Videos
 
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
@@ -594,62 +408,303 @@ public class Camera1Engine extends CameraEngine implements
         mVideoRecorder.start(stub);
     }
 
-    // -----------------
-    // Zoom and simpler stuff.
+    @Override
+    public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
+        super.onVideoResult(result, exception);
+        if (result == null) {
+            // Something went wrong, lock the camera again.
+            mCamera.lock();
+        }
+    }
 
+    //endregion
+
+    //region Parameters
+
+    private void applyAllParameters(@NonNull Camera.Parameters params) {
+        params.setRecordingHint(getMode() == Mode.VIDEO);
+        applyDefaultFocus(params);
+        applyFlash(params, Flash.OFF);
+        applyLocation(params, null);
+        applyWhiteBalance(params, WhiteBalance.AUTO);
+        applyHdr(params, Hdr.OFF);
+        applyZoom(params, 0F);
+        applyExposureCorrection(params, 0F);
+        applyPlaySounds(mPlaySounds);
+    }
+
+    private void applyDefaultFocus(@NonNull Camera.Parameters params) {
+        List<String> modes = params.getSupportedFocusModes();
+
+        if (getMode() == Mode.VIDEO &&
+                modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+            return;
+        }
+
+        if (modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            return;
+        }
+
+        if (modes.contains(Camera.Parameters.FOCUS_MODE_INFINITY)) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+            return;
+        }
+
+        if (modes.contains(Camera.Parameters.FOCUS_MODE_FIXED)) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
+            //noinspection UnnecessaryReturnStatement
+            return;
+        }
+    }
+
+    @Override
+    public void setFlash(@NonNull Flash flash) {
+        final Flash old = mFlash;
+        mFlash = flash;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyFlash(params, old)) mCamera.setParameters(params);
+                }
+                mFlashOp.end(null);
+            }
+        });
+    }
+
+    private boolean applyFlash(@NonNull Camera.Parameters params, @NonNull Flash oldFlash) {
+        if (mCameraOptions.supports(mFlash)) {
+            params.setFlashMode((String) mMapper.map(mFlash));
+            return true;
+        }
+        mFlash = oldFlash;
+        return false;
+    }
+
+    @Override
+    public void setLocation(@Nullable Location location) {
+        final Location oldLocation = mLocation;
+        mLocation = location;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyLocation(params, oldLocation)) mCamera.setParameters(params);
+                }
+                mLocationOp.end(null);
+            }
+        });
+    }
+
+    private boolean applyLocation(@NonNull Camera.Parameters params,
+                                  @SuppressWarnings("unused") @Nullable Location oldLocation) {
+        if (mLocation != null) {
+            params.setGpsLatitude(mLocation.getLatitude());
+            params.setGpsLongitude(mLocation.getLongitude());
+            params.setGpsAltitude(mLocation.getAltitude());
+            params.setGpsTimestamp(mLocation.getTime());
+            params.setGpsProcessingMethod(mLocation.getProvider());
+        }
+        return true;
+    }
+
+    @Override
+    public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
+        final WhiteBalance old = mWhiteBalance;
+        mWhiteBalance = whiteBalance;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyWhiteBalance(params, old)) mCamera.setParameters(params);
+                }
+                mWhiteBalanceOp.end(null);
+            }
+        });
+    }
+
+    private boolean applyWhiteBalance(@NonNull Camera.Parameters params, @NonNull WhiteBalance oldWhiteBalance) {
+        if (mCameraOptions.supports(mWhiteBalance)) {
+            params.setWhiteBalance((String) mMapper.map(mWhiteBalance));
+            return true;
+        }
+        mWhiteBalance = oldWhiteBalance;
+        return false;
+    }
+
+    @Override
+    public void setHdr(@NonNull Hdr hdr) {
+        final Hdr old = mHdr;
+        mHdr = hdr;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyHdr(params, old)) mCamera.setParameters(params);
+                }
+                mHdrOp.end(null);
+            }
+        });
+    }
+
+    private boolean applyHdr(@NonNull Camera.Parameters params, @NonNull Hdr oldHdr) {
+        if (mCameraOptions.supports(mHdr)) {
+            params.setSceneMode((String) mMapper.map(mHdr));
+            return true;
+        }
+        mHdr = oldHdr;
+        return false;
+    }
 
     @Override
     public void setZoom(final float zoom, @Nullable final PointF[] points, final boolean notify) {
-        schedule(mZoomOp, true, new Runnable() {
+        final float old = mZoomValue;
+        mZoomValue = zoom;
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
-                if (!mCameraOptions.isZoomSupported()) return;
-
-                mZoomValue = zoom;
-                Camera.Parameters params = mCamera.getParameters();
-                float max = params.getMaxZoom();
-                params.setZoom((int) (zoom * max));
-                mCamera.setParameters(params);
-
-                if (notify) {
-                    mCallback.dispatchOnZoomChanged(zoom, points);
+                if (getEngineState() == STATE_STARTED) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyZoom(params, old)) {
+                        mCamera.setParameters(params);
+                        if (notify) {
+                            mCallback.dispatchOnZoomChanged(mZoomValue, points);
+                        }
+                    }
                 }
+                mZoomOp.end(null);
             }
         });
+    }
+
+    private boolean applyZoom(@NonNull Camera.Parameters params, float oldZoom) {
+        if (mCameraOptions.isZoomSupported()) {
+            float max = params.getMaxZoom();
+            params.setZoom((int) (mZoomValue * max));
+            mCamera.setParameters(params);
+            return true;
+        }
+        mZoomValue = oldZoom;
+        return false;
     }
 
     @Override
     public void setExposureCorrection(final float EVvalue, @NonNull final float[] bounds,
-                               @Nullable final PointF[] points, final boolean notify) {
-        schedule(mExposureCorrectionOp, true, new Runnable() {
+                                      @Nullable final PointF[] points, final boolean notify) {
+        final float old = mExposureCorrectionValue;
+        mExposureCorrectionValue = EVvalue;
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
-                if (!mCameraOptions.isExposureCorrectionSupported()) return;
-
-                float value = EVvalue;
-                float max = mCameraOptions.getExposureCorrectionMaxValue();
-                float min = mCameraOptions.getExposureCorrectionMinValue();
-                value = value < min ? min : value > max ? max : value; // cap
-                mExposureCorrectionValue = value;
-                Camera.Parameters params = mCamera.getParameters();
-                int indexValue = (int) (value / params.getExposureCompensationStep());
-                params.setExposureCompensation(indexValue);
-                mCamera.setParameters(params);
-
-                if (notify) {
-                    mCallback.dispatchOnExposureCorrectionChanged(value, bounds, points);
+                if (getEngineState() == STATE_STARTED) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyExposureCorrection(params, old)) {
+                        mCamera.setParameters(params);
+                        if (notify) {
+                            mCallback.dispatchOnExposureCorrectionChanged(mExposureCorrectionValue, bounds, points);
+                        }
+                    }
                 }
+                mExposureCorrectionOp.end(null);
             }
         });
     }
 
-    // -----------------
-    // Tap to focus stuff.
+    private boolean applyExposureCorrection(@NonNull Camera.Parameters params, float oldExposureCorrection) {
+        if (mCameraOptions.isExposureCorrectionSupported()) {
+            // Just make sure we're inside boundaries.
+            float max = mCameraOptions.getExposureCorrectionMaxValue();
+            float min = mCameraOptions.getExposureCorrectionMinValue();
+            float val = mExposureCorrectionValue;
+            val = val < min ? min : val > max ? max : val; // cap
+            mExposureCorrectionValue = val;
+            // Apply.
+            int indexValue = (int) (mExposureCorrectionValue / params.getExposureCompensationStep());
+            params.setExposureCompensation(indexValue);
+            return true;
+        }
+        mExposureCorrectionValue = oldExposureCorrection;
+        return false;
+    }
 
+    @Override
+    public void setPlaySounds(boolean playSounds) {
+        final boolean old = mPlaySounds;
+        mPlaySounds = playSounds;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    applyPlaySounds(old);
+                }
+                mPlaySoundsOp.end(null);
+            }
+        });
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    @TargetApi(17)
+    private boolean applyPlaySounds(boolean oldPlaySound) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            Camera.getCameraInfo(mCameraId, info);
+            if (info.canDisableShutterSound) {
+                try {
+                    // this method is documented to throw on some occasions. #377
+                    return mCamera.enableShutterSound(mPlaySounds);
+                } catch (RuntimeException exception) {
+                    return false;
+                }
+            }
+        }
+        if (mPlaySounds) {
+            return true;
+        }
+        mPlaySounds = oldPlaySound;
+        return false;
+    }
+
+    //endregion
+
+    //region Frame Processing
+
+    @NonNull
+    @Override
+    protected FrameManager instantiateFrameManager() {
+        return new FrameManager(2, this);
+    }
+
+    @Override
+    public void onBufferAvailable(@NonNull byte[] buffer) {
+        if (getEngineState() == STATE_STARTED) {
+            mCamera.addCallbackBuffer(buffer);
+        }
+    }
+
+    @Override
+    public void onPreviewFrame(@NonNull byte[] data, Camera camera) {
+        Frame frame = getFrameManager().getFrame(data,
+                System.currentTimeMillis(),
+                offset(REF_SENSOR, REF_OUTPUT),
+                mPreviewStreamSize,
+                PREVIEW_FORMAT);
+        mCallback.dispatchFrame(frame);
+    }
+
+    //endregion
+
+    //region Auto Focus
 
     @Override
     public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
         // Must get width and height from the UI thread.
+        // TODO could take mPreview.surfaceSize like Camera2 does?
         int viewWidth = 0, viewHeight = 0;
         if (mPreview != null && mPreview.hasSurface()) {
             viewWidth = mPreview.getView().getWidth();
@@ -657,10 +712,10 @@ public class Camera1Engine extends CameraEngine implements
         }
         final int viewWidthF = viewWidth;
         final int viewHeightF = viewHeight;
-        // Schedule.
-        schedule(null, true, new Runnable() {
+        mHandler.run(new Runnable() {
             @Override
             public void run() {
+                if (getEngineState() < STATE_STARTED) return;
                 if (!mCameraOptions.isAutoFocusSupported()) return;
                 final PointF p = new PointF(point.x, point.y); // copy.
                 List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y,
@@ -683,9 +738,7 @@ public class Camera1Engine extends CameraEngine implements
                 mFocusEndRunnable = new Runnable() {
                     @Override
                     public void run() {
-                        if (isCameraAvailable()) {
-                            mCallback.dispatchOnFocusEnd(gesture, false, p);
-                        }
+                        mCallback.dispatchOnFocusEnd(gesture, false, p);
                     }
                 };
                 mHandler.post(AUTOFOCUS_END_DELAY_MILLIS, mFocusEndRunnable);
@@ -712,6 +765,7 @@ public class Camera1Engine extends CameraEngine implements
                     // Let the mFocusEndRunnable do its job. (could remove it and quickly dispatch
                     // onFocusEnd here, but let's make it simpler).
                 }
+
             }
         });
     }
@@ -758,38 +812,21 @@ public class Camera1Engine extends CameraEngine implements
         return new Rect(left, top, right, bottom);
     }
 
-
-    // -----------------
-    // Size stuff.
-
-    public final int getPreviewStreamFormat() {
-        return mPreviewStreamFormat;
-    }
-
-
-    @NonNull
-    @Override
-    protected List<Size> getPreviewStreamAvailableSizes() {
-        List<Camera.Size> sizes = mCamera.getParameters().getSupportedPreviewSizes();
-        List<Size> result = new ArrayList<>(sizes.size());
-        for (Camera.Size size : sizes) {
-            Size add = new Size(size.width, size.height);
-            if (!result.contains(add)) result.add(add);
+    private final Runnable mFocusResetRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (getEngineState() < STATE_STARTED) return;
+            mCamera.cancelAutoFocus();
+            Camera.Parameters params = mCamera.getParameters();
+            int maxAF = params.getMaxNumFocusAreas();
+            int maxAE = params.getMaxNumMeteringAreas();
+            if (maxAF > 0) params.setFocusAreas(null);
+            if (maxAE > 0) params.setMeteringAreas(null);
+            applyDefaultFocus(params); // Revert to internal focus.
+            mCamera.setParameters(params);
         }
-        LOG.i("getPreviewStreamAvailableSizes:", result);
-        return result;
-    }
+    };
 
-    @Override
-    public void setPlaySounds(boolean playSounds) {
-        final boolean old = mPlaySounds;
-        mPlaySounds = playSounds;
-        schedule(mPlaySoundsOp, true, new Runnable() {
-            @Override
-            public void run() {
-                applyPlaySounds(old);
-            }
-        });
-    }
+    //endregion
 }
 
