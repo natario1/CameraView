@@ -4,11 +4,11 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
 
-import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
@@ -58,7 +58,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     @Override
     protected void onStart() {
         mPreview.addRendererFrameCallback(this);
-        mFlipped = mEngine.flip(CameraEngine.REF_SENSOR, CameraEngine.REF_VIEW);
+        mFlipped = mEngine.getAngles().flip(Reference.SENSOR, Reference.VIEW);
         mDesiredState = STATE_RECORDING;
     }
 
@@ -128,7 +128,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             TextureMediaEncoder.TextureFrame textureFrame = textureEncoder.acquireFrame();
             textureFrame.timestamp = surfaceTexture.getTimestamp();
             surfaceTexture.getTransformMatrix(textureFrame.transform);
-            mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
+            if (mEncoderEngine != null) {
+                // can happen on teardown
+                mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
+            }
         }
 
         if (mCurrentState == STATE_RECORDING && mDesiredState == STATE_NOT_RECORDING) {

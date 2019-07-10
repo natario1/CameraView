@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
@@ -13,14 +12,13 @@ import android.os.Build;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Facing;
-import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.internal.egl.EglCore;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
-import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
@@ -107,7 +105,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
                         // Apply scale and crop:
                         // NOTE: scaleX and scaleY are in REF_VIEW, while our input appears to be in REF_SENSOR.
-                        boolean flip = mEngine.flip(CameraEngine.REF_VIEW, CameraEngine.REF_SENSOR);
+                        boolean flip = mEngine.getAngles().flip(Reference.VIEW, Reference.SENSOR);
                         float realScaleX = flip ? scaleY : scaleX;
                         float realScaleY = flip ? scaleX : scaleY;
                         float scaleTranslX = (1F - realScaleX) / 2F;

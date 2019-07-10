@@ -9,6 +9,7 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.RotationHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
@@ -57,7 +58,7 @@ public class Snapshot1PictureRecorder extends PictureRecorder {
                 // Adding EXIF to a byte array, unfortunately, is hard.
                 final int sensorToOutput = mResult.rotation;
                 final Size outputSize = mResult.size;
-                final Size previewStreamSize = mEngine1.getPreviewStreamSize(CameraEngine.REF_SENSOR);
+                final Size previewStreamSize = mEngine1.getPreviewStreamSize(Reference.SENSOR);
                 if (previewStreamSize == null) {
                     throw new IllegalStateException("Preview stream size should never be null here.");
                 }

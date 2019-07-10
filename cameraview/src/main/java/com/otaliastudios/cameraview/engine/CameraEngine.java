@@ -1,15 +1,12 @@
 package com.otaliastudios.cameraview.engine;
 
 import android.content.Context;
-import android.graphics.Camera;
 import android.graphics.PointF;
-import android.hardware.camera2.CameraCharacteristics;
 import android.location.Location;
 
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -22,6 +19,8 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
+import com.otaliastudios.cameraview.engine.offset.Angles;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.internal.utils.Op;
@@ -147,10 +146,6 @@ public abstract class CameraEngine implements
     public static final int STATE_STARTING = CameraEngineStep.STATE_STARTING;
     public static final int STATE_STARTED = CameraEngineStep.STATE_STARTED;
 
-    public static final int REF_SENSOR = 0;
-    public static final int REF_VIEW = 1;
-    public static final int REF_OUTPUT = 2;
-
     // Need to be protected
     @SuppressWarnings("WeakerAccess") protected WorkerHandler mHandler;
     @SuppressWarnings("WeakerAccess") protected final Callback mCallback;
@@ -161,7 +156,6 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess") protected VideoRecorder mVideoRecorder;
     @SuppressWarnings("WeakerAccess") protected Size mCaptureSize;
     @SuppressWarnings("WeakerAccess") protected Size mPreviewStreamSize;
-    @SuppressWarnings("WeakerAccess") protected Facing mFacing;
     @SuppressWarnings("WeakerAccess") protected Flash mFlash;
     @SuppressWarnings("WeakerAccess") protected WhiteBalance mWhiteBalance;
     @SuppressWarnings("WeakerAccess") protected VideoCodec mVideoCodec;
@@ -170,14 +164,15 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess") protected float mZoomValue;
     @SuppressWarnings("WeakerAccess") protected float mExposureCorrectionValue;
     @SuppressWarnings("WeakerAccess") protected boolean mPlaySounds;
-    @SuppressWarnings("WeakerAccess") protected int mSensorOffset;
 
     // Can be private
     @VisibleForTesting Handler mCrashHandler;
     private final FrameManager mFrameManager;
+    private final Angles mAngles;
     @Nullable private SizeSelector mPreviewStreamSizeSelector;
     private SizeSelector mPictureSizeSelector;
     private SizeSelector mVideoSizeSelector;
+    private Facing mFacing;
     private Mode mMode;
     private Audio mAudio;
     private long mVideoMaxSize;
@@ -188,8 +183,6 @@ public abstract class CameraEngine implements
     private long mAutoFocusResetDelayMillis;
     private int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
     private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
-    private int mDisplayOffset;
-    private int mDeviceOrientation;
 
     // Steps
     private final CameraEngineStep.Callback mStepCallback = new CameraEngineStep.Callback() {
@@ -219,6 +212,7 @@ public abstract class CameraEngine implements
         mHandler = WorkerHandler.get("CameraViewEngine");
         mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
         mFrameManager = instantiateFrameManager();
+        mAngles = new Angles();
     }
 
     public void setPreview(@NonNull CameraPreview cameraPreview) {
@@ -573,7 +567,7 @@ public abstract class CameraEngine implements
      */
     @Override
     public final void onSurfaceAvailable() {
-        LOG.i("onSurfaceAvailable:", "Size is", getPreviewSurfaceSize(REF_VIEW));
+        LOG.i("onSurfaceAvailable:", "Size is", getPreviewSurfaceSize(Reference.VIEW));
         mHandler.run(new Runnable() {
             @Override
             public void run() {
@@ -590,7 +584,7 @@ public abstract class CameraEngine implements
 
     @Override
     public final void onSurfaceChanged() {
-        LOG.i("onSurfaceChanged:", "Size is", getPreviewSurfaceSize(REF_VIEW), "Posting.");
+        LOG.i("onSurfaceChanged:", "Size is", getPreviewSurfaceSize(Reference.VIEW), "Posting.");
         mHandler.run(new Runnable() {
             @Override
             public void run() {
@@ -786,19 +780,24 @@ public abstract class CameraEngine implements
 
     //region Final setters and getters
 
-    // This is called before start() and never again.
-    public final void setDisplayOffset(int displayOffset) {
-        mDisplayOffset = displayOffset;
+    @SuppressWarnings("WeakerAccess")
+    public final Angles getAngles() {
+        return mAngles;
     }
 
     @SuppressWarnings("WeakerAccess")
-    public final int getDisplayOffset() {
-        return mDisplayOffset;
+    protected final void setSensorOffset(@NonNull Facing facing, int sensorOffset) {
+        mAngles.setSensorOffset(facing, sensorOffset);
+    }
+
+    // This is called before start() and never again.
+    public final void setDisplayOffset(int displayOffset) {
+        mAngles.setDisplayOffset(displayOffset);
     }
 
     // This can be called multiple times.
     public final void setDeviceOrientation(int deviceOrientation) {
-        mDeviceOrientation = deviceOrientation;
+        mAngles.setDeviceOrientation(deviceOrientation);
     }
 
     public final void setPreviewStreamSizeSelector(@Nullable SizeSelector selector) {
@@ -1019,8 +1018,8 @@ public abstract class CameraEngine implements
      * Camera is about to be opened. Implementors should look into available cameras
      * and see if anyone matches the given {@link Facing value}.
      *
-     * If so, implementors should set {@link #mSensorOffset} and any other information
-     * (like camera ID) needed to start teh engine.
+     * If so, implementors should set {@link #setSensorOffset(Facing, int)} and any other information
+     * (like camera ID) needed to start the engine.
      *
      * @param facing the facing value
      * @return true if we have one
@@ -1087,7 +1086,7 @@ public abstract class CameraEngine implements
     }
 
     /**
-     * The snapshot size is the {@link #getPreviewStreamSize(int)}, but cropped based on the
+     * The snapshot size is the {@link #getPreviewStreamSize(Reference)}, but cropped based on the
      * view/surface aspect ratio.
      * @param stub a picture stub
      * @param viewAspectRatio the view aspect ratio
@@ -1104,9 +1103,6 @@ public abstract class CameraEngine implements
                 stub.isSnapshot = true;
                 stub.facing = mFacing;
                 // Leave the other parameters to subclasses.
-                LOG.v("takePictureSnapshot", "Rotations", "SV", offset(REF_SENSOR, REF_VIEW), "VS", offset(REF_VIEW, REF_SENSOR));
-                LOG.v("takePictureSnapshot", "Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
-                LOG.v("takePictureSnapshot", "Rotations", "VO", offset(REF_VIEW, REF_OUTPUT), "OV", offset(REF_OUTPUT, REF_VIEW));
                 onTakePictureSnapshot(stub, viewAspectRatio);
             }
         });
@@ -1228,73 +1224,31 @@ public abstract class CameraEngine implements
 
     //endregion
 
-    //region Orientation utils
-
-    private int computeSensorToViewOffset() {
-        if (mFacing == Facing.FRONT) {
-            return (360 - ((mSensorOffset + mDisplayOffset) % 360)) % 360;
-        } else {
-            return (mSensorOffset - mDisplayOffset + 360) % 360;
-        }
-    }
-
-    private int computeSensorToOutputOffset() {
-        if (mFacing == Facing.FRONT) {
-            return (mSensorOffset - mDeviceOrientation + 360) % 360;
-        } else {
-            return (mSensorOffset + mDeviceOrientation) % 360;
-        }
-    }
-
-    // o(S, V) - o(S, O)
-    // displayOffset - deviceOrientation
-
-    // Returns the offset between two reference systems.
-    @SuppressWarnings("WeakerAccess")
-    public final int offset(int fromReference, int toReference) {
-        if (fromReference == toReference) return 0;
-        // We only know how to compute offsets with respect to REF_SENSOR.
-        // That's why we separate the two cases.
-        if (fromReference == REF_SENSOR) {
-            return toReference == REF_VIEW ?
-                    computeSensorToViewOffset() :
-                    computeSensorToOutputOffset();
-        }
-        // Maybe the sensor is the other.
-        if (toReference == REF_SENSOR) {
-            return (-offset(toReference, fromReference) + 360) % 360;
-        }
-        // None of them is the sensor. Use a difference.
-        return (offset(REF_SENSOR, toReference) - offset(REF_SENSOR, fromReference) + 360) % 360;
-    }
-
-    public final boolean flip(int reference1, int reference2) {
-        return offset(reference1, reference2) % 180 != 0;
-    }
+    //region Size utilities
 
     @Nullable
-    public final Size getPictureSize(@SuppressWarnings("SameParameterValue") int reference) {
+    public final Size getPictureSize(@SuppressWarnings("SameParameterValue") @NonNull Reference reference) {
         if (mCaptureSize == null || mMode == Mode.VIDEO) return null;
-        return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
+        return getAngles().flip(Reference.SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
     @Nullable
-    public final Size getVideoSize(@SuppressWarnings("SameParameterValue") int reference) {
+    public final Size getVideoSize(@SuppressWarnings("SameParameterValue") @NonNull Reference reference) {
         if (mCaptureSize == null || mMode == Mode.PICTURE) return null;
-        return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
+        return getAngles().flip(Reference.SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
     @Nullable
-    public final Size getPreviewStreamSize(int reference) {
+    public final Size getPreviewStreamSize(@NonNull Reference reference) {
         if (mPreviewStreamSize == null) return null;
-        return flip(REF_SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
+        return getAngles().flip(Reference.SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
     }
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
-    private Size getPreviewSurfaceSize(int reference) {
+    private Size getPreviewSurfaceSize(@NonNull Reference reference) {
         if (mPreview == null) return null;
-        return flip(REF_VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
+        return getAngles().flip(Reference.VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
     }
 
     /**
@@ -1318,10 +1272,10 @@ public abstract class CameraEngine implements
      * apply, despite the capturing mechanism being different.
      */
     @Nullable
-    public final Size getUncroppedSnapshotSize(int reference) {
+    public final Size getUncroppedSnapshotSize(@NonNull Reference reference) {
         Size baseSize = getPreviewStreamSize(reference);
         if (baseSize == null) return null;
-        boolean flip = flip(reference, REF_VIEW);
+        boolean flip = getAngles().flip(reference, Reference.VIEW);
         int maxWidth = flip ? mSnapshotMaxHeight : mSnapshotMaxWidth;
         int maxHeight = flip ? mSnapshotMaxWidth : mSnapshotMaxHeight;
         float baseRatio = AspectRatio.of(baseSize).toFloat();
@@ -1339,11 +1293,6 @@ public abstract class CameraEngine implements
         }
     }
 
-
-    //endregion
-
-    //region Size utils
-
     /**
      * This is called either on cameraView.start(), or when the underlying surface changes.
      * It is possible that in the first call the preview surface has not already computed its
@@ -1358,10 +1307,10 @@ public abstract class CameraEngine implements
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected final Size computeCaptureSize(Mode mode) {
+    protected final Size computeCaptureSize(@NonNull Mode mode) {
         // We want to pass stuff into the REF_VIEW reference, not the sensor one.
         // This is already managed by CameraOptions, so we just flip again at the end.
-        boolean flip = flip(REF_SENSOR, REF_VIEW);
+        boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
         SizeSelector selector;
         Collection<Size> sizes;
         if (mode == Mode.PICTURE) {
@@ -1397,7 +1346,7 @@ public abstract class CameraEngine implements
         @NonNull List<Size> previewSizes = getPreviewStreamAvailableSizes();
         // These sizes come in REF_SENSOR. Since there is an external selector involved,
         // we must convert all of them to REF_VIEW, then flip back when returning.
-        boolean flip = flip(REF_SENSOR, REF_VIEW);
+        boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
         List<Size> sizes = new ArrayList<>(previewSizes.size());
         for (Size size : previewSizes) {
             sizes.add(flip ? size.flip() : size);
@@ -1405,7 +1354,7 @@ public abstract class CameraEngine implements
 
         // Create our own default selector, which will be used if the external mPreviewStreamSizeSelector
         // is null, or if it fails in finding a size.
-        Size targetMinSize = getPreviewSurfaceSize(REF_VIEW);
+        Size targetMinSize = getPreviewSurfaceSize(Reference.VIEW);
         if (targetMinSize == null) throw new IllegalStateException("targetMinSize should not be null here.");
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         if (flip) targetRatio = targetRatio.flip();

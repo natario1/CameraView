@@ -140,7 +140,7 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
                     float scaleX = (float) mOutputSurfaceHeight / mOutputSurfaceWidth;
                     matrix.postScale(scaleX, 1F / scaleX, outputCenterX, outputCenterY);
                 }
-                matrix.postRotate((float) -drawRotation, outputCenterX, outputCenterY);
+                matrix.postRotate((float) drawRotation, outputCenterX, outputCenterY);
                 getView().setTransform(matrix);
                 task.setResult(null);
             }

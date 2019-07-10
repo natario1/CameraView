@@ -44,6 +44,8 @@ import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.engine.offset.Axis;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -299,7 +301,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 CameraCharacteristics characteristics = mManager.getCameraCharacteristics(cameraId);
                 if (internalFacing == readCharacteristic(characteristics, CameraCharacteristics.LENS_FACING, -99)) {
                     mCameraId = cameraId;
-                    mSensorOffset = readCharacteristic(characteristics, CameraCharacteristics.SENSOR_ORIENTATION, 0);
+                    int sensorOffset = readCharacteristic(characteristics, CameraCharacteristics.SENSOR_ORIENTATION, 0);
+                    setSensorOffset(facing, sensorOffset);
                     return true;
                 }
             } catch (CameraAccessException ignore) {
@@ -330,7 +333,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     try {
                         LOG.i("createCamera:", "Applying default parameters.");
                         mCameraCharacteristics = mManager.getCameraCharacteristics(mCameraId);
-                        mCameraOptions = new CameraOptions(mManager, mCameraId, flip(REF_SENSOR, REF_VIEW));
+                        boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
+                        mCameraOptions = new CameraOptions(mManager, mCameraId, flip);
                         createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
                     } catch (CameraAccessException e) {
                         task.trySetException(createCameraException(e));
@@ -489,12 +493,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         LOG.i("onStartPreview", "Dispatching onCameraPreviewStreamSizeChanged.");
         mCallback.onCameraPreviewStreamSizeChanged();
 
-        Size previewSizeForView = getPreviewStreamSize(REF_VIEW);
+        Size previewSizeForView = getPreviewStreamSize(Reference.VIEW);
         if (previewSizeForView == null) {
             throw new IllegalStateException("previewStreamSize should not be null at this point.");
         }
         mPreview.setStreamSize(previewSizeForView.getWidth(), previewSizeForView.getHeight());
-        mPreview.setDrawRotation(getDisplayOffset());
+        mPreview.setDrawRotation(getAngles().offset(Reference.BASE, Reference.VIEW, Axis.ABSOLUTE));
         if (hasFrameProcessors()) {
             getFrameManager().setUp(ImageFormat.getBitsPerPixel(FRAME_PROCESSING_FORMAT), mFrameProcessingSize);
         }
@@ -613,9 +617,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @WorkerThread
     @Override
     protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
-        stub.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
-        stub.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
-        AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
+        stub.size = getUncroppedSnapshotSize(Reference.OUTPUT); // Not the real size: it will be cropped to match the view ratio
+        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR); // Actually it will be rotated and set to 0.
+        AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
         if (mPreview instanceof GlCameraPreview) {
             mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio);
         } else {
@@ -626,8 +630,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     protected void onTakePicture(@NonNull PictureResult.Stub stub) {
-        stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
-        stub.size = getPictureSize(REF_OUTPUT);
+        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+        stub.size = getPictureSize(Reference.OUTPUT);
         try {
             CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             applyAllParameters(builder);
@@ -661,8 +665,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
         LOG.i("onTakeVideo", "called.");
-        stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
-        stub.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
+        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+        stub.size = getAngles().flip(Reference.SENSOR, Reference.OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
         if (!Full2VideoRecorder.SUPPORTS_PERSISTENT_SURFACE) {
             // On API 21 and 22, we must restart the session at each time.
             // Save the pending data and restart the session.
@@ -675,9 +679,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     private void doTakeVideo(@NonNull final VideoResult.Stub stub) {
-        if (!(mVideoRecorder instanceof Full2VideoRecorder)) {
-            mVideoRecorder = new Full2VideoRecorder(this, mCameraId, mFullVideoPersistentSurface);
-        }
+        mVideoRecorder = new Full2VideoRecorder(this, mCameraId, mFullVideoPersistentSurface);
         Full2VideoRecorder recorder = (Full2VideoRecorder) mVideoRecorder;
         try {
             createRepeatingRequestBuilder(CameraDevice.TEMPLATE_RECORD);
@@ -697,10 +699,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    /**
-     * See {@link CameraEngine#onTakeVideoSnapshot(VideoResult.Stub, AspectRatio)}
-     * to read about the size and rotation computation.
-     */
     @WorkerThread
     @Override
     protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
@@ -708,23 +706,20 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
-        Facing realFacing = mFacing;
-        mFacing = Facing.BACK;
-        Size outputSize = getUncroppedSnapshotSize(REF_OUTPUT);
+
+        // Output size is easy:
+        Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
             throw new IllegalStateException("outputSize should not be null.");
         }
-        AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
+        AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
         Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
         outputSize = new Size(outputCrop.width(), outputCrop.height());
         stub.size = outputSize;
-        stub.rotation = offset(REF_VIEW, REF_OUTPUT);
+        stub.rotation = getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
 
-        // Reset facing and start.
-        mFacing = realFacing;
-        if (!(mVideoRecorder instanceof SnapshotVideoRecorder)) {
-            mVideoRecorder = new SnapshotVideoRecorder(this, glPreview);
-        }
+        // Start.
+        mVideoRecorder = new SnapshotVideoRecorder(this, glPreview);
         mVideoRecorder.start(stub);
     }
 
@@ -1052,7 +1047,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (getEngineState() == STATE_STARTED) {
             Frame frame = getFrameManager().getFrame(data,
                     System.currentTimeMillis(),
-                    offset(REF_SENSOR, REF_OUTPUT),
+                    getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR),
                     mFrameProcessingSize,
                     FRAME_PROCESSING_FORMAT);
             mCallback.dispatchFrame(frame);
@@ -1101,12 +1096,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // This is a good Q/A. https://stackoverflow.com/a/33181620/4288782
                 // At first, the point is relative to the View system and does not account our own cropping.
                 // Will keep updating these two below.
-                //noinspection UnnecessaryLocalVariable
                 PointF referencePoint = new PointF(point.x, point.y);
                 Size referenceSize /* = previewSurfaceSize */;
 
                 // 1. Account for cropping.
-                Size previewStreamSize = getPreviewStreamSize(REF_VIEW);
+                Size previewStreamSize = getPreviewStreamSize(Reference.VIEW);
                 Size previewSurfaceSize = mPreview.getSurfaceSize();
                 if (previewStreamSize == null) throw new IllegalStateException("getPreviewStreamSize should not be null at this point.");
                 AspectRatio previewStreamAspectRatio = AspectRatio.of(previewStreamSize);
@@ -1133,7 +1127,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
                 // 3. Rotate to the stream coordinate system.
                 // Not elegant, but the sin/cos way was failing.
-                int angle = offset(REF_SENSOR, REF_VIEW);
+                int angle = getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE);
                 boolean flip = angle % 180 != 0;
                 float tempX = referencePoint.x; float tempY = referencePoint.y;
                 if (angle == 0) {

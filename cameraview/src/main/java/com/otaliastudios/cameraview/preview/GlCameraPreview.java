@@ -190,7 +190,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             // See TextureCameraPreview.setDrawRotation() for info.
             if (mDrawRotation != 0) {
                 Matrix.translateM(mTransformMatrix, 0, 0.5F, 0.5F, 0);
-                Matrix.rotateM(mTransformMatrix, 0, -mDrawRotation, 0, 0, 1);
+                Matrix.rotateM(mTransformMatrix, 0, mDrawRotation, 0, 0, 1);
                 Matrix.translateM(mTransformMatrix, 0, -0.5F, -0.5F, 0);
             }
 

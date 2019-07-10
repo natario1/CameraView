@@ -177,23 +177,4 @@ public class MockCameraEngine extends CameraEngine {
     protected boolean collectCameraInfo(@NonNull Facing facing) {
         return true;
     }
-
-    /*
-
-    @Override
-    public void setFacing(@NonNull Facing facing) {
-        mFacing = facing;
-    }
-
-    @Override
-    public void setMode(@NonNull Mode mode) {
-        mMode = mode;
-    }
-
-    @Override
-    public void setAudio(@NonNull Audio audio) {
-        mAudio = audio;
-    }
-
-    */
 }

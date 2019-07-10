@@ -3,7 +3,6 @@ package com.otaliastudios.cameraview.engine;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.graphics.ImageFormat;
-import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -15,7 +14,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
-import android.util.Log;
 import android.view.SurfaceHolder;
 
 import com.google.android.gms.tasks.Task;
@@ -24,6 +22,8 @@ import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.controls.Engine;
+import com.otaliastudios.cameraview.engine.offset.Axis;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
@@ -35,7 +35,6 @@ import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
-import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.picture.Full1PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
@@ -124,7 +123,7 @@ public class Camera1Engine extends CameraEngine implements
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
             if (cameraInfo.facing == internalFacing) {
-                mSensorOffset = cameraInfo.orientation;
+                setSensorOffset(facing, cameraInfo.orientation);
                 mCameraId = i;
                 return true;
             }
@@ -151,10 +150,10 @@ public class Camera1Engine extends CameraEngine implements
         // Set parameters that might have been set before the camera was opened.
         LOG.i("onStartEngine:", "Applying default parameters.");
         Camera.Parameters params = mCamera.getParameters();
-        mCameraOptions = new CameraOptions(params, flip(REF_SENSOR, REF_VIEW));
+        mCameraOptions = new CameraOptions(params, getAngles().flip(Reference.SENSOR, Reference.VIEW));
         applyAllParameters(params);
         mCamera.setParameters(params);
-        mCamera.setDisplayOrientation(offset(REF_SENSOR, REF_VIEW)); // <- not allowed during preview
+        mCamera.setDisplayOrientation(getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE)); // <- not allowed during preview
         LOG.i("onStartEngine:", "Ended");
         return Tasks.forResult(null);
     }
@@ -188,7 +187,7 @@ public class Camera1Engine extends CameraEngine implements
         LOG.i("onStartPreview", "Dispatching onCameraPreviewStreamSizeChanged.");
         mCallback.onCameraPreviewStreamSizeChanged();
 
-        Size previewSize = getPreviewStreamSize(REF_VIEW);
+        Size previewSize = getPreviewStreamSize(Reference.VIEW);
         if (previewSize == null) {
             throw new IllegalStateException("previewStreamSize should not be null at this point.");
         }
@@ -299,8 +298,8 @@ public class Camera1Engine extends CameraEngine implements
     @WorkerThread
     @Override
     protected void onTakePicture(@NonNull PictureResult.Stub stub) {
-        stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
-        stub.size = getPictureSize(REF_OUTPUT);
+        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+        stub.size = getPictureSize(Reference.OUTPUT);
         mPictureRecorder = new Full1PictureRecorder(stub, Camera1Engine.this, mCamera);
         mPictureRecorder.take();
     }
@@ -308,9 +307,9 @@ public class Camera1Engine extends CameraEngine implements
     @WorkerThread
     @Override
     protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
-        stub.size = getUncroppedSnapshotSize(REF_OUTPUT); // Not the real size: it will be cropped to match the view ratio
-        stub.rotation = offset(REF_SENSOR, REF_OUTPUT); // Actually it will be rotated and set to 0.
-        AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
+        stub.size = getUncroppedSnapshotSize(Reference.OUTPUT); // Not the real size: it will be cropped to match the view ratio
+        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR); // Actually it will be rotated and set to 0.
+        AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
 
         if (mPreview instanceof GlCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio);
@@ -326,8 +325,8 @@ public class Camera1Engine extends CameraEngine implements
 
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
-        stub.rotation = offset(REF_SENSOR, REF_OUTPUT);
-        stub.size = flip(REF_SENSOR, REF_OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
+        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+        stub.size = getAngles().flip(Reference.SENSOR, Reference.OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
         // Unlock the camera and start recording.
         try {
             mCamera.unlock();
@@ -337,9 +336,7 @@ public class Camera1Engine extends CameraEngine implements
             onVideoResult(null, e);
             return;
         }
-        if (!(mVideoRecorder instanceof Full1VideoRecorder)) {
-            mVideoRecorder = new Full1VideoRecorder(Camera1Engine.this, mCamera, mCameraId);
-        }
+        mVideoRecorder = new Full1VideoRecorder(Camera1Engine.this, mCamera, mCameraId);
         mVideoRecorder.start(stub);
     }
 
@@ -355,56 +352,19 @@ public class Camera1Engine extends CameraEngine implements
         }
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
 
-        // Size and rotation turned out to be extremely tricky. In case of Snapshot1PictureRecorder
-        // we use the preview size in REF_OUTPUT (cropped) and offset(REF_SENSOR, REF_OUTPUT) as rotation.
-        // These values mean that we expect input to be in the REF_SENSOR system.
-
-        // Here everything seems different. We would expect a difference because the two snapshot
-        // recorders have different mechanics (the picture one uses a SurfaceTexture with setBufferSize,
-        // the video one here uses the MediaCodec input surface which we can't control).
-
-        // The strangest thing is the fact that the correct angle seems to be the same for FRONT and
-        // BACK sensor, which means that our sensor correction actually screws things up. For this reason
-        // facing value is temporarily set to BACK.
-        Facing realFacing = mFacing;
-        mFacing = Facing.BACK;
-
-        // These are the angles that make it work on a Nexus5X, compared to the offset() results.
-        // For instance, SV means offset(REF_SENSOR, REF_VIEW). The rest should be clear.
-        //    CONFIG   | WANTED |   SV   |   VS   |   VO   |   OV   |   SO   |   OS   |
-        // ------------|--------|--------|--------|--------|--------|--------|--------|
-        //   Vertical  |   0    |   270  |   90   |   0    |   0    |   270  |   90   |
-        //     Left    |   270  |   270  |   90   |  270   |   90   |   180  |   180  |
-        //    Right    |   90   |   270  |   90   |   90   |   270  |    0   |    0   |
-        // Upside down |   180  |   270  |   90   |  180   |   180  |   90   |   270  |
-
-        // The VO is the only correct value. Things change when using FRONT camera, in which case,
-        // no value is actually correct, and the needed values are the same of BACK!
-        //    CONFIG   | WANTED |   SV   |   VS   |   VO   |   OV   |   SO   |   OS   |
-        // ------------|--------|--------|--------|--------|--------|--------|--------|
-        //   Vertical  |   0    |   90   |   270  |  180   |   180  |   270  |   90   |
-        //     Left    |   270  |   90   |   270  |  270   |   90   |    0   |    0   |
-        //    Right    |   90   |   90   |   270  |   90   |   270  |   180  |   180  |
-        // Upside down |   180  |   90   |   270  |   0    |    0   |   90   |   270  |
-
-        // Based on this we will use VO for everything. See if we get issues about distortion
-        // and maybe we can improve. The reason why this happen is beyond my understanding.
-
-        Size outputSize = getUncroppedSnapshotSize(REF_OUTPUT);
+        // Output size is easy:
+        Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
             throw new IllegalStateException("outputSize should not be null.");
         }
-        AspectRatio outputRatio = flip(REF_OUTPUT, REF_VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
+        AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
         Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
         outputSize = new Size(outputCrop.width(), outputCrop.height());
         stub.size = outputSize;
-        stub.rotation = offset(REF_VIEW, REF_OUTPUT);
+        stub.rotation = getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
 
-        // Reset facing and start.
-        mFacing = realFacing;
-        if (!(mVideoRecorder instanceof SnapshotVideoRecorder)) {
-            mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview);
-        }
+        // Start.
+        mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview);
         mVideoRecorder.start(stub);
     }
 
@@ -691,7 +651,7 @@ public class Camera1Engine extends CameraEngine implements
     public void onPreviewFrame(@NonNull byte[] data, Camera camera) {
         Frame frame = getFrameManager().getFrame(data,
                 System.currentTimeMillis(),
-                offset(REF_SENSOR, REF_OUTPUT),
+                getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR),
                 mPreviewStreamSize,
                 PREVIEW_FORMAT);
         mCallback.dispatchFrame(frame);
@@ -718,8 +678,9 @@ public class Camera1Engine extends CameraEngine implements
                 if (getEngineState() < STATE_STARTED) return;
                 if (!mCameraOptions.isAutoFocusSupported()) return;
                 final PointF p = new PointF(point.x, point.y); // copy.
+                int offset = getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE);
                 List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y,
-                        viewWidthF, viewHeightF, offset(REF_SENSOR, REF_VIEW));
+                        viewWidthF, viewHeightF, offset);
                 List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
 
                 // At this point we are sure that camera supports auto focus... right? Look at CameraView.onTouchEvent().

@@ -37,6 +37,7 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.markers.MarkerLayout;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
@@ -342,7 +343,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Size previewSize = mCameraEngine.getPreviewStreamSize(CameraEngine.REF_VIEW);
+        Size previewSize = mCameraEngine.getPreviewStreamSize(Reference.VIEW);
         if (previewSize == null) {
             LOG.w("onMeasure:", "surface is not ready. Calling default behavior.");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -1549,12 +1550,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Get the preview size and crop according to the current view size.
         // It's better to do calculations in the REF_VIEW reference, and then flip if needed.
-        Size preview = mCameraEngine.getUncroppedSnapshotSize(CameraEngine.REF_VIEW);
+        Size preview = mCameraEngine.getUncroppedSnapshotSize(Reference.VIEW);
         if (preview == null) return null; // Should never happen.
         AspectRatio viewRatio = AspectRatio.of(getWidth(), getHeight());
         Rect crop = CropHelper.computeCrop(preview, viewRatio);
         Size cropSize = new Size(crop.width(), crop.height());
-        if (mCameraEngine.flip(CameraEngine.REF_VIEW, CameraEngine.REF_OUTPUT)) {
+        if (mCameraEngine.getAngles().flip(Reference.VIEW, Reference.OUTPUT)) {
             return cropSize.flip();
         } else {
             return cropSize;
@@ -1573,7 +1574,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Nullable
     public Size getPictureSize() {
-        return mCameraEngine.getPictureSize(CameraEngine.REF_OUTPUT);
+        return mCameraEngine.getPictureSize(Reference.OUTPUT);
     }
 
 
@@ -1588,7 +1589,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Nullable
     public Size getVideoSize() {
-        return mCameraEngine.getVideoSize(CameraEngine.REF_OUTPUT);
+        return mCameraEngine.getVideoSize(Reference.OUTPUT);
     }
 
 
