@@ -221,7 +221,6 @@ task mergedCoverageReport(type: JacocoReport) {
         classFilter.add('**/com/otaliastudios/cameraview/engine/CameraEngine**.*')
         classFilter.add('**/com/otaliastudios/cameraview/engine/Camera1Engine**.*')
         classFilter.add('**/com/otaliastudios/cameraview/engine/Camera2Engine**.*')
-        classFilter.add('**/com/otaliastudios/cameraview/engine/offset/**.*')
         classFilter.add('**/com/otaliastudios/cameraview/picture/**.*')
         classFilter.add('**/com/otaliastudios/cameraview/video/**.*')
         classFilter.add('**/com/otaliastudios/cameraview/video/encoding/**.*')

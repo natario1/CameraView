@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.engine.offset;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.otaliastudios.cameraview.controls.Facing;
 
@@ -21,9 +22,9 @@ import com.otaliastudios.cameraview.controls.Facing;
 public class Angles {
 
     private Facing mSensorFacing;
-    private int mSensorOffset = 0;
-    private int mDisplayOffset = 0;
-    private int mDeviceOrientation = 0;
+    @VisibleForTesting int mSensorOffset = 0;
+    @VisibleForTesting int mDisplayOffset = 0;
+    @VisibleForTesting int mDeviceOrientation = 0;
 
     /**
      * We want to keep everything in the {@link Axis#ABSOLUTE} reference,
@@ -80,7 +81,7 @@ public class Angles {
         if (from == to) {
             return 0;
         } else if (to == Reference.BASE) {
-            return 360 - absoluteOffset(to, from);
+            return sanitizeOutput(360 - absoluteOffset(to, from));
         } else if (from == Reference.BASE) {
             switch (to) {
                 case VIEW: return sanitizeOutput(360 - mDisplayOffset);
