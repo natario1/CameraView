@@ -67,11 +67,9 @@ public abstract class CameraPreview<T extends View, Output> {
      * Creates a new preview.
      * @param context a context
      * @param parent where to inflate our view
-     * @param callback the callback
      */
-    public CameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
+    public CameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
         mView = onCreateView(context, parent);
-        mSurfaceCallback = callback;
     }
 
     /**
@@ -79,10 +77,12 @@ public abstract class CameraPreview<T extends View, Output> {
      * @param callback a callback
      */
     public final void setSurfaceCallback(@Nullable SurfaceCallback callback) {
+        if (hasSurface() && mSurfaceCallback != null) {
+            mSurfaceCallback.onSurfaceDestroyed();
+        }
         mSurfaceCallback = callback;
-        // If surface already available, dispatch.
-        if (mOutputSurfaceWidth != 0 || mOutputSurfaceHeight != 0) {
-            if (callback != null) callback.onSurfaceAvailable();
+        if (hasSurface() && mSurfaceCallback != null) {
+            mSurfaceCallback.onSurfaceAvailable();
         }
     }
 

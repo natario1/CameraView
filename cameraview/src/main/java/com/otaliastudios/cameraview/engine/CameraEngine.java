@@ -1,9 +1,7 @@
 package com.otaliastudios.cameraview.engine;
 
 import android.content.Context;
-import android.graphics.Camera;
 import android.graphics.PointF;
-import android.hardware.camera2.CameraCharacteristics;
 import android.location.Location;
 
 
@@ -21,6 +19,8 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
+import com.otaliastudios.cameraview.engine.offset.Angles;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.internal.utils.Op;
@@ -84,8 +84,8 @@ import java.util.concurrent.TimeUnit;
  * - {@link #start()}: ASYNC - starts the engine (S2). When possible, at a later time, S3 and S4 are also performed.
  * - {@link #stop()}: ASYNC - stops everything: undoes S4, then S3, then S2.
  * - {@link #restart()}: ASYNC - completes a stop then a start.
- * - {@link #destroy()}: ASYNC - performs a {@link #stop()} that will go on no matter the exceptions, without throwing.
- *                               Makes the engine unusable and clears resources.
+ * - {@link #destroy()}: SYNC - performs a {@link #stop()} that will go on no matter the exceptions, without throwing.
+ *                              Makes the engine unusable and clears resources.
  *
  * For example, we expose the engine (S2) state through {@link #getEngineState()}. It will be:
  * - {@link #STATE_STARTING} if we're into step 2
@@ -139,59 +139,52 @@ public abstract class CameraEngine implements
     private static final String TAG = CameraEngine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "unused"})
     public static final int STATE_STOPPING = CameraEngineStep.STATE_STOPPING;
     public static final int STATE_STOPPED = CameraEngineStep.STATE_STOPPED;
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "unused"})
     public static final int STATE_STARTING = CameraEngineStep.STATE_STARTING;
     public static final int STATE_STARTED = CameraEngineStep.STATE_STARTED;
 
-    public static final int REF_SENSOR = 0;
-    public static final int REF_VIEW = 1;
-    public static final int REF_OUTPUT = 2;
+    // Need to be protected
+    @SuppressWarnings("WeakerAccess") protected WorkerHandler mHandler;
+    @SuppressWarnings("WeakerAccess") protected final Callback mCallback;
+    @SuppressWarnings("WeakerAccess") protected CameraPreview mPreview;
+    @SuppressWarnings("WeakerAccess") protected CameraOptions mCameraOptions;
+    @SuppressWarnings("WeakerAccess") protected Mapper mMapper;
+    @SuppressWarnings("WeakerAccess") protected PictureRecorder mPictureRecorder;
+    @SuppressWarnings("WeakerAccess") protected VideoRecorder mVideoRecorder;
+    @SuppressWarnings("WeakerAccess") protected Size mCaptureSize;
+    @SuppressWarnings("WeakerAccess") protected Size mPreviewStreamSize;
+    @SuppressWarnings("WeakerAccess") protected Flash mFlash;
+    @SuppressWarnings("WeakerAccess") protected WhiteBalance mWhiteBalance;
+    @SuppressWarnings("WeakerAccess") protected VideoCodec mVideoCodec;
+    @SuppressWarnings("WeakerAccess") protected Hdr mHdr;
+    @SuppressWarnings("WeakerAccess") protected Location mLocation;
+    @SuppressWarnings("WeakerAccess") protected float mZoomValue;
+    @SuppressWarnings("WeakerAccess") protected float mExposureCorrectionValue;
+    @SuppressWarnings("WeakerAccess") protected boolean mPlaySounds;
 
-    protected final Callback mCallback;
-    private final FrameManager mFrameManager;
-    protected CameraPreview mPreview;
-    protected WorkerHandler mHandler;
+    // Can be private
     @VisibleForTesting Handler mCrashHandler;
-
-    protected Facing mFacing;
-    protected Flash mFlash;
-    protected WhiteBalance mWhiteBalance;
-    protected VideoCodec mVideoCodec;
-    protected Mode mMode;
-    protected Hdr mHdr;
-    protected Location mLocation;
-    protected Audio mAudio;
-    protected float mZoomValue;
-    protected float mExposureCorrectionValue;
-    protected boolean mPlaySounds;
-    protected boolean mHasFrameProcessors;
-
+    private final FrameManager mFrameManager;
+    private final Angles mAngles;
     @Nullable private SizeSelector mPreviewStreamSizeSelector;
     private SizeSelector mPictureSizeSelector;
     private SizeSelector mVideoSizeSelector;
+    private Facing mFacing;
+    private Mode mMode;
+    private Audio mAudio;
+    private long mVideoMaxSize;
+    private int mVideoMaxDuration;
+    private int mVideoBitRate;
+    private int mAudioBitRate;
+    private boolean mHasFrameProcessors;
+    private long mAutoFocusResetDelayMillis;
+    private int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+    private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
 
-    @VisibleForTesting int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
-    @VisibleForTesting int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
-
-    protected CameraOptions mCameraOptions;
-    protected Mapper mMapper;
-    protected PictureRecorder mPictureRecorder;
-    protected VideoRecorder mVideoRecorder;
-    protected long mVideoMaxSize;
-    protected int mVideoMaxDuration;
-    protected int mVideoBitRate;
-    protected int mAudioBitRate;
-    protected Size mCaptureSize;
-    protected Size mPreviewStreamSize;
-    protected long mAutoFocusResetDelayMillis;
-
-    protected int mSensorOffset;
-    protected int mDisplayOffset;
-    protected int mDeviceOrientation;
-
+    // Steps
     private final CameraEngineStep.Callback mStepCallback = new CameraEngineStep.Callback() {
         @Override @NonNull public Executor getExecutor() { return mHandler.getExecutor(); }
         @Override public void handleException(@NonNull Exception exception) {
@@ -203,29 +196,23 @@ public abstract class CameraEngine implements
     private CameraEngineStep mPreviewStep = new CameraEngineStep("preview", mStepCallback);
     private CameraEngineStep mAllStep = new CameraEngineStep("all", mStepCallback);
 
-    // Used for testing.
-    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    Op<Void> mZoomOp = new Op<>();
-    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    Op<Void> mExposureCorrectionOp = new Op<>();
-    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    Op<Void> mFlashOp = new Op<>();
-    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    Op<Void> mWhiteBalanceOp = new Op<>();
-    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    Op<Void> mHdrOp = new Op<>();
-    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    Op<Void> mLocationOp = new Op<>();
+    // Ops used for testing.
     @VisibleForTesting Op<Void> mStartVideoOp = new Op<>();
-    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-    Op<Void> mPlaySoundsOp = new Op<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mZoomOp = new Op<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mExposureCorrectionOp = new Op<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mFlashOp = new Op<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mWhiteBalanceOp = new Op<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mHdrOp = new Op<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mLocationOp = new Op<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mPlaySoundsOp = new Op<>();
 
-    protected CameraEngine(Callback callback) {
+    protected CameraEngine(@NonNull Callback callback) {
         mCallback = callback;
         mCrashHandler = new Handler(Looper.getMainLooper());
         mHandler = WorkerHandler.get("CameraViewEngine");
         mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
         mFrameManager = instantiateFrameManager();
+        mAngles = new Angles();
     }
 
     public void setPreview(@NonNull CameraPreview cameraPreview) {
@@ -320,7 +307,7 @@ public abstract class CameraEngine implements
         return mBindStep.getState();
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public final int getPreviewState() {
         return mPreviewStep.getState();
     }
@@ -580,7 +567,7 @@ public abstract class CameraEngine implements
      */
     @Override
     public final void onSurfaceAvailable() {
-        LOG.i("onSurfaceAvailable:", "Size is", getPreviewSurfaceSize(REF_VIEW));
+        LOG.i("onSurfaceAvailable:", "Size is", getPreviewSurfaceSize(Reference.VIEW));
         mHandler.run(new Runnable() {
             @Override
             public void run() {
@@ -597,7 +584,7 @@ public abstract class CameraEngine implements
 
     @Override
     public final void onSurfaceChanged() {
-        LOG.i("onSurfaceChanged:", "Size is", getPreviewSurfaceSize(REF_VIEW), "Posting.");
+        LOG.i("onSurfaceChanged:", "Size is", getPreviewSurfaceSize(Reference.VIEW), "Posting.");
         mHandler.run(new Runnable() {
             @Override
             public void run() {
@@ -658,7 +645,7 @@ public abstract class CameraEngine implements
      * that would cause deadlocks due to us awaiting for {@link #stop()} to return.
      */
     public void destroy() {
-        LOG.i("destroy:", "state:", getEngineStateName());
+        LOG.i("destroy:", "state:", getEngineStateName(), "thread:", Thread.currentThread());
         // Prevent CameraEngine leaks. Don't set to null, or exceptions
         // inside the standard stop() method might crash the main thread.
         mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
@@ -674,6 +661,7 @@ public abstract class CameraEngine implements
         try {
             boolean success = latch.await(3, TimeUnit.SECONDS);
             if (!success) {
+                // TODO seems like this is always the case?
                 LOG.e("Probably some deadlock in destroy.",
                         "Current thread:", Thread.currentThread(),
                         "Handler thread: ", mHandler.getThread());
@@ -790,59 +778,114 @@ public abstract class CameraEngine implements
 
     //endregion
 
-    //region final setters
+    //region Final setters and getters
+
+    @SuppressWarnings("WeakerAccess")
+    public final Angles getAngles() {
+        return mAngles;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected final void setSensorOffset(@NonNull Facing facing, int sensorOffset) {
+        mAngles.setSensorOffset(facing, sensorOffset);
+    }
 
     // This is called before start() and never again.
     public final void setDisplayOffset(int displayOffset) {
-        mDisplayOffset = displayOffset;
+        mAngles.setDisplayOffset(displayOffset);
     }
 
     // This can be called multiple times.
     public final void setDeviceOrientation(int deviceOrientation) {
-        mDeviceOrientation = deviceOrientation;
+        mAngles.setDeviceOrientation(deviceOrientation);
     }
 
     public final void setPreviewStreamSizeSelector(@Nullable SizeSelector selector) {
         mPreviewStreamSizeSelector = selector;
     }
 
+    @Nullable
+    public final SizeSelector getPreviewStreamSizeSelector() {
+        return mPreviewStreamSizeSelector;
+    }
+
     public final void setPictureSizeSelector(@NonNull SizeSelector selector) {
         mPictureSizeSelector = selector;
+    }
+
+    @NonNull
+    public final SizeSelector getPictureSizeSelector() {
+        return mPictureSizeSelector;
     }
 
     public final void setVideoSizeSelector(@NonNull SizeSelector selector) {
         mVideoSizeSelector = selector;
     }
 
+    @NonNull
+    public final SizeSelector getVideoSizeSelector() {
+        return mVideoSizeSelector;
+    }
+
     public final void setVideoMaxSize(long videoMaxSizeBytes) {
         mVideoMaxSize = videoMaxSizeBytes;
+    }
+
+    public final long getVideoMaxSize() {
+        return mVideoMaxSize;
     }
 
     public final void setVideoMaxDuration(int videoMaxDurationMillis) {
         mVideoMaxDuration = videoMaxDurationMillis;
     }
 
+    public final int getVideoMaxDuration() {
+        return mVideoMaxDuration;
+    }
+
     public final void setVideoCodec(@NonNull VideoCodec codec) {
         mVideoCodec = codec;
+    }
+
+    public final VideoCodec getVideoCodec() {
+        return mVideoCodec;
     }
 
     public final void setVideoBitRate(int videoBitRate) {
         mVideoBitRate = videoBitRate;
     }
 
+    public final int getVideoBitRate() {
+        return mVideoBitRate;
+    }
+
     public final void setAudioBitRate(int audioBitRate) {
         mAudioBitRate = audioBitRate;
+    }
+
+    public final int getAudioBitRate() {
+        return mAudioBitRate;
     }
 
     public final void setSnapshotMaxWidth(int maxWidth) {
         mSnapshotMaxWidth = maxWidth;
     }
 
+    public int getSnapshotMaxWidth() {
+        return mSnapshotMaxWidth;
+    }
+
     public final void setSnapshotMaxHeight(int maxHeight) {
         mSnapshotMaxHeight = maxHeight;
     }
 
+    public int getSnapshotMaxHeight() {
+        return mSnapshotMaxHeight;
+    }
+
     public final void setAutoFocusResetDelay(long delayMillis) { mAutoFocusResetDelayMillis = delayMillis; }
+
+    public final long getAutoFocusResetDelay() { return mAutoFocusResetDelayMillis; }
 
     /**
      * Sets a new facing value. This will restart the session (if there's any)
@@ -867,6 +910,11 @@ public abstract class CameraEngine implements
         }
     }
 
+    @NonNull
+    public final Facing getFacing() {
+        return mFacing;
+    }
+
     /**
      * Sets a new audio value that will be used for video recordings.
      * @param audio desired audio
@@ -879,6 +927,11 @@ public abstract class CameraEngine implements
             }
             mAudio = audio;
         }
+    }
+
+    @NonNull
+    public final Audio getAudio() {
+        return mAudio;
     }
 
     /**
@@ -899,6 +952,64 @@ public abstract class CameraEngine implements
         }
     }
 
+    @NonNull
+    public final Mode getMode() {
+        return mMode;
+    }
+
+    @NonNull
+    public final FrameManager getFrameManager() {
+        return mFrameManager;
+    }
+
+    @Nullable
+    public final CameraOptions getCameraOptions() {
+        return mCameraOptions;
+    }
+
+    @NonNull
+    public final Flash getFlash() {
+        return mFlash;
+    }
+
+    @NonNull
+    public final WhiteBalance getWhiteBalance() {
+        return mWhiteBalance;
+    }
+
+    @NonNull
+    public final Hdr getHdr() {
+        return mHdr;
+    }
+
+    @Nullable
+    public final Location getLocation() {
+        return mLocation;
+    }
+
+    public final float getZoomValue() {
+        return mZoomValue;
+    }
+
+    public final float getExposureCorrectionValue() {
+        return mExposureCorrectionValue;
+    }
+
+    @CallSuper
+    public void setHasFrameProcessors(boolean hasFrameProcessors) {
+        mHasFrameProcessors = hasFrameProcessors;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public final boolean hasFrameProcessors() {
+        return mHasFrameProcessors;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected final boolean shouldResetAutoFocus() {
+        return mAutoFocusResetDelayMillis > 0 && mAutoFocusResetDelayMillis != Long.MAX_VALUE;
+    }
+
     //endregion
 
     //region Abstract setters and APIs
@@ -907,8 +1018,8 @@ public abstract class CameraEngine implements
      * Camera is about to be opened. Implementors should look into available cameras
      * and see if anyone matches the given {@link Facing value}.
      *
-     * If so, implementors should set {@link #mSensorOffset} and any other information
-     * (like camera ID) needed to start teh engine.
+     * If so, implementors should set {@link #setSensorOffset(Facing, int)} and any other information
+     * (like camera ID) needed to start the engine.
      *
      * @param facing the facing value
      * @return true if we have one
@@ -945,11 +1056,13 @@ public abstract class CameraEngine implements
 
     public abstract void setPlaySounds(boolean playSounds);
 
-    public abstract void setHasFrameProcessors(boolean hasFrameProcessors);
-
     //endregion
 
     //region picture and video control
+
+    public final boolean isTakingPicture() {
+        return mPictureRecorder != null;
+    }
 
     /* not final for tests */
     public void takePicture(final @NonNull PictureResult.Stub stub) {
@@ -970,10 +1083,10 @@ public abstract class CameraEngine implements
                 onTakePicture(stub);
             }
         });
-    };
+    }
 
     /**
-     * The snapshot size is the {@link #getPreviewStreamSize(int)}, but cropped based on the
+     * The snapshot size is the {@link #getPreviewStreamSize(Reference)}, but cropped based on the
      * view/surface aspect ratio.
      * @param stub a picture stub
      * @param viewAspectRatio the view aspect ratio
@@ -990,9 +1103,6 @@ public abstract class CameraEngine implements
                 stub.isSnapshot = true;
                 stub.facing = mFacing;
                 // Leave the other parameters to subclasses.
-                LOG.v("takePictureSnapshot", "Rotations", "SV", offset(REF_SENSOR, REF_VIEW), "VS", offset(REF_VIEW, REF_SENSOR));
-                LOG.v("takePictureSnapshot", "Rotations", "SO", offset(REF_SENSOR, REF_OUTPUT), "OS", offset(REF_OUTPUT, REF_SENSOR));
-                LOG.v("takePictureSnapshot", "Rotations", "VO", offset(REF_VIEW, REF_OUTPUT), "OV", offset(REF_OUTPUT, REF_VIEW));
                 onTakePictureSnapshot(stub, viewAspectRatio);
             }
         });
@@ -1012,6 +1122,10 @@ public abstract class CameraEngine implements
             LOG.e("onPictureResult", "result is null: something went wrong.", error);
             mCallback.dispatchError(new CameraException(error, CameraException.REASON_PICTURE_FAILED));
         }
+    }
+
+    public final boolean isTakingVideo() {
+        return mVideoRecorder != null && mVideoRecorder.isRecording();
     }
 
     public final void takeVideo(final @NonNull VideoResult.Stub stub, final @NonNull File file) {
@@ -1110,187 +1224,31 @@ public abstract class CameraEngine implements
 
     //endregion
 
-    //region final getters
-
-    @NonNull
-    public final FrameManager getFrameManager() {
-        return mFrameManager;
-    }
+    //region Size utilities
 
     @Nullable
-    public final CameraOptions getCameraOptions() {
-        return mCameraOptions;
-    }
-
-    @NonNull
-    public final Facing getFacing() {
-        return mFacing;
-    }
-
-    @NonNull
-    public final Flash getFlash() {
-        return mFlash;
-    }
-
-    @NonNull
-    public final WhiteBalance getWhiteBalance() {
-        return mWhiteBalance;
-    }
-
-    public final VideoCodec getVideoCodec() {
-        return mVideoCodec;
-    }
-
-    public final int getVideoBitRate() {
-        return mVideoBitRate;
-    }
-
-    public final long getVideoMaxSize() {
-        return mVideoMaxSize;
-    }
-
-    public final int getVideoMaxDuration() {
-        return mVideoMaxDuration;
-    }
-
-    @NonNull
-    public final Mode getMode() {
-        return mMode;
-    }
-
-    @NonNull
-    public final Hdr getHdr() {
-        return mHdr;
-    }
-
-    @Nullable
-    public final Location getLocation() {
-        return mLocation;
-    }
-
-    @NonNull
-    public final Audio getAudio() {
-        return mAudio;
-    }
-
-    public final int getAudioBitRate() {
-        return mAudioBitRate;
-    }
-
-    @SuppressWarnings("unused")
-    @Nullable
-    @VisibleForTesting
-    final SizeSelector getPreviewStreamSizeSelector() {
-        return mPreviewStreamSizeSelector;
-    }
-
-    @SuppressWarnings("unused")
-    @NonNull
-    public final SizeSelector getPictureSizeSelector() {
-        return mPictureSizeSelector;
-    }
-
-    @SuppressWarnings("unused")
-    @NonNull
-    public final SizeSelector getVideoSizeSelector() {
-        return mVideoSizeSelector;
-    }
-
-    public final float getZoomValue() {
-        return mZoomValue;
-    }
-
-    public final float getExposureCorrectionValue() {
-        return mExposureCorrectionValue;
-    }
-
-    public final boolean isTakingVideo() {
-        return mVideoRecorder != null && mVideoRecorder.isRecording();
-    }
-
-    public final boolean isTakingPicture() {
-        return mPictureRecorder != null;
-    }
-
-    public final long getAutoFocusResetDelay() { return mAutoFocusResetDelayMillis; }
-
-    public boolean getHasFrameProcessors() {
-        return mHasFrameProcessors;
-    }
-
-    //endregion
-
-    final boolean shouldResetAutoFocus() {
-        return mAutoFocusResetDelayMillis > 0 && mAutoFocusResetDelayMillis != Long.MAX_VALUE;
-    }
-
-    //region Orientation utils
-
-    private int computeSensorToViewOffset() {
-        if (mFacing == Facing.FRONT) {
-            return (360 - ((mSensorOffset + mDisplayOffset) % 360)) % 360;
-        } else {
-            return (mSensorOffset - mDisplayOffset + 360) % 360;
-        }
-    }
-
-    private int computeSensorToOutputOffset() {
-        if (mFacing == Facing.FRONT) {
-            return (mSensorOffset - mDeviceOrientation + 360) % 360;
-        } else {
-            return (mSensorOffset + mDeviceOrientation) % 360;
-        }
-    }
-
-    // o(S, V) - o(S, O)
-    // displayOffset - deviceOrientation
-
-    // Returns the offset between two reference systems.
-    @SuppressWarnings("WeakerAccess")
-    public final int offset(int fromReference, int toReference) {
-        if (fromReference == toReference) return 0;
-        // We only know how to compute offsets with respect to REF_SENSOR.
-        // That's why we separate the two cases.
-        if (fromReference == REF_SENSOR) {
-            return toReference == REF_VIEW ?
-                    computeSensorToViewOffset() :
-                    computeSensorToOutputOffset();
-        }
-        // Maybe the sensor is the other.
-        if (toReference == REF_SENSOR) {
-            return (-offset(toReference, fromReference) + 360) % 360;
-        }
-        // None of them is the sensor. Use a difference.
-        return (offset(REF_SENSOR, toReference) - offset(REF_SENSOR, fromReference) + 360) % 360;
-    }
-
-    public final boolean flip(int reference1, int reference2) {
-        return offset(reference1, reference2) % 180 != 0;
-    }
-
-    @Nullable
-    public final Size getPictureSize(@SuppressWarnings("SameParameterValue") int reference) {
+    public final Size getPictureSize(@SuppressWarnings("SameParameterValue") @NonNull Reference reference) {
         if (mCaptureSize == null || mMode == Mode.VIDEO) return null;
-        return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
+        return getAngles().flip(Reference.SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
     @Nullable
-    public final Size getVideoSize(@SuppressWarnings("SameParameterValue") int reference) {
+    public final Size getVideoSize(@SuppressWarnings("SameParameterValue") @NonNull Reference reference) {
         if (mCaptureSize == null || mMode == Mode.PICTURE) return null;
-        return flip(REF_SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
+        return getAngles().flip(Reference.SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
     }
 
     @Nullable
-    public final Size getPreviewStreamSize(int reference) {
+    public final Size getPreviewStreamSize(@NonNull Reference reference) {
         if (mPreviewStreamSize == null) return null;
-        return flip(REF_SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
+        return getAngles().flip(Reference.SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
     }
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
-    private Size getPreviewSurfaceSize(int reference) {
+    private Size getPreviewSurfaceSize(@NonNull Reference reference) {
         if (mPreview == null) return null;
-        return flip(REF_VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
+        return getAngles().flip(Reference.VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
     }
 
     /**
@@ -1314,10 +1272,10 @@ public abstract class CameraEngine implements
      * apply, despite the capturing mechanism being different.
      */
     @Nullable
-    public final Size getUncroppedSnapshotSize(int reference) {
+    public final Size getUncroppedSnapshotSize(@NonNull Reference reference) {
         Size baseSize = getPreviewStreamSize(reference);
         if (baseSize == null) return null;
-        boolean flip = flip(reference, REF_VIEW);
+        boolean flip = getAngles().flip(reference, Reference.VIEW);
         int maxWidth = flip ? mSnapshotMaxHeight : mSnapshotMaxWidth;
         int maxHeight = flip ? mSnapshotMaxWidth : mSnapshotMaxHeight;
         float baseRatio = AspectRatio.of(baseSize).toFloat();
@@ -1335,11 +1293,6 @@ public abstract class CameraEngine implements
         }
     }
 
-
-    //endregion
-
-    //region Size utils
-
     /**
      * This is called either on cameraView.start(), or when the underlying surface changes.
      * It is possible that in the first call the preview surface has not already computed its
@@ -1354,10 +1307,10 @@ public abstract class CameraEngine implements
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected final Size computeCaptureSize(Mode mode) {
+    protected final Size computeCaptureSize(@NonNull Mode mode) {
         // We want to pass stuff into the REF_VIEW reference, not the sensor one.
         // This is already managed by CameraOptions, so we just flip again at the end.
-        boolean flip = flip(REF_SENSOR, REF_VIEW);
+        boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
         SizeSelector selector;
         Collection<Size> sizes;
         if (mode == Mode.PICTURE) {
@@ -1393,7 +1346,7 @@ public abstract class CameraEngine implements
         @NonNull List<Size> previewSizes = getPreviewStreamAvailableSizes();
         // These sizes come in REF_SENSOR. Since there is an external selector involved,
         // we must convert all of them to REF_VIEW, then flip back when returning.
-        boolean flip = flip(REF_SENSOR, REF_VIEW);
+        boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
         List<Size> sizes = new ArrayList<>(previewSizes.size());
         for (Size size : previewSizes) {
             sizes.add(flip ? size.flip() : size);
@@ -1401,7 +1354,7 @@ public abstract class CameraEngine implements
 
         // Create our own default selector, which will be used if the external mPreviewStreamSizeSelector
         // is null, or if it fails in finding a size.
-        Size targetMinSize = getPreviewSurfaceSize(REF_VIEW);
+        Size targetMinSize = getPreviewSurfaceSize(Reference.VIEW);
         if (targetMinSize == null) throw new IllegalStateException("targetMinSize should not be null here.");
         AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
         if (flip) targetRatio = targetRatio.flip();

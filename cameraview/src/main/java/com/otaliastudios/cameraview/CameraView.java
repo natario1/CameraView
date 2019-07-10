@@ -37,6 +37,7 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.markers.MarkerLayout;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
@@ -50,11 +51,11 @@ import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
-import com.otaliastudios.cameraview.gesture.GestureLayout;
+import com.otaliastudios.cameraview.gesture.GestureFinder;
 import com.otaliastudios.cameraview.gesture.GestureParser;
-import com.otaliastudios.cameraview.gesture.PinchGestureLayout;
-import com.otaliastudios.cameraview.gesture.ScrollGestureLayout;
-import com.otaliastudios.cameraview.gesture.TapGestureLayout;
+import com.otaliastudios.cameraview.gesture.PinchGestureFinder;
+import com.otaliastudios.cameraview.gesture.ScrollGestureFinder;
+import com.otaliastudios.cameraview.gesture.TapGestureFinder;
 import com.otaliastudios.cameraview.internal.GridLinesLayout;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.OrientationHelper;
@@ -115,11 +116,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @VisibleForTesting List<FrameProcessor> mFrameProcessors = new CopyOnWriteArrayList<>();
     private Lifecycle mLifecycle;
 
+    // Gestures
+    @VisibleForTesting PinchGestureFinder mPinchGestureFinder;
+    @VisibleForTesting TapGestureFinder mTapGestureFinder;
+    @VisibleForTesting ScrollGestureFinder mScrollGestureFinder;
+
     // Views
     GridLinesLayout mGridLinesLayout;
-    PinchGestureLayout mPinchGestureLayout;
-    TapGestureLayout mTapGestureLayout;
-    ScrollGestureLayout mScrollGestureLayout;
     MarkerLayout mMarkerLayout;
     private boolean mKeepScreenOn;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
@@ -173,16 +176,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mUiHandler = new Handler(Looper.getMainLooper());
         mFrameProcessorsHandler = WorkerHandler.get("FrameProcessorsWorker");
 
+        // Gestures
+        mPinchGestureFinder = new PinchGestureFinder(mCameraCallbacks);
+        mTapGestureFinder = new TapGestureFinder(mCameraCallbacks);
+        mScrollGestureFinder = new ScrollGestureFinder(mCameraCallbacks);
+
         // Views
         mGridLinesLayout = new GridLinesLayout(context);
-        mPinchGestureLayout = new PinchGestureLayout(context);
-        mTapGestureLayout = new TapGestureLayout(context);
-        mScrollGestureLayout = new ScrollGestureLayout(context);
         mMarkerLayout = new MarkerLayout(context);
         addView(mGridLinesLayout);
-        addView(mPinchGestureLayout);
-        addView(mTapGestureLayout);
-        addView(mScrollGestureLayout);
         addView(mMarkerLayout);
 
         // Create the engine
@@ -226,6 +228,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
+     * Engine is instantiated on creation and anytime
+     * {@link #setEngine(Engine)} is called.
+     */
+    private void doInstantiateEngine() {
+        mCameraEngine = instantiateCameraEngine(mEngine, mCameraCallbacks);
+    }
+
+    /**
+     * Preview is instantiated {@link #onAttachedToWindow()}, because
+     * we want to know if we're hardware accelerated or not.
+     * However, in tests, we might want to create the preview right after constructor.
+     */
+    @VisibleForTesting
+    void doInstantiatePreview() {
+        mCameraPreview = instantiatePreview(mPreview, getContext(), this);
+        mCameraEngine.setPreview(mCameraPreview);
+    }
+
+
+    /**
      * Instantiates the camera engine.
      *
      * @param engine the engine preference
@@ -255,28 +277,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         LOG.w("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
         switch (preview) {
             case SURFACE:
-                return new SurfaceCameraPreview(context, container, null);
+                return new SurfaceCameraPreview(context, container);
             case TEXTURE: {
                 if (isHardwareAccelerated()) {
                     // TextureView is not supported without hardware acceleration.
-                    return new TextureCameraPreview(context, container, null);
+                    return new TextureCameraPreview(context, container);
                 }
             }
             case GL_SURFACE: default: {
                 mPreview = Preview.GL_SURFACE;
-                return new GlCameraPreview(context, container, null);
+                return new GlCameraPreview(context, container);
             }
         }
-    }
-
-    @VisibleForTesting
-    void doInstantiatePreview() {
-        mCameraPreview = instantiatePreview(mPreview, getContext(), this);
-        mCameraEngine.setPreview(mCameraPreview);
-    }
-
-    private void doInstantiateEngine() {
-        mCameraEngine = instantiateCameraEngine(mEngine, mCameraCallbacks);
     }
 
     @Override
@@ -331,7 +343,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Size previewSize = mCameraEngine.getPreviewStreamSize(CameraEngine.REF_VIEW);
+        Size previewSize = mCameraEngine.getPreviewStreamSize(Reference.VIEW);
         if (previewSize == null) {
             LOG.w("onMeasure:", "surface is not ready. Calling default behavior.");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -474,19 +486,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mGestureMap.put(gesture, action);
             switch (gesture) {
                 case PINCH:
-                    mPinchGestureLayout.setActive(mGestureMap.get(Gesture.PINCH) != none);
+                    mPinchGestureFinder.setActive(mGestureMap.get(Gesture.PINCH) != none);
                     break;
                 case TAP:
                 // case DOUBLE_TAP:
                 case LONG_TAP:
-                    mTapGestureLayout.setActive(
+                    mTapGestureFinder.setActive(
                             mGestureMap.get(Gesture.TAP) != none ||
                             // mGestureMap.get(Gesture.DOUBLE_TAP) != none ||
                             mGestureMap.get(Gesture.LONG_TAP) != none);
                     break;
                 case SCROLL_HORIZONTAL:
                 case SCROLL_VERTICAL:
-                    mScrollGestureLayout.setActive(
+                    mScrollGestureFinder.setActive(
                             mGestureMap.get(Gesture.SCROLL_HORIZONTAL) != none ||
                             mGestureMap.get(Gesture.SCROLL_VERTICAL) != none);
                     break;
@@ -534,15 +546,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // Pass to our own GestureLayouts
         CameraOptions options = mCameraEngine.getCameraOptions(); // Non null
         if (options == null) throw new IllegalStateException("Options should not be null here.");
-        if (mPinchGestureLayout.onTouchEvent(event)) {
+        if (mPinchGestureFinder.onTouchEvent(event)) {
             LOG.i("onTouchEvent", "pinch!");
-            onGesture(mPinchGestureLayout, options);
-        } else if (mScrollGestureLayout.onTouchEvent(event)) {
+            onGesture(mPinchGestureFinder, options);
+        } else if (mScrollGestureFinder.onTouchEvent(event)) {
             LOG.i("onTouchEvent", "scroll!");
-            onGesture(mScrollGestureLayout, options);
-        } else if (mTapGestureLayout.onTouchEvent(event)) {
+            onGesture(mScrollGestureFinder, options);
+        } else if (mTapGestureFinder.onTouchEvent(event)) {
             LOG.i("onTouchEvent", "tap!");
-            onGesture(mTapGestureLayout, options);
+            onGesture(mTapGestureFinder, options);
         }
         return true;
     }
@@ -551,7 +563,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     // Some gesture layout detected a gesture. It's not known at this moment:
     // (1) if it was mapped to some action (we check here)
     // (2) if it's supported by the camera (CameraEngine checks)
-    private void onGesture(GestureLayout source, @NonNull CameraOptions options) {
+    private void onGesture(GestureFinder source, @NonNull CameraOptions options) {
         Gesture gesture = source.getGesture();
         GestureAction action = mGestureMap.get(gesture);
         PointF[] points = source.getPoints();
@@ -1538,12 +1550,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Get the preview size and crop according to the current view size.
         // It's better to do calculations in the REF_VIEW reference, and then flip if needed.
-        Size preview = mCameraEngine.getUncroppedSnapshotSize(CameraEngine.REF_VIEW);
+        Size preview = mCameraEngine.getUncroppedSnapshotSize(Reference.VIEW);
         if (preview == null) return null; // Should never happen.
         AspectRatio viewRatio = AspectRatio.of(getWidth(), getHeight());
         Rect crop = CropHelper.computeCrop(preview, viewRatio);
         Size cropSize = new Size(crop.width(), crop.height());
-        if (mCameraEngine.flip(CameraEngine.REF_VIEW, CameraEngine.REF_OUTPUT)) {
+        if (mCameraEngine.getAngles().flip(Reference.VIEW, Reference.OUTPUT)) {
             return cropSize.flip();
         } else {
             return cropSize;
@@ -1562,7 +1574,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Nullable
     public Size getPictureSize() {
-        return mCameraEngine.getPictureSize(CameraEngine.REF_OUTPUT);
+        return mCameraEngine.getPictureSize(Reference.OUTPUT);
     }
 
 
@@ -1577,7 +1589,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Nullable
     public Size getVideoSize() {
-        return mCameraEngine.getVideoSize(CameraEngine.REF_OUTPUT);
+        return mCameraEngine.getVideoSize(Reference.OUTPUT);
     }
 
 
@@ -1732,7 +1744,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     //region Callbacks and dispatching
 
     @VisibleForTesting
-    class CameraCallbacks implements CameraEngine.Callback, OrientationHelper.Callback {
+    class CameraCallbacks implements
+            CameraEngine.Callback,
+            OrientationHelper.Callback,
+            GestureFinder.Controller {
 
         private CameraLogger mLogger = CameraLogger.create(CameraCallbacks.class.getSimpleName());
 
@@ -1740,6 +1755,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         @Override
         public Context getContext() {
             return CameraView.this.getContext();
+        }
+
+        @Override
+        public int getWidth() {
+            return CameraView.this.getWidth();
+        }
+
+        @Override
+        public int getHeight() {
+            return CameraView.this.getHeight();
         }
 
         @Override
@@ -1786,7 +1811,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         @Override
         public void onShutter(boolean shouldPlaySound) {
             if (shouldPlaySound && mPlaySounds) {
-                //noinspection all
                 playSound(MediaActionSound.SHUTTER_CLICK);
             }
         }
@@ -1847,7 +1871,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 @Override
                 public void run() {
                     if (success && mPlaySounds) {
-                        //noinspection all
                         playSound(MediaActionSound.FOCUS_COMPLETE);
                     }
 

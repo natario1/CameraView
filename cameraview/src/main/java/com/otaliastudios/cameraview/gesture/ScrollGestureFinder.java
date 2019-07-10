@@ -1,6 +1,5 @@
 package com.otaliastudios.cameraview.gesture;
 
-import android.content.Context;
 import androidx.annotation.NonNull;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -8,21 +7,21 @@ import android.view.MotionEvent;
 import com.otaliastudios.cameraview.CameraLogger;
 
 /**
- * A {@link GestureLayout} that detects {@link Gesture#SCROLL_HORIZONTAL}
+ * A {@link GestureFinder} that detects {@link Gesture#SCROLL_HORIZONTAL}
  * and {@link Gesture#SCROLL_VERTICAL} gestures.
  */
-public class ScrollGestureLayout extends GestureLayout {
+public class ScrollGestureFinder extends GestureFinder {
 
-    private static final String TAG = ScrollGestureLayout.class.getSimpleName();
+    private static final String TAG = ScrollGestureFinder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private GestureDetector mDetector;
     private boolean mNotify;
     private float mFactor;
 
-    public ScrollGestureLayout(@NonNull Context context) {
-        super(context, 2);
-        mDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+    public ScrollGestureFinder(final @NonNull Controller controller) {
+        super(controller, 2);
+        mDetector = new GestureDetector(controller.getContext(), new GestureDetector.SimpleOnGestureListener() {
 
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
@@ -40,7 +39,7 @@ public class ScrollGestureLayout extends GestureLayout {
                     horizontal = getGesture() == Gesture.SCROLL_HORIZONTAL;
                 }
                 getPoint(1).set(e2.getX(), e2.getY());
-                mFactor = horizontal ? (distanceX / getWidth()) : (distanceY / getHeight());
+                mFactor = horizontal ? (distanceX / controller.getWidth()) : (distanceY / controller.getHeight());
                 mFactor = horizontal ? -mFactor : mFactor; // When vertical, up = positive
                 mNotify = true;
                 return true;

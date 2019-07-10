@@ -30,8 +30,8 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
 
     private View mRootView;
 
-    public TextureCameraPreview(@NonNull Context context, @NonNull ViewGroup parent, @Nullable SurfaceCallback callback) {
-        super(context, parent, callback);
+    public TextureCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
+        super(context, parent);
     }
 
     @NonNull
@@ -140,7 +140,7 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
                     float scaleX = (float) mOutputSurfaceHeight / mOutputSurfaceWidth;
                     matrix.postScale(scaleX, 1F / scaleX, outputCenterX, outputCenterY);
                 }
-                matrix.postRotate((float) -drawRotation, outputCenterX, outputCenterY);
+                matrix.postRotate((float) drawRotation, outputCenterX, outputCenterY);
                 getView().setTransform(matrix);
                 task.setResult(null);
             }

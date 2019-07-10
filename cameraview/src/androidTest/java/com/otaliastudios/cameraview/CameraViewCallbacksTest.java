@@ -195,7 +195,7 @@ public class CameraViewCallbacksTest extends BaseTest {
     @Test
     public void testDispatchOnFocusStart() {
         // Enable tap gesture.
-        // Can't mock package protected. camera.mTapGestureLayout = mock(TapGestureLayout.class);
+        // Can't mock package protected. camera.mTapGestureFinder = mock(TapGestureLayout.class);
         camera.mapGesture(Gesture.TAP, GestureAction.AUTO_FOCUS);
         AutoFocusMarker marker = mock(AutoFocusMarker.class);
         MarkerLayout markerLayout = mock(MarkerLayout.class);
@@ -215,7 +215,7 @@ public class CameraViewCallbacksTest extends BaseTest {
     @Test
     public void testDispatchOnFocusEnd() {
         // Enable tap gesture.
-        // Can't mock package protected. camera.mTapGestureLayout = mock(TapGestureLayout.class);
+        // Can't mock package protected. camera.mTapGestureFinder = mock(TapGestureLayout.class);
         camera.mapGesture(Gesture.TAP, GestureAction.AUTO_FOCUS);
         AutoFocusMarker marker = mock(AutoFocusMarker.class);
         camera.setAutoFocusMarker(marker);
@@ -229,7 +229,7 @@ public class CameraViewCallbacksTest extends BaseTest {
         verify(listener, times(1)).onAutoFocusEnd(success, point);
         verify(marker, times(1)).onAutoFocusEnd(AutoFocusTrigger.GESTURE, success, point);
 
-        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onAutoFocusEnd(success);
+        // Can't mock package protected. verify(camera.mTapGestureFinder, times(1)).onAutoFocusEnd(success);
     }
 
     @Test

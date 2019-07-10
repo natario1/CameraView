@@ -12,7 +12,7 @@ import com.otaliastudios.cameraview.preview.CameraPreview;
 public class MockCameraPreview extends CameraPreview<View, Void> {
 
     public MockCameraPreview(Context context, ViewGroup parent) {
-        super(context, parent, null);
+        super(context, parent);
     }
 
     @Override
