@@ -1270,6 +1270,9 @@ public abstract class CameraEngine implements
      *
      * I could not find the same evidence for videos, but I would say that the same things should
      * apply, despite the capturing mechanism being different.
+     *
+     * @param reference the reference system
+     * @return the uncropped snapshot size
      */
     @Nullable
     public final Size getUncroppedSnapshotSize(@NonNull Reference reference) {
@@ -1299,6 +1302,8 @@ public abstract class CameraEngine implements
      * dimensions.
      * But when it does, the {@link CameraPreview.SurfaceCallback} should be called,
      * and this should be refreshed.
+     *
+     * @return the capture size
      */
     @NonNull
     @SuppressWarnings("WeakerAccess")

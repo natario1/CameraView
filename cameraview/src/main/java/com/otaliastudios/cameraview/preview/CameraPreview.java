@@ -236,12 +236,14 @@ public abstract class CameraPreview<T extends View, Output> {
     public void onDestroy() {}
 
     /**
-     * Here we must crop the visible part by applying a > 1 scale to one of our
+     * Here we must crop the visible part by applying a scale greater than 1 to one of our
      * dimensions. This way our internal aspect ratio (mOutputSurfaceWidth / mOutputSurfaceHeight)
      * will match the preview size aspect ratio (mInputStreamWidth / mInputStreamHeight).
      *
      * There might still be some absolute difference (e.g. same ratio but bigger / smaller).
      * However that should be already managed by the framework.
+     *
+     * @param op the op
      */
     protected void crop(@NonNull Op<Void> op) {
         // The base implementation does not support cropping.

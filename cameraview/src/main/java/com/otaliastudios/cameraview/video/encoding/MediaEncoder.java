@@ -196,6 +196,9 @@ abstract class MediaEncoder {
     /**
      * Returns a new input buffer and index, waiting at most {@link #INPUT_TIMEOUT_US} if none is available.
      * Callers should check the boolean result - true if the buffer was filled.
+     *
+     * @param holder the input buffer holder
+     * @return true if acquired
      */
     @SuppressWarnings("WeakerAccess")
     protected boolean tryAcquireInputBuffer(@NonNull InputBuffer holder) {
@@ -215,6 +218,8 @@ abstract class MediaEncoder {
     /**
      * Returns a new input buffer and index, waiting indefinitely if none is available.
      * The buffer should be written into, then the index should be passed to {@link #encodeInputBuffer(InputBuffer)}.
+     *
+     * @param holder the input buffer holder
      */
     @SuppressWarnings({"StatementWithEmptyBody", "WeakerAccess"})
     protected void acquireInputBuffer(@NonNull InputBuffer holder) {
@@ -223,6 +228,8 @@ abstract class MediaEncoder {
 
     /**
      * Encode data into the {@link #mMediaCodec}.
+     *
+     * @param buffer the input buffer
      */
     @SuppressWarnings("WeakerAccess")
     protected void encodeInputBuffer(InputBuffer buffer) {
@@ -253,6 +260,8 @@ abstract class MediaEncoder {
      * If drainAll is not set, this returns after TIMEOUT_USEC if there is no more data to drain.
      * If drainAll is set, we wait until we see EOS on the output.
      * Calling this with drainAll set should be done once, right before stopping the muxer.
+     *
+     * @param drainAll whether to drain all
      */
     @SuppressLint("LogNotTimber")
     @SuppressWarnings("WeakerAccess")

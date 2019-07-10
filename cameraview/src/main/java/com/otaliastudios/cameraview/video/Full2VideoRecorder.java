@@ -65,6 +65,8 @@ public class Full2VideoRecorder extends FullVideoRecorder {
 
     /**
      * This method should be called just once.
+     *
+     * @param stub the video stub
      * @return a surface
      * @throws PrepareException if prepare went wrong
      */

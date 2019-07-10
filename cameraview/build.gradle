@@ -145,7 +145,7 @@ task javadoc(type: Javadoc) {
     }
     exclude '**/BuildConfig.java'
     exclude '**/R.java'
-    exclude '**/internal/**'
+    exclude '**/internal/**' // This excludes our internal folder!
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {

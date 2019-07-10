@@ -42,6 +42,8 @@ public abstract class VideoRecorder {
 
     /**
      * Starts recording a video.
+     *
+     * @param stub the video stub
      */
     public final void start(@NonNull VideoResult.Stub stub) {
         mResult = stub;

@@ -51,7 +51,7 @@ import javax.microedition.khronos.opengles.GL10;
  *   - The SurfaceTexture has buffers of data of mInputStreamSize
  *   - The SurfaceView hosts a view (and a surface) of size mOutputSurfaceSize.
  *     These are determined by the CameraView.onMeasure method.
- *   - We have a GL rich texture to be drawn (in the given method & thread).
+ *   - We have a GL rich texture to be drawn (in the given method and thread).
  *
  * This class will provide rendering callbacks to anyone who registers a {@link RendererFrameCallback}.
  * Callbacks are guaranteed to be called on the renderer thread, which means that we can fetch
