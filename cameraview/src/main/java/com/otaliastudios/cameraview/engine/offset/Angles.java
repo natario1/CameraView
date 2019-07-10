@@ -4,6 +4,20 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.controls.Facing;
 
+/**
+ * Manages offsets between different {@link Reference} systems.
+ *
+ * These offsets are computed based on the {@link #setSensorOffset(Facing, int)},
+ * {@link #setDisplayOffset(int)} and {@link #setDeviceOrientation(int)} values that are coming
+ * from outside.
+ *
+ * When communicating with the sensor, {@link Axis#RELATIVE_TO_SENSOR} should probably be used.
+ * This means inverting the offset when using the front camera.
+ * This is often the case when calling offset(SENSOR, OUTPUT), for example when passing a JPEG
+ * rotation to the sensor. That is meant to be consumed as relative to the sensor plane.
+ *
+ * For all other usages, {@link Axis#ABSOLUTE} is probably a better choice.
+ */
 public class Angles {
 
     private Facing mSensorFacing;
@@ -61,25 +75,6 @@ public class Angles {
         }
         return offset;
     }
-
-    /**
-     * Old results:
-     * offset(REF_SENSOR, REF_OUTPUT, Facing.BACK) = mSensorOffset + mDeviceOrientation
-     * offset(REF_SENSOR, REF_OUTPUT, Facing.FRONT) = -mSensorOffset - mDeviceOrientation
-     * offset(REF_SENSOR, REF_VIEW, Facing.BACK) = mSensorOffset - mDisplayOffset
-     * offset(REF_SENSOR, REF_VIEW, Facing.FRONT) = mSensorOffset - mDisplayOffset
-     * offset(REF_OUTPUT, REF_VIEW, Facing.BACK) = (mSensorOffset - mDisplayOffset) - (mSensorOffset + mDeviceOrientation) = -mDisplayOffset - mDeviceOrientation
-     * offset(REF_OUTPUT, REF_VIEW, Facing.FRONT) = (mSensorOffset - mDisplayOffset) - (-mSensorOffset - mDeviceOrientation) = 2*mSensorOffset + mDisplayOffset + mDeviceOrientation
-     */
-
-    /**
-     * New results:
-     * offset(REF_SENSOR, REF_OUTPUT) = mDeviceOrientation + mSensorOffset
-     * -> REF_SENSOR, REF_OUTPUT is typically wanted in the RELATIVE_TO_SENSOR axis.
-     *
-     * offset(REF_SENSOR, REF_VIEW) = -mDisplayOffset + mSensorOffset
-     * -> REF_SENSOR, REF_VIEW is typically wanted in the ABSOLUTE axis.
-     */
 
     private int absoluteOffset(@NonNull Reference from, @NonNull Reference to) {
         if (from == to) {
