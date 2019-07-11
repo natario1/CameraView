@@ -27,7 +27,8 @@ public abstract class PictureRecorder {
         /**
          * Picture was taken or there was some error, if
          * the result is null.
-         * @param result the result or null if there was some error.
+         * @param result the result or null if there was some error
+         * @param error the error or null if there wasn't any
          */
         void onPictureResult(@Nullable PictureResult.Stub result, @Nullable Exception error);
     }

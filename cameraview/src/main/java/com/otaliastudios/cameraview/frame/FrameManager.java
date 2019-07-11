@@ -155,6 +155,11 @@ public class FrameManager {
      *
      * In Camera1, this is always respected thanks to its internals.
      *
+     * @param data data
+     * @param time timestamp
+     * @param rotation rotation
+     * @param previewSize preview size
+     * @param previewFormat format
      * @return a new frame
      */
     @NonNull

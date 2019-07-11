@@ -3,7 +3,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 // Required by bintray
-version = '2.0.0-beta05'
+version = '2.0.0-beta06'
 group = 'com.otaliastudios'
 
 //region android dependencies
@@ -145,7 +145,7 @@ task javadoc(type: Javadoc) {
     }
     exclude '**/BuildConfig.java'
     exclude '**/R.java'
-    exclude '**/internal/**'
+    exclude '**/internal/**' // This excludes our internal folder!
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
