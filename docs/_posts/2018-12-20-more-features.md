@@ -87,7 +87,7 @@ cameraView.setCameraAutoFocusResetDelay(1000);  // 1 second
 cameraView.setCameraAutoFocusResetDelay(0);  // NO reset
 cameraView.setCameraAutoFocusResetDelay(-1);  // NO reset
 cameraView.setCameraAutoFocusResetDelay(Long.MAX_VALUE);  // NO reset
-
+```
 
 ### UI Orientation
 
