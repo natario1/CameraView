@@ -769,6 +769,40 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
+    /**
+     * Shorthand for the appropriate get* method.
+     * For example, if control class is a {@link Grid}, this calls {@link #getGrid()}.
+     *
+     * @param controlClass desired value class
+     */
+    @SuppressWarnings("unchecked")
+    @NonNull
+    public <T extends Control> T get(@NonNull Class<T> controlClass) {
+        if (controlClass == Audio.class) {
+            return (T) getAudio();
+        } else if (controlClass == Facing.class) {
+            return (T) getFacing();
+        } else if (controlClass == Flash.class) {
+            return (T) getFlash();
+        } else if (controlClass == Grid.class) {
+            return (T) getGrid();
+        } else if (controlClass == Hdr.class) {
+            return (T) getHdr();
+        } else if (controlClass == Mode.class) {
+            return (T) getMode();
+        } else if (controlClass == WhiteBalance.class) {
+            return (T) getWhiteBalance();
+        } else if (controlClass == VideoCodec.class) {
+            return (T) getVideoCodec();
+        } else if (controlClass == Preview.class) {
+            return (T) getPreview();
+        } else if (controlClass == Engine.class) {
+            return (T) getEngine();
+        } else {
+            throw new IllegalArgumentException("Unknown control class: " + controlClass);
+        }
+    }
+
 
     /**
      * Controls the preview engine. Should only be called
