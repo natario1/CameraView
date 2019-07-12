@@ -91,7 +91,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
                 mDispatched = false;
             }
         });
-        parent.addView(root, 0);
+        parent.addView(root, 1);
         mRootView = root;
         return glView;
     }

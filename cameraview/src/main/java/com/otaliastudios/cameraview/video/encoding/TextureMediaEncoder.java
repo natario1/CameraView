@@ -27,6 +27,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
 
     public static class Config extends VideoMediaEncoder.Config {
         int textureId;
+        int overlayTextureId;
         float scaleX;
         float scaleY;
         boolean scaleFlipped;
@@ -35,11 +36,17 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
 
         public Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
                int textureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
+            this(width, height, bitRate, frameRate, rotation, mimeType, textureId, 0, scaleX, scaleY, scaleFlipped, eglContext);
+        }
+
+        public Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
+               int textureId, int overlayTextureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
             // We rotate the texture using transformRotation. Pass rotation=0 to super so that
             // no rotation metadata is written into the output file.
             super(width, height, bitRate, frameRate, 0, mimeType);
             this.transformRotation = rotation;
             this.textureId = textureId;
+            this.overlayTextureId = overlayTextureId;
             this.scaleX = scaleX;
             this.scaleY = scaleY;
             this.scaleFlipped = scaleFlipped;
@@ -67,6 +74,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         // Typically coming from SurfaceTexture.getTimestamp().
         public long timestamp;
         public float[] transform = new float[16];
+        public float[] overlayTransform = new float[16];
     }
 
     @NonNull
@@ -117,6 +125,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         // We must scale this matrix like GlCameraPreview does, because it might have some cropping.
         // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
         float[] transform = frame.transform;
+        float[] overlayTransform = frame.overlayTransform;
         float scaleX = mConfig.scaleX;
         float scaleY = mConfig.scaleY;
         float scaleTranslX = (1F - scaleX) / 2F;
@@ -132,6 +141,11 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
         Matrix.rotateM(transform, 0, mConfig.transformRotation, 0, 0, 1);
         Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
+        if (overlayTransform != null) {
+            Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
+            Matrix.rotateM(overlayTransform, 0, mConfig.transformRotation, 0, 0, 1);
+            Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
+        }
 
         LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drainOutput.");
         drainOutput(false);
@@ -139,6 +153,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         // but flipped based on the mConfig.scaleFlipped boolean.
         LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drawFrame.");
         mViewport.drawFrame(mConfig.textureId, transform);
+        mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();
         mFramePool.recycle(frame);

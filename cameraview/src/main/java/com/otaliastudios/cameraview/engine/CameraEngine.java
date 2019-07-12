@@ -18,6 +18,7 @@ import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.SurfaceDrawer;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.engine.offset.Angles;
 import com.otaliastudios.cameraview.engine.offset.Reference;
@@ -184,6 +185,38 @@ public abstract class CameraEngine implements
     private long mAutoFocusResetDelayMillis;
     private int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
     private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+    private final List<SurfaceDrawer> pictureSurfaceDrawers = new ArrayList<>();
+    private final List<SurfaceDrawer> videoSurfaceDrawers = new ArrayList<>();
+
+    public void addPictureSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
+        if (!pictureSurfaceDrawers.contains(surfaceDrawer)) {
+            pictureSurfaceDrawers.add(surfaceDrawer);
+        }
+    }
+
+    public void removePictureSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
+        pictureSurfaceDrawers.remove(surfaceDrawer);
+    }
+
+    @NonNull
+    protected List<SurfaceDrawer> getPictureSurfaceDrawers() {
+        return pictureSurfaceDrawers;
+    }
+
+    public void addVideoSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
+        if (!videoSurfaceDrawers.contains(surfaceDrawer)) {
+            videoSurfaceDrawers.add(surfaceDrawer);
+        }
+    }
+
+    public void removeVideoSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
+        videoSurfaceDrawers.remove(surfaceDrawer);
+    }
+
+    @NonNull
+    protected List<SurfaceDrawer> getVideoSurfaceDrawers() {
+        return videoSurfaceDrawers;
+    }
 
     // Steps
     private final Step.Callback mStepCallback = new Step.Callback() {

@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.otaliastudios.cameraview.CameraException;
@@ -206,12 +207,15 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
     private void toggleCamera() {
         if (camera.isTakingPicture() || camera.isTakingVideo()) return;
+        TextView watermarkTitle = findViewById(R.id.watermark_title);
         switch (camera.toggleFacing()) {
             case BACK:
+                watermarkTitle.setText("Back facing");
                 message("Switched to back camera!", false);
                 break;
 
             case FRONT:
+                watermarkTitle.setText("Front facing");
                 message("Switched to front camera!", false);
                 break;
         }

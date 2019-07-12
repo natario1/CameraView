@@ -29,8 +29,32 @@
         app:cameraGestureScrollHorizontal="exposureCorrection"
         app:cameraGestureScrollVertical="none"
         app:cameraMode="picture"
-        app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker"/>
+        app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker">
 
+        <!-- Watermark -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="bottom|end"
+            app:layout_drawInPreview="false"
+            app:layout_drawInVideoSnapshot="true"
+            app:layout_drawInPictureSnapshot="true"
+            android:gravity="center"
+            android:padding="8dp">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/cameraview" />
+            <TextView
+                android:id="@+id/watermark_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CameraView"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
+    </com.otaliastudios.cameraview.CameraView>
 
     <ImageButton
         android:id="@+id/toggleCamera"

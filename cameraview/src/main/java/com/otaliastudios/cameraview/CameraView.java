@@ -28,6 +28,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -131,6 +132,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private boolean mExperimental;
 
+    // Overlays
+    private OverlayLayoutManager mOverlayLayoutManager; // see OverlayLayoutManager for why having two of them
+    private OverlayLayoutManager mOverlayLayoutManagerBelow;
+
     // Threading
     private Handler mUiHandler;
     private WorkerHandler mFrameProcessorsHandler;
@@ -187,9 +192,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Views
         mGridLinesLayout = new GridLinesLayout(context);
+        mOverlayLayoutManager = new OverlayLayoutManager(context);
+        mOverlayLayoutManagerBelow = new OverlayLayoutManager(context);
         mMarkerLayout = new MarkerLayout(context);
         addView(mGridLinesLayout);
         addView(mMarkerLayout);
+        addView(mOverlayLayoutManager);
+        addView(mOverlayLayoutManagerBelow, 0); // put it at the bottom of the FrameLayout
 
         // Create the engine
         doInstantiateEngine();
@@ -300,9 +309,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (mCameraPreview == null) {
+
             // isHardwareAccelerated will return the real value only after we are
             // attached. That's why we instantiate the preview here.
             doInstantiatePreview();
+            mCameraEngine.addPictureSurfaceDrawer(mOverlayLayoutManager);
+            mCameraEngine.addPictureSurfaceDrawer(mOverlayLayoutManagerBelow);
+            mCameraEngine.addVideoSurfaceDrawer(mOverlayLayoutManager);
+            mCameraEngine.addVideoSurfaceDrawer(mOverlayLayoutManagerBelow);
         }
         if (!isInEditMode()) {
             mOrientationHelper.enable(getContext());
@@ -315,6 +329,49 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mOrientationHelper.disable();
         }
         super.onDetachedFromWindow();
+    }
+
+    @Override
+    public void addView(View child, ViewGroup.LayoutParams params) {
+        if (params instanceof OverlayLayoutParams) {
+            if (((OverlayLayoutParams) params).drawInPreview) {
+                mOverlayLayoutManager.addView(child, params);
+            } else {
+                mOverlayLayoutManagerBelow.addView(child, params);
+            }
+        } else {
+            super.addView(child, params);
+        }
+    }
+
+    @Override
+    public void removeView(View child) {
+        if (child.getLayoutParams() instanceof OverlayLayoutParams) {
+            if (((OverlayLayoutParams) child.getLayoutParams()).drawInPreview) {
+                mOverlayLayoutManager.removeView(child);
+            } else {
+                mOverlayLayoutManagerBelow.removeView(child);
+            }
+        } else {
+            super.removeView(child);
+        }
+    }
+
+    @Override
+    public LayoutParams generateLayoutParams(AttributeSet attributeSet) {
+        OverlayLayoutParams toBeChecked = new OverlayLayoutParams(this.getContext(), attributeSet);
+        if (toBeChecked.isOverlay()) {
+            return toBeChecked;
+        }
+        return super.generateLayoutParams(attributeSet);
+    }
+
+    @Override
+    protected ViewGroup.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+        if (p instanceof OverlayLayoutParams) {
+            return p;
+        }
+        return super.generateLayoutParams(p);
     }
 
     //endregion
@@ -1218,6 +1275,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraEngine.setAutoFocusResetDelay(delayMillis);
     }
 
+
     /**
      * Returns the current delay in milliseconds to reset the focus after an autofocus process.
      * @return the current autofocus reset delay in milliseconds.
@@ -2074,6 +2132,65 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     }
                 }
             });
+        }
+    }
+
+    public static class OverlayLayoutParams extends FrameLayout.LayoutParams {
+
+        private boolean drawInPreview = false;
+        private boolean drawInPictureSnapshot = false;
+        private boolean drawInVideoSnapshot = false;
+
+        public OverlayLayoutParams(Context context, AttributeSet attributeSet) {
+            super(context, attributeSet);
+            this.readStyleParameters(context, attributeSet);
+        }
+
+        public OverlayLayoutParams(int width, int height) {
+            super(width, height);
+        }
+
+        public OverlayLayoutParams(ViewGroup.LayoutParams layoutParams) {
+            super(layoutParams);
+        }
+
+        private void readStyleParameters(Context context, AttributeSet attributeSet) {
+            TypedArray a = context.obtainStyledAttributes(attributeSet, R.styleable.CameraView_Layout);
+            try {
+                this.drawInPreview = a.getBoolean(R.styleable.CameraView_Layout_layout_drawInPreview, false);
+                this.drawInPictureSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawInPictureSnapshot, false);
+                this.drawInVideoSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawInVideoSnapshot, false);
+            } finally {
+                a.recycle();
+            }
+        }
+
+        public boolean isDrawInPreview() {
+            return drawInPreview;
+        }
+
+        public void setDrawInPreview(boolean drawInPreview) {
+            this.drawInPreview = drawInPreview;
+        }
+
+        public boolean isDrawInPictureSnapshot() {
+            return drawInPictureSnapshot;
+        }
+
+        public void setDrawInPictureSnapshot(boolean drawInPictureSnapshot) {
+            this.drawInPictureSnapshot = drawInPictureSnapshot;
+        }
+
+        public boolean isDrawInVideoSnapshot() {
+            return drawInVideoSnapshot;
+        }
+
+        public void setDrawInVideoSnapshot(boolean drawInVideoSnapshot) {
+            this.drawInVideoSnapshot = drawInVideoSnapshot;
+        }
+
+        public boolean isOverlay() {
+            return drawInPreview || drawInPictureSnapshot || drawInVideoSnapshot;
         }
     }
 
