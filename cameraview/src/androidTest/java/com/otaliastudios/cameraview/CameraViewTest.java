@@ -561,74 +561,74 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testSetFlash() {
         cameraView.set(Flash.TORCH);
-        assertEquals(cameraView.getFlash(), Flash.TORCH);
+        assertEquals(cameraView.get(Flash.class), Flash.TORCH);
         cameraView.set(Flash.OFF);
-        assertEquals(cameraView.getFlash(), Flash.OFF);
+        assertEquals(cameraView.get(Flash.class), Flash.OFF);
     }
 
     @Test
     public void testSetFacing() {
         cameraView.set(Facing.FRONT);
-        assertEquals(cameraView.getFacing(), Facing.FRONT);
+        assertEquals(cameraView.get(Facing.class), Facing.FRONT);
         cameraView.set(Facing.BACK);
-        assertEquals(cameraView.getFacing(), Facing.BACK);
+        assertEquals(cameraView.get(Facing.class), Facing.BACK);
     }
 
     @Test
     public void testToggleFacing() {
         cameraView.set(Facing.FRONT);
         cameraView.toggleFacing();
-        assertEquals(cameraView.getFacing(), Facing.BACK);
+        assertEquals(cameraView.get(Facing.class), Facing.BACK);
         cameraView.toggleFacing();
-        assertEquals(cameraView.getFacing(), Facing.FRONT);
+        assertEquals(cameraView.get(Facing.class), Facing.FRONT);
     }
 
     @Test
     public void testSetGrid() {
         cameraView.set(Grid.DRAW_3X3);
-        assertEquals(cameraView.getGrid(), Grid.DRAW_3X3);
+        assertEquals(cameraView.get(Grid.class), Grid.DRAW_3X3);
         cameraView.set(Grid.OFF);
-        assertEquals(cameraView.getGrid(), Grid.OFF);
+        assertEquals(cameraView.get(Grid.class), Grid.OFF);
     }
 
     @Test
     public void testSetWhiteBalance() {
         cameraView.set(WhiteBalance.CLOUDY);
-        assertEquals(cameraView.getWhiteBalance(), WhiteBalance.CLOUDY);
+        assertEquals(cameraView.get(WhiteBalance.class), WhiteBalance.CLOUDY);
         cameraView.set(WhiteBalance.AUTO);
-        assertEquals(cameraView.getWhiteBalance(), WhiteBalance.AUTO);
+        assertEquals(cameraView.get(WhiteBalance.class), WhiteBalance.AUTO);
     }
 
     @Test
     public void testMode() {
         cameraView.set(Mode.VIDEO);
-        assertEquals(cameraView.getMode(), Mode.VIDEO);
+        assertEquals(cameraView.get(Mode.class), Mode.VIDEO);
         cameraView.set(Mode.PICTURE);
-        assertEquals(cameraView.getMode(), Mode.PICTURE);
+        assertEquals(cameraView.get(Mode.class), Mode.PICTURE);
     }
 
     @Test
     public void testHdr() {
         cameraView.set(Hdr.ON);
-        assertEquals(cameraView.getHdr(), Hdr.ON);
+        assertEquals(cameraView.get(Hdr.class), Hdr.ON);
         cameraView.set(Hdr.OFF);
-        assertEquals(cameraView.getHdr(), Hdr.OFF);
+        assertEquals(cameraView.get(Hdr.class), Hdr.OFF);
     }
 
     @Test
     public void testAudio() {
         cameraView.set(Audio.ON);
-        assertEquals(cameraView.getAudio(), Audio.ON);
+        assertEquals(cameraView.get(Audio.class), Audio.ON);
         cameraView.set(Audio.OFF);
-        assertEquals(cameraView.getAudio(), Audio.OFF);
+        assertEquals(cameraView.get(Audio.class), Audio.OFF);
     }
 
     @Test
     public void testVideoCodec() {
         cameraView.set(VideoCodec.H_263);
-        assertEquals(cameraView.getVideoCodec(), VideoCodec.H_263);
+        assertEquals(cameraView.get(VideoCodec.class), VideoCodec.H_263);
         cameraView.set(VideoCodec.H_264);
-        assertEquals(cameraView.getVideoCodec(), VideoCodec.H_264);
+        assertEquals(cameraView.get(VideoCodec.class), VideoCodec.H_264);
     }
 
     @Test
