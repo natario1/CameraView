@@ -7,6 +7,7 @@ import androidx.annotation.VisibleForTesting;
 
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.CameraEngine;
@@ -240,8 +241,11 @@ public abstract class CameraPreview<T extends View, Output> {
      * this is a lifecycle event.
      */
     public void onDestroy() {
-        ViewGroup parent = (ViewGroup) getRootView().getParent();
-        parent.removeView(getRootView());
+        View root = getRootView();
+        ViewParent parent = root.getParent();
+        if (parent instanceof ViewGroup) {
+            ((ViewGroup) parent).removeView(root);
+        }
     }
 
     /**
