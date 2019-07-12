@@ -7,6 +7,7 @@ import androidx.annotation.VisibleForTesting;
 
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.CameraEngine;
@@ -186,7 +187,9 @@ public abstract class CameraPreview<T extends View, Output> {
         if (mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0) {
             crop(mCropOp);
         }
-        mSurfaceCallback.onSurfaceAvailable();
+        if (mSurfaceCallback != null) {
+            mSurfaceCallback.onSurfaceAvailable();
+        }
     }
 
     /**
@@ -203,7 +206,9 @@ public abstract class CameraPreview<T extends View, Output> {
             if (width > 0 && height > 0) {
                 crop(mCropOp);
             }
-            mSurfaceCallback.onSurfaceChanged();
+            if (mSurfaceCallback != null) {
+                mSurfaceCallback.onSurfaceChanged();
+            }
         }
     }
 
@@ -214,7 +219,9 @@ public abstract class CameraPreview<T extends View, Output> {
     protected final void dispatchOnSurfaceDestroyed() {
         mOutputSurfaceWidth = 0;
         mOutputSurfaceHeight = 0;
-        mSurfaceCallback.onSurfaceDestroyed();
+        if (mSurfaceCallback != null) {
+            mSurfaceCallback.onSurfaceDestroyed();
+        }
     }
 
     /**
@@ -233,7 +240,13 @@ public abstract class CameraPreview<T extends View, Output> {
      * Called by the hosting {@link com.otaliastudios.cameraview.CameraView},
      * this is a lifecycle event.
      */
-    public void onDestroy() {}
+    public void onDestroy() {
+        View root = getRootView();
+        ViewParent parent = root.getParent();
+        if (parent instanceof ViewGroup) {
+            ((ViewGroup) parent).removeView(root);
+        }
+    }
 
     /**
      * Here we must crop the visible part by applying a scale greater than 1 to one of our

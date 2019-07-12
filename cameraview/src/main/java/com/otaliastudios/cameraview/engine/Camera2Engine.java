@@ -19,7 +19,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
 import android.media.Image;
 import android.media.ImageReader;
-import android.media.MediaCodec;
 import android.os.Build;
 import android.util.Rational;
 import android.view.Surface;
@@ -96,8 +95,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private Surface mPreviewStreamSurface;
 
     // Video recording
-    private Surface mFullVideoPersistentSurface; // API 23+. The surface is created before.
-    private VideoResult.Stub mFullVideoPendingStub; // API 21-22. When takeVideo is called, we have to reset the session.
+    private VideoResult.Stub mFullVideoPendingStub; // When takeVideo is called, we have to reset the session.
 
     // Picture capturing
     private ImageReader mPictureReader;
@@ -302,7 +300,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 if (internalFacing == readCharacteristic(characteristics, CameraCharacteristics.LENS_FACING, -99)) {
                     mCameraId = cameraId;
                     int sensorOffset = readCharacteristic(characteristics, CameraCharacteristics.SENSOR_ORIENTATION, 0);
-                    setSensorOffset(facing, sensorOffset);
+                    getAngles().setSensorOffset(facing, sensorOffset);
                     return true;
                 }
             } catch (CameraAccessException ignore) {
@@ -411,11 +409,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
         // 2. VIDEO RECORDING
         if (getMode() == Mode.VIDEO) {
-            if (Full2VideoRecorder.SUPPORTS_PERSISTENT_SURFACE) {
-                mFullVideoPersistentSurface = MediaCodec.createPersistentInputSurface();
-                outputSurfaces.add(mFullVideoPersistentSurface);
-            } else if (mFullVideoPendingStub != null) {
-                Full2VideoRecorder recorder = new Full2VideoRecorder(this, mCameraId, null);
+            if (mFullVideoPendingStub != null) {
+                Full2VideoRecorder recorder = new Full2VideoRecorder(this, mCameraId);
                 try {
                     outputSurfaces.add(recorder.createInputSurface(mFullVideoPendingStub));
                 } catch (Full2VideoRecorder.PrepareException e) {
@@ -567,10 +562,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     protected Task<Void> onStopBind() {
         LOG.i("onStopBind:", "About to clean up.");
-        if (mFullVideoPersistentSurface != null) {
-            mFullVideoPersistentSurface.release();
-            mFullVideoPersistentSurface = null;
-        }
         mFrameProcessingSurface = null;
         mPreviewStreamSurface = null;
         mPreviewStreamSize = null;
@@ -667,19 +658,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         LOG.i("onTakeVideo", "called.");
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
         stub.size = getAngles().flip(Reference.SENSOR, Reference.OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
-        if (!Full2VideoRecorder.SUPPORTS_PERSISTENT_SURFACE) {
-            // On API 21 and 22, we must restart the session at each time.
-            // Save the pending data and restart the session.
-            LOG.w("onTakeVideo", "calling restartBind.");
-            mFullVideoPendingStub = stub;
-            restartBind();
-        } else {
-            doTakeVideo(stub);
-        }
+        // We must restart the session at each time.
+        // Save the pending data and restart the session.
+        LOG.w("onTakeVideo", "calling restartBind.");
+        mFullVideoPendingStub = stub;
+        restartBind();
     }
 
     private void doTakeVideo(@NonNull final VideoResult.Stub stub) {
-        mVideoRecorder = new Full2VideoRecorder(this, mCameraId, mFullVideoPersistentSurface);
+        if (!(mVideoRecorder instanceof Full2VideoRecorder)) {
+            mVideoRecorder = new Full2VideoRecorder(this, mCameraId);
+        }
         Full2VideoRecorder recorder = (Full2VideoRecorder) mVideoRecorder;
         try {
             createRepeatingRequestBuilder(CameraDevice.TEMPLATE_RECORD);
@@ -706,13 +695,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
-
-        // Output size is easy:
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
             throw new IllegalStateException("outputSize should not be null.");
         }
-        AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
+        AspectRatio outputRatio = getAngles().flip(Reference.VIEW, Reference.OUTPUT) ? viewAspectRatio.flip() : viewAspectRatio;
         Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
         outputSize = new Size(outputCrop.width(), outputCrop.height());
         stub.size = outputSize;

@@ -114,7 +114,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                         Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
 
                         // Fix rotation:
-                        // TODO Not sure why we need the minus here... It makes no sense to me.
+                        // Not sure why we need the minus here... It makes no sense to me.
                         LOG.w("Recording frame. Rotation:", mResult.rotation, "Actual:", -mResult.rotation);
                         int rotation = -mResult.rotation;
                         mResult.rotation = 0;

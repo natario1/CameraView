@@ -21,6 +21,7 @@ import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
+import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.size.SizeSelectors;
@@ -173,6 +174,10 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
     private void capturePictureSnapshot() {
         if (camera.isTakingPicture()) return;
+        if (camera.getPreview() != Preview.GL_SURFACE) {
+            message("Picture snapshots are only allowed with the GL_SURFACE preview.", true);
+            return;
+        }
         mCaptureTime = System.currentTimeMillis();
         message("Capturing picture snapshot...", false);
         camera.takePictureSnapshot();
@@ -191,6 +196,10 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private void captureVideoSnapshot() {
         if (camera.isTakingVideo()) {
             message("Already taking video.", false);
+            return;
+        }
+        if (camera.getPreview() != Preview.GL_SURFACE) {
+            message("Video snapshots are only allowed with the GL_SURFACE preview.", true);
             return;
         }
         message("Recording snapshot for 5 seconds...", true);
@@ -212,10 +221,11 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
     @Override
     public boolean onValueChanged(Control control, Object value, String name) {
-        if (!camera.isHardwareAccelerated() && (control == Control.WIDTH || control == Control.HEIGHT)) {
-            if ((Integer) value > 0) {
-                message("This device does not support hardware acceleration. " +
-                        "In this case you can not change width or height. " +
+        if ((control == Control.WIDTH || control == Control.HEIGHT)) {
+            Preview preview = camera.getPreview();
+            boolean wrapContent = (Integer) value == ViewGroup.LayoutParams.WRAP_CONTENT;
+            if (preview == Preview.SURFACE && !wrapContent) {
+                message("The SurfaceView preview does not support width or height changes. " +
                         "The view will act as WRAP_CONTENT by default.", true);
                 return false;
             }

@@ -6,6 +6,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 
 import androidx.annotation.VisibleForTesting;
+import androidx.core.view.ViewCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
@@ -98,9 +99,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     final static long DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS = 3000;
     final static boolean DEFAULT_PLAY_SOUNDS = true;
+    final static boolean DEFAULT_USE_DEVICE_ORIENTATION = true;
 
     // Self managed parameters
     private boolean mPlaySounds;
+    private boolean mUseDeviceOrientation;
     private HashMap<Gesture, GestureAction> mGestureMap = new HashMap<>(4);
     private Preview mPreview;
     private Engine mEngine;
@@ -152,6 +155,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Self managed
         boolean playSounds = a.getBoolean(R.styleable.CameraView_cameraPlaySounds, DEFAULT_PLAY_SOUNDS);
+        boolean useDeviceOrientation = a.getBoolean(R.styleable.CameraView_cameraUseDeviceOrientation, DEFAULT_USE_DEVICE_ORIENTATION);
         mExperimental = a.getBoolean(R.styleable.CameraView_cameraExperimental, false);
         mPreview = controls.getPreview();
         mEngine = controls.getEngine();
@@ -192,6 +196,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Apply self managed
         setPlaySounds(playSounds);
+        setUseDeviceOrientation(useDeviceOrientation);
         setGrid(controls.getGrid());
         setGridColor(gridColor);
 
@@ -640,7 +645,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (checkPermissions(getAudio())) {
             // Update display orientation for current CameraEngine
             mOrientationHelper.enable(getContext());
-            mCameraEngine.setDisplayOffset(mOrientationHelper.getDisplayOffset());
+            mCameraEngine.getAngles().setDisplayOffset(mOrientationHelper.getDisplayOffset());
             mCameraEngine.start();
         }
     }
@@ -778,9 +783,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param preview desired preview engine
      */
     public void setPreview(@NonNull Preview preview) {
+        boolean isNew = preview != mPreview;
+        if (!isNew) return;
         mPreview = preview;
+        if (!ViewCompat.isAttachedToWindow(this) && mCameraPreview != null) {
+            // Null the preview: will create another when re-attaching.
+            mCameraPreview.onDestroy();
+            mCameraPreview = null;
+        }
     }
 
+    /**
+     * Returns the current preview control.
+     *
+     * @see #setPreview(Preview)
+     * @return the current preview control
+     */
+    @NonNull
+    public Preview getPreview() {
+        return mPreview;
+    }
 
     /**
      * Controls the core engine. Should only be called
@@ -816,6 +838,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setAutoFocusResetDelay(oldEngine.getAutoFocusResetDelay());
     }
 
+    /**
+     * Returns the current engine control.
+     *
+     * @see #setEngine(Engine)
+     * @return the current engine control
+     */
+    @NonNull
+    public Engine getEngine() {
+        return mEngine;
+    }
 
     /**
      * Returns a {@link CameraOptions} instance holding supported options for this camera
@@ -1648,6 +1680,27 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return mPlaySounds;
     }
 
+    /**
+     * Controls whether picture and video output should consider the current device orientation.
+     * For example, when true, if the user rotates the device before taking a picture, the picture
+     * will be rotated as well.
+     *
+     * @param useDeviceOrientation true to consider device orientation for outputs
+     */
+    public void setUseDeviceOrientation(boolean useDeviceOrientation) {
+        mUseDeviceOrientation = useDeviceOrientation;
+    }
+
+    /**
+     * Gets the current behavior for considering the device orientation when returning picture
+     * or video outputs.
+     *
+     * @see #setUseDeviceOrientation(boolean)
+     * @return whether we are using the device orientation for outputs
+     */
+    public boolean getUseDeviceOrientation() {
+        return mUseDeviceOrientation;
+    }
 
     /**
      * Sets the encoder for video recordings.
@@ -1890,8 +1943,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         @Override
         public void onDeviceOrientationChanged(int deviceOrientation) {
             mLogger.i("onDeviceOrientationChanged", deviceOrientation);
-            mCameraEngine.setDeviceOrientation(deviceOrientation);
             int displayOffset = mOrientationHelper.getDisplayOffset();
+            if (!mUseDeviceOrientation) {
+                // To fool the engine to return outputs in the VIEW reference system,
+                // The device orientation should be set to -displayOffset.
+                int fakeDeviceOrientation = (360 - displayOffset) % 360;
+                mCameraEngine.getAngles().setDeviceOrientation(fakeDeviceOrientation);
+            } else {
+                mCameraEngine.getAngles().setDeviceOrientation(deviceOrientation);
+            }
             final int value = (deviceOrientation + displayOffset) % 360;
             mUiHandler.post(new Runnable() {
                 @Override

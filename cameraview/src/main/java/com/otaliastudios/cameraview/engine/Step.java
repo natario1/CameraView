@@ -34,9 +34,9 @@ import androidx.annotation.VisibleForTesting;
  *
  * <strong>This class is NOT thread safe!</string>
  */
-class CameraEngineStep {
+class Step {
 
-    private static final String TAG = CameraEngineStep.class.getSimpleName();
+    private static final String TAG = Step.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     interface Callback {
@@ -59,7 +59,7 @@ class CameraEngineStep {
     private final String name;
     private final Callback callback;
 
-    CameraEngineStep(@NonNull String name, @NonNull Callback callback) {
+    Step(@NonNull String name, @NonNull Callback callback) {
         this.name = name.toUpperCase();
         this.callback = callback;
     }

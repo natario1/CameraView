@@ -8,6 +8,10 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+### v2.0.0-*** (to be released)
+
+- New: `cameraUseDeviceOrientation` XML attribute and `setUseDeviceOrientation()` method to disable considering the device orientation for outputs. ([#497][497])
+
 ### v2.0.0-beta06
 
 - New: Full featured Camera2 integration! Use `cameraExperimental="true"` and `cameraEngine="camera2"` to test this out. ([#490][490])
@@ -65,3 +69,4 @@ This is the first beta release. For changes with respect to v1, please take a lo
 [482]: https://github.com/natario1/CameraView/pull/482
 [484]: https://github.com/natario1/CameraView/pull/484
 [490]: https://github.com/natario1/CameraView/pull/490
+[497]: https://github.com/natario1/CameraView/pull/497

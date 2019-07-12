@@ -15,6 +15,8 @@ public class MockCameraPreview extends CameraPreview<View, Void> {
         super(context, parent);
     }
 
+    private View rootView;
+
     @Override
     public boolean supportsCropping() {
         return true;
@@ -23,7 +25,8 @@ public class MockCameraPreview extends CameraPreview<View, Void> {
     @NonNull
     @Override
     protected View onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
-        return new View(context);
+        rootView = new View(context);
+        return rootView;
     }
 
     @NonNull
@@ -42,6 +45,6 @@ public class MockCameraPreview extends CameraPreview<View, Void> {
     @NonNull
     @Override
     public View getRootView() {
-        return null;
+        return rootView;
     }
 }
