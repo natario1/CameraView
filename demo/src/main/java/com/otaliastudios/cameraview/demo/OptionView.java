@@ -3,66 +3,60 @@ package com.otaliastudios.cameraview.demo;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.text.TextUtils;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
-public class ControlView<Value> extends LinearLayout implements Spinner.OnItemSelectedListener {
+@SuppressLint("ViewConstructor")
+public class OptionView<Value> extends LinearLayout implements Spinner.OnItemSelectedListener {
 
     interface Callback {
-        boolean onValueChanged(Control control, Object value, String name);
+        <T> boolean onValueChanged(@NonNull Option<T> option, @NonNull T value, @NonNull String name);
     }
 
     private Value value;
     private ArrayList<Value> values;
     private ArrayList<String> valuesStrings;
-    private Control control;
+    private Option option;
     private Callback callback;
     private Spinner spinner;
 
-    public ControlView(Context context, Control control, Callback callback) {
+    public OptionView(Context context, Option option, Callback callback) {
         super(context);
-        this.control = control;
+        this.option = option;
         this.callback = callback;
         setOrientation(VERTICAL);
 
-        inflate(context, R.layout.control_view, this);
+        inflate(context, R.layout.option_view, this);
         TextView title = findViewById(R.id.title);
-        title.setText(control.getName());
+        title.setText(option.getName());
         View divider = findViewById(R.id.divider);
-        divider.setVisibility(control.isSectionLast() ? View.VISIBLE : View.GONE);
+        divider.setVisibility(option.hasDividerBelow() ? View.VISIBLE : View.GONE);
 
         ViewGroup content = findViewById(R.id.content);
         spinner = new Spinner(context, Spinner.MODE_DROPDOWN);
         content.addView(spinner);
     }
 
-    public Value getValue() {
-        return value;
-    }
-
     @SuppressWarnings("all")
     public void onCameraOpened(CameraView view, CameraOptions options) {
-        values = new ArrayList(control.getValues(view, options));
-        value = (Value) control.getCurrentValue(view);
+        values = new ArrayList(option.getAll(view, options));
+        value = (Value) option.get(view);
         valuesStrings = new ArrayList<>();
         for (Value value : values) {
-            valuesStrings.add(stringify(value));
+            valuesStrings.add(option.toString(value));
         }
 
         if (values.isEmpty()) {
@@ -86,7 +80,7 @@ public class ControlView<Value> extends LinearLayout implements Spinner.OnItemSe
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         if (!values.get(i).equals(value)) {
             Log.e("ControlView", "curr: " + value + " new: " + values.get(i));
-            if (!callback.onValueChanged(control, values.get(i), valuesStrings.get(i))) {
+            if (!callback.onValueChanged(option, values.get(i), valuesStrings.get(i))) {
                 spinner.setSelection(values.indexOf(value)); // Go back.
             } else {
                 value = values.get(i);
@@ -96,12 +90,4 @@ public class ControlView<Value> extends LinearLayout implements Spinner.OnItemSe
 
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {}
-
-    private String stringify(Value value) {
-        if (value instanceof Integer) {
-            if ((Integer) value == ViewGroup.LayoutParams.MATCH_PARENT) return "match parent";
-            if ((Integer) value == ViewGroup.LayoutParams.WRAP_CONTENT) return "wrap content";
-        }
-        return String.valueOf(value).replace("_", " ").toLowerCase();
-    }
 }

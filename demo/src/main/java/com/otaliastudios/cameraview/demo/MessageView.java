@@ -24,7 +24,7 @@ public class MessageView extends LinearLayout {
     public MessageView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         setOrientation(VERTICAL);
-        inflate(context, R.layout.control_view, this);
+        inflate(context, R.layout.option_view, this);
         ViewGroup content = findViewById(R.id.content);
         inflate(context, R.layout.spinner_text, content);
         title = findViewById(R.id.title);

@@ -22,14 +22,12 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Preview;
-import com.otaliastudios.cameraview.frame.Frame;
-import com.otaliastudios.cameraview.frame.FrameProcessor;
-import com.otaliastudios.cameraview.size.SizeSelectors;
 
 import java.io.File;
+import java.util.List;
 
 
-public class CameraActivity extends AppCompatActivity implements View.OnClickListener, ControlView.Callback {
+public class CameraActivity extends AppCompatActivity implements View.OnClickListener, OptionView.Callback {
 
     private CameraView camera;
     private ViewGroup controlPanel;
@@ -67,9 +65,9 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
         controlPanel = findViewById(R.id.controls);
         ViewGroup group = (ViewGroup) controlPanel.getChildAt(0);
-        Control[] controls = Control.values();
-        for (Control control : controls) {
-            ControlView view = new ControlView(this, control, this);
+        List<Option<?>> options = Option.getAll();
+        for (Option option : options) {
+            OptionView view = new OptionView(this, option, this);
             group.addView(view,
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -95,7 +93,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         public void onCameraOpened(@NonNull CameraOptions options) {
             ViewGroup group = (ViewGroup) controlPanel.getChildAt(0);
             for (int i = 0; i < group.getChildCount(); i++) {
-                ControlView view = (ControlView) group.getChildAt(i);
+                OptionView view = (OptionView) group.getChildAt(i);
                 view.onCameraOpened(camera, options);
             }
         }
@@ -220,8 +218,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     @Override
-    public boolean onValueChanged(Control control, Object value, String name) {
-        if ((control == Control.WIDTH || control == Control.HEIGHT)) {
+    public <T> boolean onValueChanged(@NonNull Option<T> option, @NonNull T value, @NonNull String name) {
+        if ((option instanceof Option.Width || option instanceof Option.Height)) {
             Preview preview = camera.getPreview();
             boolean wrapContent = (Integer) value == ViewGroup.LayoutParams.WRAP_CONTENT;
             if (preview == Preview.SURFACE && !wrapContent) {
@@ -230,10 +228,10 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 return false;
             }
         }
-        control.applyValue(camera, value);
+        option.set(camera, value);
         BottomSheetBehavior b = BottomSheetBehavior.from(controlPanel);
         b.setState(BottomSheetBehavior.STATE_HIDDEN);
-        message("Changed " + control.getName() + " to " + name, false);
+        message("Changed " + option.getName() + " to " + name, false);
         return true;
     }
 
