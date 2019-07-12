@@ -55,7 +55,6 @@ public class CameraOptions {
     private Set<Size> supportedVideoSizes = new HashSet<>(5);
     private Set<AspectRatio> supportedPictureAspectRatio = new HashSet<>(4);
     private Set<AspectRatio> supportedVideoAspectRatio = new HashSet<>(3);
-    private Set<DisableOverlayFor> supportedDisableOverlayFor = new HashSet<>(3);
 
     private boolean zoomSupported;
     private boolean exposureCorrectionSupported;
@@ -148,12 +147,6 @@ public class CameraOptions {
                 supportedVideoAspectRatio.add(AspectRatio.of(width, height));
             }
         }
-
-
-        // Disable overlay for
-        supportedDisableOverlayFor.add(DisableOverlayFor.NONE);
-        supportedDisableOverlayFor.add(DisableOverlayFor.PICTURE);
-        supportedDisableOverlayFor.add(DisableOverlayFor.VIDEO);
     }
 
     // Camera2Engine constructor.
@@ -319,8 +312,6 @@ public class CameraOptions {
             return (Collection<T>) Arrays.asList(Engine.values());
         } else if (controlClass.equals(Preview.class)) {
             return (Collection<T>) Arrays.asList(Preview.values());
-        } else if (controlClass.equals(DisableOverlayFor.class)) {
-            return (Collection<T>) getSupportedDisableOverlayFor();
         }
         // Unrecognized control.
         return Collections.emptyList();
@@ -494,19 +485,5 @@ public class CameraOptions {
     @SuppressWarnings("WeakerAccess")
     public float getExposureCorrectionMaxValue() {
         return exposureCorrectionMaxValue;
-    }
-
-    /**
-     * Set of supported mode values for which the overlay can be disabled.
-     *
-     * @see DisableOverlayFor#NONE
-     * @see DisableOverlayFor#PICTURE
-     * @see DisableOverlayFor#VIDEO
-     * @return a collection of supported values.
-     */
-    @SuppressWarnings("WeakerAccess")
-    @NonNull
-    public Collection<DisableOverlayFor> getSupportedDisableOverlayFor() {
-        return Collections.unmodifiableSet(supportedDisableOverlayFor);
     }
 }
