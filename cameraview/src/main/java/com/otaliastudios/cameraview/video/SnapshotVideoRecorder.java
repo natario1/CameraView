@@ -60,6 +60,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         mPreview.addRendererFrameCallback(this);
         mFlipped = mEngine.getAngles().flip(Reference.SENSOR, Reference.VIEW);
         mDesiredState = STATE_RECORDING;
+        dispatchActualVideoRecordingStarted();
     }
 
     @Override

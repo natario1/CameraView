@@ -127,4 +127,16 @@ public abstract class CameraListener {
     @UiThread
     public void onExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) { }
 
+
+    /**
+     * Notifies that the actual video recording has started
+     * When we request for video recording, it doesn't start the recording the immediately.
+     * Instead it checks for hardware availability first and later on available,
+     * it sets all the config and then start the actual recording.
+     */
+    @UiThread
+    public void onActualVideoRecordingStarted() {
+
+    }
+
 }

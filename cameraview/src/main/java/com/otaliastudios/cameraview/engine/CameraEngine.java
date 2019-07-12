@@ -134,6 +134,7 @@ public abstract class CameraEngine implements
         void dispatchOnExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers);
         void dispatchFrame(Frame frame);
         void dispatchError(CameraException exception);
+        void onActualVideoRecordingStarted();
     }
 
     private static final String TAG = CameraEngine.class.getSimpleName();

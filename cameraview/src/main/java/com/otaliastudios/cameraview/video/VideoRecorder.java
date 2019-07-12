@@ -24,6 +24,11 @@ public abstract class VideoRecorder {
          * @param exception the error or null if everything went fine
          */
         void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception);
+
+        /**
+         * The callback for the actual video recording starting.
+         */
+        void onActualVideoRecordingStarted();
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) VideoResult.Stub mResult;
@@ -83,5 +88,15 @@ public abstract class VideoRecorder {
         }
         mResult = null;
         mError = null;
+    }
+
+    /**
+     * Subclasses can call this to notify that the video recording has started,
+     * this will be called when camera is prepared and started.
+     */
+    protected void dispatchActualVideoRecordingStarted(){
+        if(mListener != null){
+            mListener.onActualVideoRecordingStarted();
+        }
     }
 }
