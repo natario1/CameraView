@@ -70,7 +70,7 @@ import java.util.concurrent.TimeUnit;
  * So at the end of both step 1 and 2, the engine should check if both have
  * been performed and trigger the steps 3 and 4.
  *
- * We use an abstraction for each step called {@link CameraEngineStep} that manages the state of
+ * We use an abstraction for each step called {@link Step} that manages the state of
  * each step and ensures that start and stop operations, for each step, are never called if the
  * previous one has not ended.
  *
@@ -140,11 +140,11 @@ public abstract class CameraEngine implements
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     @SuppressWarnings({"WeakerAccess", "unused"})
-    public static final int STATE_STOPPING = CameraEngineStep.STATE_STOPPING;
-    public static final int STATE_STOPPED = CameraEngineStep.STATE_STOPPED;
+    public static final int STATE_STOPPING = Step.STATE_STOPPING;
+    public static final int STATE_STOPPED = Step.STATE_STOPPED;
     @SuppressWarnings({"WeakerAccess", "unused"})
-    public static final int STATE_STARTING = CameraEngineStep.STATE_STARTING;
-    public static final int STATE_STARTED = CameraEngineStep.STATE_STARTED;
+    public static final int STATE_STARTING = Step.STATE_STARTING;
+    public static final int STATE_STARTED = Step.STATE_STARTED;
 
     // Need to be protected
     @SuppressWarnings("WeakerAccess") protected WorkerHandler mHandler;
@@ -185,16 +185,17 @@ public abstract class CameraEngine implements
     private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
 
     // Steps
-    private final CameraEngineStep.Callback mStepCallback = new CameraEngineStep.Callback() {
+    private final Step.Callback mStepCallback = new Step.Callback() {
         @Override @NonNull public Executor getExecutor() { return mHandler.getExecutor(); }
         @Override public void handleException(@NonNull Exception exception) {
             CameraEngine.this.handleException(Thread.currentThread(), exception, false);
         }
     };
-    @VisibleForTesting CameraEngineStep mEngineStep = new CameraEngineStep("engine", mStepCallback);
-    private CameraEngineStep mBindStep = new CameraEngineStep("bind", mStepCallback);
-    private CameraEngineStep mPreviewStep = new CameraEngineStep("preview", mStepCallback);
-    private CameraEngineStep mAllStep = new CameraEngineStep("all", mStepCallback);
+    @VisibleForTesting
+    Step mEngineStep = new Step("engine", mStepCallback);
+    private Step mBindStep = new Step("bind", mStepCallback);
+    private Step mPreviewStep = new Step("preview", mStepCallback);
+    private Step mAllStep = new Step("all", mStepCallback);
 
     // Ops used for testing.
     @VisibleForTesting Op<Void> mStartVideoOp = new Op<>();
@@ -785,21 +786,6 @@ public abstract class CameraEngine implements
         return mAngles;
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected final void setSensorOffset(@NonNull Facing facing, int sensorOffset) {
-        mAngles.setSensorOffset(facing, sensorOffset);
-    }
-
-    // This is called before start() and never again.
-    public final void setDisplayOffset(int displayOffset) {
-        mAngles.setDisplayOffset(displayOffset);
-    }
-
-    // This can be called multiple times.
-    public final void setDeviceOrientation(int deviceOrientation) {
-        mAngles.setDeviceOrientation(deviceOrientation);
-    }
-
     public final void setPreviewStreamSizeSelector(@Nullable SizeSelector selector) {
         mPreviewStreamSizeSelector = selector;
     }
@@ -1018,7 +1004,7 @@ public abstract class CameraEngine implements
      * Camera is about to be opened. Implementors should look into available cameras
      * and see if anyone matches the given {@link Facing value}.
      *
-     * If so, implementors should set {@link #setSensorOffset(Facing, int)} and any other information
+     * If so, implementors should set {@link Angles#setSensorOffset(Facing, int)} and any other information
      * (like camera ID) needed to start the engine.
      *
      * @param facing the facing value

@@ -123,7 +123,7 @@ public class Camera1Engine extends CameraEngine implements
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
             if (cameraInfo.facing == internalFacing) {
-                setSensorOffset(facing, cameraInfo.orientation);
+                getAngles().setSensorOffset(facing, cameraInfo.orientation);
                 mCameraId = i;
                 return true;
             }
@@ -351,13 +351,11 @@ public class Camera1Engine extends CameraEngine implements
             throw new IllegalStateException("Video snapshots are only supported starting from API 18.");
         }
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
-
-        // Output size is easy:
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
             throw new IllegalStateException("outputSize should not be null.");
         }
-        AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
+        AspectRatio outputRatio = getAngles().flip(Reference.VIEW, Reference.OUTPUT) ? viewAspectRatio.flip() : viewAspectRatio;
         Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
         outputSize = new Size(outputCrop.width(), outputCrop.height());
         stub.size = outputSize;
