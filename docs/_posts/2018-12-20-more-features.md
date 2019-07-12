@@ -16,7 +16,8 @@ disqus: 1
     app:cameraPlaySounds="true|false"
     app:cameraGrid="off|draw3x3|draw4x4|drawPhi"
     app:cameraGridColor="@color/black"
-    app:cameraAutoFocusResetDelay="0"/>
+    app:cameraAutoFocusResetDelay="0"
+    app:cameraUseDeviceOrientation="true"/>
 ```
 
 ##### cameraPlaySounds
@@ -87,6 +88,18 @@ cameraView.setCameraAutoFocusResetDelay(1000);  // 1 second
 cameraView.setCameraAutoFocusResetDelay(0);  // NO reset
 cameraView.setCameraAutoFocusResetDelay(-1);  // NO reset
 cameraView.setCameraAutoFocusResetDelay(Long.MAX_VALUE);  // NO reset
+```
+
+##### cameraUseDeviceOrientation
+
+Controls whether we should consider the device orientation for picture and video outputs.
+This defaults to true, but can be set to false for specific usages, where you don't want the
+output to be rotated based on the device rotation at the moment of capturing.
+Defaults to true.
+
+```java
+cameraView.setUseDeviceOrientation(true); // rotate media 
+cameraView.setUseDeviceOrientation(false); // don't
 ```
 
 ### UI Orientation
