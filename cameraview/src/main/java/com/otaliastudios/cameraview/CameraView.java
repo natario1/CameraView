@@ -98,6 +98,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     final static long DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS = 3000;
     final static boolean DEFAULT_PLAY_SOUNDS = true;
+    final static boolean DEFAULT_USE_DEVICE_ORIENTATION = true;
 
     // Self managed parameters
     private boolean mPlaySounds;
@@ -153,7 +154,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Self managed
         boolean playSounds = a.getBoolean(R.styleable.CameraView_cameraPlaySounds, DEFAULT_PLAY_SOUNDS);
-        boolean useDeviceOrientation = a.getBoolean(R.styleable.CameraView_cameraUseDeviceOrientation, true);
+        boolean useDeviceOrientation = a.getBoolean(R.styleable.CameraView_cameraUseDeviceOrientation, DEFAULT_USE_DEVICE_ORIENTATION);
         mExperimental = a.getBoolean(R.styleable.CameraView_cameraExperimental, false);
         mPreview = controls.getPreview();
         mEngine = controls.getEngine();

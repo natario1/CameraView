@@ -164,6 +164,7 @@ public class CameraViewTest extends BaseTest {
         // Self managed
         GestureParser gestures = new GestureParser(empty);
         assertEquals(cameraView.getPlaySounds(), CameraView.DEFAULT_PLAY_SOUNDS);
+        assertEquals(cameraView.getUseDeviceOrientation(), CameraView.DEFAULT_USE_DEVICE_ORIENTATION);
         assertEquals(cameraView.getGestureAction(Gesture.TAP), gestures.getTapAction());
         assertEquals(cameraView.getGestureAction(Gesture.LONG_TAP), gestures.getLongTapAction());
         assertEquals(cameraView.getGestureAction(Gesture.PINCH), gestures.getPinchAction());
@@ -544,9 +545,17 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testSetPlaySounds() {
         cameraView.setPlaySounds(true);
-        assertEquals(cameraView.getPlaySounds(), true);
+        assertTrue(cameraView.getPlaySounds());
         cameraView.setPlaySounds(false);
-        assertEquals(cameraView.getPlaySounds(), false);
+        assertFalse(cameraView.getPlaySounds());
+    }
+
+    @Test
+    public void testSetUseDeviceOrientation() {
+        cameraView.setUseDeviceOrientation(true);
+        assertTrue(cameraView.getUseDeviceOrientation());
+        cameraView.setUseDeviceOrientation(false);
+        assertFalse(cameraView.getUseDeviceOrientation());
     }
 
     @Test
