@@ -94,6 +94,8 @@ public abstract class VideoRecorder {
      * Subclasses can call this to notify that the video recording has started,
      * this will be called when camera is prepared and started.
      */
+    @SuppressWarnings("WeakerAccess")
+    @CallSuper
     protected void dispatchActualVideoRecordingStarted(){
         if(mListener != null){
             mListener.onActualVideoRecordingStarted();
