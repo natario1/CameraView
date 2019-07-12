@@ -29,7 +29,7 @@ public class VideoRecorderTest extends BaseTest {
         VideoRecorder.VideoResultListener listener = Mockito.mock(VideoRecorder.VideoResultListener.class);
         VideoRecorder recorder = new VideoRecorder(listener) {
             @Override
-            protected void onStart() { }
+            protected void onStart() { dispatchActualVideoRecordingStarted(); }
 
             @Override
             protected void onStop() {
@@ -37,6 +37,8 @@ public class VideoRecorderTest extends BaseTest {
             }
         };
         recorder.start(result);
+        Mockito.verify(listener,Mockito.times(1) )
+                .onActualVideoRecordingStarted();
         recorder.stop();
         Mockito.verify(listener, Mockito.times(1))
                 .onVideoResult(result, null);
