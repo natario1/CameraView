@@ -186,7 +186,9 @@ public abstract class CameraPreview<T extends View, Output> {
         if (mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0) {
             crop(mCropOp);
         }
-        mSurfaceCallback.onSurfaceAvailable();
+        if (mSurfaceCallback != null) {
+            mSurfaceCallback.onSurfaceAvailable();
+        }
     }
 
     /**
@@ -203,7 +205,9 @@ public abstract class CameraPreview<T extends View, Output> {
             if (width > 0 && height > 0) {
                 crop(mCropOp);
             }
-            mSurfaceCallback.onSurfaceChanged();
+            if (mSurfaceCallback != null) {
+                mSurfaceCallback.onSurfaceChanged();
+            }
         }
     }
 
@@ -214,7 +218,9 @@ public abstract class CameraPreview<T extends View, Output> {
     protected final void dispatchOnSurfaceDestroyed() {
         mOutputSurfaceWidth = 0;
         mOutputSurfaceHeight = 0;
-        mSurfaceCallback.onSurfaceDestroyed();
+        if (mSurfaceCallback != null) {
+            mSurfaceCallback.onSurfaceDestroyed();
+        }
     }
 
     /**
@@ -233,7 +239,10 @@ public abstract class CameraPreview<T extends View, Output> {
      * Called by the hosting {@link com.otaliastudios.cameraview.CameraView},
      * this is a lifecycle event.
      */
-    public void onDestroy() {}
+    public void onDestroy() {
+        ViewGroup parent = (ViewGroup) getRootView().getParent();
+        parent.removeView(getRootView());
+    }
 
     /**
      * Here we must crop the visible part by applying a scale greater than 1 to one of our

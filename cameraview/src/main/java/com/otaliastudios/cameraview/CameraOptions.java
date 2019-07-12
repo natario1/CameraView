@@ -20,6 +20,7 @@ import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.engine.Mapper;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
@@ -309,6 +310,8 @@ public class CameraOptions {
             return (Collection<T>) getSupportedWhiteBalance();
         } else if (controlClass.equals(Engine.class)) {
             return (Collection<T>) Arrays.asList(Engine.values());
+        } else if (controlClass.equals(Preview.class)) {
+            return (Collection<T>) Arrays.asList(Preview.values());
         }
         // Unrecognized control.
         return Collections.emptyList();

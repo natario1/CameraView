@@ -6,6 +6,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 
 import androidx.annotation.VisibleForTesting;
+import androidx.core.view.ViewCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
@@ -782,9 +783,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param preview desired preview engine
      */
     public void setPreview(@NonNull Preview preview) {
+        boolean isNew = preview != mPreview;
+        if (!isNew) return;
         mPreview = preview;
+        if (!ViewCompat.isAttachedToWindow(this) && mCameraPreview != null) {
+            // Null the preview: will create another when re-attaching.
+            mCameraPreview.onDestroy();
+            mCameraPreview = null;
+        }
     }
 
+    /**
+     * Returns the current preview control.
+     *
+     * @see #setPreview(Preview)
+     * @return the current preview control
+     */
+    @NonNull
+    public Preview getPreview() {
+        return mPreview;
+    }
 
     /**
      * Controls the core engine. Should only be called
@@ -820,6 +838,16 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setAutoFocusResetDelay(oldEngine.getAutoFocusResetDelay());
     }
 
+    /**
+     * Returns the current engine control.
+     *
+     * @see #setEngine(Engine)
+     * @return the current engine control
+     */
+    @NonNull
+    public Engine getEngine() {
+        return mEngine;
+    }
 
     /**
      * Returns a {@link CameraOptions} instance holding supported options for this camera

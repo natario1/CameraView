@@ -5,10 +5,13 @@ import androidx.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
@@ -18,6 +21,7 @@ import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -26,28 +30,38 @@ import java.util.List;
  */
 public enum Control {
 
+    // Layout
     WIDTH("Width", false),
     HEIGHT("Height", true),
 
+    // Some controls
     MODE("Mode", false),
     FLASH("Flash", false),
     WHITE_BALANCE("White balance", false),
     HDR("Hdr", true),
 
-    GRID("Grid lines", false),
-    GRID_COLOR("Grid color", true),
+    // Engine and preview
+    ENGINE("Engine", false),
+    PREVIEW("Preview Surface", true),
 
-    // TODO audio bitRate
-    // TODO video bitRate
-    // THey are a bit annoying because it's not clear what the default should be.
+    // Video recording
     VIDEO_CODEC("Video codec", false),
     AUDIO("Audio", true),
+    // TODO audio bitRate
+    // TODO video bitRate
+    // They are a bit annoying because it's not clear what the default should be.
 
+    // Gestures
     PINCH("Pinch", false),
     HSCROLL("Horizontal scroll", false),
     VSCROLL("Vertical scroll", false),
     TAP("Single tap", false),
-    LONG_TAP("Long tap", true);
+    LONG_TAP("Long tap", true),
+
+    // Others
+    GRID("Grid lines", false),
+    GRID_COLOR("Grid color", false),
+    USE_DEVICE_ORIENTATION("Use device orientation", true);
 
     private String name;
     private boolean last;
@@ -88,6 +102,8 @@ public enum Control {
             case GRID: return options.getSupportedControls(Grid.class);
             case AUDIO: return options.getSupportedControls(Audio.class);
             case VIDEO_CODEC: return options.getSupportedControls(VideoCodec.class);
+            case ENGINE: return options.getSupportedControls(Engine.class);
+            case PREVIEW: return options.getSupportedControls(Preview.class);
             case PINCH:
             case HSCROLL:
             case VSCROLL:
@@ -110,6 +126,8 @@ public enum Control {
                 list3.add(new GridColor(Color.BLACK, "black"));
                 list3.add(new GridColor(Color.YELLOW, "yellow"));
                 return list3;
+            case USE_DEVICE_ORIENTATION:
+                return Arrays.asList(true, false);
         }
         return null;
     }
@@ -135,11 +153,14 @@ public enum Control {
             case VSCROLL: return view.getGestureAction(Gesture.SCROLL_VERTICAL);
             case TAP: return view.getGestureAction(Gesture.TAP);
             case LONG_TAP: return view.getGestureAction(Gesture.LONG_TAP);
+            case USE_DEVICE_ORIENTATION: return view.getUseDeviceOrientation();
+            case ENGINE: return view.getEngine();
+            case PREVIEW: return view.getPreview();
         }
         return null;
     }
 
-    public void applyValue(CameraView camera, Object value) {
+    public void applyValue(final CameraView camera, final Object value) {
         switch (this) {
             case WIDTH:
                 camera.getLayoutParams().width = (int) value;
@@ -175,9 +196,61 @@ public enum Control {
                 break;
             case GRID_COLOR:
                 camera.setGridColor(((GridColor) value).color);
+                break;
+            case USE_DEVICE_ORIENTATION:
+                camera.setUseDeviceOrientation((Boolean) value);
+                break;
+            case ENGINE:
+                boolean started = camera.isOpened();
+                if (started) {
+                    camera.addCameraListener(new CameraListener() {
+                        @Override
+                        public void onCameraClosed() {
+                            super.onCameraClosed();
+                            camera.removeCameraListener(this);
+                            camera.setEngine((Engine) value);
+                            camera.open();
+                        }
+                    });
+                    camera.close();
+                } else {
+                    camera.setEngine((Engine) value);
+                }
+                break;
+            case PREVIEW:
+                boolean opened = camera.isOpened();
+                if (opened) {
+                    camera.addCameraListener(new CameraListener() {
+                        @Override
+                        public void onCameraClosed() {
+                            super.onCameraClosed();
+                            camera.removeCameraListener(this);
+                            applyPreview(camera, (Preview) value, true);
+                        }
+                    });
+                    camera.close();
+                } else {
+                    applyPreview(camera, (Preview) value, false);
+                }
         }
     }
 
+    // This is really tricky since the preview can only be changed when not attached to window.
+    private void applyPreview(@NonNull CameraView cameraView, @NonNull Preview newPreview, boolean openWhenDone) {
+        ViewGroup.LayoutParams params = cameraView.getLayoutParams();
+        ViewGroup parent = (ViewGroup) cameraView.getParent();
+        int index = 0;
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            if (parent.getChildAt(i) == cameraView) {
+                index = i;
+                break;
+            }
+        }
+        parent.removeView(cameraView);
+        cameraView.setPreview(newPreview);
+        parent.addView(cameraView, index, params);
+        if (openWhenDone) cameraView.open();
+    }
 
     static class GridColor {
         int color;

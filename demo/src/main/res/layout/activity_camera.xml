@@ -17,7 +17,6 @@
         android:layout_marginBottom="88dp"
         android:keepScreenOn="true"
         app:cameraExperimental="true"
-        app:cameraUseDeviceOrientation="false"
         app:cameraEngine="camera2"
         app:cameraPreview="glSurface"
         app:cameraPlaySounds="true"
