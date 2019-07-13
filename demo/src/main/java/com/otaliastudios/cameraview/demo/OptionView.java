@@ -33,21 +33,25 @@ public class OptionView<Value> extends LinearLayout implements Spinner.OnItemSel
     private Callback callback;
     private Spinner spinner;
 
-    public OptionView(Context context, Option option, Callback callback) {
+    public OptionView(@NonNull Context context) {
         super(context);
-        this.option = option;
-        this.callback = callback;
         setOrientation(VERTICAL);
-
         inflate(context, R.layout.option_view, this);
-        TextView title = findViewById(R.id.title);
-        title.setText(option.getName());
-        View divider = findViewById(R.id.divider);
-        divider.setVisibility(option.hasDividerBelow() ? View.VISIBLE : View.GONE);
-
         ViewGroup content = findViewById(R.id.content);
         spinner = new Spinner(context, Spinner.MODE_DROPDOWN);
         content.addView(spinner);
+    }
+
+    public void setHasDivider(boolean hasDivider) {
+        View divider = findViewById(R.id.divider);
+        divider.setVisibility(hasDivider ? View.VISIBLE : View.GONE);
+    }
+
+    public void setOption(@NonNull Option<Value> option, @NonNull Callback callback) {
+        this.option = option;
+        this.callback = callback;
+        TextView title = findViewById(R.id.title);
+        title.setText(option.getName());
     }
 
     @SuppressWarnings("all")
