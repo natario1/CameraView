@@ -81,7 +81,18 @@ public class OverlayLayout extends FrameLayout implements Overlay {
     @Override
     public void draw(Canvas canvas) {
         LOG.i("normal draw called.");
-        draw(Target.PREVIEW, canvas);
+        if (drawsOn(Target.PREVIEW)) {
+            drawOn(Target.PREVIEW, canvas);
+        }
+    }
+
+    @Override
+    public boolean drawsOn(@NonNull Target target) {
+        for (int i = 0; i < getChildCount(); i++) {
+            LayoutParams params = (LayoutParams) getChildAt(i).getLayoutParams();
+            if (params.drawsOn(target)) return true;
+        }
+        return false;
     }
 
     /**
@@ -96,7 +107,7 @@ public class OverlayLayout extends FrameLayout implements Overlay {
      * @param canvas the canvas
      */
     @Override
-    public void draw(@NonNull Target target, @NonNull Canvas canvas) {
+    public void drawOn(@NonNull Target target, @NonNull Canvas canvas) {
         synchronized (this) {
             currentTarget = target;
             switch (target) {
@@ -134,11 +145,7 @@ public class OverlayLayout extends FrameLayout implements Overlay {
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         LayoutParams params = (LayoutParams) child.getLayoutParams();
-        boolean draw = ((currentTarget == Target.PREVIEW && params.drawOnPreview)
-                || (currentTarget == Target.VIDEO_SNAPSHOT && params.drawOnVideoSnapshot)
-                || (currentTarget == Target.PICTURE_SNAPSHOT && params.drawOnPictureSnapshot)
-        );
-        if (draw) {
+        if (params.drawsOn(currentTarget)) {
             LOG.v("Performing drawing for view:", child.getClass().getSimpleName(),
                     "target:", currentTarget,
                     "params:", params);
@@ -171,6 +178,12 @@ public class OverlayLayout extends FrameLayout implements Overlay {
             } finally {
                 a.recycle();
             }
+        }
+
+        private boolean drawsOn(@NonNull Target target) {
+            return ((target == Target.PREVIEW && drawOnPreview)
+                    || (target == Target.VIDEO_SNAPSHOT && drawOnVideoSnapshot)
+                    || (target == Target.PICTURE_SNAPSHOT && drawOnPictureSnapshot));
         }
 
         @NonNull

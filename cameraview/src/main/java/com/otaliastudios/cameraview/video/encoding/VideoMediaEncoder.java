@@ -42,7 +42,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
         int rotation;
         String mimeType;
 
-        Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType) {
+        Config(int width, int height, int bitRate, int frameRate, int rotation, @NonNull String mimeType) {
             this.width = width;
             this.height = height;
             this.bitRate = bitRate;

@@ -31,25 +31,27 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         int overlayTextureId;
         float scaleX;
         float scaleY;
-        boolean scaleFlipped;
         EGLContext eglContext;
         int transformRotation;
         int overlayTransformRotation;
 
-        public Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
-               int textureId, int overlayTextureId, int overlayTransformRotation,
-                      float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
+        public Config(int width, int height,
+                      int bitRate, int frameRate,
+                      int rotation, @NonNull String mimeType,
+                      int textureId,
+                      float scaleX, float scaleY,
+                      @NonNull EGLContext eglContext,
+                      int overlayTextureId, int overlayRotation) {
             // We rotate the texture using transformRotation. Pass rotation=0 to super so that
             // no rotation metadata is written into the output file.
             super(width, height, bitRate, frameRate, 0, mimeType);
             this.transformRotation = rotation;
             this.textureId = textureId;
-            this.overlayTextureId = overlayTextureId;
-            this.overlayTransformRotation = overlayTransformRotation;
             this.scaleX = scaleX;
             this.scaleY = scaleY;
-            this.scaleFlipped = scaleFlipped;
             this.eglContext = eglContext;
+            this.overlayTextureId = overlayTextureId;
+            this.overlayTransformRotation = overlayRotation;
         }
     }
 
@@ -149,8 +151,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
 
         LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drainOutput.");
         drainOutput(false);
-        // Future note: passing scale values to the viewport? They are scaleX and scaleY,
-        // but flipped based on the mConfig.scaleFlipped boolean.
         LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drawFrame.");
         mViewport.drawFrame(mConfig.textureId, transform);
         if (hasOverlay) {

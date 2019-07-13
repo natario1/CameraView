@@ -8,15 +8,11 @@ import android.opengl.EGL14;
 import android.os.Build;
 import android.view.Surface;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;
-import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
@@ -49,9 +45,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private static final int STATE_NOT_RECORDING = 1;
 
     private MediaEncoderEngine mEncoderEngine;
-    private CameraEngine mEngine;
     private GlCameraPreview mPreview;
-    private boolean mFlipped;
 
     private int mCurrentState = STATE_NOT_RECORDING;
     private int mDesiredState = STATE_NOT_RECORDING;
@@ -70,16 +64,14 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                                  int overlayRotation) {
         super(engine);
         mPreview = preview;
-        mEngine = engine;
         mOverlay = overlay;
-        mHasOverlay = overlay != null;
+        mHasOverlay = overlay != null && overlay.drawsOn(Overlay.Target.VIDEO_SNAPSHOT);
         mOverlayRotation = overlayRotation;
     }
 
     @Override
     protected void onStart() {
         mPreview.addRendererFrameCallback(this);
-        mFlipped = mEngine.getAngles().flip(Reference.SENSOR, Reference.VIEW);
         mDesiredState = STATE_RECORDING;
         dispatchVideoRecordingStart();
     }
@@ -131,11 +123,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                     mResult.videoFrameRate,
                     mResult.rotation,
                     type, mTextureId,
-                    mHasOverlay ? mOverlayTextureId : TextureMediaEncoder.NO_TEXTURE,
-                    mOverlayRotation,
                     scaleX, scaleY,
-                    mFlipped,
-                    EGL14.eglGetCurrentContext()
+                    EGL14.eglGetCurrentContext(),
+                    mHasOverlay ? mOverlayTextureId : TextureMediaEncoder.NO_TEXTURE,
+                    mOverlayRotation
             );
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
 
@@ -165,7 +156,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 try {
                     final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
                     surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                    mOverlay.draw(Overlay.Target.VIDEO_SNAPSHOT, surfaceCanvas);
+                    mOverlay.drawOn(Overlay.Target.VIDEO_SNAPSHOT, surfaceCanvas);
                     mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
                 } catch (Surface.OutOfResourcesException e) {
                     LOG.w("Got Surface.OutOfResourcesException while drawing video overlays", e);

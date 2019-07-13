@@ -1,14 +1,21 @@
 package com.otaliastudios.cameraview.preview;
 
 import android.content.Context;
+
+import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
 import androidx.annotation.VisibleForTesting;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 
+import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.internal.utils.Op;
@@ -240,7 +247,32 @@ public abstract class CameraPreview<T extends View, Output> {
      * Called by the hosting {@link com.otaliastudios.cameraview.CameraView},
      * this is a lifecycle event.
      */
+    @CallSuper
     public void onDestroy() {
+        if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
+            onDestroyView();
+        } else {
+            // Do this on the UI thread and wait.
+            Handler ui = new Handler(Looper.getMainLooper());
+            final TaskCompletionSource<Void> task = new TaskCompletionSource<>();
+            ui.post(new Runnable() {
+                @Override
+                public void run() {
+                    onDestroyView();
+                    task.setResult(null);
+                }
+            });
+            try { Tasks.await(task.getTask()); } catch (Exception ignore) {}
+        }
+    }
+
+    /**
+     * At this point we undo the work that was done during {@link #onCreateView(Context, ViewGroup)},
+     * which basically means removing the root view from the hierarchy.
+     */
+    @SuppressWarnings("WeakerAccess")
+    @UiThread
+    protected void onDestroyView() {
         View root = getRootView();
         ViewParent parent = root.getParent();
         if (parent instanceof ViewGroup) {

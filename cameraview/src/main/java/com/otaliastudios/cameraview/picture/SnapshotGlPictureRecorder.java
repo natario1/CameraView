@@ -35,9 +35,6 @@ import androidx.annotation.Nullable;
 
 import android.view.Surface;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SnapshotGlPictureRecorder extends PictureRecorder {
 
     private static final String TAG = SnapshotGlPictureRecorder.class.getSimpleName();
@@ -61,7 +58,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
         mPreview = preview;
         mOutputRatio = outputRatio;
         mOverlay = overlay;
-        mHasOverlay = overlay != null;
+        mHasOverlay = overlay != null && overlay.drawsOn(Overlay.Target.PICTURE_SNAPSHOT);
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -168,7 +165,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                             try {
                                 final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
                                 surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                                mOverlay.draw(Overlay.Target.PICTURE_SNAPSHOT, surfaceCanvas);
+                                mOverlay.drawOn(Overlay.Target.PICTURE_SNAPSHOT, surfaceCanvas);
                                 mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
                             } catch (Surface.OutOfResourcesException e) {
                                 LOG.w("Got Surface.OutOfResourcesException while drawing picture overlays", e);
