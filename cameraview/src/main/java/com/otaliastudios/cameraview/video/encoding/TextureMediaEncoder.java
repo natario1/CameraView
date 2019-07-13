@@ -34,15 +34,18 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         boolean scaleFlipped;
         EGLContext eglContext;
         int transformRotation;
+        int overlayTransformRotation;
 
         public Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
-               int textureId, int overlayTextureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
+               int textureId, int overlayTextureId, int overlayTransformRotation,
+                      float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
             // We rotate the texture using transformRotation. Pass rotation=0 to super so that
             // no rotation metadata is written into the output file.
             super(width, height, bitRate, frameRate, 0, mimeType);
             this.transformRotation = rotation;
             this.textureId = textureId;
             this.overlayTextureId = overlayTextureId;
+            this.overlayTransformRotation = overlayTransformRotation;
             this.scaleX = scaleX;
             this.scaleY = scaleY;
             this.scaleFlipped = scaleFlipped;
@@ -140,7 +143,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         boolean hasOverlay = mConfig.overlayTextureId != NO_TEXTURE;
         if (hasOverlay) {
             Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
-            Matrix.rotateM(overlayTransform, 0, mConfig.transformRotation, 0, 0, 1);
+            Matrix.rotateM(overlayTransform, 0, mConfig.overlayTransformRotation, 0, 0, 1);
             Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
         }
 

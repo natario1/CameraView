@@ -707,9 +707,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         outputSize = new Size(outputCrop.width(), outputCrop.height());
         stub.size = outputSize;
         // Vertical:               0   (270-0-0)
-        // Left (unlocked):        270   (270-90-270)
-        // Right (unlocked):       90   (270-270-90)
-        // Upside down (unlocked): 180   (270-180-180)
+        // Left (unlocked):        270 (270-90-270)
+        // Right (unlocked):       90  (270-270-90)
+        // Upside down (unlocked): 180 (270-180-180)
         // Left (locked):          270 (270-0-270)
         // Right (locked):         90  (270-0-90)
         // Upside down (locked):   180 (270-0-180)
@@ -719,7 +719,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         LOG.i("onTakeVideoSnapshot", "rotation:", stub.rotation, "size:", stub.size);
 
         // Start.
-        mVideoRecorder = new SnapshotVideoRecorder(this, glPreview, getOverlay());
+        // The overlay rotation should alway be VIEW-OUTPUT, just liek Camera1Engine.
+        int overlayRotation = getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
+        mVideoRecorder = new SnapshotVideoRecorder(this, glPreview, getOverlay(), overlayRotation);
         mVideoRecorder.start(stub);
     }
 

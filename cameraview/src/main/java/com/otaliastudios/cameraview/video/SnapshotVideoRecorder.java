@@ -62,15 +62,18 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private Surface mOverlaySurface;
     private Overlay mOverlay;
     private boolean mHasOverlay;
+    private int mOverlayRotation;
 
     public SnapshotVideoRecorder(@NonNull CameraEngine engine,
                                  @NonNull GlCameraPreview preview,
-                                 @Nullable Overlay overlay) {
+                                 @Nullable Overlay overlay,
+                                 int overlayRotation) {
         super(engine);
         mPreview = preview;
         mEngine = engine;
         mOverlay = overlay;
         mHasOverlay = overlay != null;
+        mOverlayRotation = overlayRotation;
     }
 
     @Override
@@ -129,6 +132,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                     mResult.rotation,
                     type, mTextureId,
                     mHasOverlay ? mOverlayTextureId : TextureMediaEncoder.NO_TEXTURE,
+                    mOverlayRotation,
                     scaleX, scaleY,
                     mFlipped,
                     EGL14.eglGetCurrentContext()

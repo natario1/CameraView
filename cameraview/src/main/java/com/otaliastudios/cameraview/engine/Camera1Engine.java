@@ -372,7 +372,7 @@ public class Camera1Engine extends CameraEngine implements
         LOG.i("onTakeVideoSnapshot", "rotation:", stub.rotation, "size:", stub.size);
 
         // Start.
-        mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview, getOverlay());
+        mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview, getOverlay(), stub.rotation);
         mVideoRecorder.start(stub);
     }
 
