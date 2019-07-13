@@ -37,9 +37,9 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_gravity="bottom|end"
-            app:layout_drawInPreview="false"
-            app:layout_drawInVideoSnapshot="true"
-            app:layout_drawInPictureSnapshot="true"
+            app:layout_drawOnPreview="false"
+            app:layout_drawOnVideoSnapshot="true"
+            app:layout_drawOnPictureSnapshot="true"
             android:gravity="center"
             android:padding="8dp">
             <ImageView

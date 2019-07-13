@@ -312,7 +312,7 @@ public class Camera1Engine extends CameraEngine implements
         AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
 
         if (mPreview instanceof GlCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio, getPictureSurfaceDrawers());
+            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio, getPictureOverlays());
         } else {
             mPictureRecorder = new Snapshot1PictureRecorder(stub, this, mCamera, outputRatio);
         }
@@ -362,7 +362,7 @@ public class Camera1Engine extends CameraEngine implements
         stub.rotation = getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
 
         // Start.
-        mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview, getVideoSurfaceDrawers());
+        mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview, getVideoOverlays());
         mVideoRecorder.start(stub);
     }
 

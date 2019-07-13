@@ -8,10 +8,11 @@ import android.opengl.EGL14;
 import android.os.Build;
 import android.view.Surface;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.overlay.SurfaceDrawer;
+import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;
@@ -59,18 +60,20 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private int mOverlayTextureId = 0;
     private SurfaceTexture mOverlaySurfaceTexture;
     private Surface mOverlaySurface;
-    private List<SurfaceDrawer> mSurfaceDrawerList;
-    private boolean mWithOverlay;
+    private List<Overlay> mOverlays;
+    private boolean mHasOverlays;
 
     public SnapshotVideoRecorder(@NonNull CameraEngine engine,
                                  @NonNull GlCameraPreview preview,
-                                 @NonNull List<SurfaceDrawer> surfaceDrawerList) {
+                                 @Nullable List<Overlay> overlays) {
         super(engine);
         mPreview = preview;
         mEngine = engine;
 
-        mWithOverlay = true;
-        mSurfaceDrawerList = surfaceDrawerList;
+        mHasOverlays = overlays != null && !overlays.isEmpty();
+        if (mHasOverlays) {
+            mOverlays = new ArrayList<>(overlays);
+        }
     }
 
     @Override
@@ -90,10 +93,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     @Override
     public void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
-        if (mWithOverlay) {
+        if (mHasOverlays) {
             EglViewport temp = new EglViewport();
             mOverlayTextureId = temp.createTexture();
-
             mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId);
             mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
             mOverlaySurface = new Surface(mOverlaySurfaceTexture);
@@ -129,7 +131,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                     mResult.videoFrameRate,
                     mResult.rotation,
                     type, mTextureId,
-                    mWithOverlay ? mOverlayTextureId : 0,
+                    mHasOverlays ? mOverlayTextureId : TextureMediaEncoder.NO_TEXTURE,
                     scaleX, scaleY,
                     mFlipped,
                     EGL14.eglGetCurrentContext()
@@ -158,17 +160,17 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             surfaceTexture.getTransformMatrix(textureFrame.transform);
 
             // get overlay
-            if (mWithOverlay) {
+            if (mHasOverlays) {
                 try {
                     final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
                     surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                    for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
-                        surfaceDrawer.drawOnSurfaceForVideoSnapshot(surfaceCanvas);
+                    for (Overlay overlay : mOverlays) {
+                        overlay.drawOnVideo(surfaceCanvas);
                     }
 
                     mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
                 } catch (Surface.OutOfResourcesException e) {
-                    e.printStackTrace();
+                    LOG.w("Got Surface.OutOfResourcesException while drawing video overlays", e);
                 }
                 mOverlaySurfaceTexture.updateTexImage();
                 mOverlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);

@@ -134,8 +134,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private boolean mExperimental;
 
     // Overlays
-    private OverlayLayout mOverlayLayoutManager; // see OverlayLayoutManager for why having two of them
-    private OverlayLayout mOverlayLayoutManagerBelow;
+    private OverlayLayout mOverlayLayout;
 
     // Threading
     private Handler mUiHandler;
@@ -193,13 +192,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Views
         mGridLinesLayout = new GridLinesLayout(context);
-        mOverlayLayoutManager = new OverlayLayout(context);
-        mOverlayLayoutManagerBelow = new OverlayLayout(context);
+        mOverlayLayout = new OverlayLayout(context);
         mMarkerLayout = new MarkerLayout(context);
         addView(mGridLinesLayout);
         addView(mMarkerLayout);
-        addView(mOverlayLayoutManager);
-        addView(mOverlayLayoutManagerBelow, 0); // put it at the bottom of the FrameLayout
+        addView(mOverlayLayout);
 
         // Create the engine
         doInstantiateEngine();
@@ -248,16 +245,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     private void doInstantiateEngine() {
         if (mCameraEngine != null) {
-            mCameraEngine.removePictureSurfaceDrawer(mOverlayLayoutManager);
-            mCameraEngine.removePictureSurfaceDrawer(mOverlayLayoutManagerBelow);
-            mCameraEngine.removeVideoSurfaceDrawer(mOverlayLayoutManager);
-            mCameraEngine.removeVideoSurfaceDrawer(mOverlayLayoutManagerBelow);
+            mCameraEngine.removePictureOverlay(mOverlayLayout);
+            mCameraEngine.removeVideoOverlay(mOverlayLayout);
         }
         mCameraEngine = instantiateCameraEngine(mEngine, mCameraCallbacks);
-        mCameraEngine.addPictureSurfaceDrawer(mOverlayLayoutManager);
-        mCameraEngine.addPictureSurfaceDrawer(mOverlayLayoutManagerBelow);
-        mCameraEngine.addVideoSurfaceDrawer(mOverlayLayoutManager);
-        mCameraEngine.addVideoSurfaceDrawer(mOverlayLayoutManagerBelow);
+        mCameraEngine.addPictureOverlay(mOverlayLayout);
+        mCameraEngine.addVideoOverlay(mOverlayLayout);
     }
 
     /**
@@ -2104,105 +2097,20 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     //region Overlays
 
     @Override
-    public void addView(View child, ViewGroup.LayoutParams params) {
-        if (params instanceof OverlayLayoutParams) {
-            if (((OverlayLayoutParams) params).drawInPreview) {
-                mOverlayLayoutManager.addView(child, params);
-            } else {
-                mOverlayLayoutManagerBelow.addView(child, params);
-            }
-        } else {
-            super.addView(child, params);
-        }
-    }
-
-    @Override
-    public void removeView(View child) {
-        if (child.getLayoutParams() instanceof OverlayLayoutParams) {
-            if (((OverlayLayoutParams) child.getLayoutParams()).drawInPreview) {
-                mOverlayLayoutManager.removeView(child);
-            } else {
-                mOverlayLayoutManagerBelow.removeView(child);
-            }
-        } else {
-            super.removeView(child);
-        }
-    }
-
-    @Override
     public LayoutParams generateLayoutParams(AttributeSet attributeSet) {
-        OverlayLayoutParams toBeChecked = new OverlayLayoutParams(this.getContext(), attributeSet);
-        if (toBeChecked.isOverlay()) {
-            return toBeChecked;
+        if (mOverlayLayout.isOverlay(attributeSet)) {
+            return mOverlayLayout.generateLayoutParams(attributeSet);
         }
         return super.generateLayoutParams(attributeSet);
     }
 
+    // We don't support removeView on overlays for now.
     @Override
-    protected ViewGroup.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
-        if (p instanceof OverlayLayoutParams) {
-            return p;
-        }
-        return super.generateLayoutParams(p);
-    }
-
-
-    public static class OverlayLayoutParams extends FrameLayout.LayoutParams {
-
-        private boolean drawInPreview = false;
-        private boolean drawInPictureSnapshot = false;
-        private boolean drawInVideoSnapshot = false;
-
-        public OverlayLayoutParams(Context context, AttributeSet attributeSet) {
-            super(context, attributeSet);
-            this.readStyleParameters(context, attributeSet);
-        }
-
-        public OverlayLayoutParams(int width, int height) {
-            super(width, height);
-        }
-
-        public OverlayLayoutParams(ViewGroup.LayoutParams layoutParams) {
-            super(layoutParams);
-        }
-
-        private void readStyleParameters(Context context, AttributeSet attributeSet) {
-            TypedArray a = context.obtainStyledAttributes(attributeSet, R.styleable.CameraView_Layout);
-            try {
-                this.drawInPreview = a.getBoolean(R.styleable.CameraView_Layout_layout_drawInPreview, false);
-                this.drawInPictureSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawInPictureSnapshot, false);
-                this.drawInVideoSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawInVideoSnapshot, false);
-            } finally {
-                a.recycle();
-            }
-        }
-
-        public boolean isDrawInPreview() {
-            return drawInPreview;
-        }
-
-        public void setDrawInPreview(boolean drawInPreview) {
-            this.drawInPreview = drawInPreview;
-        }
-
-        public boolean isDrawInPictureSnapshot() {
-            return drawInPictureSnapshot;
-        }
-
-        public void setDrawInPictureSnapshot(boolean drawInPictureSnapshot) {
-            this.drawInPictureSnapshot = drawInPictureSnapshot;
-        }
-
-        public boolean isDrawInVideoSnapshot() {
-            return drawInVideoSnapshot;
-        }
-
-        public void setDrawInVideoSnapshot(boolean drawInVideoSnapshot) {
-            this.drawInVideoSnapshot = drawInVideoSnapshot;
-        }
-
-        public boolean isOverlay() {
-            return drawInPreview || drawInPictureSnapshot || drawInVideoSnapshot;
+    public void addView(View child, int index, ViewGroup.LayoutParams params) {
+        if (mOverlayLayout.isOverlay(params)) {
+            mOverlayLayout.addView(child, params);
+        } else {
+            super.addView(child, index, params);
         }
     }
 

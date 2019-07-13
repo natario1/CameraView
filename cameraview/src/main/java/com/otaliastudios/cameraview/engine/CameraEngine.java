@@ -18,7 +18,7 @@ import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.overlay.SurfaceDrawer;
+import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.engine.offset.Angles;
 import com.otaliastudios.cameraview.engine.offset.Reference;
@@ -185,38 +185,8 @@ public abstract class CameraEngine implements
     private long mAutoFocusResetDelayMillis;
     private int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
     private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
-    private final List<SurfaceDrawer> pictureSurfaceDrawers = new ArrayList<>();
-    private final List<SurfaceDrawer> videoSurfaceDrawers = new ArrayList<>();
-
-    public void addPictureSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
-        if (!pictureSurfaceDrawers.contains(surfaceDrawer)) {
-            pictureSurfaceDrawers.add(surfaceDrawer);
-        }
-    }
-
-    public void removePictureSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
-        pictureSurfaceDrawers.remove(surfaceDrawer);
-    }
-
-    @NonNull
-    protected List<SurfaceDrawer> getPictureSurfaceDrawers() {
-        return pictureSurfaceDrawers;
-    }
-
-    public void addVideoSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
-        if (!videoSurfaceDrawers.contains(surfaceDrawer)) {
-            videoSurfaceDrawers.add(surfaceDrawer);
-        }
-    }
-
-    public void removeVideoSurfaceDrawer(@NonNull SurfaceDrawer surfaceDrawer) {
-        videoSurfaceDrawers.remove(surfaceDrawer);
-    }
-
-    @NonNull
-    protected List<SurfaceDrawer> getVideoSurfaceDrawers() {
-        return videoSurfaceDrawers;
-    }
+    private final List<Overlay> pictureOverlays = new ArrayList<>();
+    private final List<Overlay> videoOverlays = new ArrayList<>();
 
     // Steps
     private final Step.Callback mStepCallback = new Step.Callback() {
@@ -1416,6 +1386,43 @@ public abstract class CameraEngine implements
         if (flip) result = result.flip();
         LOG.i("computePreviewStreamSize:", "result:", result, "flip:", flip);
         return result;
+    }
+
+    //endregion
+
+    //region Overlays
+
+
+    public void addPictureOverlay(@NonNull Overlay overlay) {
+        if (!pictureOverlays.contains(overlay)) {
+            pictureOverlays.add(overlay);
+        }
+    }
+
+    public void removePictureOverlay(@NonNull Overlay overlay) {
+        pictureOverlays.remove(overlay);
+    }
+
+    public void addVideoOverlay(@NonNull Overlay overlay) {
+        if (!videoOverlays.contains(overlay)) {
+            videoOverlays.add(overlay);
+        }
+    }
+
+    public void removeVideoOverlay(@NonNull Overlay overlay) {
+        videoOverlays.remove(overlay);
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    protected List<Overlay> getPictureOverlays() {
+        return pictureOverlays;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    protected List<Overlay> getVideoOverlays() {
+        return videoOverlays;
     }
 
     //endregion

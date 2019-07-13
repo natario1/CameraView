@@ -136,10 +136,10 @@
     </declare-styleable>
 
     <declare-styleable name="CameraView_Layout">
-
-        <attr name="layout_drawInPreview" format="boolean"/>
-        <attr name="layout_drawInPictureSnapshot" format="boolean"/>
-        <attr name="layout_drawInVideoSnapshot" format="boolean"/>
+        <attr name="layout_isOverlay" format="boolean"/>
+        <attr name="layout_drawOnPreview" format="boolean"/>
+        <attr name="layout_drawOnPictureSnapshot" format="boolean"/>
+        <attr name="layout_drawOnVideoSnapshot" format="boolean"/>
 
     </declare-styleable>
 </resources>

@@ -24,6 +24,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     public final static String FRAME_EVENT = "frame";
+    public final static int NO_TEXTURE = Integer.MIN_VALUE;
 
     public static class Config extends VideoMediaEncoder.Config {
         int textureId;
@@ -33,11 +34,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         boolean scaleFlipped;
         EGLContext eglContext;
         int transformRotation;
-
-        public Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
-               int textureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
-            this(width, height, bitRate, frameRate, rotation, mimeType, textureId, 0, scaleX, scaleY, scaleFlipped, eglContext);
-        }
 
         public Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
                int textureId, int overlayTextureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
@@ -137,11 +133,12 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
         // Rotation also takes place with respect to the origin (the Z axis), so we must
         // translate to origin, rotate, then back to where we were.
-
         Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
         Matrix.rotateM(transform, 0, mConfig.transformRotation, 0, 0, 1);
         Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
-        if (overlayTransform != null) {
+
+        boolean hasOverlay = mConfig.overlayTextureId != NO_TEXTURE;
+        if (hasOverlay) {
             Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
             Matrix.rotateM(overlayTransform, 0, mConfig.transformRotation, 0, 0, 1);
             Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
@@ -153,7 +150,10 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         // but flipped based on the mConfig.scaleFlipped boolean.
         LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drawFrame.");
         mViewport.drawFrame(mConfig.textureId, transform);
-        mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
+        if (hasOverlay) {
+            mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
+        }
+
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();
         mFramePool.recycle(frame);

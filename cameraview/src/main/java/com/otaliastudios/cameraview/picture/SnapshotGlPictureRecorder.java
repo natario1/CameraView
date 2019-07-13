@@ -14,7 +14,7 @@ import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.overlay.SurfaceDrawer;
+import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.engine.offset.Axis;
@@ -31,9 +31,11 @@ import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import android.view.Surface;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SnapshotGlPictureRecorder extends PictureRecorder {
@@ -45,21 +47,23 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
     private GlCameraPreview mPreview;
     private AspectRatio mOutputRatio;
 
-    private List<SurfaceDrawer> mSurfaceDrawerList;
-    private boolean mWithOverlay;
+    private List<Overlay> mOverlays;
+    private boolean mHasOverlays;
 
     public SnapshotGlPictureRecorder(
             @NonNull PictureResult.Stub stub,
             @NonNull CameraEngine engine,
             @NonNull GlCameraPreview preview,
             @NonNull AspectRatio outputRatio,
-            @NonNull List<SurfaceDrawer> surfaceDrawerList) {
+            @Nullable List<Overlay> overlays) {
         super(stub, engine);
         mEngine = engine;
         mPreview = preview;
         mOutputRatio = outputRatio;
-        mWithOverlay = true;
-        mSurfaceDrawerList = surfaceDrawerList;
+        mHasOverlays = overlays != null && !overlays.isEmpty();
+        if (mHasOverlays) {
+            mOverlays = new ArrayList<>(overlays);
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -68,33 +72,32 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
         mPreview.addRendererFrameCallback(new RendererFrameCallback() {
 
             int mTextureId;
-            int mOverlayTextureId = 0;
             SurfaceTexture mSurfaceTexture;
-            SurfaceTexture mOverlaySurfaceTexture;
             float[] mTransform;
+
+            int mOverlayTextureId = 0;
+            SurfaceTexture mOverlaySurfaceTexture;
+            Surface mOverlaySurface;
             float[] mOverlayTransform;
-            EglViewport viewport;
+
+            EglViewport mViewport;
 
             @RendererThread
             public void onRendererTextureCreated(int textureId) {
                 mTextureId = textureId;
-                viewport = new EglViewport();
-                if (mWithOverlay) {
-                    mOverlayTextureId = viewport.createTexture();
-                }
+                mViewport = new EglViewport();
                 mSurfaceTexture = new SurfaceTexture(mTextureId, true);
-                if (mWithOverlay) {
-                    mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
-                }
                 // Need to crop the size.
                 Rect crop = CropHelper.computeCrop(mResult.size, mOutputRatio);
                 mResult.size = new Size(crop.width(), crop.height());
                 mSurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
-                if (mWithOverlay) {
-                    mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
-                }
                 mTransform = new float[16];
-                if (mWithOverlay) {
+
+                if (mHasOverlays) {
+                    mOverlayTextureId = mViewport.createTexture();
+                    mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
+                    mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
+                    mOverlaySurface = new Surface(mOverlaySurfaceTexture);
                     mOverlayTransform = new float[16];
                 }
             }
@@ -128,30 +131,14 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 WorkerHandler.execute(new Runnable() {
                     @Override
                     public void run() {
+                        // 1. Get latest texture
                         EglWindowSurface surface = new EglWindowSurface(core, mSurfaceTexture);
                         surface.makeCurrent();
-//                        EglViewport viewport = new EglViewport();
                         mSurfaceTexture.updateTexImage();
                         mSurfaceTexture.getTransformMatrix(mTransform);
-                        Surface drawOnto = new Surface(mOverlaySurfaceTexture);
-                        if (mWithOverlay) {
-                            try {
-                                final Canvas surfaceCanvas = drawOnto.lockCanvas(null);
-                                surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                                for (SurfaceDrawer surfaceDrawer : mSurfaceDrawerList) {
-                                    surfaceDrawer.drawOnSurfaceForPictureSnapshot(surfaceCanvas);
-                                }
 
-                                drawOnto.unlockCanvasAndPost(surfaceCanvas);
-                            } catch (Surface.OutOfResourcesException e) {
-                                e.printStackTrace();
-                            }
-                            mOverlaySurfaceTexture.updateTexImage();
-                            mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
-                        }
-
-                        // Apply scale and crop:
-                        // NOTE: scaleX and scaleY are in REF_VIEW, while our input appears to be in REF_SENSOR.
+                        // 2. Apply scale and crop:
+                        // scaleX and scaleY are in REF_VIEW, while our input appears to be in REF_SENSOR.
                         boolean flip = mEngine.getAngles().flip(Reference.VIEW, Reference.SENSOR);
                         float realScaleX = flip ? scaleY : scaleX;
                         float realScaleY = flip ? scaleX : scaleY;
@@ -160,65 +147,66 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                         Matrix.translateM(mTransform, 0, scaleTranslX, scaleTranslY, 0);
                         Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
 
-                        // Fix rotation:
-                        // Not sure why we need the minus here... It makes no sense to me.
-                        LOG.w("Recording frame. Rotation:", mResult.rotation, "Actual:", -mResult.rotation);
-                        int rotation = -mResult.rotation;
-                        int overlayRotation = mEngine.getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE); // TODO check axis
-                        // apparently with front facing camera with don't need the minus sign
-                        if (mResult.facing == Facing.FRONT) {
-                            overlayRotation = -overlayRotation;
-                        }
+                        // 3. Go back to 0,0 so that rotate and flip work well.
+                        Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0);
+
+                        // 4. Apply rotation:
+                        // Not sure why we need the minus here.
+                        Matrix.rotateM(mTransform, 0, -mResult.rotation, 0, 0, 1);
                         mResult.rotation = 0;
 
-                        // Go back to 0,0 so that rotate and flip work well.
-                        Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0);
-                        if (mOverlayTransform != null) {
-                            Matrix.translateM(mOverlayTransform, 0, 0.5F, 0.5F, 0);
-                        }
-
-                        // Apply rotation:
-                        Matrix.rotateM(mTransform, 0, rotation, 0, 0, 1);
-                        if (mOverlayTransform != null) {
-                            Matrix.rotateM(mOverlayTransform, 0, overlayRotation, 0, 0, 1);
-                        }
-
-                        // Flip horizontally for front camera:
+                        // 5. Flip horizontally for front camera:
                         if (mResult.facing == Facing.FRONT) {
                             Matrix.scaleM(mTransform, 0, -1, 1, 1);
-                            if (mOverlayTransform != null) {
-                                // not sure why we have to flip the mirror the y axis
-                                Matrix.scaleM(mOverlayTransform, 0, -1, -1, 1);
-                            }
-                        }
-                        if (mOverlayTransform != null) {
-                            // not sure why we have to flip the mirror the y axis
-                            Matrix.scaleM(mOverlayTransform, 0, 1, -1, 1);
                         }
 
-                        // Go back to old position.
+                        // 6. Go back to old position.
                         Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0);
-                        if (mOverlayTransform != null) {
+
+                        // 7. Do pretty much the same for overlays, though with
+                        // some differences.
+                        if (mHasOverlays) {
+                            // 1. First we must draw on the texture and get latest image.
+                            try {
+                                final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
+                                surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                                for (Overlay overlay : mOverlays) {
+                                    overlay.drawOnPicture(surfaceCanvas);
+                                }
+                                mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
+                            } catch (Surface.OutOfResourcesException e) {
+                                LOG.w("Got Surface.OutOfResourcesException while drawing picture overlays", e);
+                            }
+                            mOverlaySurfaceTexture.updateTexImage();
+                            mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
+
+                            // 2. Then we can apply the transformations.
+                            // TODO check the sign of this angle.
+                            int rotation = mEngine.getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+                            Matrix.translateM(mOverlayTransform, 0, 0.5F, 0.5F, 0);
+                            Matrix.rotateM(mOverlayTransform, 0, -rotation, 0, 0, 1);
+                            // Not sure why we have to flip the y axis (twice?).
+                            if (mResult.facing == Facing.FRONT) {
+                                Matrix.scaleM(mOverlayTransform, 0, -1, -1, 1);
+                            }
+                            Matrix.scaleM(mOverlayTransform, 0, 1, -1, 1);
                             Matrix.translateM(mOverlayTransform, 0, -0.5F, -0.5F, 0);
                         }
 
-                        // Future note: passing scale values to the viewport?
-                        // They are simply realScaleX and realScaleY.
-                        viewport.drawFrame(mTextureId, mTransform);
-                        if (mWithOverlay) {
-                            viewport.drawFrame(mOverlayTextureId, mOverlayTransform);
-                        }
+                        // 8. Draw and save
+                        mViewport.drawFrame(mTextureId, mTransform);
+                        if (mHasOverlays) mViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
                         // don't - surface.swapBuffers();
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
                         mResult.format = PictureResult.FORMAT_JPEG;
-                        mSurfaceTexture.releaseTexImage();
 
-                        // EGL14.eglMakeCurrent(oldDisplay, oldSurface, oldSurface, eglContext);
+                        // 9. Cleanup
+                        mSurfaceTexture.releaseTexImage();
                         surface.release();
-                        viewport.release();
-                        drawOnto.release();
+                        mViewport.release();
                         mSurfaceTexture.release();
-                        if (mOverlaySurfaceTexture != null) {
+                        if (mHasOverlays) {
+                            mOverlaySurface.release();
                             mOverlaySurfaceTexture.release();
                         }
                         core.release();

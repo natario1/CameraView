@@ -1,7 +1,9 @@
 package com.otaliastudios.cameraview.overlay;
 
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.view.View;
@@ -11,137 +13,172 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.R;
 
-import java.util.HashMap;
-import java.util.Map;
 
-/**
- * This class manages {@link OverlayLayoutInner}s.
- * The necessity for this class comes from two features of {@link View}s:
- *  - a {@link View} can only have one parent
- *  - the View framework does not provide a straightforward way for a {@link ViewGroup} to draw
- *    only a subset of it's children.
- * We have three possible target for a overlay {@link View} to be drawn on:
- *  - camera preview
- *  - picture snapshot
- *  - video snapshot
- * Given the two constraints above in order to draw exclusively on a subset of targets we need a
- * different {@link OverlayLayoutInner} for each subset of targets. This class manages those different
- * {@link OverlayLayoutInner}s.
- *
- * A problem remains: the views are drawn on preview when {@link #draw(Canvas)} is called on this
- * class, for not drawing on the preview but drawing on picture snapshot, for instance, we cannot
- * change the child's visibility.
- * One way to solve this problem is to have two instances of {@link OverlayLayout} and layer
- * them so that the one below is covered and hidden by the camera preview. This way only the top
- * {@link OverlayLayout} is shown on top of the camera preview and we can still access the
- * bottom one's {@link OverlayLayoutInner#draw(Canvas)} for drawing on picture snapshots.
- */
-public class OverlayLayout extends FrameLayout implements SurfaceDrawer {
+@SuppressLint("CustomViewStyleable")
+public class OverlayLayout extends FrameLayout implements Overlay {
 
-    private Map<OverlayType, OverlayLayoutInner> mLayouts = new HashMap<>();
+    private static final String TAG = OverlayLayout.class.getSimpleName();
+    private static final CameraLogger LOG = CameraLogger.create(TAG);
+
+    private static final int DRAWING_PREVIEW = 0;
+    private static final int DRAWING_PICTURE = 1;
+    private static final int DRAWING_VIDEO = 2;
+
+    private int target = DRAWING_PREVIEW;
 
     public OverlayLayout(@NonNull Context context) {
         super(context);
     }
 
-    public OverlayLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
+    /**
+     * Returns true if this {@link AttributeSet} belongs to an overlay.
+     * @param set an attribute set
+     * @return true if overlay
+     */
+    public boolean isOverlay(@Nullable AttributeSet set) {
+        if (set == null) return false;
+        TypedArray a = getContext().obtainStyledAttributes(set, R.styleable.CameraView_Layout);
+        boolean isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, false);
+        a.recycle();
+        return isOverlay;
     }
 
-    @Override
-    public void addView(View child, ViewGroup.LayoutParams params) {
-        // params must be instance of OverlayLayoutParams
-        if (!(params instanceof CameraView.OverlayLayoutParams)) {
-            return;
-        }
+    /**
+     * Returns true if this {@link ViewGroup.LayoutParams} belongs to an overlay.
+     * @param params a layout params
+     * @return true if overlay
+     */
+    public boolean isOverlay(@NonNull ViewGroup.LayoutParams params) {
+        return params instanceof LayoutParams;
+    }
 
-        OverlayType viewOverlayType = new OverlayType((CameraView.OverlayLayoutParams) params);
-        if (mLayouts.containsKey(viewOverlayType)) {
-            mLayouts.get(viewOverlayType).addView(child, params);
+    /**
+     * Generates our own overlay layout params.
+     * @param attrs input attrs
+     * @return our params
+     */
+    @Override
+    public OverlayLayout.LayoutParams generateLayoutParams(AttributeSet attrs) {
+        return new LayoutParams(getContext(), attrs);
+    }
+
+    /**
+     * This is called by the View hierarchy, so at this point we are
+     * likely drawing on the preview.
+     * @param canvas View canvas
+     */
+    @Override
+    public void draw(Canvas canvas) {
+        synchronized (this) {
+            target = DRAWING_PREVIEW;
+            super.draw(canvas);
+        }
+    }
+
+    /**
+     * This is called by the overlay drawer.
+     * We call {@link #dispatchDraw(Canvas)} to draw our children.
+     *
+     * The input canvas has the Surface dimensions which means it is guaranteed
+     * to have our own aspect ratio. But we might still have to apply some scale.
+     *
+     * @param canvas the overlay canvas
+     */
+    @Override
+    public void drawOnPicture(@NonNull Canvas canvas) {
+        canvas.save();
+        float widthScale = canvas.getWidth() / (float) getWidth();
+        float heightScale = canvas.getHeight() / (float) getHeight();
+        LOG.i("drawOnPicture",
+                "widthScale:", widthScale,
+                "heightScale:", heightScale,
+                "canvasWidth:", canvas.getWidth(),
+                "canvasHeight:", canvas.getHeight());
+        canvas.scale(widthScale, heightScale);
+        synchronized (this) {
+            target = DRAWING_PICTURE;
+            dispatchDraw(canvas);
+        }
+        canvas.restore();
+    }
+
+    /**
+     * This is called by the overlay drawer.
+     * We call {@link #dispatchDraw(Canvas)} to draw our children.
+     * @param canvas the overlay canvas
+     */
+    @Override
+    public void drawOnVideo(@NonNull Canvas canvas) {
+        canvas.save();
+        float widthScale = canvas.getWidth() / (float) getWidth();
+        float heightScale = canvas.getHeight() / (float) getHeight();
+        LOG.i("drawOnVideo",
+                "widthScale:", widthScale,
+                "heightScale:", heightScale,
+                "canvasWidth:", canvas.getWidth(),
+                "canvasHeight:", canvas.getHeight());
+        canvas.scale(widthScale, heightScale);
+        synchronized (this) {
+            target = DRAWING_VIDEO;
+            dispatchDraw(canvas);
+        }
+        canvas.restore();
+    }
+
+    /**
+     * We end up here in all three cases, and should filter out
+     * views that are not meant to be drawn on that specific surface.
+     */
+    @Override
+    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+        LayoutParams params = (LayoutParams) child.getLayoutParams();
+        boolean draw = ((target == DRAWING_PREVIEW && params.drawOnPreview)
+                || (target == DRAWING_VIDEO && params.drawOnVideoSnapshot)
+                || (target == DRAWING_PICTURE && params.drawOnPictureSnapshot)
+        );
+        if (draw) {
+            return super.drawChild(canvas, child, drawingTime);
         } else {
-            OverlayLayoutInner newLayout = new OverlayLayoutInner(getContext());
-            newLayout.addView(child, params);
-            super.addView(newLayout);
-            mLayouts.put(viewOverlayType, newLayout);
+            LOG.v("Skipping drawing for view:", child.getClass().getSimpleName(),
+                    "target:", target,
+                    "params:", params);
+            return false;
         }
     }
 
-    @Override
-    public void removeView(View child) {
-        // params must be instance of OverlayLayoutParams
-        if (!(child.getLayoutParams() instanceof CameraView.OverlayLayoutParams)) {
-            return;
-        }
+    @SuppressWarnings("WeakerAccess")
+    public static class LayoutParams extends FrameLayout.LayoutParams {
 
-        OverlayType viewOverlayType = new OverlayType((CameraView.OverlayLayoutParams) child.getLayoutParams());
-        if (mLayouts.containsKey(viewOverlayType)) {
-            mLayouts.get(viewOverlayType).removeView(child);
-        }
-    }
+        @SuppressWarnings("unused")
+        private boolean isOverlay;
+        public boolean drawOnPreview;
+        public boolean drawOnPictureSnapshot;
+        public boolean drawOnVideoSnapshot;
 
-    @Override
-    public void drawOnSurfaceForPictureSnapshot(Canvas surfaceCanvas) {
-        surfaceCanvas.save();
-        // scale factor between canvas width and this View's width
-        float widthScale = surfaceCanvas.getWidth() / (float) getWidth();
-        // scale factor between canvas height and this View's height
-        float heightScale = surfaceCanvas.getHeight() / (float) getHeight();
-        surfaceCanvas.scale(widthScale, heightScale);
-        for (Map.Entry<OverlayType, OverlayLayoutInner> entry : mLayouts.entrySet()) {
-            if (entry.getKey().pictureSnapshot) {
-                entry.getValue().drawOverlay(surfaceCanvas);
+        public LayoutParams(@NonNull Context context, @Nullable AttributeSet attrs) {
+            super(context, attrs);
+            TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CameraView_Layout);
+            try {
+                this.isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, false);
+                this.drawOnPreview = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnPreview, false);
+                this.drawOnPictureSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnPictureSnapshot, false);
+                this.drawOnVideoSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnVideoSnapshot, false);
+            } finally {
+                a.recycle();
             }
         }
-        surfaceCanvas.restore();
-    }
 
-    @Override
-    public void drawOnSurfaceForVideoSnapshot(Canvas surfaceCanvas) {
-        surfaceCanvas.save();
-        // scale factor between canvas width and this View's width
-        float widthScale = surfaceCanvas.getWidth() / (float) getWidth();
-        // scale factor between canvas height and this View's height
-        float heightScale = surfaceCanvas.getHeight() / (float) getHeight();
-        surfaceCanvas.scale(widthScale, heightScale);
-        for (Map.Entry<OverlayType, OverlayLayoutInner> entry : mLayouts.entrySet()) {
-            if (entry.getKey().videoSnapshot) {
-                entry.getValue().drawOverlay(surfaceCanvas);
-            }
-        }
-        surfaceCanvas.restore();
-    }
-
-    private class OverlayType {
-        boolean preview = false;
-        boolean pictureSnapshot = false;
-        boolean videoSnapshot = false;
-
-        OverlayType(CameraView.OverlayLayoutParams params) {
-            this.preview = params.isDrawInPreview();
-            this.pictureSnapshot = params.isDrawInPictureSnapshot();
-            this.videoSnapshot = params.isDrawInVideoSnapshot();
-        }
-
+        @NonNull
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            OverlayType that = (OverlayType) o;
-            return preview == that.preview &&
-                    pictureSnapshot == that.pictureSnapshot &&
-                    videoSnapshot == that.videoSnapshot;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = 0;
-            result = 31*result + (preview ? 1 : 0);
-            result = 31*result + (pictureSnapshot ? 1 : 0);
-            result = 31*result + (videoSnapshot ? 1 : 0);
-            return result;
+        public String toString() {
+            return getClass().getName() + "[isOverlay:" + isOverlay
+                    + ",drawOnPreview:" + drawOnPreview
+                    + ",drawOnPictureSnapshot:" + drawOnPictureSnapshot
+                    + ",drawOnVideoSnapshot:" + drawOnVideoSnapshot
+                    + "]";
         }
     }
-
 }
