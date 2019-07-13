@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.overlay;
 
 
 import android.content.Context;
@@ -11,11 +11,13 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.otaliastudios.cameraview.CameraView;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class manages {@link OverlayLayout}s.
+ * This class manages {@link OverlayLayoutInner}s.
  * The necessity for this class comes from two features of {@link View}s:
  *  - a {@link View} can only have one parent
  *  - the View framework does not provide a straightforward way for a {@link ViewGroup} to draw
@@ -25,26 +27,26 @@ import java.util.Map;
  *  - picture snapshot
  *  - video snapshot
  * Given the two constraints above in order to draw exclusively on a subset of targets we need a
- * different {@link OverlayLayout} for each subset of targets. This class manages those different
- * {@link OverlayLayout}s.
+ * different {@link OverlayLayoutInner} for each subset of targets. This class manages those different
+ * {@link OverlayLayoutInner}s.
  *
  * A problem remains: the views are drawn on preview when {@link #draw(Canvas)} is called on this
  * class, for not drawing on the preview but drawing on picture snapshot, for instance, we cannot
  * change the child's visibility.
- * One way to solve this problem is to have two instances of {@link OverlayLayoutManager} and layer
+ * One way to solve this problem is to have two instances of {@link OverlayLayout} and layer
  * them so that the one below is covered and hidden by the camera preview. This way only the top
- * {@link OverlayLayoutManager} is shown on top of the camera preview and we can still access the
- * bottom one's {@link OverlayLayout#draw(Canvas)} for drawing on picture snapshots.
+ * {@link OverlayLayout} is shown on top of the camera preview and we can still access the
+ * bottom one's {@link OverlayLayoutInner#draw(Canvas)} for drawing on picture snapshots.
  */
-class OverlayLayoutManager extends FrameLayout implements SurfaceDrawer {
+public class OverlayLayout extends FrameLayout implements SurfaceDrawer {
 
-    private Map<OverlayType, OverlayLayout> mLayouts = new HashMap<>();
+    private Map<OverlayType, OverlayLayoutInner> mLayouts = new HashMap<>();
 
-    public OverlayLayoutManager(@NonNull Context context) {
+    public OverlayLayout(@NonNull Context context) {
         super(context);
     }
 
-    public OverlayLayoutManager(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public OverlayLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
 
@@ -59,7 +61,7 @@ class OverlayLayoutManager extends FrameLayout implements SurfaceDrawer {
         if (mLayouts.containsKey(viewOverlayType)) {
             mLayouts.get(viewOverlayType).addView(child, params);
         } else {
-            OverlayLayout newLayout = new OverlayLayout(getContext());
+            OverlayLayoutInner newLayout = new OverlayLayoutInner(getContext());
             newLayout.addView(child, params);
             super.addView(newLayout);
             mLayouts.put(viewOverlayType, newLayout);
@@ -87,7 +89,7 @@ class OverlayLayoutManager extends FrameLayout implements SurfaceDrawer {
         // scale factor between canvas height and this View's height
         float heightScale = surfaceCanvas.getHeight() / (float) getHeight();
         surfaceCanvas.scale(widthScale, heightScale);
-        for (Map.Entry<OverlayType, OverlayLayout> entry : mLayouts.entrySet()) {
+        for (Map.Entry<OverlayType, OverlayLayoutInner> entry : mLayouts.entrySet()) {
             if (entry.getKey().pictureSnapshot) {
                 entry.getValue().drawOverlay(surfaceCanvas);
             }
@@ -103,7 +105,7 @@ class OverlayLayoutManager extends FrameLayout implements SurfaceDrawer {
         // scale factor between canvas height and this View's height
         float heightScale = surfaceCanvas.getHeight() / (float) getHeight();
         surfaceCanvas.scale(widthScale, heightScale);
-        for (Map.Entry<OverlayType, OverlayLayout> entry : mLayouts.entrySet()) {
+        for (Map.Entry<OverlayType, OverlayLayoutInner> entry : mLayouts.entrySet()) {
             if (entry.getKey().videoSnapshot) {
                 entry.getValue().drawOverlay(surfaceCanvas);
             }

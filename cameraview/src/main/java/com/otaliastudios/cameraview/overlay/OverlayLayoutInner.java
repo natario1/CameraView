@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.overlay;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -8,14 +8,14 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-class OverlayLayout extends FrameLayout {
+public class OverlayLayoutInner extends FrameLayout {
 
-    public OverlayLayout(@NonNull Context context) {
+    public OverlayLayoutInner(@NonNull Context context) {
         super(context);
         setWillNotDraw(false);
     }
 
-    public OverlayLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public OverlayLayoutInner(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         setWillNotDraw(false);
     }

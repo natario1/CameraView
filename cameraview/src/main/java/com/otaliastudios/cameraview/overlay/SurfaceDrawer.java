@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.overlay;
 
 import android.graphics.Canvas;
 

@@ -6,13 +6,12 @@ import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
-import android.util.Log;
 import android.view.Surface;
 
 import java.util.List;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.SurfaceDrawer;
+import com.otaliastudios.cameraview.overlay.SurfaceDrawer;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;

@@ -63,6 +63,7 @@ import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.OrientationHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.markers.MarkerParser;
+import com.otaliastudios.cameraview.overlay.OverlayLayout;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
@@ -133,8 +134,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private boolean mExperimental;
 
     // Overlays
-    private OverlayLayoutManager mOverlayLayoutManager; // see OverlayLayoutManager for why having two of them
-    private OverlayLayoutManager mOverlayLayoutManagerBelow;
+    private OverlayLayout mOverlayLayoutManager; // see OverlayLayoutManager for why having two of them
+    private OverlayLayout mOverlayLayoutManagerBelow;
 
     // Threading
     private Handler mUiHandler;
@@ -192,8 +193,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Views
         mGridLinesLayout = new GridLinesLayout(context);
-        mOverlayLayoutManager = new OverlayLayoutManager(context);
-        mOverlayLayoutManagerBelow = new OverlayLayoutManager(context);
+        mOverlayLayoutManager = new OverlayLayout(context);
+        mOverlayLayoutManagerBelow = new OverlayLayout(context);
         mMarkerLayout = new MarkerLayout(context);
         addView(mGridLinesLayout);
         addView(mMarkerLayout);
@@ -246,7 +247,17 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * {@link #setEngine(Engine)} is called.
      */
     private void doInstantiateEngine() {
+        if (mCameraEngine != null) {
+            mCameraEngine.removePictureSurfaceDrawer(mOverlayLayoutManager);
+            mCameraEngine.removePictureSurfaceDrawer(mOverlayLayoutManagerBelow);
+            mCameraEngine.removeVideoSurfaceDrawer(mOverlayLayoutManager);
+            mCameraEngine.removeVideoSurfaceDrawer(mOverlayLayoutManagerBelow);
+        }
         mCameraEngine = instantiateCameraEngine(mEngine, mCameraCallbacks);
+        mCameraEngine.addPictureSurfaceDrawer(mOverlayLayoutManager);
+        mCameraEngine.addPictureSurfaceDrawer(mOverlayLayoutManagerBelow);
+        mCameraEngine.addVideoSurfaceDrawer(mOverlayLayoutManager);
+        mCameraEngine.addVideoSurfaceDrawer(mOverlayLayoutManagerBelow);
     }
 
     /**
@@ -313,10 +324,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // isHardwareAccelerated will return the real value only after we are
             // attached. That's why we instantiate the preview here.
             doInstantiatePreview();
-            mCameraEngine.addPictureSurfaceDrawer(mOverlayLayoutManager);
-            mCameraEngine.addPictureSurfaceDrawer(mOverlayLayoutManagerBelow);
-            mCameraEngine.addVideoSurfaceDrawer(mOverlayLayoutManager);
-            mCameraEngine.addVideoSurfaceDrawer(mOverlayLayoutManagerBelow);
         }
         if (!isInEditMode()) {
             mOrientationHelper.enable(getContext());
@@ -329,49 +336,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mOrientationHelper.disable();
         }
         super.onDetachedFromWindow();
-    }
-
-    @Override
-    public void addView(View child, ViewGroup.LayoutParams params) {
-        if (params instanceof OverlayLayoutParams) {
-            if (((OverlayLayoutParams) params).drawInPreview) {
-                mOverlayLayoutManager.addView(child, params);
-            } else {
-                mOverlayLayoutManagerBelow.addView(child, params);
-            }
-        } else {
-            super.addView(child, params);
-        }
-    }
-
-    @Override
-    public void removeView(View child) {
-        if (child.getLayoutParams() instanceof OverlayLayoutParams) {
-            if (((OverlayLayoutParams) child.getLayoutParams()).drawInPreview) {
-                mOverlayLayoutManager.removeView(child);
-            } else {
-                mOverlayLayoutManagerBelow.removeView(child);
-            }
-        } else {
-            super.removeView(child);
-        }
-    }
-
-    @Override
-    public LayoutParams generateLayoutParams(AttributeSet attributeSet) {
-        OverlayLayoutParams toBeChecked = new OverlayLayoutParams(this.getContext(), attributeSet);
-        if (toBeChecked.isOverlay()) {
-            return toBeChecked;
-        }
-        return super.generateLayoutParams(attributeSet);
-    }
-
-    @Override
-    protected ViewGroup.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
-        if (p instanceof OverlayLayoutParams) {
-            return p;
-        }
-        return super.generateLayoutParams(p);
     }
 
     //endregion
@@ -2134,6 +2098,54 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             });
         }
     }
+
+    //endregion
+
+    //region Overlays
+
+    @Override
+    public void addView(View child, ViewGroup.LayoutParams params) {
+        if (params instanceof OverlayLayoutParams) {
+            if (((OverlayLayoutParams) params).drawInPreview) {
+                mOverlayLayoutManager.addView(child, params);
+            } else {
+                mOverlayLayoutManagerBelow.addView(child, params);
+            }
+        } else {
+            super.addView(child, params);
+        }
+    }
+
+    @Override
+    public void removeView(View child) {
+        if (child.getLayoutParams() instanceof OverlayLayoutParams) {
+            if (((OverlayLayoutParams) child.getLayoutParams()).drawInPreview) {
+                mOverlayLayoutManager.removeView(child);
+            } else {
+                mOverlayLayoutManagerBelow.removeView(child);
+            }
+        } else {
+            super.removeView(child);
+        }
+    }
+
+    @Override
+    public LayoutParams generateLayoutParams(AttributeSet attributeSet) {
+        OverlayLayoutParams toBeChecked = new OverlayLayoutParams(this.getContext(), attributeSet);
+        if (toBeChecked.isOverlay()) {
+            return toBeChecked;
+        }
+        return super.generateLayoutParams(attributeSet);
+    }
+
+    @Override
+    protected ViewGroup.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+        if (p instanceof OverlayLayoutParams) {
+            return p;
+        }
+        return super.generateLayoutParams(p);
+    }
+
 
     public static class OverlayLayoutParams extends FrameLayout.LayoutParams {
 

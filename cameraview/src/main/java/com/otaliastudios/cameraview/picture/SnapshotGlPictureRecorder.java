@@ -14,7 +14,7 @@ import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.SurfaceDrawer;
+import com.otaliastudios.cameraview.overlay.SurfaceDrawer;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.engine.offset.Axis;
