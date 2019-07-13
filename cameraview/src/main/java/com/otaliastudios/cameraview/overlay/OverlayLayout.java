@@ -29,8 +29,19 @@ public class OverlayLayout extends FrameLayout implements Overlay {
 
     private int target = DRAWING_PREVIEW;
 
+    /**
+     * We set {@link #setWillNotDraw(boolean)} to false even if we don't draw anything.
+     * This ensures that the View system will call {@link #draw(Canvas)} on us instead
+     * of short-circuiting to {@link #dispatchDraw(Canvas)}.
+     *
+     * That would be a problem for us since we use {@link #draw(Canvas)} to understand if
+     * we are currently drawing on the preview or not.
+     *
+     * @param context a context
+     */
     public OverlayLayout(@NonNull Context context) {
         super(context);
+        setWillNotDraw(false);
     }
 
     /**
@@ -72,6 +83,7 @@ public class OverlayLayout extends FrameLayout implements Overlay {
      */
     @Override
     public void draw(Canvas canvas) {
+        LOG.i("draw called. Setting DRAWING_PREVIEW and calling super.");
         synchronized (this) {
             target = DRAWING_PREVIEW;
             super.draw(canvas);
@@ -140,6 +152,9 @@ public class OverlayLayout extends FrameLayout implements Overlay {
                 || (target == DRAWING_PICTURE && params.drawOnPictureSnapshot)
         );
         if (draw) {
+            LOG.v("Performing drawing for view:", child.getClass().getSimpleName(),
+                    "target:", target,
+                    "params:", params);
             return super.drawChild(canvas, child, drawingTime);
         } else {
             LOG.v("Skipping drawing for view:", child.getClass().getSimpleName(),

@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.demo;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -32,6 +33,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
     private CameraView camera;
     private ViewGroup controlPanel;
+
 
     // To show stuff in the callback
     private long mCaptureTime;
@@ -81,6 +83,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 b.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
         });
+
+        syncWatermark();
     }
 
     private void message(String content, boolean important) {
@@ -207,17 +211,24 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
     private void toggleCamera() {
         if (camera.isTakingPicture() || camera.isTakingVideo()) return;
-        TextView watermarkTitle = findViewById(R.id.watermark_title);
         switch (camera.toggleFacing()) {
             case BACK:
-                watermarkTitle.setText("Back facing");
                 message("Switched to back camera!", false);
                 break;
 
             case FRONT:
-                watermarkTitle.setText("Front facing");
                 message("Switched to front camera!", false);
                 break;
+        }
+        syncWatermark();
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void syncWatermark() {
+        TextView watermark = findViewById(R.id.watermark_title);
+        switch (camera.getFacing()) {
+            case FRONT: watermark.setText("Front Camera"); break;
+            case BACK: watermark.setText("Back Camera"); break;
         }
     }
 
