@@ -60,20 +60,17 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private int mOverlayTextureId = 0;
     private SurfaceTexture mOverlaySurfaceTexture;
     private Surface mOverlaySurface;
-    private List<Overlay> mOverlays;
-    private boolean mHasOverlays;
+    private Overlay mOverlay;
+    private boolean mHasOverlay;
 
     public SnapshotVideoRecorder(@NonNull CameraEngine engine,
                                  @NonNull GlCameraPreview preview,
-                                 @Nullable List<Overlay> overlays) {
+                                 @Nullable Overlay overlay) {
         super(engine);
         mPreview = preview;
         mEngine = engine;
-
-        mHasOverlays = overlays != null && !overlays.isEmpty();
-        if (mHasOverlays) {
-            mOverlays = new ArrayList<>(overlays);
-        }
+        mOverlay = overlay;
+        mHasOverlay = overlay != null;
     }
 
     @Override
@@ -93,7 +90,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     @Override
     public void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
-        if (mHasOverlays) {
+        if (mHasOverlay) {
             EglViewport temp = new EglViewport();
             mOverlayTextureId = temp.createTexture();
             mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId);
@@ -131,7 +128,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                     mResult.videoFrameRate,
                     mResult.rotation,
                     type, mTextureId,
-                    mHasOverlays ? mOverlayTextureId : TextureMediaEncoder.NO_TEXTURE,
+                    mHasOverlay ? mOverlayTextureId : TextureMediaEncoder.NO_TEXTURE,
                     scaleX, scaleY,
                     mFlipped,
                     EGL14.eglGetCurrentContext()
@@ -160,14 +157,11 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             surfaceTexture.getTransformMatrix(textureFrame.transform);
 
             // get overlay
-            if (mHasOverlays) {
+            if (mHasOverlay) {
                 try {
                     final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
                     surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                    for (Overlay overlay : mOverlays) {
-                        overlay.drawOnVideo(surfaceCanvas);
-                    }
-
+                    mOverlay.draw(Overlay.Target.VIDEO_SNAPSHOT, surfaceCanvas);
                     mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
                 } catch (Surface.OutOfResourcesException e) {
                     LOG.w("Got Surface.OutOfResourcesException while drawing video overlays", e);

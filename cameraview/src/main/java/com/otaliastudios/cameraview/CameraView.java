@@ -244,13 +244,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * {@link #setEngine(Engine)} is called.
      */
     private void doInstantiateEngine() {
-        if (mCameraEngine != null) {
-            mCameraEngine.removePictureOverlay(mOverlayLayout);
-            mCameraEngine.removeVideoOverlay(mOverlayLayout);
-        }
         mCameraEngine = instantiateCameraEngine(mEngine, mCameraCallbacks);
-        mCameraEngine.addPictureOverlay(mOverlayLayout);
-        mCameraEngine.addVideoOverlay(mOverlayLayout);
+        mCameraEngine.setOverlay(mOverlayLayout);
     }
 
     /**

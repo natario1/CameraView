@@ -615,7 +615,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR); // Actually it will be rotated and set to 0.
         AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
         if (mPreview instanceof GlCameraPreview) {
-            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio, getPictureOverlays());
+            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio, getOverlay());
         } else {
             throw new RuntimeException("takePictureSnapshot with Camera2 is only supported with Preview.GL_SURFACE");
         }
@@ -709,7 +709,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         stub.rotation = getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
 
         // Start.
-        mVideoRecorder = new SnapshotVideoRecorder(this, glPreview, getVideoOverlays());
+        mVideoRecorder = new SnapshotVideoRecorder(this, glPreview, getOverlay());
         mVideoRecorder.start(stub);
     }
 

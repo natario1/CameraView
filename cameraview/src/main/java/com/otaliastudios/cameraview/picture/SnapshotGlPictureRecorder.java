@@ -47,23 +47,21 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
     private GlCameraPreview mPreview;
     private AspectRatio mOutputRatio;
 
-    private List<Overlay> mOverlays;
-    private boolean mHasOverlays;
+    private Overlay mOverlay;
+    private boolean mHasOverlay;
 
     public SnapshotGlPictureRecorder(
             @NonNull PictureResult.Stub stub,
             @NonNull CameraEngine engine,
             @NonNull GlCameraPreview preview,
             @NonNull AspectRatio outputRatio,
-            @Nullable List<Overlay> overlays) {
+            @Nullable Overlay overlay) {
         super(stub, engine);
         mEngine = engine;
         mPreview = preview;
         mOutputRatio = outputRatio;
-        mHasOverlays = overlays != null && !overlays.isEmpty();
-        if (mHasOverlays) {
-            mOverlays = new ArrayList<>(overlays);
-        }
+        mOverlay = overlay;
+        mHasOverlay = overlay != null;
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -93,7 +91,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 mSurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
                 mTransform = new float[16];
 
-                if (mHasOverlays) {
+                if (mHasOverlay) {
                     mOverlayTextureId = mViewport.createTexture();
                     mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
                     mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
@@ -165,14 +163,12 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
                         // 7. Do pretty much the same for overlays, though with
                         // some differences.
-                        if (mHasOverlays) {
+                        if (mHasOverlay) {
                             // 1. First we must draw on the texture and get latest image.
                             try {
                                 final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
                                 surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                                for (Overlay overlay : mOverlays) {
-                                    overlay.drawOnPicture(surfaceCanvas);
-                                }
+                                mOverlay.draw(Overlay.Target.PICTURE_SNAPSHOT, surfaceCanvas);
                                 mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
                             } catch (Surface.OutOfResourcesException e) {
                                 LOG.w("Got Surface.OutOfResourcesException while drawing picture overlays", e);
@@ -195,7 +191,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
                         // 8. Draw and save
                         mViewport.drawFrame(mTextureId, mTransform);
-                        if (mHasOverlays) mViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
+                        if (mHasOverlay) mViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
                         // don't - surface.swapBuffers();
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
                         mResult.format = PictureResult.FORMAT_JPEG;
@@ -205,7 +201,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                         surface.release();
                         mViewport.release();
                         mSurfaceTexture.release();
-                        if (mHasOverlays) {
+                        if (mHasOverlay) {
                             mOverlaySurface.release();
                             mOverlaySurfaceTexture.release();
                         }

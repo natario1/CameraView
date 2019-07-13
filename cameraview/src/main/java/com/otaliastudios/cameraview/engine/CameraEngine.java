@@ -185,8 +185,7 @@ public abstract class CameraEngine implements
     private long mAutoFocusResetDelayMillis;
     private int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
     private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
-    private final List<Overlay> pictureOverlays = new ArrayList<>();
-    private final List<Overlay> videoOverlays = new ArrayList<>();
+    private Overlay overlay;
 
     // Steps
     private final Step.Callback mStepCallback = new Step.Callback() {
@@ -783,6 +782,15 @@ public abstract class CameraEngine implements
     //endregion
 
     //region Final setters and getters
+
+    public final void setOverlay(@Nullable Overlay overlay) {
+        this.overlay = overlay;
+    }
+
+    @Nullable
+    public final Overlay getOverlay() {
+        return overlay;
+    }
 
     @SuppressWarnings("WeakerAccess")
     public final Angles getAngles() {
@@ -1386,43 +1394,6 @@ public abstract class CameraEngine implements
         if (flip) result = result.flip();
         LOG.i("computePreviewStreamSize:", "result:", result, "flip:", flip);
         return result;
-    }
-
-    //endregion
-
-    //region Overlays
-
-
-    public void addPictureOverlay(@NonNull Overlay overlay) {
-        if (!pictureOverlays.contains(overlay)) {
-            pictureOverlays.add(overlay);
-        }
-    }
-
-    public void removePictureOverlay(@NonNull Overlay overlay) {
-        pictureOverlays.remove(overlay);
-    }
-
-    public void addVideoOverlay(@NonNull Overlay overlay) {
-        if (!videoOverlays.contains(overlay)) {
-            videoOverlays.add(overlay);
-        }
-    }
-
-    public void removeVideoOverlay(@NonNull Overlay overlay) {
-        videoOverlays.remove(overlay);
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    @NonNull
-    protected List<Overlay> getPictureOverlays() {
-        return pictureOverlays;
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    @NonNull
-    protected List<Overlay> getVideoOverlays() {
-        return videoOverlays;
     }
 
     //endregion

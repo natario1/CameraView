@@ -83,8 +83,6 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 b.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
         });
-
-        syncWatermark();
     }
 
     private void message(String content, boolean important) {
@@ -219,16 +217,6 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             case FRONT:
                 message("Switched to front camera!", false);
                 break;
-        }
-        syncWatermark();
-    }
-
-    @SuppressLint("SetTextI18n")
-    private void syncWatermark() {
-        TextView watermark = findViewById(R.id.watermark_title);
-        switch (camera.getFacing()) {
-            case FRONT: watermark.setText("Front Camera"); break;
-            case BACK: watermark.setText("Back Camera"); break;
         }
     }
 

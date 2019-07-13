@@ -23,11 +23,7 @@ public class OverlayLayout extends FrameLayout implements Overlay {
     private static final String TAG = OverlayLayout.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    private static final int DRAWING_PREVIEW = 0;
-    private static final int DRAWING_PICTURE = 1;
-    private static final int DRAWING_VIDEO = 2;
-
-    private int target = DRAWING_PREVIEW;
+    private Target currentTarget = Target.PREVIEW;
 
     /**
      * We set {@link #setWillNotDraw(boolean)} to false even if we don't draw anything.
@@ -81,63 +77,52 @@ public class OverlayLayout extends FrameLayout implements Overlay {
      * likely drawing on the preview.
      * @param canvas View canvas
      */
+    @SuppressLint("MissingSuperCall")
     @Override
     public void draw(Canvas canvas) {
-        LOG.i("draw called. Setting DRAWING_PREVIEW and calling super.");
-        synchronized (this) {
-            target = DRAWING_PREVIEW;
-            super.draw(canvas);
-        }
+        LOG.i("normal draw called.");
+        draw(Target.PREVIEW, canvas);
     }
 
     /**
-     * This is called by the overlay drawer.
-     * We call {@link #dispatchDraw(Canvas)} to draw our children.
+     * For {@link Target#PREVIEW}, this method is called by the View hierarchy. We will
+     * just forward the call to super.
      *
-     * The input canvas has the Surface dimensions which means it is guaranteed
-     * to have our own aspect ratio. But we might still have to apply some scale.
+     * For {@link Target#PICTURE_SNAPSHOT} and {@link Target#VIDEO_SNAPSHOT},
+     * this method is called by the overlay drawer. We call {@link #dispatchDraw(Canvas)}
+     * to draw our children only.
      *
-     * @param canvas the overlay canvas
+     * @param target the draw target
+     * @param canvas the canvas
      */
     @Override
-    public void drawOnPicture(@NonNull Canvas canvas) {
-        canvas.save();
-        float widthScale = canvas.getWidth() / (float) getWidth();
-        float heightScale = canvas.getHeight() / (float) getHeight();
-        LOG.i("drawOnPicture",
-                "widthScale:", widthScale,
-                "heightScale:", heightScale,
-                "canvasWidth:", canvas.getWidth(),
-                "canvasHeight:", canvas.getHeight());
-        canvas.scale(widthScale, heightScale);
+    public void draw(@NonNull Target target, @NonNull Canvas canvas) {
         synchronized (this) {
-            target = DRAWING_PICTURE;
-            dispatchDraw(canvas);
+            currentTarget = target;
+            switch (target) {
+                case PREVIEW:
+                    super.draw(canvas);
+                    break;
+                case VIDEO_SNAPSHOT:
+                case PICTURE_SNAPSHOT:
+                    canvas.save();
+                    // The input canvas has the Surface dimensions which means it is guaranteed
+                    // to have our own aspect ratio. But we might still have to apply some scale.
+                    float widthScale = canvas.getWidth() / (float) getWidth();
+                    float heightScale = canvas.getHeight() / (float) getHeight();
+                    LOG.i("draw",
+                            "target:", target,
+                            "canvas:", canvas.getWidth() + "x" + canvas.getHeight(),
+                            "view:", getWidth() + "x" + getHeight(),
+                            "widthScale:", widthScale,
+                            "heightScale:", heightScale
+                    );
+                    canvas.scale(widthScale, heightScale);
+                    dispatchDraw(canvas);
+                    canvas.restore();
+                    break;
+            }
         }
-        canvas.restore();
-    }
-
-    /**
-     * This is called by the overlay drawer.
-     * We call {@link #dispatchDraw(Canvas)} to draw our children.
-     * @param canvas the overlay canvas
-     */
-    @Override
-    public void drawOnVideo(@NonNull Canvas canvas) {
-        canvas.save();
-        float widthScale = canvas.getWidth() / (float) getWidth();
-        float heightScale = canvas.getHeight() / (float) getHeight();
-        LOG.i("drawOnVideo",
-                "widthScale:", widthScale,
-                "heightScale:", heightScale,
-                "canvasWidth:", canvas.getWidth(),
-                "canvasHeight:", canvas.getHeight());
-        canvas.scale(widthScale, heightScale);
-        synchronized (this) {
-            target = DRAWING_VIDEO;
-            dispatchDraw(canvas);
-        }
-        canvas.restore();
     }
 
     /**
@@ -147,18 +132,18 @@ public class OverlayLayout extends FrameLayout implements Overlay {
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         LayoutParams params = (LayoutParams) child.getLayoutParams();
-        boolean draw = ((target == DRAWING_PREVIEW && params.drawOnPreview)
-                || (target == DRAWING_VIDEO && params.drawOnVideoSnapshot)
-                || (target == DRAWING_PICTURE && params.drawOnPictureSnapshot)
+        boolean draw = ((currentTarget == Target.PREVIEW && params.drawOnPreview)
+                || (currentTarget == Target.VIDEO_SNAPSHOT && params.drawOnVideoSnapshot)
+                || (currentTarget == Target.PICTURE_SNAPSHOT && params.drawOnPictureSnapshot)
         );
         if (draw) {
             LOG.v("Performing drawing for view:", child.getClass().getSimpleName(),
-                    "target:", target,
+                    "target:", currentTarget,
                     "params:", params);
             return super.drawChild(canvas, child, drawingTime);
         } else {
             LOG.v("Skipping drawing for view:", child.getClass().getSimpleName(),
-                    "target:", target,
+                    "target:", currentTarget,
                     "params:", params);
             return false;
         }
