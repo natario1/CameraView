@@ -177,14 +177,10 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                             mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
 
                             // 2. Then we can apply the transformations.
-                            // TODO check the sign of this angle.
-                            int rotation = mEngine.getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+                            int rotation = mEngine.getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
                             Matrix.translateM(mOverlayTransform, 0, 0.5F, 0.5F, 0);
-                            Matrix.rotateM(mOverlayTransform, 0, -rotation, 0, 0, 1);
-                            // Not sure why we have to flip the y axis (twice?).
-                            if (mResult.facing == Facing.FRONT) {
-                                Matrix.scaleM(mOverlayTransform, 0, -1, -1, 1);
-                            }
+                            Matrix.rotateM(mOverlayTransform, 0, rotation, 0, 0, 1);
+                            // No need to flip the x axis for front camera, but need to flip the y axis always.
                             Matrix.scaleM(mOverlayTransform, 0, 1, -1, 1);
                             Matrix.translateM(mOverlayTransform, 0, -0.5F, -0.5F, 0);
                         }

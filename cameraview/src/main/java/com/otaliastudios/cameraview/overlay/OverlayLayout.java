@@ -106,8 +106,10 @@ public class OverlayLayout extends FrameLayout implements Overlay {
                 case VIDEO_SNAPSHOT:
                 case PICTURE_SNAPSHOT:
                     canvas.save();
-                    // The input canvas has the Surface dimensions which means it is guaranteed
-                    // to have our own aspect ratio. But we might still have to apply some scale.
+                    // The input canvas size is that of the preview stream, cropped to match
+                    // the view aspect ratio (this op is done by picture & video recorder).
+                    // So the aspect ratio is guaranteed to be the same, but we might have
+                    // to apply some scale (typically > 1).
                     float widthScale = canvas.getWidth() / (float) getWidth();
                     float heightScale = canvas.getHeight() / (float) getHeight();
                     LOG.i("draw",
