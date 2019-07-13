@@ -359,7 +359,17 @@ public class Camera1Engine extends CameraEngine implements
         Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
         outputSize = new Size(outputCrop.width(), outputCrop.height());
         stub.size = outputSize;
+        // Vertical:               0   (270-0-0)
+        // Left (unlocked):        0   (270-90-270)
+        // Right (unlocked):       0   (270-270-90)
+        // Upside down (unlocked): 0   (270-180-180)
+        // Left (locked):          270 (270-0-270)
+        // Right (locked):         90  (270-0-90)
+        // Upside down (locked):   180 (270-0-180)
+        // The correct formula seems to be deviceOrientation+displayOffset,
+        // which means offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE).
         stub.rotation = getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
+        LOG.i("onTakeVideoSnapshot", "rotation:", stub.rotation, "size:", stub.size);
 
         // Start.
         mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview, getOverlay());
