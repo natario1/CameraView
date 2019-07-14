@@ -39,9 +39,8 @@ compile 'com.otaliastudios:cameraview:2.0.0-beta06'
 - Well tested
 
 Read the [official website](https://natario1.github.io/CameraView) for setup instructions and documentation.
-
-- Coming from v1? Take a look at the [migration guide](https://natario1.github.io/CameraView/extra/v1-migration-guide.html)
-- Changelog is hosted [here](https://natario1.github.io/CameraView/about/changelog.html)
+You might also be interested in [changelog](https://natario1.github.io/CameraView/about/changelog.html)
+or in the [v1 migration guide](https://natario1.github.io/CameraView/extra/v1-migration-guide.html).
 
 <p>
   <img src="docs/static/screen1.jpg" width="250" vspace="20" hspace="5">
@@ -55,6 +54,71 @@ donation or become a sponsor, in which case your company logo will immediately s
 
 Thank you for any contribution - it is a nice reward for what has been done until now, and a 
 motivation boost to push the library forward.
+
+```xml
+<com.otaliastudios.cameraview.CameraView
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:cameraPictureSizeMinWidth="@integer/picture_min_width"
+    app:cameraPictureSizeMinHeight="@integer/picture_min_height"
+    app:cameraPictureSizeMaxWidth="@integer/picture_max_width"
+    app:cameraPictureSizeMaxHeight="@integer/picture_max_height"
+    app:cameraPictureSizeMinArea="@integer/picture_min_area"
+    app:cameraPictureSizeMaxArea="@integer/picture_max_area"
+    app:cameraPictureSizeSmallest="false|true"
+    app:cameraPictureSizeBiggest="false|true"
+    app:cameraPictureSizeAspectRatio="@string/video_ratio"
+    app:cameraVideoSizeMinWidth="@integer/video_min_width"
+    app:cameraVideoSizeMinHeight="@integer/video_min_height"
+    app:cameraVideoSizeMaxWidth="@integer/video_max_width"
+    app:cameraVideoSizeMaxHeight="@integer/video_max_height"
+    app:cameraVideoSizeMinArea="@integer/video_min_area"
+    app:cameraVideoSizeMaxArea="@integer/video_max_area"
+    app:cameraVideoSizeSmallest="false|true"
+    app:cameraVideoSizeBiggest="false|true"
+    app:cameraVideoSizeAspectRatio="@string/video_ratio"
+    app:cameraSnapshotMaxWidth="@integer/snapshot_max_width"
+    app:cameraSnapshotMaxHeight="@integer/snapshot_max_height"
+    app:cameraVideoBitRate="@integer/video_bit_rate"
+    app:cameraAudioBitRate="@integer/audio_bit_rate"
+    app:cameraGestureTap="none|autoFocus|takePicture"
+    app:cameraGestureLongTap="none|autoFocus|takePicture"
+    app:cameraGesturePinch="none|zoom|exposureCorrection"
+    app:cameraGestureScrollHorizontal="none|zoom|exposureCorrection"
+    app:cameraGestureScrollVertical="none|zoom|exposureCorrection"
+    app:cameraEngine="camera1|camera2"
+    app:cameraPreview="glSurface|surface|texture"
+    app:cameraFacing="back|front"
+    app:cameraHdr="on|off"
+    app:cameraFlash="on|auto|torch|off"
+    app:cameraWhiteBalance="auto|cloudy|daylight|fluorescent|incandescent"
+    app:cameraMode="picture|video"
+    app:cameraAudio="on|off"
+    app:cameraGrid="draw3x3|draw4x4|drawPhi|off"
+    app:cameraGridColor="@color/grid_color"
+    app:cameraPlaySounds="true|false"
+    app:cameraVideoMaxSize="@integer/video_max_size"
+    app:cameraVideoMaxDuration="@integer/video_max_duration"
+    app:cameraVideoCodec="deviceDefault|h264|h263"
+    app:cameraAutoFocusResetDelay="@integer/autofocus_delay"
+    app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker"
+    app:cameraUseDeviceOrientation="true|false"
+    app:cameraExperimental="false|true">
+    
+    <!-- Watermark! -->
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:src="@drawable/watermark"
+        app:layout_isOverlay="true"
+        app:layout_drawOnPreview="true|false"
+        app:layout_drawOnPictureSnapshot="true|false"
+        app:layout_drawOnVideoSnapshot="true|false"/>
+        
+</com.otaliastudios.cameraview.CameraView>
+```
 
 ## Backers
 
