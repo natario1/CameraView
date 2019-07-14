@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.engine;
 
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
@@ -25,6 +26,7 @@ import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -48,10 +50,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public abstract class CameraIntegrationTest extends BaseTest {
 
@@ -503,11 +510,26 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     @Test
+    public void testStartEndVideoSnapshot() {
+        // TODO should check api
+        waitForOpen(true);
+        camera.takeVideoSnapshot(new File(context().getFilesDir(), "video.mp4"), 4000);
+        waitForVideoEnd(true);
+    }
+
+    @Test
     public void testEndVideo_withoutStarting() {
         camera.setMode(Mode.VIDEO);
         openSync(true);
         camera.stopVideo();
         waitForVideoResult(false);
+    }
+
+    @Test
+    public void testEndVideoSnapshot_withoutStarting() {
+        waitForOpen(true);
+        camera.stopVideo();
+        waitForVideoEnd(false);
     }
 
     @Test
@@ -520,12 +542,30 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     @Test
+    public void testEndVideoSnapshot_withMaxSize() {
+        // TODO
+        // camera.setVideoMaxSize(3000*1000);
+        // waitForOpen(true);
+        // waitForVideoStart();
+        // waitForVideoEnd(true);
+    }
+
+    @Test
     public void testEndVideo_withMaxDuration() {
         camera.setMode(Mode.VIDEO);
         camera.setVideoMaxDuration(4000);
         openSync(true);
         takeVideoSync(true);
         waitForVideoResult(true);
+    }
+
+    @Test
+    public void testEndVideoSnapshot_withMaxDuration() {
+        // TODO
+        // camera.setVideoMaxDuration(4000);
+        // waitForOpen(true);
+        // waitForVideoStart();
+        // waitForVideoEnd(true);
     }
 
     //endregion
@@ -601,6 +641,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         camera.takePicture();
         PictureResult result = waitForPictureResult(true);
         Bitmap bitmap = CameraUtils.decodeBitmap(result.getData(), Integer.MAX_VALUE, Integer.MAX_VALUE);
+        assertNotNull(bitmap);
         assertEquals(result.getSize(), size);
         assertEquals(bitmap.getWidth(), size.getWidth());
         assertEquals(bitmap.getHeight(), size.getHeight());
@@ -732,6 +773,35 @@ public abstract class CameraIntegrationTest extends BaseTest {
         public void process(@NonNull Frame frame) {
             frame.freeze().release();
         }
+    }
+
+    //endregion
+
+    //region Overlays
+
+    @Test
+    public void testOverlay_forPictureSnapshot() {
+        Overlay overlay = mock(Overlay.class);
+        when(overlay.drawsOn(any(Overlay.Target.class))).thenReturn(true);
+        controller.setOverlay(overlay);
+        waitForOpen(true);
+        camera.takePictureSnapshot();
+        waitForPicture(true);
+        verify(overlay, atLeastOnce()).drawsOn(Overlay.Target.PICTURE_SNAPSHOT);
+        verify(overlay, times(1)).drawOn(eq(Overlay.Target.PICTURE_SNAPSHOT), any(Canvas.class));
+    }
+
+    @Test
+    public void testOverlay_forVideoSnapshot() {
+        Overlay overlay = mock(Overlay.class);
+        when(overlay.drawsOn(any(Overlay.Target.class))).thenReturn(true);
+        controller.setOverlay(overlay);
+        waitForOpen(true);
+        camera.takeVideoSnapshot(new File(context().getFilesDir(), "video.mp4"), 4000);
+        waitForVideoStart();
+        waitForVideoEnd(true);
+        verify(overlay, atLeastOnce()).drawsOn(Overlay.Target.VIDEO_SNAPSHOT);
+        verify(overlay, atLeastOnce()).drawOn(eq(Overlay.Target.VIDEO_SNAPSHOT), any(Canvas.class));
     }
 
     //endregion

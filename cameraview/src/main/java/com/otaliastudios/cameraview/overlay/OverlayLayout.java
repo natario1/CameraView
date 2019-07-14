@@ -12,6 +12,7 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.R;
@@ -23,7 +24,7 @@ public class OverlayLayout extends FrameLayout implements Overlay {
     private static final String TAG = OverlayLayout.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    private Target currentTarget = Target.PREVIEW;
+    @VisibleForTesting Target currentTarget = Target.PREVIEW;
 
     /**
      * We set {@link #setWillNotDraw(boolean)} to false even if we don't draw anything.
@@ -149,7 +150,7 @@ public class OverlayLayout extends FrameLayout implements Overlay {
             LOG.v("Performing drawing for view:", child.getClass().getSimpleName(),
                     "target:", currentTarget,
                     "params:", params);
-            return super.drawChild(canvas, child, drawingTime);
+            return doDrawChild(canvas, child, drawingTime);
         } else {
             LOG.v("Skipping drawing for view:", child.getClass().getSimpleName(),
                     "target:", currentTarget,
@@ -158,11 +159,16 @@ public class OverlayLayout extends FrameLayout implements Overlay {
         }
     }
 
+    @VisibleForTesting
+    boolean doDrawChild(Canvas canvas, View child, long drawingTime) {
+        return super.drawChild(canvas, child, drawingTime);
+    }
+
     @SuppressWarnings("WeakerAccess")
     public static class LayoutParams extends FrameLayout.LayoutParams {
 
         @SuppressWarnings("unused")
-        private boolean isOverlay;
+        @VisibleForTesting boolean isOverlay;
         public boolean drawOnPreview = false;
         public boolean drawOnPictureSnapshot = false;
         public boolean drawOnVideoSnapshot = false;
@@ -186,7 +192,8 @@ public class OverlayLayout extends FrameLayout implements Overlay {
             }
         }
 
-        private boolean drawsOn(@NonNull Target target) {
+        @VisibleForTesting
+        boolean drawsOn(@NonNull Target target) {
             return ((target == Target.PREVIEW && drawOnPreview)
                     || (target == Target.VIDEO_SNAPSHOT && drawOnVideoSnapshot)
                     || (target == Target.PICTURE_SNAPSHOT && drawOnPictureSnapshot));
