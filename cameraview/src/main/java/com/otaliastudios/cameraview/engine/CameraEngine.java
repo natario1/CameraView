@@ -1229,27 +1229,31 @@ public abstract class CameraEngine implements
 
     @Nullable
     public final Size getPictureSize(@SuppressWarnings("SameParameterValue") @NonNull Reference reference) {
-        if (mCaptureSize == null || mMode == Mode.VIDEO) return null;
-        return getAngles().flip(Reference.SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
+        Size size = mCaptureSize;
+        if (size == null || mMode == Mode.VIDEO) return null;
+        return getAngles().flip(Reference.SENSOR, reference) ? size.flip() : size;
     }
 
     @Nullable
     public final Size getVideoSize(@SuppressWarnings("SameParameterValue") @NonNull Reference reference) {
-        if (mCaptureSize == null || mMode == Mode.PICTURE) return null;
-        return getAngles().flip(Reference.SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
+        Size size = mCaptureSize;
+        if (size == null || mMode == Mode.PICTURE) return null;
+        return getAngles().flip(Reference.SENSOR, reference) ? size.flip() : size;
     }
 
     @Nullable
     public final Size getPreviewStreamSize(@NonNull Reference reference) {
-        if (mPreviewStreamSize == null) return null;
-        return getAngles().flip(Reference.SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
+        Size size = mPreviewStreamSize;
+        if (size == null) return null;
+        return getAngles().flip(Reference.SENSOR, reference) ? size.flip() : size;
     }
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
     private Size getPreviewSurfaceSize(@NonNull Reference reference) {
-        if (mPreview == null) return null;
-        return getAngles().flip(Reference.VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
+        CameraPreview preview = mPreview;
+        if (preview == null) return null;
+        return getAngles().flip(Reference.VIEW, reference) ? preview.getSurfaceSize().flip() : preview.getSurfaceSize();
     }
 
     /**
