@@ -112,7 +112,6 @@ motivation boost to push the library forward.
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:src="@drawable/watermark"
-        app:layout_isOverlay="true"
         app:layout_drawOnPreview="true|false"
         app:layout_drawOnPictureSnapshot="true|false"
         app:layout_drawOnVideoSnapshot="true|false"/>
