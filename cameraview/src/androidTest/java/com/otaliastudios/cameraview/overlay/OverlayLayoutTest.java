@@ -78,12 +78,8 @@ public class OverlayLayoutTest extends BaseTest {
         params = new ViewGroup.LayoutParams(10, 10);
         assertFalse(overlayLayout.isOverlay(params));
 
-        params = new OverlayLayout.LayoutParams(10, 10, Gravity.CENTER);
+        params = new OverlayLayout.LayoutParams(10, 10);
         assertTrue(overlayLayout.isOverlay(params));
-
-        // Remove the isOverlay flag.
-        ((OverlayLayout.LayoutParams) params).isOverlay = false;
-        assertFalse(overlayLayout.isOverlay(params));
     }
 
     @Test
@@ -109,7 +105,7 @@ public class OverlayLayoutTest extends BaseTest {
 
     @Test
     public void testLayoutParams_drawsOn() {
-        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10, Gravity.CENTER);
+        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
 
         assertFalse(params.drawsOn(Overlay.Target.PREVIEW));
         assertFalse(params.drawsOn(Overlay.Target.PICTURE_SNAPSHOT));
@@ -125,7 +121,7 @@ public class OverlayLayoutTest extends BaseTest {
 
     @Test
     public void testLayoutParams_toString() {
-        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10, Gravity.CENTER);
+        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
         String string = params.toString();
         assertTrue(string.contains("drawOnPreview"));
         assertTrue(string.contains("drawOnPictureSnapshot"));
@@ -135,7 +131,7 @@ public class OverlayLayoutTest extends BaseTest {
     @Test
     public void testDrawChild() {
         Canvas canvas = new Canvas();
-        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10, Gravity.CENTER);
+        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
         View child = new View(context());
         child.setLayoutParams(params);
         when(overlayLayout.doDrawChild(canvas, child, 0)).thenReturn(true);
@@ -174,7 +170,7 @@ public class OverlayLayoutTest extends BaseTest {
     public void testDrawOn() {
         Canvas canvas = spy(new Canvas());
         View child = new View(context());
-        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10, Gravity.CENTER);
+        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
         params.drawOnPreview = true;
         params.drawOnPictureSnapshot = true;
         params.drawOnVideoSnapshot = true;

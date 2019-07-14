@@ -811,7 +811,7 @@ public class CameraViewTest extends BaseTest {
     public void testOverlays_addOverlayView() {
         cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
         View overlay = new View(context());
-        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10, Gravity.CENTER);
+        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
         int count = cameraView.getChildCount();
         cameraView.addView(overlay, 0, params);
         assertEquals(count, cameraView.getChildCount()); // Not added to CameraView

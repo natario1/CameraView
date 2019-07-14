@@ -49,7 +49,10 @@ public class OverlayLayout extends FrameLayout implements Overlay {
     public boolean isOverlay(@Nullable AttributeSet set) {
         if (set == null) return false;
         TypedArray a = getContext().obtainStyledAttributes(set, R.styleable.CameraView_Layout);
-        boolean isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, false);
+        boolean isOverlay =
+                a.hasValue(R.styleable.CameraView_Layout_layout_drawOnPreview)
+                || a.hasValue(R.styleable.CameraView_Layout_layout_drawOnPictureSnapshot)
+                || a.hasValue(R.styleable.CameraView_Layout_layout_drawOnVideoSnapshot);
         a.recycle();
         return isOverlay;
     }
@@ -60,7 +63,7 @@ public class OverlayLayout extends FrameLayout implements Overlay {
      * @return true if overlay
      */
     public boolean isOverlay(@NonNull ViewGroup.LayoutParams params) {
-        return params instanceof LayoutParams && (((LayoutParams) params).isOverlay);
+        return params instanceof LayoutParams;
     }
 
     /**
@@ -168,22 +171,18 @@ public class OverlayLayout extends FrameLayout implements Overlay {
     public static class LayoutParams extends FrameLayout.LayoutParams {
 
         @SuppressWarnings("unused")
-        @VisibleForTesting boolean isOverlay;
         public boolean drawOnPreview = false;
         public boolean drawOnPictureSnapshot = false;
         public boolean drawOnVideoSnapshot = false;
 
-        public LayoutParams(int width, int height, int gravity) {
-            super(width, height, gravity);
-            isOverlay = true;
+        public LayoutParams(int width, int height) {
+            super(width, height);
         }
 
         public LayoutParams(@NonNull Context context, @NonNull AttributeSet attrs) {
             super(context, attrs);
             TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CameraView_Layout);
             try {
-                // If someone is calling this constructor, they will likely want isOverlay to be true!
-                isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, true);
                 drawOnPreview = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnPreview, false);
                 drawOnPictureSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnPictureSnapshot, false);
                 drawOnVideoSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnVideoSnapshot, false);
@@ -202,8 +201,8 @@ public class OverlayLayout extends FrameLayout implements Overlay {
         @NonNull
         @Override
         public String toString() {
-            return getClass().getName() + "[isOverlay:" + isOverlay
-                    + ",drawOnPreview:" + drawOnPreview
+            return getClass().getName() + "["
+                    + "drawOnPreview:" + drawOnPreview
                     + ",drawOnPictureSnapshot:" + drawOnPictureSnapshot
                     + ",drawOnVideoSnapshot:" + drawOnVideoSnapshot
                     + "]";
