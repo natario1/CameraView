@@ -4,7 +4,7 @@ title: "Runtime Permissions"
 subtitle: "Permissions and Manifest setup"
 description: "Permissions and Manifest setup"
 category: docs
-order: 10
+order: 11
 date: 2018-12-20 20:03:03
 disqus: 1
 ---

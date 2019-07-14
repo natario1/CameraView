@@ -29,6 +29,7 @@ compile 'com.otaliastudios:cameraview:2.0.0-beta06'
 - Gestures support
 - Camera1 or Camera2 powered engine
 - Frame processing support
+- Watermarks & animated overlays
 - OpenGL powered preview
 - Take high-quality content with `takePicture` and `takeVideo`
 - Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot`
