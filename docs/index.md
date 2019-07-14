@@ -9,15 +9,15 @@ CameraView is a well documented, high-level library that makes capturing picture
 addressing most of the common issues and needs, and still leaving you with flexibility where needed.
 
 - Fast & reliable
-- Gestures support
-- Camera1 or Camera2 powered engine
-- Frame processing support
-- Watermarks & animated overlays
-- OpenGL powered preview
-- Take high-quality content with `takePicture` and `takeVideo`
-- Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot`
-- Smart sizing: create a `CameraView` of any size
-- Control HDR, flash, zoom, white balance, exposure, location, grid drawing & more
+- Gestures support [[docs]](docs/gestures.html)
+- Camera1 or Camera2 powered engine [[docs]](docs/previews.html)
+- Frame processing support [[docs]](docs/frame-processing.html)
+- Watermarks & animated overlays [[docs]](docs/watermarks-and-overlays.html)
+- OpenGL powered preview [[docs]](docs/previews.html)
+- Take high-quality content with `takePicture` and `takeVideo` [[docs]](docs/capturing-media.html)
+- Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot` [[docs]](docs/capturing-media.html)
+- Smart sizing: create a `CameraView` of any size [[docs]](docs/preview-size.html)
+- Control HDR, flash, zoom, white balance, exposure, location, grid drawing & more [[docs]](docs/controls.html)
 - Lightweight
 - Works down to API level 15
 - Well tested
@@ -29,7 +29,7 @@ addressing most of the common issues and needs, and still leaving you with flexi
 ### Get started
 
 Get started with [install info](about/install.html), [quick setup](about/getting-started.html), or
-read the in-depth [documentation](docs/camera-events.html).
+start reading the in-depth [documentation](docs/camera-events.html).
 
 ### Older versions
 
