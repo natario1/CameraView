@@ -59,7 +59,7 @@ public class OverlayLayout extends FrameLayout implements Overlay {
      * @return true if overlay
      */
     public boolean isOverlay(@NonNull ViewGroup.LayoutParams params) {
-        return params instanceof LayoutParams;
+        return params instanceof LayoutParams && (((LayoutParams) params).isOverlay);
     }
 
     /**
@@ -163,18 +163,24 @@ public class OverlayLayout extends FrameLayout implements Overlay {
 
         @SuppressWarnings("unused")
         private boolean isOverlay;
-        public boolean drawOnPreview;
-        public boolean drawOnPictureSnapshot;
-        public boolean drawOnVideoSnapshot;
+        public boolean drawOnPreview = false;
+        public boolean drawOnPictureSnapshot = false;
+        public boolean drawOnVideoSnapshot = false;
 
-        public LayoutParams(@NonNull Context context, @Nullable AttributeSet attrs) {
+        public LayoutParams(int width, int height, int gravity) {
+            super(width, height, gravity);
+            isOverlay = true;
+        }
+
+        public LayoutParams(@NonNull Context context, @NonNull AttributeSet attrs) {
             super(context, attrs);
             TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CameraView_Layout);
             try {
-                this.isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, false);
-                this.drawOnPreview = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnPreview, false);
-                this.drawOnPictureSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnPictureSnapshot, false);
-                this.drawOnVideoSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnVideoSnapshot, false);
+                // If someone is calling this constructor, they will likely want isOverlay to be true!
+                isOverlay = a.getBoolean(R.styleable.CameraView_Layout_layout_isOverlay, true);
+                drawOnPreview = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnPreview, false);
+                drawOnPictureSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnPictureSnapshot, false);
+                drawOnVideoSnapshot = a.getBoolean(R.styleable.CameraView_Layout_layout_drawOnVideoSnapshot, false);
             } finally {
                 a.recycle();
             }

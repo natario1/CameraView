@@ -127,14 +127,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @VisibleForTesting ScrollGestureFinder mScrollGestureFinder;
 
     // Views
-    GridLinesLayout mGridLinesLayout;
-    MarkerLayout mMarkerLayout;
+    @VisibleForTesting GridLinesLayout mGridLinesLayout;
+    @VisibleForTesting MarkerLayout mMarkerLayout;
     private boolean mKeepScreenOn;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private boolean mExperimental;
 
     // Overlays
-    private OverlayLayout mOverlayLayout;
+    @VisibleForTesting OverlayLayout mOverlayLayout;
 
     // Threading
     private Handler mUiHandler;

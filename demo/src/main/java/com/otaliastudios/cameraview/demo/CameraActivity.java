@@ -84,7 +84,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 new Option.Pinch(), new Option.HorizontalScroll(), new Option.VerticalScroll(),
                 new Option.Tap(), new Option.LongTap(),
                 // Watermarks
-                new Option.OverlayInPreview(watermark), new Option.OverlayInPictureSnapshot(watermark),
+                new Option.OverlayInPreview(watermark),
+                new Option.OverlayInPictureSnapshot(watermark),
                 new Option.OverlayInVideoSnapshot(watermark),
                 // Other
                 new Option.Grid(), new Option.GridColor(), new Option.UseDeviceOrientation()
@@ -122,14 +123,12 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         animator.setRepeatCount(ValueAnimator.INFINITE);
         animator.setRepeatMode(ValueAnimator.REVERSE);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            float rotation = 0;
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float scale = (float) animation.getAnimatedValue();
-                rotation += 2;
                 watermark.setScaleX(scale);
                 watermark.setScaleY(scale);
-                watermark.setRotation(rotation);
+                watermark.setRotation(watermark.getRotation() + 2);
             }
         });
         animator.start();
