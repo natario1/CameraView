@@ -32,28 +32,17 @@
         app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker">
 
         <!-- Watermark -->
-        <LinearLayout
+        <ImageView
             android:id="@+id/watermark"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:layout_gravity="bottom|end"
             app:layout_isOverlay="true"
             app:layout_drawOnPreview="true"
             app:layout_drawOnVideoSnapshot="true"
             app:layout_drawOnPictureSnapshot="true"
-            android:gravity="center"
-            android:padding="8dp">
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@mipmap/cameraview" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Watermark"
-                android:textColor="@android:color/white" />
-        </LinearLayout>
+            android:src="@mipmap/cameraview"
+            android:padding="8dp"/>
 
     </com.otaliastudios.cameraview.CameraView>
 

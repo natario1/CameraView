@@ -1,5 +1,7 @@
 package com.otaliastudios.cameraview.demo;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -7,6 +9,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import android.util.Log;
 import android.view.View;
@@ -66,7 +69,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
         controlPanel = findViewById(R.id.controls);
         ViewGroup group = (ViewGroup) controlPanel.getChildAt(0);
-        View watermark = findViewById(R.id.watermark);
+        final View watermark = findViewById(R.id.watermark);
 
         List<Option<?>> options = Arrays.asList(
                 // Layout
@@ -112,6 +115,24 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 b.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
         });
+
+        // Animate the watermark just to show we record the animation in video snapshots
+        ValueAnimator animator = ValueAnimator.ofFloat(1F, 0.8F);
+        animator.setDuration(300);
+        animator.setRepeatCount(ValueAnimator.INFINITE);
+        animator.setRepeatMode(ValueAnimator.REVERSE);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            float rotation = 0;
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float scale = (float) animation.getAnimatedValue();
+                rotation += 2;
+                watermark.setScaleX(scale);
+                watermark.setScaleY(scale);
+                watermark.setRotation(rotation);
+            }
+        });
+        animator.start();
     }
 
     private void message(String content, boolean important) {
