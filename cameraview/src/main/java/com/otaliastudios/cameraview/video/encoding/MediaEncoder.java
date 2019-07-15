@@ -5,6 +5,7 @@ import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Build;
 
+import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -16,6 +17,44 @@ import java.nio.ByteBuffer;
 
 /**
  * Base class for single-track encoders, coordinated by a {@link MediaEncoderEngine}.
+ * For the lifecycle of this class, read comments in the engine class.
+ *
+ * This class manages a background thread and streamlines events on this thread
+ * which we call the {@link EncoderThread}:
+ *
+ * 1. When {@link #prepare(MediaEncoderEngine.Controller, long)} is called, we call
+ *    {@link #onPrepare(MediaEncoderEngine.Controller, long)} on the encoder thread.
+ *
+ * 2. When {@link #start()} is called, we call {@link #onStart()} on the encoder thread.
+ *
+ * 3. When {@link #notify(String, Object)} is called, we call {@link #onEvent(String, Object)}
+ *    on the encoder thread.
+ *
+ * 4. After starting, encoders are free to acquire an input buffer with
+ *    {@link #tryAcquireInputBuffer(InputBuffer)} or {@link #acquireInputBuffer(InputBuffer)}.
+ *
+ * 5. After getting the input buffer, they are free to fill it with data.
+ *
+ * 6. After filling it with data, they are required to call {@link #encodeInputBuffer(InputBuffer)}
+ *    for encoding to take place.
+ *
+ * 7. After this happens, or at regular intervals, or whenever they want, encoders can then
+ *    call {@link #drainOutput(boolean)} with a false parameter to fetch the encoded data
+ *    and pass it to the engine (so it can be written to the muxer).
+ *
+ * 8. When {@link #stop()} is called - either by the engine user, or as a consequence of having
+ *    called {@link MediaEncoderEngine.Controller#requestStop(int)} - we call
+ *    {@link #onStop()} on the encoder thread.
+ *
+ * 9. The {@link #onStop()} implementation should, as fast as possible, stop reading, signal the
+ *    end of input stream (there are two ways to do so), and finally call
+ *    {@link #drainOutput(boolean)} for the last time, with a true parameter.
+ *
+ * 10. Once everything is drained, we will call {@link #onStopped()}, on a unspecified thread.
+ *     There, subclasses can perform extra cleanup of their own resources.
+ *
+ * For VIDEO encoders, things are much easier because we skip the whole input part.
+ * See description in {@link VideoMediaEncoder}.
  */
 // https://github.com/saki4510t/AudioVideoRecordingSample/blob/master/app/src/main/java/com/serenegiant/encoder/MediaEncoder.java
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -36,6 +75,20 @@ abstract class MediaEncoder {
     // Can't go too high or this is a bottleneck for the audio encoder.
     private final static int OUTPUT_TIMEOUT_US = 0;
 
+    private final static int STATE_NONE = 0;
+    private final static int STATE_PREPARING = 1;
+    private final static int STATE_PREPARED = 2;
+    private final static int STATE_STARTING = 3;
+    private final static int STATE_STARTED = 4;
+    // max timestamp was reached. we will keep draining but have asked the engine to stop us.
+    // this step can be skipped in case stop() is called from outside before a limit is reached.
+    private final static int STATE_LIMIT_REACHED = 5;
+    private final static int STATE_STOPPING = 6;
+    private final static int STATE_STOPPED = 7;
+
+    private int mState = STATE_NONE;
+    private final String mName;
+
     @SuppressWarnings("WeakerAccess")
     protected MediaCodec mMediaCodec;
 
@@ -51,31 +104,55 @@ abstract class MediaEncoder {
     private boolean mMaxLengthReached;
 
     /**
-     * A readable name for the thread.
+     * Needs a readable name for the thread and for logging.
+     * @param name a name
      */
-    @NonNull
-    abstract String getName();
+    MediaEncoder(@NonNull String name) {
+        mName = name;
+    }
+
+    private void setState(int newState) {
+        String newStateName = null;
+        switch (newState) {
+            case STATE_NONE: newStateName = "NONE"; break;
+            case STATE_PREPARING: newStateName = "PREPARING"; break;
+            case STATE_PREPARED: newStateName = "PREPARED"; break;
+            case STATE_STARTING: newStateName = "STARTING"; break;
+            case STATE_STARTED: newStateName = "STARTED"; break;
+            case STATE_LIMIT_REACHED: newStateName = "LIMIT_REACHED"; break;
+            case STATE_STOPPING: newStateName = "STOPPING"; break;
+            case STATE_STOPPED: newStateName = "STOPPED"; break;
+        }
+        LOG.w(mName, "setState:", newStateName);
+        mState = newState;
+    }
 
     /**
      * This encoder was attached to the engine. Keep the controller
      * and run the internal thread.
      *
      * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
-     * The internal actions can cause a stop/release, and due to how {@link WorkerHandler#run(Runnable)}
-     * works, we might have {@link #onStop()} or {@link #onRelease()} to be executed before
+     * The internal actions can cause a stop, and due to how {@link WorkerHandler#run(Runnable)}
+     * works, we might have {@link #onStop()} or {@link #onStopped()} to be executed before
      * the previous step has completed.
      */
     final void prepare(@NonNull final MediaEncoderEngine.Controller controller, final long maxLengthMillis) {
+        if (mState >= STATE_PREPARING) {
+            LOG.e("Wrong state while preparing. Aborting.", mState);
+            return;
+        }
+        setState(STATE_PREPARING);
         mController = controller;
         mBufferInfo = new MediaCodec.BufferInfo();
         mMaxLengthMillis = maxLengthMillis;
-        mWorker = WorkerHandler.get(getName());
-        LOG.i(getName(), "Prepare was called. Posting.");
+        mWorker = WorkerHandler.get(mName);
+        LOG.i(mName, "Prepare was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.i(getName(), "Prepare was called. Executing.");
+                LOG.i(mName, "Prepare was called. Executing.");
                 onPrepare(controller, maxLengthMillis);
+                setState(STATE_PREPARED);
             }
         });
     }
@@ -85,14 +162,22 @@ abstract class MediaEncoder {
      * in case the encoder needs to wait for a certain event
      * like a "frame available".
      *
+     * The {@link #STATE_STARTED} state will be set when draining for the
+     * first time (not when onStart ends).
+     *
      * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
      */
     final void start() {
-        LOG.w(getName(), "Start was called. Posting.");
+        if (mState < STATE_PREPARED || mState >= STATE_STARTING) {
+            LOG.e("Wrong state while starting. Aborting.", mState);
+            return;
+        }
+        setState(STATE_STARTING);
+        LOG.w(mName, "Start was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.w(getName(), "Start was called. Executing.");
+                LOG.w(mName, "Start was called. Executing.");
                 onStart();
             }
         });
@@ -108,27 +193,36 @@ abstract class MediaEncoder {
      * @param data object
      */
     final void notify(final @NonNull String event, final @Nullable Object data) {
-        LOG.v(getName(), "Notify was called. Posting.");
+        LOG.v(mName, "Notify was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.v(getName(), "Notify was called. Executing.");
+                LOG.v(mName, "Notify was called. Executing.");
                 onEvent(event, data);
             }
         });
     }
 
     /**
-     * Stop recording.
+     * Stop recording. This involves signaling the end of stream and draining
+     * all output left.
+     *
+     * The {@link #STATE_STOPPED} state will be set when draining for the
+     * last time (not when onStart ends).
      *
      * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
      */
     final void stop() {
-        LOG.w(getName(), "Stop was called. Posting.");
+        if (mState >= STATE_LIMIT_REACHED) {
+            LOG.e("Wrong state while stopping. Aborting.", mState);
+            return;
+        }
+        setState(STATE_STOPPING);
+        LOG.w(mName, "Stop was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.w(getName(), "Stop was called. Executing.");
+                LOG.w(mName, "Stop was called. Executing.");
                 onStop();
             }
         });
@@ -165,7 +259,8 @@ abstract class MediaEncoder {
     abstract void onEvent(@NonNull String event, @Nullable Object data);
 
     /**
-     * Stop recording.
+     * Stop recording. This involves signaling the end of stream and draining
+     * all output left.
      */
     @EncoderThread
     abstract void onStop();
@@ -173,26 +268,23 @@ abstract class MediaEncoder {
     /**
      * Called by {@link #drainOutput(boolean)} when we get an EOS signal (not necessarily in the
      * parameters, might also be through an input buffer flag).
+     *
+     * This is a good moment to release all resources, although the muxer might still
+     * be alive (we wait for the other Encoder, see MediaEncoderEngine.Controller).
      */
-    private void release() {
-        LOG.w(getName(), "is being released. Notifying controller and releasing codecs.");
+    @CallSuper
+    protected void onStopped() {
+        LOG.w(mName, "is being released. Notifying controller and releasing codecs.");
         // TODO should we notify after this method?
-        mController.notifyReleased(mTrackIndex);
+        mController.notifyStopped(mTrackIndex);
         mMediaCodec.stop();
         mMediaCodec.release();
         mMediaCodec = null;
         mOutputBufferPool.clear();
         mOutputBufferPool = null;
         mBuffers = null;
-        onRelease();
+        setState(STATE_STOPPED);
     }
-
-    /**
-     * This is called when we are stopped.
-     * It is a good moment to release all resources, although the muxer
-     * might still be alive (we wait for the other Encoder, see Controller).
-     */
-    abstract void onRelease();
 
     /**
      * Returns a new input buffer and index, waiting at most {@link #INPUT_TIMEOUT_US} if none is available.
@@ -234,7 +326,7 @@ abstract class MediaEncoder {
      */
     @SuppressWarnings("WeakerAccess")
     protected void encodeInputBuffer(InputBuffer buffer) {
-        LOG.v(getName(), "ENCODING - Buffer:", buffer.index, "Bytes:", buffer.length, "Presentation:", buffer.timestamp);
+        LOG.v(mName, "ENCODING - Buffer:", buffer.index, "Bytes:", buffer.length, "Presentation:", buffer.timestamp);
         if (buffer.isEndOfStream) { // send EOS
             mMediaCodec.queueInputBuffer(buffer.index, 0, 0,
                     buffer.timestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
@@ -242,16 +334,6 @@ abstract class MediaEncoder {
             mMediaCodec.queueInputBuffer(buffer.index, 0, buffer.length,
                     buffer.timestamp, 0);
         }
-    }
-
-    /**
-     * Signals the end of input stream. This is a Video only API, as in the normal case,
-     * we use input buffers to signal the end. In the video case, we don't have input buffers
-     * because we use an input surface instead.
-     */
-    @SuppressWarnings("WeakerAccess")
-    protected void signalEndOfInputStream() {
-        mMediaCodec.signalEndOfInputStream();
     }
 
     /**
@@ -267,7 +349,7 @@ abstract class MediaEncoder {
     @SuppressLint("LogNotTimber")
     @SuppressWarnings("WeakerAccess")
     protected void drainOutput(boolean drainAll) {
-        LOG.v(getName(), "DRAINING - EOS:", drainAll);
+        LOG.v(mName, "DRAINING - EOS:", drainAll);
         if (mMediaCodec == null) {
             LOG.e("drain() was called before prepare() or after releasing.");
             return;
@@ -289,7 +371,8 @@ abstract class MediaEncoder {
                 // should happen before receiving buffers, and should only happen once
                 if (mController.isStarted()) throw new RuntimeException("MediaFormat changed twice.");
                 MediaFormat newFormat = mMediaCodec.getOutputFormat();
-                mTrackIndex = mController.requestStart(newFormat);
+                mTrackIndex = mController.notifyStarted(newFormat);
+                setState(STATE_STARTED);
                 mOutputBufferPool = new OutputBufferPool(mTrackIndex);
             } else if (encoderStatus < 0) {
                 LOG.e("Unexpected result from dequeueOutputBuffer: " + encoderStatus);
@@ -316,7 +399,7 @@ abstract class MediaEncoder {
                     // and should be used for offsets only.
                     // TODO find a better way, this causes sync issues. (+ note: this sends pts=0 at first)
                     // mBufferInfo.presentationTimeUs = mLastPresentationTimeUs - mStartPresentationTimeUs;
-                    LOG.v(getName(), "DRAINING - About to write(). Presentation:", mBufferInfo.presentationTimeUs);
+                    LOG.v(mName, "DRAINING - About to write(). Presentation:", mBufferInfo.presentationTimeUs);
 
                     // TODO fix the mBufferInfo being the same, then implement delayed writing in Controller
                     // and remove the isStarted() check here.
@@ -335,19 +418,20 @@ abstract class MediaEncoder {
                         && !mMaxLengthReached
                         && mStartPresentationTimeUs != Long.MIN_VALUE
                         && mLastPresentationTimeUs - mStartPresentationTimeUs > mMaxLengthMillis * 1000) {
-                    LOG.w(getName(), "DRAINING - Reached maxLength! mLastPresentationTimeUs:", mLastPresentationTimeUs,
+                    LOG.w(mName, "DRAINING - Reached maxLength! mLastPresentationTimeUs:", mLastPresentationTimeUs,
                             "mStartPresentationTimeUs:", mStartPresentationTimeUs,
                             "mMaxLengthUs:", mMaxLengthMillis * 1000);
                     mMaxLengthReached = true;
-                    LOG.w(getName(), "DRAINING - Requesting a stop.");
+                    LOG.w(mName, "DRAINING - Requesting a stop.");
+                    setState(STATE_LIMIT_REACHED);
                     mController.requestStop(mTrackIndex);
                     break;
                 }
 
-                // Check for the EOS flag so we can release the encoder.
+                // Check for the EOS flag so we can call onStopped.
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                    LOG.w(getName(), "DRAINING - Got EOS. Releasing the codec.");
-                    release();
+                    LOG.w(mName, "DRAINING - Got EOS. Releasing the codec.");
+                    onStopped();
                     break;
                 }
             }

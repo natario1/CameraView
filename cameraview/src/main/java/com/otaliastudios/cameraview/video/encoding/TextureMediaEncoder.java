@@ -102,13 +102,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
 
     @EncoderThread
     @Override
-    void onStart() {
-        super.onStart();
-        // Nothing to do here. Waiting for the first frame.
-    }
-
-    @EncoderThread
-    @Override
     void onEvent(@NonNull String event, @Nullable Object data) {
         if (!event.equals(FRAME_EVENT)) return;
         TextureFrame frame = (TextureFrame) data;
@@ -163,7 +156,8 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
     }
 
     @Override
-    void onRelease() {
+    protected void onStopped() {
+        super.onStopped();
         mFramePool.clear();
         if (mWindow != null) {
             mWindow.release();

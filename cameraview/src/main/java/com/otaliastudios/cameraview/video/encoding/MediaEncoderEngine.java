@@ -16,6 +16,35 @@ import java.util.ArrayList;
 
 /**
  * The entry point for encoding video files.
+ *
+ * The external API is simple but the internal mechanism is not easy. Basically the engine
+ * controls a {@link MediaEncoder} instance for each track (e.g. one for video, one for audio).
+ *
+ * 1. We prepare the MediaEncoders: {@link MediaEncoder#prepare(Controller, long)}
+ *    MediaEncoders can be prepared synchronously or not.
+ *
+ * 2. Someone calls {@link #start()} from any thread.
+ *    As a consequence, we start the MediaEncoders: {@link MediaEncoder#start()}.
+ *
+ * 3. MediaEncoders do not start synchronously. Instead, they call
+ *    {@link Controller#notifyStarted(MediaFormat)} when they have a legit format,
+ *    and we keep track of who has started.
+ *
+ * 4. When all MediaEncoders have started, we actually start the muxer.
+ *
+ * 5. Someone calls {@link #stop()} from any thread.
+ *    As a consequence, we stop the MediaEncoders: {@link MediaEncoder#stop()}.
+ *
+ * 6. MediaEncoders do not stop synchronously. Instead, they will stop reading but
+ *    keep draining the codec until there's no data left. At that point, they can
+ *    call {@link Controller#notifyStopped(int)}.
+ *
+ * 7. When all MediaEncoders have been released, we actually stop the muxer and notify.
+ *
+ * There is another possibility where MediaEncoders themselves want to stop, for example
+ * because they reach some limit or constraint (e.g. max duration). For this, they should
+ * call {@link Controller#requestStop(int)}. Once all MediaEncoders have stopped, we will
+ * actually call {@link #stop()} on ourselves.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class MediaEncoderEngine {
@@ -148,7 +177,7 @@ public class MediaEncoderEngine {
 
     /**
      * Asks encoders to stop. This is not sync, of course we will ask for encoders
-     * to call {@link Controller#notifyReleased(int)} before actually stop the muxer.
+     * to call {@link Controller#notifyStopped(int)} before actually stop the muxer.
      * When all encoders request a release, {@link #end()} is called to do cleanup
      * and notify the listener.
      */
@@ -160,7 +189,7 @@ public class MediaEncoderEngine {
     }
 
     /**
-     * Called after all encoders have requested a release using {@link Controller#notifyReleased(int)}.
+     * Called after all encoders have requested a release using {@link Controller#notifyStopped(int)}.
      * At this point we will do cleanup and notify the listener.
      */
     private void end() {
@@ -225,15 +254,15 @@ public class MediaEncoderEngine {
          * @param format the media format
          * @return the encoder track index
          */
-        int requestStart(@NonNull MediaFormat format) {
+        int notifyStarted(@NonNull MediaFormat format) {
             synchronized (mControllerLock) {
                 if (mMediaMuxerStarted) {
                     throw new IllegalStateException("Trying to start but muxer started already");
                 }
                 int track = mMediaMuxer.addTrack(format);
-                LOG.w("requestStart:", "Assigned track", track, "to format", format.getString(MediaFormat.KEY_MIME));
+                LOG.w("notifyStarted:", "Assigned track", track, "to format", format.getString(MediaFormat.KEY_MIME));
                 if (++mStartedEncodersCount == mEncoders.size()) {
-                    LOG.w("requestStart:", "All encoders have started. Starting muxer and dispatching onEncodingStart().");
+                    LOG.w("notifyStarted:", "All encoders have started. Starting muxer and dispatching onEncodingStart().");
                     mMediaMuxer.start();
                     mMediaMuxerStarted = true;
                     if (mListener != null) {
@@ -274,7 +303,7 @@ public class MediaEncoderEngine {
 
         /**
          * Requests that the engine stops. This is not executed until all encoders call
-         * this method, so it is a kind of soft request, just like {@link #requestStart(MediaFormat)}.
+         * this method, so it is a kind of soft request, just like {@link #notifyStarted(MediaFormat)}.
          * To be used when maxLength / maxSize constraints are reached, for example.
          *
          * When this succeeds, {@link MediaEncoder#stop()} is called.
@@ -294,9 +323,9 @@ public class MediaEncoderEngine {
          * Notifies that the encoder was stopped. After this is called by all encoders,
          * we will actually stop the muxer.
          */
-        void notifyReleased(int track) {
+        void notifyStopped(int track) {
             synchronized (mControllerLock) {
-                LOG.w("notifyReleased:", "Called for track", track);
+                LOG.w("notifyStopped:", "Called for track", track);
                 if (++mReleasedEncodersCount == mEncoders.size()) {
                     LOG.w("requestStop:", "All encoders have been released. Stopping the muxer.");
                     end();

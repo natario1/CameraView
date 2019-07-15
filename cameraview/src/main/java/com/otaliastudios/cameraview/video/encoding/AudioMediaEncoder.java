@@ -80,13 +80,8 @@ public class AudioMediaEncoder extends MediaEncoder {
     }
 
     public AudioMediaEncoder(@NonNull Config config) {
+        super("AudioEncoder");
         mConfig = config;
-    }
-
-    @NonNull
-    @Override
-    String getName() {
-        return "AudioEncoder";
     }
 
     @EncoderThread
@@ -127,7 +122,8 @@ public class AudioMediaEncoder extends MediaEncoder {
     }
 
     @Override
-    void onRelease() {
+    protected void onStopped() {
+        super.onStopped();
         mRequestStop = false;
         mEncoder = null;
         mRecorder = null;
