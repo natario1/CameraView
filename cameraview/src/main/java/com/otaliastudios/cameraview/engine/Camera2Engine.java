@@ -1173,16 +1173,19 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 int maxReagionsAe = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
                 int maxReagionsAwb = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
                 if (maxReagionsAf > 0) {
+                    int max = Math.min(maxReagionsAf, areas.size());
                     mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
-                            areas.subList(0, maxReagionsAf).toArray(new MeteringRectangle[]{}));
+                            areas.subList(0, max).toArray(new MeteringRectangle[]{}));
                 }
                 if (maxReagionsAe > 0) {
+                    int max = Math.min(maxReagionsAe, areas.size());
                     mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
-                            areas.subList(0, maxReagionsAe).toArray(new MeteringRectangle[]{}));
+                            areas.subList(0, max).toArray(new MeteringRectangle[]{}));
                 }
                 if (maxReagionsAwb > 0) {
+                    int max = Math.min(maxReagionsAwb, areas.size());
                     mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
-                            areas.subList(0, maxReagionsAwb).toArray(new MeteringRectangle[]{}));
+                            areas.subList(0, max).toArray(new MeteringRectangle[]{}));
                 }
 
                 // 8. Set AF mode to AUTO so it doesn't use the CONTINUOUS schedule.
