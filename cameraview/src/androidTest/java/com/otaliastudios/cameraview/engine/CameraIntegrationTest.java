@@ -10,6 +10,7 @@ import android.os.Build;
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraListener;
+import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraUtils;
 import com.otaliastudios.cameraview.CameraView;
@@ -62,7 +63,9 @@ import static org.mockito.Mockito.when;
 
 public abstract class CameraIntegrationTest extends BaseTest {
 
-    private final static long DELAY = 9000;
+    private final static CameraLogger LOG = CameraLogger.create(CameraIntegrationTest.class.getSimpleName());
+    private final static long DELAY = 8000;
+    private final static long VIDEO_DELAY = 16000;
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
@@ -82,6 +85,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Before
     public void setUp() {
+        LOG.e("Test started. Setting up camera.");
         WorkerHandler.destroy();
 
         ui(new Runnable() {
@@ -120,7 +124,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @After
     public void tearDown() {
-        camera.stopVideo();
+        LOG.e("Test ended. Tearing down camera.");
         camera.destroy();
         WorkerHandler.destroy();
     }
@@ -141,7 +145,6 @@ public abstract class CameraIntegrationTest extends BaseTest {
             assertNotNull("Can open", result);
             // Extra wait for the bind state.
             // TODO fix this and other while {} in this class in a more elegant way.
-            //noinspection StatementWithEmptyBody
             while (controller.getBindState() != CameraEngine.STATE_STARTED) {}
         } else {
             assertNull("Should not open", result);
@@ -172,7 +175,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
                 return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
             }
         }));
-        VideoResult result = video.await(DELAY);
+        VideoResult result = video.await(VIDEO_DELAY);
         if (expectSuccess) {
             assertNotNull("Should end video", result);
         } else {
@@ -624,7 +627,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         camera.takePicture();
         boolean did = latch.await(4, TimeUnit.SECONDS);
         assertFalse(did);
-        assertEquals(latch.getCount(), 1);
+        assertEquals(1, latch.getCount());
     }
 
     @SuppressWarnings("StatementWithEmptyBody")

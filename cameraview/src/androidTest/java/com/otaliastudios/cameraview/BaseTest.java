@@ -33,8 +33,6 @@ import static org.mockito.Mockito.mock;
 
 public class BaseTest {
 
-    public static CameraLogger LOG = CameraLogger.create("Test");
-
     private static KeyguardManager.KeyguardLock keyguardLock;
     private static PowerManager.WakeLock wakeLock;
 

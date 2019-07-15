@@ -149,7 +149,7 @@ public class MediaEncoderEngine {
     /**
      * Asks encoders to stop. This is not sync, of course we will ask for encoders
      * to call {@link Controller#notifyReleased(int)} before actually stop the muxer.
-     * When all encoders request a release, {@link #release()} is called to do cleanup
+     * When all encoders request a release, {@link #end()} is called to do cleanup
      * and notify the listener.
      */
     public final void stop() {
@@ -163,8 +163,8 @@ public class MediaEncoderEngine {
      * Called after all encoders have requested a release using {@link Controller#notifyReleased(int)}.
      * At this point we will do cleanup and notify the listener.
      */
-    private void release() {
-        LOG.i("release:", "Releasing muxer after all encoders have been released.");
+    private void end() {
+        LOG.i("end:", "Releasing muxer after all encoders have been released.");
         Exception error = null;
         if (mMediaMuxer != null) {
             // stop() throws an exception if you haven't fed it any data.
@@ -178,7 +178,7 @@ public class MediaEncoderEngine {
             }
             mMediaMuxer = null;
         }
-        LOG.w("release:", "Dispatching end to listener - reason:", mEndReason, "error:", error);
+        LOG.w("end:", "Dispatching end to listener - reason:", mEndReason, "error:", error);
         if (mListener != null) {
             mListener.onEncodingEnd(mEndReason, error);
             mListener = null;
@@ -187,7 +187,7 @@ public class MediaEncoderEngine {
         mStartedEncodersCount = 0;
         mReleasedEncodersCount = 0;
         mMediaMuxerStarted = false;
-        LOG.i("release:", "Completed.");
+        LOG.i("end:", "Completed.");
     }
 
     /**
@@ -299,7 +299,7 @@ public class MediaEncoderEngine {
                 LOG.w("notifyReleased:", "Called for track", track);
                 if (++mReleasedEncodersCount == mEncoders.size()) {
                     LOG.w("requestStop:", "All encoders have been released. Stopping the muxer.");
-                    release();
+                    end();
                 }
             }
         }

@@ -108,11 +108,11 @@ abstract class MediaEncoder {
      * @param data object
      */
     final void notify(final @NonNull String event, final @Nullable Object data) {
-        LOG.i(getName(), "Notify was called. Posting.");
+        LOG.v(getName(), "Notify was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.i(getName(), "Notify was called. Executing.");
+                LOG.v(getName(), "Notify was called. Executing.");
                 onEvent(event, data);
             }
         });
@@ -321,9 +321,7 @@ abstract class MediaEncoder {
                     // TODO fix the mBufferInfo being the same, then implement delayed writing in Controller
                     // and remove the isStarted() check here.
                     OutputBuffer buffer = mOutputBufferPool.get();
-                    if (buffer == null) {
-                        throw new IllegalStateException("buffer is null!");
-                    }
+                    //noinspection ConstantConditions
                     buffer.info = mBufferInfo;
                     buffer.trackIndex = mTrackIndex;
                     buffer.data = encodedData;
