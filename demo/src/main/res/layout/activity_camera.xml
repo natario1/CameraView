@@ -37,7 +37,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
-            app:layout_isOverlay="true"
             app:layout_drawOnPreview="true"
             app:layout_drawOnVideoSnapshot="true"
             app:layout_drawOnPictureSnapshot="true"
