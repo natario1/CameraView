@@ -26,15 +26,15 @@ compile 'com.otaliastudios:cameraview:2.0.0-beta06'
 ```
 
 - Fast & reliable
-- Gestures support
-- Camera1 or Camera2 powered engine
-- Frame processing support
-- Watermarks & animated overlays
-- OpenGL powered preview
-- Take high-quality content with `takePicture` and `takeVideo`
-- Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot`
-- Smart sizing: create a `CameraView` of any size
-- Control HDR, flash, zoom, white balance, exposure, location, grid drawing & more
+- Gestures support [[docs]](https://natario1.github.io/CameraView/docs/gestures.html)
+- Camera1 or Camera2 powered engine [[docs]](https://natario1.github.io/CameraView/docs/previews.html)
+- Frame processing support [[docs]](https://natario1.github.io/CameraView/docs/frame-processing.html)
+- Watermarks & animated overlays [[docs]](https://natario1.github.io/CameraView/docs/watermarks-and-overlays.html)
+- OpenGL powered preview [[docs]](https://natario1.github.io/CameraView/docs/previews.html)
+- Take high-quality content with `takePicture` and `takeVideo` [[docs]](https://natario1.github.io/CameraView/docs/capturing-media.html)
+- Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot` [[docs]](https://natario1.github.io/CameraView/docs/capturing-media.html)
+- Smart sizing: create a `CameraView` of any size [[docs]](https://natario1.github.io/CameraView/docs/preview-size.html)
+- Control HDR, flash, zoom, white balance, exposure, location, grid drawing & more [[docs]](https://natario1.github.io/CameraView/docs/controls.html)
 - Lightweight
 - Works down to API level 15
 - Well tested
