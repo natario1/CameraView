@@ -2064,8 +2064,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void onVideoRecordingStart() {
-            mLogger.i("onVideoRecordingStart", "onVideoRecordingStart");
+        public void dispatchOnVideoRecordingStart() {
+            mLogger.i("dispatchOnVideoRecordingStart", "dispatchOnVideoRecordingStart");
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {

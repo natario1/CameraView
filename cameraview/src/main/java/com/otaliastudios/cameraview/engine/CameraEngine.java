@@ -134,7 +134,7 @@ public abstract class CameraEngine implements
         void dispatchOnExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers);
         void dispatchFrame(Frame frame);
         void dispatchError(CameraException exception);
-        void onVideoRecordingStart();
+        void dispatchOnVideoRecordingStart();
     }
 
     private static final String TAG = CameraEngine.class.getSimpleName();
@@ -199,7 +199,6 @@ public abstract class CameraEngine implements
     private Step mAllStep = new Step("all", mStepCallback);
 
     // Ops used for testing.
-    @VisibleForTesting Op<Void> mStartVideoOp = new Op<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mZoomOp = new Op<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mExposureCorrectionOp = new Op<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mFlashOp = new Op<>();
@@ -1121,8 +1120,8 @@ public abstract class CameraEngine implements
             @Override
             public void run() {
                 LOG.v("takeVideo", "performing. BindState:", getBindState(), "isTakingVideo:", isTakingVideo());
-                if (getBindState() < STATE_STARTED) { mStartVideoOp.end(null); return; }
-                if (isTakingVideo()) { mStartVideoOp.end(null); return; }
+                if (getBindState() < STATE_STARTED) return;
+                if (isTakingVideo()) return;
                 if (mMode == Mode.PICTURE) {
                     throw new IllegalStateException("Can't record video while in PICTURE mode");
                 }
@@ -1137,7 +1136,6 @@ public abstract class CameraEngine implements
                 stub.videoBitRate = mVideoBitRate;
                 stub.audioBitRate = mAudioBitRate;
                 onTakeVideo(stub);
-                mStartVideoOp.end(null);
             }
         });
     }
@@ -1153,8 +1151,8 @@ public abstract class CameraEngine implements
             @Override
             public void run() {
                 LOG.v("takeVideoSnapshot", "performing. BindState:", getBindState(), "isTakingVideo:", isTakingVideo());
-                if (getBindState() < STATE_STARTED) { mStartVideoOp.end(null); return; }
-                if (isTakingVideo()) { mStartVideoOp.end(null); return; }
+                if (getBindState() < STATE_STARTED) return;
+                if (isTakingVideo()) return;
                 stub.file = file;
                 stub.isSnapshot = true;
                 stub.videoCodec = mVideoCodec;
@@ -1166,7 +1164,6 @@ public abstract class CameraEngine implements
                 stub.maxSize = mVideoMaxSize;
                 stub.maxDuration = mVideoMaxDuration;
                 onTakeVideoSnapshot(stub, viewAspectRatio);
-                mStartVideoOp.end(null);
             }
         });
     }
@@ -1196,6 +1193,12 @@ public abstract class CameraEngine implements
             mCallback.dispatchError(new CameraException(exception, CameraException.REASON_VIDEO_FAILED));
         }
     }
+
+    @Override
+    public void onVideoRecordingStart() {
+        mCallback.dispatchOnVideoRecordingStart();
+    }
+
 
     @WorkerThread
     protected abstract void onTakePicture(@NonNull PictureResult.Stub stub);
@@ -1380,15 +1383,6 @@ public abstract class CameraEngine implements
         if (flip) result = result.flip();
         LOG.i("computePreviewStreamSize:", "result:", result, "flip:", flip);
         return result;
-    }
-
-    //endregion
-
-    //region callbacks
-
-    @Override
-    public void onVideoRecordingStart() {
-        mCallback.onVideoRecordingStart();
     }
 
     //endregion

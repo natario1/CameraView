@@ -8,9 +8,11 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
-### v2.0.0-*** (to be released)
+### v2.0.0 (to be released)
 
-- New: `cameraUseDeviceOrientation` XML attribute and `setUseDeviceOrientation()` method to disable considering the device orientation for outputs. ([#497][497])
+- New: added `onVideoRecordingStart()` to be notified when video recording starts, thanks to [@agrawalsuneet][agrawalsuneet] ([#498][498])
+- New: added `cameraUseDeviceOrientation` to choose whether picture and video outputs should consider the device orientation or not ([#497][497])
+- Improvement: improved Camera2 stability and various bugs fixed (e.g. [#501][501])
 
 ### v2.0.0-beta06
 
@@ -55,6 +57,7 @@ If you were using `focusWithMarker`, you can [add back the old marker](../docs/m
 This is the first beta release. For changes with respect to v1, please take a look at the [migration guide](../extra/v1-migration-guide.html).
 
 [cneuwirt]: https://github.com/cneuwirt
+[agrawalsuneet]: https://github.com/agrawalsuneet
 
 [356]: https://github.com/natario1/CameraView/pull/356
 [360]: https://github.com/natario1/CameraView/pull/360
@@ -70,3 +73,5 @@ This is the first beta release. For changes with respect to v1, please take a lo
 [484]: https://github.com/natario1/CameraView/pull/484
 [490]: https://github.com/natario1/CameraView/pull/490
 [497]: https://github.com/natario1/CameraView/pull/497
+[498]: https://github.com/natario1/CameraView/pull/498
+[501]: https://github.com/natario1/CameraView/pull/501
