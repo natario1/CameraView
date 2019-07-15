@@ -37,6 +37,8 @@ camera.addCameraListener(new CameraListener() {
     public void onZoomChanged(float newValue, float[] bounds, PointF[] fingers) {}
     
     public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {}
+
+    public void onVideoRecordingStart() {}
 });
 ```
 

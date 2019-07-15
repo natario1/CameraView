@@ -127,4 +127,15 @@ public abstract class CameraListener {
     @UiThread
     public void onExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) { }
 
+
+    /**
+     * Notifies that the actual video recording has started
+     * This is the time when actual frames recording starts.
+     * This can be used to show some indicator while the actual video recording.
+     */
+    @UiThread
+    public void onVideoRecordingStart() {
+
+    }
+
 }

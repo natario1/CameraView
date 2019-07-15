@@ -130,6 +130,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
 
         try {
             mMediaRecorder.start();
+            dispatchVideoRecordingStart();
         } catch (Exception e) {
             LOG.w("start:", "Error while starting media recorder.", e);
             mResult = null;

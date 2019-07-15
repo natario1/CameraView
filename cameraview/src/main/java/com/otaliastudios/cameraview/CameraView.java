@@ -2062,6 +2062,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 }
             });
         }
+
+        @Override
+        public void dispatchOnVideoRecordingStart() {
+            mLogger.i("dispatchOnVideoRecordingStart", "dispatchOnVideoRecordingStart");
+            mUiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onVideoRecordingStart();
+                    }
+                }
+            });
+        }
     }
 
     //endregion

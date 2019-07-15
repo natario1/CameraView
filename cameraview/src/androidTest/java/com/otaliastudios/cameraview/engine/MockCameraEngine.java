@@ -177,4 +177,9 @@ public class MockCameraEngine extends CameraEngine {
     protected boolean collectCameraInfo(@NonNull Facing facing) {
         return true;
     }
+
+    @Override
+    public void onVideoRecordingStart() {
+
+    }
 }

@@ -181,6 +181,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             mRepeatingRequestBuilder.addTarget(mFrameProcessingSurface);
         }
         for (Surface extraSurface : extraSurfaces) {
+            if (extraSurface == null) {
+                throw new IllegalArgumentException("Should not add a null surface.");
+            }
             mRepeatingRequestBuilder.addTarget(extraSurface);
         }
     }

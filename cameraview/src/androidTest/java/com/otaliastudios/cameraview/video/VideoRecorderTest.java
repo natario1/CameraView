@@ -2,9 +2,7 @@ package com.otaliastudios.cameraview.video;
 
 
 import com.otaliastudios.cameraview.BaseTest;
-import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
-import com.otaliastudios.cameraview.video.VideoRecorder;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -29,7 +27,7 @@ public class VideoRecorderTest extends BaseTest {
         VideoRecorder.VideoResultListener listener = Mockito.mock(VideoRecorder.VideoResultListener.class);
         VideoRecorder recorder = new VideoRecorder(listener) {
             @Override
-            protected void onStart() { }
+            protected void onStart() { dispatchVideoRecordingStart(); }
 
             @Override
             protected void onStop() {
@@ -37,6 +35,8 @@ public class VideoRecorderTest extends BaseTest {
             }
         };
         recorder.start(result);
+        Mockito.verify(listener,Mockito.times(1) )
+                .onVideoRecordingStart();
         recorder.stop();
         Mockito.verify(listener, Mockito.times(1))
                 .onVideoResult(result, null);
