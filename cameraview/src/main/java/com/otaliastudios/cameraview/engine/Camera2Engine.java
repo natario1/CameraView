@@ -670,7 +670,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private void doTakeVideo(@NonNull final VideoResult.Stub stub) {
         if (!(mVideoRecorder instanceof Full2VideoRecorder)) {
-            mVideoRecorder = new Full2VideoRecorder(this, mCameraId);
+            throw new IllegalStateException("doTakeVideo called, but video recorder is not a Full2VideoRecorder! " + mVideoRecorder);
         }
         Full2VideoRecorder recorder = (Full2VideoRecorder) mVideoRecorder;
         try {

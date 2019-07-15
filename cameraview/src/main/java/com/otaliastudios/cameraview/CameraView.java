@@ -244,7 +244,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * {@link #setEngine(Engine)} is called.
      */
     private void doInstantiateEngine() {
+        LOG.w("doInstantiateEngine:", "instantiating. engine:", mEngine);
         mCameraEngine = instantiateCameraEngine(mEngine, mCameraCallbacks);
+        LOG.w("doInstantiateEngine:", "instantiated. engine:", mCameraEngine.getClass().getSimpleName());
         mCameraEngine.setOverlay(mOverlayLayout);
     }
 
@@ -255,7 +257,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @VisibleForTesting
     void doInstantiatePreview() {
+        LOG.w("doInstantiateEngine:", "instantiating. preview:", mPreview);
         mCameraPreview = instantiatePreview(mPreview, getContext(), this);
+        LOG.w("doInstantiateEngine:", "instantiated. preview:", mCameraPreview.getClass().getSimpleName());
         mCameraEngine.setPreview(mCameraPreview);
     }
 
@@ -287,7 +291,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @NonNull
     protected CameraPreview instantiatePreview(@NonNull Preview preview, @NonNull Context context, @NonNull ViewGroup container) {
-        LOG.w("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
         switch (preview) {
             case SURFACE:
                 return new SurfaceCameraPreview(context, container);
@@ -393,7 +396,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // other than respect it. The preview will eventually be cropped at the sides (by PreviewImpl scaling)
         // except the case in which these fixed dimensions manage to fit exactly the preview aspect ratio.
         if (widthMode == EXACTLY && heightMode == EXACTLY) {
-            LOG.w("onMeasure:", "both are MATCH_PARENT or fixed value. We adapt.",
+            LOG.i("onMeasure:", "both are MATCH_PARENT or fixed value. We adapt.",
                     "This means CROP_CENTER.", "(" + widthValue + "x" + heightValue + ")");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;

@@ -190,24 +190,29 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     }
 
+    @Override
+    public void onEncodingStart() {
+        // Do nothing.
+    }
+
     @EncoderThread
     @Override
-    public void onEncoderStop(int stopReason, @Nullable Exception e) {
+    public void onEncodingEnd(int stopReason, @Nullable Exception e) {
         // If something failed, undo the result, since this is the mechanism
         // to notify Camera1Engine about this.
         if (e != null) {
-            LOG.e("Error onEncoderStop", e);
+            LOG.e("Error onEncodingEnd", e);
             mResult = null;
             mError = e;
         } else {
-            if (stopReason == MediaEncoderEngine.STOP_BY_MAX_DURATION) {
-                LOG.i("onEncoderStop because of max duration.");
+            if (stopReason == MediaEncoderEngine.END_BY_MAX_DURATION) {
+                LOG.i("onEncodingEnd because of max duration.");
                 mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
-            } else if (stopReason == MediaEncoderEngine.STOP_BY_MAX_SIZE) {
-                LOG.i("onEncoderStop because of max size.");
+            } else if (stopReason == MediaEncoderEngine.END_BY_MAX_SIZE) {
+                LOG.i("onEncodingEnd because of max size.");
                 mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
             } else {
-                LOG.i("onEncoderStop because of user.");
+                LOG.i("onEncodingEnd because of user.");
             }
         }
         // Cleanup

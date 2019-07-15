@@ -157,7 +157,7 @@ public class AudioMediaEncoder extends MediaEncoder {
             while (!mRequestStop) {
                 read(false);
             }
-            LOG.w("RECORDER: Stop was requested. We're out of the loop. Will post an endOfStream.");
+            LOG.w("Stop was requested. We're out of the loop. Will post an endOfStream.");
             // Last input with 0 length. This will signal the endOfStream.
             // Can't use drain(true); it is only available when writing to the codec InputSurface.
             read(true);
@@ -169,20 +169,21 @@ public class AudioMediaEncoder extends MediaEncoder {
         private void read(boolean endOfStream) {
             mCurrentBuffer = mByteBufferPool.get();
             if (mCurrentBuffer == null) {
-                LOG.e("Skipping audio frame, encoding is too slow.");
-                // TODO should fix the next presentation time here. However this is
-                // extremely unlikely based on my tests. The mByteBufferPool should be big enough.
+                LOG.e("read thread - Skipping audio frame, encoding is too slow.");
+                // TODO should fix the next presentation time here.
             } else {
                 mCurrentBuffer.clear();
                 mReadBytes = mAudioRecord.read(mCurrentBuffer, FRAME_SIZE);
+                LOG.v("read thread - Read new audio frame. Bytes:", mReadBytes);
                 if (mReadBytes > 0) { // Good read: increase PTS.
-                    increaseTime(mReadBytes);
+                    mLastTimeUs = increaseTime(mReadBytes);
+                    LOG.v("read thread - Increasing PTS to", mLastTimeUs);
                     mCurrentBuffer.limit(mReadBytes);
                     onBuffer(endOfStream);
                 } else if (mReadBytes == AudioRecord.ERROR_INVALID_OPERATION) {
-                    LOG.e("Got AudioRecord.ERROR_INVALID_OPERATION");
+                    LOG.e("read thread - Got AudioRecord.ERROR_INVALID_OPERATION");
                 } else if (mReadBytes == AudioRecord.ERROR_BAD_VALUE) {
-                    LOG.e("Got AudioRecord.ERROR_BAD_VALUE");
+                    LOG.e("read thread - Got AudioRecord.ERROR_BAD_VALUE");
                 }
             }
         }
@@ -193,12 +194,20 @@ public class AudioMediaEncoder extends MediaEncoder {
          * to the consumer.
          */
         private void onBuffer(boolean endOfStream) {
+            LOG.v("read thread - Sending buffer to encoder thread.");
             mEncoder.sendInputBuffer(mCurrentBuffer, mLastTimeUs, endOfStream);
         }
 
-        private void increaseTime(int readBytes) {
-            increaseTime3(readBytes);
-            LOG.v("Read", readBytes, "bytes, increasing PTS to", mLastTimeUs);
+        private long bytesToUs(int bytes) {
+            return (1000000L * bytes) / BYTE_RATE;
+        }
+
+        private long bytesToUs(long bytes) {
+            return (1000000L * bytes) / BYTE_RATE;
+        }
+
+        private long increaseTime(int readBytes) {
+            return increaseTime3(readBytes);
         }
 
         /**
@@ -206,21 +215,23 @@ public class AudioMediaEncoder extends MediaEncoder {
          * It will use System.nanoTime() just once, as the starting point.
          * Of course we don't as there are things going on in this thread.
          */
-        private void increaseTime1(int readBytes) {
-            mLastTimeUs += (1000000L * readBytes) / BYTE_RATE;
+        @SuppressWarnings("unused")
+        private long increaseTime1(int readBytes) {
+            return mLastTimeUs + bytesToUs(readBytes);
         }
 
         /**
          * Just for testing, this method will use Api 24 method to retrieve the timestamp.
          * This way we let the platform choose instead of making assumptions.
          */
+        @SuppressWarnings("unused")
         @RequiresApi(24)
-        private void increaseTime2(int readBytes) {
+        private long increaseTime2(int readBytes) {
             if (mApi24Timestamp == null) {
                 mApi24Timestamp = new AudioTimestamp();
             }
             mAudioRecord.getTimestamp(mApi24Timestamp, AudioTimestamp.TIMEBASE_MONOTONIC);
-            mLastTimeUs = mApi24Timestamp.nanoTime / 1000;
+            return mApi24Timestamp.nanoTime / 1000;
         }
         private AudioTimestamp mApi24Timestamp;
 
@@ -228,27 +239,33 @@ public class AudioMediaEncoder extends MediaEncoder {
          * This method looks like an improvement over {@link #increaseTime1(int)} as it
          * accounts for the current time as well. Adapted & improved. from Kickflip.
          */
-        private void increaseTime3(int readBytes) {
-            long currentTime = System.nanoTime() / 1000;
-            long correctedTime;
-            long bufferDuration = (1000000 * readBytes) / BYTE_RATE;
-            long bufferTime = currentTime - bufferDuration; // delay of acquiring the audio buffer
-            if (mTotalReadBytes == 0) {
-                mStartTimeUs = bufferTime;
-            }
+        private long increaseTime3(int readBytes) {
+            long bufferDurationUs = bytesToUs(readBytes);
+            long bufferEndTimeUs = System.nanoTime() / 1000; // now
+            long bufferStartTimeUs = bufferEndTimeUs - bufferDurationUs;
+
+            // If this is the first time, the base time is the buffer start time.
+            if (mBytesSinceBaseTime == 0) mBaseTimeUs = bufferStartTimeUs;
+
             // Recompute time assuming that we are respecting the sampling frequency.
-            // However, if the correction is too big (> 2*bufferDuration), reset to this point.
-            correctedTime = mStartTimeUs + (1000000 * mTotalReadBytes) / BYTE_RATE;
-            if(bufferTime - correctedTime >= 2 * bufferDuration) {
-                mStartTimeUs = bufferTime;
-                mTotalReadBytes = 0;
-                correctedTime = mStartTimeUs;
+            // This puts the time at the end of last read buffer, which means, where we
+            // should be if we had no delay / missed buffers.
+            long correctedTimeUs = mBaseTimeUs + bytesToUs(mBytesSinceBaseTime);
+            long correctionUs = bufferStartTimeUs - correctedTimeUs;
+
+            // However, if the correction is too big (> 2*bufferDurationUs), reset to this point.
+            // This is triggered if we lose buffers and are recording/encoding at a slower rate.
+            if (correctionUs >= 2L * bufferDurationUs) {
+                mBaseTimeUs = bufferStartTimeUs;
+                mBytesSinceBaseTime = readBytes;
+                return mBaseTimeUs;
+            } else {
+                mBytesSinceBaseTime += readBytes;
+                return correctedTimeUs;
             }
-            mTotalReadBytes += readBytes;
-            mLastTimeUs = correctedTime;
         }
-        private long mStartTimeUs;
-        private long mTotalReadBytes;
+        private long mBaseTimeUs;
+        private long mBytesSinceBaseTime;
     }
 
     /**
@@ -278,6 +295,7 @@ public class AudioMediaEncoder extends MediaEncoder {
             super.handleMessage(msg);
             boolean endOfStream = msg.what == 1;
             long timestamp = (((long) msg.arg1) << 32) | (((long) msg.arg2) & 0xffffffffL);
+            LOG.v("encoding thread - got buffer. timestamp:", timestamp, "eos:", endOfStream);
             ByteBuffer buffer = (ByteBuffer) msg.obj;
             int readBytes = buffer.remaining();
             InputBuffer inputBuffer = mInputBufferPool.get();
@@ -290,7 +308,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         }
 
         private void performPendingOps(boolean force) {
-            LOG.v("Performing", mPendingOps.size(), "Pending operations.");
+            LOG.v("encoding thread - performing", mPendingOps.size(), "pending operations.");
             InputBuffer buffer;
             while ((buffer = mPendingOps.peek()) != null) {
                 if (force) {
@@ -305,12 +323,15 @@ public class AudioMediaEncoder extends MediaEncoder {
         }
 
         private void performPendingOp(InputBuffer buffer) {
+            LOG.v("encoding thread - performing pending operation for timestamp:", buffer.timestamp);
             buffer.data.put(buffer.source);
             mByteBufferPool.recycle(buffer.source);
             mPendingOps.remove(buffer);
+            LOG.v("encoding thread - performing pending operation for timestamp:", buffer.timestamp, "- encoding.");
             encodeInputBuffer(buffer);
             boolean eos = buffer.isEndOfStream;
             mInputBufferPool.recycle(buffer);
+            LOG.v("encoding thread - performing pending operation for timestamp:", buffer.timestamp, "- draining.");
             drainOutput(eos);
             if (eos) {
                 mInputBufferPool.clear();
