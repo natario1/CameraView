@@ -96,6 +96,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
                 rule.getActivity().inflate(camera);
 
                 // Ensure that controller exceptions are thrown on this thread (not on the UI thread).
+                // TODO this makes debugging for wrong tests very hard, as we don't get the exception
+                // unless waitForUiException() is called.
                 uiExceptionOp = new Op<>(true);
                 WorkerHandler crashThread = WorkerHandler.get("CrashThread");
                 crashThread.getThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
