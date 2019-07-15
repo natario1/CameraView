@@ -28,7 +28,7 @@ public abstract class VideoRecorder {
         /**
          * The callback for the actual video recording starting.
          */
-        void onActualVideoRecordingStarted();
+        void onVideoRecordingStart();
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) VideoResult.Stub mResult;
@@ -96,9 +96,9 @@ public abstract class VideoRecorder {
      */
     @SuppressWarnings("WeakerAccess")
     @CallSuper
-    protected void dispatchActualVideoRecordingStarted(){
+    protected void dispatchVideoRecordingStart(){
         if(mListener != null){
-            mListener.onActualVideoRecordingStarted();
+            mListener.onVideoRecordingStart();
         }
     }
 }

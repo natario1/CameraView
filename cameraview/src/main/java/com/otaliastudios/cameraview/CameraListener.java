@@ -130,12 +130,11 @@ public abstract class CameraListener {
 
     /**
      * Notifies that the actual video recording has started
-     * When we request for video recording, it doesn't start the recording the immediately.
-     * Instead it checks for hardware availability first and later on available,
-     * it sets all the config and then start the actual recording.
+     * This is the time when actual frames recording starts.
+     * This can be used to show some indicator while the actual video recording.
      */
     @UiThread
-    public void onActualVideoRecordingStarted() {
+    public void onVideoRecordingStart() {
 
     }
 

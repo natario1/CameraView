@@ -134,7 +134,7 @@ public abstract class CameraEngine implements
         void dispatchOnExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers);
         void dispatchFrame(Frame frame);
         void dispatchError(CameraException exception);
-        void onActualVideoRecordingStarted();
+        void onVideoRecordingStart();
     }
 
     private static final String TAG = CameraEngine.class.getSimpleName();
@@ -1380,6 +1380,15 @@ public abstract class CameraEngine implements
         if (flip) result = result.flip();
         LOG.i("computePreviewStreamSize:", "result:", result, "flip:", flip);
         return result;
+    }
+
+    //endregion
+
+    //region callbacks
+
+    @Override
+    public void onVideoRecordingStart() {
+        mCallback.onVideoRecordingStart();
     }
 
     //endregion

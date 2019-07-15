@@ -726,11 +726,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    @Override
-    public void onActualVideoRecordingStarted() {
-        mCallback.onActualVideoRecordingStarted();
-    }
-
     //endregion
 
     //region Parameters

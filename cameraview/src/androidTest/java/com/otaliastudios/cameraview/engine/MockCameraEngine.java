@@ -179,7 +179,7 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     @Override
-    public void onActualVideoRecordingStarted() {
+    public void onVideoRecordingStart() {
 
     }
 }
