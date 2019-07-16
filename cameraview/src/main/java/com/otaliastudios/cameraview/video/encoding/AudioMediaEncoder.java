@@ -103,7 +103,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     public AudioMediaEncoder(@NonNull Config config) {
         super("AudioEncoder");
         mConfig = config.copy();
-        mTimestamp = new AudioTimestamp();
+        mTimestamp = new AudioTimestamp(mConfig.byteRate());
         // These two were in onPrepare() but it's better to do warm-up here
         // since thread and looper creation is expensive.
         mEncoder = new AudioEncodingHandler();
@@ -262,19 +262,28 @@ public class AudioMediaEncoder extends MediaEncoder {
          * @param endOfStream end of stream?
          */
         private void increaseTime(int readBytes, boolean endOfStream) {
-            mLastTimeUs = mTimestamp.increaseUs(readBytes, mConfig.byteRate());
+            // Get the latest frame timestamp.
+            mLastTimeUs = mTimestamp.increaseUs(readBytes);
             if (mFirstTimeUs == Long.MIN_VALUE) {
                 mFirstTimeUs = mLastTimeUs;
                 // Compute the first frame milliseconds as well.
                 notifyFirstFrameMillis(System.currentTimeMillis()
                         - AudioTimestamp.bytesToMillis(readBytes, mConfig.byteRate()));
             }
+
+            // See if we reached the max length value.
             boolean didReachMaxLength = (mLastTimeUs - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
             if (didReachMaxLength && !endOfStream) {
                 LOG.w("read thread - this frame reached the maxLength! deltaUs:", mLastTimeUs - mFirstTimeUs);
                 notifyMaxLengthReached();
             }
-            int gaps = mTimestamp.getGapCount(mConfig.frameSize(), mConfig.byteRate());
+
+            // Add zeroes if we have huge gaps. Even if timestamps are correct, if we have gaps between
+            // them, the encoder might shrink all timestamps to have a continuous audio. This results
+            // in a video that is fast-forwarded.
+            // Adding zeroes does not solve the gaps issue - audio will still be distorted. But at
+            // least we get a video that has the correct playback speed.
+            int gaps = mTimestamp.getGapCount(mConfig.frameSize());
             if (gaps > 0) {
                 long gapStart = mTimestamp.getGapStartUs(mLastTimeUs);
                 long frameUs = AudioTimestamp.bytesToUs(mConfig.frameSize(), mConfig.byteRate());
