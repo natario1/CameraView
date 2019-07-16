@@ -18,9 +18,11 @@ import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.video.encoding.AudioConfig;
 import com.otaliastudios.cameraview.video.encoding.AudioMediaEncoder;
 import com.otaliastudios.cameraview.video.encoding.EncoderThread;
 import com.otaliastudios.cameraview.video.encoding.MediaEncoderEngine;
+import com.otaliastudios.cameraview.video.encoding.TextureConfig;
 import com.otaliastudios.cameraview.video.encoding.TextureMediaEncoder;
 
 import androidx.annotation.NonNull;
@@ -124,7 +126,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case DEVICE_DEFAULT: type = "video/avc"; break;
             }
             LOG.w("Creating frame encoder. Rotation:", mResult.rotation);
-            TextureMediaEncoder.Config videoConfig = new TextureMediaEncoder.Config();
+            TextureConfig videoConfig = new TextureConfig();
             videoConfig.width = width;
             videoConfig.height = height;
             videoConfig.bitRate = mResult.videoBitRate;
@@ -144,7 +146,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             // Audio
             AudioMediaEncoder audioEncoder = null;
             if (mResult.audio == Audio.ON || mResult.audio == Audio.MONO || mResult.audio == Audio.STEREO) {
-                AudioMediaEncoder.Config audioConfig = new AudioMediaEncoder.Config();
+                AudioConfig audioConfig = new AudioConfig();
                 audioConfig.bitRate = mResult.audioBitRate;
                 if (mResult.audio == Audio.MONO) audioConfig.channels = 1;
                 if (mResult.audio == Audio.STEREO) audioConfig.channels = 2;

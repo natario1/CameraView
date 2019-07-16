@@ -1,7 +1,6 @@
 package com.otaliastudios.cameraview.video.encoding;
 
 import android.graphics.SurfaceTexture;
-import android.opengl.EGLContext;
 import android.opengl.Matrix;
 import android.os.Build;
 
@@ -19,35 +18,12 @@ import androidx.annotation.RequiresApi;
  * Default implementation for video encoding.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.Config> {
+public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
 
     private static final String TAG = TextureMediaEncoder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     public final static String FRAME_EVENT = "frame";
-    private final static int NO_TEXTURE = Integer.MIN_VALUE;
-
-    public static class Config extends VideoMediaEncoder.Config {
-        public int textureId = NO_TEXTURE;
-        public int overlayTextureId = NO_TEXTURE;
-        public int overlayRotation;
-        public float scaleX;
-        public float scaleY;
-        public EGLContext eglContext;
-
-        @NonNull
-        private Config copy() {
-            Config copy = new Config();
-            copy(copy);
-            copy.textureId = this.textureId;
-            copy.overlayTextureId = this.overlayTextureId;
-            copy.overlayRotation = this.overlayRotation;
-            copy.scaleX = this.scaleX;
-            copy.scaleY = this.scaleY;
-            copy.eglContext = this.eglContext;
-            return copy;
-        }
-    }
 
     private int mTransformRotation;
     private EglCore mEglCore;
@@ -60,7 +36,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         }
     });
 
-    public TextureMediaEncoder(@NonNull Config config) {
+    public TextureMediaEncoder(@NonNull TextureConfig config) {
         super(config.copy());
     }
 
@@ -171,14 +147,13 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
         // 3. Do the same for overlays with their own rotation.
-        boolean hasOverlay = mConfig.overlayTextureId != NO_TEXTURE;
-        if (hasOverlay) {
+        if (mConfig.hasOverlay()) {
             Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
             Matrix.rotateM(overlayTransform, 0, mConfig.overlayRotation, 0, 0, 1);
             Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
         }
         mViewport.drawFrame(mConfig.textureId, transform);
-        if (hasOverlay) {
+        if (mConfig.hasOverlay()) {
             mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
         }
         mWindow.setPresentationTime(frame.timestamp);

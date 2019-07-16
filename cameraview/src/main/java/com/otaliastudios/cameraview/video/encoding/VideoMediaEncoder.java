@@ -29,7 +29,7 @@ import java.io.IOException;
  * @param <C> the config object.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends MediaEncoder {
+abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
 
     private static final String TAG = VideoMediaEncoder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -42,24 +42,6 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
 
     @SuppressWarnings("WeakerAccess")
     protected int mFrameNumber = -1;
-
-    protected static class Config {
-        public int width;
-        public int height;
-        public int bitRate;
-        public int frameRate;
-        public int rotation;
-        public String mimeType;
-
-        protected <C extends Config> void copy(@NonNull C output) {
-            output.width = this.width;
-            output.height = this.height;
-            output.bitRate = this.bitRate;
-            output.frameRate = this.frameRate;
-            output.rotation = this.rotation;
-            output.mimeType = this.mimeType;
-        }
-    }
 
     VideoMediaEncoder(@NonNull C config) {
         super("VideoEncoder");
