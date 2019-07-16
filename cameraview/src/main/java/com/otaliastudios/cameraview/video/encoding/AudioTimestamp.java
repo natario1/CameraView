@@ -58,14 +58,20 @@ class AudioTimestamp {
         long correctedTimeUs = mBaseTimeUs + bytesToUs(mBytesSinceBaseTime, mByteRate);
         long correctionUs = bufferStartTimeUs - correctedTimeUs;
 
-        // However, if the correction is too big (> 2*bufferDurationUs), reset to this point.
-        // This is triggered if we lose buffers and are recording/encoding at a slower rate.
         if (correctionUs >= 2L * bufferDurationUs) {
+            // However, if the correction is too big (> 2*bufferDurationUs), reset to this point.
+            // This is triggered if we lose buffers and are recording/encoding at a slower rate.
             mBaseTimeUs = bufferStartTimeUs;
             mBytesSinceBaseTime = readBytes;
             mGapUs = correctionUs;
             return mBaseTimeUs;
         } else {
+            //noinspection StatementWithEmptyBody
+            if (correctionUs < 0) {
+                // This means that this method is being called too often, so that the expected start
+                // time for this buffer is BEFORE the last buffer end. So, respect the last buffer end
+                // instead.
+            }
             mGapUs = 0;
             mBytesSinceBaseTime += readBytes;
             return correctedTimeUs;

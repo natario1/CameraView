@@ -39,8 +39,9 @@ public class AudioMediaEncoder extends MediaEncoder {
     // the recorder thread. It's not safe to have it very large or we can end encoding A LOT AFTER
     // the actual recording. It's better to reduce this and skip recording at all.
     private static final int BUFFER_POOL_MAX_SIZE = 80;
-    private static final boolean DEBUG_PERFORMANCE = true;
-    private static final boolean USE_SEPARATE_ENCODING_THREAD = true; // not clear how much benefit this brings
+    private static final boolean PERFORMANCE_DEBUG = true;
+    private static final boolean PERFORMANCE_SEPARATE_ENCODING_THREAD = true; // not clear how much benefit this brings
+    private static final boolean PERFORMANCE_FILL_GAPS = false;
 
     private boolean mRequestStop = false;
     private AudioEncodingHandler mEncoder;
@@ -61,11 +62,11 @@ public class AudioMediaEncoder extends MediaEncoder {
 
         // Not configurable options (for now)
         private final String mimeType = "audio/mp4a-latm";
-        private final int encoding = AudioFormat.ENCODING_PCM_16BIT; // Determines the SAMPLE_SIZE
+        private final int encoding = AudioFormat.ENCODING_PCM_16BIT; // Determines the sampleSizePerChannel
         // The 44.1KHz frequency is the only setting guaranteed to be available on all devices.
         private final int samplingFrequency = 44100; // samples/sec
-        private final int sampleSize = 2; // byte/sample/channel [16bit]
-        private final int byteRatePerChannel = samplingFrequency * sampleSize; // byte/sec/channel
+        private final int sampleSizePerChannel = 2; // byte/sample/channel [16bit]
+        private final int byteRatePerChannel = samplingFrequency * sampleSizePerChannel; // byte/sec/channel
         private final int frameSizePerChannel = 1024; // bytes/frame/channel [AAC constant]
 
         @NonNull
@@ -170,12 +171,16 @@ public class AudioMediaEncoder extends MediaEncoder {
         private AudioRecordingThread() {
             final int minBufferSize = AudioRecord.getMinBufferSize(mConfig.samplingFrequency,
                     mConfig.channels, mConfig.encoding);
-            int bufferSize = mConfig.frameSize() * 25; // Make this bigger so we don't skip frames.
+            // Make this bigger so we don't skip frames. Stereo: 51200. Mono: 25600
+            int bufferSize = mConfig.frameSize() * 25;
             while (bufferSize < minBufferSize) {
-                bufferSize += mConfig.frameSize(); // Unlikely I think.
+                bufferSize += mConfig.frameSize(); // Unlikely.
             }
             mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.CAMCORDER,
-                    mConfig.samplingFrequency, mConfig.channels, mConfig.encoding, bufferSize);
+                    mConfig.samplingFrequency,
+                    mConfig.channels,
+                    mConfig.encoding,
+                    bufferSize);
             setPriority(Thread.MAX_PRIORITY);
         }
 
@@ -215,7 +220,7 @@ public class AudioMediaEncoder extends MediaEncoder {
                 mCurrentBuffer.clear();
                 // When stereo, we read twice the data here and AudioRecord will fill the buffer
                 // with left and right bytes. https://stackoverflow.com/q/20594750/4288782
-                if (DEBUG_PERFORMANCE) {
+                if (PERFORMANCE_DEBUG) {
                     float before = System.nanoTime() / 1000000F;
                     mReadBytes = mAudioRecord.read(mCurrentBuffer, mConfig.frameSize());
                     float after = System.nanoTime() / 1000000F;
@@ -283,22 +288,25 @@ public class AudioMediaEncoder extends MediaEncoder {
             // in a video that is fast-forwarded.
             // Adding zeroes does not solve the gaps issue - audio will still be distorted. But at
             // least we get a video that has the correct playback speed.
-            int gaps = mTimestamp.getGapCount(mConfig.frameSize());
-            if (gaps > 0) {
-                long gapStart = mTimestamp.getGapStartUs(mLastTimeUs);
-                long frameUs = AudioTimestamp.bytesToUs(mConfig.frameSize(), mConfig.byteRate());
-                LOG.w("read thread - GAPS: trying to add", gaps, "zeroed buffers");
-                for (int i = 0; i < gaps; i++) {
-                    ByteBuffer zeroBuffer = mByteBufferPool.get();
-                    if (zeroBuffer == null) {
-                        LOG.e("read thread - GAPS: aborting because we have no free buffer.");
-                        break;
-                    };
-                    zeroBuffer.position(0);
-                    zeroBuffer.put(mZeroBuffer);
-                    zeroBuffer.clear();
-                    mEncoder.sendInputBuffer(zeroBuffer, gapStart, false);
-                    gapStart += frameUs;
+            if (PERFORMANCE_FILL_GAPS) {
+                int gaps = mTimestamp.getGapCount(mConfig.frameSize());
+                if (gaps > 0) {
+                    long gapStart = mTimestamp.getGapStartUs(mLastTimeUs);
+                    long frameUs = AudioTimestamp.bytesToUs(mConfig.frameSize(), mConfig.byteRate());
+                    LOG.w("read thread - GAPS: trying to add", gaps, "zeroed buffers");
+                    for (int i = 0; i < gaps; i++) {
+                        ByteBuffer zeroBuffer = mByteBufferPool.get();
+                        if (zeroBuffer == null) {
+                            LOG.e("read thread - GAPS: aborting because we have no free buffer.");
+                            break;
+                        }
+                        ;
+                        zeroBuffer.position(0);
+                        zeroBuffer.put(mZeroBuffer);
+                        zeroBuffer.clear();
+                        mEncoder.sendInputBuffer(zeroBuffer, gapStart, false);
+                        gapStart += frameUs;
+                    }
                 }
             }
         }
@@ -319,6 +327,8 @@ public class AudioMediaEncoder extends MediaEncoder {
 
         private AudioEncodingHandler() {
             super(WorkerHandler.get("AudioEncodingHandler").getLooper());
+            // TODO this thread has warmup issues, the first recording is always messy. Investigate.
+            // getLooper().getThread().setPriority(Thread.MAX_PRIORITY);
         }
 
         // Just to debug performance.
@@ -329,7 +339,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         private Map<Long, Long> mSendStartMap = new HashMap<>();
 
         private void sendInputBuffer(ByteBuffer buffer, long presentationTimeUs, boolean endOfStream) {
-            if (DEBUG_PERFORMANCE) {
+            if (PERFORMANCE_DEBUG) {
                 mSendStartMap.put(presentationTimeUs, System.nanoTime() / 1000000);
             }
             Message message = obtainMessage(
@@ -337,7 +347,7 @@ public class AudioMediaEncoder extends MediaEncoder {
                     (int) (presentationTimeUs >> 32),
                     (int) (presentationTimeUs),
                     buffer);
-            if (USE_SEPARATE_ENCODING_THREAD) {
+            if (PERFORMANCE_SEPARATE_ENCODING_THREAD) {
                 sendMessage(message);
             } else {
                 handleMessage(message);
@@ -353,7 +363,7 @@ public class AudioMediaEncoder extends MediaEncoder {
 
             // Performance logging
             long executeStart;
-            if (DEBUG_PERFORMANCE) {
+            if (PERFORMANCE_DEBUG) {
                 long sendEnd = System.nanoTime() / 1000000;
                 //noinspection ConstantConditions
                 long sendStart = mSendStartMap.remove(timestamp);
@@ -384,7 +394,7 @@ public class AudioMediaEncoder extends MediaEncoder {
                 }
             }
 
-            if (DEBUG_PERFORMANCE) {
+            if (PERFORMANCE_DEBUG) {
                 long executeEnd = System.nanoTime() / 1000000;
                 mAvgExecuteDelay = ((mAvgExecuteDelay * mExecuteCount) + (executeEnd - executeStart)) / (++mExecuteCount);
                 LOG.v("execute delay millis:", executeEnd - executeStart, "average:", mAvgExecuteDelay);
@@ -407,7 +417,7 @@ public class AudioMediaEncoder extends MediaEncoder {
             drainOutput(eos);
             if (eos) {
                 // Not sure we want this: WorkerHandler.get("AudioEncodingHandler").getThread().interrupt();
-                if (DEBUG_PERFORMANCE) {
+                if (PERFORMANCE_DEBUG) {
                     // With MONO, the count is about 370. With STEREO, the count is about 220.
                     // This reflects the count difference that we see in engine.write (MONO:200 STEREO:100).
                     LOG.e("EXECUTE DELAY MILLIS:", mAvgExecuteDelay, "COUNT:", mExecuteCount);
