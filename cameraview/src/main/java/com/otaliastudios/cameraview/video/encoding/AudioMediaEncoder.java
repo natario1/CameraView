@@ -45,8 +45,12 @@ public class AudioMediaEncoder extends MediaEncoder {
     private final AudioTimestamp mTimestamp;
     private Config mConfig;
 
+    /**
+     * Audio configuration to be passed as input to the constructor.
+     */
     public static class Config {
 
+        // Configurable options
         public int bitRate;
         public int channels = 1;
 
@@ -71,6 +75,7 @@ public class AudioMediaEncoder extends MediaEncoder {
             return byteRatePerChannel * channels; // byte/sec
         }
 
+        @SuppressWarnings("unused")
         private int bitRate() {
             return byteRate() * 8; // bit/sec
         }
