@@ -57,7 +57,7 @@ import java.nio.ByteBuffer;
  * See description in {@link VideoMediaEncoder}.
  *
  * For max length constraint, it will be checked automatically during {@link #drainOutput(boolean)},
- * or subclasses can provide an hint to this encoder using {@link InputBuffer#didReachMaxLength}.
+ * OR subclasses can provide an hint to this encoder using {@link #notifyMaxLengthReached()}.
  * In this second case, we can request a stop at reading time, so we avoid useless readings
  * in certain setups (where drain is called a lot after reading).
  */
@@ -342,9 +342,6 @@ abstract class MediaEncoder {
             mMediaCodec.queueInputBuffer(buffer.index, 0, buffer.length,
                     buffer.timestamp, 0);
         }
-        if (buffer.didReachMaxLength) {
-            onMaxLengthReached();
-        }
     }
 
     /**
@@ -448,6 +445,15 @@ abstract class MediaEncoder {
 
     abstract int getEncodedBitRate();
 
+    @SuppressWarnings("WeakerAccess")
+    protected long getMaxLengthMillis() {
+        return mMaxLengthMillis;
+    }
+
+    protected void notifyMaxLengthReached() {
+        onMaxLengthReached();
+    }
+
     private void onMaxLengthReached() {
         if (mMaxLengthReached) return;
         mMaxLengthReached = true;
@@ -458,9 +464,5 @@ abstract class MediaEncoder {
             setState(STATE_LIMIT_REACHED);
             mController.requestStop(mTrackIndex);
         }
-    }
-
-    protected long getMaxLengthMillis() {
-        return mMaxLengthMillis;
     }
 }

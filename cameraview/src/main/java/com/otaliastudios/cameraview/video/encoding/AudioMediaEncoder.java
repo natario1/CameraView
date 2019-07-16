@@ -144,6 +144,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         private ByteBuffer mCurrentBuffer;
         private int mReadBytes;
         private long mLastTimeUs;
+        private long mFirstTimeUs = Long.MIN_VALUE;
 
         AudioRecordingThread() {
             final int minBufferSize = AudioRecord.getMinBufferSize(SAMPLING_FREQUENCY, CHANNELS, ENCODING);
@@ -193,8 +194,8 @@ public class AudioMediaEncoder extends MediaEncoder {
                 mReadBytes = mAudioRecord.read(mCurrentBuffer, FRAME_SIZE);
                 LOG.i("read thread - eos:", endOfStream, "- Read new audio frame. Bytes:", mReadBytes);
                 if (mReadBytes > 0) { // Good read: increase PTS.
-                    mLastTimeUs = increaseTime(mReadBytes);
-                    LOG.i("read thread - eos:", endOfStream, "- Frame PTS:", mLastTimeUs);
+                    increaseTime(mReadBytes, endOfStream);
+                    LOG.i("read thread - eos:", endOfStream, "- mLastTimeUs:", mLastTimeUs);
                     mCurrentBuffer.limit(mReadBytes);
                     mEncoder.sendInputBuffer(mCurrentBuffer, mLastTimeUs, endOfStream);
                 } else if (mReadBytes == AudioRecord.ERROR_INVALID_OPERATION) {
@@ -215,8 +216,34 @@ public class AudioMediaEncoder extends MediaEncoder {
             } catch (InterruptedException ignore) {}
         }
 
-        private long increaseTime(int readBytes) {
-            return increaseTime3(readBytes);
+        /**
+         * Increases presentation time and checks for max length constraint. This is much faster
+         * then waiting for the encoder to check it during {@link #drainOutput(boolean)}. We
+         * want to catch this as soon as possible so we stop recording useless frames and bother
+         * all the threads involved.
+         * @param readBytes bytes read in last reading
+         * @param endOfStream end of stream?
+         */
+        private void increaseTime(int readBytes, boolean endOfStream) {
+            mLastTimeUs = onIncreaseTime(readBytes);
+            if (mFirstTimeUs == Long.MIN_VALUE) {
+                mFirstTimeUs = mLastTimeUs;
+            }
+            boolean didReachMaxLength = (mLastTimeUs - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
+            if (didReachMaxLength && !endOfStream) {
+                LOG.w("read thread - this frame reached the maxLength! deltaUs:", mLastTimeUs - mFirstTimeUs);
+                notifyMaxLengthReached();
+            }
+        }
+
+        /**
+         * We have different implementations here, using the last one
+         * that looks better.
+         * @param readBytes bytes read
+         * @return the new presentation time
+         */
+        private long onIncreaseTime(int readBytes) {
+            return onIncreaseTime3(readBytes);
         }
 
         /**
@@ -225,7 +252,7 @@ public class AudioMediaEncoder extends MediaEncoder {
          * Of course we don't as there are things going on in this thread.
          */
         @SuppressWarnings("unused")
-        private long increaseTime1(int readBytes) {
+        private long onIncreaseTime1(int readBytes) {
             return mLastTimeUs + bytesToUs(readBytes);
         }
 
@@ -235,7 +262,7 @@ public class AudioMediaEncoder extends MediaEncoder {
          */
         @SuppressWarnings("unused")
         @RequiresApi(24)
-        private long increaseTime2(int readBytes) {
+        private long onIncreaseTime2(int readBytes) {
             if (mApi24Timestamp == null) {
                 mApi24Timestamp = new AudioTimestamp();
             }
@@ -245,14 +272,14 @@ public class AudioMediaEncoder extends MediaEncoder {
         private AudioTimestamp mApi24Timestamp;
 
         /**
-         * This method looks like an improvement over {@link #increaseTime1(int)} as it
+         * This method looks like an improvement over {@link #onIncreaseTime1(int)} as it
          * accounts for the current time as well. Adapted & improved. from Kickflip.
          *
          * This creates regular timestamps unless we accumulate a lot of delay (greater than
          * twice the buffer duration), in which case it creates a gap and starts again trying
          * to be regular from the new point.
          */
-        private long increaseTime3(int readBytes) {
+        private long onIncreaseTime3(int readBytes) {
             long bufferDurationUs = bytesToUs(readBytes);
             long bufferEndTimeUs = System.nanoTime() / 1000; // now
             long bufferStartTimeUs = bufferEndTimeUs - bufferDurationUs;
@@ -292,7 +319,6 @@ public class AudioMediaEncoder extends MediaEncoder {
 
         private InputBufferPool mInputBufferPool = new InputBufferPool();
         private LinkedBlockingQueue<InputBuffer> mPendingOps = new LinkedBlockingQueue<>();
-        private long mFirstFrameTimestamp = Long.MIN_VALUE;
 
         AudioEncodingHandler() {
             super(WorkerHandler.get("AudioEncodingHandler").getLooper());
@@ -311,10 +337,6 @@ public class AudioMediaEncoder extends MediaEncoder {
             super.handleMessage(msg);
             boolean endOfStream = msg.what == 1;
             long timestamp = (((long) msg.arg1) << 32) | (((long) msg.arg2) & 0xffffffffL);
-            if (mFirstFrameTimestamp == Long.MIN_VALUE) {
-                mFirstFrameTimestamp = timestamp;
-            }
-
             LOG.i("encoding thread - got buffer. timestamp:", timestamp, "eos:", endOfStream);
             ByteBuffer buffer = (ByteBuffer) msg.obj;
             int readBytes = buffer.remaining();
@@ -324,7 +346,6 @@ public class AudioMediaEncoder extends MediaEncoder {
             inputBuffer.timestamp = timestamp;
             inputBuffer.length = readBytes;
             inputBuffer.isEndOfStream = endOfStream;
-            inputBuffer.didReachMaxLength = (timestamp - mFirstFrameTimestamp) > getMaxLengthMillis() * 1000;
             mPendingOps.add(inputBuffer);
 
             LOG.i("encoding thread - performing", mPendingOps.size(), "pending operations.");
