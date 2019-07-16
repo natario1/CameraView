@@ -3,7 +3,6 @@ package com.otaliastudios.cameraview.video.encoding;
 import android.annotation.SuppressLint;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.AudioTimestamp;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
@@ -58,18 +57,11 @@ public class AudioMediaEncoder extends MediaEncoder {
     // the actual recording. It's better to reduce this and skip recording at all.
     private static final int BUFFER_POOL_MAX_SIZE = 80;
 
-    private static long bytesToUs(int bytes) {
-        return (1000000L * bytes) / BYTE_RATE;
-    }
-
-    private static long bytesToUs(long bytes) {
-        return (1000000L * bytes) / BYTE_RATE;
-    }
-
     private boolean mRequestStop = false;
     private AudioEncodingHandler mEncoder;
     private AudioRecordingThread mRecorder;
     private ByteBufferPool mByteBufferPool;
+    private final AudioTimestamp mTimestamp;
     private Config mConfig;
 
     public static class Config {
@@ -86,6 +78,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     public AudioMediaEncoder(@NonNull Config config) {
         super("AudioEncoder");
         mConfig = config.copy();
+        mTimestamp = new AudioTimestamp();
     }
 
     @EncoderThread
@@ -146,7 +139,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         private long mLastTimeUs;
         private long mFirstTimeUs = Long.MIN_VALUE;
 
-        AudioRecordingThread() {
+        private AudioRecordingThread() {
             final int minBufferSize = AudioRecord.getMinBufferSize(SAMPLING_FREQUENCY, CHANNELS, ENCODING);
             int bufferSize = FRAME_SIZE * 25; // Make this bigger so we don't skip frames.
             while (bufferSize < minBufferSize) {
@@ -212,7 +205,7 @@ public class AudioMediaEncoder extends MediaEncoder {
          */
         private void sleep() {
             try {
-                Thread.sleep(bytesToUs(FRAME_SIZE) / 1000);
+                Thread.sleep(AudioTimestamp.bytesToUs(FRAME_SIZE, BYTE_RATE) / 1000);
             } catch (InterruptedException ignore) {}
         }
 
@@ -225,7 +218,7 @@ public class AudioMediaEncoder extends MediaEncoder {
          * @param endOfStream end of stream?
          */
         private void increaseTime(int readBytes, boolean endOfStream) {
-            mLastTimeUs = onIncreaseTime(readBytes);
+            mLastTimeUs = mTimestamp.increaseUs(readBytes, BYTE_RATE);
             if (mFirstTimeUs == Long.MIN_VALUE) {
                 mFirstTimeUs = mLastTimeUs;
             }
@@ -236,76 +229,6 @@ public class AudioMediaEncoder extends MediaEncoder {
             }
         }
 
-        /**
-         * We have different implementations here, using the last one
-         * that looks better.
-         * @param readBytes bytes read
-         * @return the new presentation time
-         */
-        private long onIncreaseTime(int readBytes) {
-            return onIncreaseTime3(readBytes);
-        }
-
-        /**
-         * This method simply assumes that we read everything without losing a single US.
-         * It will use System.nanoTime() just once, as the starting point.
-         * Of course we don't as there are things going on in this thread.
-         */
-        @SuppressWarnings("unused")
-        private long onIncreaseTime1(int readBytes) {
-            return mLastTimeUs + bytesToUs(readBytes);
-        }
-
-        /**
-         * Just for testing, this method will use Api 24 method to retrieve the timestamp.
-         * This way we let the platform choose instead of making assumptions.
-         */
-        @SuppressWarnings("unused")
-        @RequiresApi(24)
-        private long onIncreaseTime2(int readBytes) {
-            if (mApi24Timestamp == null) {
-                mApi24Timestamp = new AudioTimestamp();
-            }
-            mAudioRecord.getTimestamp(mApi24Timestamp, AudioTimestamp.TIMEBASE_MONOTONIC);
-            return mApi24Timestamp.nanoTime / 1000;
-        }
-        private AudioTimestamp mApi24Timestamp;
-
-        /**
-         * This method looks like an improvement over {@link #onIncreaseTime1(int)} as it
-         * accounts for the current time as well. Adapted & improved. from Kickflip.
-         *
-         * This creates regular timestamps unless we accumulate a lot of delay (greater than
-         * twice the buffer duration), in which case it creates a gap and starts again trying
-         * to be regular from the new point.
-         */
-        private long onIncreaseTime3(int readBytes) {
-            long bufferDurationUs = bytesToUs(readBytes);
-            long bufferEndTimeUs = System.nanoTime() / 1000; // now
-            long bufferStartTimeUs = bufferEndTimeUs - bufferDurationUs;
-
-            // If this is the first time, the base time is the buffer start time.
-            if (mBytesSinceBaseTime == 0) mBaseTimeUs = bufferStartTimeUs;
-
-            // Recompute time assuming that we are respecting the sampling frequency.
-            // This puts the time at the end of last read buffer, which means, where we
-            // should be if we had no delay / missed buffers.
-            long correctedTimeUs = mBaseTimeUs + bytesToUs(mBytesSinceBaseTime);
-            long correctionUs = bufferStartTimeUs - correctedTimeUs;
-
-            // However, if the correction is too big (> 2*bufferDurationUs), reset to this point.
-            // This is triggered if we lose buffers and are recording/encoding at a slower rate.
-            if (correctionUs >= 2L * bufferDurationUs) {
-                mBaseTimeUs = bufferStartTimeUs;
-                mBytesSinceBaseTime = readBytes;
-                return mBaseTimeUs;
-            } else {
-                mBytesSinceBaseTime += readBytes;
-                return correctedTimeUs;
-            }
-        }
-        private long mBaseTimeUs;
-        private long mBytesSinceBaseTime;
     }
 
     /**
@@ -315,16 +238,16 @@ public class AudioMediaEncoder extends MediaEncoder {
      *   For example, a stop() must become onStop() soon, can't wait for all this draining.
      */
     @SuppressLint("HandlerLeak")
-    class AudioEncodingHandler extends Handler {
+    private class AudioEncodingHandler extends Handler {
 
         private InputBufferPool mInputBufferPool = new InputBufferPool();
         private LinkedBlockingQueue<InputBuffer> mPendingOps = new LinkedBlockingQueue<>();
 
-        AudioEncodingHandler() {
+        private AudioEncodingHandler() {
             super(WorkerHandler.get("AudioEncodingHandler").getLooper());
         }
 
-        void sendInputBuffer(ByteBuffer buffer, long presentationTimeUs, boolean endOfStream) {
+        private void sendInputBuffer(ByteBuffer buffer, long presentationTimeUs, boolean endOfStream) {
             sendMessage(obtainMessage(
                     endOfStream ? 1 : 0,
                     (int) (presentationTimeUs >> 32),
@@ -363,7 +286,7 @@ public class AudioMediaEncoder extends MediaEncoder {
 
         private void performPendingOp(InputBuffer buffer) {
             LOG.i("encoding thread - performing pending operation for timestamp:", buffer.timestamp, "- encoding.");
-            buffer.data.put(buffer.source); // TODO this copy is prob. the worst part here for performance
+            buffer.data.put(buffer.source); // NOTE: this copy is prob. the worst part here for performance
             mByteBufferPool.recycle(buffer.source);
             mPendingOps.remove(buffer);
             encodeInputBuffer(buffer);
@@ -374,31 +297,8 @@ public class AudioMediaEncoder extends MediaEncoder {
             // NOTE: can consider calling this drainOutput on yet another thread, which would let us
             // use an even smaller BUFFER_POOL_MAX_SIZE without losing audio frames. But this way
             // we can accumulate delay on this new thread without noticing (no pool getting empty).
-            if (true) {
-                drainOutput(eos);
-                if (eos) WorkerHandler.get("AudioEncodingHandler").getThread().interrupt();
-            } else {
-                // Testing the option above.
-                WorkerHandler.get("AudioEncodingDrainer").remove(drainRunnable);
-                WorkerHandler.get("AudioEncodingDrainer").remove(drainRunnableEos);
-                WorkerHandler.get("AudioEncodingDrainer").post(eos ? drainRunnableEos : drainRunnable);
-            }
+            drainOutput(eos);
+            if (eos) WorkerHandler.get("AudioEncodingHandler").getThread().interrupt();
         }
-
-        private final Runnable drainRunnable = new Runnable() {
-            @Override
-            public void run() {
-                drainOutput(false);
-            }
-        };
-
-        private final Runnable drainRunnableEos = new Runnable() {
-            @Override
-            public void run() {
-                drainOutput(true);
-                WorkerHandler.get("AudioEncodingHandler").getThread().interrupt();
-                WorkerHandler.get("AudioEncodingDrainer").getThread().interrupt();
-            }
-        };
     }
 }

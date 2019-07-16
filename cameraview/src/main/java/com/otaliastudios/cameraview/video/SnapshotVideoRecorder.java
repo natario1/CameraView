@@ -38,8 +38,14 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private static final int DEFAULT_VIDEO_FRAMERATE = 30;
-    private static final int DEFAULT_VIDEO_BITRATE = 1000000;
     private static final int DEFAULT_AUDIO_BITRATE = 64000;
+
+    // https://stackoverflow.com/a/5220554/4288782
+    // Assuming low motion, we don't want to put this too high for default usage,
+    // advanced users are still free to change this for each video.
+    private static int estimateVideoBitRate(@NonNull Size size, int frameRate) {
+        return (int) (0.07F * 1F * size.getWidth() * size.getHeight() * frameRate);
+    }
 
     private static final int STATE_RECORDING = 0;
     private static final int STATE_NOT_RECORDING = 1;
@@ -101,8 +107,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             LOG.i("Starting the encoder engine.");
 
             // Set default options
-            if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
             if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
+            if (mResult.videoBitRate <= 0) mResult.videoBitRate = estimateVideoBitRate(mResult.size, mResult.videoFrameRate);
             if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
 
             // Video. Ensure width and height are divisible by 2, as I have read somewhere.
