@@ -10,6 +10,7 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 
 ### v2.0.0 (to be released)
 
+- New: support for watermarks and animated overlays ([docs](../docs/watermarks-and-overlays.html)), thanks to [@RAN3000][RAN3000] ([#502][502], [#421][421])
 - New: added `onVideoRecordingStart()` to be notified when video recording starts, thanks to [@agrawalsuneet][agrawalsuneet] ([#498][498])
 - New: added `cameraUseDeviceOrientation` to choose whether picture and video outputs should consider the device orientation or not ([#497][497])
 - Improvement: improved Camera2 stability and various bugs fixed (e.g. [#501][501])
@@ -58,6 +59,7 @@ This is the first beta release. For changes with respect to v1, please take a lo
 
 [cneuwirt]: https://github.com/cneuwirt
 [agrawalsuneet]: https://github.com/agrawalsuneet
+[RAN3000]: https://github.com/RAN3000
 
 [356]: https://github.com/natario1/CameraView/pull/356
 [360]: https://github.com/natario1/CameraView/pull/360
@@ -67,6 +69,7 @@ This is the first beta release. For changes with respect to v1, please take a lo
 [471]: https://github.com/natario1/CameraView/pull/471
 [431]: https://github.com/natario1/CameraView/pull/431
 [403]: https://github.com/natario1/CameraView/pull/403
+[421]: https://github.com/natario1/CameraView/pull/421
 [435]: https://github.com/natario1/CameraView/pull/435
 [477]: https://github.com/natario1/CameraView/pull/477
 [482]: https://github.com/natario1/CameraView/pull/482
@@ -75,3 +78,4 @@ This is the first beta release. For changes with respect to v1, please take a lo
 [497]: https://github.com/natario1/CameraView/pull/497
 [498]: https://github.com/natario1/CameraView/pull/498
 [501]: https://github.com/natario1/CameraView/pull/501
+[502]: https://github.com/natario1/CameraView/pull/502
