@@ -41,7 +41,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
     protected Surface mSurface;
 
     @SuppressWarnings("WeakerAccess")
-    protected int mFrameNum = -1;
+    protected int mFrameNumber = -1;
 
     protected static class Config {
         public int width;
@@ -95,14 +95,14 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
     @Override
     void onStart() {
         // Nothing to do here. Waiting for the first frame.
-        mFrameNum = 0;
+        mFrameNumber = 0;
     }
 
     @EncoderThread
     @Override
     void onStop() {
-        LOG.i("onStop", "setting mFrameNum to 1 and signaling the end of input stream.");
-        mFrameNum = -1;
+        LOG.i("onStop", "setting mFrameNumber to 1 and signaling the end of input stream.");
+        mFrameNumber = -1;
         // Signals the end of input stream. This is a Video only API, as in the normal case,
         // we use input buffers to signal the end. In the video case, we don't have input buffers
         // because we use an input surface instead.

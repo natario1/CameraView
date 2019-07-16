@@ -399,6 +399,7 @@ abstract class MediaEncoder {
                     // detect the mMaxLengthReached and stop recording.
                     if (mStartPresentationTimeUs == Long.MIN_VALUE) {
                         mStartPresentationTimeUs = mBufferInfo.presentationTimeUs;
+                        LOG.w(mName, "DRAINING - Got the first presentation time:", mStartPresentationTimeUs);
                     }
                     mLastPresentationTimeUs = mBufferInfo.presentationTimeUs;
                     // Pass presentation times as offets with respect to the mStartPresentationTimeUs.

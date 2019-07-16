@@ -37,13 +37,12 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         super(listener);
     }
 
-    @SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "BooleanMethodIsAlwaysInverted"})
+    @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
     protected boolean prepareMediaRecorder(@NonNull VideoResult.Stub stub) {
         if (mMediaRecorderPrepared) return true;
         return onPrepareMediaRecorder(stub, new MediaRecorder());
     }
 
-    @SuppressWarnings("WeakerAccess")
     protected boolean onPrepareMediaRecorder(@NonNull VideoResult.Stub stub, @NonNull MediaRecorder mediaRecorder) {
         mMediaRecorder = mediaRecorder;
         Size size = stub.rotation % 180 != 0 ? stub.size.flip() : stub.size;

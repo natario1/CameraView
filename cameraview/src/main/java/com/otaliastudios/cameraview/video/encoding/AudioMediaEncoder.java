@@ -20,6 +20,8 @@ import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -79,6 +81,10 @@ public class AudioMediaEncoder extends MediaEncoder {
         super("AudioEncoder");
         mConfig = config.copy();
         mTimestamp = new AudioTimestamp();
+        // These two were in onPrepare() but it's better to do warm-up here
+        // since thread and looper creation is expensive.
+        mEncoder = new AudioEncodingHandler();
+        mRecorder = new AudioRecordingThread();
     }
 
     @EncoderThread
@@ -97,8 +103,6 @@ public class AudioMediaEncoder extends MediaEncoder {
         mMediaCodec.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
         mByteBufferPool = new ByteBufferPool(FRAME_SIZE, BUFFER_POOL_MAX_SIZE);
-        mEncoder = new AudioEncodingHandler();
-        mRecorder = new AudioRecordingThread();
     }
 
     @EncoderThread
@@ -200,12 +204,12 @@ public class AudioMediaEncoder extends MediaEncoder {
         }
 
         /**
-         * Sleeps for a frame duration, to skip it. This can be used to slow down
+         * Sleeps for some frames duration, to skip them. This can be used to slow down
          * the recording operation to balance it with encoding.
          */
         private void sleep() {
             try {
-                Thread.sleep(AudioTimestamp.bytesToUs(FRAME_SIZE, BYTE_RATE) / 1000);
+                Thread.sleep(AudioTimestamp.bytesToUs(FRAME_SIZE * 6, BYTE_RATE) / 1000);
             } catch (InterruptedException ignore) {}
         }
 
@@ -247,7 +251,15 @@ public class AudioMediaEncoder extends MediaEncoder {
             super(WorkerHandler.get("AudioEncodingHandler").getLooper());
         }
 
+        // Just to debug performance.
+        private int mSendCount = 0;
+        private int mExecuteCount = 0;
+        private long mAvgSendDelay = 0;
+        private long mAvgExecuteDelay = 0;
+        private Map<Long, Long> mSendStartMap = new HashMap<>();
+
         private void sendInputBuffer(ByteBuffer buffer, long presentationTimeUs, boolean endOfStream) {
+            mSendStartMap.put(presentationTimeUs, System.nanoTime() / 1000000);
             sendMessage(obtainMessage(
                     endOfStream ? 1 : 0,
                     (int) (presentationTimeUs >> 32),
@@ -258,9 +270,19 @@ public class AudioMediaEncoder extends MediaEncoder {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            boolean endOfStream = msg.what == 1;
             long timestamp = (((long) msg.arg1) << 32) | (((long) msg.arg2) & 0xffffffffL);
+            boolean endOfStream = msg.what == 1;
             LOG.i("encoding thread - got buffer. timestamp:", timestamp, "eos:", endOfStream);
+
+            // Performance logging
+            long sendEnd = System.nanoTime() / 1000000;
+            //noinspection ConstantConditions
+            long sendStart = mSendStartMap.remove(timestamp);
+            mAvgSendDelay = ((mAvgSendDelay * mSendCount) + (sendEnd - sendStart)) / (++mSendCount);
+            LOG.v("send delay millis:", sendEnd - sendStart, "average:", mAvgSendDelay);
+            long executeStart = System.nanoTime() / 1000000;
+
+            // Actual work
             ByteBuffer buffer = (ByteBuffer) msg.obj;
             int readBytes = buffer.remaining();
             InputBuffer inputBuffer = mInputBufferPool.get();
@@ -282,6 +304,10 @@ public class AudioMediaEncoder extends MediaEncoder {
                     break; // Will try later.
                 }
             }
+
+            long executeEnd = System.nanoTime() / 1000000;
+            mAvgExecuteDelay = ((mAvgExecuteDelay * mExecuteCount) + (executeEnd - executeStart)) / (++mExecuteCount);
+            LOG.v("execute delay millis:", executeEnd - executeStart, "average:", mAvgExecuteDelay);
         }
 
         private void performPendingOp(InputBuffer buffer) {
@@ -298,7 +324,11 @@ public class AudioMediaEncoder extends MediaEncoder {
             // use an even smaller BUFFER_POOL_MAX_SIZE without losing audio frames. But this way
             // we can accumulate delay on this new thread without noticing (no pool getting empty).
             drainOutput(eos);
-            if (eos) WorkerHandler.get("AudioEncodingHandler").getThread().interrupt();
+            if (eos) {
+                // Not sure we want this: WorkerHandler.get("AudioEncodingHandler").getThread().interrupt();
+                LOG.e("EXECUTE DELAY MILLIS:", mAvgExecuteDelay);
+                LOG.e("SEND DELAY MILLIS:", mAvgSendDelay);
+            }
         }
     }
 }

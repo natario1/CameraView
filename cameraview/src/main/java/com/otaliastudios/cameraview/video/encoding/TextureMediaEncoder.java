@@ -103,18 +103,27 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
     void onEvent(@NonNull String event, @Nullable Object data) {
         if (!event.equals(FRAME_EVENT)) return;
         TextureFrame frame = (TextureFrame) data;
-        if (frame == null) return; // Should not happen
-        if (frame.timestamp == 0 || mFrameNum < 0) {
-            // The first condition comes from grafika.
-            // The second condition means we were asked to stop.
+        if (frame == null) {
+            throw new IllegalArgumentException("Got null frame for FRAME_EVENT.");
+        }
+        if (frame.timestamp == 0) { // grafika
             mFramePool.recycle(frame);
             return;
         }
+        if (mFrameNumber < 0) { // We were asked to stop.
+            mFramePool.recycle(frame);
+            return;
+        }
+        mFrameNumber++;
 
-        mFrameNum++;
-        int thisFrameNum = mFrameNum;
-        LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "timestamp:", frame.timestamp);
-        // We must scale this matrix like GlCameraPreview does, because it might have some cropping.
+        // First, drain any previous data.
+        LOG.i("onEvent", "frameNumber:", mFrameNumber, "timestamp:", frame.timestamp, "- draining.");
+        drainOutput(false);
+
+        // Then draw on the surface.
+        LOG.i("onEvent", "frameNumber:", mFrameNumber, "timestamp:", frame.timestamp, "- drawing.");
+
+        // 1. We must scale this matrix like GlCameraPreview does, because it might have some cropping.
         // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
         float[] transform = frame.transform;
         float[] overlayTransform = frame.overlayTransform;
@@ -125,7 +134,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
         Matrix.scaleM(transform, 0, scaleX, scaleY, 1);
 
-        // We also must rotate this matrix. In GlCameraPreview it is not needed because it is a live
+        // 2. We also must rotate this matrix. In GlCameraPreview it is not needed because it is a live
         // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
         // Rotation also takes place with respect to the origin (the Z axis), so we must
         // translate to origin, rotate, then back to where we were.
@@ -133,21 +142,17 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         Matrix.rotateM(transform, 0, mTransformRotation, 0, 0, 1);
         Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
+        // 3. Do the same for overlays with their own rotation.
         boolean hasOverlay = mConfig.overlayTextureId != NO_TEXTURE;
         if (hasOverlay) {
             Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
             Matrix.rotateM(overlayTransform, 0, mConfig.overlayRotation, 0, 0, 1);
             Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
         }
-
-        LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drainOutput.");
-        drainOutput(false);
-        LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drawFrame.");
         mViewport.drawFrame(mConfig.textureId, transform);
         if (hasOverlay) {
             mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
         }
-
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();
         mFramePool.recycle(frame);

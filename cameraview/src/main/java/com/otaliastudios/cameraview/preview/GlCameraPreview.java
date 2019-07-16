@@ -63,7 +63,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     private int mOutputTextureId = 0;
     private SurfaceTexture mInputSurfaceTexture;
     private EglViewport mOutputViewport;
-    private Set<RendererFrameCallback> mRendererFrameCallbacks = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
+    private final Set<RendererFrameCallback> mRendererFrameCallbacks = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
     @VisibleForTesting float mCropScaleX = 1F;
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
@@ -144,8 +144,11 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             getView().queueEvent(new Runnable() {
                 @Override
                 public void run() {
-                    for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                        callback.onRendererTextureCreated(mOutputTextureId);
+                    // Need to synchronize when iterating the Collections.synchronizedSet
+                    synchronized (mRendererFrameCallbacks) {
+                        for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                            callback.onRendererTextureCreated(mOutputTextureId);
+                        }
                     }
                 }
             });
@@ -202,11 +205,12 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
                 Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
                 Matrix.scaleM(mTransformMatrix, 0, mCropScaleX, mCropScaleY, 1);
             }
-            // Future note: passing scale to the viewport?
-            // They are scaleX an scaleY, but flipped based on mInputFlipped.
             mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
-            for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
+            synchronized (mRendererFrameCallbacks) {
+                // Need to synchronize when iterating the Collections.synchronizedSet
+                for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
+                }
             }
         }
     }
@@ -299,6 +303,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
      * Creates the renderer for this GL surface.
      * @return the renderer for this GL surface
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     protected Renderer instantiateRenderer() {
         return new Renderer();
