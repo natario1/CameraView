@@ -14,14 +14,26 @@ import androidx.annotation.Nullable;
 public enum Audio implements Control {
 
     /**
-     * No Audio.
+     * No audio.
      */
     OFF(0),
 
     /**
-     * With Audio.
+     * Audio on. The number of channels depends on the video configuration,
+     * on the device capabilities and on the video type (e.g. we default to
+     * mono for snapshots).
      */
-    ON(1);
+    ON(1),
+
+    /**
+     * Force mono channel audio.
+     */
+    MONO(2),
+
+    /**
+     * Force stereo audio.
+     */
+    STEREO(3);
 
     final static Audio DEFAULT = ON;
 

@@ -678,7 +678,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         Context c = getContext();
         boolean needsCamera = true;
-        boolean needsAudio = audio == Audio.ON;
+        boolean needsAudio = audio == Audio.ON || audio == Audio.MONO || audio == Audio.STEREO;
 
         needsCamera = needsCamera && c.checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED;
         needsAudio = needsAudio && c.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED;
@@ -696,7 +696,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * If the developer did not add this to its manifest, throw and fire warnings.
      */
     private void checkPermissionsManifestOrThrow(@NonNull Audio audio) {
-        if (audio == Audio.ON) {
+        if (audio == Audio.ON || audio == Audio.MONO || audio == Audio.STEREO) {
             try {
                 PackageManager manager = getContext().getPackageManager();
                 PackageInfo info = manager.getPackageInfo(getContext().getPackageName(), PackageManager.GET_PERMISSIONS);
@@ -1174,6 +1174,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @see Audio#OFF
      * @see Audio#ON
+     * @see Audio#MONO
+     * @see Audio#STEREO
      *
      * @param audio desired audio value
      */

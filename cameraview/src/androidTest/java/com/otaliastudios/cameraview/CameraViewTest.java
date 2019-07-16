@@ -628,6 +628,10 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.get(Audio.class), Audio.ON);
         cameraView.set(Audio.OFF);
         assertEquals(cameraView.get(Audio.class), Audio.OFF);
+        cameraView.set(Audio.MONO);
+        assertEquals(cameraView.get(Audio.class), Audio.MONO);
+        cameraView.set(Audio.STEREO);
+        assertEquals(cameraView.get(Audio.class), Audio.STEREO);
     }
 
     @Test

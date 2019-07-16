@@ -143,9 +143,11 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
             // Audio
             AudioMediaEncoder audioEncoder = null;
-            if (mResult.audio == Audio.ON) {
+            if (mResult.audio == Audio.ON || mResult.audio == Audio.MONO || mResult.audio == Audio.STEREO) {
                 AudioMediaEncoder.Config audioConfig = new AudioMediaEncoder.Config();
                 audioConfig.bitRate = mResult.audioBitRate;
+                if (mResult.audio == Audio.MONO) audioConfig.channels = 1;
+                if (mResult.audio == Audio.STEREO) audioConfig.channels = 2;
                 audioEncoder = new AudioMediaEncoder(audioConfig);
             }
 
