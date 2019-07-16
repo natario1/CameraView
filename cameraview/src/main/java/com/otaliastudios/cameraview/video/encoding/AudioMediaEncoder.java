@@ -19,8 +19,6 @@ import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -254,14 +252,14 @@ public class AudioMediaEncoder extends MediaEncoder {
         }
 
         // Just to debug performance.
-        private int mSendCount = 0;
-        private int mExecuteCount = 0;
-        private long mAvgSendDelay = 0;
-        private long mAvgExecuteDelay = 0;
-        private Map<Long, Long> mSendStartMap = new HashMap<>();
+        // private int mSendCount = 0;
+        // private int mExecuteCount = 0;
+        // private long mAvgSendDelay = 0;
+        // private long mAvgExecuteDelay = 0;
+        // private Map<Long, Long> mSendStartMap = new HashMap<>();
 
         private void sendInputBuffer(ByteBuffer buffer, long presentationTimeUs, boolean endOfStream) {
-            mSendStartMap.put(presentationTimeUs, System.nanoTime() / 1000000);
+            // mSendStartMap.put(presentationTimeUs, System.nanoTime() / 1000000);
             sendMessage(obtainMessage(
                     endOfStream ? 1 : 0,
                     (int) (presentationTimeUs >> 32),
@@ -277,12 +275,11 @@ public class AudioMediaEncoder extends MediaEncoder {
             LOG.i("encoding thread - got buffer. timestamp:", timestamp, "eos:", endOfStream);
 
             // Performance logging
-            long sendEnd = System.nanoTime() / 1000000;
-            //noinspection ConstantConditions
-            long sendStart = mSendStartMap.remove(timestamp);
-            mAvgSendDelay = ((mAvgSendDelay * mSendCount) + (sendEnd - sendStart)) / (++mSendCount);
-            LOG.v("send delay millis:", sendEnd - sendStart, "average:", mAvgSendDelay);
-            long executeStart = System.nanoTime() / 1000000;
+            // long sendEnd = System.nanoTime() / 1000000;
+            // long sendStart = mSendStartMap.remove(timestamp);
+            // mAvgSendDelay = ((mAvgSendDelay * mSendCount) + (sendEnd - sendStart)) / (++mSendCount);
+            // LOG.v("send delay millis:", sendEnd - sendStart, "average:", mAvgSendDelay);
+            // long executeStart = System.nanoTime() / 1000000;
 
             // Actual work
             ByteBuffer buffer = (ByteBuffer) msg.obj;
@@ -307,9 +304,9 @@ public class AudioMediaEncoder extends MediaEncoder {
                 }
             }
 
-            long executeEnd = System.nanoTime() / 1000000;
-            mAvgExecuteDelay = ((mAvgExecuteDelay * mExecuteCount) + (executeEnd - executeStart)) / (++mExecuteCount);
-            LOG.v("execute delay millis:", executeEnd - executeStart, "average:", mAvgExecuteDelay);
+            // long executeEnd = System.nanoTime() / 1000000;
+            // mAvgExecuteDelay = ((mAvgExecuteDelay * mExecuteCount) + (executeEnd - executeStart)) / (++mExecuteCount);
+            // LOG.v("execute delay millis:", executeEnd - executeStart, "average:", mAvgExecuteDelay);
         }
 
         private void performPendingOp(InputBuffer buffer) {
@@ -328,8 +325,8 @@ public class AudioMediaEncoder extends MediaEncoder {
             drainOutput(eos);
             if (eos) {
                 // Not sure we want this: WorkerHandler.get("AudioEncodingHandler").getThread().interrupt();
-                LOG.e("EXECUTE DELAY MILLIS:", mAvgExecuteDelay);
-                LOG.e("SEND DELAY MILLIS:", mAvgSendDelay);
+                // LOG.e("EXECUTE DELAY MILLIS:", mAvgExecuteDelay);
+                // LOG.e("SEND DELAY MILLIS:", mAvgSendDelay);
             }
         }
     }
