@@ -1,18 +1,30 @@
 package com.otaliastudios.cameraview.video.encoding;
 
+import android.util.Log;
+
 /**
  * Computes timestamps for audio frames.
  * Video frames do not need this since the timestamp comes from
  * the surface texture.
+ *
+ * This is independent from the channels count, as long as the read bytes include
+ * all channels and the byte rate accounts for this as well.
+ * If channels is 2, both values will be doubled and we behave the same.
  */
 class AudioTimestamp {
 
+    @SuppressWarnings("WeakerAccess")
     static long bytesToUs(long bytes, int byteRate) {
         return (1000000L * bytes) / byteRate;
     }
 
+    static long bytesToMillis(long bytes, int byteRate) {
+        return (1000L * bytes) / byteRate;
+    }
+
     private long mBaseTimeUs;
     private long mBytesSinceBaseTime;
+    private long mGapUs;
 
     /**
      * This method accounts for the current time and proved to be the most reliable among
@@ -44,10 +56,24 @@ class AudioTimestamp {
         if (correctionUs >= 2L * bufferDurationUs) {
             mBaseTimeUs = bufferStartTimeUs;
             mBytesSinceBaseTime = readBytes;
+            mGapUs = correctionUs;
             return mBaseTimeUs;
         } else {
+            mGapUs = 0;
             mBytesSinceBaseTime += readBytes;
             return correctedTimeUs;
         }
+    }
+
+    // This is guaranteed to be > 1 (actually > 2, since 2 is the constant we
+    // use in the correction check).
+    int getGapCount(int frameBytes, int byteRate) {
+        if (mGapUs == 0) return 0;
+        long durationUs = bytesToUs((long) frameBytes, byteRate);
+        return (int) (mGapUs / durationUs);
+    }
+
+    long getGapStartUs(long lastTimeUs) {
+        return lastTimeUs - mGapUs;
     }
 }

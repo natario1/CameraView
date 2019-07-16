@@ -19,6 +19,8 @@ import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -37,11 +39,14 @@ public class AudioMediaEncoder extends MediaEncoder {
     // the recorder thread. It's not safe to have it very large or we can end encoding A LOT AFTER
     // the actual recording. It's better to reduce this and skip recording at all.
     private static final int BUFFER_POOL_MAX_SIZE = 80;
+    private static final boolean DEBUG_PERFORMANCE = true;
+    private static final boolean USE_SEPARATE_ENCODING_THREAD = true; // not clear how much benefit this brings
 
     private boolean mRequestStop = false;
     private AudioEncodingHandler mEncoder;
     private AudioRecordingThread mRecorder;
     private ByteBufferPool mByteBufferPool;
+    private ByteBuffer mZeroBuffer;
     private final AudioTimestamp mTimestamp;
     private Config mConfig;
 
@@ -51,7 +56,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     public static class Config {
 
         // Configurable options
-        public int bitRate;
+        public int bitRate; // ENCODED bit rate
         public int channels = 1;
 
         // Not configurable options (for now)
@@ -59,7 +64,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         private final int encoding = AudioFormat.ENCODING_PCM_16BIT; // Determines the SAMPLE_SIZE
         // The 44.1KHz frequency is the only setting guaranteed to be available on all devices.
         private final int samplingFrequency = 44100; // samples/sec
-        private final int sampleSize = 2; // byte/sample/channel
+        private final int sampleSize = 2; // byte/sample/channel [16bit]
         private final int byteRatePerChannel = samplingFrequency * sampleSize; // byte/sec/channel
         private final int frameSizePerChannel = 1024; // bytes/frame/channel [AAC constant]
 
@@ -71,12 +76,12 @@ public class AudioMediaEncoder extends MediaEncoder {
             return config;
         }
 
-        private int byteRate() {
+        private int byteRate() { // RAW byte rate
             return byteRatePerChannel * channels; // byte/sec
         }
 
         @SuppressWarnings("unused")
-        private int bitRate() {
+        private int bitRate() { // RAW bit rate
             return byteRate() * 8; // bit/sec
         }
 
@@ -111,7 +116,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         final MediaFormat audioFormat = MediaFormat.createAudioFormat(mConfig.mimeType, mConfig.samplingFrequency, mConfig.channels);
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, mConfig.audioFormatChannels());
-        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
+        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate); // TODO multiply by channels?
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, mConfig.channels);
         try {
             mMediaCodec = MediaCodec.createEncoderByType(mConfig.mimeType);
@@ -121,6 +126,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         mMediaCodec.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
         mByteBufferPool = new ByteBufferPool(mConfig.frameSize(), BUFFER_POOL_MAX_SIZE);
+        mZeroBuffer = ByteBuffer.allocateDirect(mConfig.frameSize());
     }
 
     @EncoderThread
@@ -162,7 +168,8 @@ public class AudioMediaEncoder extends MediaEncoder {
         private long mFirstTimeUs = Long.MIN_VALUE;
 
         private AudioRecordingThread() {
-            final int minBufferSize = AudioRecord.getMinBufferSize(mConfig.samplingFrequency, mConfig.channels, mConfig.encoding);
+            final int minBufferSize = AudioRecord.getMinBufferSize(mConfig.samplingFrequency,
+                    mConfig.channels, mConfig.encoding);
             int bufferSize = mConfig.frameSize() * 25; // Make this bigger so we don't skip frames.
             while (bufferSize < minBufferSize) {
                 bufferSize += mConfig.frameSize(); // Unlikely I think.
@@ -206,7 +213,20 @@ public class AudioMediaEncoder extends MediaEncoder {
                 }
             } else {
                 mCurrentBuffer.clear();
-                mReadBytes = mAudioRecord.read(mCurrentBuffer, mConfig.frameSize());
+                // When stereo, we read twice the data here and AudioRecord will fill the buffer
+                // with left and right bytes. https://stackoverflow.com/q/20594750/4288782
+                if (DEBUG_PERFORMANCE) {
+                    float before = System.nanoTime() / 1000000F;
+                    mReadBytes = mAudioRecord.read(mCurrentBuffer, mConfig.frameSize());
+                    float after = System.nanoTime() / 1000000F;
+                    float delayMillis = after - before;
+                    float durationMillis = AudioTimestamp.bytesToUs(mReadBytes, mConfig.byteRate()) / 1000F;
+                    LOG.v("read thread - reading took:", delayMillis,
+                            "should be:", durationMillis,
+                            "delta:", delayMillis - durationMillis);
+                } else {
+                    mReadBytes = mAudioRecord.read(mCurrentBuffer, mConfig.frameSize());
+                }
                 LOG.i("read thread - eos:", endOfStream, "- Read new audio frame. Bytes:", mReadBytes);
                 if (mReadBytes > 0) { // Good read: increase PTS.
                     increaseTime(mReadBytes, endOfStream);
@@ -227,9 +247,9 @@ public class AudioMediaEncoder extends MediaEncoder {
          */
         private void sleep() {
             try {
-                Thread.sleep(AudioTimestamp.bytesToUs(
+                Thread.sleep(AudioTimestamp.bytesToMillis(
                         mConfig.frameSize() * 6,
-                        mConfig.byteRate()) / 1000);
+                        mConfig.byteRate()));
             } catch (InterruptedException ignore) {}
         }
 
@@ -247,12 +267,30 @@ public class AudioMediaEncoder extends MediaEncoder {
                 mFirstTimeUs = mLastTimeUs;
                 // Compute the first frame milliseconds as well.
                 notifyFirstFrameMillis(System.currentTimeMillis()
-                        - AudioTimestamp.bytesToUs(readBytes, mConfig.byteRate()) / 1000L);
+                        - AudioTimestamp.bytesToMillis(readBytes, mConfig.byteRate()));
             }
             boolean didReachMaxLength = (mLastTimeUs - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
             if (didReachMaxLength && !endOfStream) {
                 LOG.w("read thread - this frame reached the maxLength! deltaUs:", mLastTimeUs - mFirstTimeUs);
                 notifyMaxLengthReached();
+            }
+            int gaps = mTimestamp.getGapCount(mConfig.frameSize(), mConfig.byteRate());
+            if (gaps > 0) {
+                long gapStart = mTimestamp.getGapStartUs(mLastTimeUs);
+                long frameUs = AudioTimestamp.bytesToUs(mConfig.frameSize(), mConfig.byteRate());
+                LOG.w("read thread - GAPS: trying to add", gaps, "zeroed buffers");
+                for (int i = 0; i < gaps; i++) {
+                    ByteBuffer zeroBuffer = mByteBufferPool.get();
+                    if (zeroBuffer == null) {
+                        LOG.e("read thread - GAPS: aborting because we have no free buffer.");
+                        break;
+                    };
+                    zeroBuffer.position(0);
+                    zeroBuffer.put(mZeroBuffer);
+                    zeroBuffer.clear();
+                    mEncoder.sendInputBuffer(zeroBuffer, gapStart, false);
+                    gapStart += frameUs;
+                }
             }
         }
 
@@ -275,19 +313,26 @@ public class AudioMediaEncoder extends MediaEncoder {
         }
 
         // Just to debug performance.
-        // private int mSendCount = 0;
-        // private int mExecuteCount = 0;
-        // private long mAvgSendDelay = 0;
-        // private long mAvgExecuteDelay = 0;
-        // private Map<Long, Long> mSendStartMap = new HashMap<>();
+        private int mSendCount = 0;
+        private int mExecuteCount = 0;
+        private long mAvgSendDelay = 0;
+        private long mAvgExecuteDelay = 0;
+        private Map<Long, Long> mSendStartMap = new HashMap<>();
 
         private void sendInputBuffer(ByteBuffer buffer, long presentationTimeUs, boolean endOfStream) {
-            // mSendStartMap.put(presentationTimeUs, System.nanoTime() / 1000000);
-            sendMessage(obtainMessage(
+            if (DEBUG_PERFORMANCE) {
+                mSendStartMap.put(presentationTimeUs, System.nanoTime() / 1000000);
+            }
+            Message message = obtainMessage(
                     endOfStream ? 1 : 0,
                     (int) (presentationTimeUs >> 32),
                     (int) (presentationTimeUs),
-                    buffer));
+                    buffer);
+            if (USE_SEPARATE_ENCODING_THREAD) {
+                sendMessage(message);
+            } else {
+                handleMessage(message);
+            }
         }
 
         @Override
@@ -298,11 +343,15 @@ public class AudioMediaEncoder extends MediaEncoder {
             LOG.i("encoding thread - got buffer. timestamp:", timestamp, "eos:", endOfStream);
 
             // Performance logging
-            // long sendEnd = System.nanoTime() / 1000000;
-            // long sendStart = mSendStartMap.remove(timestamp);
-            // mAvgSendDelay = ((mAvgSendDelay * mSendCount) + (sendEnd - sendStart)) / (++mSendCount);
-            // LOG.v("send delay millis:", sendEnd - sendStart, "average:", mAvgSendDelay);
-            // long executeStart = System.nanoTime() / 1000000;
+            long executeStart;
+            if (DEBUG_PERFORMANCE) {
+                long sendEnd = System.nanoTime() / 1000000;
+                //noinspection ConstantConditions
+                long sendStart = mSendStartMap.remove(timestamp);
+                mAvgSendDelay = ((mAvgSendDelay * mSendCount) + (sendEnd - sendStart)) / (++mSendCount);
+                LOG.v("send delay millis:", sendEnd - sendStart, "average:", mAvgSendDelay);
+                executeStart = System.nanoTime() / 1000000;
+            }
 
             // Actual work
             ByteBuffer buffer = (ByteBuffer) msg.obj;
@@ -314,7 +363,6 @@ public class AudioMediaEncoder extends MediaEncoder {
             inputBuffer.length = readBytes;
             inputBuffer.isEndOfStream = endOfStream;
             mPendingOps.add(inputBuffer);
-
             LOG.i("encoding thread - performing", mPendingOps.size(), "pending operations.");
             while ((inputBuffer = mPendingOps.peek()) != null) {
                 if (endOfStream) {
@@ -327,9 +375,11 @@ public class AudioMediaEncoder extends MediaEncoder {
                 }
             }
 
-            // long executeEnd = System.nanoTime() / 1000000;
-            // mAvgExecuteDelay = ((mAvgExecuteDelay * mExecuteCount) + (executeEnd - executeStart)) / (++mExecuteCount);
-            // LOG.v("execute delay millis:", executeEnd - executeStart, "average:", mAvgExecuteDelay);
+            if (DEBUG_PERFORMANCE) {
+                long executeEnd = System.nanoTime() / 1000000;
+                mAvgExecuteDelay = ((mAvgExecuteDelay * mExecuteCount) + (executeEnd - executeStart)) / (++mExecuteCount);
+                LOG.v("execute delay millis:", executeEnd - executeStart, "average:", mAvgExecuteDelay);
+            }
         }
 
         private void performPendingOp(InputBuffer buffer) {
@@ -348,8 +398,12 @@ public class AudioMediaEncoder extends MediaEncoder {
             drainOutput(eos);
             if (eos) {
                 // Not sure we want this: WorkerHandler.get("AudioEncodingHandler").getThread().interrupt();
-                // LOG.e("EXECUTE DELAY MILLIS:", mAvgExecuteDelay);
-                // LOG.e("SEND DELAY MILLIS:", mAvgSendDelay);
+                if (DEBUG_PERFORMANCE) {
+                    // With MONO, the count is about 370. With STEREO, the count is about 220.
+                    // This reflects the count difference that we see in engine.write (MONO:200 STEREO:100).
+                    LOG.e("EXECUTE DELAY MILLIS:", mAvgExecuteDelay, "COUNT:", mExecuteCount);
+                    LOG.e("SEND DELAY MILLIS:", mAvgSendDelay, "COUNT:", mSendCount);
+                }
             }
         }
     }

@@ -1,8 +1,10 @@
 package com.otaliastudios.cameraview.video.encoding;
 
+import android.annotation.SuppressLint;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
+import android.text.format.DateFormat;
 
 import com.otaliastudios.cameraview.CameraLogger;
 
@@ -13,6 +15,10 @@ import androidx.annotation.RequiresApi;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The entry point for encoding video files.
@@ -73,13 +79,14 @@ public class MediaEncoderEngine {
 
     private final static String TAG = MediaEncoderEngine.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
+    private static final boolean DEBUG_PERFORMANCE = true;
 
     @SuppressWarnings("WeakerAccess")
     public final static int END_BY_USER = 0;
     public final static int END_BY_MAX_DURATION = 1;
     public final static int END_BY_MAX_SIZE = 2;
 
-    private ArrayList<MediaEncoder> mEncoders;
+    private List<MediaEncoder> mEncoders;
     private MediaMuxer mMediaMuxer;
     private int mStartedEncodersCount;
     private int mReleasedEncodersCount;
@@ -286,6 +293,9 @@ public class MediaEncoderEngine {
             }
         }
 
+        @SuppressLint("UseSparseArrays")
+        private Map<Integer, Integer> mDebugCount = new HashMap<>();
+
         /**
          * Writes the given data to the muxer. Should be called after {@link #isStarted()}
          * returns true. Note: this seems to be thread safe, no lock.
@@ -294,7 +304,24 @@ public class MediaEncoderEngine {
             if (!mMediaMuxerStarted) {
                 throw new IllegalStateException("Trying to write before muxer started");
             }
-            LOG.v("write:", "Writing OutputBuffer - track:", buffer.trackIndex, "presentation:", buffer.info.presentationTimeUs);
+
+            if (DEBUG_PERFORMANCE) {
+                // When AUDIO = mono, this is called about twice the time. (200 vs 100 for 5 sec).
+                Integer count = mDebugCount.get(buffer.trackIndex);
+                mDebugCount.put(buffer.trackIndex, count == null ? 1 : ++count);
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(buffer.info.presentationTimeUs / 1000);
+                LOG.v("write:", "Writing into muxer -",
+                                "track:", buffer.trackIndex,
+                        "presentation:", buffer.info.presentationTimeUs,
+                        "readable:", calendar.get(Calendar.SECOND) + ":" + calendar.get(Calendar.MILLISECOND),
+                        "count:", count);
+            } else {
+                LOG.v("write:", "Writing into muxer -",
+                        "track:", buffer.trackIndex,
+                        "presentation:", buffer.info.presentationTimeUs);
+            }
+
             mMediaMuxer.writeSampleData(buffer.trackIndex, buffer.data, buffer.info);
             pool.recycle(buffer);
         }
