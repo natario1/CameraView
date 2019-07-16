@@ -138,10 +138,9 @@ abstract class MediaEncoder {
      */
     final void prepare(@NonNull final MediaEncoderEngine.Controller controller, final long maxLengthMillis) {
         if (mState >= STATE_PREPARING) {
-            LOG.e("Wrong state while preparing. Aborting.", mState);
+            LOG.e(mName, "Wrong state while preparing. Aborting.", mState);
             return;
         }
-        setState(STATE_PREPARING);
         mController = controller;
         mBufferInfo = new MediaCodec.BufferInfo();
         mMaxLengthMillis = maxLengthMillis;
@@ -151,6 +150,7 @@ abstract class MediaEncoder {
             @Override
             public void run() {
                 LOG.i(mName, "Prepare was called. Executing.");
+                setState(STATE_PREPARING);
                 onPrepare(controller, maxLengthMillis);
                 setState(STATE_PREPARED);
             }
@@ -168,15 +168,15 @@ abstract class MediaEncoder {
      * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
      */
     final void start() {
-        if (mState < STATE_PREPARED || mState >= STATE_STARTING) {
-            LOG.e("Wrong state while starting. Aborting.", mState);
-            return;
-        }
-        setState(STATE_STARTING);
         LOG.w(mName, "Start was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
             public void run() {
+                if (mState < STATE_PREPARED || mState >= STATE_STARTING) {
+                    LOG.e(mName, "Wrong state while starting. Aborting.", mState);
+                    return;
+                }
+                setState(STATE_STARTING);
                 LOG.w(mName, "Start was called. Executing.");
                 onStart();
             }
@@ -213,8 +213,8 @@ abstract class MediaEncoder {
      * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
      */
     final void stop() {
-        if (mState >= STATE_LIMIT_REACHED) {
-            LOG.e("Wrong state while stopping. Aborting.", mState);
+        if (mState >= STATE_STOPPING) {
+            LOG.e(mName, "Wrong state while stopping. Aborting.", mState);
             return;
         }
         setState(STATE_STOPPING);

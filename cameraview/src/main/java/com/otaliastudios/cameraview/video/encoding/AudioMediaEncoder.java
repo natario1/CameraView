@@ -56,7 +56,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     // This value is the number of runnables that the encoder thread is allowed to be 'behind'
     // the recorder thread. It's not safe to have it very large or we can end encoding A LOT AFTER
     // the actual recording. It's better to reduce this and skip recording at all.
-    private static final int BUFFER_POOL_MAX_SIZE = 60;
+    private static final int BUFFER_POOL_MAX_SIZE = 100;
 
     private static long bytesToUs(int bytes) {
         return (1000000L * bytes) / BYTE_RATE;
@@ -175,8 +175,19 @@ public class AudioMediaEncoder extends MediaEncoder {
         private void read(boolean endOfStream) {
             mCurrentBuffer = mByteBufferPool.get();
             if (mCurrentBuffer == null) {
-                LOG.e("read thread - eos:", endOfStream, "- Skipping audio frame, encoding is too slow.");
-                // Should fix the next presentation time here, but
+                // This can happen and it means that encoding is slow with respect to recording.
+                // One might be tempted to fix precisely the next frame presentation time when this happens,
+                // but this is not needed because the current increaseTime() algorithm will consider delays
+                // when they get large.
+                // Sleeping before returning is a good way of balancing the two operations.
+                // However, if endOfStream, we CAN'T lose this frame!
+                if (endOfStream) {
+                    LOG.v("read thread - eos:", endOfStream, "- No buffer, retrying.");
+                    read(true); // try again
+                } else {
+                    LOG.w("read thread - eos:", endOfStream, "- Skipping audio frame, encoding is too slow.");
+                    sleep();
+                }
             } else {
                 mCurrentBuffer.clear();
                 mReadBytes = mAudioRecord.read(mCurrentBuffer, FRAME_SIZE);
@@ -185,7 +196,7 @@ public class AudioMediaEncoder extends MediaEncoder {
                     mLastTimeUs = increaseTime(mReadBytes);
                     LOG.i("read thread - eos:", endOfStream, "- Frame PTS:", mLastTimeUs);
                     mCurrentBuffer.limit(mReadBytes);
-                    onBuffer(endOfStream);
+                    mEncoder.sendInputBuffer(mCurrentBuffer, mLastTimeUs, endOfStream);
                 } else if (mReadBytes == AudioRecord.ERROR_INVALID_OPERATION) {
                     LOG.e("read thread - eos:", endOfStream, "- Got AudioRecord.ERROR_INVALID_OPERATION");
                 } else if (mReadBytes == AudioRecord.ERROR_BAD_VALUE) {
@@ -195,13 +206,13 @@ public class AudioMediaEncoder extends MediaEncoder {
         }
 
         /**
-         * New data at position buffer.position() of size buffer.remaining()
-         * has been written into this buffer. This method should pass the data
-         * to the consumer.
+         * Sleeps for a frame duration, to skip it. This can be used to slow down
+         * the recording operation to balance it with encoding.
          */
-        private void onBuffer(boolean endOfStream) {
-            LOG.v("read thread - Sending buffer to encoder thread.");
-            mEncoder.sendInputBuffer(mCurrentBuffer, mLastTimeUs, endOfStream);
+        private void sleep() {
+            try {
+                Thread.sleep(bytesToUs(FRAME_SIZE) / 1000);
+            } catch (InterruptedException ignore) {}
         }
 
         private long increaseTime(int readBytes) {
@@ -309,18 +320,14 @@ public class AudioMediaEncoder extends MediaEncoder {
             inputBuffer.length = readBytes;
             inputBuffer.isEndOfStream = endOfStream;
             mPendingOps.add(inputBuffer);
-            performPendingOps(endOfStream);
-        }
 
-        private void performPendingOps(boolean force) {
-            LOG.i("encoding thread - performing", mPendingOps.size(), "pending operations. force:", force);
-            InputBuffer buffer;
-            while ((buffer = mPendingOps.peek()) != null) {
-                if (force) {
-                    acquireInputBuffer(buffer);
-                    performPendingOp(buffer);
-                } else if (tryAcquireInputBuffer(buffer)) {
-                    performPendingOp(buffer);
+            LOG.i("encoding thread - performing", mPendingOps.size(), "pending operations.");
+            while ((inputBuffer = mPendingOps.peek()) != null) {
+                if (endOfStream) {
+                    acquireInputBuffer(inputBuffer);
+                    performPendingOp(inputBuffer);
+                } else if (tryAcquireInputBuffer(inputBuffer)) {
+                    performPendingOp(inputBuffer);
                 } else {
                     break; // Will try later.
                 }
