@@ -55,6 +55,11 @@ import java.nio.ByteBuffer;
  *
  * For VIDEO encoders, things are much easier because we skip the whole input part.
  * See description in {@link VideoMediaEncoder}.
+ *
+ * For max length constraint, it will be checked automatically during {@link #drainOutput(boolean)},
+ * or subclasses can provide an hint to this encoder using {@link InputBuffer#didReachMaxLength}.
+ * In this second case, we can request a stop at reading time, so we avoid useless readings
+ * in certain setups (where drain is called a lot after reading).
  */
 // https://github.com/saki4510t/AudioVideoRecordingSample/blob/master/app/src/main/java/com/serenegiant/encoder/MediaEncoder.java
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -100,9 +105,12 @@ abstract class MediaEncoder {
     private OutputBufferPool mOutputBufferPool;
     private MediaCodec.BufferInfo mBufferInfo;
     private MediaCodecBuffers mBuffers;
+
     private long mMaxLengthMillis;
     private boolean mMaxLengthReached;
 
+    private long mStartPresentationTimeUs = Long.MIN_VALUE;
+    private long mLastPresentationTimeUs = 0;
     /**
      * Needs a readable name for the thread and for logging.
      * @param name a name
@@ -334,6 +342,9 @@ abstract class MediaEncoder {
             mMediaCodec.queueInputBuffer(buffer.index, 0, buffer.length,
                     buffer.timestamp, 0);
         }
+        if (buffer.didReachMaxLength) {
+            onMaxLengthReached();
+        }
     }
 
     /**
@@ -421,10 +432,7 @@ abstract class MediaEncoder {
                     LOG.w(mName, "DRAINING - Reached maxLength! mLastPresentationTimeUs:", mLastPresentationTimeUs,
                             "mStartPresentationTimeUs:", mStartPresentationTimeUs,
                             "mMaxLengthUs:", mMaxLengthMillis * 1000);
-                    mMaxLengthReached = true;
-                    LOG.w(mName, "DRAINING - Requesting a stop.");
-                    setState(STATE_LIMIT_REACHED);
-                    mController.requestStop(mTrackIndex);
+                    onMaxLengthReached();
                     break;
                 }
 
@@ -438,8 +446,21 @@ abstract class MediaEncoder {
         }
     }
 
-    private long mStartPresentationTimeUs = Long.MIN_VALUE;
-    private long mLastPresentationTimeUs = 0;
-
     abstract int getEncodedBitRate();
+
+    private void onMaxLengthReached() {
+        if (mMaxLengthReached) return;
+        mMaxLengthReached = true;
+        if (mState >= STATE_LIMIT_REACHED) {
+            LOG.w(mName, "onMaxLengthReached: Reached in wrong state. Aborting.", mState);
+        } else {
+            LOG.w(mName, "onMaxLengthReached: Requesting a stop.");
+            setState(STATE_LIMIT_REACHED);
+            mController.requestStop(mTrackIndex);
+        }
+    }
+
+    protected long getMaxLengthMillis() {
+        return mMaxLengthMillis;
+    }
 }

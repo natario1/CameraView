@@ -13,4 +13,5 @@ class InputBuffer {
     int length;
     long timestamp;
     boolean isEndOfStream;
+    boolean didReachMaxLength;
 }

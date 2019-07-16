@@ -56,7 +56,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     // This value is the number of runnables that the encoder thread is allowed to be 'behind'
     // the recorder thread. It's not safe to have it very large or we can end encoding A LOT AFTER
     // the actual recording. It's better to reduce this and skip recording at all.
-    private static final int BUFFER_POOL_MAX_SIZE = 100;
+    private static final int BUFFER_POOL_MAX_SIZE = 80;
 
     private static long bytesToUs(int bytes) {
         return (1000000L * bytes) / BYTE_RATE;
@@ -182,11 +182,11 @@ public class AudioMediaEncoder extends MediaEncoder {
                 // Sleeping before returning is a good way of balancing the two operations.
                 // However, if endOfStream, we CAN'T lose this frame!
                 if (endOfStream) {
-                    LOG.v("read thread - eos:", endOfStream, "- No buffer, retrying.");
+                    LOG.v("read thread - eos: true - No buffer, retrying.");
                     read(true); // try again
                 } else {
-                    LOG.w("read thread - eos:", endOfStream, "- Skipping audio frame, encoding is too slow.");
-                    sleep();
+                    LOG.w("read thread - eos: false - Skipping audio frame, encoding is too slow.");
+                    sleep(); // sleep a bit
                 }
             } else {
                 mCurrentBuffer.clear();
@@ -290,8 +290,9 @@ public class AudioMediaEncoder extends MediaEncoder {
     @SuppressLint("HandlerLeak")
     class AudioEncodingHandler extends Handler {
 
-        InputBufferPool mInputBufferPool = new InputBufferPool();
-        LinkedBlockingQueue<InputBuffer> mPendingOps = new LinkedBlockingQueue<>();
+        private InputBufferPool mInputBufferPool = new InputBufferPool();
+        private LinkedBlockingQueue<InputBuffer> mPendingOps = new LinkedBlockingQueue<>();
+        private long mFirstFrameTimestamp = Long.MIN_VALUE;
 
         AudioEncodingHandler() {
             super(WorkerHandler.get("AudioEncodingHandler").getLooper());
@@ -310,6 +311,10 @@ public class AudioMediaEncoder extends MediaEncoder {
             super.handleMessage(msg);
             boolean endOfStream = msg.what == 1;
             long timestamp = (((long) msg.arg1) << 32) | (((long) msg.arg2) & 0xffffffffL);
+            if (mFirstFrameTimestamp == Long.MIN_VALUE) {
+                mFirstFrameTimestamp = timestamp;
+            }
+
             LOG.i("encoding thread - got buffer. timestamp:", timestamp, "eos:", endOfStream);
             ByteBuffer buffer = (ByteBuffer) msg.obj;
             int readBytes = buffer.remaining();
@@ -319,6 +324,7 @@ public class AudioMediaEncoder extends MediaEncoder {
             inputBuffer.timestamp = timestamp;
             inputBuffer.length = readBytes;
             inputBuffer.isEndOfStream = endOfStream;
+            inputBuffer.didReachMaxLength = (timestamp - mFirstFrameTimestamp) > getMaxLengthMillis() * 1000;
             mPendingOps.add(inputBuffer);
 
             LOG.i("encoding thread - performing", mPendingOps.size(), "pending operations.");
