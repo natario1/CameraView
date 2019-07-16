@@ -246,7 +246,8 @@ public class MediaEncoderEngine {
      * A handle for {@link MediaEncoder}s to pass information to this engine.
      * All methods here can be called for multiple threads.
      */
-    class Controller {
+    @SuppressWarnings("WeakerAccess")
+    public class Controller {
 
         /**
          * Request that the muxer should start. This is not guaranteed to be executed:
@@ -254,7 +255,7 @@ public class MediaEncoderEngine {
          * @param format the media format
          * @return the encoder track index
          */
-        int notifyStarted(@NonNull MediaFormat format) {
+        public int notifyStarted(@NonNull MediaFormat format) {
             synchronized (mControllerLock) {
                 if (mMediaMuxerStarted) {
                     throw new IllegalStateException("Trying to start but muxer started already");
@@ -274,10 +275,12 @@ public class MediaEncoderEngine {
         }
 
         /**
-         * Whether the muxer is started.
+         * Whether the muxer is started. MediaEncoders are required to avoid
+         * calling {@link #write(OutputBufferPool, OutputBuffer)} until this method returns true.
+         *
          * @return true if muxer was started
          */
-        boolean isStarted() {
+        public boolean isStarted() {
             synchronized (mControllerLock) {
                 return mMediaMuxerStarted;
             }
@@ -287,7 +290,7 @@ public class MediaEncoderEngine {
          * Writes the given data to the muxer. Should be called after {@link #isStarted()}
          * returns true. Note: this seems to be thread safe, no lock.
          */
-        void write(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
+        public void write(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
             if (!mMediaMuxerStarted) {
                 throw new IllegalStateException("Trying to write before muxer started");
             }
@@ -303,7 +306,7 @@ public class MediaEncoderEngine {
          *
          * When this succeeds, {@link MediaEncoder#stop()} is called.
          */
-        void requestStop(int track) {
+        public void requestStop(int track) {
             synchronized (mControllerLock) {
                 LOG.w("requestStop:", "Called for track", track);
                 if (--mStartedEncodersCount == 0) {
@@ -318,7 +321,7 @@ public class MediaEncoderEngine {
          * Notifies that the encoder was stopped. After this is called by all encoders,
          * we will actually stop the muxer.
          */
-        void notifyStopped(int track) {
+        public void notifyStopped(int track) {
             synchronized (mControllerLock) {
                 LOG.w("notifyStopped:", "Called for track", track);
                 if (++mReleasedEncodersCount == mEncoders.size()) {

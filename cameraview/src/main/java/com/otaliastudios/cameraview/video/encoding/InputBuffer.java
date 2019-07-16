@@ -6,11 +6,12 @@ import java.nio.ByteBuffer;
  * Represents an input buffer, which means,
  * raw data that should be encoded by MediaCodec.
  */
-class InputBuffer {
-    ByteBuffer data;
-    ByteBuffer source;
-    int index;
-    int length;
-    long timestamp;
-    boolean isEndOfStream;
+@SuppressWarnings("WeakerAccess")
+public class InputBuffer {
+    public ByteBuffer data;
+    public ByteBuffer source;
+    public int index;
+    public int length;
+    public long timestamp;
+    public boolean isEndOfStream;
 }

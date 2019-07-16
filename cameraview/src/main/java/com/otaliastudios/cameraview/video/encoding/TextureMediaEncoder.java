@@ -110,7 +110,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
 
     @EncoderThread
     @Override
-    void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         // We rotate the texture using transformRotation. Pass rotation=0 to super so that
         // no rotation metadata is written into the output file.
         mTransformRotation = mConfig.rotation;
@@ -125,7 +125,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
 
     @EncoderThread
     @Override
-    void onEvent(@NonNull String event, @Nullable Object data) {
+    protected void onEvent(@NonNull String event, @Nullable Object data) {
         if (!event.equals(FRAME_EVENT)) return;
         Frame frame = (Frame) data;
         if (frame == null) {

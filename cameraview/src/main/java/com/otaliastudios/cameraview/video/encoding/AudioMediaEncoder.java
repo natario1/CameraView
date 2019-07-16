@@ -88,7 +88,7 @@ public class AudioMediaEncoder extends MediaEncoder {
 
     @EncoderThread
     @Override
-    void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         final MediaFormat audioFormat = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLING_FREQUENCY, CHANNELS_COUNT);
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, CHANNELS);
@@ -106,14 +106,14 @@ public class AudioMediaEncoder extends MediaEncoder {
 
     @EncoderThread
     @Override
-    void onStart() {
+    protected void onStart() {
         mRequestStop = false;
         mRecorder.start();
     }
 
     @EncoderThread
     @Override
-    void onStop() {
+    protected void onStop() {
         mRequestStop = true;
     }
 
@@ -130,7 +130,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     }
 
     @Override
-    int getEncodedBitRate() {
+    protected int getEncodedBitRate() {
         return mConfig.bitRate;
     }
 

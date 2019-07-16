@@ -75,7 +75,7 @@ import java.nio.ByteBuffer;
  */
 // https://github.com/saki4510t/AudioVideoRecordingSample/blob/master/app/src/main/java/com/serenegiant/encoder/MediaEncoder.java
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-abstract class MediaEncoder {
+public abstract class MediaEncoder {
 
     private final static String TAG = MediaEncoder.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
@@ -129,7 +129,8 @@ abstract class MediaEncoder {
      * Needs a readable name for the thread and for logging.
      * @param name a name
      */
-    MediaEncoder(@NonNull String name) {
+    @SuppressWarnings("WeakerAccess")
+    protected MediaEncoder(@NonNull String name) {
         mName = name;
     }
 
@@ -261,7 +262,7 @@ abstract class MediaEncoder {
      * @param maxLengthMillis the maxLength in millis
      */
     @EncoderThread
-    abstract void onPrepare(@NonNull final MediaEncoderEngine.Controller controller, final long maxLengthMillis);
+    protected abstract void onPrepare(@NonNull final MediaEncoderEngine.Controller controller, final long maxLengthMillis);
 
     /**
      * Start recording. This might be a lightweight operation
@@ -269,7 +270,7 @@ abstract class MediaEncoder {
      * like a "frame available".
      */
     @EncoderThread
-    abstract void onStart();
+    protected abstract void onStart();
 
     /**
      * The caller notifying of a certain event occurring.
@@ -278,14 +279,14 @@ abstract class MediaEncoder {
      * @param data object
      */
     @EncoderThread
-    void onEvent(@NonNull String event, @Nullable Object data) {}
+    protected void onEvent(@NonNull String event, @Nullable Object data) {}
 
     /**
      * Stop recording. This involves signaling the end of stream and draining
      * all output left.
      */
     @EncoderThread
-    abstract void onStop();
+    protected abstract void onStop();
 
     /**
      * Called by {@link #drainOutput(boolean)} when we get an EOS signal (not necessarily in the
@@ -461,7 +462,7 @@ abstract class MediaEncoder {
         }
     }
 
-    abstract int getEncodedBitRate();
+    protected abstract int getEncodedBitRate();
 
     /**
      * Returns the max length setting, in milliseconds, which can be used

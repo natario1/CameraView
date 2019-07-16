@@ -68,7 +68,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
 
     @EncoderThread
     @Override
-    void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
 
         // Set some properties.  Failing to specify some of these can cause the MediaCodec
@@ -93,14 +93,14 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
 
     @EncoderThread
     @Override
-    void onStart() {
+    protected void onStart() {
         // Nothing to do here. Waiting for the first frame.
         mFrameNumber = 0;
     }
 
     @EncoderThread
     @Override
-    void onStop() {
+    protected void onStop() {
         LOG.i("onStop", "setting mFrameNumber to 1 and signaling the end of input stream.");
         mFrameNumber = -1;
         // Signals the end of input stream. This is a Video only API, as in the normal case,
@@ -111,7 +111,7 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
     }
 
     @Override
-    int getEncodedBitRate() {
+    protected int getEncodedBitRate() {
         return mConfig.bitRate;
     }
 }
