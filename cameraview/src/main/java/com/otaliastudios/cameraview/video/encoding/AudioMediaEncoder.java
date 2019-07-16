@@ -73,15 +73,19 @@ public class AudioMediaEncoder extends MediaEncoder {
     private Config mConfig;
 
     public static class Config {
-        int bitRate;
-        public Config(int bitRate) {
-            this.bitRate = bitRate;
+        public int bitRate;
+
+        @NonNull
+        private Config copy() {
+            Config config = new Config();
+            config.bitRate = this.bitRate;
+            return config;
         }
     }
 
     public AudioMediaEncoder(@NonNull Config config) {
         super("AudioEncoder");
-        mConfig = config;
+        mConfig = config.copy();
     }
 
     @EncoderThread
@@ -113,10 +117,6 @@ public class AudioMediaEncoder extends MediaEncoder {
 
     @EncoderThread
     @Override
-    void onEvent(@NonNull String event, @Nullable Object data) { }
-
-    @EncoderThread
-    @Override
     void onStop() {
         mRequestStop = true;
     }
@@ -138,7 +138,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         return mConfig.bitRate;
     }
 
-    class AudioRecordingThread extends Thread {
+    private class AudioRecordingThread extends Thread {
 
         private AudioRecord mAudioRecord;
         private ByteBuffer mCurrentBuffer;
@@ -287,9 +287,11 @@ public class AudioMediaEncoder extends MediaEncoder {
         }
 
         void sendInputBuffer(ByteBuffer buffer, long presentationTimeUs, boolean endOfStream) {
-            int presentation1 = (int) (presentationTimeUs >> 32);
-            int presentation2 = (int) (presentationTimeUs);
-            sendMessage(obtainMessage(endOfStream ? 1 : 0, presentation1, presentation2, buffer));
+            sendMessage(obtainMessage(
+                    endOfStream ? 1 : 0,
+                    (int) (presentationTimeUs >> 32),
+                    (int) (presentationTimeUs),
+                    buffer));
         }
 
         @Override

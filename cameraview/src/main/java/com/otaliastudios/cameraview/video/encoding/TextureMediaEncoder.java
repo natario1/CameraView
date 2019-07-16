@@ -24,37 +24,31 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     public final static String FRAME_EVENT = "frame";
-    public final static int NO_TEXTURE = Integer.MIN_VALUE;
+    private final static int NO_TEXTURE = Integer.MIN_VALUE;
 
     public static class Config extends VideoMediaEncoder.Config {
-        int textureId;
-        int overlayTextureId;
-        float scaleX;
-        float scaleY;
-        EGLContext eglContext;
-        int transformRotation;
-        int overlayTransformRotation;
+        public int textureId = NO_TEXTURE;
+        public int overlayTextureId = NO_TEXTURE;
+        public int overlayRotation;
+        public float scaleX;
+        public float scaleY;
+        public EGLContext eglContext;
 
-        public Config(int width, int height,
-                      int bitRate, int frameRate,
-                      int rotation, @NonNull String mimeType,
-                      int textureId,
-                      float scaleX, float scaleY,
-                      @NonNull EGLContext eglContext,
-                      int overlayTextureId, int overlayRotation) {
-            // We rotate the texture using transformRotation. Pass rotation=0 to super so that
-            // no rotation metadata is written into the output file.
-            super(width, height, bitRate, frameRate, 0, mimeType);
-            this.transformRotation = rotation;
-            this.textureId = textureId;
-            this.scaleX = scaleX;
-            this.scaleY = scaleY;
-            this.eglContext = eglContext;
-            this.overlayTextureId = overlayTextureId;
-            this.overlayTransformRotation = overlayRotation;
+        @NonNull
+        private Config copy() {
+            Config copy = new Config();
+            copy(copy);
+            copy.textureId = this.textureId;
+            copy.overlayTextureId = this.overlayTextureId;
+            copy.overlayRotation = this.overlayRotation;
+            copy.scaleX = this.scaleX;
+            copy.scaleY = this.scaleY;
+            copy.eglContext = this.eglContext;
+            return copy;
         }
     }
 
+    private int mTransformRotation;
     private EglCore mEglCore;
     private EglWindowSurface mWindow;
     private EglViewport mViewport;
@@ -66,7 +60,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
     });
 
     public TextureMediaEncoder(@NonNull Config config) {
-        super(config);
+        super(config.copy());
     }
 
     public static class TextureFrame {
@@ -92,6 +86,10 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
     @EncoderThread
     @Override
     void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+        // We rotate the texture using transformRotation. Pass rotation=0 to super so that
+        // no rotation metadata is written into the output file.
+        mTransformRotation = mConfig.rotation;
+        mConfig.rotation = 0;
         super.onPrepare(controller, maxLengthMillis);
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
@@ -132,13 +130,13 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         // Rotation also takes place with respect to the origin (the Z axis), so we must
         // translate to origin, rotate, then back to where we were.
         Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
-        Matrix.rotateM(transform, 0, mConfig.transformRotation, 0, 0, 1);
+        Matrix.rotateM(transform, 0, mTransformRotation, 0, 0, 1);
         Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
         boolean hasOverlay = mConfig.overlayTextureId != NO_TEXTURE;
         if (hasOverlay) {
             Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
-            Matrix.rotateM(overlayTransform, 0, mConfig.overlayTransformRotation, 0, 0, 1);
+            Matrix.rotateM(overlayTransform, 0, mConfig.overlayRotation, 0, 0, 1);
             Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
         }
 

@@ -43,21 +43,21 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
     @SuppressWarnings("WeakerAccess")
     protected int mFrameNum = -1;
 
-    static class Config {
-        int width;
-        int height;
-        int bitRate;
-        int frameRate;
-        int rotation;
-        String mimeType;
+    protected static class Config {
+        public int width;
+        public int height;
+        public int bitRate;
+        public int frameRate;
+        public int rotation;
+        public String mimeType;
 
-        Config(int width, int height, int bitRate, int frameRate, int rotation, @NonNull String mimeType) {
-            this.width = width;
-            this.height = height;
-            this.bitRate = bitRate;
-            this.frameRate = frameRate;
-            this.rotation = rotation;
-            this.mimeType = mimeType;
+        protected <C extends Config> void copy(@NonNull C output) {
+            output.width = this.width;
+            output.height = this.height;
+            output.bitRate = this.bitRate;
+            output.frameRate = this.frameRate;
+            output.rotation = this.rotation;
+            output.mimeType = this.mimeType;
         }
     }
 

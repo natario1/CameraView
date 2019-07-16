@@ -118,22 +118,29 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case DEVICE_DEFAULT: type = "video/avc"; break;
             }
             LOG.w("Creating frame encoder. Rotation:", mResult.rotation);
-            TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(width, height,
-                    mResult.videoBitRate,
-                    mResult.videoFrameRate,
-                    mResult.rotation,
-                    type, mTextureId,
-                    scaleX, scaleY,
-                    EGL14.eglGetCurrentContext(),
-                    mHasOverlay ? mOverlayTextureId : TextureMediaEncoder.NO_TEXTURE,
-                    mOverlayRotation
-            );
-            TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
+            TextureMediaEncoder.Config videoConfig = new TextureMediaEncoder.Config();
+            videoConfig.width = width;
+            videoConfig.height = height;
+            videoConfig.bitRate = mResult.videoBitRate;
+            videoConfig.frameRate = mResult.videoFrameRate;
+            videoConfig.rotation = mResult.rotation;
+            videoConfig.mimeType = type;
+            videoConfig.textureId = mTextureId;
+            videoConfig.scaleX = scaleX;
+            videoConfig.scaleY = scaleY;
+            videoConfig.eglContext = EGL14.eglGetCurrentContext();
+            if (mHasOverlay) {
+                videoConfig.overlayTextureId = mOverlayTextureId;
+                videoConfig.overlayRotation = mOverlayRotation;
+            }
+            TextureMediaEncoder videoEncoder = new TextureMediaEncoder(videoConfig);
 
             // Audio
             AudioMediaEncoder audioEncoder = null;
             if (mResult.audio == Audio.ON) {
-                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config(mResult.audioBitRate));
+                AudioMediaEncoder.Config audioConfig = new AudioMediaEncoder.Config();
+                audioConfig.bitRate = mResult.audioBitRate;
+                audioEncoder = new AudioMediaEncoder(audioConfig);
             }
 
             // Engine

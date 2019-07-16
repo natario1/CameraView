@@ -256,7 +256,7 @@ abstract class MediaEncoder {
      * @param data object
      */
     @EncoderThread
-    abstract void onEvent(@NonNull String event, @Nullable Object data);
+    void onEvent(@NonNull String event, @Nullable Object data) {};
 
     /**
      * Stop recording. This involves signaling the end of stream and draining
