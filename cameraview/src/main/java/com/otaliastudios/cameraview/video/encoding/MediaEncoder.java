@@ -56,10 +56,22 @@ import java.nio.ByteBuffer;
  * For VIDEO encoders, things are much easier because we skip the whole input part.
  * See description in {@link VideoMediaEncoder}.
  *
+ * MAX LENGTH CONSTRAINT
+ *
  * For max length constraint, it will be checked automatically during {@link #drainOutput(boolean)},
  * OR subclasses can provide an hint to this encoder using {@link #notifyMaxLengthReached()}.
  * In this second case, we can request a stop at reading time, so we avoid useless readings
  * in certain setups (where drain is called a lot after reading).
+ *
+ * TIMING
+ *
+ * Subclasses can use timestamps (in microseconds) in any reference system they prefer. For
+ * instance, it might be the {@link System#nanoTime()} reference, or some reference provided
+ * by SurfaceTextures.
+ *
+ * However, they are required to call {@link #notifyFirstFrameMillis(long)} and pass the
+ * milliseconds of the first frame in the {@link System#currentTimeMillis()} reference, so
+ * something that we can coordinate on.
  */
 // https://github.com/saki4510t/AudioVideoRecordingSample/blob/master/app/src/main/java/com/serenegiant/encoder/MediaEncoder.java
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -109,8 +121,10 @@ abstract class MediaEncoder {
     private long mMaxLengthMillis;
     private boolean mMaxLengthReached;
 
-    private long mStartPresentationTimeUs = Long.MIN_VALUE;
-    private long mLastPresentationTimeUs = 0;
+    private long mStartTimeMillis = 0; // In System.currentTimeMillis()
+    private long mStartTimeUs = Long.MIN_VALUE; // In unknown reference
+    private long mLastTimeUs = 0;
+
     /**
      * Needs a readable name for the thread and for logging.
      * @param name a name
@@ -264,7 +278,7 @@ abstract class MediaEncoder {
      * @param data object
      */
     @EncoderThread
-    void onEvent(@NonNull String event, @Nullable Object data) {};
+    void onEvent(@NonNull String event, @Nullable Object data) {}
 
     /**
      * Stop recording. This involves signaling the end of stream and draining
@@ -392,26 +406,29 @@ abstract class MediaEncoder {
                 // the INFO_OUTPUT_FORMAT_CHANGED status. Ignore it.
                 boolean isCodecConfig = (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0;
                 if (!isCodecConfig && mController.isStarted() && mBufferInfo.size != 0) {
+
                     // adjust the ByteBuffer values to match BufferInfo (not needed?)
                     encodedData.position(mBufferInfo.offset);
                     encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
-                    // Store startPresentationTime and lastPresentationTime, useful for example to
-                    // detect the mMaxLengthReached and stop recording.
-                    if (mStartPresentationTimeUs == Long.MIN_VALUE) {
-                        mStartPresentationTimeUs = mBufferInfo.presentationTimeUs;
-                        LOG.w(mName, "DRAINING - Got the first presentation time:", mStartPresentationTimeUs);
-                    }
-                    mLastPresentationTimeUs = mBufferInfo.presentationTimeUs;
-                    // Pass presentation times as offets with respect to the mStartPresentationTimeUs.
-                    // This ensures consistency between audio pts (coming from System.nanoTime()) and
-                    // video pts (coming from SurfaceTexture) both of which have no meaningful time-base
-                    // and should be used for offsets only.
-                    // TODO find a better way, this causes sync issues. (+ note: this sends pts=0 at first)
-                    // mBufferInfo.presentationTimeUs = mLastPresentationTimeUs - mStartPresentationTimeUs;
-                    LOG.v(mName, "DRAINING - About to write(). Presentation:", mBufferInfo.presentationTimeUs);
 
-                    // TODO fix the mBufferInfo being the same, then implement delayed writing in Controller
-                    // and remove the isStarted() check here.
+                    // Store mStartTimeUs and mLastTimeUs, useful to detect the max length
+                    // reached and stop recording when needed.
+                    if (mStartTimeUs == Long.MIN_VALUE) {
+                        mStartTimeUs = mBufferInfo.presentationTimeUs;
+                        LOG.w(mName, "DRAINING - Got the first presentation time:", mStartTimeUs);
+                    }
+                    mLastTimeUs = mBufferInfo.presentationTimeUs;
+
+                    // Adjust the presentation times. Subclasses can pass a presentation time in any
+                    // reference system - possibly some that has no real meaning, and frequently,
+                    // presentation times from different encoders have a different time-base.
+                    // To address this, encoders are required to call notifyFirstFrameMillis
+                    // so we can adjust here - moving to 1970 reference.
+                    // Extra benefit: we never pass a pts equal to 0, which some encoders refuse.
+                    mBufferInfo.presentationTimeUs = (mStartTimeMillis * 1000) + mLastTimeUs - mStartTimeUs;
+
+                    // Write.
+                    LOG.v(mName, "DRAINING - About to write(). Adjusted presentation:", mBufferInfo.presentationTimeUs);
                     OutputBuffer buffer = mOutputBufferPool.get();
                     //noinspection ConstantConditions
                     buffer.info = mBufferInfo;
@@ -425,10 +442,10 @@ abstract class MediaEncoder {
                 // Not needed if drainAll because we already were asked to stop
                 if (!drainAll
                         && !mMaxLengthReached
-                        && mStartPresentationTimeUs != Long.MIN_VALUE
-                        && mLastPresentationTimeUs - mStartPresentationTimeUs > mMaxLengthMillis * 1000) {
-                    LOG.w(mName, "DRAINING - Reached maxLength! mLastPresentationTimeUs:", mLastPresentationTimeUs,
-                            "mStartPresentationTimeUs:", mStartPresentationTimeUs,
+                        && mStartTimeUs != Long.MIN_VALUE
+                        && mLastTimeUs - mStartTimeUs > mMaxLengthMillis * 1000) {
+                    LOG.w(mName, "DRAINING - Reached maxLength! mLastTimeUs:", mLastTimeUs,
+                            "mStartTimeUs:", mStartTimeUs,
                             "mMaxLengthUs:", mMaxLengthMillis * 1000);
                     onMaxLengthReached();
                     break;
@@ -446,15 +463,33 @@ abstract class MediaEncoder {
 
     abstract int getEncodedBitRate();
 
+    /**
+     * Returns the max length setting, in milliseconds, which can be used
+     * to compute the current state and eventually call {@link #notifyMaxLengthReached()}.
+     * This is not a requirement for subclasses - we do this check anyway when draining,
+     * but doing so might be better.
+     *
+     * @return the max length setting
+     */
     @SuppressWarnings("WeakerAccess")
     protected long getMaxLengthMillis() {
         return mMaxLengthMillis;
     }
 
+    /**
+     * Called by subclasses to notify that the max length was reached.
+     * We will move to {@link #STATE_LIMIT_REACHED} and request a stop.
+     */
+    @SuppressWarnings("WeakerAccess")
     protected void notifyMaxLengthReached() {
         onMaxLengthReached();
     }
 
+    /**
+     * Called by us (during {@link #drainOutput(boolean)}) or by subclasses
+     * (through {@link #notifyMaxLengthReached()}) to notify that we reached the
+     * max length allowed. We will move to {@link #STATE_LIMIT_REACHED} and request a stop.
+     */
     private void onMaxLengthReached() {
         if (mMaxLengthReached) return;
         mMaxLengthReached = true;
@@ -465,5 +500,18 @@ abstract class MediaEncoder {
             setState(STATE_LIMIT_REACHED);
             mController.requestStop(mTrackIndex);
         }
+    }
+
+    /**
+     * Should be called by subclasses to pass the milliseconds of the first frame - as soon
+     * as this information is available. The milliseconds should be in the
+     * {@link System#currentTimeMillis()} reference system, so we can coordinate between different
+     * encoders.
+     *
+     * @param firstFrameMillis the milliseconds of the first frame presentation
+     */
+    @SuppressWarnings("WeakerAccess")
+    protected void notifyFirstFrameMillis(long firstFrameMillis) {
+        mStartTimeMillis = firstFrameMillis;
     }
 }

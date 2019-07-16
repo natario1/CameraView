@@ -15,7 +15,6 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
@@ -27,7 +26,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Default implementation for audio encoding.
  */
-// TODO create onVideoRecordingStart/onVideoRecordingEnd callbacks
+// TODO create onVideoRecordingEnd callbacks
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class AudioMediaEncoder extends MediaEncoder {
 
@@ -225,6 +224,9 @@ public class AudioMediaEncoder extends MediaEncoder {
             mLastTimeUs = mTimestamp.increaseUs(readBytes, BYTE_RATE);
             if (mFirstTimeUs == Long.MIN_VALUE) {
                 mFirstTimeUs = mLastTimeUs;
+                // Compute the first frame milliseconds as well.
+                notifyFirstFrameMillis(System.currentTimeMillis()
+                        - AudioTimestamp.bytesToUs(readBytes, BYTE_RATE) / 1000L);
             }
             boolean didReachMaxLength = (mLastTimeUs - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
             if (didReachMaxLength && !endOfStream) {

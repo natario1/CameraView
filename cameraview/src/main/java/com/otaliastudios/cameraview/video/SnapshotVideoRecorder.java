@@ -160,9 +160,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         if (mCurrentState == STATE_RECORDING) {
             LOG.v("dispatching frame.");
             TextureMediaEncoder textureEncoder = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
-            TextureMediaEncoder.TextureFrame textureFrame = textureEncoder.acquireFrame();
-            textureFrame.timestamp = surfaceTexture.getTimestamp();
-            surfaceTexture.getTransformMatrix(textureFrame.transform);
+            TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
+            frame.timestamp = surfaceTexture.getTimestamp();
+            frame.timestampMillis = System.currentTimeMillis(); // NOTE: this is an approximation but it seems to work.
+            surfaceTexture.getTransformMatrix(frame.transform);
 
             // get overlay
             if (mHasOverlay) {
@@ -175,12 +176,12 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                     LOG.w("Got Surface.OutOfResourcesException while drawing video overlays", e);
                 }
                 mOverlaySurfaceTexture.updateTexImage();
-                mOverlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);
+                mOverlaySurfaceTexture.getTransformMatrix(frame.overlayTransform);
             }
 
             if (mEncoderEngine != null) {
                 // can happen on teardown
-                mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
+                mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
             }
         }
 

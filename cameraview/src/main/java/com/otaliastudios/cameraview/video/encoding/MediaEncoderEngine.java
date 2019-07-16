@@ -286,16 +286,11 @@ public class MediaEncoderEngine {
         /**
          * Writes the given data to the muxer. Should be called after {@link #isStarted()}
          * returns true. Note: this seems to be thread safe, no lock.
-         * TODO cache values if not started yet, then apply later. Read comments in drain().
-         * Currently they are recycled instantly.
          */
         void write(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
             if (!mMediaMuxerStarted) {
                 throw new IllegalStateException("Trying to write before muxer started");
             }
-            // This is a bad idea and causes crashes.
-            // if (info.presentationTimeUs < mLastTimestampUs) info.presentationTimeUs = mLastTimestampUs;
-            // mLastTimestampUs = info.presentationTimeUs;
             LOG.v("write:", "Writing OutputBuffer - track:", buffer.trackIndex, "presentation:", buffer.info.presentationTimeUs);
             mMediaMuxer.writeSampleData(buffer.trackIndex, buffer.data, buffer.info);
             pool.recycle(buffer);

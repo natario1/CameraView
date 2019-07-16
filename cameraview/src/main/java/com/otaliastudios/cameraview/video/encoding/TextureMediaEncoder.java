@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.video.encoding;
 
+import android.graphics.SurfaceTexture;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
 import android.os.Build;
@@ -52,10 +53,10 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
     private EglCore mEglCore;
     private EglWindowSurface mWindow;
     private EglViewport mViewport;
-    private Pool<TextureFrame> mFramePool = new Pool<>(100, new Pool.Factory<TextureFrame>() {
+    private Pool<Frame> mFramePool = new Pool<>(100, new Pool.Factory<Frame>() {
         @Override
-        public TextureFrame create() {
-            return new TextureFrame();
+        public Frame create() {
+            return new Frame();
         }
     });
 
@@ -63,17 +64,42 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         super(config.copy());
     }
 
-    public static class TextureFrame {
-        private TextureFrame() {}
-        // Nanoseconds, in no meaningful time-base. Should be for offsets only.
-        // Typically coming from SurfaceTexture.getTimestamp().
+    /**
+     * Should be acquired with {@link #acquireFrame()}, filled and then passed
+     * to {@link MediaEncoderEngine#notify(String, Object)} with {@link #FRAME_EVENT}.
+     */
+    public static class Frame {
+        private Frame() {}
+
+        /**
+         * Nanoseconds, in no meaningful time-base. Will be used for offsets only.
+         * Typically this comes from {@link SurfaceTexture#getTimestamp()}.
+         */
         public long timestamp;
+
+        /**
+         * Milliseconds in the {@link System#currentTimeMillis()} reference.
+         * This is actually needed/read only for the first frame.
+         */
+        public long timestampMillis;
+
+        /**
+         * The transformation matrix for the base texture.
+         */
         public float[] transform = new float[16];
+
+        /**
+         * The transformation matrix for the overlay texture, if any.
+         */
         public float[] overlayTransform = new float[16];
     }
 
+    /**
+     * Returns a new frame to be filled. See {@link Frame} for details.
+     * @return a new frame
+     */
     @NonNull
-    public TextureFrame acquireFrame() {
+    public Frame acquireFrame() {
         if (mFramePool.isEmpty()) {
             throw new RuntimeException("Need more frames than this! Please increase the pool size.");
         } else {
@@ -81,7 +107,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
             return mFramePool.get();
         }
     }
-
 
     @EncoderThread
     @Override
@@ -102,7 +127,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
     @Override
     void onEvent(@NonNull String event, @Nullable Object data) {
         if (!event.equals(FRAME_EVENT)) return;
-        TextureFrame frame = (TextureFrame) data;
+        Frame frame = (Frame) data;
         if (frame == null) {
             throw new IllegalArgumentException("Got null frame for FRAME_EVENT.");
         }
@@ -115,6 +140,9 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
             return;
         }
         mFrameNumber++;
+        if (mFrameNumber == 1) {
+            notifyFirstFrameMillis(frame.timestampMillis);
+        }
 
         // First, drain any previous data.
         LOG.i("onEvent", "frameNumber:", mFrameNumber, "timestamp:", frame.timestamp, "- draining.");
