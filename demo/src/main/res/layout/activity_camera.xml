@@ -22,7 +22,7 @@
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
         app:cameraFlash="off"
-        app:cameraAudio="stereo"
+        app:cameraAudio="on"
         app:cameraGestureTap="autoFocus"
         app:cameraGestureLongTap="none"
         app:cameraGesturePinch="zoom"

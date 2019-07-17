@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.video.encoding;
 
+import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -22,20 +23,13 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Default implementation for audio encoding.
  */
 // TODO create onVideoRecordingEnd callback
-// TODO STEREO does not work well
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class AudioMediaEncoder extends MediaEncoder {
 
     private static final String TAG = AudioMediaEncoder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    // We allocate buffers of 1KB each, which is not so much. This value indicates the maximum
-    // number of these buffers that we can allocate at a given instant.
-    // This value is the number of runnables that the encoder thread is allowed to be 'behind'
-    // the recorder thread. It's not safe to have it very large or we can end encoding A LOT AFTER
-    // the actual recording. It's better to reduce this and skip recording at all.
-    private static final int BUFFER_POOL_MAX_SIZE = 80;
-    private static final boolean PERFORMANCE_DEBUG = true;
+    private static final boolean PERFORMANCE_DEBUG = false;
     private static final boolean PERFORMANCE_FILL_GAPS = true;
 
     private boolean mRequestStop = false;
@@ -68,11 +62,13 @@ public class AudioMediaEncoder extends MediaEncoder {
     @EncoderThread
     @Override
     protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
-        final MediaFormat audioFormat = MediaFormat.createAudioFormat(mConfig.mimeType, mConfig.samplingFrequency, mConfig.channels);
+        final MediaFormat audioFormat = MediaFormat.createAudioFormat(
+                mConfig.mimeType,
+                mConfig.samplingFrequency,
+                mConfig.channels);
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, mConfig.audioFormatChannels());
         audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate); // TODO multiply by channels?
-        audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, mConfig.channels);
         try {
             mMediaCodec = MediaCodec.createEncoderByType(mConfig.mimeType);
         } catch (IOException e) {
@@ -80,7 +76,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         }
         mMediaCodec.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
-        mByteBufferPool = new ByteBufferPool(mConfig.frameSize(), BUFFER_POOL_MAX_SIZE);
+        mByteBufferPool = new ByteBufferPool(mConfig.frameSize(), mConfig.bufferPoolMaxSize());
         mZeroBuffer = ByteBuffer.allocateDirect(mConfig.frameSize());
     }
 
@@ -140,19 +136,21 @@ public class AudioMediaEncoder extends MediaEncoder {
         private long mFirstTimeUs = Long.MIN_VALUE;
 
         private AudioRecordingThread() {
-            final int minBufferSize = AudioRecord.getMinBufferSize(mConfig.samplingFrequency,
-                    mConfig.channels, mConfig.encoding);
+            final int minBufferSize = AudioRecord.getMinBufferSize(
+                    mConfig.samplingFrequency,
+                    mConfig.audioFormatChannels(),
+                    mConfig.encoding);
             // Make this bigger so we don't skip frames. 25: Stereo: 51200. Mono: 25600
             // 25 is quite big already. Tried to make it bigger to solve the read() delay
             // but it just makes things worse (ruins MONO as well).
             // Tried to make it smaller and things change as well.
-            int bufferSize = mConfig.frameSize() * 25;
+            int bufferSize = mConfig.frameSize() * mConfig.audioRecordBufferFrames();
             while (bufferSize < minBufferSize) {
                 bufferSize += mConfig.frameSize(); // Unlikely.
             }
             mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.CAMCORDER,
                     mConfig.samplingFrequency,
-                    mConfig.channels,
+                    mConfig.audioFormatChannels(),
                     mConfig.encoding,
                     bufferSize);
             setPriority(Thread.MAX_PRIORITY);
@@ -315,12 +313,14 @@ public class AudioMediaEncoder extends MediaEncoder {
                         // Performance logging
                         if (PERFORMANCE_DEBUG) {
                             long sendEnd = System.nanoTime() / 1000000;
-                            //noinspection ConstantConditions
-                            long sendStart = mSendStartMap.remove(inputBuffer.timestamp);
-                            mAvgSendDelay = ((mAvgSendDelay * mSendCount) + (sendEnd - sendStart)) / (++mSendCount);
-                            LOG.v("send delay millis:", sendEnd - sendStart, "average:", mAvgSendDelay);
+                            Long sendStart = mSendStartMap.remove(inputBuffer.timestamp);
+                            if (sendStart != null) {
+                                mAvgSendDelay = ((mAvgSendDelay * mSendCount) + (sendEnd - sendStart)) / (++mSendCount);
+                                LOG.v("send delay millis:", sendEnd - sendStart, "average:", mAvgSendDelay);
+                            } else {
+                                // This input buffer was already processed (but tryAcquire failed for now).
+                            }
                         }
-
 
                         // Actual work
                         if (inputBuffer.isEndOfStream) {
