@@ -18,9 +18,11 @@ import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.video.encoding.AudioConfig;
 import com.otaliastudios.cameraview.video.encoding.AudioMediaEncoder;
 import com.otaliastudios.cameraview.video.encoding.EncoderThread;
 import com.otaliastudios.cameraview.video.encoding.MediaEncoderEngine;
+import com.otaliastudios.cameraview.video.encoding.TextureConfig;
 import com.otaliastudios.cameraview.video.encoding.TextureMediaEncoder;
 
 import androidx.annotation.NonNull;
@@ -38,8 +40,14 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private static final int DEFAULT_VIDEO_FRAMERATE = 30;
-    private static final int DEFAULT_VIDEO_BITRATE = 1000000;
     private static final int DEFAULT_AUDIO_BITRATE = 64000;
+
+    // https://stackoverflow.com/a/5220554/4288782
+    // Assuming low motion, we don't want to put this too high for default usage,
+    // advanced users are still free to change this for each video.
+    private static int estimateVideoBitRate(@NonNull Size size, int frameRate) {
+        return (int) (0.07F * 1F * size.getWidth() * size.getHeight() * frameRate);
+    }
 
     private static final int STATE_RECORDING = 0;
     private static final int STATE_NOT_RECORDING = 1;
@@ -73,7 +81,6 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     protected void onStart() {
         mPreview.addRendererFrameCallback(this);
         mDesiredState = STATE_RECORDING;
-        dispatchVideoRecordingStart();
     }
 
     @Override
@@ -101,8 +108,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             LOG.i("Starting the encoder engine.");
 
             // Set default options
-            if (mResult.videoBitRate <= 0) mResult.videoBitRate = DEFAULT_VIDEO_BITRATE;
             if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
+            if (mResult.videoBitRate <= 0) mResult.videoBitRate = estimateVideoBitRate(mResult.size, mResult.videoFrameRate);
             if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
 
             // Video. Ensure width and height are divisible by 2, as I have read somewhere.
@@ -118,22 +125,31 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case DEVICE_DEFAULT: type = "video/avc"; break;
             }
             LOG.w("Creating frame encoder. Rotation:", mResult.rotation);
-            TextureMediaEncoder.Config config = new TextureMediaEncoder.Config(width, height,
-                    mResult.videoBitRate,
-                    mResult.videoFrameRate,
-                    mResult.rotation,
-                    type, mTextureId,
-                    scaleX, scaleY,
-                    EGL14.eglGetCurrentContext(),
-                    mHasOverlay ? mOverlayTextureId : TextureMediaEncoder.NO_TEXTURE,
-                    mOverlayRotation
-            );
-            TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
+            TextureConfig videoConfig = new TextureConfig();
+            videoConfig.width = width;
+            videoConfig.height = height;
+            videoConfig.bitRate = mResult.videoBitRate;
+            videoConfig.frameRate = mResult.videoFrameRate;
+            videoConfig.rotation = mResult.rotation;
+            videoConfig.mimeType = type;
+            videoConfig.textureId = mTextureId;
+            videoConfig.scaleX = scaleX;
+            videoConfig.scaleY = scaleY;
+            videoConfig.eglContext = EGL14.eglGetCurrentContext();
+            if (mHasOverlay) {
+                videoConfig.overlayTextureId = mOverlayTextureId;
+                videoConfig.overlayRotation = mOverlayRotation;
+            }
+            TextureMediaEncoder videoEncoder = new TextureMediaEncoder(videoConfig);
 
             // Audio
             AudioMediaEncoder audioEncoder = null;
-            if (mResult.audio == Audio.ON) {
-                audioEncoder = new AudioMediaEncoder(new AudioMediaEncoder.Config(mResult.audioBitRate));
+            if (mResult.audio == Audio.ON || mResult.audio == Audio.MONO || mResult.audio == Audio.STEREO) {
+                AudioConfig audioConfig = new AudioConfig();
+                audioConfig.bitRate = mResult.audioBitRate;
+                if (mResult.audio == Audio.MONO) audioConfig.channels = 1;
+                if (mResult.audio == Audio.STEREO) audioConfig.channels = 2;
+                audioEncoder = new AudioMediaEncoder(audioConfig);
             }
 
             // Engine
@@ -147,9 +163,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         if (mCurrentState == STATE_RECORDING) {
             LOG.v("dispatching frame.");
             TextureMediaEncoder textureEncoder = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
-            TextureMediaEncoder.TextureFrame textureFrame = textureEncoder.acquireFrame();
-            textureFrame.timestamp = surfaceTexture.getTimestamp();
-            surfaceTexture.getTransformMatrix(textureFrame.transform);
+            TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
+            frame.timestamp = surfaceTexture.getTimestamp();
+            frame.timestampMillis = System.currentTimeMillis(); // NOTE: this is an approximation but it seems to work.
+            surfaceTexture.getTransformMatrix(frame.transform);
 
             // get overlay
             if (mHasOverlay) {
@@ -162,12 +179,12 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                     LOG.w("Got Surface.OutOfResourcesException while drawing video overlays", e);
                 }
                 mOverlaySurfaceTexture.updateTexImage();
-                mOverlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);
+                mOverlaySurfaceTexture.getTransformMatrix(frame.overlayTransform);
             }
 
             if (mEncoderEngine != null) {
                 // can happen on teardown
-                mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
+                mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
             }
         }
 
@@ -192,7 +209,12 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     @Override
     public void onEncodingStart() {
-        // Do nothing.
+        dispatchVideoRecordingStart();
+    }
+
+    @Override
+    public void onEncodingStop() {
+        dispatchVideoRecordingEnd();
     }
 
     @EncoderThread

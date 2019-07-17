@@ -129,12 +129,29 @@ public abstract class CameraListener {
 
 
     /**
-     * Notifies that the actual video recording has started
+     * Notifies that the actual video recording has started.
      * This is the time when actual frames recording starts.
-     * This can be used to show some indicator while the actual video recording.
+     *
+     * This can be used to show some UI indicator for video recording or counting time.
+     *
+     * @see #onVideoRecordingEnd()
      */
     @UiThread
     public void onVideoRecordingStart() {
+
+    }
+
+    /**
+     * Notifies that the actual video recording has ended.
+     * At this point recording has ended, though the file might still be processed.
+     * The {@link #onVideoTaken(VideoResult)} callback will be called soon.
+     *
+     * This can be used to remove UI indicators for video recording.
+     *
+     * @see #onVideoRecordingStart()
+     */
+    @UiThread
+    public void onVideoRecordingEnd() {
 
     }
 

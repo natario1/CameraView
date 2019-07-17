@@ -9,22 +9,18 @@ import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
-import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
-import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
-import com.otaliastudios.cameraview.size.SizeSelector;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -176,10 +172,5 @@ public class MockCameraEngine extends CameraEngine {
     @Override
     protected boolean collectCameraInfo(@NonNull Facing facing) {
         return true;
-    }
-
-    @Override
-    public void onVideoRecordingStart() {
-
     }
 }

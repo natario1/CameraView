@@ -77,7 +77,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @BeforeClass
     public static void grant() {
-        grantPermissions();
+        grantAllPermissions();
     }
 
     @NonNull
@@ -88,7 +88,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         LOG.e("Test started. Setting up camera.");
         WorkerHandler.destroy();
 
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 camera = new CameraView(rule.getActivity()) {
@@ -139,12 +139,13 @@ public abstract class CameraIntegrationTest extends BaseTest {
     private CameraOptions openSync(boolean expectSuccess) {
         camera.open();
         final Op<CameraOptions> open = new Op<>(true);
-        doEndTask(open, 0).when(listener).onCameraOpened(any(CameraOptions.class));
+        doEndOp(open, 0).when(listener).onCameraOpened(any(CameraOptions.class));
         CameraOptions result = open.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Can open", result);
             // Extra wait for the bind state.
             // TODO fix this and other while {} in this class in a more elegant way.
+            //noinspection StatementWithEmptyBody
             while (controller.getBindState() != CameraEngine.STATE_STARTED) {}
         } else {
             assertNull("Should not open", result);
@@ -155,7 +156,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     private void closeSync(boolean expectSuccess) {
         camera.close();
         final Op<Boolean> close = new Op<>(true);
-        doEndTask(close, true).when(listener).onCameraClosed();
+        doEndOp(close, true).when(listener).onCameraClosed();
         Boolean result = close.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Can close", result);
@@ -167,16 +168,24 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @SuppressWarnings("UnusedReturnValue")
     @Nullable
     private VideoResult waitForVideoResult(boolean expectSuccess) {
+        // CountDownLatch for onVideoRecordingEnd.
+        CountDownLatch onVideoRecordingEnd = new CountDownLatch(1);
+        doCountDown(onVideoRecordingEnd).when(listener).onVideoRecordingEnd();
+
+        // Op for onVideoTaken.
         final Op<VideoResult> video = new Op<>(true);
-        doEndTask(video, 0).when(listener).onVideoTaken(any(VideoResult.class));
-        doEndTask(video, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
+        doEndOp(video, 0).when(listener).onVideoTaken(any(VideoResult.class));
+        doEndOp(video, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
             @Override
             public boolean matches(CameraException argument) {
                 return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
             }
         }));
+
+        // Wait for onVideoTaken and check.
         VideoResult result = video.await(VIDEO_DELAY);
         if (expectSuccess) {
+            assertEquals("Should call onVideoRecordingEnd", 0, onVideoRecordingEnd.getCount());
             assertNotNull("Should end video", result);
         } else {
             assertNull("Should not end video", result);
@@ -187,8 +196,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @Nullable
     private PictureResult waitForPictureResult(boolean expectSuccess) {
         final Op<PictureResult> pic = new Op<>(true);
-        doEndTask(pic, 0).when(listener).onPictureTaken(any(PictureResult.class));
-        doEndTask(pic, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
+        doEndOp(pic, 0).when(listener).onPictureTaken(any(PictureResult.class));
+        doEndOp(pic, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
             @Override
             public boolean matches(CameraException argument) {
                 return argument.getReason() == CameraException.REASON_PICTURE_FAILED;
@@ -209,14 +218,14 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     private void takeVideoSync(boolean expectSuccess, int duration) {
         final Op<Boolean> op = new Op<>(true);
-        doEndTask(op, true).when(listener).onVideoRecordingStart();
-        doEndTask(op, false).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
+        doEndOp(op, true).when(listener).onVideoRecordingStart();
+        doEndOp(op, false).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
             @Override
             public boolean matches(CameraException argument) {
                 return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
             }
         }));
-        File file = new File(context().getFilesDir(), "video.mp4");
+        File file = new File(getContext().getFilesDir(), "video.mp4");
         if (duration > 0) {
             camera.takeVideo(file, duration);
         } else {
@@ -231,21 +240,21 @@ public abstract class CameraIntegrationTest extends BaseTest {
         }
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "SameParameterValue"})
     private void takeVideoSnapshotSync(boolean expectSuccess) {
         takeVideoSnapshotSync(expectSuccess,0);
     }
 
     private void takeVideoSnapshotSync(boolean expectSuccess, int duration) {
         final Op<Boolean> op = new Op<>(true);
-        doEndTask(op, true).when(listener).onVideoRecordingStart();
-        doEndTask(op, false).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
+        doEndOp(op, true).when(listener).onVideoRecordingStart();
+        doEndOp(op, false).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
             @Override
             public boolean matches(CameraException argument) {
                 return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
             }
         }));
-        File file = new File(context().getFilesDir(), "video.mp4");
+        File file = new File(getContext().getFilesDir(), "video.mp4");
         if (duration > 0) {
             camera.takeVideoSnapshot(file, duration);
         } else {
@@ -541,11 +550,10 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Test
     public void testEndVideoSnapshot_withMaxSize() {
-        // TODO
-        // camera.setVideoMaxSize(3000*1000);
-        // waitForOpen(true);
-        // waitForVideoStart();
-        // waitForVideoEnd(true);
+        camera.setVideoMaxSize(3000*1000);
+        openSync(true);
+        takeVideoSnapshotSync(true);
+        waitForVideoResult(true);
     }
 
     @Test
@@ -559,11 +567,10 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Test
     public void testEndVideoSnapshot_withMaxDuration() {
-        // TODO
-        // camera.setVideoMaxDuration(4000);
-        // waitForOpen(true);
-        // waitForVideoStart();
-        // waitForVideoEnd(true);
+        camera.setVideoMaxDuration(4000);
+        openSync(true);
+        takeVideoSnapshotSync(true);
+        waitForVideoResult(true);
     }
 
     //endregion
@@ -575,7 +582,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         CameraOptions o = openSync(true);
 
         final Op<PointF> focus = new Op<>(true);
-        doEndTask(focus, 0).when(listener).onAutoFocusStart(any(PointF.class));
+        doEndOp(focus, 0).when(listener).onAutoFocusStart(any(PointF.class));
 
         camera.startAutoFocus(1, 1);
         PointF point = focus.await(300);
@@ -592,7 +599,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         CameraOptions o = openSync(true);
 
         final Op<PointF> focus = new Op<>(true);
-        doEndTask(focus, 1).when(listener).onAutoFocusEnd(anyBoolean(), any(PointF.class));
+        doEndOp(focus, 1).when(listener).onAutoFocusEnd(anyBoolean(), any(PointF.class));
 
         camera.startAutoFocus(1, 1);
         // Stop is not guaranteed to be called, we use a delay. So wait at least the delay time.
@@ -632,7 +639,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Test
-    public void testCapturePicture_size() throws Exception {
+    public void testCapturePicture_size() {
         openSync(true);
         // PictureSize can still be null after opened.
         // TODO be more elegant
@@ -682,7 +689,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Test
-    public void testCaptureSnapshot_size() throws Exception {
+    public void testCaptureSnapshot_size() {
         openSync(true);
         // SnapshotSize can still be null after opened.
         // TODO be more elegant

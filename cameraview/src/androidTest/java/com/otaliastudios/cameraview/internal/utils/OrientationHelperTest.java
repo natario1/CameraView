@@ -6,7 +6,6 @@ import androidx.test.filters.SmallTest;
 import android.view.OrientationEventListener;
 
 import com.otaliastudios.cameraview.BaseTest;
-import com.otaliastudios.cameraview.internal.utils.OrientationHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -25,11 +24,11 @@ public class OrientationHelperTest extends BaseTest {
 
     @Before
     public void setUp() {
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 callback = mock(OrientationHelper.Callback.class);
-                helper = new OrientationHelper(context(), callback);
+                helper = new OrientationHelper(getContext(), callback);
             }
         });
     }
@@ -46,12 +45,12 @@ public class OrientationHelperTest extends BaseTest {
         assertEquals(helper.getDisplayOffset(), -1);
         assertEquals(helper.getDeviceOrientation(), -1);
 
-        helper.enable(context());
+        helper.enable(getContext());
         assertNotNull(helper.mListener);
         assertNotEquals(helper.getDisplayOffset(), -1); // Don't know about device orientation.
 
         // Ensure nothing bad if called twice.
-        helper.enable(context());
+        helper.enable(getContext());
         assertNotNull(helper.mListener);
         assertNotEquals(helper.getDisplayOffset(), -1);
 
@@ -66,7 +65,7 @@ public class OrientationHelperTest extends BaseTest {
 
         // Sometimes (on some APIs) the helper will trigger an update to 0
         // right after enabling. But that's fine for us, times(1) will be OK either way.
-        helper.enable(context());
+        helper.enable(getContext());
         helper.mListener.onOrientationChanged(OrientationEventListener.ORIENTATION_UNKNOWN);
         assertEquals(helper.getDeviceOrientation(), 0);
         helper.mListener.onOrientationChanged(10);

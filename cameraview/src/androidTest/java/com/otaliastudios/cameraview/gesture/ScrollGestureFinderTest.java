@@ -1,8 +1,6 @@
 package com.otaliastudios.cameraview.gesture;
 
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -11,13 +9,10 @@ import androidx.test.filters.SmallTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.swipeDown;
 import static androidx.test.espresso.action.ViewActions.swipeLeft;
 import static androidx.test.espresso.action.ViewActions.swipeRight;
 import static androidx.test.espresso.action.ViewActions.swipeUp;
-import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -33,7 +28,7 @@ public class ScrollGestureFinderTest extends GestureFinderTest<ScrollGestureFind
 
     @Test
     public void testDefaults() {
-        assertNull(finder.getGesture());
+        assertNull(finder.mType);
         assertEquals(finder.getPoints().length, 2);
         assertEquals(finder.getPoints()[0].x, 0, 0);
         assertEquals(finder.getPoints()[0].y, 0, 0);

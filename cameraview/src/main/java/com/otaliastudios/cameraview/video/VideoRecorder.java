@@ -29,10 +29,16 @@ public abstract class VideoRecorder {
          * The callback for the actual video recording starting.
          */
         void onVideoRecordingStart();
+
+        /**
+         * Video recording has ended. We will finish processing the file
+         * and soon {@link #onVideoResult(VideoResult.Stub, Exception)} will be called.
+         */
+        void onVideoRecordingEnd();
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) VideoResult.Stub mResult;
-    @VisibleForTesting final VideoResultListener mListener;
+    private final VideoResultListener mListener;
     @SuppressWarnings("WeakerAccess")
     protected Exception mError;
     private boolean mIsRecording;
@@ -96,9 +102,20 @@ public abstract class VideoRecorder {
      */
     @SuppressWarnings("WeakerAccess")
     @CallSuper
-    protected void dispatchVideoRecordingStart(){
-        if(mListener != null){
+    protected void dispatchVideoRecordingStart() {
+        if (mListener != null) {
             mListener.onVideoRecordingStart();
+        }
+    }
+
+    /**
+     * Subclasses can call this to notify that the video recording has ended,
+     * although the video result might still be processed.
+     */
+    @CallSuper
+    protected void dispatchVideoRecordingEnd() {
+        if (mListener != null) {
+            mListener.onVideoRecordingEnd();
         }
     }
 }

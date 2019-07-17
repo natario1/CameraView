@@ -4,7 +4,6 @@ package com.otaliastudios.cameraview.internal.utils;
 import android.graphics.Rect;
 
 import com.otaliastudios.cameraview.BaseTest;
-import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -15,11 +14,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest

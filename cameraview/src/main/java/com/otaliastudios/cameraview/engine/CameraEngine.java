@@ -136,6 +136,7 @@ public abstract class CameraEngine implements
         void dispatchFrame(Frame frame);
         void dispatchError(CameraException exception);
         void dispatchOnVideoRecordingStart();
+        void dispatchOnVideoRecordingEnd();
     }
 
     private static final String TAG = CameraEngine.class.getSimpleName();
@@ -1210,6 +1211,10 @@ public abstract class CameraEngine implements
         mCallback.dispatchOnVideoRecordingStart();
     }
 
+    @Override
+    public void onVideoRecordingEnd() {
+        mCallback.dispatchOnVideoRecordingEnd();
+    }
 
     @WorkerThread
     protected abstract void onTakePicture(@NonNull PictureResult.Stub stub);

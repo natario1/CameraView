@@ -1,8 +1,10 @@
 package com.otaliastudios.cameraview.video.encoding;
 
+import android.annotation.SuppressLint;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
+import android.text.format.DateFormat;
 
 import com.otaliastudios.cameraview.CameraLogger;
 
@@ -13,9 +15,42 @@ import androidx.annotation.RequiresApi;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The entry point for encoding video files.
+ *
+ * The external API is simple but the internal mechanism is not easy. Basically the engine
+ * controls a {@link MediaEncoder} instance for each track (e.g. one for video, one for audio).
+ *
+ * 1. We prepare the MediaEncoders: {@link MediaEncoder#prepare(Controller, long)}
+ *    MediaEncoders can be prepared synchronously or not.
+ *
+ * 2. Someone calls {@link #start()} from any thread.
+ *    As a consequence, we start the MediaEncoders: {@link MediaEncoder#start()}.
+ *
+ * 3. MediaEncoders do not start synchronously. Instead, they call
+ *    {@link Controller#notifyStarted(MediaFormat)} when they have a legit format,
+ *    and we keep track of who has started.
+ *
+ * 4. When all MediaEncoders have started, we actually start the muxer.
+ *
+ * 5. Someone calls {@link #stop()} from any thread.
+ *    As a consequence, we stop the MediaEncoders: {@link MediaEncoder#stop()}.
+ *
+ * 6. MediaEncoders do not stop synchronously. Instead, they will stop reading but
+ *    keep draining the codec until there's no data left. At that point, they can
+ *    call {@link Controller#notifyStopped(int)}.
+ *
+ * 7. When all MediaEncoders have been released, we actually stop the muxer and notify.
+ *
+ * There is another possibility where MediaEncoders themselves want to stop, for example
+ * because they reach some limit or constraint (e.g. max duration). For this, they should
+ * call {@link Controller#requestStop(int)}. Once all MediaEncoders have stopped, we will
+ * actually call {@link #stop()} on ourselves.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class MediaEncoderEngine {
@@ -33,7 +68,17 @@ public class MediaEncoderEngine {
         void onEncodingStart();
 
         /**
-         * Called when encoding stopped for some reason.
+         * Called when encoding stopped. At this point the mxuer might still be processing,
+         * but we have stopped receiving input (recording video and audio frames).
+         *
+         * The {@link #onEncodingEnd(int, Exception)} callback will soon be called
+         * with the results.
+         */
+        @EncoderThread
+        void onEncodingStop();
+
+        /**
+         * Called when encoding ended for some reason.
          * If there's an exception, it failed.
          * @param reason the reason
          * @param e the error, if present
@@ -44,13 +89,14 @@ public class MediaEncoderEngine {
 
     private final static String TAG = MediaEncoderEngine.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
+    private static final boolean DEBUG_PERFORMANCE = true;
 
     @SuppressWarnings("WeakerAccess")
     public final static int END_BY_USER = 0;
     public final static int END_BY_MAX_DURATION = 1;
     public final static int END_BY_MAX_SIZE = 2;
 
-    private ArrayList<MediaEncoder> mEncoders;
+    private List<MediaEncoder> mEncoders;
     private MediaMuxer mMediaMuxer;
     private int mStartedEncodersCount;
     private int mReleasedEncodersCount;
@@ -148,7 +194,7 @@ public class MediaEncoderEngine {
 
     /**
      * Asks encoders to stop. This is not sync, of course we will ask for encoders
-     * to call {@link Controller#notifyReleased(int)} before actually stop the muxer.
+     * to call {@link Controller#notifyStopped(int)} before actually stop the muxer.
      * When all encoders request a release, {@link #end()} is called to do cleanup
      * and notify the listener.
      */
@@ -160,7 +206,7 @@ public class MediaEncoderEngine {
     }
 
     /**
-     * Called after all encoders have requested a release using {@link Controller#notifyReleased(int)}.
+     * Called after all encoders have requested a release using {@link Controller#notifyStopped(int)}.
      * At this point we will do cleanup and notify the listener.
      */
     private void end() {
@@ -217,7 +263,8 @@ public class MediaEncoderEngine {
      * A handle for {@link MediaEncoder}s to pass information to this engine.
      * All methods here can be called for multiple threads.
      */
-    class Controller {
+    @SuppressWarnings("WeakerAccess")
+    public class Controller {
 
         /**
          * Request that the muxer should start. This is not guaranteed to be executed:
@@ -225,15 +272,15 @@ public class MediaEncoderEngine {
          * @param format the media format
          * @return the encoder track index
          */
-        int requestStart(@NonNull MediaFormat format) {
+        public int notifyStarted(@NonNull MediaFormat format) {
             synchronized (mControllerLock) {
                 if (mMediaMuxerStarted) {
                     throw new IllegalStateException("Trying to start but muxer started already");
                 }
                 int track = mMediaMuxer.addTrack(format);
-                LOG.w("requestStart:", "Assigned track", track, "to format", format.getString(MediaFormat.KEY_MIME));
+                LOG.w("notifyStarted:", "Assigned track", track, "to format", format.getString(MediaFormat.KEY_MIME));
                 if (++mStartedEncodersCount == mEncoders.size()) {
-                    LOG.w("requestStart:", "All encoders have started. Starting muxer and dispatching onEncodingStart().");
+                    LOG.w("notifyStarted:", "All encoders have started. Starting muxer and dispatching onEncodingStart().");
                     mMediaMuxer.start();
                     mMediaMuxerStarted = true;
                     if (mListener != null) {
@@ -245,41 +292,58 @@ public class MediaEncoderEngine {
         }
 
         /**
-         * Whether the muxer is started.
+         * Whether the muxer is started. MediaEncoders are required to avoid
+         * calling {@link #write(OutputBufferPool, OutputBuffer)} until this method returns true.
+         *
          * @return true if muxer was started
          */
-        boolean isStarted() {
+        public boolean isStarted() {
             synchronized (mControllerLock) {
                 return mMediaMuxerStarted;
             }
         }
 
+        @SuppressLint("UseSparseArrays")
+        private Map<Integer, Integer> mDebugCount = new HashMap<>();
+
         /**
          * Writes the given data to the muxer. Should be called after {@link #isStarted()}
          * returns true. Note: this seems to be thread safe, no lock.
-         * TODO cache values if not started yet, then apply later. Read comments in drain().
-         * Currently they are recycled instantly.
          */
-        void write(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
+        public void write(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
             if (!mMediaMuxerStarted) {
                 throw new IllegalStateException("Trying to write before muxer started");
             }
-            // This is a bad idea and causes crashes.
-            // if (info.presentationTimeUs < mLastTimestampUs) info.presentationTimeUs = mLastTimestampUs;
-            // mLastTimestampUs = info.presentationTimeUs;
-            LOG.v("write:", "Writing OutputBuffer - track:", buffer.trackIndex, "presentation:", buffer.info.presentationTimeUs);
+
+            if (DEBUG_PERFORMANCE) {
+                // When AUDIO = mono, this is called about twice the time. (200 vs 100 for 5 sec).
+                Integer count = mDebugCount.get(buffer.trackIndex);
+                mDebugCount.put(buffer.trackIndex, count == null ? 1 : ++count);
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(buffer.info.presentationTimeUs / 1000);
+                LOG.v("write:", "Writing into muxer -",
+                                "track:", buffer.trackIndex,
+                        "presentation:", buffer.info.presentationTimeUs,
+                        "readable:", calendar.get(Calendar.SECOND) + ":" + calendar.get(Calendar.MILLISECOND),
+                        "count:", count);
+            } else {
+                LOG.v("write:", "Writing into muxer -",
+                        "track:", buffer.trackIndex,
+                        "presentation:", buffer.info.presentationTimeUs);
+            }
+
             mMediaMuxer.writeSampleData(buffer.trackIndex, buffer.data, buffer.info);
             pool.recycle(buffer);
         }
 
         /**
          * Requests that the engine stops. This is not executed until all encoders call
-         * this method, so it is a kind of soft request, just like {@link #requestStart(MediaFormat)}.
+         * this method, so it is a kind of soft request, just like {@link #notifyStarted(MediaFormat)}.
          * To be used when maxLength / maxSize constraints are reached, for example.
          *
          * When this succeeds, {@link MediaEncoder#stop()} is called.
          */
-        void requestStop(int track) {
+        public void requestStop(int track) {
             synchronized (mControllerLock) {
                 LOG.w("requestStop:", "Called for track", track);
                 if (--mStartedEncodersCount == 0) {
@@ -294,11 +358,14 @@ public class MediaEncoderEngine {
          * Notifies that the encoder was stopped. After this is called by all encoders,
          * we will actually stop the muxer.
          */
-        void notifyReleased(int track) {
+        public void notifyStopped(int track) {
             synchronized (mControllerLock) {
-                LOG.w("notifyReleased:", "Called for track", track);
+                LOG.w("notifyStopped:", "Called for track", track);
                 if (++mReleasedEncodersCount == mEncoders.size()) {
                     LOG.w("requestStop:", "All encoders have been released. Stopping the muxer.");
+                    if (mListener != null) {
+                        mListener.onEncodingStop();
+                    }
                     end();
                 }
             }

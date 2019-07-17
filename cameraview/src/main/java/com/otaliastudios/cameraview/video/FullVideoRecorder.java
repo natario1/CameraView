@@ -37,17 +37,16 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         super(listener);
     }
 
-    @SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "BooleanMethodIsAlwaysInverted"})
+    @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
     protected boolean prepareMediaRecorder(@NonNull VideoResult.Stub stub) {
         if (mMediaRecorderPrepared) return true;
         return onPrepareMediaRecorder(stub, new MediaRecorder());
     }
 
-    @SuppressWarnings("WeakerAccess")
     protected boolean onPrepareMediaRecorder(@NonNull VideoResult.Stub stub, @NonNull MediaRecorder mediaRecorder) {
         mMediaRecorder = mediaRecorder;
         Size size = stub.rotation % 180 != 0 ? stub.size.flip() : stub.size;
-        if (stub.audio == Audio.ON) {
+        if (stub.audio == Audio.ON || stub.audio == Audio.MONO || stub.audio == Audio.STEREO) {
             // Must be called before setOutputFormat.
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         }
@@ -71,8 +70,15 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         } else {
             mMediaRecorder.setVideoEncodingBitRate(stub.videoBitRate);
         }
-        if (stub.audio == Audio.ON) {
-            mMediaRecorder.setAudioChannels(mProfile.audioChannels);
+        if (stub.audio == Audio.ON || stub.audio == Audio.MONO || stub.audio == Audio.STEREO) {
+            if (stub.audio == Audio.ON) {
+                mMediaRecorder.setAudioChannels(mProfile.audioChannels);
+            } else if (stub.audio == Audio.MONO) {
+                mMediaRecorder.setAudioChannels(1);
+            } else //noinspection ConstantConditions
+                if (stub.audio == Audio.STEREO) {
+                mMediaRecorder.setAudioChannels(2);
+            }
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
             mMediaRecorder.setAudioEncoder(mProfile.audioCodec);
             if (stub.audioBitRate <= 0) {
@@ -142,6 +148,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
     @Override
     protected void onStop() {
         if (mMediaRecorder != null) {
+            dispatchVideoRecordingEnd();
             try {
                 mMediaRecorder.stop();
             } catch (Exception e) {

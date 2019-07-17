@@ -56,22 +56,23 @@ public final class CameraLogger {
     @VisibleForTesting static String lastTag;
 
     private static int sLevel;
-    private static List<Logger> sLoggers;
+    private static List<Logger> sLoggers = new ArrayList<>();
+
+    @VisibleForTesting static Logger sAndroidLogger = new Logger() {
+        @Override
+        public void log(int level, @NonNull String tag, @NonNull String message, @Nullable Throwable throwable) {
+            switch (level) {
+                case LEVEL_VERBOSE: Log.v(tag, message, throwable); break;
+                case LEVEL_INFO: Log.i(tag, message, throwable); break;
+                case LEVEL_WARNING: Log.w(tag, message, throwable); break;
+                case LEVEL_ERROR: Log.e(tag, message, throwable); break;
+            }
+        }
+    };
 
     static {
         setLogLevel(LEVEL_ERROR);
-        sLoggers = new ArrayList<>();
-        sLoggers.add(new Logger() {
-            @Override
-            public void log(int level, @NonNull String tag, @NonNull String message, @Nullable Throwable throwable) {
-                switch (level) {
-                    case LEVEL_VERBOSE: Log.v(tag, message, throwable); break;
-                    case LEVEL_INFO: Log.i(tag, message, throwable); break;
-                    case LEVEL_WARNING: Log.w(tag, message, throwable); break;
-                    case LEVEL_ERROR: Log.e(tag, message, throwable); break;
-                }
-            }
-        });
+        sLoggers.add(sAndroidLogger);
     }
 
     /**

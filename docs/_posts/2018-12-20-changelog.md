@@ -12,8 +12,11 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 
 - New: support for watermarks and animated overlays ([docs](../docs/watermarks-and-overlays.html)), thanks to [@RAN3000][RAN3000] ([#502][502], [#421][421])
 - New: added `onVideoRecordingStart()` to be notified when video recording starts, thanks to [@agrawalsuneet][agrawalsuneet] ([#498][498])
+- New: added `onVideoRecordingEnd()` to be notified when video recording ends ([#506][506])
+- New: added `Audio.MONO` and `Audio.STEREO` to control the channel count for videos and video snapshots ([#506][506])
 - New: added `cameraUseDeviceOrientation` to choose whether picture and video outputs should consider the device orientation or not ([#497][497])
 - Improvement: improved Camera2 stability and various bugs fixed (e.g. [#501][501])
+- Improvement: improved video snapshots speed, quality and stability ([#506][506])
 
 ### v2.0.0-beta06
 
@@ -27,7 +30,7 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 
 If you were using `focus`, just switch to `autoFocus`.
 
-If you were using `focusWithMarker`, you can [add back the old marker](../docs/more-features.html#cameraautofocusmarker).
+If you were using `focusWithMarker`, you can [add back the old marker](../docs/controls.html#cameraautofocusmarker).
 
 
 ### v2.0.0-beta05
@@ -79,3 +82,4 @@ This is the first beta release. For changes with respect to v1, please take a lo
 [498]: https://github.com/natario1/CameraView/pull/498
 [501]: https://github.com/natario1/CameraView/pull/501
 [502]: https://github.com/natario1/CameraView/pull/502
+[506]: https://github.com/natario1/CameraView/pull/506

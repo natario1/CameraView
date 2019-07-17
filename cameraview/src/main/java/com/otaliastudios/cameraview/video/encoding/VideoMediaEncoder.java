@@ -14,13 +14,22 @@ import com.otaliastudios.cameraview.CameraLogger;
 import java.io.IOException;
 
 /**
- * This alone does nothing.
- * Subclasses must make sure they write each frame onto the given Surface {@link #mSurface}.
+ * Base class for video encoding.
+ *
+ * This uses {@link MediaCodec#createInputSurface()} to create an input {@link Surface}
+ * into which we can write and that MediaCodec itself can read.
+ *
+ * This makes everything easier with respect to the process explained in {@link MediaEncoder}
+ * docs. We can skip the whole input part of acquiring an InputBuffer, filling it with data
+ * and returning it to the encoder with {@link #encodeInputBuffer(InputBuffer)}.
+ *
+ * All of this is automatically done by MediaCodec as long as we keep writing data into the
+ * given {@link Surface}. This class alone does not do this - subclasses are required to do so.
  *
  * @param <C> the config object.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends MediaEncoder {
+abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
 
     private static final String TAG = VideoMediaEncoder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -32,39 +41,16 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
     protected Surface mSurface;
 
     @SuppressWarnings("WeakerAccess")
-    protected int mFrameNum = -1;
-
-    static class Config {
-        int width;
-        int height;
-        int bitRate;
-        int frameRate;
-        int rotation;
-        String mimeType;
-
-        Config(int width, int height, int bitRate, int frameRate, int rotation, @NonNull String mimeType) {
-            this.width = width;
-            this.height = height;
-            this.bitRate = bitRate;
-            this.frameRate = frameRate;
-            this.rotation = rotation;
-            this.mimeType = mimeType;
-        }
-    }
+    protected int mFrameNumber = -1;
 
     VideoMediaEncoder(@NonNull C config) {
+        super("VideoEncoder");
         mConfig = config;
-    }
-
-    @NonNull
-    @Override
-    String getName() {
-        return "VideoEncoder";
     }
 
     @EncoderThread
     @Override
-    void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
 
         // Set some properties.  Failing to specify some of these can cause the MediaCodec
@@ -89,22 +75,25 @@ abstract class VideoMediaEncoder<C extends VideoMediaEncoder.Config> extends Med
 
     @EncoderThread
     @Override
-    void onStart() {
+    protected void onStart() {
         // Nothing to do here. Waiting for the first frame.
-        mFrameNum = 0;
+        mFrameNumber = 0;
     }
 
     @EncoderThread
     @Override
-    void onStop() {
-        LOG.i("onStop", "setting mFrameNum to 1 and signaling the end of input stream.");
-        mFrameNum = -1;
-        signalEndOfInputStream();
+    protected void onStop() {
+        LOG.i("onStop", "setting mFrameNumber to 1 and signaling the end of input stream.");
+        mFrameNumber = -1;
+        // Signals the end of input stream. This is a Video only API, as in the normal case,
+        // we use input buffers to signal the end. In the video case, we don't have input buffers
+        // because we use an input surface instead.
+        mMediaCodec.signalEndOfInputStream();
         drainOutput(true);
     }
 
     @Override
-    int getEncodedBitRate() {
+    protected int getEncodedBitRate() {
         return mConfig.bitRate;
     }
 }

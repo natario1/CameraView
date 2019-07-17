@@ -6,10 +6,8 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
-import android.media.ImageReader;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.util.Range;
@@ -63,8 +61,6 @@ public class CameraOptions {
     private boolean autoFocusSupported;
 
 
-    // Camera1Engine constructor.
-    @SuppressWarnings("deprecation")
     public CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
         Mapper mapper = Mapper.get(Engine.CAMERA1);
@@ -151,7 +147,6 @@ public class CameraOptions {
 
     // Camera2Engine constructor.
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    @SuppressWarnings("deprecation")
     public CameraOptions(@NonNull CameraManager manager, @NonNull String  cameraId, boolean flipSizes) throws CameraAccessException {
         Mapper mapper = Mapper.get(Engine.CAMERA2);
         CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(cameraId);
@@ -323,7 +318,6 @@ public class CameraOptions {
      *
      * @return a collection of supported values.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<Size> getSupportedPictureSizes() {
         return Collections.unmodifiableSet(supportedPictureSizes);
@@ -347,7 +341,6 @@ public class CameraOptions {
      *
      * @return a collection of supported values.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<Size> getSupportedVideoSizes() {
         return Collections.unmodifiableSet(supportedVideoSizes);
@@ -373,7 +366,6 @@ public class CameraOptions {
      * @see Facing#FRONT
      * @return a collection of supported values.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<Facing> getSupportedFacing() {
         return Collections.unmodifiableSet(supportedFacing);
@@ -389,7 +381,6 @@ public class CameraOptions {
      * @see Flash#TORCH
      * @return a collection of supported values.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<Flash> getSupportedFlash() {
         return Collections.unmodifiableSet(supportedFlash);
@@ -406,7 +397,6 @@ public class CameraOptions {
      * @see WhiteBalance#CLOUDY
      * @return a collection of supported values.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Collection<WhiteBalance> getSupportedWhiteBalance() {
         return Collections.unmodifiableSet(supportedWhiteBalance);
@@ -432,7 +422,6 @@ public class CameraOptions {
      *
      * @return whether zoom is supported.
      */
-    @SuppressWarnings("WeakerAccess")
     public boolean isZoomSupported() {
         return zoomSupported;
     }
@@ -444,7 +433,6 @@ public class CameraOptions {
      *
      * @return whether auto focus is supported.
      */
-    @SuppressWarnings("WeakerAccess")
     public boolean isAutoFocusSupported() {
         return autoFocusSupported;
     }
@@ -458,7 +446,6 @@ public class CameraOptions {
      * @see #getExposureCorrectionMaxValue()
      * @return whether exposure correction is supported.
      */
-    @SuppressWarnings("WeakerAccess")
     public boolean isExposureCorrectionSupported() {
         return exposureCorrectionSupported;
     }
@@ -470,7 +457,6 @@ public class CameraOptions {
      *
      * @return min EV value
      */
-    @SuppressWarnings("WeakerAccess")
     public float getExposureCorrectionMinValue() {
         return exposureCorrectionMinValue;
     }
@@ -482,7 +468,6 @@ public class CameraOptions {
      *
      * @return max EV value
      */
-    @SuppressWarnings("WeakerAccess")
     public float getExposureCorrectionMaxValue() {
         return exposureCorrectionMaxValue;
     }

@@ -32,7 +32,6 @@ public abstract class CameraPreviewTest extends BaseTest {
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
-    @SuppressWarnings("WeakerAccess")
     protected CameraPreview preview;
     @SuppressWarnings("WeakerAccess")
     protected Size surfaceSize;
@@ -46,7 +45,7 @@ public abstract class CameraPreviewTest extends BaseTest {
         available = new Op<>(true);
         destroyed = new Op<>(true);
 
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 TestActivity a = rule.getActivity();
@@ -82,7 +81,7 @@ public abstract class CameraPreviewTest extends BaseTest {
 
     // Trigger a destroy.
     protected void ensureDestroyed() {
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 rule.getActivity().getContentView().removeView(preview.getRootView());

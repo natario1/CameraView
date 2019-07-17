@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
- * Base class for pools of recycleable objects.
+ * Base class for thread-safe pools of recycleable objects.
  * @param <T> the object type
  */
 public class Pool<T> {
@@ -19,8 +19,9 @@ public class Pool<T> {
 
     private int maxPoolSize;
     private int activeCount;
-    private LinkedBlockingQueue<T> mQueue;
+    private LinkedBlockingQueue<T> queue;
     private Factory<T> factory;
+    private final Object lock = new Object();
 
     /**
      * Used to create new instances of objects when needed.
@@ -37,7 +38,7 @@ public class Pool<T> {
      */
     public Pool(int maxPoolSize, @NonNull Factory<T> factory) {
         this.maxPoolSize = maxPoolSize;
-        this.mQueue = new LinkedBlockingQueue<>(maxPoolSize);
+        this.queue = new LinkedBlockingQueue<>(maxPoolSize);
         this.factory = factory;
     }
 
@@ -48,7 +49,9 @@ public class Pool<T> {
      * @return whether the pool is empty
      */
     public boolean isEmpty() {
-        return count() >= maxPoolSize;
+        synchronized (lock) {
+            return count() >= maxPoolSize;
+        }
     }
 
     /**
@@ -60,21 +63,23 @@ public class Pool<T> {
      */
     @Nullable
     public T get() {
-        T item = mQueue.poll();
-        if (item != null) {
-            activeCount++; // poll decreases, this fixes
-            LOG.v("GET - Reusing recycled item.", this);
-            return item;
-        }
+        synchronized (lock) {
+            T item = queue.poll();
+            if (item != null) {
+                activeCount++; // poll decreases, this fixes
+                LOG.v("GET - Reusing recycled item.", this);
+                return item;
+            }
 
-        if (isEmpty()) {
-            LOG.v("GET - Returning null. Too much items requested.", this);
-            return null;
-        }
+            if (isEmpty()) {
+                LOG.v("GET - Returning null. Too much items requested.", this);
+                return null;
+            }
 
-        activeCount++;
-        LOG.v("GET - Creating a new item.", this);
-        return factory.create();
+            activeCount++;
+            LOG.v("GET - Creating a new item.", this);
+            return factory.create();
+        }
     }
 
     /**
@@ -84,16 +89,18 @@ public class Pool<T> {
      * @param item used item
      */
     public void recycle(@NonNull T item) {
-        LOG.v("RECYCLE - Recycling item.", this);
-        if (--activeCount < 0) {
-            throw new IllegalStateException("Trying to recycle an item which makes activeCount < 0." +
-                    "This means that this or some previous items being recycled were not coming from " +
-                    "this pool, or some item was recycled more than once. " + this);
-        }
-        if (!mQueue.offer(item)) {
-            throw new IllegalStateException("Trying to recycle an item while the queue is full. " +
-                    "This means that this or some previous items being recycled were not coming from " +
-                    "this pool, or some item was recycled more than once. " + this);
+        synchronized (lock) {
+            LOG.v("RECYCLE - Recycling item.", this);
+            if (--activeCount < 0) {
+                throw new IllegalStateException("Trying to recycle an item which makes activeCount < 0." +
+                        "This means that this or some previous items being recycled were not coming from " +
+                        "this pool, or some item was recycled more than once. " + this);
+            }
+            if (!queue.offer(item)) {
+                throw new IllegalStateException("Trying to recycle an item while the queue is full. " +
+                        "This means that this or some previous items being recycled were not coming from " +
+                        "this pool, or some item was recycled more than once. " + this);
+            }
         }
     }
 
@@ -102,7 +109,9 @@ public class Pool<T> {
      */
     @CallSuper
     public void clear() {
-        mQueue.clear();
+        synchronized (lock) {
+            queue.clear();
+        }
     }
 
     /**
@@ -114,7 +123,9 @@ public class Pool<T> {
      */
     @SuppressWarnings("WeakerAccess")
     public final int count() {
-        return activeCount() + recycledCount();
+        synchronized (lock) {
+            return activeCount() + recycledCount();
+        }
     }
 
     /**
@@ -125,7 +136,9 @@ public class Pool<T> {
      */
     @SuppressWarnings("WeakerAccess")
     public final int activeCount() {
-        return activeCount;
+        synchronized (lock) {
+            return activeCount;
+        }
     }
 
     /**
@@ -137,7 +150,9 @@ public class Pool<T> {
      */
     @SuppressWarnings("WeakerAccess")
     public final int recycledCount() {
-        return mQueue.size();
+        synchronized (lock) {
+            return queue.size();
+        }
     }
 
     @NonNull

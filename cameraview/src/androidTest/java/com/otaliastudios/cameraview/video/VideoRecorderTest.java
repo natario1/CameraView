@@ -13,9 +13,6 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Constructor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
@@ -27,10 +24,13 @@ public class VideoRecorderTest extends BaseTest {
         VideoRecorder.VideoResultListener listener = Mockito.mock(VideoRecorder.VideoResultListener.class);
         VideoRecorder recorder = new VideoRecorder(listener) {
             @Override
-            protected void onStart() { dispatchVideoRecordingStart(); }
+            protected void onStart() {
+                dispatchVideoRecordingStart();
+            }
 
             @Override
             protected void onStop() {
+                dispatchVideoRecordingEnd();
                 dispatchResult();
             }
         };
@@ -38,6 +38,8 @@ public class VideoRecorderTest extends BaseTest {
         Mockito.verify(listener,Mockito.times(1) )
                 .onVideoRecordingStart();
         recorder.stop();
+        Mockito.verify(listener, Mockito.times(1))
+                .onVideoRecordingEnd();
         Mockito.verify(listener, Mockito.times(1))
                 .onVideoResult(result, null);
     }

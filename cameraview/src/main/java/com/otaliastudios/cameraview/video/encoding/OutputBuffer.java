@@ -9,8 +9,9 @@ import java.nio.ByteBuffer;
  * an encoded buffer of data that should be passed
  * to the muxer.
  */
-class OutputBuffer {
-    MediaCodec.BufferInfo info;
-    int trackIndex;
-    ByteBuffer data;
+@SuppressWarnings("WeakerAccess")
+public class OutputBuffer {
+    public MediaCodec.BufferInfo info;
+    public int trackIndex;
+    public ByteBuffer data;
 }

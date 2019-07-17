@@ -56,7 +56,7 @@ public class CameraUtilsTest extends BaseTest {
         };
 
         // Run on ui because it involves handlers.
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 if (maxWidth > 0 && maxHeight > 0) {
@@ -84,8 +84,6 @@ public class CameraUtilsTest extends BaseTest {
         assertEquals(0, other.getPixel(0, h-1));
         assertEquals(0, other.getPixel(w-1, 0));
         assertEquals(0, other.getPixel(w-1, h-1));
-
-        // TODO: improve when we add EXIF writing to byte arrays
     }
 
 

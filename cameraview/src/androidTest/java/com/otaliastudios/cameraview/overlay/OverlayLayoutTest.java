@@ -1,17 +1,12 @@
 package com.otaliastudios.cameraview.overlay;
 
 
-import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.util.Xml;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.test.annotation.UiThreadTest;
@@ -19,35 +14,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseTest;
-import com.otaliastudios.cameraview.R;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.w3c.dom.Attr;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
@@ -63,7 +40,7 @@ public class OverlayLayoutTest extends BaseTest {
 
     @Before
     public void setUp() {
-        overlayLayout = spy(new OverlayLayout(context()));
+        overlayLayout = spy(new OverlayLayout(getContext()));
     }
 
     @After
@@ -97,7 +74,7 @@ public class OverlayLayoutTest extends BaseTest {
     @NonNull
     private AttributeSet getAttributeSet(int layout) throws Exception {
         // Get the attribute set in the correct state: use a parser and move to START_TAG
-        XmlResourceParser parser = context().getResources().getLayout(layout);
+        XmlResourceParser parser = getContext().getResources().getLayout(layout);
         //noinspection StatementWithEmptyBody
         while (parser.next() != XmlResourceParser.START_TAG) {}
         return Xml.asAttributeSet(parser);
@@ -132,7 +109,7 @@ public class OverlayLayoutTest extends BaseTest {
     public void testDrawChild() {
         Canvas canvas = new Canvas();
         OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
-        View child = new View(context());
+        View child = new View(getContext());
         child.setLayoutParams(params);
         when(overlayLayout.doDrawChild(canvas, child, 0)).thenReturn(true);
 
@@ -169,7 +146,7 @@ public class OverlayLayoutTest extends BaseTest {
     @Test
     public void testDrawOn() {
         Canvas canvas = spy(new Canvas());
-        View child = new View(context());
+        View child = new View(getContext());
         OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
         params.drawOnPreview = true;
         params.drawOnPictureSnapshot = true;

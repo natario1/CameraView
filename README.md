@@ -95,7 +95,7 @@ motivation boost to push the library forward.
     app:cameraFlash="on|auto|torch|off"
     app:cameraWhiteBalance="auto|cloudy|daylight|fluorescent|incandescent"
     app:cameraMode="picture|video"
-    app:cameraAudio="on|off"
+    app:cameraAudio="on|off|mono|stereo"
     app:cameraGrid="draw3x3|draw4x4|drawPhi|off"
     app:cameraGridColor="@color/grid_color"
     app:cameraPlaySounds="true|false"

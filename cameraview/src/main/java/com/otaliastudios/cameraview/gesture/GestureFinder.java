@@ -3,6 +3,8 @@ package com.otaliastudios.cameraview.gesture;
 import android.content.Context;
 import android.graphics.PointF;
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+
 import android.view.MotionEvent;
 
 /**
@@ -22,7 +24,7 @@ public abstract class GestureFinder {
     private final static int GRANULARITY = 50;
 
     private boolean mActive;
-    private Gesture mType;
+    @VisibleForTesting Gesture mType;
     private PointF[] mPoints;
     private Controller mController;
 

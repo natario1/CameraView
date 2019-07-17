@@ -102,6 +102,8 @@
         <attr name="cameraAudio" format="enum">
             <enum name="off" value="0" />
             <enum name="on" value="1" />
+            <enum name="mono" value="2" />
+            <enum name="stereo" value="3" />
         </attr>
 
         <attr name="cameraGrid" format="enum">
