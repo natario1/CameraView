@@ -1,16 +1,21 @@
 package com.otaliastudios.cameraview.demo;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.otaliastudios.cameraview.CameraException;
@@ -24,6 +29,7 @@ import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Preview;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -31,8 +37,6 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
     private CameraView camera;
     private ViewGroup controlPanel;
-
-    // To show stuff in the callback
     private long mCaptureTime;
 
     @Override
@@ -65,9 +69,41 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
         controlPanel = findViewById(R.id.controls);
         ViewGroup group = (ViewGroup) controlPanel.getChildAt(0);
-        List<Option<?>> options = Option.getAll();
-        for (Option option : options) {
-            OptionView view = new OptionView(this, option, this);
+        final View watermark = findViewById(R.id.watermark);
+
+        List<Option<?>> options = Arrays.asList(
+                // Layout
+                new Option.Width(), new Option.Height(),
+                // Engine and preview
+                new Option.Mode(), new Option.Engine(), new Option.Preview(),
+                // Some controls
+                new Option.Flash(), new Option.WhiteBalance(), new Option.Hdr(),
+                // Video recording
+                new Option.VideoCodec(), new Option.Audio(),
+                // Gestures
+                new Option.Pinch(), new Option.HorizontalScroll(), new Option.VerticalScroll(),
+                new Option.Tap(), new Option.LongTap(),
+                // Watermarks
+                new Option.OverlayInPreview(watermark),
+                new Option.OverlayInPictureSnapshot(watermark),
+                new Option.OverlayInVideoSnapshot(watermark),
+                // Other
+                new Option.Grid(), new Option.GridColor(), new Option.UseDeviceOrientation()
+        );
+        List<Boolean> dividers = Arrays.asList(
+                false, true,
+                false, false, true,
+                false, false, true,
+                false, true,
+                false, false, false, false, true,
+                false, false, true,
+                false, false, true
+        );
+        for (int i = 0; i < options.size(); i++) {
+            OptionView view = new OptionView(this);
+            //noinspection unchecked
+            view.setOption(options.get(i), this);
+            view.setHasDivider(dividers.get(i));
             group.addView(view,
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -80,6 +116,22 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 b.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
         });
+
+        // Animate the watermark just to show we record the animation in video snapshots
+        ValueAnimator animator = ValueAnimator.ofFloat(1F, 0.8F);
+        animator.setDuration(300);
+        animator.setRepeatCount(ValueAnimator.INFINITE);
+        animator.setRepeatMode(ValueAnimator.REVERSE);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float scale = (float) animation.getAnimatedValue();
+                watermark.setScaleX(scale);
+                watermark.setScaleY(scale);
+                watermark.setRotation(watermark.getRotation() + 2);
+            }
+        });
+        animator.start();
     }
 
     private void message(String content, boolean important) {

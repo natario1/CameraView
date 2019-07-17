@@ -24,17 +24,24 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     public final static String FRAME_EVENT = "frame";
+    public final static int NO_TEXTURE = Integer.MIN_VALUE;
 
     public static class Config extends VideoMediaEncoder.Config {
         int textureId;
+        int overlayTextureId;
         float scaleX;
         float scaleY;
-        boolean scaleFlipped;
         EGLContext eglContext;
         int transformRotation;
+        int overlayTransformRotation;
 
-        public Config(int width, int height, int bitRate, int frameRate, int rotation, String mimeType,
-               int textureId, float scaleX, float scaleY, boolean scaleFlipped, EGLContext eglContext) {
+        public Config(int width, int height,
+                      int bitRate, int frameRate,
+                      int rotation, @NonNull String mimeType,
+                      int textureId,
+                      float scaleX, float scaleY,
+                      @NonNull EGLContext eglContext,
+                      int overlayTextureId, int overlayRotation) {
             // We rotate the texture using transformRotation. Pass rotation=0 to super so that
             // no rotation metadata is written into the output file.
             super(width, height, bitRate, frameRate, 0, mimeType);
@@ -42,8 +49,9 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
             this.textureId = textureId;
             this.scaleX = scaleX;
             this.scaleY = scaleY;
-            this.scaleFlipped = scaleFlipped;
             this.eglContext = eglContext;
+            this.overlayTextureId = overlayTextureId;
+            this.overlayTransformRotation = overlayRotation;
         }
     }
 
@@ -67,6 +75,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         // Typically coming from SurfaceTexture.getTimestamp().
         public long timestamp;
         public float[] transform = new float[16];
+        public float[] overlayTransform = new float[16];
     }
 
     @NonNull
@@ -117,6 +126,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         // We must scale this matrix like GlCameraPreview does, because it might have some cropping.
         // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
         float[] transform = frame.transform;
+        float[] overlayTransform = frame.overlayTransform;
         float scaleX = mConfig.scaleX;
         float scaleY = mConfig.scaleY;
         float scaleTranslX = (1F - scaleX) / 2F;
@@ -128,17 +138,25 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureMediaEncoder.C
         // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
         // Rotation also takes place with respect to the origin (the Z axis), so we must
         // translate to origin, rotate, then back to where we were.
-
         Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
         Matrix.rotateM(transform, 0, mConfig.transformRotation, 0, 0, 1);
         Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
 
+        boolean hasOverlay = mConfig.overlayTextureId != NO_TEXTURE;
+        if (hasOverlay) {
+            Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
+            Matrix.rotateM(overlayTransform, 0, mConfig.overlayTransformRotation, 0, 0, 1);
+            Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
+        }
+
         LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drainOutput.");
         drainOutput(false);
-        // Future note: passing scale values to the viewport? They are scaleX and scaleY,
-        // but flipped based on the mConfig.scaleFlipped boolean.
         LOG.v("onEvent", "frameNum:", thisFrameNum, "realFrameNum:", mFrameNum, "calling drawFrame.");
         mViewport.drawFrame(mConfig.textureId, transform);
+        if (hasOverlay) {
+            mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
+        }
+
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();
         mFramePool.recycle(frame);

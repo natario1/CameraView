@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.engine;
 
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
@@ -9,6 +10,7 @@ import android.os.Build;
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraListener;
+import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraUtils;
 import com.otaliastudios.cameraview.CameraView;
@@ -25,6 +27,7 @@ import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -48,14 +51,21 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public abstract class CameraIntegrationTest extends BaseTest {
 
-    private final static long DELAY = 9000;
+    private final static CameraLogger LOG = CameraLogger.create(CameraIntegrationTest.class.getSimpleName());
+    private final static long DELAY = 8000;
+    private final static long VIDEO_DELAY = 16000;
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
@@ -75,6 +85,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Before
     public void setUp() {
+        LOG.e("Test started. Setting up camera.");
         WorkerHandler.destroy();
 
         ui(new Runnable() {
@@ -113,7 +124,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @After
     public void tearDown() {
-        camera.stopVideo();
+        LOG.e("Test ended. Tearing down camera.");
         camera.destroy();
         WorkerHandler.destroy();
     }
@@ -133,6 +144,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         if (expectSuccess) {
             assertNotNull("Can open", result);
             // Extra wait for the bind state.
+            // TODO fix this and other while {} in this class in a more elegant way.
             while (controller.getBindState() != CameraEngine.STATE_STARTED) {}
         } else {
             assertNull("Should not open", result);
@@ -163,7 +175,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
                 return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
             }
         }));
-        VideoResult result = video.await(DELAY);
+        VideoResult result = video.await(VIDEO_DELAY);
         if (expectSuccess) {
             assertNotNull("Should end video", result);
         } else {
@@ -219,6 +231,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         }
     }
 
+    @SuppressWarnings("unused")
     private void takeVideoSnapshotSync(boolean expectSuccess) {
         takeVideoSnapshotSync(expectSuccess,0);
     }
@@ -431,7 +444,6 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Test
     public void testSetAudio() {
-        // TODO: when permissions are managed, check that Audio.ON triggers the audio permission
         openSync(true);
         Audio[] values = Audio.values();
         for (Audio value : values) {
@@ -472,7 +484,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
                 assertEquals(oldValue, camera.getPlaySounds());
             }
         } else {
-            // TODO do when Camera2 is completed
+            assertEquals(newValue, camera.getPlaySounds());
         }
     }
 
@@ -503,6 +515,14 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     @Test
+    public void testStartEndVideoSnapshot() {
+        // TODO should check api level for snapshot?
+        openSync(true);
+        takeVideoSnapshotSync(true, 4000);
+        waitForVideoResult(true);
+    }
+
+    @Test
     public void testEndVideo_withoutStarting() {
         camera.setMode(Mode.VIDEO);
         openSync(true);
@@ -520,12 +540,30 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     @Test
+    public void testEndVideoSnapshot_withMaxSize() {
+        // TODO
+        // camera.setVideoMaxSize(3000*1000);
+        // waitForOpen(true);
+        // waitForVideoStart();
+        // waitForVideoEnd(true);
+    }
+
+    @Test
     public void testEndVideo_withMaxDuration() {
         camera.setMode(Mode.VIDEO);
         camera.setVideoMaxDuration(4000);
         openSync(true);
         takeVideoSync(true);
         waitForVideoResult(true);
+    }
+
+    @Test
+    public void testEndVideoSnapshot_withMaxDuration() {
+        // TODO
+        // camera.setVideoMaxDuration(4000);
+        // waitForOpen(true);
+        // waitForVideoStart();
+        // waitForVideoEnd(true);
     }
 
     //endregion
@@ -589,18 +627,22 @@ public abstract class CameraIntegrationTest extends BaseTest {
         camera.takePicture();
         boolean did = latch.await(4, TimeUnit.SECONDS);
         assertFalse(did);
-        assertEquals(latch.getCount(), 1);
+        assertEquals(1, latch.getCount());
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     @Test
     public void testCapturePicture_size() throws Exception {
         openSync(true);
         // PictureSize can still be null after opened.
+        // TODO be more elegant
         while (camera.getPictureSize() == null) {}
         Size size = camera.getPictureSize();
         camera.takePicture();
         PictureResult result = waitForPictureResult(true);
+        assertNotNull(result);
         Bitmap bitmap = CameraUtils.decodeBitmap(result.getData(), Integer.MAX_VALUE, Integer.MAX_VALUE);
+        assertNotNull(bitmap);
         assertEquals(result.getSize(), size);
         assertEquals(bitmap.getWidth(), size.getWidth());
         assertEquals(bitmap.getHeight(), size.getHeight());
@@ -638,16 +680,20 @@ public abstract class CameraIntegrationTest extends BaseTest {
         assertEquals(1, latch.getCount());
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     @Test
     public void testCaptureSnapshot_size() throws Exception {
         openSync(true);
         // SnapshotSize can still be null after opened.
+        // TODO be more elegant
         while (camera.getSnapshotSize() == null) {}
         Size size = camera.getSnapshotSize();
         camera.takePictureSnapshot();
 
         PictureResult result = waitForPictureResult(true);
+        assertNotNull(result);
         Bitmap bitmap = CameraUtils.decodeBitmap(result.getData(), Integer.MAX_VALUE, Integer.MAX_VALUE);
+        assertNotNull(bitmap);
         assertEquals(result.getSize(), size);
         assertEquals(bitmap.getWidth(), size.getWidth());
         assertEquals(bitmap.getHeight(), size.getHeight());
@@ -732,6 +778,34 @@ public abstract class CameraIntegrationTest extends BaseTest {
         public void process(@NonNull Frame frame) {
             frame.freeze().release();
         }
+    }
+
+    //endregion
+
+    //region Overlays
+
+    @Test
+    public void testOverlay_forPictureSnapshot() {
+        Overlay overlay = mock(Overlay.class);
+        when(overlay.drawsOn(any(Overlay.Target.class))).thenReturn(true);
+        controller.setOverlay(overlay);
+        openSync(true);
+        camera.takePictureSnapshot();
+        waitForPictureResult(true);
+        verify(overlay, atLeastOnce()).drawsOn(Overlay.Target.PICTURE_SNAPSHOT);
+        verify(overlay, times(1)).drawOn(eq(Overlay.Target.PICTURE_SNAPSHOT), any(Canvas.class));
+    }
+
+    @Test
+    public void testOverlay_forVideoSnapshot() {
+        Overlay overlay = mock(Overlay.class);
+        when(overlay.drawsOn(any(Overlay.Target.class))).thenReturn(true);
+        controller.setOverlay(overlay);
+        openSync(true);
+        takeVideoSnapshotSync(true, 4000);
+        waitForVideoResult(true);
+        verify(overlay, atLeastOnce()).drawsOn(Overlay.Target.VIDEO_SNAPSHOT);
+        verify(overlay, atLeastOnce()).drawOn(eq(Overlay.Target.VIDEO_SNAPSHOT), any(Canvas.class));
     }
 
     //endregion

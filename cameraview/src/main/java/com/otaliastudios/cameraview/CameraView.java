@@ -28,6 +28,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -62,6 +63,7 @@ import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.OrientationHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.markers.MarkerParser;
+import com.otaliastudios.cameraview.overlay.OverlayLayout;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
@@ -125,11 +127,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @VisibleForTesting ScrollGestureFinder mScrollGestureFinder;
 
     // Views
-    GridLinesLayout mGridLinesLayout;
-    MarkerLayout mMarkerLayout;
+    @VisibleForTesting GridLinesLayout mGridLinesLayout;
+    @VisibleForTesting MarkerLayout mMarkerLayout;
     private boolean mKeepScreenOn;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private boolean mExperimental;
+
+    // Overlays
+    @VisibleForTesting OverlayLayout mOverlayLayout;
 
     // Threading
     private Handler mUiHandler;
@@ -187,9 +192,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         // Views
         mGridLinesLayout = new GridLinesLayout(context);
+        mOverlayLayout = new OverlayLayout(context);
         mMarkerLayout = new MarkerLayout(context);
         addView(mGridLinesLayout);
         addView(mMarkerLayout);
+        addView(mOverlayLayout);
 
         // Create the engine
         doInstantiateEngine();
@@ -237,7 +244,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * {@link #setEngine(Engine)} is called.
      */
     private void doInstantiateEngine() {
+        LOG.w("doInstantiateEngine:", "instantiating. engine:", mEngine);
         mCameraEngine = instantiateCameraEngine(mEngine, mCameraCallbacks);
+        LOG.w("doInstantiateEngine:", "instantiated. engine:", mCameraEngine.getClass().getSimpleName());
+        mCameraEngine.setOverlay(mOverlayLayout);
     }
 
     /**
@@ -247,7 +257,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @VisibleForTesting
     void doInstantiatePreview() {
+        LOG.w("doInstantiateEngine:", "instantiating. preview:", mPreview);
         mCameraPreview = instantiatePreview(mPreview, getContext(), this);
+        LOG.w("doInstantiateEngine:", "instantiated. preview:", mCameraPreview.getClass().getSimpleName());
         mCameraEngine.setPreview(mCameraPreview);
     }
 
@@ -279,7 +291,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @NonNull
     protected CameraPreview instantiatePreview(@NonNull Preview preview, @NonNull Context context, @NonNull ViewGroup container) {
-        LOG.w("preview:", "isHardwareAccelerated:", isHardwareAccelerated());
         switch (preview) {
             case SURFACE:
                 return new SurfaceCameraPreview(context, container);
@@ -300,6 +311,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (mCameraPreview == null) {
+
             // isHardwareAccelerated will return the real value only after we are
             // attached. That's why we instantiate the preview here.
             doInstantiatePreview();
@@ -384,7 +396,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // other than respect it. The preview will eventually be cropped at the sides (by PreviewImpl scaling)
         // except the case in which these fixed dimensions manage to fit exactly the preview aspect ratio.
         if (widthMode == EXACTLY && heightMode == EXACTLY) {
-            LOG.w("onMeasure:", "both are MATCH_PARENT or fixed value. We adapt.",
+            LOG.i("onMeasure:", "both are MATCH_PARENT or fixed value. We adapt.",
                     "This means CROP_CENTER.", "(" + widthValue + "x" + heightValue + ")");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
@@ -1217,6 +1229,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void setAutoFocusResetDelay(long delayMillis) {
         mCameraEngine.setAutoFocusResetDelay(delayMillis);
     }
+
 
     /**
      * Returns the current delay in milliseconds to reset the focus after an autofocus process.
@@ -2074,6 +2087,28 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     }
                 }
             });
+        }
+    }
+
+    //endregion
+
+    //region Overlays
+
+    @Override
+    public LayoutParams generateLayoutParams(AttributeSet attributeSet) {
+        if (mOverlayLayout.isOverlay(attributeSet)) {
+            return mOverlayLayout.generateLayoutParams(attributeSet);
+        }
+        return super.generateLayoutParams(attributeSet);
+    }
+
+    // We don't support removeView on overlays for now.
+    @Override
+    public void addView(View child, int index, ViewGroup.LayoutParams params) {
+        if (mOverlayLayout.isOverlay(params)) {
+            mOverlayLayout.addView(child, params);
+        } else {
+            super.addView(child, index, params);
         }
     }
 

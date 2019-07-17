@@ -63,17 +63,17 @@ public class Pool<T> {
         T item = mQueue.poll();
         if (item != null) {
             activeCount++; // poll decreases, this fixes
-            LOG.v("GET: Reusing recycled item.", this);
+            LOG.v("GET - Reusing recycled item.", this);
             return item;
         }
 
         if (isEmpty()) {
-            LOG.v("GET: Returning null. Too much items requested.", this);
+            LOG.v("GET - Returning null. Too much items requested.", this);
             return null;
         }
 
         activeCount++;
-        LOG.v("GET: Creating a new item.", this);
+        LOG.v("GET - Creating a new item.", this);
         return factory.create();
     }
 
@@ -84,7 +84,7 @@ public class Pool<T> {
      * @param item used item
      */
     public void recycle(@NonNull T item) {
-        LOG.v("RECYCLE: Recycling item.", this);
+        LOG.v("RECYCLE - Recycling item.", this);
         if (--activeCount < 0) {
             throw new IllegalStateException("Trying to recycle an item which makes activeCount < 0." +
                     "This means that this or some previous items being recycled were not coming from " +
@@ -112,6 +112,7 @@ public class Pool<T> {
      *
      * @return count
      */
+    @SuppressWarnings("WeakerAccess")
     public final int count() {
         return activeCount() + recycledCount();
     }
@@ -122,6 +123,7 @@ public class Pool<T> {
      *
      * @return active count
      */
+    @SuppressWarnings("WeakerAccess")
     public final int activeCount() {
         return activeCount;
     }
@@ -133,6 +135,7 @@ public class Pool<T> {
      *
      * @return recycled count
      */
+    @SuppressWarnings("WeakerAccess")
     public final int recycledCount() {
         return mQueue.size();
     }
@@ -140,6 +143,6 @@ public class Pool<T> {
     @NonNull
     @Override
     public String toString() {
-        return getClass().getSimpleName() + " -- count:" + count() + ", active:" + activeCount() + ", recycled:" + recycledCount();
+        return getClass().getSimpleName() + " - count:" + count() + ", active:" + activeCount() + ", recycled:" + recycledCount();
     }
 }

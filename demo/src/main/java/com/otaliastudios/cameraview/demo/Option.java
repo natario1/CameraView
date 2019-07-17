@@ -12,6 +12,8 @@ import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureAction;
+import com.otaliastudios.cameraview.overlay.Overlay;
+import com.otaliastudios.cameraview.overlay.OverlayLayout;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,62 +23,19 @@ import java.util.List;
 /**
  * Controls that we want to display in a ControlView.
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class Option<T> {
 
-    public static List<Option<?>> getAll() {
-        return Arrays.asList(
-                // Layout
-                new Width(false),
-                new Height(true),
-
-                // Engine and preview
-                new Mode(false),
-                new Engine(false),
-                new Preview(true),
-
-                // Some controls
-                new Flash(false),
-                new WhiteBalance(false),
-                new Hdr(true),
-
-                // Video recording
-                new VideoCodec(false),
-                new Audio(true),
-                // TODO audio bitRate
-                // TODO video bitRate
-                // They are a bit annoying because it's not clear what the default should be.
-
-                // Gestures
-                new Pinch(false),
-                new HorizontalScroll(false),
-                new VerticalScroll(false),
-                new Tap(false),
-                new LongTap(true),
-
-                // Other
-                new Grid(false),
-                new GridColor(false),
-                new UseDeviceOrientation(true)
-        );
-    }
-
     private String name;
-    private boolean hasDividerBelow;
 
-    private Option(@NonNull String name, boolean hasDividerBelow) {
+    private Option(@NonNull String name) {
         this.name = name;
-        this.hasDividerBelow = hasDividerBelow;
     }
 
     @SuppressWarnings("WeakerAccess")
     @NonNull
     public final String getName() {
         return name;
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public final boolean hasDividerBelow() {
-        return hasDividerBelow;
     }
 
     @NonNull
@@ -93,8 +52,8 @@ public abstract class Option<T> {
     }
 
     public static class Width extends Option<Integer> {
-        Width(boolean hasDividerBelow) {
-            super("Width", hasDividerBelow);
+        public Width() {
+            super("Width");
         }
 
         @NonNull
@@ -135,8 +94,8 @@ public abstract class Option<T> {
     }
 
     public static class Height extends Option<Integer> {
-        Height(boolean hasDividerBelow) {
-            super("Height", hasDividerBelow);
+        public Height() {
+            super("Height");
         }
 
         @NonNull
@@ -179,8 +138,8 @@ public abstract class Option<T> {
     private static abstract class ControlOption<T extends com.otaliastudios.cameraview.controls.Control> extends Option<T> {
         private final Class<T> controlClass;
 
-        ControlOption(@NonNull Class<T> controlClass, String name, boolean hasDividerBelow) {
-            super(name, hasDividerBelow);
+        ControlOption(@NonNull Class<T> controlClass, String name) {
+            super(name);
             this.controlClass = controlClass;
         }
 
@@ -203,14 +162,14 @@ public abstract class Option<T> {
     }
 
     public static class Mode extends ControlOption<com.otaliastudios.cameraview.controls.Mode> {
-        Mode(boolean hasDividerBelow) {
-            super(com.otaliastudios.cameraview.controls.Mode.class, "Mode", hasDividerBelow);
+        public Mode() {
+            super(com.otaliastudios.cameraview.controls.Mode.class, "Mode");
         }
     }
 
     public static class Engine extends ControlOption<com.otaliastudios.cameraview.controls.Engine> {
-        Engine(boolean hasDividerBelow) {
-            super(com.otaliastudios.cameraview.controls.Engine.class, "Engine", hasDividerBelow);
+        public Engine() {
+            super(com.otaliastudios.cameraview.controls.Engine.class, "Engine");
         }
 
         @Override
@@ -234,8 +193,8 @@ public abstract class Option<T> {
     }
 
     public static class Preview extends ControlOption<com.otaliastudios.cameraview.controls.Preview> {
-        Preview(boolean hasDividerBelow) {
-            super(com.otaliastudios.cameraview.controls.Preview.class, "Preview Surface", hasDividerBelow);
+        public Preview() {
+            super(com.otaliastudios.cameraview.controls.Preview.class, "Preview Surface");
         }
 
         @Override
@@ -276,32 +235,32 @@ public abstract class Option<T> {
     }
 
     public static class Flash extends ControlOption<com.otaliastudios.cameraview.controls.Flash> {
-        Flash(boolean hasDividerBelow) {
-            super(com.otaliastudios.cameraview.controls.Flash.class, "Flash", hasDividerBelow);
+        public Flash() {
+            super(com.otaliastudios.cameraview.controls.Flash.class, "Flash");
         }
     }
 
     public static class WhiteBalance extends ControlOption<com.otaliastudios.cameraview.controls.WhiteBalance> {
-        WhiteBalance(boolean hasDividerBelow) {
-            super(com.otaliastudios.cameraview.controls.WhiteBalance.class, "White Balance", hasDividerBelow);
+        public WhiteBalance() {
+            super(com.otaliastudios.cameraview.controls.WhiteBalance.class, "White Balance");
         }
     }
 
     public static class Hdr extends ControlOption<com.otaliastudios.cameraview.controls.Hdr> {
-        Hdr(boolean hasDividerBelow) {
-            super(com.otaliastudios.cameraview.controls.Hdr.class, "HDR", hasDividerBelow);
+        public Hdr() {
+            super(com.otaliastudios.cameraview.controls.Hdr.class, "HDR");
         }
     }
 
     public static class VideoCodec extends ControlOption<com.otaliastudios.cameraview.controls.VideoCodec> {
-        VideoCodec(boolean hasDividerBelow) {
-            super(com.otaliastudios.cameraview.controls.VideoCodec.class, "Video Codec", hasDividerBelow);
+        public VideoCodec() {
+            super(com.otaliastudios.cameraview.controls.VideoCodec.class, "Video Codec");
         }
     }
 
     public static class Audio extends ControlOption<com.otaliastudios.cameraview.controls.Audio> {
-        Audio(boolean hasDividerBelow) {
-            super(com.otaliastudios.cameraview.controls.Audio.class, "Audio", hasDividerBelow);
+        public Audio() {
+            super(com.otaliastudios.cameraview.controls.Audio.class, "Audio");
         }
     }
 
@@ -309,8 +268,8 @@ public abstract class Option<T> {
         private final Gesture gesture;
         private final GestureAction[] allActions = GestureAction.values();
 
-        GestureOption(@NonNull Gesture gesture, String name, boolean hasDividerBelow) {
-            super(name, hasDividerBelow);
+        GestureOption(@NonNull Gesture gesture, String name) {
+            super(name);
             this.gesture = gesture;
         }
 
@@ -339,45 +298,103 @@ public abstract class Option<T> {
     }
 
     public static class Pinch extends GestureOption {
-        Pinch(boolean hasDividerBelow) {
-            super(Gesture.PINCH, "Pinch", hasDividerBelow);
+        public Pinch() {
+            super(Gesture.PINCH, "Pinch");
         }
     }
 
     public static class HorizontalScroll extends GestureOption {
-        HorizontalScroll(boolean hasDividerBelow) {
-            super(Gesture.SCROLL_HORIZONTAL, "Horizontal Scroll", hasDividerBelow);
+        public HorizontalScroll() {
+            super(Gesture.SCROLL_HORIZONTAL, "Horizontal Scroll");
         }
     }
 
     public static class VerticalScroll extends GestureOption {
-        VerticalScroll(boolean hasDividerBelow) {
-            super(Gesture.SCROLL_VERTICAL, "Vertical Scroll", hasDividerBelow);
+        public VerticalScroll() {
+            super(Gesture.SCROLL_VERTICAL, "Vertical Scroll");
         }
     }
 
     public static class Tap extends GestureOption {
-        Tap(boolean hasDividerBelow) {
-            super(Gesture.TAP, "Tap", hasDividerBelow);
+        public Tap() {
+            super(Gesture.TAP, "Tap");
         }
     }
 
     public static class LongTap extends GestureOption {
-        LongTap(boolean hasDividerBelow) {
-            super(Gesture.LONG_TAP, "Long Tap", hasDividerBelow);
+        public LongTap() {
+            super(Gesture.LONG_TAP, "Long Tap");
+        }
+    }
+
+    private static abstract class OverlayOption extends Option<Boolean> {
+        private View overlay;
+        private Overlay.Target target;
+
+        OverlayOption(@NonNull Overlay.Target target, @NonNull String name, @NonNull View overlay) {
+            super(name);
+            this.overlay = overlay;
+            this.target = target;
+        }
+
+        @NonNull
+        @Override
+        public Collection<Boolean> getAll(@NonNull CameraView view, @NonNull CameraOptions options) {
+            return Arrays.asList(true, false);
+        }
+
+        @NonNull
+        @Override
+        public Boolean get(@NonNull CameraView view) {
+            OverlayLayout.LayoutParams params = (OverlayLayout.LayoutParams) overlay.getLayoutParams();
+            switch (target) {
+                case PREVIEW: return params.drawOnPreview;
+                case PICTURE_SNAPSHOT: return params.drawOnPictureSnapshot;
+                case VIDEO_SNAPSHOT: return params.drawOnVideoSnapshot;
+            }
+            return false;
+        }
+
+        @Override
+        public void set(@NonNull CameraView view, @NonNull Boolean value) {
+            OverlayLayout.LayoutParams params = (OverlayLayout.LayoutParams) overlay.getLayoutParams();
+            switch (target) {
+                case PREVIEW: params.drawOnPreview = value; break;
+                case PICTURE_SNAPSHOT: params.drawOnPictureSnapshot = value; break;
+                case VIDEO_SNAPSHOT: params.drawOnVideoSnapshot = value; break;
+            }
+            overlay.setLayoutParams(params);
+        }
+    }
+
+    public static class OverlayInPreview extends OverlayOption {
+        public OverlayInPreview(@NonNull View overlay) {
+            super(Overlay.Target.PREVIEW, "Overlay in Preview", overlay);
+        }
+    }
+
+    public static class OverlayInPictureSnapshot extends OverlayOption {
+        public OverlayInPictureSnapshot(@NonNull View overlay) {
+            super(Overlay.Target.PICTURE_SNAPSHOT, "Overlay in Picture Snapshot", overlay);
+        }
+    }
+
+    public static class OverlayInVideoSnapshot extends OverlayOption {
+        public OverlayInVideoSnapshot(@NonNull View overlay) {
+            super(Overlay.Target.VIDEO_SNAPSHOT, "Overlay in Video Snapshot", overlay);
         }
     }
 
     public static class Grid extends ControlOption<com.otaliastudios.cameraview.controls.Grid> {
-        Grid(boolean hasDividerBelow) {
-            super(com.otaliastudios.cameraview.controls.Grid.class, "Grid Lines", hasDividerBelow);
+        public Grid() {
+            super(com.otaliastudios.cameraview.controls.Grid.class, "Grid Lines");
         }
     }
 
     public static class GridColor extends Option<Pair<Integer, String>> {
 
-        GridColor(boolean hasDividerBelow) {
-            super("Grid Color", hasDividerBelow);
+        public GridColor() {
+            super("Grid Color");
         }
 
         private static final List<Pair<Integer, String>> ALL = Arrays.asList(
@@ -420,8 +437,8 @@ public abstract class Option<T> {
     }
 
     public static class UseDeviceOrientation extends Option<Boolean> {
-        UseDeviceOrientation(boolean hasDividerBelow) {
-            super("Use Device Orientation", hasDividerBelow);
+        public UseDeviceOrientation() {
+            super("Use Device Orientation");
         }
 
         @NonNull

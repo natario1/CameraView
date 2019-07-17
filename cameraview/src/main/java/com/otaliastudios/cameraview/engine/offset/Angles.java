@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.engine.offset;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
+import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.controls.Facing;
 
 /**
@@ -20,6 +21,9 @@ import com.otaliastudios.cameraview.controls.Facing;
  * For all other usages, {@link Axis#ABSOLUTE} is probably a better choice.
  */
 public class Angles {
+
+    private final static String TAG = Angles.class.getSimpleName();
+    private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     private Facing mSensorFacing;
     @VisibleForTesting int mSensorOffset = 0;
@@ -40,6 +44,7 @@ public class Angles {
         if (mSensorFacing == Facing.FRONT) {
             mSensorOffset = sanitizeOutput(360 - mSensorOffset);
         }
+        print();
     }
 
     /**
@@ -49,6 +54,7 @@ public class Angles {
     public void setDisplayOffset(int displayOffset) {
         sanitizeInput(displayOffset);
         mDisplayOffset = displayOffset;
+        print();
     }
 
     /**
@@ -58,6 +64,14 @@ public class Angles {
     public void setDeviceOrientation(int deviceOrientation) {
         sanitizeInput(deviceOrientation);
         mDeviceOrientation = deviceOrientation;
+        print();
+    }
+
+    private void print() {
+        LOG.i("Angles changed:",
+                "sensorOffset:", mSensorOffset,
+                "displayOffset:", mDisplayOffset,
+                "deviceOrientation:", mDeviceOrientation);
     }
 
     /**

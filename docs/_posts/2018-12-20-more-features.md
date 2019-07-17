@@ -4,7 +4,7 @@ title: "More features"
 subtitle: "Undocumented features & more"
 description: "Undocumented features & more"
 category: docs
-order: 13
+order: 14
 date: 2018-12-20 20:41:20
 disqus: 1
 ---

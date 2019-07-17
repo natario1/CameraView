@@ -8,7 +8,12 @@ import android.location.Location;
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
+
+import android.util.AttributeSet;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.controls.Audio;
@@ -36,6 +41,7 @@ import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.markers.AutoFocusMarker;
 import com.otaliastudios.cameraview.markers.DefaultAutoFocusMarker;
 import com.otaliastudios.cameraview.markers.MarkerLayout;
+import com.otaliastudios.cameraview.overlay.OverlayLayout;
 import com.otaliastudios.cameraview.preview.MockCameraPreview;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.size.Size;
@@ -48,6 +54,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.w3c.dom.Attr;
 
 import static org.junit.Assert.*;
 
@@ -777,5 +784,53 @@ public class CameraViewTest extends BaseTest {
 
     //endregion
 
+    //region Overlays
+
+    @Test
+    public void testOverlays_generateLayoutParams() {
+        cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
+        LayoutInflater inflater = LayoutInflater.from(context());
+        View overlay = inflater.inflate(com.otaliastudios.cameraview.test.R.layout.overlay, cameraView, false);
+        assertTrue(overlay.getLayoutParams() instanceof OverlayLayout.LayoutParams);
+        verify(cameraView.mOverlayLayout, times(1)).isOverlay(any(AttributeSet.class));
+        verify(cameraView.mOverlayLayout, times(1)).generateLayoutParams(any(AttributeSet.class));
+
+    }
+
+    @Test
+    public void testOverlays_dontGenerateLayoutParams() {
+        cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
+        LayoutInflater inflater = LayoutInflater.from(context());
+        View overlay = inflater.inflate(com.otaliastudios.cameraview.test.R.layout.not_overlay, cameraView, false);
+        assertFalse(overlay.getLayoutParams() instanceof OverlayLayout.LayoutParams);
+        verify(cameraView.mOverlayLayout, times(1)).isOverlay(any(AttributeSet.class));
+        verify(cameraView.mOverlayLayout, never()).generateLayoutParams(any(AttributeSet.class));
+    }
+
+    @Test
+    public void testOverlays_addOverlayView() {
+        cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
+        View overlay = new View(context());
+        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
+        int count = cameraView.getChildCount();
+        cameraView.addView(overlay, 0, params);
+        assertEquals(count, cameraView.getChildCount()); // Not added to CameraView
+        verify(cameraView.mOverlayLayout, times(1)).isOverlay(params);
+        verify(cameraView.mOverlayLayout, times(1)).addView(overlay, params);
+    }
+
+    @Test
+    public void testOverlays_dontAddOverlayView() {
+        cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
+        View overlay = new View(context());
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(10, 10);
+        int count = cameraView.getChildCount();
+        cameraView.addView(overlay, 0, params);
+        assertEquals(count + 1, cameraView.getChildCount());
+        verify(cameraView.mOverlayLayout, times(1)).isOverlay(params);
+        verify(cameraView.mOverlayLayout, never()).addView(overlay, params);
+    }
+
+    //endregion
     // TODO: test permissions
 }

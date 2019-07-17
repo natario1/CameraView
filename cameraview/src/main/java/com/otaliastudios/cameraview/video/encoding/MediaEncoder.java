@@ -88,11 +88,11 @@ abstract class MediaEncoder {
      * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
      */
     final void start() {
-        LOG.i(getName(), "Start was called. Posting.");
+        LOG.w(getName(), "Start was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.i(getName(), "Start was called. Executing.");
+                LOG.w(getName(), "Start was called. Executing.");
                 onStart();
             }
         });
@@ -108,11 +108,11 @@ abstract class MediaEncoder {
      * @param data object
      */
     final void notify(final @NonNull String event, final @Nullable Object data) {
-        LOG.i(getName(), "Notify was called. Posting.");
+        LOG.v(getName(), "Notify was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.i(getName(), "Notify was called. Executing.");
+                LOG.v(getName(), "Notify was called. Executing.");
                 onEvent(event, data);
             }
         });
@@ -124,11 +124,11 @@ abstract class MediaEncoder {
      * NOTE: it's important to call {@link WorkerHandler#post(Runnable)} instead of run()!
      */
     final void stop() {
-        LOG.i(getName(), "Stop was called. Posting.");
+        LOG.w(getName(), "Stop was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.i(getName(), "Stop was called. Executing.");
+                LOG.w(getName(), "Stop was called. Executing.");
                 onStop();
             }
         });
@@ -175,8 +175,9 @@ abstract class MediaEncoder {
      * parameters, might also be through an input buffer flag).
      */
     private void release() {
-        LOG.w("Subclass", getName(), "Notified that it is released.");
-        mController.requestRelease(mTrackIndex);
+        LOG.w(getName(), "is being released. Notifying controller and releasing codecs.");
+        // TODO should we notify after this method?
+        mController.notifyReleased(mTrackIndex);
         mMediaCodec.stop();
         mMediaCodec.release();
         mMediaCodec = null;
@@ -217,7 +218,7 @@ abstract class MediaEncoder {
 
     /**
      * Returns a new input buffer and index, waiting indefinitely if none is available.
-     * The buffer should be written into, then the index should be passed to {@link #encodeInputBuffer(InputBuffer)}.
+     * The buffer should be written into, then be passed to {@link #encodeInputBuffer(InputBuffer)}.
      *
      * @param holder the input buffer holder
      */
@@ -233,7 +234,7 @@ abstract class MediaEncoder {
      */
     @SuppressWarnings("WeakerAccess")
     protected void encodeInputBuffer(InputBuffer buffer) {
-        LOG.w("ENCODING:", getName(), "Buffer:", buffer.index, "Bytes:", buffer.length, "Presentation:", buffer.timestamp);
+        LOG.v(getName(), "ENCODING - Buffer:", buffer.index, "Bytes:", buffer.length, "Presentation:", buffer.timestamp);
         if (buffer.isEndOfStream) { // send EOS
             mMediaCodec.queueInputBuffer(buffer.index, 0, 0,
                     buffer.timestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
@@ -266,7 +267,7 @@ abstract class MediaEncoder {
     @SuppressLint("LogNotTimber")
     @SuppressWarnings("WeakerAccess")
     protected void drainOutput(boolean drainAll) {
-        LOG.w("DRAINING:", getName(), "EOS:", drainAll);
+        LOG.v(getName(), "DRAINING - EOS:", drainAll);
         if (mMediaCodec == null) {
             LOG.e("drain() was called before prepare() or after releasing.");
             return;
@@ -315,14 +316,12 @@ abstract class MediaEncoder {
                     // and should be used for offsets only.
                     // TODO find a better way, this causes sync issues. (+ note: this sends pts=0 at first)
                     // mBufferInfo.presentationTimeUs = mLastPresentationTimeUs - mStartPresentationTimeUs;
-                    LOG.i("DRAINING:", getName(), "Dispatching write(). Presentation:", mBufferInfo.presentationTimeUs);
+                    LOG.v(getName(), "DRAINING - About to write(). Presentation:", mBufferInfo.presentationTimeUs);
 
                     // TODO fix the mBufferInfo being the same, then implement delayed writing in Controller
                     // and remove the isStarted() check here.
                     OutputBuffer buffer = mOutputBufferPool.get();
-                    if (buffer == null) {
-                        throw new IllegalStateException("buffer is null!");
-                    }
+                    //noinspection ConstantConditions
                     buffer.info = mBufferInfo;
                     buffer.trackIndex = mTrackIndex;
                     buffer.data = encodedData;
@@ -336,17 +335,18 @@ abstract class MediaEncoder {
                         && !mMaxLengthReached
                         && mStartPresentationTimeUs != Long.MIN_VALUE
                         && mLastPresentationTimeUs - mStartPresentationTimeUs > mMaxLengthMillis * 1000) {
-                    LOG.w("DRAINING: Reached maxLength! mLastPresentationTimeUs:", mLastPresentationTimeUs,
+                    LOG.w(getName(), "DRAINING - Reached maxLength! mLastPresentationTimeUs:", mLastPresentationTimeUs,
                             "mStartPresentationTimeUs:", mStartPresentationTimeUs,
                             "mMaxLengthUs:", mMaxLengthMillis * 1000);
                     mMaxLengthReached = true;
+                    LOG.w(getName(), "DRAINING - Requesting a stop.");
                     mController.requestStop(mTrackIndex);
                     break;
                 }
 
                 // Check for the EOS flag so we can release the encoder.
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                    LOG.w("DRAINING:", getName(), "Dispatching release().");
+                    LOG.w(getName(), "DRAINING - Got EOS. Releasing the codec.");
                     release();
                     break;
                 }

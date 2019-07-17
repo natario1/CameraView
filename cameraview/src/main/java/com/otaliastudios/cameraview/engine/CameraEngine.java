@@ -18,6 +18,7 @@ import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.engine.offset.Angles;
 import com.otaliastudios.cameraview.engine.offset.Reference;
@@ -184,6 +185,7 @@ public abstract class CameraEngine implements
     private long mAutoFocusResetDelayMillis;
     private int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
     private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW for consistency with SizeSelectors
+    private Overlay overlay;
 
     // Steps
     private final Step.Callback mStepCallback = new Step.Callback() {
@@ -781,6 +783,15 @@ public abstract class CameraEngine implements
 
     //region Final setters and getters
 
+    public final void setOverlay(@Nullable Overlay overlay) {
+        this.overlay = overlay;
+    }
+
+    @Nullable
+    public final Overlay getOverlay() {
+        return overlay;
+    }
+
     @SuppressWarnings("WeakerAccess")
     public final Angles getAngles() {
         return mAngles;
@@ -1218,27 +1229,31 @@ public abstract class CameraEngine implements
 
     @Nullable
     public final Size getPictureSize(@SuppressWarnings("SameParameterValue") @NonNull Reference reference) {
-        if (mCaptureSize == null || mMode == Mode.VIDEO) return null;
-        return getAngles().flip(Reference.SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
+        Size size = mCaptureSize;
+        if (size == null || mMode == Mode.VIDEO) return null;
+        return getAngles().flip(Reference.SENSOR, reference) ? size.flip() : size;
     }
 
     @Nullable
     public final Size getVideoSize(@SuppressWarnings("SameParameterValue") @NonNull Reference reference) {
-        if (mCaptureSize == null || mMode == Mode.PICTURE) return null;
-        return getAngles().flip(Reference.SENSOR, reference) ? mCaptureSize.flip() : mCaptureSize;
+        Size size = mCaptureSize;
+        if (size == null || mMode == Mode.PICTURE) return null;
+        return getAngles().flip(Reference.SENSOR, reference) ? size.flip() : size;
     }
 
     @Nullable
     public final Size getPreviewStreamSize(@NonNull Reference reference) {
-        if (mPreviewStreamSize == null) return null;
-        return getAngles().flip(Reference.SENSOR, reference) ? mPreviewStreamSize.flip() : mPreviewStreamSize;
+        Size size = mPreviewStreamSize;
+        if (size == null) return null;
+        return getAngles().flip(Reference.SENSOR, reference) ? size.flip() : size;
     }
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
     private Size getPreviewSurfaceSize(@NonNull Reference reference) {
-        if (mPreview == null) return null;
-        return getAngles().flip(Reference.VIEW, reference) ? mPreview.getSurfaceSize().flip() : mPreview.getSurfaceSize();
+        CameraPreview preview = mPreview;
+        if (preview == null) return null;
+        return getAngles().flip(Reference.VIEW, reference) ? preview.getSurfaceSize().flip() : preview.getSurfaceSize();
     }
 
     /**

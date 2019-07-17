@@ -1,14 +1,19 @@
 package com.otaliastudios.cameraview.video;
 
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
+import android.view.Surface;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;
-import com.otaliastudios.cameraview.engine.offset.Reference;
+import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
@@ -40,25 +45,33 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private static final int STATE_NOT_RECORDING = 1;
 
     private MediaEncoderEngine mEncoderEngine;
-    private CameraEngine mEngine;
     private GlCameraPreview mPreview;
-    private boolean mFlipped;
 
     private int mCurrentState = STATE_NOT_RECORDING;
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
 
+    private int mOverlayTextureId = 0;
+    private SurfaceTexture mOverlaySurfaceTexture;
+    private Surface mOverlaySurface;
+    private Overlay mOverlay;
+    private boolean mHasOverlay;
+    private int mOverlayRotation;
+
     public SnapshotVideoRecorder(@NonNull CameraEngine engine,
-                                 @NonNull GlCameraPreview preview) {
+                                 @NonNull GlCameraPreview preview,
+                                 @Nullable Overlay overlay,
+                                 int overlayRotation) {
         super(engine);
         mPreview = preview;
-        mEngine = engine;
+        mOverlay = overlay;
+        mHasOverlay = overlay != null && overlay.drawsOn(Overlay.Target.VIDEO_SNAPSHOT);
+        mOverlayRotation = overlayRotation;
     }
 
     @Override
     protected void onStart() {
         mPreview.addRendererFrameCallback(this);
-        mFlipped = mEngine.getAngles().flip(Reference.SENSOR, Reference.VIEW);
         mDesiredState = STATE_RECORDING;
         dispatchVideoRecordingStart();
     }
@@ -72,6 +85,13 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     @Override
     public void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
+        if (mHasOverlay) {
+            EglViewport temp = new EglViewport();
+            mOverlayTextureId = temp.createTexture();
+            mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId);
+            mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
+            mOverlaySurface = new Surface(mOverlaySurfaceTexture);
+        }
     }
 
     @RendererThread
@@ -104,8 +124,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                     mResult.rotation,
                     type, mTextureId,
                     scaleX, scaleY,
-                    mFlipped,
-                    EGL14.eglGetCurrentContext()
+                    EGL14.eglGetCurrentContext(),
+                    mHasOverlay ? mOverlayTextureId : TextureMediaEncoder.NO_TEXTURE,
+                    mOverlayRotation
             );
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(config);
 
@@ -129,6 +150,21 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             TextureMediaEncoder.TextureFrame textureFrame = textureEncoder.acquireFrame();
             textureFrame.timestamp = surfaceTexture.getTimestamp();
             surfaceTexture.getTransformMatrix(textureFrame.transform);
+
+            // get overlay
+            if (mHasOverlay) {
+                try {
+                    final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
+                    surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                    mOverlay.drawOn(Overlay.Target.VIDEO_SNAPSHOT, surfaceCanvas);
+                    mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
+                } catch (Surface.OutOfResourcesException e) {
+                    LOG.w("Got Surface.OutOfResourcesException while drawing video overlays", e);
+                }
+                mOverlaySurfaceTexture.updateTexImage();
+                mOverlaySurfaceTexture.getTransformMatrix(textureFrame.overlayTransform);
+            }
+
             if (mEncoderEngine != null) {
                 // can happen on teardown
                 mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, textureFrame);
@@ -142,28 +178,41 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mEncoderEngine = null;
             mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
             mPreview = null;
+            if (mOverlaySurfaceTexture != null) {
+                mOverlaySurfaceTexture.release();
+                mOverlaySurfaceTexture = null;
+            }
+            if (mOverlaySurface != null) {
+                mOverlaySurface.release();
+                mOverlaySurface = null;
+            }
         }
 
     }
 
+    @Override
+    public void onEncodingStart() {
+        // Do nothing.
+    }
+
     @EncoderThread
     @Override
-    public void onEncoderStop(int stopReason, @Nullable Exception e) {
+    public void onEncodingEnd(int stopReason, @Nullable Exception e) {
         // If something failed, undo the result, since this is the mechanism
         // to notify Camera1Engine about this.
         if (e != null) {
-            LOG.e("Error onEncoderStop", e);
+            LOG.e("Error onEncodingEnd", e);
             mResult = null;
             mError = e;
         } else {
-            if (stopReason == MediaEncoderEngine.STOP_BY_MAX_DURATION) {
-                LOG.i("onEncoderStop because of max duration.");
+            if (stopReason == MediaEncoderEngine.END_BY_MAX_DURATION) {
+                LOG.i("onEncodingEnd because of max duration.");
                 mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
-            } else if (stopReason == MediaEncoderEngine.STOP_BY_MAX_SIZE) {
-                LOG.i("onEncoderStop because of max size.");
+            } else if (stopReason == MediaEncoderEngine.END_BY_MAX_SIZE) {
+                LOG.i("onEncodingEnd because of max size.");
                 mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
             } else {
-                LOG.i("onEncoderStop because of user.");
+                LOG.i("onEncodingEnd because of user.");
             }
         }
         // Cleanup

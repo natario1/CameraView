@@ -17,7 +17,7 @@
         android:layout_marginBottom="88dp"
         android:keepScreenOn="true"
         app:cameraExperimental="true"
-        app:cameraEngine="camera2"
+        app:cameraEngine="camera1"
         app:cameraPreview="glSurface"
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
@@ -29,8 +29,21 @@
         app:cameraGestureScrollHorizontal="exposureCorrection"
         app:cameraGestureScrollVertical="none"
         app:cameraMode="picture"
-        app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker"/>
+        app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker">
 
+        <!-- Watermark -->
+        <ImageView
+            android:id="@+id/watermark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            app:layout_drawOnPreview="true"
+            app:layout_drawOnVideoSnapshot="true"
+            app:layout_drawOnPictureSnapshot="true"
+            android:src="@mipmap/cameraview"
+            android:padding="8dp"/>
+
+    </com.otaliastudios.cameraview.CameraView>
 
     <ImageButton
         android:id="@+id/toggleCamera"
