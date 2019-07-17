@@ -549,11 +549,10 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Test
     public void testEndVideoSnapshot_withMaxSize() {
-        // TODO
-        // camera.setVideoMaxSize(3000*1000);
-        // waitForOpen(true);
-        // waitForVideoStart();
-        // waitForVideoEnd(true);
+        camera.setVideoMaxSize(3000*1000);
+        openSync(true);
+        takeVideoSnapshotSync(true);
+        waitForVideoResult(true);
     }
 
     @Test
@@ -567,11 +566,10 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Test
     public void testEndVideoSnapshot_withMaxDuration() {
-        // TODO
-        // camera.setVideoMaxDuration(4000);
-        // waitForOpen(true);
-        // waitForVideoStart();
-        // waitForVideoEnd(true);
+        camera.setVideoMaxDuration(4000);
+        openSync(true);
+        takeVideoSnapshotSync(true);
+        waitForVideoResult(true);
     }
 
     //endregion

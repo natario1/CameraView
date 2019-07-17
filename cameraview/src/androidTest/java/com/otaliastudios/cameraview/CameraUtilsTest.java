@@ -84,8 +84,6 @@ public class CameraUtilsTest extends BaseTest {
         assertEquals(0, other.getPixel(0, h-1));
         assertEquals(0, other.getPixel(w-1, 0));
         assertEquals(0, other.getPixel(w-1, h-1));
-
-        // TODO: improve when we add EXIF writing to byte arrays
     }
 
 

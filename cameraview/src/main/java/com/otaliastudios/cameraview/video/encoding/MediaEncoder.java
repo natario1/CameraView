@@ -298,7 +298,7 @@ public abstract class MediaEncoder {
     @CallSuper
     protected void onStopped() {
         LOG.w(mName, "is being released. Notifying controller and releasing codecs.");
-        // TODO should we notify after this method?
+        // TODO should we call notifyStopped after this method ends?
         mController.notifyStopped(mTrackIndex);
         mMediaCodec.stop();
         mMediaCodec.release();

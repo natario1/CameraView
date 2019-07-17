@@ -339,7 +339,6 @@ public class AudioMediaEncoder extends MediaEncoder {
             if (PERFORMANCE_DEBUG) {
                 // After latest changes, the count here is not so different between MONO and STEREO.
                 // We get about 400 frames in both cases (430 for MONO, but doesn't seem like a big issue).
-                // TODO CHECK: This reflects the count difference that we see in engine.write (MONO:200 STEREO:100).
                 LOG.e("EXECUTE DELAY MILLIS:", mAvgExecuteDelay, "COUNT:", mExecuteCount);
                 LOG.e("SEND DELAY MILLIS:", mAvgSendDelay, "COUNT:", mSendCount);
             }
