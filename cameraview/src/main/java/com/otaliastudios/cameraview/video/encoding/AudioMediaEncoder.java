@@ -28,7 +28,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     private static final String TAG = AudioMediaEncoder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    private static final boolean PERFORMANCE_DEBUG = false;
+    private static final boolean PERFORMANCE_DEBUG = true;
     private static final boolean PERFORMANCE_FILL_GAPS = true;
 
     private boolean mRequestStop = false;
@@ -67,7 +67,7 @@ public class AudioMediaEncoder extends MediaEncoder {
                 mConfig.channels);
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, mConfig.audioFormatChannels());
-        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate); // TODO multiply by channels?
+        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         try {
             mMediaCodec = MediaCodec.createEncoderByType(mConfig.mimeType);
         } catch (IOException e) {
@@ -157,7 +157,6 @@ public class AudioMediaEncoder extends MediaEncoder {
 
         @Override
         public void run() {
-            mLastTimeUs = System.nanoTime() / 1000L;
             mAudioRecord.startRecording();
             while (!mRequestStop) {
                 read(false);
