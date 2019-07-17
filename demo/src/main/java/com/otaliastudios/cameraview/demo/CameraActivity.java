@@ -174,20 +174,23 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             // This can happen if picture was taken with a gesture.
             long callbackTime = System.currentTimeMillis();
             if (mCaptureTime == 0) mCaptureTime = callbackTime - 300;
+            LOG.w("onPictureTaken called! Launching activity. Delay:", callbackTime - mCaptureTime);
             PicturePreviewActivity.setPictureResult(result);
             Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
             intent.putExtra("delay", callbackTime - mCaptureTime);
-            LOG.w("Picture delay:", callbackTime - mCaptureTime);
             startActivity(intent);
             mCaptureTime = 0;
+            LOG.w("onPictureTaken called! Launched activity.");
         }
 
         @Override
         public void onVideoTaken(@NonNull VideoResult result) {
             super.onVideoTaken(result);
+            LOG.w("onVideoTaken called! Launching activity.");
             VideoPreviewActivity.setVideoResult(result);
             Intent intent = new Intent(CameraActivity.this, VideoPreviewActivity.class);
             startActivity(intent);
+            LOG.w("onVideoTaken called! Launched activity.");
         }
 
         @Override
