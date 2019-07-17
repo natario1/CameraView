@@ -27,7 +27,7 @@ public class GridLinesLayoutTest extends BaseTest {
 
     @Before
     public void setUp() {
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 TestActivity a = rule.getActivity();

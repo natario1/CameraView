@@ -40,7 +40,7 @@ public abstract class GestureFinderTest<T extends GestureFinder> extends BaseTes
 
     @Before
     public void setUp() {
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 TestActivity a = rule.getActivity();

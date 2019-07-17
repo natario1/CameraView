@@ -56,7 +56,7 @@ public class CameraUtilsTest extends BaseTest {
         };
 
         // Run on ui because it involves handlers.
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 if (maxWidth > 0 && maxHeight > 0) {

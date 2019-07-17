@@ -1,8 +1,6 @@
 package com.otaliastudios.cameraview.gesture;
 
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.test.espresso.action.GeneralClickAction;
 import androidx.test.espresso.action.GeneralLocation;
@@ -32,7 +30,7 @@ public class TapGestureFinderTest extends GestureFinderTest<TapGestureFinder> {
 
     @Test
     public void testDefaults() {
-        assertNull(finder.getGesture());
+        assertNull(finder.mType);
         assertEquals(finder.getPoints().length, 1);
         assertEquals(finder.getPoints()[0].x, 0, 0);
         assertEquals(finder.getPoints()[0].y, 0, 0);

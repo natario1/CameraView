@@ -10,7 +10,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -52,9 +51,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.w3c.dom.Attr;
 
 import static org.junit.Assert.*;
 
@@ -74,10 +70,10 @@ public class CameraViewTest extends BaseTest {
 
     @Before
     public void setUp() {
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
-                Context context = context();
+                Context context = getContext();
                 cameraView = new CameraView(context) {
 
                     @NonNull
@@ -151,8 +147,8 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testDefaults() {
         // CameraEngine
-        TypedArray empty = context().obtainStyledAttributes(new int[]{});
-        ControlParser controls = new ControlParser(context(), empty);
+        TypedArray empty = getContext().obtainStyledAttributes(new int[]{});
+        ControlParser controls = new ControlParser(getContext(), empty);
         assertEquals(cameraView.getFlash(), controls.getFlash());
         assertEquals(cameraView.getFacing(), controls.getFacing());
         assertEquals(cameraView.getGrid(), controls.getGrid());
@@ -236,7 +232,7 @@ public class CameraViewTest extends BaseTest {
         mockController.setMockCameraOptions(o);
         mockController.setMockEngineState(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 cameraView.mTapGestureFinder = new TapGestureFinder(cameraView.mCameraCallbacks) {
@@ -258,7 +254,7 @@ public class CameraViewTest extends BaseTest {
         mockController.setMockCameraOptions(o);
         mockController.setMockEngineState(true);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 cameraView.mTapGestureFinder = new TapGestureFinder(cameraView.mCameraCallbacks) {
@@ -285,7 +281,7 @@ public class CameraViewTest extends BaseTest {
         mockController.mZoomChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         final FactorHolder factor = new FactorHolder();
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 cameraView.mPinchGestureFinder = new PinchGestureFinder(cameraView.mCameraCallbacks) {
@@ -326,7 +322,7 @@ public class CameraViewTest extends BaseTest {
         mockController.mExposureCorrectionChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         final FactorHolder factor = new FactorHolder();
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 cameraView.mScrollGestureFinder = new ScrollGestureFinder(cameraView.mCameraCallbacks) {
@@ -685,7 +681,6 @@ public class CameraViewTest extends BaseTest {
 
     //region Lists of listeners and processors
 
-    @SuppressWarnings("UseBulkOperation")
     @Test
     public void testCameraListenerList() {
         assertTrue(cameraView.mListeners.isEmpty());
@@ -713,7 +708,6 @@ public class CameraViewTest extends BaseTest {
         }
     }
 
-    @SuppressWarnings({"NullableProblems", "UseBulkOperation"})
     @Test
     public void testFrameProcessorsList() {
         assertTrue(cameraView.mFrameProcessors.isEmpty());
@@ -775,13 +769,7 @@ public class CameraViewTest extends BaseTest {
         final PointF point = new PointF(0, 0);
         final PointF[] points = new PointF[]{ point };
         final Op<Boolean> op = new Op<>(true);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                op.end(true);
-                return null;
-            }
-        }).when(markerLayout).onEvent(MarkerLayout.TYPE_AUTOFOCUS, points);
+        doEndOp(op, true).when(markerLayout).onEvent(MarkerLayout.TYPE_AUTOFOCUS, points);
         cameraView.mCameraCallbacks.dispatchOnFocusStart(Gesture.TAP, point);
         assertNotNull(op.await(100));
     }
@@ -793,7 +781,7 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testOverlays_generateLayoutParams() {
         cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
-        LayoutInflater inflater = LayoutInflater.from(context());
+        LayoutInflater inflater = LayoutInflater.from(getContext());
         View overlay = inflater.inflate(com.otaliastudios.cameraview.test.R.layout.overlay, cameraView, false);
         assertTrue(overlay.getLayoutParams() instanceof OverlayLayout.LayoutParams);
         verify(cameraView.mOverlayLayout, times(1)).isOverlay(any(AttributeSet.class));
@@ -804,7 +792,7 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testOverlays_dontGenerateLayoutParams() {
         cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
-        LayoutInflater inflater = LayoutInflater.from(context());
+        LayoutInflater inflater = LayoutInflater.from(getContext());
         View overlay = inflater.inflate(com.otaliastudios.cameraview.test.R.layout.not_overlay, cameraView, false);
         assertFalse(overlay.getLayoutParams() instanceof OverlayLayout.LayoutParams);
         verify(cameraView.mOverlayLayout, times(1)).isOverlay(any(AttributeSet.class));
@@ -814,7 +802,7 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testOverlays_addOverlayView() {
         cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
-        View overlay = new View(context());
+        View overlay = new View(getContext());
         OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
         int count = cameraView.getChildCount();
         cameraView.addView(overlay, 0, params);
@@ -826,7 +814,7 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testOverlays_dontAddOverlayView() {
         cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
-        View overlay = new View(context());
+        View overlay = new View(getContext());
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(10, 10);
         int count = cameraView.getChildCount();
         cameraView.addView(overlay, 0, params);

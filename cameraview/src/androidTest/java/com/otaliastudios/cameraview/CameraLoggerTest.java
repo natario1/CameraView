@@ -10,8 +10,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -26,11 +24,13 @@ public class CameraLoggerTest extends BaseTest {
     @Before
     public void setUp() {
         CameraLogger.setLogLevel(CameraLogger.LEVEL_VERBOSE);
+        CameraLogger.unregisterLogger(CameraLogger.sAndroidLogger); // Avoid writing into Logs during these tests
         logger = CameraLogger.create(loggerTag);
     }
 
     @After
     public void tearDown() {
+        CameraLogger.registerLogger(CameraLogger.sAndroidLogger);
         logger = null;
     }
 
@@ -110,15 +110,9 @@ public class CameraLoggerTest extends BaseTest {
         CameraLogger.registerLogger(mock);
 
         final Op<Throwable> op = new Op<>();
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                Throwable throwable = (Throwable) args[3];
-                op.end(throwable);
-                return null;
-            }
-        }).when(mock).log(anyInt(), anyString(), anyString(), any(Throwable.class));
+        doEndOp(op, 3)
+                .when(mock)
+                .log(anyInt(), anyString(), anyString(), any(Throwable.class));
 
         op.listen();
         logger.e("Got no error.");

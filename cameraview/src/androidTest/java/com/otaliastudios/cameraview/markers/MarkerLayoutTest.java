@@ -11,7 +11,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.manipulation.Filter;
 import org.mockito.Mockito;
 
 import androidx.test.annotation.UiThreadTest;
@@ -29,7 +28,7 @@ public class MarkerLayoutTest extends BaseTest {
 
     @Before
     public void setUp() {
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
                 TestActivity a = rule.getActivity();

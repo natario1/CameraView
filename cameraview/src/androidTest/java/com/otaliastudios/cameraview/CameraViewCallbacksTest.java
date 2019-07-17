@@ -29,19 +29,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.mockito.stubbing.Stubber;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -54,6 +49,8 @@ import static org.mockito.Mockito.verify;
 @MediumTest
 public class CameraViewCallbacksTest extends BaseTest {
 
+    private final static long DELAY = 500;
+
     private CameraView camera;
     private CameraListener listener;
     private FrameProcessor processor;
@@ -63,10 +60,10 @@ public class CameraViewCallbacksTest extends BaseTest {
 
     @Before
     public void setUp() {
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
-                Context context = context();
+                Context context = getContext();
                 listener = mock(CameraListener.class);
                 processor = mock(FrameProcessor.class);
                 camera = new CameraView(context) {
@@ -106,108 +103,101 @@ public class CameraViewCallbacksTest extends BaseTest {
         listener = null;
     }
 
-    // Completes our op.
-    private Stubber completeTask() {
-        return doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                op.end(true);
-                return null;
-            }
-        });
-    }
-
     @Test
     public void testDontDispatchIfRemoved() {
         camera.removeCameraListener(listener);
-        completeTask().when(listener).onCameraOpened(null);
-        camera.mCameraCallbacks.dispatchOnCameraOpened(null);
+        CameraOptions options = mock(CameraOptions.class);
+        doEndOp(op, true).when(listener).onCameraOpened(options);
+        camera.mCameraCallbacks.dispatchOnCameraOpened(options);
 
-        assertNull(op.await(500));
-        verify(listener, never()).onCameraOpened(null);
+        assertNull(op.await(DELAY));
+        verify(listener, never()).onCameraOpened(options);
     }
 
     @Test
     public void testDontDispatchIfCleared() {
         camera.clearCameraListeners();
-        completeTask().when(listener).onCameraOpened(null);
-        camera.mCameraCallbacks.dispatchOnCameraOpened(null);
+        CameraOptions options = mock(CameraOptions.class);
+        doEndOp(op, true).when(listener).onCameraOpened(options);
+        camera.mCameraCallbacks.dispatchOnCameraOpened(options);
 
-        assertNull(op.await(500));
-        verify(listener, never()).onCameraOpened(null);
+        assertNull(op.await(DELAY));
+        verify(listener, never()).onCameraOpened(options);
     }
 
     @Test
     public void testDispatchOnCameraOpened() {
-        completeTask().when(listener).onCameraOpened(null);
-        camera.mCameraCallbacks.dispatchOnCameraOpened(null);
+        CameraOptions options = mock(CameraOptions.class);
+        doEndOp(op, true).when(listener).onCameraOpened(options);
+        camera.mCameraCallbacks.dispatchOnCameraOpened(options);
 
-        assertNotNull(op.await(500));
-        verify(listener, times(1)).onCameraOpened(null);
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onCameraOpened(options);
     }
 
     @Test
     public void testDispatchOnCameraClosed() {
-        completeTask().when(listener).onCameraClosed();
+        doEndOp(op, true).when(listener).onCameraClosed();
         camera.mCameraCallbacks.dispatchOnCameraClosed();
 
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onCameraClosed();
     }
 
     @Test
     public void testDispatchOnVideoRecordingStart() {
-        completeTask().when(listener).onVideoRecordingStart();
+        doEndOp(op, true).when(listener).onVideoRecordingStart();
         camera.mCameraCallbacks.dispatchOnVideoRecordingStart();
 
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onVideoRecordingStart();
     }
 
     @Test
     public void testDispatchOnVideoRecordingEnd() {
-        completeTask().when(listener).onVideoRecordingEnd();
+        doEndOp(op, true).when(listener).onVideoRecordingEnd();
         camera.mCameraCallbacks.dispatchOnVideoRecordingEnd();
 
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onVideoRecordingEnd();
     }
 
     @Test
     public void testDispatchOnVideoTaken() {
         VideoResult.Stub stub = new VideoResult.Stub();
-        completeTask().when(listener).onVideoTaken(any(VideoResult.class));
+        doEndOp(op, true).when(listener).onVideoTaken(any(VideoResult.class));
         camera.mCameraCallbacks.dispatchOnVideoTaken(stub);
 
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onVideoTaken(any(VideoResult.class));
     }
 
     @Test
     public void testDispatchOnPictureTaken() {
         PictureResult.Stub stub = new PictureResult.Stub();
-        completeTask().when(listener).onPictureTaken(any(PictureResult.class));
+        doEndOp(op, true).when(listener).onPictureTaken(any(PictureResult.class));
         camera.mCameraCallbacks.dispatchOnPictureTaken(stub);
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onPictureTaken(any(PictureResult.class));
     }
 
     @Test
     public void testDispatchOnZoomChanged() {
-        completeTask().when(listener).onZoomChanged(eq(0f), eq(new float[]{0, 1}), nullable(PointF[].class));
+        doEndOp(op, true).when(listener).onZoomChanged(eq(0f), eq(new float[]{0, 1}), nullable(PointF[].class));
         camera.mCameraCallbacks.dispatchOnZoomChanged(0f, null);
 
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onZoomChanged(eq(0f), eq(new float[]{0, 1}), nullable(PointF[].class));
     }
 
     @Test
     public void testDispatchOnExposureCorrectionChanged() {
-        completeTask().when(listener).onExposureCorrectionChanged(0f, null, null);
-        camera.mCameraCallbacks.dispatchOnExposureCorrectionChanged(0f, null, null);
+        float[] bounds = new float[]{};
+        doEndOp(op, true).when(listener).onExposureCorrectionChanged(0f, bounds, null);
+        camera.mCameraCallbacks.dispatchOnExposureCorrectionChanged(0f, bounds, null);
 
-        assertNotNull(op.await(500));
-        verify(listener, times(1)).onExposureCorrectionChanged(0f, null, null);
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onExposureCorrectionChanged(0f, bounds, null);
     }
 
     @Test
@@ -221,10 +211,10 @@ public class CameraViewCallbacksTest extends BaseTest {
         camera.mMarkerLayout = markerLayout;
 
         PointF point = new PointF();
-        completeTask().when(listener).onAutoFocusStart(point);
+        doEndOp(op, true).when(listener).onAutoFocusStart(point);
         camera.mCameraCallbacks.dispatchOnFocusStart(Gesture.TAP, point);
 
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onAutoFocusStart(point);
         verify(marker, times(1)).onAutoFocusStart(AutoFocusTrigger.GESTURE, point);
         verify(markerLayout, times(1)).onEvent(eq(MarkerLayout.TYPE_AUTOFOCUS), any(PointF[].class));
@@ -240,10 +230,10 @@ public class CameraViewCallbacksTest extends BaseTest {
 
         PointF point = new PointF();
         boolean success = true;
-        completeTask().when(listener).onAutoFocusEnd(success, point);
+        doEndOp(op, true).when(listener).onAutoFocusEnd(success, point);
         camera.mCameraCallbacks.dispatchOnFocusEnd(Gesture.TAP, success, point);
 
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onAutoFocusEnd(success, point);
         verify(marker, times(1)).onAutoFocusEnd(AutoFocusTrigger.GESTURE, success, point);
 
@@ -252,9 +242,9 @@ public class CameraViewCallbacksTest extends BaseTest {
 
     @Test
     public void testOrientationCallbacks() {
-        completeTask().when(listener).onOrientationChanged(anyInt());
+        doEndOp(op, true).when(listener).onOrientationChanged(anyInt());
         camera.mCameraCallbacks.onDeviceOrientationChanged(90);
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onOrientationChanged(anyInt());
     }
 
@@ -263,20 +253,20 @@ public class CameraViewCallbacksTest extends BaseTest {
     @Test
     public void testCameraError() {
         CameraException error = new CameraException(new RuntimeException("Error"));
-        completeTask().when(listener).onCameraError(error);
+        doEndOp(op, true).when(listener).onCameraError(error);
 
         camera.mCameraCallbacks.dispatchError(error);
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onCameraError(error);
     }
 
     @Test
     public void testProcessFrame() {
         Frame mock = mock(Frame.class);
-        completeTask().when(processor).process(mock);
+        doEndOp(op, true).when(processor).process(mock);
         camera.mCameraCallbacks.dispatchFrame(mock);
 
-        assertNotNull(op.await(500));
+        assertNotNull(op.await(DELAY));
         verify(processor, times(1)).process(mock);
     }
 }
