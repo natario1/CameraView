@@ -68,7 +68,17 @@ public class MediaEncoderEngine {
         void onEncodingStart();
 
         /**
-         * Called when encoding stopped for some reason.
+         * Called when encoding stopped. At this point the mxuer might still be processing,
+         * but we have stopped receiving input (recording video and audio frames).
+         *
+         * The {@link #onEncodingEnd(int, Exception)} callback will soon be called
+         * with the results.
+         */
+        @EncoderThread
+        void onEncodingStop();
+
+        /**
+         * Called when encoding ended for some reason.
          * If there's an exception, it failed.
          * @param reason the reason
          * @param e the error, if present
@@ -353,6 +363,9 @@ public class MediaEncoderEngine {
                 LOG.w("notifyStopped:", "Called for track", track);
                 if (++mReleasedEncodersCount == mEncoders.size()) {
                     LOG.w("requestStop:", "All encoders have been released. Stopping the muxer.");
+                    if (mListener != null) {
+                        mListener.onEncodingStop();
+                    }
                     end();
                 }
             }

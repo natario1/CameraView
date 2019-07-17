@@ -35,6 +35,8 @@ import java.util.List;
 
 public class CameraActivity extends AppCompatActivity implements View.OnClickListener, OptionView.Callback {
 
+    private final static CameraLogger LOG = CameraLogger.create("DemoApp");
+
     private CameraView camera;
     private ViewGroup controlPanel;
     private long mCaptureTime;
@@ -134,9 +136,14 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         animator.start();
     }
 
-    private void message(String content, boolean important) {
-        int length = important ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
-        Toast.makeText(this, content, length).show();
+    private void message(@NonNull String content, boolean important) {
+        if (important) {
+            LOG.w(content);
+            Toast.makeText(this, content, Toast.LENGTH_LONG).show();
+        } else {
+            LOG.i(content);
+            Toast.makeText(this, content, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private class Listener extends CameraListener {
@@ -170,7 +177,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             PicturePreviewActivity.setPictureResult(result);
             Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
             intent.putExtra("delay", callbackTime - mCaptureTime);
-            Log.e("CameraActivity", "Picture delay: " + (callbackTime - mCaptureTime));
+            LOG.w("Picture delay:", callbackTime - mCaptureTime);
             startActivity(intent);
             mCaptureTime = 0;
         }
@@ -181,6 +188,12 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             VideoPreviewActivity.setVideoResult(result);
             Intent intent = new Intent(CameraActivity.this, VideoPreviewActivity.class);
             startActivity(intent);
+        }
+
+        @Override
+        public void onVideoRecordingStart() {
+            super.onVideoRecordingStart();
+            LOG.w("onVideoRecordingStart!");
         }
     }
 

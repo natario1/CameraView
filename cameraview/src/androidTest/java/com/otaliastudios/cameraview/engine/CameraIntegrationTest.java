@@ -167,6 +167,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @SuppressWarnings("UnusedReturnValue")
     @Nullable
     private VideoResult waitForVideoResult(boolean expectSuccess) {
+        // CountDownLatch for onVideoRecordingEnd.
+        CountDownLatch onVideoRecordingEnd = new CountDownLatch(1);
+        doCountDown(onVideoRecordingEnd).when(listener).onVideoRecordingEnd();
+
+        // Op for onVideoTaken.
         final Op<VideoResult> video = new Op<>(true);
         doEndTask(video, 0).when(listener).onVideoTaken(any(VideoResult.class));
         doEndTask(video, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
@@ -175,8 +180,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
                 return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
             }
         }));
+
+        // Wait for onVideoTaken and check.
         VideoResult result = video.await(VIDEO_DELAY);
         if (expectSuccess) {
+            assertEquals("Should call onVideoRecordingEnd", 0, onVideoRecordingEnd.getCount());
             assertNotNull("Should end video", result);
         } else {
             assertNull("Should not end video", result);

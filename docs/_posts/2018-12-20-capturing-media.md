@@ -59,13 +59,42 @@ Please note that the video snaphot features requires:
 This is allowed at the following conditions:
 
 - `takePictureSnapshot()` is used (no HQ pictures)
-- the OpenGL preview is used (see [previews](previews.html))
+- the `GL_SURFACE` preview is used (see [previews](previews.html))
 
 ### Related XML attributes
 
 ```xml
 <com.otaliastudios.cameraview.CameraView
     app:cameraMode="picture|video"/>
+```
+
+### Related callbacks
+
+```java
+camera.addCameraListener(new CameraListener() {
+    
+    @Override
+    public void onPictureTaken(@NonNull PictureResult result) {
+        // A Picture was taken!
+    }
+    
+    @Override
+    public void onVideoTaken(@NonNull VideoResult result) {
+        // A Video was taken!
+    }
+    
+    @Override
+    public void onVideoRecordingStart() {
+        // Notifies that the actual video recording has started.
+        // Can be used to show some UI indicator for video recording or counting time.
+    }
+    
+    @Override
+    public void onVideoRecordingEnd() {
+        // Notifies that the actual video recording has ended.
+        // Can be used to remove UI indicators added in onVideoRecordingStart.
+    }
+})
 ```
 
 ### Related APIs

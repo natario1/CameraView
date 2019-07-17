@@ -148,6 +148,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
     @Override
     protected void onStop() {
         if (mMediaRecorder != null) {
+            dispatchVideoRecordingEnd();
             try {
                 mMediaRecorder.stop();
             } catch (Exception e) {

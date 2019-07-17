@@ -22,7 +22,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Default implementation for audio encoding.
  */
-// TODO create onVideoRecordingEnd callback
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class AudioMediaEncoder extends MediaEncoder {
 

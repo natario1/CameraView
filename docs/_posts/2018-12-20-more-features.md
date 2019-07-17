@@ -58,38 +58,6 @@ cameraView.setGridColor(Color.WHITE);
 cameraView.setGridColor(Color.BLACK);
 ```
 
-##### cameraAutoFocusMarker
-
-Lets you set a marker for drawing on screen in response to auto focus events.
-In XML, you should pass the qualified class name of your marker.
-
-```java
-cameraView.setAutoFocusMarker(null);
-cameraView.setAutoFocusMarker(marker);
-```
-
-We offer a default marker (similar to the old `focusWithMarker` attribute in v1),
-which you can set in XML using the `@string/cameraview_default_autofocus_marker` resource,
-or programmatically:
-
-```java
-cameraView.setAutoFocusMarker(new DefaultAutoFocusMarker());
-```
-
-##### cameraAutoFocusResetDelay
-
-Lets you control how an auto-focus operation is reset after completed.
-Setting a value <= 0 or == Long.MAX_VALUE will not reset the auto-focus.
-This is useful for low end devices that have slow auto-focus capabilities.
-Defaults to 3 seconds.
-
-```java
-cameraView.setCameraAutoFocusResetDelay(1000);  // 1 second
-cameraView.setCameraAutoFocusResetDelay(0);  // NO reset
-cameraView.setCameraAutoFocusResetDelay(-1);  // NO reset
-cameraView.setCameraAutoFocusResetDelay(Long.MAX_VALUE);  // NO reset
-```
-
 ##### cameraUseDeviceOrientation
 
 Controls whether we should consider the device orientation for picture and video outputs.

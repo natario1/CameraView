@@ -39,6 +39,8 @@ camera.addCameraListener(new CameraListener() {
     public void onExposureCorrectionChanged(float newValue, float[] bounds, PointF[] fingers) {}
 
     public void onVideoRecordingStart() {}
+    
+    public void onVideoRecordingEnd() {}
 });
 ```
 

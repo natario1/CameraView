@@ -27,7 +27,7 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 
 If you were using `focus`, just switch to `autoFocus`.
 
-If you were using `focusWithMarker`, you can [add back the old marker](../docs/more-features.html#cameraautofocusmarker).
+If you were using `focusWithMarker`, you can [add back the old marker](../docs/controls.html#cameraautofocusmarker).
 
 
 ### v2.0.0-beta05
