@@ -4,9 +4,6 @@
 [![Issues](https://img.shields.io/github/issues-raw/natario1/CameraView.svg)](https://github.com/natario1/CameraView/issues)
 [![Funding](https://img.shields.io/opencollective/all/CameraView.svg?colorB=r)](https://natario1.github.io/CameraView/extra/donate)
 
-*This is a new major version (v2) of the library. It includes breaking changes, signature changes and new functionality.
-Keep reading if interested, or head to the legacy-v1 branch to read v1 documentation and info.*
-
 <p align="center">
   <img src="docs/static/icon.png" vspace="10" width="250" height="250">
 </p>
