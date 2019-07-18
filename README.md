@@ -4,6 +4,7 @@
 [![Issues](https://img.shields.io/github/issues-raw/natario1/CameraView.svg)](https://github.com/natario1/CameraView/issues)
 [![Funding](https://img.shields.io/opencollective/all/CameraView.svg?colorB=r)](https://natario1.github.io/CameraView/extra/donate)
 
+
 <p align="center">
   <img src="docs/static/icon.png" vspace="10" width="250" height="250">
 </p>
