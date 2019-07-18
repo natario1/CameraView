@@ -1,11 +1,7 @@
 package com.otaliastudios.cameraview.internal.utils;
 
 import android.graphics.ImageFormat;
-import android.graphics.Rect;
 import android.media.Image;
-
-import com.otaliastudios.cameraview.size.AspectRatio;
-import com.otaliastudios.cameraview.size.Size;
 
 import java.nio.ByteBuffer;
 
@@ -18,7 +14,14 @@ import androidx.annotation.RequiresApi;
 @RequiresApi(19)
 public class ImageHelper {
 
-    // https://stackoverflow.com/a/52740776/4288782
+    /**
+     * From https://stackoverflow.com/a/52740776/4288782 .
+     * The result array should have a size that is at least 3/2 * w * h.
+     * This is correctly computed by {@link com.otaliastudios.cameraview.frame.FrameManager}.
+     *
+     * @param image input image
+     * @param result output array
+     */
     public static void convertToNV21(@NonNull Image image, @NonNull byte[] result) {
         if (image.getFormat() != ImageFormat.YUV_420_888) {
             throw new IllegalStateException("CAn only convert from YUV_420_888.");

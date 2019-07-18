@@ -223,6 +223,7 @@ task mergedCoverageReport(type: JacocoReport) {
         classFilter.add('**/com/otaliastudios/cameraview/engine/Camera2Engine**.*')
         classFilter.add('**/com/otaliastudios/cameraview/picture/**.*')
         classFilter.add('**/com/otaliastudios/cameraview/video/**.*')
+        // TODO these below could be testable ALSO outside of the integration tests
         classFilter.add('**/com/otaliastudios/cameraview/video/encoding/**.*')
     }
     classDirectories = fileTree(dir: classDir, excludes: classFilter);
