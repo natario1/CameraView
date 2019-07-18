@@ -12,6 +12,7 @@ import com.otaliastudios.cameraview.R;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 /**
  * A default implementation of {@link AutoFocusMarker}.
@@ -20,8 +21,8 @@ import androidx.annotation.Nullable;
  */
 public class DefaultAutoFocusMarker implements AutoFocusMarker {
 
-    private View mContainer;
-    private View mFill;
+    @VisibleForTesting View mContainer;
+    @VisibleForTesting View mFill;
 
     @Nullable
     @Override

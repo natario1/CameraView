@@ -23,6 +23,7 @@
         app:cameraGrid="off"
         app:cameraFlash="off"
         app:cameraAudio="on"
+        app:cameraFacing="front"
         app:cameraGestureTap="autoFocus"
         app:cameraGestureLongTap="none"
         app:cameraGesturePinch="zoom"

@@ -3,6 +3,9 @@ package com.otaliastudios.cameraview.markers;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.PointF;
+import android.view.View;
+import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
@@ -13,8 +16,19 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.rule.ActivityTestRule;
+
+import static org.mockito.ArgumentMatchers.anyFloat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @TargetApi(17)
 public class MarkerLayoutTest extends BaseTest {
@@ -32,9 +46,9 @@ public class MarkerLayoutTest extends BaseTest {
             @Override
             public void run() {
                 TestActivity a = rule.getActivity();
-                markerLayout = Mockito.spy(new MarkerLayout(a));
+                markerLayout = spy(new MarkerLayout(a));
                 a.inflate(markerLayout);
-                autoFocusMarker = Mockito.spy(new DefaultAutoFocusMarker());
+                autoFocusMarker = spy(new DefaultAutoFocusMarker());
             }
         });
     }
@@ -43,7 +57,7 @@ public class MarkerLayoutTest extends BaseTest {
     @UiThreadTest
     public void testOnMarker_callsOnAttach() {
         markerLayout.onMarker(MarkerLayout.TYPE_AUTOFOCUS, autoFocusMarker);
-        Mockito.verify(autoFocusMarker, Mockito.times(1)).onAttach(
+        Mockito.verify(autoFocusMarker, times(1)).onAttach(
                 Mockito.any(Context.class),
                 Mockito.eq(markerLayout));
     }
@@ -66,8 +80,32 @@ public class MarkerLayoutTest extends BaseTest {
         markerLayout.onMarker(MarkerLayout.TYPE_AUTOFOCUS, null);
         Assert.assertEquals(markerLayout.getChildCount(), 0);
 
-        Mockito.verify(autoFocusMarker, Mockito.times(2)).onAttach(
+        Mockito.verify(autoFocusMarker, times(2)).onAttach(
                 Mockito.any(Context.class),
                 Mockito.eq(markerLayout));
+    }
+
+    @Test
+    @UiThreadTest
+    public void testOnEvent() {
+        final View mockView = spy(new View(getContext()));
+        // These fail, however it's not really needed.
+        // when(mockView.getWidth()).thenReturn(50);
+        // when(mockView.getHeight()).thenReturn(50);
+        AutoFocusMarker mockMarker = new AutoFocusMarker() {
+            public void onAutoFocusStart(@NonNull AutoFocusTrigger trigger, @NonNull PointF point) { }
+            public void onAutoFocusEnd(@NonNull AutoFocusTrigger trigger, boolean successful, @NonNull PointF point) { }
+
+            @Override
+            public View onAttach(@NonNull Context context, @NonNull ViewGroup container) {
+                return mockView;
+            }
+        };
+        markerLayout.onMarker(MarkerLayout.TYPE_AUTOFOCUS, mockMarker);
+        reset(mockView);
+        markerLayout.onEvent(MarkerLayout.TYPE_AUTOFOCUS, new PointF[]{new PointF(0, 0)});
+        verify(mockView, times(1)).clearAnimation();
+        verify(mockView, times(1)).setTranslationX(anyFloat());
+        verify(mockView, times(1)).setTranslationY(anyFloat());
     }
 }

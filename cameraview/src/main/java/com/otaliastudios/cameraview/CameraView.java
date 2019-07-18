@@ -6,7 +6,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 
 import androidx.annotation.VisibleForTesting;
-import androidx.core.view.ViewCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
@@ -830,12 +829,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setPreview(@NonNull Preview preview) {
         boolean isNew = preview != mPreview;
-        if (!isNew) return;
-        mPreview = preview;
-        if (!ViewCompat.isAttachedToWindow(this) && mCameraPreview != null) {
-            // Null the preview: will create another when re-attaching.
-            mCameraPreview.onDestroy();
-            mCameraPreview = null;
+        if (isNew) {
+            mPreview = preview;
+            boolean isAttachedToWindow = getWindowToken() != null;
+            if (!isAttachedToWindow && mCameraPreview != null) {
+                // Null the preview: will create another when re-attaching.
+                mCameraPreview.onDestroy();
+                mCameraPreview = null;
+            }
         }
     }
 

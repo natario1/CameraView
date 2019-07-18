@@ -125,6 +125,8 @@ public abstract class MediaEncoder {
     private long mStartTimeUs = Long.MIN_VALUE; // In unknown reference
     private long mLastTimeUs = 0;
 
+    private long mDebugSetStateTimestamp = Long.MIN_VALUE;
+
     /**
      * Needs a readable name for the thread and for logging.
      * @param name a name
@@ -135,6 +137,12 @@ public abstract class MediaEncoder {
     }
 
     private void setState(int newState) {
+        if (mDebugSetStateTimestamp == Long.MIN_VALUE) {
+            mDebugSetStateTimestamp = System.currentTimeMillis();
+        }
+        long millis = System.currentTimeMillis() - mDebugSetStateTimestamp;
+        mDebugSetStateTimestamp = System.currentTimeMillis();
+
         String newStateName = null;
         switch (newState) {
             case STATE_NONE: newStateName = "NONE"; break;
@@ -146,7 +154,7 @@ public abstract class MediaEncoder {
             case STATE_STOPPING: newStateName = "STOPPING"; break;
             case STATE_STOPPED: newStateName = "STOPPED"; break;
         }
-        LOG.w(mName, "setState:", newStateName);
+        LOG.w(mName, "setState:", newStateName, "millisSinceLastState:", millis);
         mState = newState;
     }
 

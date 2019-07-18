@@ -5,6 +5,11 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -27,7 +32,10 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Preview;
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameProcessor;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +44,8 @@ import java.util.List;
 public class CameraActivity extends AppCompatActivity implements View.OnClickListener, OptionView.Callback {
 
     private final static CameraLogger LOG = CameraLogger.create("DemoApp");
+    private final static boolean USE_FRAME_PROCESSOR = true;
+    private final static boolean DECODE_BITMAP = true;
 
     private CameraView camera;
     private ViewGroup controlPanel;
@@ -51,16 +61,33 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera.setLifecycleOwner(this);
         camera.addCameraListener(new Listener());
 
-        /* camera.addFrameProcessor(new FrameProcessor() {
-            private long lastTime = System.currentTimeMillis();
-            @Override
-            public void process(@NonNull Frame frame) {
-                long newTime = frame.getTime();
-                long delay = newTime - lastTime;
-                lastTime = newTime;
-                Log.e("Frames", "Delay: " + delay + "millis, FPS: " + 1000 / delay);
-            }
-        }); */
+        if (USE_FRAME_PROCESSOR) {
+            camera.addFrameProcessor(new FrameProcessor() {
+                private long lastTime = System.currentTimeMillis();
+
+                @Override
+                public void process(@NonNull Frame frame) {
+                    long newTime = frame.getTime();
+                    long delay = newTime - lastTime;
+                    lastTime = newTime;
+                    LOG.e("Frame delayMillis:", delay, "FPS:", 1000 / delay);
+                    if (DECODE_BITMAP) {
+                        YuvImage yuvImage = new YuvImage(frame.getData(), ImageFormat.NV21,
+                                frame.getSize().getWidth(),
+                                frame.getSize().getHeight(),
+                                null);
+                        ByteArrayOutputStream jpegStream = new ByteArrayOutputStream();
+                        yuvImage.compressToJpeg(new Rect(0, 0,
+                                frame.getSize().getWidth(),
+                                frame.getSize().getHeight()), 100, jpegStream);
+                        byte[] jpegByteArray = jpegStream.toByteArray();
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.length);
+                        //noinspection ResultOfMethodCallIgnored
+                        bitmap.toString();
+                    }
+                }
+            });
+        }
 
         findViewById(R.id.edit).setOnClickListener(this);
         findViewById(R.id.capturePicture).setOnClickListener(this);
@@ -174,20 +201,23 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             // This can happen if picture was taken with a gesture.
             long callbackTime = System.currentTimeMillis();
             if (mCaptureTime == 0) mCaptureTime = callbackTime - 300;
+            LOG.w("onPictureTaken called! Launching activity. Delay:", callbackTime - mCaptureTime);
             PicturePreviewActivity.setPictureResult(result);
             Intent intent = new Intent(CameraActivity.this, PicturePreviewActivity.class);
             intent.putExtra("delay", callbackTime - mCaptureTime);
-            LOG.w("Picture delay:", callbackTime - mCaptureTime);
             startActivity(intent);
             mCaptureTime = 0;
+            LOG.w("onPictureTaken called! Launched activity.");
         }
 
         @Override
         public void onVideoTaken(@NonNull VideoResult result) {
             super.onVideoTaken(result);
+            LOG.w("onVideoTaken called! Launching activity.");
             VideoPreviewActivity.setVideoResult(result);
             Intent intent = new Intent(CameraActivity.this, VideoPreviewActivity.class);
             startActivity(intent);
+            LOG.w("onVideoTaken called! Launched activity.");
         }
 
         @Override
