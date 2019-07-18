@@ -7,11 +7,6 @@
 *This is a new major version (v2) of the library. It includes breaking changes, signature changes and new functionality.
 Keep reading if interested, or head to the legacy-v1 branch to read v1 documentation and info.*
 
-*The v2 version is still in beta and its API surface might still change. Functions might be renamed,
-options might be removed (though they probably won't), signatures might change. If this is a problem,
-please wait for the final release and keep using v1*.
-
-
 <p align="center">
   <img src="docs/static/icon.png" vspace="10" width="250" height="250">
 </p>
@@ -22,7 +17,7 @@ CameraView is a well documented, high-level library that makes capturing picture
 addressing most of the common issues and needs, and still leaving you with flexibility where needed.
 
 ```groovy
-compile 'com.otaliastudios:cameraview:2.0.0-beta06'
+compile 'com.otaliastudios:cameraview:2.0.0-rc1'
 ```
 
 - Fast & reliable
