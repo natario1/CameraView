@@ -165,6 +165,7 @@ public class WorkerHandler {
      * Returns the android backing {@link Handler}.
      * @return the handler
      */
+    @NonNull
     public Handler getHandler() {
         return mHandler;
     }
@@ -207,7 +208,9 @@ public class WorkerHandler {
             WorkerHandler handler = ref.get();
             if (handler != null && handler.getThread().isAlive()) {
                 handler.getThread().interrupt();
-                // handler.getThread().quit();
+                handler.getThread().quit();
+                // after quit(), the thread will die at some point in the future. Might take some ms.
+                // try { handler.getThread().join(); } catch (InterruptedException ignore) {}
             }
             ref.clear();
         }
