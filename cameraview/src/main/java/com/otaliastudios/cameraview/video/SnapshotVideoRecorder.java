@@ -183,26 +183,17 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             }
 
             if (mEncoderEngine != null) {
-                // can happen on teardown
+                // Can happen on teardown. At least it used to.
+                // NOTE: If this still happens, I would say we can still crash on mOverlaySurface
+                // calls above. We might have to add some synchronization.
                 mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
             }
         }
 
         if (mCurrentState == STATE_RECORDING && mDesiredState == STATE_NOT_RECORDING) {
             LOG.i("Stopping the encoder engine.");
-            mCurrentState = STATE_NOT_RECORDING; // before nulling encoderEngine!
+            mCurrentState = STATE_NOT_RECORDING;
             mEncoderEngine.stop();
-            mEncoderEngine = null;
-            mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
-            mPreview = null;
-            if (mOverlaySurfaceTexture != null) {
-                mOverlaySurfaceTexture.release();
-                mOverlaySurfaceTexture = null;
-            }
-            if (mOverlaySurface != null) {
-                mOverlaySurface.release();
-                mOverlaySurface = null;
-            }
         }
 
     }
@@ -241,6 +232,15 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         mCurrentState = STATE_NOT_RECORDING;
         mDesiredState = STATE_NOT_RECORDING;
         mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
+        mPreview = null;
+        if (mOverlaySurfaceTexture != null) {
+            mOverlaySurfaceTexture.release();
+            mOverlaySurfaceTexture = null;
+        }
+        if (mOverlaySurface != null) {
+            mOverlaySurface.release();
+            mOverlaySurface = null;
+        }
         mEncoderEngine = null;
         dispatchResult();
     }
