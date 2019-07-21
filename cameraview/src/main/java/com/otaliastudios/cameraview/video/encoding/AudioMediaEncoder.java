@@ -28,7 +28,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     private static final String TAG = AudioMediaEncoder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    private static final boolean PERFORMANCE_DEBUG = true;
+    private static final boolean PERFORMANCE_DEBUG = false;
     private static final boolean PERFORMANCE_FILL_GAPS = true;
 
     private boolean mRequestStop = false;
