@@ -8,6 +8,11 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+### v2.0.0-rc2
+
+- Fix: crashes when stopping video snapshots ([#513][513])
+- Fix: dependencies missing, leading to runtime crashes ([#517][517])
+
 ### v2.0.0-rc1
 
 This is likely to be the last release before v2.0.0.
@@ -85,3 +90,5 @@ This is the first beta release. For changes with respect to v1, please take a lo
 [501]: https://github.com/natario1/CameraView/pull/501
 [502]: https://github.com/natario1/CameraView/pull/502
 [506]: https://github.com/natario1/CameraView/pull/506
+[513]: https://github.com/natario1/CameraView/pull/513
+[517]: https://github.com/natario1/CameraView/pull/517
