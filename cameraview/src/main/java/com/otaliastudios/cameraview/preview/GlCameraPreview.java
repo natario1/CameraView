@@ -308,4 +308,8 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     protected Renderer instantiateRenderer() {
         return new Renderer();
     }
+
+    public void setEffectFragmentShader(String fragmentShader){
+        mOutputViewport.changeEffectFragmentShader(fragmentShader);
+    }
 }
