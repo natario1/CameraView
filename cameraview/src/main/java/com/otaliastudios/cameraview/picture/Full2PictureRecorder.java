@@ -1,8 +1,8 @@
 package com.otaliastudios.cameraview.picture;
 
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -10,9 +10,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
-import android.view.Surface;
 
-import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.internal.utils.ExifHelper;
@@ -46,6 +44,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     private static final int REQUEST_TAG = CameraDevice.TEMPLATE_STILL_CAPTURE;
 
     private CameraCaptureSession mSession;
+    private CameraCharacteristics mCharacteristics;
     private CaptureRequest.Builder mBuilder;
     private CameraCaptureSession.CaptureCallback mCallback;
     private ImageReader mPictureReader;
@@ -55,6 +54,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
 
     public Full2PictureRecorder(@NonNull PictureResult.Stub stub,
                                 @Nullable PictureResultListener listener,
+                                @NonNull CameraCharacteristics characteristics,
                                 @NonNull CameraCaptureSession session,
                                 @NonNull CaptureRequest.Builder builder,
                                 @NonNull CameraCaptureSession.CaptureCallback callback,
@@ -62,6 +62,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
                                 @NonNull ImageReader pictureReader,
                                 boolean stopPreviewBeforeCapture) {
         super(stub, listener);
+        mCharacteristics = characteristics;
         mSession = session;
         mBuilder = builder;
         mCallback = callback;
@@ -76,34 +77,72 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
         runFocusLock();
     }
 
+    private boolean supportsFocusLock() {
+        //noinspection ConstantConditions
+        int afMode = mBuilder.get(CaptureRequest.CONTROL_AF_MODE);
+        // Exclude OFF and EDOF as per their docs.
+        return afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO
+                || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                || afMode == CameraCharacteristics.CONTROL_AF_MODE_MACRO;
+    }
+
     private void runFocusLock() {
-        try {
-            mState = STATE_WAITING_FOCUS_LOCK;
-            mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                    CaptureRequest.CONTROL_AF_TRIGGER_START);
-            mSession.capture(mBuilder.build(), mCallback, null);
-        } catch (CameraAccessException e) {
-            mResult = null;
-            mError = e;
-            dispatchResult();
+        if (supportsFocusLock()) {
+            try {
+                mState = STATE_WAITING_FOCUS_LOCK;
+                mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
+                mSession.capture(mBuilder.build(), mCallback, null);
+            } catch (CameraAccessException e) {
+                mResult = null;
+                mError = e;
+                dispatchResult();
+            }
+        } else {
+            LOG.w("Device does not support focus lock. Running precapture.");
+            runPrecapture(null);
         }
     }
 
-    private void runPrecapture() {
-        try {
-            mState = STATE_WAITING_PRECAPTURE_START;
-            mBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-            mSession.capture(mBuilder.build(), mCallback, null);
-        } catch (CameraAccessException e) {
-            mResult = null;
-            mError = e;
-            dispatchResult();
+    @SuppressWarnings("ConstantConditions")
+    private boolean supportsPrecapture() {
+        // Precapture is not supported on legacy devices.
+        int level = mCharacteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+        if (level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) return false;
+        // We still have to check the current AE mode, see CaptureResult.CONTROL_AE_STATE.
+        int aeMode = mBuilder.get(CaptureRequest.CONTROL_AE_MODE);
+        return aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON
+                || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH
+                || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH
+                || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
+                || aeMode == 5 /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */;
+    }
+
+    private void runPrecapture(@Nullable CaptureResult lastResult) {
+        //noinspection ConstantConditions
+        boolean shouldSkipPrecapture = lastResult != null
+                && lastResult.get(CaptureResult.CONTROL_AE_STATE) != null
+                && lastResult.get(CaptureResult.CONTROL_AE_STATE) == CaptureResult.CONTROL_AE_STATE_CONVERGED;
+        if (supportsPrecapture() && !shouldSkipPrecapture) {
+            try {
+                mState = STATE_WAITING_PRECAPTURE_START;
+                mBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+                mSession.capture(mBuilder.build(), mCallback, null);
+            } catch (CameraAccessException e) {
+                mResult = null;
+                mError = e;
+                dispatchResult();
+            }
+        } else {
+            LOG.w("Device does not support precapture. Running capture.");
+            runCapture();
         }
     }
 
     private void runCapture() {
         try {
+            mState = STATE_WAITING_CAPTURE;
             mPictureBuilder.setTag(REQUEST_TAG);
             mPictureBuilder.addTarget(mPictureReader.getSurface());
             mPictureBuilder.set(CaptureRequest.JPEG_ORIENTATION, mResult.rotation);
@@ -143,26 +182,18 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
             case STATE_IDLE: break;
             case STATE_WAITING_FOCUS_LOCK: {
                 Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                if (afState == null) {
-                    runCapture();
-                } else if (afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED
+                if (afState == null
+                        || afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED
                         || afState == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED) {
-                    // CONTROL_AE_STATE can be null on some devices
-                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                    if (aeState == null || aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
-                        mState = STATE_WAITING_CAPTURE;
-                        runCapture();
-                    } else {
-                        runPrecapture();
-                    }
+                    runPrecapture(result);
                 }
                 break;
             }
             case STATE_WAITING_PRECAPTURE_START: {
                 Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                if (aeState == null ||
-                        aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
-                        aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
+                if (aeState == null
+                        || aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE
+                        || aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
                     mState = STATE_WAITING_PRECAPTURE_END;
                 }
                 break;
@@ -171,7 +202,6 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
                 Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                 if (aeState == null
                         || aeState != CaptureResult.CONTROL_AE_STATE_PRECAPTURE) {
-                    mState = STATE_WAITING_CAPTURE;
                     runCapture();
                 }
                 break;
@@ -188,6 +218,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
 
     @Override
     public void onImageAvailable(ImageReader reader) {
+        LOG.i("onImageAvailable started.");
         mState = STATE_IDLE;
 
         // Read the JPEG.
@@ -226,6 +257,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
         } catch (CameraAccessException ignore) { }
 
         // Leave.
+        LOG.i("onImageAvailable ended.");
         dispatchResult();
     }
 
