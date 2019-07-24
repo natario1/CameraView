@@ -5,6 +5,8 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.effects.BlackAndWhiteEffect;
 
 import java.nio.FloatBuffer;
 
@@ -76,7 +78,12 @@ public class EglViewport extends EglElement {
 
     public EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
-        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
+
+        //mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
+
+        ShaderInterface effect = new BlackAndWhiteEffect();
+        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, effect.getShader(null));
+
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
         checkLocation(maPositionLocation, "aPosition");
         maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, "aTextureCoord");
