@@ -122,7 +122,7 @@ public class EglViewport extends EglElement {
     }
 
     public void changeEffectFragmentShader(String fragmentShader){
-        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, fra);
+        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, fragmentShader);
     }
 
     public void drawFrame(int textureId, float[] textureMatrix) {
