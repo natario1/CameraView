@@ -79,10 +79,7 @@ public class EglViewport extends EglElement {
     public EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
 
-        //mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
-
-        ShaderInterface effect = new BlackAndWhiteEffect();
-        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, effect.getShader(null));
+        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
 
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
         checkLocation(maPositionLocation, "aPosition");
@@ -122,6 +119,10 @@ public class EglViewport extends EglElement {
         check("glTexParameter");
 
         return texId;
+    }
+
+    public void changeEffectFragmentShader(String fragmentShader){
+        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, fra);
     }
 
     public void drawFrame(int textureId, float[] textureMatrix) {

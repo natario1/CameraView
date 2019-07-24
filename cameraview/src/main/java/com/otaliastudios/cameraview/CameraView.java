@@ -26,6 +26,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -67,6 +68,8 @@ import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
 import com.otaliastudios.cameraview.preview.TextureCameraPreview;
+import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.effects.BlackAndWhiteEffect;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
@@ -2125,6 +2128,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mOverlayLayout.addView(child, params);
         } else {
             super.addView(child, index, params);
+        }
+    }
+
+    //endregion
+
+    //region Effects
+
+    public void changeEffect(ShaderInterface shader) {
+        if (mCameraPreview instanceof GlCameraPreview) {
+            String effect = shader.getShader(((GlCameraPreview) mCameraPreview).getView());
+            ((GlCameraPreview) mCameraPreview).setEffectFragmentShader(effect);
+        } else {
+            LOG.e("changeEffect", "changeEffect is supported only for GLSurfaceView");
         }
     }
 
