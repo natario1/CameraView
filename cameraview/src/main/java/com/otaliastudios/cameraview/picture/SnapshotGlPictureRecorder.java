@@ -4,9 +4,13 @@ import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ImageFormat;
+import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.media.Image;
+import android.media.ImageReader;
 import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.Matrix;
@@ -36,7 +40,10 @@ import androidx.annotation.Nullable;
 
 import android.view.Surface;
 
+import java.nio.ByteBuffer;
+
 /**
+ * API 19.
  * Records a picture snapshots from the {@link GlCameraPreview}. It works as follows:
  *
  * - We register a one time {@link RendererFrameCallback} on the preview
@@ -65,9 +72,10 @@ import android.view.Surface;
  *   This is technically correct, we can just re-draw on this offscreen surface the input texture.
  *   However, despite being more correct, this method is significantly slower than the previous.
  *
- * A third and better method could be using {@link android.media.ImageReader} to construct
- * a surface and use that as the output for a new EGL window surface. This would make sense
- * and would avoid us using glReadPixels. However, it is API 19.
+ * A third method is using {@link ImageReader} to construct a surface and use that
+ * as the output for a new EGL window surface. This makes sense and would avoid us using glReadPixels.
+ * However, it's not working. It looks like ImageReader is not capable of converting the input data
+ * into JPEG: "RGBA override BLOB format buffer should have height == width"
  */
 public class SnapshotGlPictureRecorder extends PictureRecorder {
 
@@ -76,6 +84,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
     private static final int METHOD_WINDOW_SURFACE = 0;
     private static final int METHOD_PBUFFER_SURFACE = 1;
+    private static final int METHOD_IMAGEREADER_SURFACE = 2;
 
     // METHOD_PBUFFER_SURFACE: (409 + 420 + 394 + 424 + 437 + 482 + 420 + 463 + 451 + 378 + 416 + 429 + 459 + 361 + 466 + 517 + 492 + 435 + 585 + 427) / 20
     // METHOD_WINDOW_SURFACE: (329 + 462 + 343 + 312 + 311 + 322 + 495 + 342 + 310 + 329 + 373 + 380 + 667 + 315 + 354 + 351 + 315 + 333 + 277 + 274) / 20
@@ -152,16 +161,22 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                     @Override
                     public void run() {
                         // 0. Create the output surface.
-                        EglBaseSurface surface;
+                        ImageReader reader = null;
+                        EglBaseSurface eglSurface;
                         if (METHOD == METHOD_WINDOW_SURFACE) {
-                            surface = new EglWindowSurface(core, mSurfaceTexture);
+                            eglSurface = new EglWindowSurface(core, mSurfaceTexture);
+                            eglSurface.makeCurrent();
                         } else if (METHOD == METHOD_PBUFFER_SURFACE) {
-                            surface = new EglBaseSurface(core);
-                            surface.createOffscreenSurface(mResult.size.getWidth(), mResult.size.getHeight());
+                            eglSurface = new EglBaseSurface(core);
+                            eglSurface.createOffscreenSurface(mResult.size.getWidth(), mResult.size.getHeight());
+                            eglSurface.makeCurrent();
+                        } else if (METHOD == METHOD_IMAGEREADER_SURFACE) {
+                            reader = ImageReader.newInstance(mResult.size.getWidth(), mResult.size.getHeight(), ImageFormat.JPEG, 1);
+                            eglSurface = new EglWindowSurface(core, reader.getSurface(), true);
+                            eglSurface.makeCurrent();
                         } else {
                             throw new RuntimeException("Unknown method.");
                         }
-                        surface.makeCurrent();
 
                         // 1. Get latest texture
                         mSurfaceTexture.updateTexImage();
@@ -220,15 +235,38 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                         // 8. Draw and save
                         mViewport.drawFrame(mTextureId, mTransform);
                         if (mHasOverlay) mViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
-                        mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
                         mResult.format = PictureResult.FORMAT_JPEG;
+                        if (METHOD == METHOD_WINDOW_SURFACE) {
+                            // We do not call swapBuffers so we do not really publish to the texture.
+                            // We read pixels at the gl level.
+                            mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
+                        } else if (METHOD == METHOD_PBUFFER_SURFACE) {
+                            // For pbuffer surfaces, swapBuffers is not needed. They already hold
+                            // the data, so we can call glReadPixels safely.
+                            mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
+                        } else if (METHOD == METHOD_IMAGEREADER_SURFACE) {
+                            // Publish into the output Surface.
+                            eglSurface.swapBuffers();
+                            Image image;
+                            //noinspection ConstantConditions,StatementWithEmptyBody
+                            while ((image = reader.acquireNextImage()) == null) {}
+                            ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                            byte[] bytes = new byte[buffer.remaining()];
+                            buffer.get(bytes);
+                            mResult.data = bytes;
+                            image.close();
+                            reader.close();
+                        } else {
+                            throw new RuntimeException("Unknown method.");
+                        }
 
                         // 9. Cleanup
                         mSurfaceTexture.releaseTexImage();
-                        surface.releaseEglSurface();
+                        eglSurface.releaseEglSurface();
                         mViewport.release();
                         mSurfaceTexture.release();
                         if (mHasOverlay) {
+                            mOverlaySurfaceTexture.releaseTexImage();
                             mOverlaySurface.release();
                             mOverlaySurfaceTexture.release();
                         }
