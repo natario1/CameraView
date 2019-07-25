@@ -193,6 +193,9 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
                 Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                 if (aeState == null
                         || aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE
+                        // The one above is a transient state, which means it might not be reported
+                        // by the camera. So in addition let's also check for the precature end states.
+                        || aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED
                         || aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
                     mState = STATE_WAITING_PRECAPTURE_END;
                 }
@@ -201,7 +204,15 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
             case STATE_WAITING_PRECAPTURE_END: {
                 Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                 if (aeState == null
-                        || aeState != CaptureResult.CONTROL_AE_STATE_PRECAPTURE) {
+                        || aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED
+                        || aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED
+                        // The two above are the correct states. However, just for safety, and
+                        // since we got STATE_WAITING_PRECAPTURE_START already, let's accept anything
+                        // other than the precapturing state. We don't want to get stuck here.
+                        || aeState == CaptureRequest.CONTROL_AE_STATE_SEARCHING // Camera is in normal AE routine. Should never happen.
+                        || aeState == CaptureRequest.CONTROL_AE_STATE_INACTIVE // AE is OFF. Should never happen.
+                        || aeState == CaptureResult.CONTROL_AE_STATE_LOCKED // AE has been locked. Should never happen.
+                ) {
                     runCapture();
                 }
                 break;
@@ -250,11 +261,14 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
         } catch (IOException ignore) { }
 
         // Before leaving, unlock focus.
-        try {
-            mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                    CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
-            mSession.capture(mBuilder.build(), mCallback, null);
-        } catch (CameraAccessException ignore) { }
+        if (supportsFocusLock()) {
+            try {
+                mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
+                        CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+                mSession.capture(mBuilder.build(), mCallback, null);
+            } catch (CameraAccessException ignore) {
+            }
+        }
 
         // Leave.
         LOG.i("onImageAvailable ended.");
