@@ -135,6 +135,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             videoConfig.textureId = mTextureId;
             videoConfig.scaleX = scaleX;
             videoConfig.scaleY = scaleY;
+            // Get egl context from the RendererThread, which is the one in which we have created
+            // the textureId and the overlayTextureId, managed by the GlSurfaceView.
+            // Next operations can then be performed on different threads using this handle.
             videoConfig.eglContext = EGL14.eglGetCurrentContext();
             if (mHasOverlay) {
                 videoConfig.overlayTextureId = mOverlayTextureId;

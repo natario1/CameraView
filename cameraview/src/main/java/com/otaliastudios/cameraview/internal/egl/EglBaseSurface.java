@@ -51,7 +51,7 @@ public class EglBaseSurface extends EglElement {
     private int mWidth = -1;
     private int mHeight = -1;
 
-    protected EglBaseSurface(EglCore eglCore) {
+    public EglBaseSurface(EglCore eglCore) {
         mEglCore = eglCore;
     }
 

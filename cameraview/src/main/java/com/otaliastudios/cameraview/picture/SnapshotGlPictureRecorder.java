@@ -14,6 +14,7 @@ import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.internal.egl.EglBaseSurface;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.engine.CameraEngine;
@@ -35,10 +36,50 @@ import androidx.annotation.Nullable;
 
 import android.view.Surface;
 
+/**
+ * Records a picture snapshots from the {@link GlCameraPreview}. It works as follows:
+ *
+ * - We register a one time {@link RendererFrameCallback} on the preview
+ * - We get the textureId and the frame callback on the {@link RendererThread}
+ * - [Optional: we construct another textureId for overlays]
+ * - We take a handle of the EGL context from the {@link RendererThread}
+ * - We move to another thread, and create a new EGL surface for that EGL context.
+ * - We make this new surface current, and re-draw the textureId on it
+ * - [Optional: fill the overlayTextureId and draw it on the same surface]
+ * - We use glReadPixels (through {@link EglBaseSurface#saveFrameTo(Bitmap.CompressFormat)}) and save to file.
+ *
+ * We create a new surface and redraw the frame because:
+ * 1. We want to go off the renderer thread as soon as possible
+ * 2. We have overlays to be drawn - we don't want to draw them on the preview surface, not even for a frame
+ *
+ * We can currently use two different methods:
+ *
+ * - {@link #METHOD_WINDOW_SURFACE}
+ *   This creates an EGL window surface using a new SurfaceTexture as output,
+ *   constructed with the preview textureId. This makes no real sense -
+ *   the preview is already managing a window surface and using it to render,
+ *   and we don't want to stream into that textureId: it would be both input and output.
+ *
+ * - {@link #METHOD_PBUFFER_SURFACE}
+ *   This creates an EGL pbuffer surface, passing desired width and height.
+ *   This is technically correct, we can just re-draw on this offscreen surface the input texture.
+ *   However, despite being more correct, this method is significantly slower than the previous.
+ *
+ * A third and better method could be using {@link android.media.ImageReader} to construct
+ * a surface and use that as the output for a new EGL window surface. This would make sense
+ * and would avoid us using glReadPixels. However, it is API 19.
+ */
 public class SnapshotGlPictureRecorder extends PictureRecorder {
 
     private static final String TAG = SnapshotGlPictureRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
+
+    private static final int METHOD_WINDOW_SURFACE = 0;
+    private static final int METHOD_PBUFFER_SURFACE = 1;
+
+    // METHOD_PBUFFER_SURFACE: (409 + 420 + 394 + 424 + 437 + 482 + 420 + 463 + 451 + 378 + 416 + 429 + 459 + 361 + 466 + 517 + 492 + 435 + 585 + 427) / 20
+    // METHOD_WINDOW_SURFACE: (329 + 462 + 343 + 312 + 311 + 322 + 495 + 342 + 310 + 329 + 373 + 380 + 667 + 315 + 354 + 351 + 315 + 333 + 277 + 274) / 20
+    private static int METHOD = METHOD_WINDOW_SURFACE;
 
     private CameraEngine mEngine;
     private GlCameraPreview mPreview;
@@ -102,33 +143,27 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
             public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
                 mPreview.removeRendererFrameCallback(this);
 
-                // This kinda work but has drawbacks:
-                // - output is upside down due to coordinates in GL: need to flip the byte[] someway
-                // - output is not rotated as we would like to: need to create a bitmap copy...
-                // - works only in the renderer thread, where it allocates the buffer and reads pixels. Bad!
-                /*
-                ByteBuffer buffer = ByteBuffer.allocateDirect(width * height * 4);
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-                GLES20.glReadPixels(0, 0, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buffer);
-                buffer.rewind();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream(buffer.array().length);
-                Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                bitmap.copyPixelsFromBuffer(buffer);
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, bos);
-                bitmap.recycle(); */
-
-                // For this reason it is better to create a new surface,
-                // and draw the last frame again there.
+                // Get egl context from the RendererThread, which is the one in which we have created
+                // the textureId and the overlayTextureId, managed by the GlSurfaceView.
+                // Next operations can then be performed on different threads using this handle.
                 final EGLContext eglContext = EGL14.eglGetCurrentContext();
                 final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
-                // final EGLSurface oldSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW);
-                // final EGLDisplay oldDisplay = EGL14.eglGetCurrentDisplay();
                 WorkerHandler.execute(new Runnable() {
                     @Override
                     public void run() {
-                        // 1. Get latest texture
-                        EglWindowSurface surface = new EglWindowSurface(core, mSurfaceTexture);
+                        // 0. Create the output surface.
+                        EglBaseSurface surface;
+                        if (METHOD == METHOD_WINDOW_SURFACE) {
+                            surface = new EglWindowSurface(core, mSurfaceTexture);
+                        } else if (METHOD == METHOD_PBUFFER_SURFACE) {
+                            surface = new EglBaseSurface(core);
+                            surface.createOffscreenSurface(mResult.size.getWidth(), mResult.size.getHeight());
+                        } else {
+                            throw new RuntimeException("Unknown method.");
+                        }
                         surface.makeCurrent();
+
+                        // 1. Get latest texture
                         mSurfaceTexture.updateTexImage();
                         mSurfaceTexture.getTransformMatrix(mTransform);
 
@@ -185,13 +220,12 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                         // 8. Draw and save
                         mViewport.drawFrame(mTextureId, mTransform);
                         if (mHasOverlay) mViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
-                        // don't - surface.swapBuffers();
                         mResult.data = surface.saveFrameTo(Bitmap.CompressFormat.JPEG);
                         mResult.format = PictureResult.FORMAT_JPEG;
 
                         // 9. Cleanup
                         mSurfaceTexture.releaseTexImage();
-                        surface.release();
+                        surface.releaseEglSurface();
                         mViewport.release();
                         mSurfaceTexture.release();
                         if (mHasOverlay) {

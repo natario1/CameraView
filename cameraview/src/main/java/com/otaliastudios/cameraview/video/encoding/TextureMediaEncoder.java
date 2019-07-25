@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.video.encoding;
 
 import android.graphics.SurfaceTexture;
+import android.media.ImageReader;
 import android.opengl.Matrix;
 import android.os.Build;
 
