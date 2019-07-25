@@ -95,8 +95,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         super.onPrepare(controller, maxLengthMillis);
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
-        mWindow.makeCurrent(); // drawing will happen on the InputWindowSurface, which
-        // is backed by mVideoEncoder.getInputSurface()
+        mWindow.makeCurrent();
         mViewport = new EglViewport();
     }
 

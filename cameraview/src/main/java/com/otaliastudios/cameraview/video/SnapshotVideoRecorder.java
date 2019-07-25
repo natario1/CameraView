@@ -98,6 +98,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId);
             mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
             mOverlaySurface = new Surface(mOverlaySurfaceTexture);
+            temp.release(true);
         }
     }
 
