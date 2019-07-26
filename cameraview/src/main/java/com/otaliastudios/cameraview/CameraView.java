@@ -575,6 +575,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             LOG.i("onTouchEvent", "tap!");
             onGesture(mTapGestureFinder, options);
         }
+
+        if( MotionEvent.ACTION_UP == event.getAction()) {
+            Log.d("Suneet Agrawal", "onTouchEvent " + event.getAction());
+
+            changeEffect(new BlackAndWhiteEffect());
+        }
+
         return true;
     }
 
@@ -2139,8 +2146,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (mCameraPreview instanceof GlCameraPreview) {
             String effect = shader.getShader(((GlCameraPreview) mCameraPreview).getView());
             ((GlCameraPreview) mCameraPreview).setEffectFragmentShader(effect);
+
+            //doInstantiatePreview();
         } else {
-            LOG.e("changeEffect", "changeEffect is supported only for GLSurfaceView");
+            LOG.w("changeEffect", "changeEffect is supported only for GLSurfaceView");
         }
     }
 
