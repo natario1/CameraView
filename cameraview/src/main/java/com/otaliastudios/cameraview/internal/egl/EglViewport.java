@@ -76,10 +76,19 @@ public class EglViewport extends EglElement {
     // private int muTexOffsetLoc; // Used for filtering
     // private int muColorAdjustLoc; // Used for filtering
 
+    private String vertexShader = SIMPLE_VERTEX_SHADER;
+    private String fragmentShader = SIMPLE_FRAGMENT_SHADER;
+
+    private boolean isShaderChanged = false;
+
     public EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+        initProgram();
+    }
 
-        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
+    private void initProgram(){
+
+        mProgramHandle = createProgram(vertexShader, fragmentShader);
 
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
         checkLocation(maPositionLocation, "aPosition");
@@ -91,7 +100,6 @@ public class EglViewport extends EglElement {
         checkLocation(muTexMatrixLocation, "uTexMatrix");
 
         // Stuff from Drawable2d.FULL_RECTANGLE
-
     }
 
     public void release(boolean doEglCleanup) {
@@ -122,8 +130,11 @@ public class EglViewport extends EglElement {
     }
 
     public void changeEffectFragmentShader(String fragmentShader){
-        mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, fragmentShader);
+        this.fragmentShader = fragmentShader;
+        isShaderChanged = true;
     }
+
+
 
     public void drawFrame(int textureId, float[] textureMatrix) {
         drawFrame(textureId, textureMatrix,
@@ -147,6 +158,12 @@ public class EglViewport extends EglElement {
     private void drawFrame(int textureId, float[] textureMatrix,
                            FloatBuffer vertexBuffer,
                            FloatBuffer texBuffer) {
+
+        if (isShaderChanged){
+            initProgram();
+            isShaderChanged = false;
+        }
+
         check("draw start");
 
         // Select the program.
