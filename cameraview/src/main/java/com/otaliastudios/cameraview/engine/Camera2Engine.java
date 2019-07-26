@@ -629,7 +629,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         try {
             CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             applyAllParameters(builder);
-            mPictureRecorder = new Full2PictureRecorder(stub, this, mSession,
+            mPictureRecorder = new Full2PictureRecorder(stub, this,
+                    mCameraCharacteristics,
+                    mSession,
                     mRepeatingRequestBuilder,
                     mRepeatingRequestCallback,
                     builder,
