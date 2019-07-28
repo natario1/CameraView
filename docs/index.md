@@ -8,6 +8,10 @@ title: "CameraView v2"
 CameraView is a well documented, high-level library that makes capturing pictures and videos easy,
 addressing most of the common issues and needs, and still leaving you with flexibility where needed.
 
+<p align="center">
+  <img src="static/banner.png" vspace="10" width="100%">
+</p>
+
 - Fast & reliable
 - Gestures support [[docs]](docs/gestures.html)
 - Camera1 or Camera2 powered engine [[docs]](docs/previews.html)
@@ -21,10 +25,6 @@ addressing most of the common issues and needs, and still leaving you with flexi
 - Lightweight
 - Works down to API level 15
 - Well tested
-
-<p align="center">
-  <img src="static/icon.png" vspace="10" width="200" height="200">
-</p>
 
 ### Get started
 

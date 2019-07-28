@@ -9,7 +9,6 @@
 
     <!-- Camera -->
     <com.otaliastudios.cameraview.CameraView
-        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/camera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -35,14 +34,13 @@
         <!-- Watermark -->
         <ImageView
             android:id="@+id/watermark"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:layout_gravity="bottom|end"
             app:layout_drawOnPreview="true"
             app:layout_drawOnVideoSnapshot="true"
             app:layout_drawOnPictureSnapshot="true"
-            android:src="@mipmap/cameraview"
-            android:padding="8dp"/>
+            android:src="@mipmap/logo_foreground"/>
 
     </com.otaliastudios.cameraview.CameraView>
 
@@ -53,6 +51,7 @@
         android:layout_margin="16dp"
         android:layout_gravity="top|end"
         android:background="@drawable/background"
+        android:elevation="6dp"
         app:srcCompat="@drawable/ic_switch" />
 
     <!-- Controls -->
