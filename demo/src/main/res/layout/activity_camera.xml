@@ -41,7 +41,7 @@
             app:layout_drawOnPreview="true"
             app:layout_drawOnVideoSnapshot="true"
             app:layout_drawOnPictureSnapshot="true"
-            android:src="@mipmap/cameraview"
+            android:src="@mipmap/logo"
             android:padding="8dp"/>
 
     </com.otaliastudios.cameraview.CameraView>

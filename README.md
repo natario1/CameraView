@@ -40,7 +40,7 @@ or in the [v1 migration guide](https://natario1.github.io/CameraView/extra/v1-mi
 &#10240;  <!-- Hack to add whitespace -->
 
 <p>
-  <img src="docs/static/screen1.jpg" width="250" hspace="5"><img src="docs/static/screen2.jpg" width="250" hspace="5"><img src="docs/static/screen3.jpg" width="250" hspace="5">
+  <img src="docs/static/screen1.png" width="250" hspace="5"><img src="docs/static/screen2.png" width="250" hspace="5"><img src="docs/static/screen3.png" width="250" hspace="5">
 </p>
 
 &#10240;  <!-- Hack to add whitespace -->
