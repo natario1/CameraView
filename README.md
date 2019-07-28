@@ -7,7 +7,7 @@
 &#10240;  <!-- Hack to add whitespace -->
 
 <p align="center">
-  <img src="docs/static/icon.png" width="300" height="300">
+  <img src="docs/static/banner.png" width="100%">
 </p>
 
 # CameraView
