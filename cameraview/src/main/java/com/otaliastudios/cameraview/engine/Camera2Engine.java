@@ -1255,8 +1255,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private void onAutoFocusCapture(@NonNull CaptureResult result) {
         Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
         if (afState == null) {
-            LOG.e("onAutoFocusCapture", "afState is null! Assuming AF failed.");
-            afState = CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
+            LOG.i("onAutoFocusCapture", "afState is null! This can happen for partial results. Waiting.");
+            return;
         }
         switch (afState) {
             case CaptureRequest.CONTROL_AF_STATE_FOCUSED_LOCKED: {
