@@ -306,10 +306,9 @@ public class Camera1Engine extends CameraEngine implements
 
     @WorkerThread
     @Override
-    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
+    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio) {
         stub.size = getUncroppedSnapshotSize(Reference.OUTPUT); // Not the real size: it will be cropped to match the view ratio
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR); // Actually it will be rotated and set to 0.
-        AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
 
         if (mPreview instanceof GlCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio, getOverlay());
@@ -343,7 +342,7 @@ public class Camera1Engine extends CameraEngine implements
     @SuppressLint("NewApi")
     @WorkerThread
     @Override
-    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
+    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio outputRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
@@ -355,7 +354,6 @@ public class Camera1Engine extends CameraEngine implements
         if (outputSize == null) {
             throw new IllegalStateException("outputSize should not be null.");
         }
-        AspectRatio outputRatio = getAngles().flip(Reference.VIEW, Reference.OUTPUT) ? viewAspectRatio.flip() : viewAspectRatio;
         Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
         outputSize = new Size(outputCrop.width(), outputCrop.height());
         stub.size = outputSize;

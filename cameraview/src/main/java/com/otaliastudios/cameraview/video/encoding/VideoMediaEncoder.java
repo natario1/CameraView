@@ -53,16 +53,16 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
     protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
 
-        // Set some properties.  Failing to specify some of these can cause the MediaCodec
-        // configure() call to throw an unhelpful exception.
+        // Failing to specify some of these can cause the MediaCodec configure() call to throw an unhelpful exception.
+        // About COLOR_FormatSurface, see https://stackoverflow.com/q/28027858/4288782
+        // This just means it is an opaque, implementation-specific format that the device GPU prefers.
+        // So as long as we use the GPU to draw, the format will match what the encoder expects.
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, mConfig.frameRate);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
         format.setInteger("rotation-degrees", mConfig.rotation);
 
-        // Create a MediaCodec encoder, and configure it with our format.  Get a Surface
-        // we can use for input and wrap it with a class that handles the EGL work.
         try {
             mMediaCodec = MediaCodec.createEncoderByType(mConfig.mimeType);
         } catch (IOException e) {

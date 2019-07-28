@@ -19,7 +19,7 @@ public class AspectRatio implements Comparable<AspectRatio> {
      * @return a (possibly cached) aspect ratio
      */
     @NonNull
-    public static AspectRatio of(Size size) {
+    public static AspectRatio of(@NonNull Size size) {
         return AspectRatio.of(size.getWidth(), size.getHeight());
     }
 
@@ -78,12 +78,15 @@ public class AspectRatio implements Comparable<AspectRatio> {
         return mY;
     }
 
-    @SuppressWarnings("WeakerAccess")
     public boolean matches(@NonNull Size size) {
         int gcd = gcd(size.getWidth(), size.getHeight());
         int x = size.getWidth() / gcd;
         int y = size.getHeight() / gcd;
         return mX == x && mY == y;
+    }
+
+    public boolean matches(@NonNull Size size, float tolerance) {
+        return Math.abs(toFloat() - (float) size.getWidth() / size.getHeight()) <= tolerance;
     }
 
     @Override
@@ -107,7 +110,6 @@ public class AspectRatio implements Comparable<AspectRatio> {
         return mX + ":" + mY;
     }
 
-    @SuppressWarnings("WeakerAccess")
     public float toFloat() {
         return (float) mX / mY;
     }

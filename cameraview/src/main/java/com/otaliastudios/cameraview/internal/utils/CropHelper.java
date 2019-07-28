@@ -17,7 +17,7 @@ public class CropHelper {
     public static Rect computeCrop(@NonNull Size currentSize, @NonNull AspectRatio targetRatio) {
         int currentWidth = currentSize.getWidth();
         int currentHeight = currentSize.getHeight();
-        if (targetRatio.matches(currentSize)) {
+        if (targetRatio.matches(currentSize, 0.0005F)) {
             return new Rect(0, 0, currentWidth, currentHeight);
         }
 
@@ -26,13 +26,13 @@ public class CropHelper {
         int x, y, width, height;
         if (currentRatio.toFloat() > targetRatio.toFloat()) {
             height = currentHeight;
-            width = (int) (height * targetRatio.toFloat());
+            width = Math.round(height * targetRatio.toFloat());
             y = 0;
-            x = (currentWidth - width) / 2;
+            x = Math.round((currentWidth - width) / 2F);
         } else {
             width = currentWidth;
-            height = (int) (width / targetRatio.toFloat());
-            y = (currentHeight - height) / 2;
+            height = Math.round(width / targetRatio.toFloat());
+            y = Math.round((currentHeight - height) / 2F);
             x = 0;
         }
         return new Rect(x, y, x + width, y + height);

@@ -13,30 +13,30 @@ import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.BitmapCallback;
 import com.otaliastudios.cameraview.PictureResult;
 
-import java.lang.ref.WeakReference;
-
 
 public class PicturePreviewActivity extends Activity {
 
-    private static WeakReference<PictureResult> image;
+    private static PictureResult picture;
 
-    public static void setPictureResult(@Nullable PictureResult im) {
-        image = im != null ? new WeakReference<>(im) : null;
+    public static void setPictureResult(@Nullable PictureResult pictureResult) {
+        picture = pictureResult;
     }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_picture_preview);
-        final ImageView imageView = findViewById(R.id.image);
-        final MessageView captureResolution = findViewById(R.id.nativeCaptureResolution);
-        final MessageView captureLatency = findViewById(R.id.captureLatency);
-        final MessageView exifRotation = findViewById(R.id.exifRotation);
-        PictureResult result = image == null ? null : image.get();
+        final PictureResult result = picture;
         if (result == null) {
             finish();
             return;
         }
+
+        final ImageView imageView = findViewById(R.id.image);
+        final MessageView captureResolution = findViewById(R.id.nativeCaptureResolution);
+        final MessageView captureLatency = findViewById(R.id.captureLatency);
+        final MessageView exifRotation = findViewById(R.id.exifRotation);
+
         final long delay = getIntent().getLongExtra("delay", 0);
         AspectRatio ratio = AspectRatio.of(result.getSize());
         captureLatency.setTitleAndMessage("Approx. latency", delay + " milliseconds");

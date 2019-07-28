@@ -13,23 +13,28 @@ import android.widget.MediaController;
 import android.widget.VideoView;
 
 import com.otaliastudios.cameraview.VideoResult;
-
-import java.lang.ref.WeakReference;
+import com.otaliastudios.cameraview.size.AspectRatio;
 
 
 public class VideoPreviewActivity extends Activity {
 
     private VideoView videoView;
 
-    private static WeakReference<VideoResult> videoResult;
+    private static VideoResult videoResult;
 
     public static void setVideoResult(@Nullable VideoResult result) {
-        videoResult = result != null ? new WeakReference<>(result) : null;
+        videoResult = result;
     }
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video_preview);
+        final VideoResult result = videoResult;
+        if (result == null) {
+            finish();
+            return;
+        }
+
         videoView = findViewById(R.id.video);
         videoView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -46,13 +51,8 @@ public class VideoPreviewActivity extends Activity {
         final MessageView videoBitRate = findViewById(R.id.videoBitRate);
         final MessageView videoFrameRate = findViewById(R.id.videoFrameRate);
 
-        final VideoResult result = videoResult == null ? null : videoResult.get();
-        if (result == null) {
-            finish();
-            return;
-        }
-
-        actualResolution.setTitleAndMessage("Size", result.getSize() + "");
+        AspectRatio ratio = AspectRatio.of(result.getSize());
+        actualResolution.setTitleAndMessage("Size", result.getSize() + " (" + ratio + ")");
         isSnapshot.setTitleAndMessage("Snapshot", result.isSnapshot() + "");
         rotation.setTitleAndMessage("Rotation", result.getRotation() + "");
         audio.setTitleAndMessage("Audio", result.getAudio().name());
@@ -85,8 +85,9 @@ public class VideoPreviewActivity extends Activity {
     }
 
     void playVideo() {
-        if (videoView.isPlaying()) return;
-        videoView.start();
+        if (!videoView.isPlaying()) {
+            videoView.start();
+        }
     }
 
     @Override
