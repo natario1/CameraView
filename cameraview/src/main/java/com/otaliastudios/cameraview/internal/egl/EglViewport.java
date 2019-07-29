@@ -5,6 +5,8 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.shadereffects.effects.NoEffect;
 
 import java.nio.FloatBuffer;
 
@@ -74,19 +76,38 @@ public class EglViewport extends EglElement {
     // private int muTexOffsetLoc; // Used for filtering
     // private int muColorAdjustLoc; // Used for filtering
 
-    private String vertexShader = SIMPLE_VERTEX_SHADER;
-    private String fragmentShader = SIMPLE_FRAGMENT_SHADER;
+    private String mVertexShader = SIMPLE_VERTEX_SHADER;
+    private String mFragmentShader = SIMPLE_FRAGMENT_SHADER;
 
-    private boolean isShaderChanged = false;
+    private BaseShaderEffect mShaderEffect;
+
+    private boolean mIsShaderChanged = false;
 
     public EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+        mShaderEffect = new NoEffect();
         initProgram();
     }
 
     private void initProgram(){
 
-        mProgramHandle = createProgram(vertexShader, fragmentShader);
+        release();
+
+        mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+
+        mProgramHandle = createProgram(mShaderEffect.getVertextShader(), mShaderEffect.getFragmentShader());
+
+        maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, mShaderEffect.getPositionVariableName());
+        checkLocation(maPositionLocation, mShaderEffect.getPositionVariableName());
+        maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, mShaderEffect.getTexttureCoordinateVariableName());
+        checkLocation(maTextureCoordLocation, mShaderEffect.getTexttureCoordinateVariableName());
+        muMVPMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, mShaderEffect.getMVPMatrixVariableName());
+        checkLocation(muMVPMatrixLocation, mShaderEffect.getMVPMatrixVariableName());
+        muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, mShaderEffect.getTextureMatrixVariableName());
+        checkLocation(muTexMatrixLocation, mShaderEffect.getTextureMatrixVariableName());
+
+
+        /*mProgramHandle = createProgram(mVertexShader, mFragmentShader);
 
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
         checkLocation(maPositionLocation, "aPosition");
@@ -95,7 +116,7 @@ public class EglViewport extends EglElement {
         muMVPMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uMVPMatrix");
         checkLocation(muMVPMatrixLocation, "uMVPMatrix");
         muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uTexMatrix");
-        checkLocation(muTexMatrixLocation, "uTexMatrix");
+        checkLocation(muTexMatrixLocation, "uTexMatrix");*/
 
         // Stuff from Drawable2d.FULL_RECTANGLE
     }
@@ -127,9 +148,9 @@ public class EglViewport extends EglElement {
         return texId;
     }
 
-    public void changeEffectFragmentShader(String fragmentShader){
-        this.fragmentShader = fragmentShader;
-        isShaderChanged = true;
+    public void changeShaderEffect(BaseShaderEffect shaderEffect){
+        this.mShaderEffect = shaderEffect;
+        mIsShaderChanged = true;
     }
 
 
@@ -157,9 +178,9 @@ public class EglViewport extends EglElement {
                            FloatBuffer vertexBuffer,
                            FloatBuffer texBuffer) {
 
-        if (isShaderChanged){
+        if (mIsShaderChanged){
             initProgram();
-            isShaderChanged = false;
+            mIsShaderChanged = false;
         }
 
         check("draw start");

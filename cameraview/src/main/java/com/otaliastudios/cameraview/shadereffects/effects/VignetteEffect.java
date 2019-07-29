@@ -11,21 +11,33 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 public class VignetteEffect extends BaseShaderEffect {
     private int mWidth = 0;
     private int mHeight = 0;
-    private float mScale = 0f;
-    private final float mShade = 0.85f;
+    private float mScale = 0.85f;
+    private float mShade = 0.5f;
 
     /**
      * Initialize Effect
      *
-     * @param scale Float, between 0 and 1. 0 means no change.
+     * @param glSurfaceView GLSurfaceView
      */
-    public VignetteEffect(float scale) {
+    public VignetteEffect(GLSurfaceView glSurfaceView) {
+        this.mGlSurfaceView = glSurfaceView;
+
+    }
+
+    public void setVignetteEffectScale(float scale){
         if (scale < 0.0f)
             scale = 0.0f;
         if (scale > 1.0f)
             scale = 1.0f;
         this.mScale = scale;
+    }
 
+    public void setVignetteEffectShade(float shade){
+        if (shade < 0.0f)
+            shade = 0.0f;
+        if (shade > 1.0f)
+            shade = 1.0f;
+        this.mShade = shade;
     }
 
     /**
