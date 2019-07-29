@@ -9,17 +9,16 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  * Tints the preview with specified color..
  */
 public class TintEffect extends BaseShaderEffect {
-    private int mTint = 0xFF0000FF;
+    private int mTint = 0xFFFF0000;
 
     /**
      * Initialize Effect
-     *
-     * @param color Integer, representing an ARGB color with 8 bits per channel.
-     *              May be created using Color class.
      */
-    public TintEffect(int color) {
-        this.mTint = color;
+    public TintEffect() {
+    }
 
+    public void setTintColor(int color){
+        this.mTint = color;
     }
 
     @Override

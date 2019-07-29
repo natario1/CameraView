@@ -7,7 +7,6 @@ import android.opengl.Matrix;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.View;
@@ -16,6 +15,7 @@ import android.view.ViewGroup;
 import com.otaliastudios.cameraview.R;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 import java.util.Collections;
@@ -310,7 +310,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         return new Renderer();
     }
 
-    public void setEffectFragmentShader(String fragmentShader){
-        mOutputViewport.changeEffectFragmentShader(fragmentShader);
+    public void setShaderEffect(BaseShaderEffect shaderEffect){
+        mOutputViewport.changeShaderEffect(shaderEffect);
     }
 }

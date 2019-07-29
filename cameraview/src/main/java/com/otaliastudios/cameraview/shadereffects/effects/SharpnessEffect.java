@@ -9,20 +9,27 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 public class SharpnessEffect extends BaseShaderEffect {
     private int mWidth;
     private int mHeight;
-    private float scale = 0f;
+    private float scale = 0.5f;
 
     /**
      * Initialize Effect
      *
-     * @param scale Float, between 0 and 1. 0 means no change.
+     *
      */
-    public SharpnessEffect(float scale) {
-        if (scale < 0.0f)
-            scale = 0.0f;
-        if (scale > 1.0f)
-            scale = 1.0f;
+    public SharpnessEffect(GLSurfaceView glSurfaceView) {
+        this.mGlSurfaceView = glSurfaceView;
+    }
 
-        this.scale = scale;
+    /**
+     * @param value Float, between 0 and 1. 0 means no change.
+     */
+    public void setSharpnessValue(float value){
+        if (value < 0.0f)
+            value = 0.0f;
+        if (value > 1.0f)
+            value = 1.0f;
+
+        this.scale = value;
     }
 
     /**

@@ -10,17 +10,20 @@ public class TemperatureEffect extends BaseShaderEffect {
 
     /**
      * Initialize Effect
-     *
-     * @param scale Float, between 0 and 1, with 0 indicating cool, and 1
-     *              indicating warm. A value of of 0.5 indicates no change.
      */
-    public TemperatureEffect(float scale) {
+    public TemperatureEffect() {
+    }
+
+    /**
+     * @param scale Float, between 0 and 1, with 0 indicating cool, and 1
+     *                indicating warm. A value of of 0.5 indicates no change.
+     */
+    public void setTemperatureScale(float scale){
         if (scale < 0.0f)
             scale = 0.0f;
         if (scale > 1.0f)
             scale = 1.0f;
         this.scale = scale;
-
     }
 
     @Override
