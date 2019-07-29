@@ -10,13 +10,20 @@ public class SaturationEffect extends BaseShaderEffect {
 
     /**
      * Initialize Effect
-     *
-     * @param scale Float, between -1 and 1. 0 means no change, while -1 indicates
-     *              full desaturation, i.e. grayscale.
      */
-    public SaturationEffect(float scale) {
+    public SaturationEffect() {
+    }
 
-        this.scale = scale;
+    /**
+     *  @param value Float, between -1 and 1. 0 means no change, while -1 indicates
+     *                 full desaturated, i.e. grayscale.
+     */
+    public void setSaturationValue(float value){
+        if (value < -1.0f)
+            value = -1.0f;
+        else if (value > 1.0f)
+            value = 1.0f;
+        this.scale = value;
     }
 
     @Override

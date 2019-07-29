@@ -21,7 +21,7 @@ public class TemperatureEffect extends BaseShaderEffect {
     public void setTemperatureScale(float scale){
         if (scale < 0.0f)
             scale = 0.0f;
-        if (scale > 1.0f)
+        else if (scale > 1.0f)
             scale = 1.0f;
         this.scale = scale;
     }

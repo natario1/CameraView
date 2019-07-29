@@ -13,8 +13,6 @@ public class SharpnessEffect extends BaseShaderEffect {
 
     /**
      * Initialize Effect
-     *
-     *
      */
     public SharpnessEffect(GLSurfaceView glSurfaceView) {
         this.mGlSurfaceView = glSurfaceView;
@@ -26,7 +24,7 @@ public class SharpnessEffect extends BaseShaderEffect {
     public void setSharpnessValue(float value){
         if (value < 0.0f)
             value = 0.0f;
-        if (value > 1.0f)
+        else if (value > 1.0f)
             value = 1.0f;
 
         this.scale = value;
