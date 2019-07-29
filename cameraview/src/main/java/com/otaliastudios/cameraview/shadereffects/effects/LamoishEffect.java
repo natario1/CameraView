@@ -17,9 +17,11 @@ public class LamoishEffect extends BaseShaderEffect {
 
     /**
      * Initialize Effect
+     *
+     * @param glSurfaceView GLSurfaceView
      */
-    public LamoishEffect() {
-
+    public LamoishEffect(GLSurfaceView glSurfaceView) {
+        this.mGlSurfaceView = glSurfaceView;
     }
 
     /**
