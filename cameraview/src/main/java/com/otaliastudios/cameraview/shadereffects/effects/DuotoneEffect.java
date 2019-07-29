@@ -1,14 +1,13 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
 import android.graphics.Color;
-import android.opengl.GLSurfaceView;
 
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Representation of preview using only two color tones.
  */
-public class DuotoneEffect implements ShaderInterface {
+public class DuotoneEffect extends BaseShaderEffect {
     // Default values
     private int mFirstColor = Color.MAGENTA;
     private int mSecondColor = Color.YELLOW;
@@ -27,7 +26,7 @@ public class DuotoneEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         float first[] = {Color.red(mFirstColor) / 255f,
                 Color.green(mFirstColor) / 255f, Color.blue(mFirstColor) / 255f};
         float second[] = {Color.red(mSecondColor) / 255f,

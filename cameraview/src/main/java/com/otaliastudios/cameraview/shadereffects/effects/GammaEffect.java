@@ -1,13 +1,11 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Apply Gamma Effect on preview being played
  */
-public class GammaEffect implements ShaderInterface {
+public class GammaEffect extends BaseShaderEffect {
     private float gammaValue;
 
     /**
@@ -25,7 +23,7 @@ public class GammaEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
 
         String shader = "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"

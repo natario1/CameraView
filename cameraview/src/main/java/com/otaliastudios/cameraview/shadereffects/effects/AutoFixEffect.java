@@ -1,13 +1,14 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Attempts to auto-fix the preview based on histogram equalization.
  */
-public class AutoFixEffect implements ShaderInterface {
+public class AutoFixEffect extends BaseShaderEffect {
+
+
+
     private float scale;
 
     /**
@@ -26,7 +27,7 @@ public class AutoFixEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
 
         String shader = "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"

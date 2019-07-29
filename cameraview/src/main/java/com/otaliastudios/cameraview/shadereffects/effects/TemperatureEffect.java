@@ -1,13 +1,11 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Adjusts color temperature of the preview.
  */
-public class TemperatureEffect implements ShaderInterface {
+public class TemperatureEffect extends BaseShaderEffect {
     private float scale = 0f;
 
     /**
@@ -26,7 +24,7 @@ public class TemperatureEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
 
         String scaleString = "scale = " + (2.0f * scale - 1.0f) + ";\n";
 

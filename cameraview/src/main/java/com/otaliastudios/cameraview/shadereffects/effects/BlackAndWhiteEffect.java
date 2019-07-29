@@ -1,21 +1,21 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Converts the preview into black and white colors
  */
-public class BlackAndWhiteEffect implements ShaderInterface {
+public class BlackAndWhiteEffect extends BaseShaderEffect {
+
+
     /**
-     * Initialize Effect
+     * Initialize effect
      */
-    public BlackAndWhiteEffect() {
+    public BlackAndWhiteEffect(){
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
 
         String shader = "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"

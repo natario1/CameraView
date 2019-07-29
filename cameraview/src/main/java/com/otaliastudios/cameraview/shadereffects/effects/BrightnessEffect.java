@@ -1,13 +1,11 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Adjusts the brightness of the preview.
  */
-public class BrightnessEffect implements ShaderInterface {
+public class BrightnessEffect extends BaseShaderEffect {
     private float brightnessValue;
 
     /**
@@ -25,7 +23,7 @@ public class BrightnessEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
 
         String shader = "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"

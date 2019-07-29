@@ -1,13 +1,11 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Displays the normal preview without any effect.
  */
-public class NoEffect implements ShaderInterface {
+public class NoEffect extends BaseShaderEffect {
     /**
      * Initialize
      */
@@ -15,7 +13,7 @@ public class NoEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
 
         String shader = "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"

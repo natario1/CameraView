@@ -2,13 +2,13 @@ package com.otaliastudios.cameraview.shadereffects.effects;
 
 import android.opengl.GLSurfaceView;
 
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 
 /**
  * Applies lomo-camera style effect to your preview.
  */
-public class VignetteEffect implements ShaderInterface {
+public class VignetteEffect extends BaseShaderEffect {
     private int mWidth = 0;
     private int mHeight = 0;
     private float mScale = 0f;
@@ -39,7 +39,7 @@ public class VignetteEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         initValues(mGlSurfaceView);
         float scale[] = new float[2];
         if (mWidth > mHeight) {
