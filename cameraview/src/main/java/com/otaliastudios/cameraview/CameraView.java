@@ -9,6 +9,7 @@ import android.content.ContextWrapper;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.location.Location;
@@ -73,6 +74,11 @@ import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
 import com.otaliastudios.cameraview.preview.TextureCameraPreview;
 import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 import com.otaliastudios.cameraview.shadereffects.ShaderEffectFactory;
+import com.otaliastudios.cameraview.shadereffects.effects.BrightnessEffect;
+import com.otaliastudios.cameraview.shadereffects.effects.ContrastEffect;
+import com.otaliastudios.cameraview.shadereffects.effects.DuotoneEffect;
+import com.otaliastudios.cameraview.shadereffects.effects.GrainEffect;
+import com.otaliastudios.cameraview.shadereffects.effects.HueEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.SaturationEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.SharpnessEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.TemperatureEffect;
@@ -584,7 +590,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             Log.d("Suneet Agrawal", "onTouchEvent " + event.getAction());
 
             //BlackAndWhiteEffect effect = new BlackAndWhiteEffect();
-            changeEffect(ShaderEffectFactory.ShaderEffects.INVERT_COLOR_EFFECT);
+            changeEffect(ShaderEffectFactory.ShaderEffects.BRIGHTNESS_EFFECT);
         }
 
         return true;
@@ -2162,7 +2168,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             if (previewingSurfaceView != null) {
                 BaseShaderEffect shaderEffect = ShaderEffectFactory.getShaderFromFactory(effect, previewingSurfaceView);
 
-                //((SaturationEffect)shaderEffect).setSaturationValue(1f);
                 ((GlCameraPreview) mCameraPreview).setShaderEffect(shaderEffect);
             }
         } else {

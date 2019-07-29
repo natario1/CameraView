@@ -15,6 +15,10 @@ public class DocumentaryEffect extends BaseShaderEffect {
     private int mHeight;
     private Random mRandom;
 
+    public DocumentaryEffect(GLSurfaceView glSurfaceView) {
+        this.mGlSurfaceView = glSurfaceView;
+    }
+
     /**
      * Init all values that will be used by this shader.
      */

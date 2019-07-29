@@ -9,20 +9,6 @@ import android.opengl.GLSurfaceView;
 public abstract class BaseShaderEffect {
 
     /**
-     * Empty default constructor
-     */
-    public BaseShaderEffect(){
-    }
-
-    /**
-     * parameterized constructor with previewing GLSurfaceView as parameter
-     * @param glSurfaceView
-     */
-    public BaseShaderEffect(GLSurfaceView glSurfaceView) {
-        this.mGlSurfaceView = glSurfaceView;
-    }
-
-    /**
      * Previewing GlSurfaceview.
      * This will be used by a few effects.
      */

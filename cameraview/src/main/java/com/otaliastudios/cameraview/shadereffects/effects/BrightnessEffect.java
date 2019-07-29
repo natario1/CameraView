@@ -6,17 +6,23 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  * Adjusts the brightness of the preview.
  */
 public class BrightnessEffect extends BaseShaderEffect {
-    private float brightnessValue;
+    private float brightnessValue = 2.0f;
 
     /**
      * Initialize Effect
-     *
-     * @param brightnessvalue Range should be between 0.1- 2.0 with 1.0 being normal.
      */
-    public BrightnessEffect(float brightnessvalue) {
-        if (brightnessvalue < 0.1f)
-            brightnessvalue = 0.1f;
-        if (brightnessvalue > 2.0f)
+    public BrightnessEffect() {
+    }
+
+    /**
+     * setBrightnessValue
+     *
+     * @param brightnessvalue Range should be between 1.0- 2.0 with 1.0 being normal.
+     */
+    public void setBrightnessValue(float brightnessvalue) {
+        if (brightnessvalue < 1.0f)
+            brightnessvalue = 1.0f;
+        else if (brightnessvalue > 2.0f)
             brightnessvalue = 2.0f;
 
         this.brightnessValue = brightnessvalue;

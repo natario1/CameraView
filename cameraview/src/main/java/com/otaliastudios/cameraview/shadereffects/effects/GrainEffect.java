@@ -13,19 +13,26 @@ import java.util.Random;
 public class GrainEffect extends BaseShaderEffect {
     private int mWidth;
     private int mHeight;
-    private float strength;
+    private float strength = 0.5f;
     private Random mRandom;
 
     /**
      * Initialize Effect
+     */
+    public GrainEffect(GLSurfaceView glSurfaceView) {
+        this.mGlSurfaceView = glSurfaceView;
+    }
+
+    /**
+     * setDistortionStrength
      *
      * @param strength Float, between 0 and 1. Zero means no distortion, while 1
      *              indicates the maximum amount of adjustment.
      */
-    public GrainEffect(float strength) {
+    public void setDistortionStrength(float strength){
         if (strength < 0.0f)
             strength = 0.0f;
-        if (strength > 1.0f)
+        else if (strength > 1.0f)
             strength = 1.0f;
         this.strength = strength;
     }
