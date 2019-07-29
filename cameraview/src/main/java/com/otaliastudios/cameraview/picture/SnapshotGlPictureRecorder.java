@@ -66,7 +66,6 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
     private boolean mHasOverlay;
 
     private int mTextureId;
-    private SurfaceTexture mSurfaceTexture;
     private float[] mTransform;
 
     private int mOverlayTextureId = 0;
@@ -104,7 +103,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
             @Override
             public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
                 mPreview.removeRendererFrameCallback(this);
-                SnapshotGlPictureRecorder.this.onRendererFrame(scaleX, scaleY);
+                SnapshotGlPictureRecorder.this.onRendererFrame(surfaceTexture, scaleX, scaleY);
             }
         });
     }
@@ -114,12 +113,11 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
     private void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
         mViewport = new EglViewport();
-        mSurfaceTexture = new SurfaceTexture(mTextureId, true);
         // Need to crop the size.
         Rect crop = CropHelper.computeCrop(mResult.size, mOutputRatio);
         mResult.size = new Size(crop.width(), crop.height());
-        mSurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
         mTransform = new float[16];
+        Matrix.setIdentityM(mTransform, 0);
 
         if (mHasOverlay) {
             mOverlayTextureId = mViewport.createTexture();
@@ -155,22 +153,26 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
      */
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    private void onRendererFrame(final float scaleX, final float scaleY) {
+    private void onRendererFrame(final @NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
         // Get egl context from the RendererThread, which is the one in which we have created
         // the textureId and the overlayTextureId, managed by the GlSurfaceView.
         // Next operations can then be performed on different threads using this handle.
         final EGLContext eglContext = EGL14.eglGetCurrentContext();
-        final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
+        // Calling this invalidates the rotation/scale logic below:
+        // surfaceTexture.getTransformMatrix(mTransform); // TODO activate and fix the logic.
         WorkerHandler.execute(new Runnable() {
             @Override
             public void run() {
-                // 0. Create an EGL surface
-                EglBaseSurface eglSurface = new EglWindowSurface(core, mSurfaceTexture);
-                eglSurface.makeCurrent();
+                // 0. EGL window will need an output.
+                // We create a fake one as explained in javadocs.
+                final int fakeOutputTextureId = 9999;
+                SurfaceTexture fakeOutputSurface = new SurfaceTexture(fakeOutputTextureId);
+                fakeOutputSurface.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
 
-                // 1. Get latest texture
-                mSurfaceTexture.updateTexImage();
-                mSurfaceTexture.getTransformMatrix(mTransform);
+                // 1. Create an EGL surface
+                final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
+                final EglBaseSurface eglSurface = new EglWindowSurface(core, fakeOutputSurface);
+                eglSurface.makeCurrent();
 
                 // 2. Apply scale and crop
                 boolean flip = mEngine.getAngles().flip(Reference.VIEW, Reference.SENSOR);
@@ -181,22 +183,16 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 Matrix.translateM(mTransform, 0, scaleTranslX, scaleTranslY, 0);
                 Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
 
-                // 3. Go back to 0,0 so that rotate and flip work well
-                Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0);
-
-                // 4. Apply rotation (not sure why we need the minus here)
-                Matrix.rotateM(mTransform, 0, -mResult.rotation, 0, 0, 1);
+                // 3. Apply rotation and flip
+                Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0); // Go back to 0,0
+                Matrix.rotateM(mTransform, 0, -mResult.rotation, 0, 0, 1); // Rotate (not sure why we need the minus)
                 mResult.rotation = 0;
-
-                // 5. Flip horizontally for front camera
-                if (mResult.facing == Facing.FRONT) {
+                if (mResult.facing == Facing.FRONT) { // 5. Flip horizontally for front camera
                     Matrix.scaleM(mTransform, 0, -1, 1, 1);
                 }
+                Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0); // Go back to old position
 
-                // 6. Go back to old position
-                Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0);
-
-                // 7. Do pretty much the same for overlays
+                // 4. Do pretty much the same for overlays
                 if (mHasOverlay) {
                     // 1. First we must draw on the texture and get latest image
                     try {
@@ -219,17 +215,16 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                     Matrix.translateM(mOverlayTransform, 0, -0.5F, -0.5F, 0);
                 }
 
-                // 8. Draw and save
+                // 5. Draw and save
                 mViewport.drawFrame(mTextureId, mTransform);
                 if (mHasOverlay) mViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
                 mResult.format = PictureResult.FORMAT_JPEG;
                 mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
 
-                // 9. Cleanup
-                mSurfaceTexture.releaseTexImage();
+                // 6. Cleanup
                 eglSurface.releaseEglSurface();
                 mViewport.release();
-                mSurfaceTexture.release();
+                fakeOutputSurface.release();
                 if (mHasOverlay) {
                     mOverlaySurfaceTexture.releaseTexImage();
                     mOverlaySurface.release();
