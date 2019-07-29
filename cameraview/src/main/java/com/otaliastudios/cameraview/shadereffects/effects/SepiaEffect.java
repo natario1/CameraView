@@ -1,13 +1,11 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Converts preview to Sepia tone.
  */
-public class SepiaEffect implements ShaderInterface {
+public class SepiaEffect extends BaseShaderEffect {
     /**
      * Initialize Effect
      */
@@ -15,7 +13,7 @@ public class SepiaEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         float weights[] = {805.0f / 2048.0f, 715.0f / 2048.0f,
                 557.0f / 2048.0f, 1575.0f / 2048.0f, 1405.0f / 2048.0f,
                 1097.0f / 2048.0f, 387.0f / 2048.0f, 344.0f / 2048.0f,

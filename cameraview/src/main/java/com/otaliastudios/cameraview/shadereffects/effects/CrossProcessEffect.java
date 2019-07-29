@@ -1,14 +1,12 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Applies a cross process effect on preview, in which the red and green channels
  * are enhanced while the blue channel is restricted.
  */
-public class CrossProcessEffect implements ShaderInterface {
+public class CrossProcessEffect extends BaseShaderEffect {
 
     /**
      * Initialize Effect
@@ -17,7 +15,7 @@ public class CrossProcessEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
 
         String shader = "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"

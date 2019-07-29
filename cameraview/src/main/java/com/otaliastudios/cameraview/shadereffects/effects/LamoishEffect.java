@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview.shadereffects.effects;
 
 import android.opengl.GLSurfaceView;
 
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 import java.util.Date;
 import java.util.Random;
@@ -10,7 +10,7 @@ import java.util.Random;
 /**
  * Applies lomo-camera style effect to preview.
  */
-public class LamoishEffect implements ShaderInterface {
+public class LamoishEffect extends BaseShaderEffect {
     private int mWidth;
     private int mHeight;
     private Random mRandom;
@@ -34,7 +34,7 @@ public class LamoishEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         initValues(mGlSurfaceView);
         float scale[] = new float[2];
         if (mWidth > mHeight) {

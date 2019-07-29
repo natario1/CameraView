@@ -5,8 +5,6 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
-import com.otaliastudios.cameraview.shadereffects.effects.BlackAndWhiteEffect;
 
 import java.nio.FloatBuffer;
 

@@ -1,13 +1,11 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Inverts the preview colors. This can also be known as negative Effect.
  */
-public class InvertColorsEffect implements ShaderInterface {
+public class InvertColorsEffect extends BaseShaderEffect {
     /**
      * Initialize Effect
      */
@@ -15,7 +13,7 @@ public class InvertColorsEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
 
         String shader = "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"

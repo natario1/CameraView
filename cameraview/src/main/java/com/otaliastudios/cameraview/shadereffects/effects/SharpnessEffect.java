@@ -1,12 +1,12 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
 import android.opengl.GLSurfaceView;
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Sharpens the preview.
  */
-public class SharpnessEffect implements ShaderInterface {
+public class SharpnessEffect extends BaseShaderEffect {
     private int mWidth;
     private int mHeight;
     private float scale = 0f;
@@ -36,7 +36,7 @@ public class SharpnessEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         initValues(mGlSurfaceView);
 
         String stepsizeXString = "stepsizeX = " + 1.0f / mWidth + ";\n";

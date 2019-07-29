@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview.shadereffects.effects;
 
 import android.opengl.GLSurfaceView;
 
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 import java.util.Date;
 import java.util.Random;
@@ -10,22 +10,13 @@ import java.util.Random;
 /**
  * Applies black and white documentary style effect on preview.
  */
-public class DocumentaryEffect implements ShaderInterface {
+public class DocumentaryEffect extends BaseShaderEffect {
     private int mWidth;
     private int mHeight;
     private Random mRandom;
 
     /**
-     * Initialize Effect
-     */
-    public DocumentaryEffect() {
-
-    }
-
-    /**
      * Init all values that will be used by this shader.
-     *
-     * @param mGlSurfaceView which is responsible for displaying your video
      */
     private void initValues(GLSurfaceView mGlSurfaceView) {
         mWidth = mGlSurfaceView.getWidth();
@@ -34,7 +25,7 @@ public class DocumentaryEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         initValues(mGlSurfaceView);
         float scale[] = new float[2];
         if (mWidth > mHeight) {

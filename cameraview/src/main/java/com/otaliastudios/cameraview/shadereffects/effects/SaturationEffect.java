@@ -1,13 +1,11 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Adjusts color saturation of preview.
  */
-public class SaturationEffect implements ShaderInterface {
+public class SaturationEffect extends BaseShaderEffect {
     private float scale = 0f;
 
     /**
@@ -22,7 +20,7 @@ public class SaturationEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         float shift = 1.0f / 255.0f;
         float weights[] = {2f / 8f, 5f / 8f, 1f / 8f};
         float exponents[] = new float[3];

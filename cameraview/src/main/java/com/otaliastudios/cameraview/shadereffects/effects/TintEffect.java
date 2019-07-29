@@ -1,15 +1,14 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
 import android.graphics.Color;
-import android.opengl.GLSurfaceView;
 
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 
 /**
  * Tints the preview with specified color..
  */
-public class TintEffect implements ShaderInterface {
+public class TintEffect extends BaseShaderEffect {
     private int mTint = 0xFF0000FF;
 
     /**
@@ -24,7 +23,7 @@ public class TintEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         float color_ratio[] = {0.21f, 0.71f, 0.07f};
         String color_ratioString[] = new String[3];
         color_ratioString[0] = "color_ratio[0] = " + color_ratio[0] + ";\n";

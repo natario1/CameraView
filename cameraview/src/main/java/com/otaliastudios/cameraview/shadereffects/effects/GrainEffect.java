@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview.shadereffects.effects;
 
 import android.opengl.GLSurfaceView;
 
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 import java.util.Date;
 import java.util.Random;
@@ -10,7 +10,7 @@ import java.util.Random;
 /**
  * Applies film grain effect to preview.
  */
-public class GrainEffect implements ShaderInterface {
+public class GrainEffect extends BaseShaderEffect {
     private int mWidth;
     private int mHeight;
     private float strength;
@@ -42,7 +42,7 @@ public class GrainEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         initValues(mGlSurfaceView);
 
         float seed[] = {mRandom.nextFloat(), mRandom.nextFloat()};

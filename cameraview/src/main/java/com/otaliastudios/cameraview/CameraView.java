@@ -19,6 +19,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.location.Location;
 import android.media.MediaActionSound;
+import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -68,7 +69,7 @@ import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
 import com.otaliastudios.cameraview.preview.TextureCameraPreview;
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.BlackAndWhiteEffect;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
@@ -579,7 +580,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if( MotionEvent.ACTION_UP == event.getAction()) {
             Log.d("Suneet Agrawal", "onTouchEvent " + event.getAction());
 
-            changeEffect(new BlackAndWhiteEffect());
+            BlackAndWhiteEffect effect = new BlackAndWhiteEffect();
+            changeEffect(effect);
         }
 
         return true;
@@ -2142,9 +2144,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     //region Effects
 
-    public void changeEffect(ShaderInterface shader) {
+    public GLSurfaceView getCurrentPreviewingGlSurfaceView(){
         if (mCameraPreview instanceof GlCameraPreview) {
-            String effect = shader.getShader(((GlCameraPreview) mCameraPreview).getView());
+            return ((GlCameraPreview) mCameraPreview).getView();
+        }
+
+        LOG.w("getCurrentPreviewingGlSurfaceView", "current preview is not GLSurfaceView");
+        return null;
+    }
+
+    public void changeEffect(BaseShaderEffect shader) {
+        if (mCameraPreview instanceof GlCameraPreview) {
+            String effect = shader.getFragmentShader();
             ((GlCameraPreview) mCameraPreview).setEffectFragmentShader(effect);
 
             //doInstantiatePreview();

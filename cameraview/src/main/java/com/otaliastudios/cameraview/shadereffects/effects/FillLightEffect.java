@@ -1,13 +1,11 @@
 package com.otaliastudios.cameraview.shadereffects.effects;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.ShaderInterface;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 
 /**
  * Applies back-light filling to the preview.
  */
-public class FillLightEffect implements ShaderInterface {
+public class FillLightEffect extends BaseShaderEffect {
     private float strength = 0f;
 
     /**
@@ -25,7 +23,7 @@ public class FillLightEffect implements ShaderInterface {
     }
 
     @Override
-    public String getShader(GLSurfaceView mGlSurfaceView) {
+    public String getFragmentShader() {
         float fade_gamma = 0.3f;
         float amt = 1.0f - strength;
         float mult = 1.0f / (amt * 0.7f + 0.3f);
