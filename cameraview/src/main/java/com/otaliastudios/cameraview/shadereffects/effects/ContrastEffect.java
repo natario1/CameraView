@@ -5,17 +5,22 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  * Adjusts the contrast of the preview.
  */
 public class ContrastEffect extends BaseShaderEffect {
-    private float contrast;
+    private float contrast = 2.0f;
 
     /**
      * Initialize Effect
-     *
-     * @param contrast Range should be between 0.1- 2.0 with 1.0 being normal.
      */
-    public ContrastEffect(float contrast) {
-        if (contrast < 0.1f)
-            contrast = 0.1f;
-        if (contrast > 2.0f)
+    public ContrastEffect() {
+    }
+
+    /**
+     *
+     * @param contrast Range should be between 1.0- 2.0 with 1.0 being normal.
+     */
+    public void setContrast(float contrast){
+        if (contrast < 1.0f)
+            contrast = 1.0f;
+        else if (contrast > 2.0f)
             contrast = 2.0f;
 
         this.contrast = contrast;

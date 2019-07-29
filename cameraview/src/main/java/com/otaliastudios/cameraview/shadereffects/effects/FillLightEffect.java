@@ -10,13 +10,19 @@ public class FillLightEffect extends BaseShaderEffect {
 
     /**
      * Initialize Effect
+     */
+    public FillLightEffect() {
+    }
+
+    /**
+     * setStrength
      *
      * @param strength Float, between 0 and 1. 0 means no change.
      */
-    public FillLightEffect(float strength) {
+    public void setStrength(float strength){
         if (strength < 0.0f)
             strength = 0f;
-        if (strength > 1.0f)
+        else if (strength > 1.0f)
             strength = 1f;
 
         this.strength = strength;

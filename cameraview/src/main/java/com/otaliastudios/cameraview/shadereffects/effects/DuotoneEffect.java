@@ -14,15 +14,21 @@ public class DuotoneEffect extends BaseShaderEffect {
 
     /**
      * Initialize effect
-     *
-     * @param mFirstColor Integer, representing an ARGB color with 8 bits per channel.
-     *               May be created using Color class.
-     * @param mSecondColor Integer, representing an ARGB color with 8 bits per channel.
-     *               May be created using Color class.
      */
-    public DuotoneEffect(int mFirstColor, int mSecondColor) {
-        this.mFirstColor = mFirstColor;
-        this.mSecondColor = mSecondColor;
+    public DuotoneEffect() {
+    }
+
+    /**
+     * setDuoToneColors
+     *
+     * @param firstColor   Integer, representing an ARGB color with 8 bits per channel.
+     *                     May be created using Color class.
+     * @param secondColor Integer, representing an ARGB color with 8 bits per channel.
+     *                     May be created using Color class.
+     */
+    public void setDuoToneColors(int firstColor, int secondColor) {
+        this.mFirstColor = firstColor;
+        this.mSecondColor = secondColor;
     }
 
     @Override

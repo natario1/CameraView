@@ -6,19 +6,21 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  * Apply Hue effect on the preview
  */
 public class HueEffect extends BaseShaderEffect {
-    float hueValue;
+    float hueValue = 0.0f;
 
     /**
      * Initialize Effect
-     * <p>
-     * <img alt="Hue value chart" width="400" height="350" src="https://cloud.githubusercontent.com/assets/2201511/21810115/b99ac22a-d74a-11e6-9f6c-ef74d15c88c7.jpg" >
-     *
+     */
+    public HueEffect() {
+    }
+
+    /**
+     * Hue value chart - https://cloud.githubusercontent.com/assets/2201511/21810115/b99ac22a-d74a-11e6-9f6c-ef74d15c88c7.jpg" >
      * @param hueDegrees Range of value should be between 0 to 360 degrees as described in the image above
      */
-    public HueEffect(float hueDegrees) {
-//      manipulating input value so that we can map it on 360 degree circle
+    public void setHueDegreeValue(float hueDegrees){
+        //      manipulating input value so that we can map it on 360 degree circle
         hueValue = ((hueDegrees - 45) / 45f + 0.5f) * -1;
-
     }
 
     @Override

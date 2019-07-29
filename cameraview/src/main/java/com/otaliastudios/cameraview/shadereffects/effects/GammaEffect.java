@@ -6,20 +6,25 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  * Apply Gamma Effect on preview being played
  */
 public class GammaEffect extends BaseShaderEffect {
-    private float gammaValue;
+    private float gammaValue = 2.0f;
 
     /**
      * Initialize Effect
+     */
+    public GammaEffect() {
+    }
+
+    /**
+     * setGammaValue
      *
      * @param gammaValue Range should be between 0.0 - 2.0 with 1.0 being normal.
      */
-    public GammaEffect(float gammaValue) {
+    public void setGammaValue(float gammaValue){
         if (gammaValue < 0.0f)
             gammaValue = 0.0f;
-        if (gammaValue > 2.0f)
+        else if (gammaValue > 2.0f)
             gammaValue = 2.0f;
         this.gammaValue = gammaValue;
-
     }
 
     @Override
