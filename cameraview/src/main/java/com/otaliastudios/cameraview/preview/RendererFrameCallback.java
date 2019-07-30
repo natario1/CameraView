@@ -4,6 +4,8 @@ import android.graphics.SurfaceTexture;
 
 import androidx.annotation.NonNull;
 
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+
 /**
  * Callback for renderer frames.
  */
@@ -28,5 +30,5 @@ public interface RendererFrameCallback {
      * @param scaleY the scaleY (in REF_VIEW) value
      */
     @RendererThread
-    void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY);
+    void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY, BaseShaderEffect shaderEffect);
 }

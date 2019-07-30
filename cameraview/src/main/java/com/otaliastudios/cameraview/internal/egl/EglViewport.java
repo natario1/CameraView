@@ -17,28 +17,6 @@ public class EglViewport extends EglElement {
 
     private final static CameraLogger LOG = CameraLogger.create(EglViewport.class.getSimpleName());
 
-    // Simple vertex shader.
-    private static final String SIMPLE_VERTEX_SHADER =
-            "uniform mat4 uMVPMatrix;\n" +
-                    "uniform mat4 uTexMatrix;\n" +
-                    "attribute vec4 aPosition;\n" +
-                    "attribute vec4 aTextureCoord;\n" +
-                    "varying vec2 vTextureCoord;\n" +
-                    "void main() {\n" +
-                    "    gl_Position = uMVPMatrix * aPosition;\n" +
-                    "    vTextureCoord = (uTexMatrix * aTextureCoord).xy;\n" +
-                    "}\n";
-
-    // Simple fragment shader for use with external 2D textures
-    private static final String SIMPLE_FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;\n" +
-                    "varying vec2 vTextureCoord;\n" +
-                    "uniform samplerExternalOES sTexture;\n" +
-                    "void main() {\n" +
-                    "    gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
-                    "}\n";
-
     // Stuff from Drawable2d.FULL_RECTANGLE
     // A full square, extending from -1 to +1 in both dimensions.
     // When the model/view/projection matrix is identity, this will exactly cover the viewport.
@@ -76,15 +54,14 @@ public class EglViewport extends EglElement {
     // private int muTexOffsetLoc; // Used for filtering
     // private int muColorAdjustLoc; // Used for filtering
 
-    private String mVertexShader = SIMPLE_VERTEX_SHADER;
-    private String mFragmentShader = SIMPLE_FRAGMENT_SHADER;
-
     private BaseShaderEffect mShaderEffect;
 
     private boolean mIsShaderChanged = false;
 
     public EglViewport() {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+
+        //init the default shader effect
         mShaderEffect = new NoEffect();
         initProgram();
     }
@@ -105,20 +82,6 @@ public class EglViewport extends EglElement {
         checkLocation(muMVPMatrixLocation, mShaderEffect.getMVPMatrixVariableName());
         muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, mShaderEffect.getTextureMatrixVariableName());
         checkLocation(muTexMatrixLocation, mShaderEffect.getTextureMatrixVariableName());
-
-
-        /*mProgramHandle = createProgram(mVertexShader, mFragmentShader);
-
-        maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
-        checkLocation(maPositionLocation, "aPosition");
-        maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, "aTextureCoord");
-        checkLocation(maTextureCoordLocation, "aTextureCoord");
-        muMVPMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uMVPMatrix");
-        checkLocation(muMVPMatrixLocation, "uMVPMatrix");
-        muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, "uTexMatrix");
-        checkLocation(muTexMatrixLocation, "uTexMatrix");*/
-
-        // Stuff from Drawable2d.FULL_RECTANGLE
     }
 
     public void release(boolean doEglCleanup) {
