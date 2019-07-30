@@ -37,7 +37,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
             return new Frame();
         }
     });
-    private Issue514Workaround mIssue514Workaround;
 
     public TextureMediaEncoder(@NonNull TextureConfig config) {
         super(config.copy());
@@ -95,7 +94,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         mTransformRotation = mConfig.rotation;
         mConfig.rotation = 0;
         super.onPrepare(controller, maxLengthMillis);
-        mIssue514Workaround = new Issue514Workaround(mConfig.textureId, mConfig.hasOverlay());
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent();
@@ -126,7 +124,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         // First, drain any previous data.
         LOG.i("onEvent", "frameNumber:", mFrameNumber, "timestamp:", frame.timestamp, "- draining.");
         drainOutput(false);
-        mIssue514Workaround.onStart();
 
         // Then draw on the surface.
         LOG.i("onEvent", "frameNumber:", mFrameNumber, "timestamp:", frame.timestamp, "- drawing.");
@@ -169,10 +166,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     protected void onStopped() {
         super.onStopped();
         mFramePool.clear();
-        if (mIssue514Workaround != null) {
-            mIssue514Workaround.onEnd();
-            mIssue514Workaround = null;
-        }
         if (mWindow != null) {
             mWindow.release();
             mWindow = null;

@@ -9,6 +9,7 @@ import android.os.Build;
 import android.view.Surface;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.internal.Issue514Workaround;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
@@ -66,6 +67,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private boolean mHasOverlay;
     private int mOverlayRotation;
 
+    private Issue514Workaround mIssue514Workaround;
+
     public SnapshotVideoRecorder(@NonNull CameraEngine engine,
                                  @NonNull GlCameraPreview preview,
                                  @Nullable Overlay overlay,
@@ -100,6 +103,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mOverlaySurface = new Surface(mOverlaySurfaceTexture);
             temp.release(true);
         }
+        mIssue514Workaround = new Issue514Workaround(textureId, mHasOverlay);
     }
 
     @RendererThread
@@ -166,6 +170,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
         if (mCurrentState == STATE_RECORDING) {
             LOG.v("dispatching frame.");
+            mIssue514Workaround.onStart();
             TextureMediaEncoder textureEncoder = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
             TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
             frame.timestamp = surfaceTexture.getTimestamp();
@@ -237,6 +242,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         mDesiredState = STATE_NOT_RECORDING;
         mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
         mPreview = null;
+        if (mIssue514Workaround != null) {
+            mIssue514Workaround.onEnd();
+            mIssue514Workaround = null;
+        }
         if (mOverlaySurfaceTexture != null) {
             mOverlaySurfaceTexture.release();
             mOverlaySurfaceTexture = null;
