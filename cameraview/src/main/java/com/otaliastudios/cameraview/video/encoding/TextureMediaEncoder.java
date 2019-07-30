@@ -95,7 +95,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         mTransformRotation = mConfig.rotation;
         mConfig.rotation = 0;
         super.onPrepare(controller, maxLengthMillis);
-        mIssue514Workaround = new Issue514Workaround(mConfig.textureId);
+        mIssue514Workaround = new Issue514Workaround(mConfig.textureId, mConfig.hasOverlay());
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent();

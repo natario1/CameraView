@@ -9,17 +9,31 @@ import android.graphics.SurfaceTexture;
  */
 public class Issue514Workaround {
 
-    private final SurfaceTexture surfaceTexture;
+    private SurfaceTexture surfaceTexture = null;
+    private final boolean hasOverlay;
 
-    public Issue514Workaround(int cameraTextureId) {
-        surfaceTexture = new SurfaceTexture(cameraTextureId);
+    public Issue514Workaround(int cameraTextureId, boolean hasOverlay) {
+        this.hasOverlay = hasOverlay;
+        if (this.hasOverlay) {
+            try {
+                surfaceTexture = new SurfaceTexture(cameraTextureId);
+            } catch (Exception ignore) { }
+        }
     }
 
     public void onStart() {
-        surfaceTexture.updateTexImage();
+        if (hasOverlay) {
+            try {
+                surfaceTexture.updateTexImage();
+            } catch (Exception ignore) {}
+        }
     }
 
     public void onEnd() {
-        surfaceTexture.release();
+        if (hasOverlay) {
+            try {
+                surfaceTexture.release();
+            } catch (Exception ignore) {}
+        }
     }
 }
