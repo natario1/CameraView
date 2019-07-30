@@ -2,9 +2,6 @@ package com.otaliastudios.cameraview.internal;
 
 import android.graphics.SurfaceTexture;
 
-import androidx.annotation.NonNull;
-
-import com.otaliastudios.cameraview.size.Size;
 
 /**
  * Fixes an issue for some devices with snapshot picture and video recording.
@@ -14,9 +11,8 @@ public class Issue514Workaround {
 
     private final SurfaceTexture surfaceTexture;
 
-    public Issue514Workaround(int cameraTextureId, int outputWidth, int outputHeight) {
+    public Issue514Workaround(int cameraTextureId) {
         surfaceTexture = new SurfaceTexture(cameraTextureId);
-        // surfaceTexture.setDefaultBufferSize(outputWidth, outputHeight);
     }
 
     public void onStart() {
