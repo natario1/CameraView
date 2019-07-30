@@ -17,6 +17,7 @@ import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.video.encoding.AudioConfig;
 import com.otaliastudios.cameraview.video.encoding.AudioMediaEncoder;
@@ -66,6 +67,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private boolean mHasOverlay;
     private int mOverlayRotation;
 
+    private EglViewport mViewport;
+
     public SnapshotVideoRecorder(@NonNull CameraEngine engine,
                                  @NonNull GlCameraPreview preview,
                                  @Nullable Overlay overlay,
@@ -93,8 +96,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     public void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
         if (mHasOverlay) {
-            EglViewport temp = new EglViewport();
-            mOverlayTextureId = temp.createTexture();
+            mViewport = new EglViewport();
+            mOverlayTextureId = mViewport.createTexture();
             mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId);
             mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
             mOverlaySurface = new Surface(mOverlaySurfaceTexture);
@@ -103,9 +106,12 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     @RendererThread
     @Override
-    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
+    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY, BaseShaderEffect shaderEffect) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
             LOG.i("Starting the encoder engine.");
+
+            //set current shader effect
+            mViewport.changeShaderEffect(shaderEffect);
 
             // Set default options
             if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;

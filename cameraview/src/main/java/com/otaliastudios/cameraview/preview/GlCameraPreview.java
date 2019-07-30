@@ -16,6 +16,7 @@ import com.otaliastudios.cameraview.R;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.shadereffects.effects.NoEffect;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 import java.util.Collections;
@@ -68,6 +69,8 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     @VisibleForTesting float mCropScaleX = 1F;
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
+
+    private BaseShaderEffect mCurrectShaderEffect;
 
     public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
         super(context, parent);
@@ -162,6 +165,9 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
                     getView().requestRender(); // requestRender is thread-safe.
                 }
             });
+
+            //init the default shader effect
+            mCurrectShaderEffect = new NoEffect();
         }
 
         @RendererThread
@@ -210,7 +216,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             synchronized (mRendererFrameCallbacks) {
                 // Need to synchronize when iterating the Collections.synchronizedSet
                 for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
+                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY, mCurrectShaderEffect);
                 }
             }
         }
@@ -311,6 +317,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     }
 
     public void setShaderEffect(BaseShaderEffect shaderEffect){
+        mCurrectShaderEffect = shaderEffect;
         mOutputViewport.changeShaderEffect(shaderEffect);
     }
 }

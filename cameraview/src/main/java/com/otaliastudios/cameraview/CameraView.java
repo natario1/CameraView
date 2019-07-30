@@ -590,7 +590,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             Log.d("Suneet Agrawal", "onTouchEvent " + event.getAction());
 
             //BlackAndWhiteEffect effect = new BlackAndWhiteEffect();
-            changeEffect(ShaderEffectFactory.ShaderEffects.BRIGHTNESS_EFFECT);
+            changeEffect(ShaderEffectFactory.ShaderEffects.SEPIA_EFFECT);
         }
 
         return true;

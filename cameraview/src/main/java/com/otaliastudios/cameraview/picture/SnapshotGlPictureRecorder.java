@@ -27,6 +27,7 @@ import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -99,7 +100,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
             @RendererThread
             @Override
-            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
+            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY, BaseShaderEffect shaderEffect) {
                 mPreview.removeRendererFrameCallback(this);
 
                 // This kinda work but has drawbacks:
@@ -121,6 +122,10 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 // and draw the last frame again there.
                 final EGLContext eglContext = EGL14.eglGetCurrentContext();
                 final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
+
+                //set the current shader before taking the snapshot
+                mViewport.changeShaderEffect(shaderEffect);
+
                 // final EGLSurface oldSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW);
                 // final EGLDisplay oldDisplay = EGL14.eglGetCurrentDisplay();
                 WorkerHandler.execute(new Runnable() {
