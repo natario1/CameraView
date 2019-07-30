@@ -169,7 +169,9 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 final int fakeOutputTextureId = 9999;
                 SurfaceTexture fakeOutputSurface = new SurfaceTexture(fakeOutputTextureId);
                 fakeOutputSurface.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
-                final Issue514Workaround issue514Workaround = new Issue514Workaround(mTextureId, mResult.size);
+                final Issue514Workaround issue514Workaround = new Issue514Workaround(mTextureId,
+                        mResult.size.getWidth(),
+                        mResult.size.getHeight());
 
                 // 1. Create an EGL surface
                 final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);

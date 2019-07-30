@@ -14,9 +14,9 @@ public class Issue514Workaround {
 
     private final SurfaceTexture surfaceTexture;
 
-    public Issue514Workaround(int cameraTextureId, @NonNull Size size) {
+    public Issue514Workaround(int cameraTextureId, int outputWidth, int outputHeight) {
         surfaceTexture = new SurfaceTexture(cameraTextureId);
-        surfaceTexture.setDefaultBufferSize(size.getWidth(), size.getHeight());
+        // surfaceTexture.setDefaultBufferSize(outputWidth, outputHeight);
     }
 
     public void onStart() {

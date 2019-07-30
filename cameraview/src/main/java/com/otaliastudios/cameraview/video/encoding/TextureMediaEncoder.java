@@ -6,6 +6,7 @@ import android.opengl.Matrix;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.internal.Issue514Workaround;
 import com.otaliastudios.cameraview.internal.egl.EglCore;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
@@ -36,6 +37,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
             return new Frame();
         }
     });
+    private Issue514Workaround mIssue514Workaround;
 
     public TextureMediaEncoder(@NonNull TextureConfig config) {
         super(config.copy());
@@ -93,10 +95,12 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         mTransformRotation = mConfig.rotation;
         mConfig.rotation = 0;
         super.onPrepare(controller, maxLengthMillis);
+        mIssue514Workaround = new Issue514Workaround(mConfig.textureId, mConfig.width, mConfig.height);
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent();
         mViewport = new EglViewport();
+        mIssue514Workaround.onStart();
     }
 
     @EncoderThread
@@ -165,6 +169,10 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     protected void onStopped() {
         super.onStopped();
         mFramePool.clear();
+        if (mIssue514Workaround != null) {
+            mIssue514Workaround.onEnd();
+            mIssue514Workaround = null;
+        }
         if (mWindow != null) {
             mWindow.release();
             mWindow = null;
