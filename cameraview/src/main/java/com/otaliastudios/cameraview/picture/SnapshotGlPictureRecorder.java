@@ -14,6 +14,7 @@ import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.internal.Issue514Workaround;
 import com.otaliastudios.cameraview.internal.egl.EglBaseSurface;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.controls.Facing;
@@ -168,11 +169,13 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 final int fakeOutputTextureId = 9999;
                 SurfaceTexture fakeOutputSurface = new SurfaceTexture(fakeOutputTextureId);
                 fakeOutputSurface.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
+                final Issue514Workaround issue514Workaround = new Issue514Workaround(mTextureId, mResult.size);
 
                 // 1. Create an EGL surface
                 final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
                 final EglBaseSurface eglSurface = new EglWindowSurface(core, fakeOutputSurface);
                 eglSurface.makeCurrent();
+                issue514Workaround.onStart();
 
                 // 2. Apply scale and crop
                 boolean flip = mEngine.getAngles().flip(Reference.VIEW, Reference.SENSOR);
@@ -222,6 +225,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
 
                 // 6. Cleanup
+                issue514Workaround.onEnd();
                 eglSurface.releaseEglSurface();
                 mViewport.release();
                 fakeOutputSurface.release();
