@@ -104,6 +104,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             temp.release(true);
         }
         mIssue514Workaround = new Issue514Workaround(textureId, mHasOverlay);
+        mIssue514Workaround.start();
     }
 
     @RendererThread
@@ -170,7 +171,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
         if (mCurrentState == STATE_RECORDING) {
             LOG.v("dispatching frame.");
-            mIssue514Workaround.onStart();
+            mIssue514Workaround.start();
             TextureMediaEncoder textureEncoder = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
             TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
             frame.timestamp = surfaceTexture.getTimestamp();
@@ -243,7 +244,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
         mPreview = null;
         if (mIssue514Workaround != null) {
-            mIssue514Workaround.onEnd();
+            mIssue514Workaround.end();
             mIssue514Workaround = null;
         }
         if (mOverlaySurfaceTexture != null) {

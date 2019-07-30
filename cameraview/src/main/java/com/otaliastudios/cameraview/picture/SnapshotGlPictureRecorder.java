@@ -175,7 +175,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
                 final EglBaseSurface eglSurface = new EglWindowSurface(core, fakeOutputSurface);
                 eglSurface.makeCurrent();
-                issue514Workaround.onStart();
+                issue514Workaround.start();
 
                 // 2. Apply scale and crop
                 boolean flip = mEngine.getAngles().flip(Reference.VIEW, Reference.SENSOR);
@@ -225,7 +225,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
 
                 // 6. Cleanup
-                issue514Workaround.onEnd();
+                issue514Workaround.end();
                 eglSurface.releaseEglSurface();
                 mViewport.release();
                 fakeOutputSurface.release();
