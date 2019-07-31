@@ -6,7 +6,7 @@ import android.opengl.GLES20;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.NoEffect;
+import com.otaliastudios.cameraview.shadereffects.effects.NoFilterEffect;
 
 import java.nio.FloatBuffer;
 
@@ -62,7 +62,7 @@ public class EglViewport extends EglElement {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
 
         //init the default shader effect
-        mShaderEffect = new NoEffect();
+        mShaderEffect = new NoFilterEffect();
         initProgram();
     }
 
@@ -72,7 +72,7 @@ public class EglViewport extends EglElement {
 
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
 
-        mProgramHandle = createProgram(mShaderEffect.getVertextShader(), mShaderEffect.getFragmentShader());
+        mProgramHandle = createProgram(mShaderEffect.getVertexShader(), mShaderEffect.getFragmentShader());
 
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, mShaderEffect.getPositionVariableName());
         checkLocation(maPositionLocation, mShaderEffect.getPositionVariableName());
