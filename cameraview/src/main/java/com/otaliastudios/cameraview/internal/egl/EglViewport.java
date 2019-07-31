@@ -64,6 +64,8 @@ public class EglViewport extends EglElement {
     // Stuff from Texture2dProgram
     private int mProgramHandle;
     private int mTextureTarget;
+    private int mTextureUnit;
+
     // Program attributes
     private int muMVPMatrixLocation;
     private int muTexMatrixLocation;
@@ -75,7 +77,16 @@ public class EglViewport extends EglElement {
     // private int muColorAdjustLoc; // Used for filtering
 
     public EglViewport() {
-        mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+        this(false);
+    }
+
+    public EglViewport(boolean overlay) {
+        this(GLES20.GL_TEXTURE0, overlay ? GLES20.GL_TEXTURE_2D : GLES11Ext.GL_TEXTURE_EXTERNAL_OES);
+    }
+
+    public EglViewport(int textureUnit, int textureTarget) {
+        mTextureUnit = textureUnit;
+        mTextureTarget = textureTarget;
         mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
         maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, "aPosition");
         checkLocation(maPositionLocation, "aPosition");
@@ -105,6 +116,7 @@ public class EglViewport extends EglElement {
         check("glGenTextures");
 
         int texId = textures[0];
+        GLES20.glActiveTexture(mTextureUnit);
         GLES20.glBindTexture(mTextureTarget, texId);
         check("glBindTexture " + texId);
 
@@ -152,7 +164,7 @@ public class EglViewport extends EglElement {
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         // Set the texture.
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glActiveTexture(mTextureUnit);
         GLES20.glBindTexture(mTextureTarget, textureId);
 
         // Copy the model / view / projection matrix over.

@@ -96,6 +96,12 @@ public class Issue514Workaround {
         if (this.hasOverlay) {
             try {
                 surfaceTexture = new SurfaceTexture(cameraTextureId);
+                surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
+                    @Override
+                    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+                        // Never called! Correctly.
+                    }
+                });
             } catch (Exception ignore) { }
         }
     }
