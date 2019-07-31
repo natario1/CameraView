@@ -9,6 +9,7 @@ import android.opengl.GLES20;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.internal.Issue514Workaround;
@@ -39,11 +40,11 @@ public class OverlayDrawer {
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private Overlay mOverlay;
-    private int mTextureId;
+    @VisibleForTesting int mTextureId;
     private SurfaceTexture mSurfaceTexture;
     private Surface mSurface;
     private float[] mTransform = new float[16];
-    private EglViewport mViewport;
+    @VisibleForTesting EglViewport mViewport;
     private Issue514Workaround mIssue514Workaround;
     private final Object mIssue514WorkaroundLock = new Object();
 
