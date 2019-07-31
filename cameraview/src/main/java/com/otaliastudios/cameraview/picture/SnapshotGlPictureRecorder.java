@@ -175,7 +175,6 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
                 final EglBaseSurface eglSurface = new EglWindowSurface(core, fakeOutputSurface);
                 eglSurface.makeCurrent();
-                issue514Workaround.start();
 
                 // 2. Apply scale and crop
                 boolean flip = mEngine.getAngles().flip(Reference.VIEW, Reference.SENSOR);
@@ -206,6 +205,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                     } catch (Surface.OutOfResourcesException e) {
                         LOG.w("Got Surface.OutOfResourcesException while drawing picture overlays", e);
                     }
+                    issue514Workaround.start();
                     mOverlaySurfaceTexture.updateTexImage();
                     mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
 
