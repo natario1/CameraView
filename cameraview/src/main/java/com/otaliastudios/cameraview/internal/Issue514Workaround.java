@@ -80,18 +80,14 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  *
  * This makes no sense, since overlaySurfaceTexture.updateTexImage() is setting it to overlayTextureId,
  * but it fixes the issue. Specifically, after any draw operation with {@link EglViewport}, the bound
- * texture is reset to 0.
+ * texture is reset to 0 so this must be undone here. We offer:
  *
- * So, since updating and drawing can happen on different threads, to maximize the chances that
- * when updateTexImage() is called we have bound the cameraTextureId, and to avoid using a lock,
- * we require to call
- * - {@link #beforeOverlayUpdateTexImage()} right before the {@link SurfaceTexture#updateTexImage()} call
- * - {@link #afterOverlayGlDrawn()} right after the last {@link EglViewport#drawFrame(int, float[])} call
- * - {@link #end()} to release
+ * - {@link #beforeOverlayUpdateTexImage()} to be called before the {@link SurfaceTexture#updateTexImage()} call
+ * - {@link #end()} to release and bring things back to normal state
  *
- * If filling the texture and rendering happen on two different threads (with a shared EGL context)
- * there is still a chance that updateTexImage() is called with a current texture that creates this
- * issue (0?), but the alternative would be creating a lock.
+ * Since updating and rendering can happen on different threads with a shared EGL context,
+ * in case they do, the {@link #beforeOverlayUpdateTexImage()}, the actual updateTexImage() and
+ * finally the {@link EglViewport} drawing operations should be synchronized with a lock.
  *
  * REFERENCES
  * https://android.googlesource.com/platform/frameworks/native/+/5c1139f/libs/gui/SurfaceTexture.cpp

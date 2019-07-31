@@ -4,6 +4,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
+import android.opengl.GLES11Ext;
+import android.opengl.GLES20;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
@@ -13,6 +15,24 @@ import com.otaliastudios.cameraview.internal.Issue514Workaround;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.size.Size;
 
+import java.nio.Buffer;
+
+
+/**
+ * Draws overlays through {@link Overlay}.
+ *
+ * - Provides a {@link Canvas} to be passed to the Overlay
+ * - Lets the overlay draw there: {@link #draw(Overlay.Target)}
+ * - Renders this into the current EGL window: {@link #render()}
+ * - Applies the {@link Issue514Workaround} the correct way
+ *
+ * In the future we might want to use a different approach than {@link EglViewport},
+ * {@link SurfaceTexture} and {@link GLES11Ext#GL_TEXTURE_EXTERNAL_OES},
+ * for example by using a regular {@link GLES20#GL_TEXTURE_2D} that might
+ * be filled through {@link GLES20#glTexImage2D(int, int, int, int, int, int, int, int, Buffer)}.
+ *
+ * The current approach has some issues, for example see {@link Issue514Workaround}.
+ */
 public class OverlayDrawer {
 
     private static final String TAG = OverlayDrawer.class.getSimpleName();
@@ -22,9 +42,10 @@ public class OverlayDrawer {
     private int mTextureId;
     private SurfaceTexture mSurfaceTexture;
     private Surface mSurface;
+    private float[] mTransform = new float[16];
     private EglViewport mViewport;
     private Issue514Workaround mIssue514Workaround;
-    private float[] mTransform = new float[16];
+    private final Object mIssue514WorkaroundLock = new Object();
 
     public OverlayDrawer(@NonNull Overlay overlay, @NonNull Size size, int cameraTextureId) {
         mOverlay = overlay;
@@ -46,8 +67,10 @@ public class OverlayDrawer {
         } catch (Surface.OutOfResourcesException e) {
             LOG.w("Got Surface.OutOfResourcesException while drawing video overlays", e);
         }
-        mIssue514Workaround.beforeOverlayUpdateTexImage();
-        mSurfaceTexture.updateTexImage();
+        synchronized (mIssue514WorkaroundLock) {
+            mIssue514Workaround.beforeOverlayUpdateTexImage();
+            mSurfaceTexture.updateTexImage();
+        }
         mSurfaceTexture.getTransformMatrix(mTransform);
     }
 
@@ -56,9 +79,11 @@ public class OverlayDrawer {
     }
 
     public void render() {
-        mIssue514Workaround.afterOverlayGlDrawn();
-        mViewport.drawFrame(mTextureId, mTransform);
-        mIssue514Workaround.afterOverlayGlDrawn();
+        synchronized (mIssue514WorkaroundLock) {
+            mViewport.drawFrame(mTextureId, mTransform);
+        }
+        // mIssue514Workaround.afterOverlayGlDrawn();
+        // mIssue514Workaround.afterOverlayGlDrawn();
     }
 
     public void release() {
