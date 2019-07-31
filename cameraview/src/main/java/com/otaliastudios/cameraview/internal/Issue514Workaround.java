@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.internal;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.view.Surface;
 import com.otaliastudios.cameraview.preview.RendererThread;
@@ -85,23 +86,21 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  * - Calling a useless {@link SurfaceTexture#updateTexImage()} before locking the overlay canvas
  * - Releasing the useless {@link SurfaceTexture}
  * This must be done using the video frame textureId, not the overlayTextureId nor any other id.
+ *
+ * https://android.googlesource.com/platform/frameworks/native/+/5c1139f/libs/gui/SurfaceTexture.cpp
  */
 public class Issue514Workaround {
 
     private SurfaceTexture surfaceTexture = null;
+    private final int cameraTextureId;
     private final boolean hasOverlay;
 
     public Issue514Workaround(int cameraTextureId, boolean hasOverlay) {
+        this.cameraTextureId = cameraTextureId;
         this.hasOverlay = hasOverlay;
         if (this.hasOverlay) {
             try {
-                surfaceTexture = new SurfaceTexture(cameraTextureId);
-                surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
-                    @Override
-                    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                        // Never called! Correctly.
-                    }
-                });
+                // surfaceTexture = new SurfaceTexture(cameraTextureId);
             } catch (Exception ignore) { }
         }
     }
@@ -109,7 +108,8 @@ public class Issue514Workaround {
     public void start() {
         if (hasOverlay) {
             try {
-                surfaceTexture.updateTexImage();
+                GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, cameraTextureId);
+                // surfaceTexture.updateTexImage();
             } catch (Exception ignore) {}
         }
     }
@@ -117,7 +117,7 @@ public class Issue514Workaround {
     public void end() {
         if (hasOverlay) {
             try {
-                surfaceTexture.release();
+                // surfaceTexture.release();
             } catch (Exception ignore) {}
         }
     }
