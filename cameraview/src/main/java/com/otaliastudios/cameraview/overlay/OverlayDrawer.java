@@ -94,6 +94,13 @@ public class OverlayDrawer {
      * modification.
      */
     public void render() {
+        // Enable blending
+        // Reference http://www.learnopengles.com/android-lesson-five-an-introduction-to-blending/
+        GLES20.glDisable(GLES20.GL_CULL_FACE);
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
         synchronized (mIssue514WorkaroundLock) {
             mViewport.drawFrame(mTextureId, mTransform);
         }
