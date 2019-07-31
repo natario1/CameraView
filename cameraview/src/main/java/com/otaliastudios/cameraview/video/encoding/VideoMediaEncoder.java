@@ -7,6 +7,7 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import android.os.Bundle;
 import android.view.Surface;
 
 import com.otaliastudios.cameraview.CameraLogger;
@@ -62,7 +63,7 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, mConfig.frameRate);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1); // seconds between key frames!
         format.setInteger("rotation-degrees", mConfig.rotation);
 
         try {
@@ -105,17 +106,24 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
      * @param pool the buffer pool
      * @param buffer the buffer
      */
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     protected void onWriteOutput(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
         if (!mSyncFrameFound) {
+            LOG.w("onWriteOutput:", "sync frame not found yet. Checking.");
             int flag = MediaCodec.BUFFER_FLAG_SYNC_FRAME;
-            boolean hasFlag = (buffer.info.flags & flag) != 0;
+            boolean hasFlag = (buffer.info.flags & flag) == flag;
             if (hasFlag) {
+                LOG.w("onWriteOutput:", "sync frame found!");
                 mSyncFrameFound = true;
                 super.onWriteOutput(pool, buffer);
             } else {
                 // drop this.
+                LOG.w("onWriteOutput:", "DROPPING FRAME and requesting a sync frame soon.");
+                if (Build.VERSION.SDK_INT >= 19) {
+                    Bundle params = new Bundle();
+                    params.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
+                    mMediaCodec.setParameters(params);
+                }
             }
         } else {
             super.onWriteOutput(pool, buffer);
@@ -127,7 +135,7 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
         return mConfig.bitRate;
     }
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     protected boolean shouldRenderFrame(long timestampUs) {
         if (timestampUs == 0) return false; // grafika said so
         if (mFrameNumber < 0) return false; // We were asked to stop.
