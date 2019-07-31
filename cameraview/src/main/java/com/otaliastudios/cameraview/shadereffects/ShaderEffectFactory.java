@@ -15,7 +15,7 @@ import com.otaliastudios.cameraview.shadereffects.effects.GreyScaleEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.HueEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.InvertColorsEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.LamoishEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.NoEffect;
+import com.otaliastudios.cameraview.shadereffects.effects.NoFilterEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.PosterizeEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.SaturationEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.SepiaEffect;
@@ -137,7 +137,7 @@ public class ShaderEffectFactory {
 
             case NO_EFFECT:
             default:
-                shaderEffect = new NoEffect();
+                shaderEffect = new NoFilterEffect();
         }
 
         return shaderEffect;

@@ -9,7 +9,6 @@ import android.content.ContextWrapper;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.location.Location;
@@ -74,15 +73,6 @@ import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
 import com.otaliastudios.cameraview.preview.TextureCameraPreview;
 import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
 import com.otaliastudios.cameraview.shadereffects.ShaderEffectFactory;
-import com.otaliastudios.cameraview.shadereffects.effects.BrightnessEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.ContrastEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.DuotoneEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.GrainEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.HueEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.SaturationEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.SharpnessEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.TemperatureEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.TintEffect;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
@@ -584,13 +574,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         } else if (mTapGestureFinder.onTouchEvent(event)) {
             LOG.i("onTouchEvent", "tap!");
             onGesture(mTapGestureFinder, options);
-        }
-
-        if( MotionEvent.ACTION_UP == event.getAction()) {
-            Log.d("Suneet Agrawal", "onTouchEvent " + event.getAction());
-
-            //BlackAndWhiteEffect effect = new BlackAndWhiteEffect();
-            changeEffect(ShaderEffectFactory.ShaderEffects.SEPIA_EFFECT);
         }
 
         return true;
