@@ -122,7 +122,7 @@ public abstract class MediaEncoder {
     private boolean mMaxLengthReached;
 
     private long mStartTimeMillis = 0; // In System.currentTimeMillis()
-    private long mStartTimeUs = Long.MIN_VALUE; // In unknown reference
+    private long mFirstTimeUs = Long.MIN_VALUE; // In unknown reference
     private long mLastTimeUs = 0;
 
     private long mDebugSetStateTimestamp = Long.MIN_VALUE;
@@ -422,9 +422,9 @@ public abstract class MediaEncoder {
 
                     // Store mStartTimeUs and mLastTimeUs, useful to detect the max length
                     // reached and stop recording when needed.
-                    if (mStartTimeUs == Long.MIN_VALUE) {
-                        mStartTimeUs = mBufferInfo.presentationTimeUs;
-                        LOG.w(mName, "DRAINING - Got the first presentation time:", mStartTimeUs);
+                    if (mFirstTimeUs == Long.MIN_VALUE) {
+                        mFirstTimeUs = mBufferInfo.presentationTimeUs;
+                        LOG.w(mName, "DRAINING - Got the first presentation time:", mFirstTimeUs);
                     }
                     mLastTimeUs = mBufferInfo.presentationTimeUs;
 
@@ -434,7 +434,7 @@ public abstract class MediaEncoder {
                     // To address this, encoders are required to call notifyFirstFrameMillis
                     // so we can adjust here - moving to 1970 reference.
                     // Extra benefit: we never pass a pts equal to 0, which some encoders refuse.
-                    mBufferInfo.presentationTimeUs = (mStartTimeMillis * 1000) + mLastTimeUs - mStartTimeUs;
+                    mBufferInfo.presentationTimeUs = (mStartTimeMillis * 1000) + mLastTimeUs - mFirstTimeUs;
 
                     // Write.
                     LOG.v(mName, "DRAINING - About to write(). Adjusted presentation:", mBufferInfo.presentationTimeUs);
@@ -451,10 +451,10 @@ public abstract class MediaEncoder {
                 // Not needed if drainAll because we already were asked to stop
                 if (!drainAll
                         && !mMaxLengthReached
-                        && mStartTimeUs != Long.MIN_VALUE
-                        && mLastTimeUs - mStartTimeUs > mMaxLengthMillis * 1000) {
+                        && mFirstTimeUs != Long.MIN_VALUE
+                        && mLastTimeUs - mFirstTimeUs > mMaxLengthMillis * 1000) {
                     LOG.w(mName, "DRAINING - Reached maxLength! mLastTimeUs:", mLastTimeUs,
-                            "mStartTimeUs:", mStartTimeUs,
+                            "mStartTimeUs:", mFirstTimeUs,
                             "mMaxLengthUs:", mMaxLengthMillis * 1000);
                     onMaxLengthReached();
                     break;
@@ -520,7 +520,7 @@ public abstract class MediaEncoder {
      * @param firstFrameMillis the milliseconds of the first frame presentation
      */
     @SuppressWarnings("WeakerAccess")
-    protected void notifyFirstFrameMillis(long firstFrameMillis) {
+    protected final void notifyFirstFrameMillis(long firstFrameMillis) {
         mStartTimeMillis = firstFrameMillis;
     }
 }

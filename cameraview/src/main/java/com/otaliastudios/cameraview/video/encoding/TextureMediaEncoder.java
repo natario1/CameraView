@@ -31,7 +31,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     private EglCore mEglCore;
     private EglWindowSurface mWindow;
     private EglViewport mViewport;
-    private Pool<Frame> mFramePool = new Pool<>(100, new Pool.Factory<Frame>() {
+    private Pool<Frame> mFramePool = new Pool<>(Integer.MAX_VALUE, new Pool.Factory<Frame>() {
         @Override
         public Frame create() {
             return new Frame();
@@ -103,15 +103,11 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         if (frame == null) {
             throw new IllegalArgumentException("Got null frame for FRAME_EVENT.");
         }
-        if (frame.timestamp == 0) { // grafika
+        if (!shouldRenderFrame(frame.timestamp)) {
             mFramePool.recycle(frame);
             return;
         }
-        if (mFrameNumber < 0) { // We were asked to stop.
-            mFramePool.recycle(frame);
-            return;
-        }
-        mFrameNumber++;
+
         if (mFrameNumber == 1) {
             notifyFirstFrameMillis(frame.timestampMillis);
         }
@@ -173,5 +169,12 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
             mEglCore.release();
             mEglCore = null;
         }
+    }
+
+    private boolean shouldRenderFrame(long timestamp) {
+        if (timestamp == 0) return false; // grafika said so
+        if (mFrameNumber < 0) return false; // We were asked to stop.
+        mFrameNumber++;
+        return true;
     }
 }

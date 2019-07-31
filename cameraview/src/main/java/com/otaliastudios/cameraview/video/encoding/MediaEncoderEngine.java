@@ -68,8 +68,9 @@ public class MediaEncoderEngine {
         void onEncodingStart();
 
         /**
-         * Called when encoding stopped. At this point the mxuer might still be processing,
-         * but we have stopped receiving input (recording video and audio frames).
+         * Called when encoding stopped. At this point the muxer or the encoders might still be
+         * processing data, but we have stopped receiving input (recording video and audio frames).
+         * Actually, we will stop very soon.
          *
          * The {@link #onEncodingEnd(int, Exception)} callback will soon be called
          * with the results.
@@ -98,9 +99,9 @@ public class MediaEncoderEngine {
 
     private List<MediaEncoder> mEncoders;
     private MediaMuxer mMediaMuxer;
-    private int mStartedEncodersCount;
-    private int mReleasedEncodersCount;
-    private boolean mMediaMuxerStarted;
+    private int mStartedEncodersCount = 0;
+    private int mStoppedEncodersCount = 0;
+    private boolean mMediaMuxerStarted = false;
     @SuppressWarnings("FieldCanBeLocal")
     private Controller mController;
     private Listener mListener;
@@ -137,9 +138,6 @@ public class MediaEncoderEngine {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        mStartedEncodersCount = 0;
-        mMediaMuxerStarted = false;
-        mReleasedEncodersCount = 0;
 
         // Trying to convert the size constraints to duration constraints,
         // because they are super easy to check.
@@ -203,6 +201,9 @@ public class MediaEncoderEngine {
         for (MediaEncoder encoder : mEncoders) {
             encoder.stop();
         }
+        if (mListener != null) {
+            mListener.onEncodingStop();
+        }
     }
 
     /**
@@ -231,7 +232,7 @@ public class MediaEncoderEngine {
         }
         mEndReason = END_BY_USER;
         mStartedEncodersCount = 0;
-        mReleasedEncodersCount = 0;
+        mStoppedEncodersCount = 0;
         mMediaMuxerStarted = false;
         LOG.i("end:", "Completed.");
     }
@@ -372,11 +373,8 @@ public class MediaEncoderEngine {
         public void notifyStopped(int track) {
             synchronized (mControllerLock) {
                 LOG.w("notifyStopped:", "Called for track", track);
-                if (++mReleasedEncodersCount == mEncoders.size()) {
-                    LOG.w("requestStop:", "All encoders have been released. Stopping the muxer.");
-                    if (mListener != null) {
-                        mListener.onEncodingStop();
-                    }
+                if (++mStoppedEncodersCount == mEncoders.size()) {
+                    LOG.w("requestStop:", "All encoders have been stopped. Stopping the muxer.");
                     end();
                 }
             }
