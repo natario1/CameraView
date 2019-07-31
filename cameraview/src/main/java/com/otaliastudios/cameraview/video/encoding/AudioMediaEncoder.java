@@ -34,7 +34,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     private final static Random NOISE = new Random();
 
     private static short noise() {
-        return (short) NOISE.nextInt(300);
+        return (short) NOISE.nextInt(100);
     }
 
     private boolean mRequestStop = false;
@@ -138,7 +138,6 @@ public class AudioMediaEncoder extends MediaEncoder {
 
         private long mLastTimeUs;
         private long mFirstTimeUs = Long.MIN_VALUE;
-        private boolean mReachedMaxLength = false;
 
         private AudioRecordingThread() {
             setPriority(Thread.MAX_PRIORITY);
@@ -165,7 +164,16 @@ public class AudioMediaEncoder extends MediaEncoder {
         public void run() {
             mAudioRecord.startRecording();
             while (!mRequestStop) {
-                read(false);
+                if (!hasReachedMaxLength()) {
+                    read(false);
+                } else {
+                    // We have reached the max length, so stop reading.
+                    // However, do not get out of the loop - the controller
+                    // will call stop() on us soon. It's not our responsibility
+                    // to stop ourselves.
+                    //noinspection UnnecessaryContinue
+                    continue;
+                }
             }
             LOG.w("Stop was requested. We're out of the loop. Will post an endOfStream.");
             // Last input with 0 length. This will signal the endOfStream.
@@ -241,11 +249,10 @@ public class AudioMediaEncoder extends MediaEncoder {
             }
 
             // See if we reached the max length value.
-            if (!mReachedMaxLength) {
+            if (!hasReachedMaxLength()) {
                 boolean didReachMaxLength = (mLastTimeUs - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
                 if (didReachMaxLength && !endOfStream) {
                     LOG.w("read thread - this frame reached the maxLength! deltaUs:", mLastTimeUs - mFirstTimeUs);
-                    mReachedMaxLength = true;
                     notifyMaxLengthReached();
                 }
             }

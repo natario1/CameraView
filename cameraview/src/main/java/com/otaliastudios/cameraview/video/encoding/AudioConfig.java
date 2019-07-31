@@ -91,6 +91,6 @@ public class AudioConfig {
      * @return the buffer pool max size
      */
     int bufferPoolMaxSize() {
-        return 80;
+        return 200;
     }
 }

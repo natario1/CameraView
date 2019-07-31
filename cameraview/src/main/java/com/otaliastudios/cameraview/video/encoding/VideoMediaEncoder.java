@@ -96,4 +96,13 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
     protected int getEncodedBitRate() {
         return mConfig.bitRate;
     }
+
+    @SuppressWarnings("WeakerAccess")
+    protected boolean shouldRenderFrame(long timestampUs) {
+        if (timestampUs == 0) return false; // grafika said so
+        if (mFrameNumber < 0) return false; // We were asked to stop.
+        if (hasReachedMaxLength()) return false; // We were not asked yet, but we'll be soon.
+        mFrameNumber++;
+        return true;
+    }
 }
