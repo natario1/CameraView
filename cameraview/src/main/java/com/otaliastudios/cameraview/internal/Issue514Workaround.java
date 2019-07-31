@@ -99,11 +99,9 @@ import com.otaliastudios.cameraview.preview.RendererThread;
 public class Issue514Workaround {
 
     private final int cameraTextureId;
-    private final boolean hasOverlay;
 
-    public Issue514Workaround(int cameraTextureId, boolean hasOverlay) {
+    public Issue514Workaround(int cameraTextureId) {
         this.cameraTextureId = cameraTextureId;
-        this.hasOverlay = hasOverlay;
     }
 
     public void beforeOverlayUpdateTexImage() {
@@ -119,8 +117,6 @@ public class Issue514Workaround {
     }
 
     private void bindTexture(int textureId) {
-        if (hasOverlay) {
-            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
-        }
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
     }
 }

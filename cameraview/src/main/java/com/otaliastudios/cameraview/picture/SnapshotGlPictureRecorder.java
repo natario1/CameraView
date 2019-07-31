@@ -26,6 +26,7 @@ import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.overlay.OverlayDrawer;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
@@ -65,14 +66,11 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
     private Overlay mOverlay;
     private boolean mHasOverlay;
+    private OverlayDrawer mOverlayDrawer;
 
     private int mTextureId;
     private float[] mTransform;
 
-    private int mOverlayTextureId = 0;
-    private SurfaceTexture mOverlaySurfaceTexture;
-    private Surface mOverlaySurface;
-    private float[] mOverlayTransform;
 
     private EglViewport mViewport;
 
@@ -121,11 +119,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
         Matrix.setIdentityM(mTransform, 0);
 
         if (mHasOverlay) {
-            mOverlayTextureId = mViewport.createTexture();
-            mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId, true);
-            mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
-            mOverlaySurface = new Surface(mOverlaySurfaceTexture);
-            mOverlayTransform = new float[16];
+            mOverlayDrawer = new OverlayDrawer(mOverlay, mResult.size, textureId);
         }
     }
 
@@ -169,7 +163,6 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 final int fakeOutputTextureId = 9999;
                 SurfaceTexture fakeOutputSurface = new SurfaceTexture(fakeOutputTextureId);
                 fakeOutputSurface.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
-                final Issue514Workaround issue514Workaround = new Issue514Workaround(mTextureId, mHasOverlay);
 
                 // 1. Create an EGL surface
                 final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
@@ -195,46 +188,30 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0); // Go back to old position
 
                 // 4. Do pretty much the same for overlays
-                issue514Workaround.beforeOverlayUpdateTexImage();
                 if (mHasOverlay) {
                     // 1. First we must draw on the texture and get latest image
-                    try {
-                        final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
-                        surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                        mOverlay.drawOn(Overlay.Target.PICTURE_SNAPSHOT, surfaceCanvas);
-                        mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
-                    } catch (Surface.OutOfResourcesException e) {
-                        LOG.w("Got Surface.OutOfResourcesException while drawing picture overlays", e);
-                    }
-                    mOverlaySurfaceTexture.updateTexImage();
-                    mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
+                    mOverlayDrawer.draw(Overlay.Target.PICTURE_SNAPSHOT);
 
                     // 2. Then we can apply the transformations
                     int rotation = mEngine.getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
-                    Matrix.translateM(mOverlayTransform, 0, 0.5F, 0.5F, 0);
-                    Matrix.rotateM(mOverlayTransform, 0, rotation, 0, 0, 1);
+                    Matrix.translateM(mOverlayDrawer.getTransform(), 0, 0.5F, 0.5F, 0);
+                    Matrix.rotateM(mOverlayDrawer.getTransform(), 0, rotation, 0, 0, 1);
                     // No need to flip the x axis for front camera, but need to flip the y axis always.
-                    Matrix.scaleM(mOverlayTransform, 0, 1, -1, 1);
-                    Matrix.translateM(mOverlayTransform, 0, -0.5F, -0.5F, 0);
+                    Matrix.scaleM(mOverlayDrawer.getTransform(), 0, 1, -1, 1);
+                    Matrix.translateM(mOverlayDrawer.getTransform(), 0, -0.5F, -0.5F, 0);
                 }
 
                 // 5. Draw and save
                 mViewport.drawFrame(mTextureId, mTransform);
-                if (mHasOverlay) mViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
-                issue514Workaround.afterOverlayGlDrawn();
+                if (mHasOverlay) mOverlayDrawer.render();
                 mResult.format = PictureResult.FORMAT_JPEG;
                 mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
 
                 // 6. Cleanup
-                issue514Workaround.end();
                 eglSurface.releaseEglSurface();
                 mViewport.release();
                 fakeOutputSurface.release();
-                if (mHasOverlay) {
-                    mOverlaySurfaceTexture.releaseTexImage();
-                    mOverlaySurface.release();
-                    mOverlaySurfaceTexture.release();
-                }
+                if (mHasOverlay) mOverlayDrawer.release();
                 core.release();
                 dispatchResult();
             }
