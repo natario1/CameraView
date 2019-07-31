@@ -218,7 +218,7 @@ public class WorkerHandlerTest extends BaseTest {
     public void testDestroy() {
         final WorkerHandler handler = WorkerHandler.get("handler");
         assertTrue(handler.getThread().isAlive());
-        WorkerHandler.destroy();
+        WorkerHandler.destroyAll();
         // Wait for the thread to die.
         try { handler.getThread().join(500); } catch (InterruptedException ignore) {}
         assertFalse(handler.getThread().isAlive());
