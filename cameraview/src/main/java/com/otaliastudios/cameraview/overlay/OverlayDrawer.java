@@ -47,17 +47,22 @@ public class OverlayDrawer {
     private Issue514Workaround mIssue514Workaround;
     private final Object mIssue514WorkaroundLock = new Object();
 
-    public OverlayDrawer(@NonNull Overlay overlay, @NonNull Size size, int cameraTextureId) {
+    public OverlayDrawer(@NonNull Overlay overlay, @NonNull Size size) {
         mOverlay = overlay;
         mViewport = new EglViewport();
         mTextureId = mViewport.createTexture();
         mSurfaceTexture = new SurfaceTexture(mTextureId);
         mSurfaceTexture.setDefaultBufferSize(size.getWidth(), size.getHeight());
         mSurface = new Surface(mSurfaceTexture);
-        mIssue514Workaround = new Issue514Workaround(cameraTextureId);
+        mIssue514Workaround = new Issue514Workaround(mTextureId);
     }
 
-
+    /**
+     * Should be called to draw the {@link Overlay} on the given {@link Overlay.Target}.
+     * This will provide a working {@link Canvas} to the overlay and also update the
+     * drawn contents to a GLES texture.
+     * @param target the target
+     */
     public void draw(@NonNull Overlay.Target target) {
         try {
             final Canvas surfaceCanvas = mSurface.lockCanvas(null);
@@ -74,20 +79,34 @@ public class OverlayDrawer {
         mSurfaceTexture.getTransformMatrix(mTransform);
     }
 
+    /**
+     * Returns the transform that should be used to render the drawn content.
+     * This should be called after {@link #draw(Overlay.Target)} and can be modified.
+     * @return the transform matrix
+     */
     public float[] getTransform() {
         return mTransform;
     }
 
+    /**
+     * Renders the drawn content in the current EGL surface, assuming there is one.
+     * Should be called after {@link #draw(Overlay.Target)} and any {@link #getTransform()}
+     * modification.
+     */
     public void render() {
         synchronized (mIssue514WorkaroundLock) {
             mViewport.drawFrame(mTextureId, mTransform);
         }
-        // mIssue514Workaround.afterOverlayGlDrawn();
-        // mIssue514Workaround.afterOverlayGlDrawn();
     }
 
+    /**
+     * Releases resources.
+     */
     public void release() {
-        mIssue514Workaround.end();
+        if (mIssue514Workaround != null) {
+            mIssue514Workaround.end();
+            mIssue514Workaround = null;
+        }
         if (mSurfaceTexture != null) {
             mSurfaceTexture.release();
             mSurfaceTexture = null;

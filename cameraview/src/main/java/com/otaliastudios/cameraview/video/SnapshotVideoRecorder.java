@@ -93,7 +93,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     public void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
         if (mHasOverlay) {
-            mOverlayDrawer = new OverlayDrawer(mOverlay, mResult.size, textureId);
+            mOverlayDrawer = new OverlayDrawer(mOverlay, mResult.size);
         }
     }
 

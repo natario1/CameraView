@@ -119,7 +119,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
         Matrix.setIdentityM(mTransform, 0);
 
         if (mHasOverlay) {
-            mOverlayDrawer = new OverlayDrawer(mOverlay, mResult.size, textureId);
+            mOverlayDrawer = new OverlayDrawer(mOverlay, mResult.size);
         }
     }
 

@@ -12,16 +12,14 @@ import com.otaliastudios.cameraview.preview.RendererThread;
 
 /**
  * Fixes an issue for some devices with snapshot picture and video recording.
- * This is so dirty and totally unclear that I wanted to have a separate class.
+ * This is so unclear that I wanted to have a separate class holding code and comments.
  *
- * WHY IT FIXES THAT ISSUE
- * I have no answer, this is pure magic to me.
+ * WHEN TO USE THIS CLASS
  * There is actually no need of this class in some cases:
  * - when we don't have overlays, everything works
  * - on the majority of devices, everything works
  * But some devices will show the issue #514 and so they need this class to fix it.
- * I believe that this has no performance impact but it could be measured and the use of this
- * class could be restricted to those specific devices that need it.
+ * We will use this always since it should have close to none performance impact.
  *
  * SNAPSHOT PROCEDURE
  * The issue is about picture and video snapshots with overlays. In both cases, we:
@@ -75,12 +73,15 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  * THE MAGIC
  * Hard to say why, but using this class fixes the described issue.
  * It seems that when the {@link SurfaceTexture#updateTexImage()} method for the overlay surface
- * is called - the one that updates the overlayTextureId - we must ensure that the currently
- * bound texture is the cameraTextureId.
+ * is called - the one that updates the overlayTextureId - we must ensure that the CURRENTLY
+ * BOUND TEXTURE ID IS NOT 0. The id we choose to apply might be cameraTextureId, or overlayTextureId,
+ * or probably whatever other valid id, and should be passed to {@link #Issue514Workaround(int)}.
+ * [Tested with cameraTextureId and overlayTextureId: both do work.]
+ * [Tested with invalid id like 9999. This won't work.]
  *
- * This makes no sense, since overlaySurfaceTexture.updateTexImage() is setting it to overlayTextureId,
- * but it fixes the issue. Specifically, after any draw operation with {@link EglViewport}, the bound
- * texture is reset to 0 so this must be undone here. We offer:
+ * This makes no sense, since overlaySurfaceTexture.updateTexImage() is setting it to overlayTextureId
+ * anyway, but it fixes the issue. Specifically, after any draw operation with {@link EglViewport},
+ * the bound texture is reset to 0 so this must be undone here. We offer:
  *
  * - {@link #beforeOverlayUpdateTexImage()} to be called before the {@link SurfaceTexture#updateTexImage()} call
  * - {@link #end()} to release and bring things back to normal state
@@ -90,22 +91,22 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  * finally the {@link EglViewport} drawing operations should be synchronized with a lock.
  *
  * REFERENCES
+ * https://github.com/natario1/CameraView/issues/514
  * https://android.googlesource.com/platform/frameworks/native/+/5c1139f/libs/gui/SurfaceTexture.cpp
+ * I can see here that SurfaceTexture does indeed call glBindTexture with the same parameters whenever
+ * updateTexImage is called, but it also does other gl stuff first. This other gl stuff might be
+ * breaking when we don't have a bound texture on some specific hardware implementation.
  */
 public class Issue514Workaround {
 
-    private final int cameraTextureId;
+    private final int textureId;
 
-    public Issue514Workaround(int cameraTextureId) {
-        this.cameraTextureId = cameraTextureId;
+    public Issue514Workaround(int textureId) {
+        this.textureId = textureId;
     }
 
     public void beforeOverlayUpdateTexImage() {
-        bindTexture(cameraTextureId);
-    }
-
-    public void afterOverlayGlDrawn() {
-        bindTexture(cameraTextureId);
+        bindTexture(textureId);
     }
 
     public void end() {
