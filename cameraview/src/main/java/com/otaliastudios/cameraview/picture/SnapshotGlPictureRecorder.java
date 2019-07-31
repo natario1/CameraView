@@ -195,6 +195,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0); // Go back to old position
 
                 // 4. Do pretty much the same for overlays
+                issue514Workaround.beforeOverlayUpdateTexImage();
                 if (mHasOverlay) {
                     // 1. First we must draw on the texture and get latest image
                     try {
@@ -205,7 +206,6 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                     } catch (Surface.OutOfResourcesException e) {
                         LOG.w("Got Surface.OutOfResourcesException while drawing picture overlays", e);
                     }
-                    issue514Workaround.start();
                     mOverlaySurfaceTexture.updateTexImage();
                     mOverlaySurfaceTexture.getTransformMatrix(mOverlayTransform);
 
@@ -221,6 +221,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
                 // 5. Draw and save
                 mViewport.drawFrame(mTextureId, mTransform);
                 if (mHasOverlay) mViewport.drawFrame(mOverlayTextureId, mOverlayTransform);
+                issue514Workaround.afterOverlayGlDrawn();
                 mResult.format = PictureResult.FORMAT_JPEG;
                 mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
 

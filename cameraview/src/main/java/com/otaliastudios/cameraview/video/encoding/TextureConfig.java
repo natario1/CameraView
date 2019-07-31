@@ -4,6 +4,8 @@ import android.opengl.EGLContext;
 
 import androidx.annotation.NonNull;
 
+import com.otaliastudios.cameraview.internal.Issue514Workaround;
+
 /**
  * Video configuration to be passed as input to the constructor
  * of a {@link TextureMediaEncoder}.
@@ -18,6 +20,7 @@ public class TextureConfig extends VideoConfig {
     public float scaleX;
     public float scaleY;
     public EGLContext eglContext;
+    public Issue514Workaround issue514Workaround;
 
     @NonNull
     TextureConfig copy() {
@@ -29,6 +32,7 @@ public class TextureConfig extends VideoConfig {
         copy.scaleX = this.scaleX;
         copy.scaleY = this.scaleY;
         copy.eglContext = this.eglContext;
+        copy.issue514Workaround = this.issue514Workaround;
         return copy;
     }
 

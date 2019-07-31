@@ -21,7 +21,7 @@
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
         app:cameraFlash="off"
-        app:cameraAudio="on"
+        app:cameraAudio="off"
         app:cameraFacing="back"
         app:cameraGestureTap="autoFocus"
         app:cameraGestureLongTap="none"

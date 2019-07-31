@@ -140,6 +140,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             videoConfig.textureId = mTextureId;
             videoConfig.scaleX = scaleX;
             videoConfig.scaleY = scaleY;
+            videoConfig.issue514Workaround = mIssue514Workaround;
             // Get egl context from the RendererThread, which is the one in which we have created
             // the textureId and the overlayTextureId, managed by the GlSurfaceView.
             // Next operations can then be performed on different threads using this handle.
@@ -186,7 +187,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 } catch (Surface.OutOfResourcesException e) {
                     LOG.w("Got Surface.OutOfResourcesException while drawing video overlays", e);
                 }
-                mIssue514Workaround.start();
+                mIssue514Workaround.beforeOverlayUpdateTexImage();
                 mOverlaySurfaceTexture.updateTexImage();
                 mOverlaySurfaceTexture.getTransformMatrix(frame.overlayTransform);
             }

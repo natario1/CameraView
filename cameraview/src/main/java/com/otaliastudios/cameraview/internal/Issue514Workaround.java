@@ -6,6 +6,7 @@ import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.view.Surface;
+import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.preview.RendererThread;
 
 
@@ -13,20 +14,11 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  * Fixes an issue for some devices with snapshot picture and video recording.
  * This is so dirty and totally unclear that I wanted to have a separate class.
  *
- * WHAT WE DO
- * What we do here is, assuming that we have overlays, is to create a useless
- * {@link SurfaceTexture} that receives NO input, because we create no Surface out of it.
- * However, it MUST be created using the camera frames texture ID.
- * After creation, and before drawing on the overlay Surface, users can call {@link #start()}:
- * this will call {@link SurfaceTexture#updateTexImage()}. Since this has NO input, this
- * call should be doing NOTHING! However, it fixes the bug #514. Keep reading!
- * After the snapshot has been taken (either picture or video), this can be released
- * using {@link #end()}.
- *
  * WHY IT FIXES THAT ISSUE
- * I have no answer, this is pure magic to me. There is actually no need of this class in some cases:
- * - when we don't have overlays
- * - on the majority of devices
+ * I have no answer, this is pure magic to me.
+ * There is actually no need of this class in some cases:
+ * - when we don't have overlays, everything works
+ * - on the majority of devices, everything works
  * But some devices will show the issue #514 and so they need this class to fix it.
  * I believe that this has no performance impact but it could be measured and the use of this
  * class could be restricted to those specific devices that need it.
@@ -81,44 +73,54 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  *   and it is implementation specific.
  *
  * THE MAGIC
- * Impossible to say why, but using this class fixes the described issue.
- * - Creating an useless {@link SurfaceTexture}
- * - Calling a useless {@link SurfaceTexture#updateTexImage()} before locking the overlay canvas
- * - Releasing the useless {@link SurfaceTexture}
- * This must be done using the video frame textureId, not the overlayTextureId nor any other id.
+ * Hard to say why, but using this class fixes the described issue.
+ * It seems that when the {@link SurfaceTexture#updateTexImage()} method for the overlay surface
+ * is called - the one that updates the overlayTextureId - we must ensure that the currently
+ * bound texture is the cameraTextureId.
  *
+ * This makes no sense, since overlaySurfaceTexture.updateTexImage() is setting it to overlayTextureId,
+ * but it fixes the issue. Specifically, after any draw operation with {@link EglViewport}, the bound
+ * texture is reset to 0.
+ *
+ * So, since updating and drawing can happen on different threads, to maximize the chances that
+ * when updateTexImage() is called we have bound the cameraTextureId, and to avoid using a lock,
+ * we require to call
+ * - {@link #beforeOverlayUpdateTexImage()} right before the {@link SurfaceTexture#updateTexImage()} call
+ * - {@link #afterOverlayGlDrawn()} right after the last {@link EglViewport#drawFrame(int, float[])} call
+ * - {@link #end()} to release
+ *
+ * If filling the texture and rendering happen on two different threads (with a shared EGL context)
+ * there is still a chance that updateTexImage() is called with a current texture that creates this
+ * issue (0?), but the alternative would be creating a lock.
+ *
+ * REFERENCES
  * https://android.googlesource.com/platform/frameworks/native/+/5c1139f/libs/gui/SurfaceTexture.cpp
  */
 public class Issue514Workaround {
 
-    private SurfaceTexture surfaceTexture = null;
     private final int cameraTextureId;
     private final boolean hasOverlay;
 
     public Issue514Workaround(int cameraTextureId, boolean hasOverlay) {
         this.cameraTextureId = cameraTextureId;
         this.hasOverlay = hasOverlay;
-        if (this.hasOverlay) {
-            try {
-                // surfaceTexture = new SurfaceTexture(cameraTextureId);
-            } catch (Exception ignore) { }
-        }
     }
 
-    public void start() {
-        if (hasOverlay) {
-            try {
-                GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, cameraTextureId);
-                // surfaceTexture.updateTexImage();
-            } catch (Exception ignore) {}
-        }
+    public void beforeOverlayUpdateTexImage() {
+        bindTexture(cameraTextureId);
+    }
+
+    public void afterOverlayGlDrawn() {
+        bindTexture(cameraTextureId);
     }
 
     public void end() {
+        bindTexture(0);
+    }
+
+    private void bindTexture(int textureId) {
         if (hasOverlay) {
-            try {
-                // surfaceTexture.release();
-            } catch (Exception ignore) {}
+            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
         }
     }
 }

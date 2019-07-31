@@ -156,6 +156,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         mViewport.drawFrame(mConfig.textureId, transform);
         if (mConfig.hasOverlay()) {
             mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
+            mConfig.issue514Workaround.afterOverlayGlDrawn();
         }
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();

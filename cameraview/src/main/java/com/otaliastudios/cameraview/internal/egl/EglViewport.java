@@ -77,14 +77,10 @@ public class EglViewport extends EglElement {
     // private int muColorAdjustLoc; // Used for filtering
 
     public EglViewport() {
-        this(false);
+        this(GLES20.GL_TEXTURE0, GLES11Ext.GL_TEXTURE_EXTERNAL_OES);
     }
 
-    public EglViewport(boolean overlay) {
-        this(GLES20.GL_TEXTURE0, overlay ? GLES20.GL_TEXTURE_2D : GLES11Ext.GL_TEXTURE_EXTERNAL_OES);
-    }
-
-    public EglViewport(int textureUnit, int textureTarget) {
+    private EglViewport(int textureUnit, int textureTarget) {
         mTextureUnit = textureUnit;
         mTextureTarget = textureTarget;
         mProgramHandle = createProgram(SIMPLE_VERTEX_SHADER, SIMPLE_FRAGMENT_SHADER);
@@ -197,7 +193,7 @@ public class EglViewport extends EglElement {
         // Done -- disable vertex array, texture, and program.
         GLES20.glDisableVertexAttribArray(maPositionLocation);
         GLES20.glDisableVertexAttribArray(maTextureCoordLocation);
-        // GLES20.glBindTexture(mTextureTarget, 0);
+        GLES20.glBindTexture(mTextureTarget, 0);
         GLES20.glUseProgram(0);
     }
 }
