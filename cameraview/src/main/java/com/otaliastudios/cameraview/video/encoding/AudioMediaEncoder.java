@@ -14,6 +14,7 @@ import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -30,11 +31,12 @@ public class AudioMediaEncoder extends MediaEncoder {
 
     private static final boolean PERFORMANCE_DEBUG = false;
     private static final boolean PERFORMANCE_FILL_GAPS = true;
+    private static final int PERFORMANCE_MAX_GAPS = 8;
 
     private final static Random NOISE = new Random();
 
     private static short noise() {
-        return (short) NOISE.nextInt(100);
+        return (short) NOISE.nextInt(50);
     }
 
     private boolean mRequestStop = false;
@@ -45,6 +47,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     private AudioConfig mConfig;
     private InputBufferPool mInputBufferPool = new InputBufferPool();
     private final LinkedBlockingQueue<InputBuffer> mInputBufferQueue = new LinkedBlockingQueue<>();
+    private ByteBuffer mNoiseBuffer;
 
     // Just to debug performance.
     private int mDebugSendCount = 0;
@@ -257,37 +260,8 @@ public class AudioMediaEncoder extends MediaEncoder {
                 }
             }
 
-            // Add zeroes if we have huge gaps. Even if timestamps are correct, if we have gaps between
-            // them, the encoder might shrink all timestamps to have a continuous audio. This results
-            // in a video that is fast-forwarded.
-            // Adding zeroes does not solve the gaps issue - audio will still be distorted. But at
-            // least we get a video that has the correct playback speed.
-            if (PERFORMANCE_FILL_GAPS) {
-                int gaps = mTimestamp.getGapCount(mConfig.frameSize());
-                if (gaps > 0) {
-                    long gapStart = mTimestamp.getGapStartUs(mLastTimeUs);
-                    long frameUs = AudioTimestamp.bytesToUs(mConfig.frameSize(), mConfig.byteRate());
-                    LOG.w("read thread - GAPS: trying to add", gaps, "zeroed buffers");
-                    for (int i = 0; i < gaps; i++) {
-                        ByteBuffer noiseBuffer = mByteBufferPool.get();
-                        if (noiseBuffer == null) {
-                            LOG.e("read thread - GAPS: aborting because we have no free buffer.");
-                            break;
-                        }
-                        noiseBuffer.clear();
-                        while (noiseBuffer.hasRemaining()) {
-                            // Assume remaining() is not an odd number!
-                            // Also assuming byte order is little endian in Android.
-                            short noise = noise();
-                            noiseBuffer.put((byte) noise);
-                            noiseBuffer.put((byte) (noise >> 8));
-                        }
-                        noiseBuffer.rewind();
-                        enqueue(noiseBuffer, gapStart, false);
-                        gapStart += frameUs;
-                    }
-                }
-            }
+            // Maybe add noise.
+            maybeAddNoise();
         }
 
         private void enqueue(@NonNull ByteBuffer byteBuffer, long timestamp, boolean isEndOfStream) {
@@ -304,6 +278,62 @@ public class AudioMediaEncoder extends MediaEncoder {
             mInputBufferQueue.add(inputBuffer);
         }
 
+        /**
+         * If our {@link AudioTimestamp} detected huge gap, and the performance flag is enabled,
+         * we can add noise to fill them.
+         *
+         * Even if we always pass the correct timestamps, if there are big gaps between the frames,
+         * the encoder implementation might shrink all timestamps to have a continuous audio.
+         * This results in a video that is fast-forwarded.
+         *
+         * Adding noise does not solve the gaps issue, we'll still have distorted audio, but
+         * at least we get a video that has the correct playback speed.
+         *
+         * NOTE: this MUST be fast!
+         * If this operation is slow, we make the {@link AudioRecordingThread} busy, so we'll
+         * read the next frame with a delay, so we'll have even more gaps at the next call
+         * and spend even more time here. The result might be recording no audio at all - just
+         * random noise.
+         * This is the reason why we have a {@link #PERFORMANCE_MAX_GAPS} number.
+         */
+        private void maybeAddNoise() {
+            if (!PERFORMANCE_FILL_GAPS) return;
+            int gaps = mTimestamp.getGapCount(mConfig.frameSize());
+            if (gaps <= 0) return;
+
+            long gapStart = mTimestamp.getGapStartUs(mLastTimeUs);
+            long frameUs = AudioTimestamp.bytesToUs(mConfig.frameSize(), mConfig.byteRate());
+            LOG.w("read thread - GAPS: trying to add", gaps, "noise buffers. PERFORMANCE_MAX_GAPS:", PERFORMANCE_MAX_GAPS);
+
+            // Prepare the noise buffer.
+            if (mNoiseBuffer == null) {
+                LOG.w("read thread - GAPS: creating noise buffer.");
+                mNoiseBuffer = ByteBuffer.allocateDirect(mConfig.frameSize()).order(ByteOrder.nativeOrder());
+                while (mNoiseBuffer.hasRemaining()) {
+                    // Assume remaining() is not an odd number!
+                    // Also assuming byte order is little endian in Android.
+                    short noise = noise();
+                    mNoiseBuffer.put((byte) noise);
+                    mNoiseBuffer.put((byte) (noise >> 8));
+                }
+            }
+
+            // Fill all gaps.
+            // Well, at most PERFORMANCE_MAX_GAPS.
+            for (int i = 0; i < Math.min(gaps, PERFORMANCE_MAX_GAPS); i++) {
+                ByteBuffer noiseBuffer = mByteBufferPool.get();
+                if (noiseBuffer == null) {
+                    LOG.e("read thread - GAPS: aborting because we have no free buffer.");
+                    break;
+                }
+                mNoiseBuffer.clear();
+                noiseBuffer.clear();
+                noiseBuffer.put(mNoiseBuffer);
+                noiseBuffer.rewind();
+                enqueue(noiseBuffer, gapStart, false);
+                gapStart += frameUs;
+            }
+        }
     }
 
     /**

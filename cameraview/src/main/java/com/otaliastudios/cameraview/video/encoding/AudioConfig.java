@@ -62,7 +62,7 @@ public class AudioConfig {
      * @return the frame size
      */
     int frameSize() {
-        return 2048 * channels;
+        return 1024 * channels;
     }
 
     /**
@@ -75,7 +75,7 @@ public class AudioConfig {
      * @return the number of frames
      */
     int audioRecordBufferFrames() {
-        return 25;
+        return 50;
     }
 
     /**
