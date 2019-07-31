@@ -43,6 +43,8 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
     @SuppressWarnings("WeakerAccess")
     protected int mFrameNumber = -1;
 
+    private boolean mSyncFrameFound = false;
+
     VideoMediaEncoder(@NonNull C config) {
         super("VideoEncoder");
         mConfig = config;
@@ -90,6 +92,34 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
         // because we use an input surface instead.
         mMediaCodec.signalEndOfInputStream();
         drainOutput(true);
+    }
+
+    /**
+     * The first frame that we write MUST have the BUFFER_FLAG_SYNC_FRAME flag set.
+     * It sometimes doesn't because we might drop some frames in {@link #drainOutput(boolean)},
+     * basically if, at the time, the muxer was not started yet, due to Audio setup being slow.
+     *
+     * We can't add the BUFFER_FLAG_SYNC_FRAME flag to the first frame just because we'd like to.
+     * But we can drop frames until we get a sync one.
+     *
+     * @param pool the buffer pool
+     * @param buffer the buffer
+     */
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    protected void onWriteOutput(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
+        if (!mSyncFrameFound) {
+            int flag = MediaCodec.BUFFER_FLAG_SYNC_FRAME;
+            boolean hasFlag = (buffer.info.flags & flag) != 0;
+            if (hasFlag) {
+                mSyncFrameFound = true;
+                super.onWriteOutput(pool, buffer);
+            } else {
+                // drop this.
+            }
+        } else {
+            super.onWriteOutput(pool, buffer);
+        }
     }
 
     @Override

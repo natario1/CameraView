@@ -391,7 +391,7 @@ public abstract class MediaEncoder {
      */
     @SuppressLint("LogNotTimber")
     @SuppressWarnings("WeakerAccess")
-    protected void drainOutput(boolean drainAll) {
+    protected final void drainOutput(boolean drainAll) {
         LOG.i(mName, "DRAINING - EOS:", drainAll);
         if (mMediaCodec == null) {
             LOG.e("drain() was called before prepare() or after releasing.");
@@ -455,7 +455,7 @@ public abstract class MediaEncoder {
                     buffer.info = mBufferInfo;
                     buffer.trackIndex = mTrackIndex;
                     buffer.data = encodedData;
-                    mController.write(mOutputBufferPool, buffer);
+                    onWriteOutput(mOutputBufferPool, buffer);
                 }
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);
 
@@ -481,6 +481,11 @@ public abstract class MediaEncoder {
                 }
             }
         }
+    }
+
+    @CallSuper
+    protected void onWriteOutput(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
+        mController.write(pool, buffer);
     }
 
     protected abstract int getEncodedBitRate();
