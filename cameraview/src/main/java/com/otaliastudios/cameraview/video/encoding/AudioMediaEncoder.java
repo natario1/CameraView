@@ -1,6 +1,5 @@
 package com.otaliastudios.cameraview.video.encoding;
 
-import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -17,6 +16,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -31,11 +31,16 @@ public class AudioMediaEncoder extends MediaEncoder {
     private static final boolean PERFORMANCE_DEBUG = false;
     private static final boolean PERFORMANCE_FILL_GAPS = true;
 
+    private final static Random NOISE = new Random();
+
+    private static short noise() {
+        return (short) NOISE.nextInt(300);
+    }
+
     private boolean mRequestStop = false;
     private AudioEncodingThread mEncoder;
     private AudioRecordingThread mRecorder;
     private ByteBufferPool mByteBufferPool;
-    private ByteBuffer mZeroBuffer;
     private final AudioTimestamp mTimestamp;
     private AudioConfig mConfig;
     private InputBufferPool mInputBufferPool = new InputBufferPool();
@@ -76,7 +81,6 @@ public class AudioMediaEncoder extends MediaEncoder {
         mMediaCodec.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
         mByteBufferPool = new ByteBufferPool(mConfig.frameSize(), mConfig.bufferPoolMaxSize());
-        mZeroBuffer = ByteBuffer.allocateDirect(mConfig.frameSize());
     }
 
     @EncoderThread
@@ -253,16 +257,21 @@ public class AudioMediaEncoder extends MediaEncoder {
                     long frameUs = AudioTimestamp.bytesToUs(mConfig.frameSize(), mConfig.byteRate());
                     LOG.w("read thread - GAPS: trying to add", gaps, "zeroed buffers");
                     for (int i = 0; i < gaps; i++) {
-                        ByteBuffer zeroBuffer = mByteBufferPool.get();
-                        if (zeroBuffer == null) {
+                        ByteBuffer noiseBuffer = mByteBufferPool.get();
+                        if (noiseBuffer == null) {
                             LOG.e("read thread - GAPS: aborting because we have no free buffer.");
                             break;
                         }
-                        ;
-                        zeroBuffer.position(0);
-                        zeroBuffer.put(mZeroBuffer);
-                        zeroBuffer.clear();
-                        enqueue(zeroBuffer, gapStart, false);
+                        noiseBuffer.clear();
+                        while (noiseBuffer.hasRemaining()) {
+                            // Assume remaining() is not an odd number!
+                            // Also assuming byte order is little endian in Android.
+                            short noise = noise();
+                            noiseBuffer.put((byte) noise);
+                            noiseBuffer.put((byte) (noise >> 8));
+                        }
+                        noiseBuffer.rewind();
+                        enqueue(noiseBuffer, gapStart, false);
                         gapStart += frameUs;
                     }
                 }
@@ -312,6 +321,7 @@ public class AudioMediaEncoder extends MediaEncoder {
                         if (PERFORMANCE_DEBUG) {
                             long sendEnd = System.nanoTime() / 1000000;
                             Long sendStart = mSendStartMap.remove(inputBuffer.timestamp);
+                            //noinspection StatementWithEmptyBody
                             if (sendStart != null) {
                                 mAvgSendDelay = ((mAvgSendDelay * mSendCount) + (sendEnd - sendStart)) / (++mSendCount);
                                 LOG.v("send delay millis:", sendEnd - sendStart, "average:", mAvgSendDelay);
@@ -357,7 +367,7 @@ public class AudioMediaEncoder extends MediaEncoder {
             // NOTE: can consider calling this drainOutput on yet another thread, which would let us
             // use an even smaller BUFFER_POOL_MAX_SIZE without losing audio frames. But this way
             // we can accumulate delay on this new thread without noticing (no pool getting empty).
-            drainOutput(buffer.isEndOfStream);
+            drainOutput(eos);
 
             if (PERFORMANCE_DEBUG) {
                 long executeEnd = System.nanoTime() / 1000000;

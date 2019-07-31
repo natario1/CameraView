@@ -20,7 +20,7 @@ public class AudioConfig {
     final int encoding = AudioFormat.ENCODING_PCM_16BIT; // Determines the sampleSizePerChannel
     // The 44.1KHz frequency is the only setting guaranteed to be available on all devices.
     final int samplingFrequency = 44100; // samples/sec
-    final int sampleSizePerChannel = 2; // byte/sample/channel [16bit]
+    final int sampleSizePerChannel = 2; // byte/sample/channel [16bit]. If this changes, review noise introduction
     final int byteRatePerChannel = samplingFrequency * sampleSizePerChannel; // byte/sec/channel
 
     @NonNull
