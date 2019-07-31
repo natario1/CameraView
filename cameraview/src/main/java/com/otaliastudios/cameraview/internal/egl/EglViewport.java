@@ -197,7 +197,7 @@ public class EglViewport extends EglElement {
         // Done -- disable vertex array, texture, and program.
         GLES20.glDisableVertexAttribArray(maPositionLocation);
         GLES20.glDisableVertexAttribArray(maTextureCoordLocation);
-        GLES20.glBindTexture(mTextureTarget, 0);
+        // GLES20.glBindTexture(mTextureTarget, 0);
         GLES20.glUseProgram(0);
     }
 }
