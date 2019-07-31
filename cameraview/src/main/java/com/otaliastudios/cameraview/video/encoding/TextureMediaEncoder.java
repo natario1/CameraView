@@ -29,7 +29,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     private EglCore mEglCore;
     private EglWindowSurface mWindow;
     private EglViewport mViewport;
-    private Pool<Frame> mFramePool = new Pool<>(Integer.MAX_VALUE, new Pool.Factory<Frame>() {
+    private Pool<Frame> mFramePool = new Pool<>(100, new Pool.Factory<Frame>() {
         @Override
         public Frame create() {
             return new Frame();
@@ -115,14 +115,18 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
      */
     @Override
     protected boolean shouldRenderFrame(long timestampUs) {
-        if (!super.shouldRenderFrame(timestampUs)) return false;
-        if (mFrameNumber <= 5) return true; // Always render the first few frames, or muxer fails.
-        int events = getPendingEvents(FRAME_EVENT);
-        if (events > 2) {
-            LOG.w("Dropping frame because we already have too many pending events.", events);
+        if (!super.shouldRenderFrame(timestampUs)) {
             return false;
+        } else if (mFrameNumber <= 10) {
+            // Always render the first few frames, or muxer fails.
+            return true;
+        } else if (getPendingEvents(FRAME_EVENT) > 2) {
+            LOG.w("shouldRenderFrame - Dropping frame because we already have too many pending events:",
+                    getPendingEvents(FRAME_EVENT));
+            return false;
+        } else {
+            return true;
         }
-        return true;
     }
 
     @EncoderThread

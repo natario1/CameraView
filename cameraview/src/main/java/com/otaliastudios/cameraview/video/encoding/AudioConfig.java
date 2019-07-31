@@ -62,7 +62,7 @@ public class AudioConfig {
      * @return the frame size
      */
     int frameSize() {
-        return 1024 * channels;
+        return 2048 * channels;
     }
 
     /**
@@ -91,6 +91,6 @@ public class AudioConfig {
      * @return the buffer pool max size
      */
     int bufferPoolMaxSize() {
-        return 200;
+        return 500;
     }
 }

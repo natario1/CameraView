@@ -7,6 +7,7 @@ import android.os.Build;
 import android.text.format.DateFormat;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -97,17 +98,18 @@ public class MediaEncoderEngine {
     public final static int END_BY_MAX_DURATION = 1;
     public final static int END_BY_MAX_SIZE = 2;
 
-    private List<MediaEncoder> mEncoders;
+    private final List<MediaEncoder> mEncoders = new ArrayList<>();
     private MediaMuxer mMediaMuxer;
     private int mStartedEncodersCount = 0;
     private int mStoppedEncodersCount = 0;
     private boolean mMediaMuxerStarted = false;
     @SuppressWarnings("FieldCanBeLocal")
-    private Controller mController;
+    private final Controller mController = new Controller();
+    private final WorkerHandler mControllerThread = WorkerHandler.get("EncoderEngine");
+    private final Object mControllerLock = new Object();
     private Listener mListener;
     private int mEndReason = END_BY_USER;
     private int mPossibleEndReason;
-    private final Object mControllerLock = new Object();
 
     /**
      * Creates a new engine for the given file, with the given encoders and max limits,
@@ -127,8 +129,6 @@ public class MediaEncoderEngine {
                               final long maxSize,
                               @Nullable Listener listener) {
         mListener = listener;
-        mController = new Controller();
-        mEncoders = new ArrayList<>();
         mEncoders.add(videoEncoder);
         if (audioEncoder != null) {
             mEncoders.add(audioEncoder);
@@ -219,9 +219,13 @@ public class MediaEncoderEngine {
             // went wrong, and we propagate that to the listener.
             try {
                 mMediaMuxer.stop();
-                mMediaMuxer.release();
             } catch (Exception e) {
                 error = e;
+            }
+            try {
+                mMediaMuxer.release();
+            } catch (Exception e) {
+                if (error == null) error = e;
             }
             mMediaMuxer = null;
         }
@@ -234,6 +238,7 @@ public class MediaEncoderEngine {
         mStartedEncodersCount = 0;
         mStoppedEncodersCount = 0;
         mMediaMuxerStarted = false;
+        mControllerThread.destroy();
         LOG.i("end:", "Completed.");
     }
 
@@ -282,11 +287,18 @@ public class MediaEncoderEngine {
                 LOG.w("notifyStarted:", "Assigned track", track, "to format", format.getString(MediaFormat.KEY_MIME));
                 if (++mStartedEncodersCount == mEncoders.size()) {
                     LOG.w("notifyStarted:", "All encoders have started. Starting muxer and dispatching onEncodingStart().");
-                    mMediaMuxer.start();
-                    mMediaMuxerStarted = true;
-                    if (mListener != null) {
-                        mListener.onEncodingStart();
-                    }
+                    // Go out of this thread since it might be very important for the
+                    // encoders and we don't want to perform expensive operations here.
+                    mControllerThread.run(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMediaMuxer.start();
+                            mMediaMuxerStarted = true;
+                            if (mListener != null) {
+                                mListener.onEncodingStart();
+                            }
+                        }
+                    });
                 }
                 return track;
             }
@@ -323,10 +335,6 @@ public class MediaEncoderEngine {
          * large differences.
          */
         public void write(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
-            if (!mMediaMuxerStarted) {
-                throw new IllegalStateException("Trying to write before muxer started");
-            }
-
             if (DEBUG_PERFORMANCE) {
                 // When AUDIO = mono, this is called about twice the time. (200 vs 100 for 5 sec).
                 Integer count = mDebugCount.get(buffer.trackIndex);
@@ -343,7 +351,6 @@ public class MediaEncoderEngine {
                         "track:", buffer.trackIndex,
                         "presentation:", buffer.info.presentationTimeUs);
             }
-
             mMediaMuxer.writeSampleData(buffer.trackIndex, buffer.data, buffer.info);
             pool.recycle(buffer);
         }
@@ -361,7 +368,14 @@ public class MediaEncoderEngine {
                 if (--mStartedEncodersCount == 0) {
                     LOG.w("requestStop:", "All encoders have requested a stop. Stopping them.");
                     mEndReason = mPossibleEndReason;
-                    stop();
+                    // Go out of this thread since it might be very important for the
+                    // encoders and we don't want to perform expensive operations here.
+                    mControllerThread.run(new Runnable() {
+                        @Override
+                        public void run() {
+                            stop();
+                        }
+                    });
                 }
             }
         }
@@ -375,7 +389,14 @@ public class MediaEncoderEngine {
                 LOG.w("notifyStopped:", "Called for track", track);
                 if (++mStoppedEncodersCount == mEncoders.size()) {
                     LOG.w("requestStop:", "All encoders have been stopped. Stopping the muxer.");
-                    end();
+                    // Go out of this thread since it might be very important for the
+                    // encoders and we don't want to perform expensive operations here.
+                    mControllerThread.run(new Runnable() {
+                        @Override
+                        public void run() {
+                            end();
+                        }
+                    });
                 }
             }
         }

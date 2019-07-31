@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
 /**
@@ -100,6 +101,20 @@ public class WorkerHandler {
                 WorkerHandler.this.run(command);
             }
         };
+
+        // HandlerThreads/Handlers sometimes have a significant warmup time.
+        // We want to spend this time here so when this object is built, it
+        // is fully operational.
+        final CountDownLatch latch = new CountDownLatch(1);
+        post(new Runnable() {
+            @Override
+            public void run() {
+                latch.countDown();
+            }
+        });
+        try {
+            latch.await();
+        } catch (InterruptedException ignore) {}
     }
 
     /**
@@ -219,7 +234,6 @@ public class WorkerHandler {
      * interrupt it, so the next {@link #get(String)} call will remove it.
      * In any case, we only store weak references.
      */
-    @SuppressWarnings("WeakerAccess")
     public void destroy() {
         HandlerThread thread = getThread();
         if (thread.isAlive()) {

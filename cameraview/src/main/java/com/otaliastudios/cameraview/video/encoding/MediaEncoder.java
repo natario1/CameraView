@@ -180,6 +180,7 @@ public abstract class MediaEncoder {
         mBufferInfo = new MediaCodec.BufferInfo();
         mMaxLengthMillis = maxLengthMillis;
         mWorker = WorkerHandler.get(mName);
+        mWorker.getThread().setPriority(Thread.MAX_PRIORITY);
         LOG.i(mName, "Prepare was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
