@@ -231,7 +231,7 @@ public class Camera1Engine extends CameraEngine implements
     @Override
     protected Task<Void> onStopPreview() {
         if (mVideoRecorder != null) {
-            mVideoRecorder.stop();
+            mVideoRecorder.stop(true);
             mVideoRecorder = null;
         }
         mPictureRecorder = null;

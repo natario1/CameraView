@@ -1,20 +1,14 @@
 package com.otaliastudios.cameraview.video;
 
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
-import android.view.Surface;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.internal.Issue514Workaround;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;
-import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.overlay.OverlayDrawer;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
@@ -84,8 +78,16 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     }
 
     @Override
-    protected void onStop() {
-        mDesiredState = STATE_NOT_RECORDING;
+    protected void onStop(boolean isCameraShutdown) {
+        if (isCameraShutdown) {
+            // The renderer callback might never be called. From my tests, it's not.
+            LOG.i("Stopping the encoder engine from isCameraShutdown.");
+            mDesiredState = STATE_NOT_RECORDING;
+            mCurrentState = STATE_NOT_RECORDING;
+            mEncoderEngine.stop();
+        } else {
+            mDesiredState = STATE_NOT_RECORDING;
+        }
     }
 
     @RendererThread
@@ -164,7 +166,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             LOG.v("dispatching frame.");
             TextureMediaEncoder textureEncoder = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
             TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
-            frame.timestamp = surfaceTexture.getTimestamp();
+            frame.timestampNanos = surfaceTexture.getTimestamp();
             frame.timestampMillis = System.currentTimeMillis(); // NOTE: this is an approximation but it seems to work.
             surfaceTexture.getTransformMatrix(frame.transform);
             if (mEncoderEngine != null) { // Can happen on teardown. At least it used to.

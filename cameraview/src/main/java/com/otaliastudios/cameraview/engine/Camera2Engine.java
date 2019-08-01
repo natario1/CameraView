@@ -535,7 +535,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (mVideoRecorder != null) {
             // This should synchronously call onVideoResult that will reset the repeating builder
             // to the PREVIEW template. This is very important.
-            mVideoRecorder.stop();
+            mVideoRecorder.stop(true);
             mVideoRecorder = null;
         }
         mPictureRecorder = null;

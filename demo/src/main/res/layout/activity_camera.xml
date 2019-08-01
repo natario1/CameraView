@@ -21,7 +21,7 @@
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
         app:cameraFlash="off"
-        app:cameraAudio="off"
+        app:cameraAudio="on"
         app:cameraFacing="back"
         app:cameraGestureTap="autoFocus"
         app:cameraGestureLongTap="none"
@@ -51,7 +51,7 @@
         android:layout_margin="16dp"
         android:layout_gravity="top|end"
         android:background="@drawable/background"
-        android:elevation="6dp"
+        android:elevation="3dp"
         app:srcCompat="@drawable/ic_switch" />
 
     <!-- Controls -->
@@ -155,6 +155,7 @@
         app:behavior_hideable="true"
         app:behavior_peekHeight="300dp"
         app:behavior_skipCollapsed="false"
+        android:elevation="4dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <LinearLayout
