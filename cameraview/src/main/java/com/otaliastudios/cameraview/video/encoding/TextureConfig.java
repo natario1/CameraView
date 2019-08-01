@@ -4,16 +4,19 @@ import android.opengl.EGLContext;
 
 import androidx.annotation.NonNull;
 
+import com.otaliastudios.cameraview.internal.Issue514Workaround;
+import com.otaliastudios.cameraview.overlay.Overlay;
+import com.otaliastudios.cameraview.overlay.OverlayDrawer;
+
 /**
  * Video configuration to be passed as input to the constructor
  * of a {@link TextureMediaEncoder}.
  */
 public class TextureConfig extends VideoConfig {
 
-    private final static int NO_TEXTURE = Integer.MIN_VALUE;
-
-    public int textureId = NO_TEXTURE;
-    public int overlayTextureId = NO_TEXTURE;
+    public int textureId;
+    public Overlay.Target overlayTarget;
+    public OverlayDrawer overlayDrawer;
     public int overlayRotation;
     public float scaleX;
     public float scaleY;
@@ -24,7 +27,8 @@ public class TextureConfig extends VideoConfig {
         TextureConfig copy = new TextureConfig();
         copy(copy);
         copy.textureId = this.textureId;
-        copy.overlayTextureId = this.overlayTextureId;
+        copy.overlayDrawer = this.overlayDrawer;
+        copy.overlayTarget = this.overlayTarget;
         copy.overlayRotation = this.overlayRotation;
         copy.scaleX = this.scaleX;
         copy.scaleY = this.scaleY;
@@ -33,6 +37,6 @@ public class TextureConfig extends VideoConfig {
     }
 
     boolean hasOverlay() {
-        return overlayTextureId != NO_TEXTURE;
+        return overlayDrawer != null;
     }
 }

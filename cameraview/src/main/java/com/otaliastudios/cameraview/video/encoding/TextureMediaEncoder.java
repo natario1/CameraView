@@ -6,6 +6,7 @@ import android.opengl.Matrix;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.internal.Issue514Workaround;
 import com.otaliastudios.cameraview.internal.egl.EglCore;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
@@ -64,11 +65,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
          * The transformation matrix for the base texture.
          */
         public float[] transform = new float[16];
-
-        /**
-         * The transformation matrix for the overlay texture, if any.
-         */
-        public float[] overlayTransform = new float[16];
     }
 
     /**
@@ -130,7 +126,6 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         // 1. We must scale this matrix like GlCameraPreview does, because it might have some cropping.
         // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
         float[] transform = frame.transform;
-        float[] overlayTransform = frame.overlayTransform;
         float scaleX = mConfig.scaleX;
         float scaleY = mConfig.scaleY;
         float scaleTranslX = (1F - scaleX) / 2F;
@@ -148,13 +143,14 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
 
         // 3. Do the same for overlays with their own rotation.
         if (mConfig.hasOverlay()) {
-            Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
-            Matrix.rotateM(overlayTransform, 0, mConfig.overlayRotation, 0, 0, 1);
-            Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
+            mConfig.overlayDrawer.draw(mConfig.overlayTarget);
+            Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, 0.5F, 0.5F, 0);
+            Matrix.rotateM(mConfig.overlayDrawer.getTransform(), 0, mConfig.overlayRotation, 0, 0, 1);
+            Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, -0.5F, -0.5F, 0);
         }
         mViewport.drawFrame(mConfig.textureId, transform);
         if (mConfig.hasOverlay()) {
-            mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
+            mConfig.overlayDrawer.render();
         }
         mWindow.setPresentationTime(frame.timestamp);
         mWindow.swapBuffers();
