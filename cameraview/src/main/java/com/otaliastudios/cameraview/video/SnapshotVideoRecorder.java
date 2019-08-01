@@ -78,8 +78,16 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     }
 
     @Override
-    protected void onStop() {
-        mDesiredState = STATE_NOT_RECORDING;
+    protected void onStop(boolean isCameraShutdown) {
+        if (isCameraShutdown) {
+            // The renderer callback might never be called. From my tests, it's not.
+            LOG.i("Stopping the encoder engine from isCameraShutdown.");
+            mDesiredState = STATE_NOT_RECORDING;
+            mCurrentState = STATE_NOT_RECORDING;
+            mEncoderEngine.stop();
+        } else {
+            mDesiredState = STATE_NOT_RECORDING;
+        }
     }
 
     @RendererThread

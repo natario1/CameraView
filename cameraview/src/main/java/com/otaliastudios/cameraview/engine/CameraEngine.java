@@ -1189,7 +1189,7 @@ public abstract class CameraEngine implements
             public void run() {
                 LOG.i("stopVideo", "executing.", "isTakingVideo?", isTakingVideo());
                 if (mVideoRecorder != null) {
-                    mVideoRecorder.stop();
+                    mVideoRecorder.stop(false);
                     mVideoRecorder = null;
                 }
             }

@@ -29,7 +29,7 @@ public class VideoRecorderTest extends BaseTest {
             }
 
             @Override
-            protected void onStop() {
+            protected void onStop(boolean isCameraShutdown) {
                 dispatchVideoRecordingEnd();
                 dispatchResult();
             }
@@ -37,7 +37,7 @@ public class VideoRecorderTest extends BaseTest {
         recorder.start(result);
         Mockito.verify(listener,Mockito.times(1) )
                 .onVideoRecordingStart();
-        recorder.stop();
+        recorder.stop(false);
         Mockito.verify(listener, Mockito.times(1))
                 .onVideoRecordingEnd();
         Mockito.verify(listener, Mockito.times(1))
