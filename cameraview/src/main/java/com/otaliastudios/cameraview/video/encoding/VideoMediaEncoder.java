@@ -113,17 +113,17 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
             int flag = MediaCodec.BUFFER_FLAG_SYNC_FRAME;
             boolean hasFlag = (buffer.info.flags & flag) == flag;
             if (hasFlag) {
-                LOG.w("onWriteOutput:", "sync frame found!");
+                LOG.w("onWriteOutput:", "SYNC FRAME FOUND!");
                 mSyncFrameFound = true;
                 super.onWriteOutput(pool, buffer);
             } else {
-                // drop this.
                 LOG.w("onWriteOutput:", "DROPPING FRAME and requesting a sync frame soon.");
                 if (Build.VERSION.SDK_INT >= 19) {
                     Bundle params = new Bundle();
                     params.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
                     mMediaCodec.setParameters(params);
                 }
+                pool.recycle(buffer);
             }
         } else {
             super.onWriteOutput(pool, buffer);
