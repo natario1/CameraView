@@ -33,12 +33,6 @@ public class AudioMediaEncoder extends MediaEncoder {
     private static final boolean PERFORMANCE_FILL_GAPS = true;
     private static final int PERFORMANCE_MAX_GAPS = 8;
 
-    private final static Random NOISE = new Random();
-
-    private static short noise() {
-        return (short) NOISE.nextInt(50);
-    }
-
     private boolean mRequestStop = false;
     private AudioEncodingThread mEncoder;
     private AudioRecordingThread mRecorder;
@@ -47,7 +41,7 @@ public class AudioMediaEncoder extends MediaEncoder {
     private AudioConfig mConfig;
     private InputBufferPool mInputBufferPool = new InputBufferPool();
     private final LinkedBlockingQueue<InputBuffer> mInputBufferQueue = new LinkedBlockingQueue<>();
-    private ByteBuffer mNoiseBuffer;
+    private AudioNoise mAudioNoise;
 
     // Just to debug performance.
     private int mDebugSendCount = 0;
@@ -84,6 +78,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         mMediaCodec.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
         mByteBufferPool = new ByteBufferPool(mConfig.frameSize(), mConfig.bufferPoolMaxSize());
+        mAudioNoise = new AudioNoise(mConfig);
     }
 
     @EncoderThread
@@ -304,31 +299,14 @@ public class AudioMediaEncoder extends MediaEncoder {
             long gapStart = mTimestamp.getGapStartUs(mLastTimeUs);
             long frameUs = AudioTimestamp.bytesToUs(mConfig.frameSize(), mConfig.byteRate());
             LOG.w("read thread - GAPS: trying to add", gaps, "noise buffers. PERFORMANCE_MAX_GAPS:", PERFORMANCE_MAX_GAPS);
-
-            // Prepare the noise buffer.
-            if (mNoiseBuffer == null) {
-                LOG.w("read thread - GAPS: creating noise buffer.");
-                mNoiseBuffer = ByteBuffer.allocateDirect(mConfig.frameSize()).order(ByteOrder.nativeOrder());
-                while (mNoiseBuffer.hasRemaining()) {
-                    // Assume remaining() is not an odd number!
-                    // Also assuming byte order is little endian in Android.
-                    short noise = noise();
-                    mNoiseBuffer.put((byte) noise);
-                    mNoiseBuffer.put((byte) (noise >> 8));
-                }
-            }
-
-            // Fill all gaps.
-            // Well, at most PERFORMANCE_MAX_GAPS.
             for (int i = 0; i < Math.min(gaps, PERFORMANCE_MAX_GAPS); i++) {
                 ByteBuffer noiseBuffer = mByteBufferPool.get();
                 if (noiseBuffer == null) {
                     LOG.e("read thread - GAPS: aborting because we have no free buffer.");
                     break;
                 }
-                mNoiseBuffer.clear();
                 noiseBuffer.clear();
-                noiseBuffer.put(mNoiseBuffer);
+                mAudioNoise.fill(noiseBuffer);
                 noiseBuffer.rewind();
                 enqueue(noiseBuffer, gapStart, false);
                 gapStart += frameUs;

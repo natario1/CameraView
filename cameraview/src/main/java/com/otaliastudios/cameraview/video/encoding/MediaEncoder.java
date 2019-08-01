@@ -325,6 +325,7 @@ public abstract class MediaEncoder {
         mOutputBufferPool = null;
         mBuffers = null;
         setState(STATE_STOPPED);
+        mWorker.destroy();
     }
 
     /**
