@@ -64,9 +64,10 @@ public abstract class VideoRecorder {
 
     /**
      * Stops recording.
+     * @param isCameraShutdown whether this is a full shutdown, camera is being closed
      */
-    public final void stop() {
-        onStop();
+    public final void stop(boolean isCameraShutdown) {
+        onStop(isCameraShutdown);
     }
 
     /**
@@ -79,13 +80,12 @@ public abstract class VideoRecorder {
 
     protected abstract void onStart();
 
-    protected abstract void onStop();
+    protected abstract void onStop(boolean isCameraShutdown);
 
     /**
      * Subclasses can call this to notify that the result was obtained,
      * either with some error (null result) or with the actual stub, filled.
      */
-    @SuppressWarnings("WeakerAccess")
     @CallSuper
     protected void dispatchResult() {
         mIsRecording = false;
@@ -112,6 +112,7 @@ public abstract class VideoRecorder {
      * Subclasses can call this to notify that the video recording has ended,
      * although the video result might still be processed.
      */
+    @SuppressWarnings("WeakerAccess")
     @CallSuper
     protected void dispatchVideoRecordingEnd() {
         if (mListener != null) {

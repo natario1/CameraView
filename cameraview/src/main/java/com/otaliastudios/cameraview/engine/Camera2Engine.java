@@ -535,7 +535,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (mVideoRecorder != null) {
             // This should synchronously call onVideoResult that will reset the repeating builder
             // to the PREVIEW template. This is very important.
-            mVideoRecorder.stop();
+            mVideoRecorder.stop(true);
             mVideoRecorder = null;
         }
         mPictureRecorder = null;
@@ -610,10 +610,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @WorkerThread
     @Override
-    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
+    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio) {
         stub.size = getUncroppedSnapshotSize(Reference.OUTPUT); // Not the real size: it will be cropped to match the view ratio
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR); // Actually it will be rotated and set to 0.
-        AspectRatio outputRatio = getAngles().flip(Reference.OUTPUT, Reference.VIEW) ? viewAspectRatio.flip() : viewAspectRatio;
         if (mPreview instanceof GlCameraPreview) {
             mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio, getOverlay());
         } else {
@@ -695,7 +694,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @WorkerThread
     @Override
-    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio viewAspectRatio) {
+    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio outputRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
@@ -704,7 +703,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (outputSize == null) {
             throw new IllegalStateException("outputSize should not be null.");
         }
-        AspectRatio outputRatio = getAngles().flip(Reference.VIEW, Reference.OUTPUT) ? viewAspectRatio.flip() : viewAspectRatio;
         Rect outputCrop = CropHelper.computeCrop(outputSize, outputRatio);
         outputSize = new Size(outputCrop.width(), outputCrop.height());
         stub.size = outputSize;
@@ -1257,8 +1255,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private void onAutoFocusCapture(@NonNull CaptureResult result) {
         Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
         if (afState == null) {
-            LOG.e("onAutoFocusCapture", "afState is null! Assuming AF failed.");
-            afState = CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
+            LOG.i("onAutoFocusCapture", "afState is null! This can happen for partial results. Waiting.");
+            return;
         }
         switch (afState) {
             case CaptureRequest.CONTROL_AF_STATE_FOCUSED_LOCKED: {

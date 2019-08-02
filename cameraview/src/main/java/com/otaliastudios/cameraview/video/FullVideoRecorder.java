@@ -103,11 +103,11 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 switch (what) {
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
                         mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
-                        stop();
+                        stop(false);
                         break;
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
                         mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
-                        stop();
+                        stop(false);
                         break;
                 }
             }
@@ -130,7 +130,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
     protected void onStart() {
         if (!prepareMediaRecorder(mResult)) {
             mResult = null;
-            stop();
+            stop(false);
             return;
         }
 
@@ -141,12 +141,12 @@ public abstract class FullVideoRecorder extends VideoRecorder {
             LOG.w("start:", "Error while starting media recorder.", e);
             mResult = null;
             mError = e;
-            stop();
+            stop(false);
         }
     }
 
     @Override
-    protected void onStop() {
+    protected void onStop(boolean isCameraShutdown) {
         if (mMediaRecorder != null) {
             dispatchVideoRecordingEnd();
             try {

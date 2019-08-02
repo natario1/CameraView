@@ -14,6 +14,9 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Base class for single-track encoders, coordinated by a {@link MediaEncoderEngine}.
@@ -117,12 +120,13 @@ public abstract class MediaEncoder {
     private OutputBufferPool mOutputBufferPool;
     private MediaCodec.BufferInfo mBufferInfo;
     private MediaCodecBuffers mBuffers;
+    private final Map<String, AtomicInteger> mPendingEvents = new HashMap<>();
 
     private long mMaxLengthMillis;
     private boolean mMaxLengthReached;
 
     private long mStartTimeMillis = 0; // In System.currentTimeMillis()
-    private long mStartTimeUs = Long.MIN_VALUE; // In unknown reference
+    private long mFirstTimeUs = Long.MIN_VALUE; // In unknown reference
     private long mLastTimeUs = 0;
 
     private long mDebugSetStateTimestamp = Long.MIN_VALUE;
@@ -176,6 +180,7 @@ public abstract class MediaEncoder {
         mBufferInfo = new MediaCodec.BufferInfo();
         mMaxLengthMillis = maxLengthMillis;
         mWorker = WorkerHandler.get(mName);
+        mWorker.getThread().setPriority(Thread.MAX_PRIORITY);
         LOG.i(mName, "Prepare was called. Posting.");
         mWorker.post(new Runnable() {
             @Override
@@ -223,13 +228,18 @@ public abstract class MediaEncoder {
      * @param event what happened
      * @param data object
      */
+    @SuppressWarnings("ConstantConditions")
     final void notify(final @NonNull String event, final @Nullable Object data) {
-        LOG.v(mName, "Notify was called. Posting.");
+        if (!mPendingEvents.containsKey(event)) mPendingEvents.put(event, new AtomicInteger(0));
+        final AtomicInteger pendingEvents = mPendingEvents.get(event);
+        pendingEvents.incrementAndGet();
+        LOG.v(mName, "Notify was called. Posting. pendingEvents:", pendingEvents.intValue());
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.v(mName, "Notify was called. Executing.");
+                LOG.v(mName, "Notify was called. Executing. pendingEvents:", pendingEvents.intValue());
                 onEvent(event, data);
+                pendingEvents.decrementAndGet();
             }
         });
     }
@@ -315,6 +325,7 @@ public abstract class MediaEncoder {
         mOutputBufferPool = null;
         mBuffers = null;
         setState(STATE_STOPPED);
+        mWorker.destroy();
     }
 
     /**
@@ -357,7 +368,9 @@ public abstract class MediaEncoder {
      */
     @SuppressWarnings("WeakerAccess")
     protected void encodeInputBuffer(InputBuffer buffer) {
-        LOG.v(mName, "ENCODING - Buffer:", buffer.index, "Bytes:", buffer.length, "Presentation:", buffer.timestamp);
+        LOG.v(mName, "ENCODING - Buffer:", buffer.index,
+                "Bytes:", buffer.length,
+                "Presentation:", buffer.timestamp);
         if (buffer.isEndOfStream) { // send EOS
             mMediaCodec.queueInputBuffer(buffer.index, 0, 0,
                     buffer.timestamp, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
@@ -379,8 +392,8 @@ public abstract class MediaEncoder {
      */
     @SuppressLint("LogNotTimber")
     @SuppressWarnings("WeakerAccess")
-    protected void drainOutput(boolean drainAll) {
-        LOG.v(mName, "DRAINING - EOS:", drainAll);
+    protected final void drainOutput(boolean drainAll) {
+        LOG.i(mName, "DRAINING - EOS:", drainAll);
         if (mMediaCodec == null) {
             LOG.e("drain() was called before prepare() or after releasing.");
             return;
@@ -422,9 +435,9 @@ public abstract class MediaEncoder {
 
                     // Store mStartTimeUs and mLastTimeUs, useful to detect the max length
                     // reached and stop recording when needed.
-                    if (mStartTimeUs == Long.MIN_VALUE) {
-                        mStartTimeUs = mBufferInfo.presentationTimeUs;
-                        LOG.w(mName, "DRAINING - Got the first presentation time:", mStartTimeUs);
+                    if (mFirstTimeUs == Long.MIN_VALUE) {
+                        mFirstTimeUs = mBufferInfo.presentationTimeUs;
+                        LOG.w(mName, "DRAINING - Got the first presentation time:", mFirstTimeUs);
                     }
                     mLastTimeUs = mBufferInfo.presentationTimeUs;
 
@@ -434,16 +447,16 @@ public abstract class MediaEncoder {
                     // To address this, encoders are required to call notifyFirstFrameMillis
                     // so we can adjust here - moving to 1970 reference.
                     // Extra benefit: we never pass a pts equal to 0, which some encoders refuse.
-                    mBufferInfo.presentationTimeUs = (mStartTimeMillis * 1000) + mLastTimeUs - mStartTimeUs;
+                    mBufferInfo.presentationTimeUs = (mStartTimeMillis * 1000) + mLastTimeUs - mFirstTimeUs;
 
                     // Write.
-                    LOG.v(mName, "DRAINING - About to write(). Adjusted presentation:", mBufferInfo.presentationTimeUs);
+                    LOG.i(mName, "DRAINING - About to write(). Adjusted presentation:", mBufferInfo.presentationTimeUs);
                     OutputBuffer buffer = mOutputBufferPool.get();
                     //noinspection ConstantConditions
                     buffer.info = mBufferInfo;
                     buffer.trackIndex = mTrackIndex;
                     buffer.data = encodedData;
-                    mController.write(mOutputBufferPool, buffer);
+                    onWriteOutput(mOutputBufferPool, buffer);
                 }
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);
 
@@ -451,10 +464,11 @@ public abstract class MediaEncoder {
                 // Not needed if drainAll because we already were asked to stop
                 if (!drainAll
                         && !mMaxLengthReached
-                        && mStartTimeUs != Long.MIN_VALUE
-                        && mLastTimeUs - mStartTimeUs > mMaxLengthMillis * 1000) {
+                        && mFirstTimeUs != Long.MIN_VALUE
+                        && mLastTimeUs - mFirstTimeUs > mMaxLengthMillis * 1000) {
                     LOG.w(mName, "DRAINING - Reached maxLength! mLastTimeUs:", mLastTimeUs,
-                            "mStartTimeUs:", mStartTimeUs,
+                            "mStartTimeUs:", mFirstTimeUs,
+                            "mDeltaUs:", mLastTimeUs - mFirstTimeUs,
                             "mMaxLengthUs:", mMaxLengthMillis * 1000);
                     onMaxLengthReached();
                     break;
@@ -468,6 +482,11 @@ public abstract class MediaEncoder {
                 }
             }
         }
+    }
+
+    @CallSuper
+    protected void onWriteOutput(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
+        mController.write(pool, buffer);
     }
 
     protected abstract int getEncodedBitRate();
@@ -492,6 +511,11 @@ public abstract class MediaEncoder {
     @SuppressWarnings("WeakerAccess")
     protected void notifyMaxLengthReached() {
         onMaxLengthReached();
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected boolean hasReachedMaxLength() {
+        return mMaxLengthReached;
     }
 
     /**
@@ -520,7 +544,20 @@ public abstract class MediaEncoder {
      * @param firstFrameMillis the milliseconds of the first frame presentation
      */
     @SuppressWarnings("WeakerAccess")
-    protected void notifyFirstFrameMillis(long firstFrameMillis) {
+    protected final void notifyFirstFrameMillis(long firstFrameMillis) {
         mStartTimeMillis = firstFrameMillis;
+    }
+
+    /**
+     * Returns the number of events (see {@link #onEvent(String, Object)}) that were scheduled
+     * but still not passed to that function. Could be used to drop some of them if this
+     * number is too high.
+     *
+     * @param event the event type
+     * @return the pending events number
+     */
+    @SuppressWarnings({"SameParameterValue", "ConstantConditions", "WeakerAccess"})
+    protected final int getPendingEvents(@NonNull String event) {
+        return mPendingEvents.get(event).intValue();
     }
 }

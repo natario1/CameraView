@@ -1087,9 +1087,8 @@ public abstract class CameraEngine implements
      * The snapshot size is the {@link #getPreviewStreamSize(Reference)}, but cropped based on the
      * view/surface aspect ratio.
      * @param stub a picture stub
-     * @param viewAspectRatio the view aspect ratio
      */
-    public final void takePictureSnapshot(final @NonNull PictureResult.Stub stub, @NonNull final AspectRatio viewAspectRatio) {
+    public final void takePictureSnapshot(final @NonNull PictureResult.Stub stub) {
         LOG.v("takePictureSnapshot", "scheduling");
         mHandler.run(new Runnable() {
             @Override
@@ -1101,7 +1100,9 @@ public abstract class CameraEngine implements
                 stub.isSnapshot = true;
                 stub.facing = mFacing;
                 // Leave the other parameters to subclasses.
-                onTakePictureSnapshot(stub, viewAspectRatio);
+                //noinspection ConstantConditions
+                AspectRatio ratio = AspectRatio.of(getPreviewSurfaceSize(Reference.OUTPUT));
+                onTakePictureSnapshot(stub, ratio);
             }
         });
     }
@@ -1155,9 +1156,8 @@ public abstract class CameraEngine implements
     /**
      * @param stub a video stub
      * @param file the output file
-     * @param viewAspectRatio the view aspect ratio
      */
-    public final void takeVideoSnapshot(final @NonNull VideoResult.Stub stub, @NonNull final File file, @NonNull final AspectRatio viewAspectRatio) {
+    public final void takeVideoSnapshot(final @NonNull VideoResult.Stub stub, @NonNull final File file) {
         LOG.v("takeVideoSnapshot", "scheduling");
         mHandler.run(new Runnable() {
             @Override
@@ -1175,7 +1175,9 @@ public abstract class CameraEngine implements
                 stub.audio = mAudio;
                 stub.maxSize = mVideoMaxSize;
                 stub.maxDuration = mVideoMaxDuration;
-                onTakeVideoSnapshot(stub, viewAspectRatio);
+                //noinspection ConstantConditions
+                AspectRatio ratio = AspectRatio.of(getPreviewSurfaceSize(Reference.OUTPUT));
+                onTakeVideoSnapshot(stub, ratio);
             }
         });
     }
@@ -1187,7 +1189,7 @@ public abstract class CameraEngine implements
             public void run() {
                 LOG.i("stopVideo", "executing.", "isTakingVideo?", isTakingVideo());
                 if (mVideoRecorder != null) {
-                    mVideoRecorder.stop();
+                    mVideoRecorder.stop(false);
                     mVideoRecorder = null;
                 }
             }
@@ -1220,10 +1222,10 @@ public abstract class CameraEngine implements
     protected abstract void onTakePicture(@NonNull PictureResult.Stub stub);
 
     @WorkerThread
-    protected abstract void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio viewAspectRatio);
+    protected abstract void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio);
 
     @WorkerThread
-    protected abstract void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio viewAspectRatio);
+    protected abstract void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio outputRatio);
 
     @WorkerThread
     protected abstract void onTakeVideo(@NonNull VideoResult.Stub stub);

@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
 /**
@@ -24,6 +25,13 @@ public class WorkerHandler {
 
     private final static CameraLogger LOG = CameraLogger.create(WorkerHandler.class.getSimpleName());
     private final static ConcurrentHashMap<String, WeakReference<WorkerHandler>> sCache = new ConcurrentHashMap<>(4);
+
+    private final static String FALLBACK_NAME = "FallbackCameraThread";
+
+    // Store a hard reference to the fallback handler. We never use this, only update it
+    // anytime get() is called. This should ensure that this instance is not collected.
+    @SuppressWarnings("FieldCanBeLocal")
+    private static WorkerHandler sFallbackHandler;
 
     /**
      * Gets a possibly cached handler with the given name.
@@ -36,14 +44,19 @@ public class WorkerHandler {
             //noinspection ConstantConditions
             WorkerHandler cached = sCache.get(name).get();
             if (cached != null) {
-                HandlerThread thread = cached.mThread;
-                if (thread.isAlive() && !thread.isInterrupted()) {
+                if (cached.getThread().isAlive() && !cached.getThread().isInterrupted()) {
                     LOG.w("get:", "Reusing cached worker handler.", name);
                     return cached;
+                } else {
+                    // Cleanup the old thread before creating a new one
+                    cached.destroy();
+                    LOG.w("get:", "Thread reference found, but not alive or interrupted. Removing.", name);
+                    sCache.remove(name);
                 }
+            } else {
+                LOG.w("get:", "Thread reference died. Removing.", name);
+                sCache.remove(name);
             }
-            LOG.w("get:", "Thread reference died, removing.", name);
-            sCache.remove(name);
         }
 
         LOG.i("get:", "Creating new handler.", name);
@@ -58,7 +71,8 @@ public class WorkerHandler {
      */
     @NonNull
     public static WorkerHandler get() {
-        return get("FallbackCameraThread");
+        sFallbackHandler = get(FALLBACK_NAME);
+        return sFallbackHandler;
     }
 
     /**
@@ -87,6 +101,20 @@ public class WorkerHandler {
                 WorkerHandler.this.run(command);
             }
         };
+
+        // HandlerThreads/Handlers sometimes have a significant warmup time.
+        // We want to spend this time here so when this object is built, it
+        // is fully operational.
+        final CountDownLatch latch = new CountDownLatch(1);
+        post(new Runnable() {
+            @Override
+            public void run() {
+                latch.countDown();
+            }
+        });
+        try {
+            latch.await();
+        } catch (InterruptedException ignore) {}
     }
 
     /**
@@ -183,6 +211,7 @@ public class WorkerHandler {
      * Returns the android backing {@link Looper}.
      * @return the looper
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Looper getLooper() {
         return mThread.getLooper();
@@ -198,20 +227,33 @@ public class WorkerHandler {
     }
 
     /**
+     * Destroys this handler and its thread. After this method returns, the handler
+     * should be considered unusable.
+     *
+     * Internal note: this does not remove the thread from our cache, but it does
+     * interrupt it, so the next {@link #get(String)} call will remove it.
+     * In any case, we only store weak references.
+     */
+    public void destroy() {
+        HandlerThread thread = getThread();
+        if (thread.isAlive()) {
+            thread.interrupt();
+            thread.quit();
+            // after quit(), the thread will die at some point in the future. Might take some ms.
+            // try { handler.getThread().join(); } catch (InterruptedException ignore) {}
+        }
+    }
+
+    /**
      * Destroys all handlers, interrupting their work and
      * removing them from our cache.
      */
-    public static void destroy() {
+    public static void destroyAll() {
         for (String key : sCache.keySet()) {
             WeakReference<WorkerHandler> ref = sCache.get(key);
             //noinspection ConstantConditions
             WorkerHandler handler = ref.get();
-            if (handler != null && handler.getThread().isAlive()) {
-                handler.getThread().interrupt();
-                handler.getThread().quit();
-                // after quit(), the thread will die at some point in the future. Might take some ms.
-                // try { handler.getThread().join(); } catch (InterruptedException ignore) {}
-            }
+            if (handler != null) handler.destroy();
             ref.clear();
         }
         sCache.clear();

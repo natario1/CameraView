@@ -230,6 +230,13 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             super.onVideoRecordingStart();
             LOG.w("onVideoRecordingStart!");
         }
+
+        @Override
+        public void onVideoRecordingEnd() {
+            super.onVideoRecordingEnd();
+            message("Video taken. Processing...", false);
+            LOG.w("onVideoRecordingEnd!");
+        }
     }
 
     @Override

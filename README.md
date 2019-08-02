@@ -4,9 +4,10 @@
 [![Issues](https://img.shields.io/github/issues-raw/natario1/CameraView.svg)](https://github.com/natario1/CameraView/issues)
 [![Funding](https://img.shields.io/opencollective/all/CameraView.svg?colorB=r)](https://natario1.github.io/CameraView/extra/donate)
 
+&#10240;  <!-- Hack to add whitespace -->
 
 <p align="center">
-  <img src="docs/static/icon.png" vspace="10" width="250" height="250">
+  <img src="docs/static/banner.png" width="100%">
 </p>
 
 # CameraView
@@ -15,7 +16,7 @@ CameraView is a well documented, high-level library that makes capturing picture
 addressing most of the common issues and needs, and still leaving you with flexibility where needed.
 
 ```groovy
-api 'com.otaliastudios:cameraview:2.0.0-rc1'
+api 'com.otaliastudios:cameraview:2.0.0-rc2'
 ```
 
 - Fast & reliable
@@ -36,11 +37,13 @@ Read the [official website](https://natario1.github.io/CameraView) for setup ins
 You might also be interested in [changelog](https://natario1.github.io/CameraView/about/changelog.html)
 or in the [v1 migration guide](https://natario1.github.io/CameraView/extra/v1-migration-guide.html).
 
-<p>
-  <img src="docs/static/screen1.jpg" width="250" vspace="20" hspace="5">
-  <img src="docs/static/screen2.jpg" width="250" vspace="20" hspace="5">
-  <img src="docs/static/screen3.jpg" width="250" vspace="20" hspace="5">
+&#10240;  <!-- Hack to add whitespace -->
+
+<p align="center">
+  <img src="docs/static/screen1.png" width="250" hspace="5"><img src="docs/static/screen2.png" width="250" hspace="5"><img src="docs/static/screen3.png" width="250" hspace="5">
 </p>
+
+&#10240;  <!-- Hack to add whitespace -->
 
 If you like the project, use it with profit, or simply want to thank back, please consider [donating
 to the project](https://natario1.github.io/CameraView/extra/donate) now! You can either make a one time

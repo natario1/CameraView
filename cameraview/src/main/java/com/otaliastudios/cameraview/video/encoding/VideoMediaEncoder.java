@@ -7,6 +7,7 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import android.os.Bundle;
 import android.view.Surface;
 
 import com.otaliastudios.cameraview.CameraLogger;
@@ -43,6 +44,8 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
     @SuppressWarnings("WeakerAccess")
     protected int mFrameNumber = -1;
 
+    private boolean mSyncFrameFound = false;
+
     VideoMediaEncoder(@NonNull C config) {
         super("VideoEncoder");
         mConfig = config;
@@ -53,16 +56,16 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
     protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
         MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
 
-        // Set some properties.  Failing to specify some of these can cause the MediaCodec
-        // configure() call to throw an unhelpful exception.
+        // Failing to specify some of these can cause the MediaCodec configure() call to throw an unhelpful exception.
+        // About COLOR_FormatSurface, see https://stackoverflow.com/q/28027858/4288782
+        // This just means it is an opaque, implementation-specific format that the device GPU prefers.
+        // So as long as we use the GPU to draw, the format will match what the encoder expects.
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, mConfig.frameRate);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1); // seconds between key frames!
         format.setInteger("rotation-degrees", mConfig.rotation);
 
-        // Create a MediaCodec encoder, and configure it with our format.  Get a Surface
-        // we can use for input and wrap it with a class that handles the EGL work.
         try {
             mMediaCodec = MediaCodec.createEncoderByType(mConfig.mimeType);
         } catch (IOException e) {
@@ -92,8 +95,52 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
         drainOutput(true);
     }
 
+    /**
+     * The first frame that we write MUST have the BUFFER_FLAG_SYNC_FRAME flag set.
+     * It sometimes doesn't because we might drop some frames in {@link #drainOutput(boolean)},
+     * basically if, at the time, the muxer was not started yet, due to Audio setup being slow.
+     *
+     * We can't add the BUFFER_FLAG_SYNC_FRAME flag to the first frame just because we'd like to.
+     * But we can drop frames until we get a sync one.
+     *
+     * @param pool the buffer pool
+     * @param buffer the buffer
+     */
+    @Override
+    protected void onWriteOutput(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
+        if (!mSyncFrameFound) {
+            LOG.w("onWriteOutput:", "sync frame not found yet. Checking.");
+            int flag = MediaCodec.BUFFER_FLAG_SYNC_FRAME;
+            boolean hasFlag = (buffer.info.flags & flag) == flag;
+            if (hasFlag) {
+                LOG.w("onWriteOutput:", "SYNC FRAME FOUND!");
+                mSyncFrameFound = true;
+                super.onWriteOutput(pool, buffer);
+            } else {
+                LOG.w("onWriteOutput:", "DROPPING FRAME and requesting a sync frame soon.");
+                if (Build.VERSION.SDK_INT >= 19) {
+                    Bundle params = new Bundle();
+                    params.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
+                    mMediaCodec.setParameters(params);
+                }
+                pool.recycle(buffer);
+            }
+        } else {
+            super.onWriteOutput(pool, buffer);
+        }
+    }
+
     @Override
     protected int getEncodedBitRate() {
         return mConfig.bitRate;
+    }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    protected boolean shouldRenderFrame(long timestampUs) {
+        if (timestampUs == 0) return false; // grafika said so
+        if (mFrameNumber < 0) return false; // We were asked to stop.
+        if (hasReachedMaxLength()) return false; // We were not asked yet, but we'll be soon.
+        mFrameNumber++;
+        return true;
     }
 }
