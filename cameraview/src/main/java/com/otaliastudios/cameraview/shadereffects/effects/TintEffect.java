@@ -21,6 +21,10 @@ public class TintEffect extends BaseShaderEffect {
         this.mTint = color;
     }
 
+    public int getTintColor() {
+        return mTint;
+    }
+
     @Override
     public String getFragmentShader() {
         float color_ratio[] = {0.21f, 0.71f, 0.07f};

@@ -30,6 +30,10 @@ public class SharpnessEffect extends BaseShaderEffect {
         this.scale = value;
     }
 
+    public float getSharpnessValue() {
+        return scale;
+    }
+
     /**
      * Init all values that will be used by this shader.
      *

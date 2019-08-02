@@ -7,20 +7,26 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  */
 public class AutoFixEffect extends BaseShaderEffect {
 
-
-
-    private float scale;
+    private float scale = 1.0f;
 
     /**
      * Initialize Effect
-     *
+     */
+    public AutoFixEffect() {
+    }
+
+    public float getScale() {
+        return scale;
+    }
+
+    /**
      * @param scale Float, between 0 and 1. Zero means no adjustment, while 1
      *              indicates the maximum amount of adjustment.
      */
-    public AutoFixEffect(float scale) {
+    public void setScale(float scale) {
         if (scale < 0.0f)
             scale = 0.0f;
-        if (scale > 1.0f)
+        else if (scale > 1.0f)
             scale = 1.0f;
 
         this.scale = scale;
