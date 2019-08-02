@@ -34,6 +34,8 @@ import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
+import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.shadereffects.ShaderEffectFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -50,6 +52,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private CameraView camera;
     private ViewGroup controlPanel;
     private long mCaptureTime;
+
+    private ShaderEffectFactory.ShaderEffects mCurrentEffect = ShaderEffectFactory.ShaderEffects.NO_EFFECT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +99,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         findViewById(R.id.captureVideo).setOnClickListener(this);
         findViewById(R.id.captureVideoSnapshot).setOnClickListener(this);
         findViewById(R.id.toggleCamera).setOnClickListener(this);
+        findViewById(R.id.changeFilter).setOnClickListener(this);
 
         controlPanel = findViewById(R.id.controls);
         ViewGroup group = (ViewGroup) controlPanel.getChildAt(0);
@@ -236,6 +241,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             case R.id.captureVideo: captureVideo(); break;
             case R.id.captureVideoSnapshot: captureVideoSnapshot(); break;
             case R.id.toggleCamera: toggleCamera(); break;
+            case R.id.changeFilter: changeCurrentFilter(); break;
         }
     }
 
@@ -310,6 +316,81 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 message("Switched to front camera!", false);
                 break;
         }
+    }
+
+    private void changeCurrentFilter(){
+        switch (mCurrentEffect){
+            case NO_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.AUTO_FIX_EFFECT;
+                break;
+            case AUTO_FIX_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.BLACK_AND_WHITE_EFFECT;
+                break;
+            case BLACK_AND_WHITE_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.BRIGHTNESS_EFFECT;
+                break;
+            case BRIGHTNESS_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.CONTRAST_EFFECT;
+                break;
+            case CONTRAST_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.CROSS_PROCESS_EFFECT;
+                break;
+            case CROSS_PROCESS_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.DOCUMENTARY_EFFECT;
+                break;
+            case DOCUMENTARY_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.DUO_TONE_COLOR_EFFECT;
+                break;
+            case DUO_TONE_COLOR_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.FILL_LIGHT_EFFECT;
+                break;
+            case FILL_LIGHT_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.GAMMA_EFFECT;
+                break;
+            case GAMMA_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.GRAIN_EFFECT;
+                break;
+            case GRAIN_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.GREY_SCALE_EFFECT;
+                break;
+            case GREY_SCALE_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.HUE_EFFECT;
+                break;
+            case HUE_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.INVERT_COLOR_EFFECT;
+                break;
+            case INVERT_COLOR_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.LAMOISH_EFFECT;
+                break;
+            case LAMOISH_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.POSTERIZE_EFFECT;
+                break;
+            case POSTERIZE_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.SATURATION_EFFECT;
+                break;
+            case SATURATION_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.SEPIA_EFFECT;
+                break;
+            case SEPIA_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.SHARPNESS_EFFECT;
+                break;
+            case SHARPNESS_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.TEMPERATURE_EFFECT;
+                break;
+            case TEMPERATURE_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.TINT_EFFECT;
+                break;
+            case TINT_EFFECT:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.VIGNETTE_EFFECT;
+                break;
+
+            case VIGNETTE_EFFECT:
+            default:
+                mCurrentEffect = ShaderEffectFactory.ShaderEffects.NO_EFFECT;
+                break;
+        }
+
+        camera.changeEffect(mCurrentEffect);
     }
 
     @Override
