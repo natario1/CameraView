@@ -17,14 +17,23 @@ public class GammaEffect extends BaseShaderEffect {
     /**
      * setGammaValue
      *
-     * @param gammaValue Range should be between 0.0 - 2.0 with 1.0 being normal.
+     * @param gammaValue Range should be between 0.0 - 1.0 with 0.5 being normal.
      */
     public void setGammaValue(float gammaValue){
         if (gammaValue < 0.0f)
             gammaValue = 0.0f;
-        else if (gammaValue > 2.0f)
-            gammaValue = 2.0f;
-        this.gammaValue = gammaValue;
+        else if (gammaValue > 1.0f)
+            gammaValue = 1.0f;
+
+        //since the shader excepts a range of 0.0 - 2.0
+        //will multiply the 2.0 to every value
+        this.gammaValue = gammaValue * 2.0f;
+    }
+
+    public float getGammaValue() {
+        //since the shader excepts a range of 0.0 - 2.0
+        //to keep it between 0.0f - 1.0f range, will divide it with 2.0
+        return gammaValue / 2.0f;
     }
 
     @Override

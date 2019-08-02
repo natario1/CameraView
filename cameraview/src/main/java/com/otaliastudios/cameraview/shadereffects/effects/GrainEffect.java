@@ -26,7 +26,7 @@ public class GrainEffect extends BaseShaderEffect {
     /**
      * setDistortionStrength
      *
-     * @param strength Float, between 0 and 1. Zero means no distortion, while 1
+     * @param strength Float, between 0.0f and 1.0. Zero means no distortion, while 1
      *              indicates the maximum amount of adjustment.
      */
     public void setDistortionStrength(float strength){
@@ -35,6 +35,10 @@ public class GrainEffect extends BaseShaderEffect {
         else if (strength > 1.0f)
             strength = 1.0f;
         this.strength = strength;
+    }
+
+    public float getStrength() {
+        return strength;
     }
 
     /**

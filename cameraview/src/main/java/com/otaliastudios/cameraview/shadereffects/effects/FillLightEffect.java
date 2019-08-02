@@ -6,7 +6,7 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  * Applies back-light filling to the preview.
  */
 public class FillLightEffect extends BaseShaderEffect {
-    private float strength = 0f;
+    private float strength = 0.5f;
 
     /**
      * Initialize Effect
@@ -17,7 +17,7 @@ public class FillLightEffect extends BaseShaderEffect {
     /**
      * setStrength
      *
-     * @param strength Float, between 0 and 1. 0 means no change.
+     * @param strength Float, between 0.0 and 1.0 where 0.0 means no change.
      */
     public void setStrength(float strength){
         if (strength < 0.0f)
@@ -26,6 +26,10 @@ public class FillLightEffect extends BaseShaderEffect {
             strength = 1f;
 
         this.strength = strength;
+    }
+
+    public float getStrength() {
+        return strength;
     }
 
     @Override

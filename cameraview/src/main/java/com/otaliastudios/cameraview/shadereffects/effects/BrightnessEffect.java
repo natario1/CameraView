@@ -17,15 +17,23 @@ public class BrightnessEffect extends BaseShaderEffect {
     /**
      * setBrightnessValue
      *
-     * @param brightnessvalue Range should be between 1.0- 2.0 with 1.0 being normal.
+     * @param brightnessvalue Range should be between 0.0- 1.0 with 0.0 being normal.
      */
     public void setBrightnessValue(float brightnessvalue) {
-        if (brightnessvalue < 1.0f)
+        if (brightnessvalue < 0.0f)
+            brightnessvalue = 0.0f;
+        else if (brightnessvalue > 1.0f)
             brightnessvalue = 1.0f;
-        else if (brightnessvalue > 2.0f)
-            brightnessvalue = 2.0f;
 
-        this.brightnessValue = brightnessvalue;
+        //since the shader excepts a range of 1.0 - 2.0
+        // will add the 1.0 to every value
+        this.brightnessValue = 1.0f + brightnessvalue;
+    }
+
+    public float getBrightnessValue() {
+        //since the shader excepts a range of 1.0 - 2.0
+        //to keep it between 0.0f - 1.0f range, will subtract the 1.0 to every value
+        return brightnessValue - 1.0f;
     }
 
     @Override

@@ -26,6 +26,10 @@ public class TemperatureEffect extends BaseShaderEffect {
         this.scale = scale;
     }
 
+    public float getTemperatureScale() {
+        return scale;
+    }
+
     @Override
     public String getFragmentShader() {
 

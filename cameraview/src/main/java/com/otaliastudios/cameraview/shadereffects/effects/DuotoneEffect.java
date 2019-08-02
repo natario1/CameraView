@@ -31,6 +31,14 @@ public class DuotoneEffect extends BaseShaderEffect {
         this.mSecondColor = secondColor;
     }
 
+    public int getFirstColor() {
+        return mFirstColor;
+    }
+
+    public int getSecondColor() {
+        return mSecondColor;
+    }
+
     @Override
     public String getFragmentShader() {
         float first[] = {Color.red(mFirstColor) / 255f,

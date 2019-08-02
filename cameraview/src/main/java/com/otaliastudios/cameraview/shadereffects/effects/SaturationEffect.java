@@ -6,7 +6,7 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  * Adjusts color saturation of preview.
  */
 public class SaturationEffect extends BaseShaderEffect {
-    private float scale = 0f;
+    private float scale = 1.0f;
 
     /**
      * Initialize Effect
@@ -15,15 +15,25 @@ public class SaturationEffect extends BaseShaderEffect {
     }
 
     /**
-     *  @param value Float, between -1 and 1. 0 means no change, while -1 indicates
-     *                 full desaturated, i.e. grayscale.
+     * @param value Float, between 0.0 and 1. 0 means no change, while 0.0 indicates
+     *              full desaturated, i.e. grayscale.
+     *              and 1.0 indicates full saturation
      */
-    public void setSaturationValue(float value){
-        if (value < -1.0f)
-            value = -1.0f;
+    public void setSaturationValue(float value) {
+        if (value < 0.0f)
+            value = 0.0f;
         else if (value > 1.0f)
             value = 1.0f;
-        this.scale = value;
+
+        //since the shader excepts a range of -1.0 to 1.0
+        //will multiply it by 2.0f and subtract 1.0 to every value
+        this.scale = (2.0f * value) - 1.0f;
+    }
+
+    public float getSaturationValue() {
+        //since the shader excepts a range of -1.0 to 1.0
+        //will add 1.0 to every value and divide it by 2.0f
+        return (scale + 1.0f) / 2.0f;
     }
 
     @Override

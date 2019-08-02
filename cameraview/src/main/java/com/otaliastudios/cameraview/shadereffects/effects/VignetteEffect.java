@@ -24,6 +24,10 @@ public class VignetteEffect extends BaseShaderEffect {
 
     }
 
+    /**
+     * setVignetteEffectScale
+     * @param scale Float, between 0.0 and 1. 0
+     */
     public void setVignetteEffectScale(float scale){
         if (scale < 0.0f)
             scale = 0.0f;
@@ -32,6 +36,10 @@ public class VignetteEffect extends BaseShaderEffect {
         this.mScale = scale;
     }
 
+    /**
+     * setVignetteEffectShade
+     * @param shade Float, between 0.0 and 1. 0
+     */
     public void setVignetteEffectShade(float shade){
         if (shade < 0.0f)
             shade = 0.0f;

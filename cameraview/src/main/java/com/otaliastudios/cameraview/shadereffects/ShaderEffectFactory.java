@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.shadereffects;
 
 import android.opengl.GLSurfaceView;
 
+import com.otaliastudios.cameraview.shadereffects.effects.AutoFixEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.BlackAndWhiteEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.BrightnessEffect;
 import com.otaliastudios.cameraview.shadereffects.effects.ContrastEffect;
@@ -29,6 +30,7 @@ public class ShaderEffectFactory {
     public enum ShaderEffects {
         NO_EFFECT,
 
+        AUTO_FIX_EFFECT,
         BLACK_AND_WHITE_EFFECT,
         BRIGHTNESS_EFFECT,
         CONTRAST_EFFECT,
@@ -54,6 +56,11 @@ public class ShaderEffectFactory {
     public static BaseShaderEffect getShaderFromFactory(ShaderEffects effect, GLSurfaceView glSurfaceView) {
         BaseShaderEffect shaderEffect;
         switch (effect) {
+
+            case AUTO_FIX_EFFECT:
+                shaderEffect = new AutoFixEffect();
+                break;
+
             case BLACK_AND_WHITE_EFFECT:
                 shaderEffect = new BlackAndWhiteEffect();
                 break;
