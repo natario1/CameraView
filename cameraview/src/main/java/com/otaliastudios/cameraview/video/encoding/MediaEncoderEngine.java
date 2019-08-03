@@ -333,6 +333,9 @@ public class MediaEncoderEngine {
          *
          * This controller should coordinate between firstFrameMillis and skip frames that have
          * large differences.
+         *
+         * @param pool pool
+         * @param buffer buffer
          */
         public void write(@NonNull OutputBufferPool pool, @NonNull OutputBuffer buffer) {
             if (DEBUG_PERFORMANCE) {
@@ -361,6 +364,8 @@ public class MediaEncoderEngine {
          * To be used when maxLength / maxSize constraints are reached, for example.
          *
          * When this succeeds, {@link MediaEncoder#stop()} is called.
+         *
+         * @param track track
          */
         public void requestStop(int track) {
             synchronized (mControllerLock) {
@@ -383,6 +388,8 @@ public class MediaEncoderEngine {
         /**
          * Notifies that the encoder was stopped. After this is called by all encoders,
          * we will actually stop the muxer.
+         *
+         * @param track track
          */
         public void notifyStopped(int track) {
             synchronized (mControllerLock) {

@@ -71,7 +71,7 @@ before_script:
 
 
 script:
-  - ./gradlew clean testDebugUnitTest connectedCheck mergedCoverageReport
+  - ./gradlew clean demo:assembleDebug cameraview:testDebugUnitTest cameraview:connectedCheck cameraview:mergedCoverageReport cameraview:javadoc
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) -s "*/build/reports/mergedCoverageReport/"

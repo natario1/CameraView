@@ -785,6 +785,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * For example, if control class is a {@link Grid}, this calls {@link #getGrid()}.
      *
      * @param controlClass desired value class
+     * @param <T> the class type
+     * @return the control
      */
     @SuppressWarnings("unchecked")
     @NonNull
