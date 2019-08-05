@@ -44,7 +44,7 @@ public class EglViewport extends EglElement {
     private FloatBuffer mTextureCoordinatesArray = floatBuffer(FULL_RECTANGLE_TEX_COORDS);
 
     // Stuff from Texture2dProgram
-    private int mProgramHandle;
+    private int mProgramHandle = -1;
     private int mTextureTarget;
     private int mTextureUnit;
 
@@ -54,13 +54,8 @@ public class EglViewport extends EglElement {
     private int maPositionLocation;
     private int maTextureCoordLocation;
 
-    // private int muKernelLoc; // Used for filtering
-    // private int muTexOffsetLoc; // Used for filtering
-    // private int muColorAdjustLoc; // Used for filtering
-
-    private Filter mShaderEffect;
-
-    private boolean mIsShaderChanged = false;
+    private Filter mFilter;
+    private boolean mFilterChanged = false;
 
     public EglViewport() {
         this(new NoFilter());
@@ -69,30 +64,28 @@ public class EglViewport extends EglElement {
     public EglViewport(@NonNull Filter filter) {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
         mTextureUnit = GLES20.GL_TEXTURE0;
-        mShaderEffect = filter;
-        initProgram();
+        mFilter = filter;
+        createProgram();
     }
 
-    private void initProgram() {
-        release();
-        mProgramHandle = createProgram(mShaderEffect.getVertexShader(), mShaderEffect.getFragmentShader());
-        maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, mShaderEffect.getPositionVariableName());
-        checkLocation(maPositionLocation, mShaderEffect.getPositionVariableName());
-        maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, mShaderEffect.getTexttureCoordinateVariableName());
-        checkLocation(maTextureCoordLocation, mShaderEffect.getTexttureCoordinateVariableName());
-        muMVPMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, mShaderEffect.getMVPMatrixVariableName());
-        checkLocation(muMVPMatrixLocation, mShaderEffect.getMVPMatrixVariableName());
-        muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, mShaderEffect.getTextureMatrixVariableName());
-        checkLocation(muTexMatrixLocation, mShaderEffect.getTextureMatrixVariableName());
-    }
-
-    public void release(boolean doEglCleanup) {
-        if (doEglCleanup) GLES20.glDeleteProgram(mProgramHandle);
-        mProgramHandle = -1;
+    private void createProgram() {
+        release(); // Release old program if present.
+        mProgramHandle = createProgram(mFilter.getVertexShader(), mFilter.getFragmentShader());
+        maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, mFilter.getPositionVariableName());
+        checkLocation(maPositionLocation, mFilter.getPositionVariableName());
+        maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, mFilter.getTexttureCoordinateVariableName());
+        checkLocation(maTextureCoordLocation, mFilter.getTexttureCoordinateVariableName());
+        muMVPMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, mFilter.getMVPMatrixVariableName());
+        checkLocation(muMVPMatrixLocation, mFilter.getMVPMatrixVariableName());
+        muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, mFilter.getTextureMatrixVariableName());
+        checkLocation(muTexMatrixLocation, mFilter.getTextureMatrixVariableName());
     }
 
     public void release() {
-        release(true);
+        if (mProgramHandle != -1) {
+            GLES20.glDeleteProgram(mProgramHandle);
+            mProgramHandle = -1;
+        }
     }
 
     public int createTexture() {
@@ -114,9 +107,9 @@ public class EglViewport extends EglElement {
         return texId;
     }
 
-    public void changeShaderFilter(@NonNull Filter shaderEffect){
-        this.mShaderEffect = shaderEffect;
-        mIsShaderChanged = true;
+    public void setFilter(@NonNull Filter filter){
+        this.mFilter = filter;
+        mFilterChanged = true;
     }
 
 
@@ -144,9 +137,9 @@ public class EglViewport extends EglElement {
                            FloatBuffer vertexBuffer,
                            FloatBuffer texBuffer) {
 
-        if (mIsShaderChanged){
-            initProgram();
-            mIsShaderChanged = false;
+        if (mFilterChanged) {
+            createProgram();
+            mFilterChanged = false;
         }
 
         check("draw start");

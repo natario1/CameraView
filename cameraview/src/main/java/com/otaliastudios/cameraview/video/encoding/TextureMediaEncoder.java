@@ -137,7 +137,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
 
         if (event.equals(FILTER_EVENT)) {
             Filter filter = (Filter) data;
-            mViewport.changeShaderFilter(filter);
+            mViewport.setFilter(filter);
         } else if (event.equals(FRAME_EVENT)) {
             Frame frame = (Frame) data;
             if (frame == null) {
@@ -224,7 +224,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
             mWindow = null;
         }
         if (mViewport != null) {
-            mViewport.release(true);
+            mViewport.release();
             mViewport = null;
         }
         if (mEglCore != null) {

@@ -103,9 +103,8 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
             }
 
             @Override
-            public void
-            onFilterChanged(@NonNull Filter filter) {
-                mViewport.changeShaderFilter(filter);
+            public void onFilterChanged(@NonNull Filter filter) {
+                mViewport.setFilter(filter);
             }
         });
     }

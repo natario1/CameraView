@@ -331,7 +331,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
         }
         mCurrentFilter = filter;
         if (mOutputViewport != null) {
-            mOutputViewport.changeShaderFilter(filter);
+            mOutputViewport.setFilter(filter);
         }
 
         // Need to synchronize when iterating the Collections.synchronizedSet
