@@ -25,7 +25,7 @@ public abstract class Filter {
      * This wil be used by GL to apply any effect.
      */
 
-    protected String mVertexShader =
+    String mVertexShader =
             "uniform mat4 uMVPMatrix;\n" +
                     "uniform mat4 uTexMatrix;\n" +
                     "attribute vec4 aPosition;\n" +
@@ -41,7 +41,7 @@ public abstract class Filter {
      * Fragment shader code written in Shader Language (C) and stored as String.
      * This wil be used by GL to apply any effect.
      */
-    protected String mFragmentShader =
+    String mFragmentShader =
             "#extension GL_OES_EGL_image_external : require\n"
                     + "precision mediump float;\n"
                     + "varying vec2 vTextureCoord;\n"
@@ -54,10 +54,10 @@ public abstract class Filter {
      * Width and height of previewing GlSurfaceview.
      * This will be used by a few effects.
      */
-    protected int mPreviewingViewWidth = 0;
-    protected int mPreviewingViewHeight = 0;
+    int mPreviewingViewWidth = 0;
+    int mPreviewingViewHeight = 0;
 
-    public void setPreviewingViewWidthAndHeight(int width, int height){
+    public void setPreviewingViewSize(int width, int height){
         mPreviewingViewWidth = width;
         mPreviewingViewHeight = height;
     }
