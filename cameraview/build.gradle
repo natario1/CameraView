@@ -3,7 +3,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 // Required by bintray
-version = '2.0.0-rc2'
+version = '2.0.0'
 group = 'com.otaliastudios'
 
 //region android dependencies
@@ -161,7 +161,10 @@ task javadoc(type: Javadoc) {
     }
     exclude '**/BuildConfig.java'
     exclude '**/R.java'
-    exclude '**/internal/**' // This excludes our internal folder!
+    // This excludes our internal folder, which is nice, but also creates
+    // errors anytime we reference excluded classes in public classes javadocs,
+    // which is unfortunate. There might be a fix but I don't know any.
+    // exclude '**/internal/**'
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {

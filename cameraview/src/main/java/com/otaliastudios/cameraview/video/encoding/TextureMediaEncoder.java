@@ -102,7 +102,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     }
 
     /**
-     * Any number of pending events > 1 means that we should skip this frame.
+     * Any number of pending events greater than 1 means that we should skip this frame.
      * To avoid skipping too many frames, we'll use 2 for now, but this just means
      * that we'll be drawing the same frame twice.
      *
