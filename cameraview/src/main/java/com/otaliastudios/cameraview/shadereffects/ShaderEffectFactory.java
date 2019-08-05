@@ -78,7 +78,7 @@ public class ShaderEffectFactory {
                 break;
 
             case DOCUMENTARY_EFFECT:
-                shaderEffect = new DocumentaryEffect(glSurfaceView);
+                shaderEffect = new DocumentaryEffect();
                 break;
 
             case DUO_TONE_COLOR_EFFECT:
@@ -94,7 +94,7 @@ public class ShaderEffectFactory {
                 break;
 
             case GRAIN_EFFECT:
-                shaderEffect = new GrainEffect(glSurfaceView);
+                shaderEffect = new GrainEffect();
                 break;
 
             case GREY_SCALE_EFFECT:
@@ -110,7 +110,7 @@ public class ShaderEffectFactory {
                 break;
 
             case LAMOISH_EFFECT:
-                shaderEffect = new LamoishEffect(glSurfaceView);
+                shaderEffect = new LamoishEffect();
                 break;
 
             case POSTERIZE_EFFECT:
@@ -126,7 +126,7 @@ public class ShaderEffectFactory {
                 break;
 
             case SHARPNESS_EFFECT:
-                shaderEffect = new SharpnessEffect(glSurfaceView);
+                shaderEffect = new SharpnessEffect();
                 break;
 
             case TEMPERATURE_EFFECT:
@@ -138,7 +138,7 @@ public class ShaderEffectFactory {
                 break;
 
             case VIGNETTE_EFFECT:
-                shaderEffect = new VignetteEffect(glSurfaceView);
+                shaderEffect = new VignetteEffect();
                 break;
 
 

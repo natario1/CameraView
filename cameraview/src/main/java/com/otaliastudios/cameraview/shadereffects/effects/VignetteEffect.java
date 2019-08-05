@@ -9,19 +9,13 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  * Applies lomo-camera style effect to your preview.
  */
 public class VignetteEffect extends BaseShaderEffect {
-    private int mWidth = 0;
-    private int mHeight = 0;
     private float mScale = 0.85f;
     private float mShade = 0.5f;
 
     /**
      * Initialize Effect
-     *
-     * @param glSurfaceView GLSurfaceView
      */
-    public VignetteEffect(GLSurfaceView glSurfaceView) {
-        this.mGlSurfaceView = glSurfaceView;
-
+    public VignetteEffect() {
     }
 
     /**
@@ -48,25 +42,14 @@ public class VignetteEffect extends BaseShaderEffect {
         this.mShade = shade;
     }
 
-    /**
-     * Init all values that will be used by this shader.
-     *
-     * @param mGlSurfaceView which is responsible for displaying your preview
-     */
-    private void initValues(GLSurfaceView mGlSurfaceView) {
-        mWidth = mGlSurfaceView.getWidth();
-        mHeight = mGlSurfaceView.getHeight();
-    }
-
     @Override
     public String getFragmentShader() {
-        initValues(mGlSurfaceView);
         float scale[] = new float[2];
-        if (mWidth > mHeight) {
+        if (mPreviewingViewWidth > mPreviewingViewHeight) {
             scale[0] = 1f;
-            scale[1] = ((float) mHeight) / mWidth;
+            scale[1] = ((float) mPreviewingViewHeight) / mPreviewingViewWidth;
         } else {
-            scale[0] = ((float) mWidth) / mHeight;
+            scale[0] = ((float) mPreviewingViewWidth) / mPreviewingViewHeight;
             scale[1] = 1f;
         }
         float max_dist = ((float) Math.sqrt(scale[0] * scale[0] + scale[1]

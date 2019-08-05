@@ -52,15 +52,16 @@ public abstract class BaseShaderEffect {
                     + "  gl_FragColor = texture2D(sTexture, vTextureCoord);\n"
                     + "}\n";
 
-
     /**
-     * Previewing GlSurfaceview.
+     * Width and height of previewing GlSurfaceview.
      * This will be used by a few effects.
      */
-    protected GLSurfaceView mGlSurfaceView;
+    protected int mPreviewingViewWidth = 0;
+    protected int mPreviewingViewHeight = 0;
 
-    public void setGlSurfaceView(GLSurfaceView glSurfaceView) {
-        this.mGlSurfaceView = glSurfaceView;
+    public void setPreviewingViewWidthAndHeight(int width, int height){
+        mPreviewingViewWidth = width;
+        mPreviewingViewHeight = height;
     }
 
     /**

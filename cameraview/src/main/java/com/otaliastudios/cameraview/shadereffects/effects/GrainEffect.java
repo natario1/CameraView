@@ -11,16 +11,14 @@ import java.util.Random;
  * Applies film grain effect to preview.
  */
 public class GrainEffect extends BaseShaderEffect {
-    private int mWidth;
-    private int mHeight;
     private float strength = 0.5f;
     private Random mRandom;
 
     /**
      * Initialize Effect
      */
-    public GrainEffect(GLSurfaceView glSurfaceView) {
-        this.mGlSurfaceView = glSurfaceView;
+    public GrainEffect() {
+        mRandom = new Random(new Date().getTime());
     }
 
     /**
@@ -41,28 +39,15 @@ public class GrainEffect extends BaseShaderEffect {
         return strength;
     }
 
-    /**
-     * Init all values that will be used by this shader.
-     *
-     * @param mGlSurfaceView which is responsible for displaying your video
-     */
-    private void initValues(GLSurfaceView mGlSurfaceView) {
-        mWidth = mGlSurfaceView.getWidth();
-        mHeight = mGlSurfaceView.getHeight();
-        mRandom = new Random(new Date().getTime());
-    }
-
     @Override
     public String getFragmentShader() {
-        initValues(mGlSurfaceView);
-
         float seed[] = {mRandom.nextFloat(), mRandom.nextFloat()};
         String scaleString = "scale = " + strength + ";\n";
         String seedString[] = new String[2];
         seedString[0] = "seed[0] = " + seed[0] + ";\n";
         seedString[1] = "seed[1] = " + seed[1] + ";\n";
-        String stepX = "stepX = " + 0.5f / mWidth + ";\n";
-        String stepY = "stepY = " + 0.5f / mHeight + ";\n";
+        String stepX = "stepX = " + 0.5f / mPreviewingViewWidth + ";\n";
+        String stepY = "stepY = " + 0.5f / mPreviewingViewHeight + ";\n";
 
         // locString[1] = "loc[1] = loc[1]+" + seedString[1] + ";\n";
 

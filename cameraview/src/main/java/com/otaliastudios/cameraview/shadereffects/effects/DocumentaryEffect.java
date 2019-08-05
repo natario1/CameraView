@@ -11,32 +11,20 @@ import java.util.Random;
  * Applies black and white documentary style effect on preview.
  */
 public class DocumentaryEffect extends BaseShaderEffect {
-    private int mWidth;
-    private int mHeight;
     private Random mRandom;
 
-    public DocumentaryEffect(GLSurfaceView glSurfaceView) {
-        this.mGlSurfaceView = glSurfaceView;
-    }
-
-    /**
-     * Init all values that will be used by this shader.
-     */
-    private void initValues(GLSurfaceView mGlSurfaceView) {
-        mWidth = mGlSurfaceView.getWidth();
-        mHeight = mGlSurfaceView.getHeight();
+    public DocumentaryEffect() {
         mRandom = new Random(new Date().getTime());
     }
 
     @Override
     public String getFragmentShader() {
-        initValues(mGlSurfaceView);
         float scale[] = new float[2];
-        if (mWidth > mHeight) {
+        if (mPreviewingViewWidth > mPreviewingViewHeight) {
             scale[0] = 1f;
-            scale[1] = ((float) mHeight) / mWidth;
+            scale[1] = ((float) mPreviewingViewHeight) / mPreviewingViewWidth;
         } else {
-            scale[0] = ((float) mWidth) / mHeight;
+            scale[0] = ((float) mPreviewingViewWidth) / mPreviewingViewHeight;
             scale[1] = 1f;
         }
         float max_dist = ((float) Math.sqrt(scale[0] * scale[0] + scale[1]

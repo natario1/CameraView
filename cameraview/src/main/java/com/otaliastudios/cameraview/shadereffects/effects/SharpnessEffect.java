@@ -7,16 +7,12 @@ import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
  * Sharpens the preview.
  */
 public class SharpnessEffect extends BaseShaderEffect {
-    private int mWidth;
-    private int mHeight;
     private float scale = 0.5f;
 
     /**
      * Initialize Effect
      */
-    public SharpnessEffect(GLSurfaceView glSurfaceView) {
-        this.mGlSurfaceView = glSurfaceView;
-    }
+    public SharpnessEffect() { }
 
     /**
      * @param value Float, between 0 and 1. 0 means no change.
@@ -34,22 +30,11 @@ public class SharpnessEffect extends BaseShaderEffect {
         return scale;
     }
 
-    /**
-     * Init all values that will be used by this shader.
-     *
-     * @param mGlSurfaceView which is responsible for displaying your video
-     */
-    private void initValues(GLSurfaceView mGlSurfaceView) {
-        mWidth = mGlSurfaceView.getWidth();
-        mHeight = mGlSurfaceView.getHeight();
-    }
-
     @Override
     public String getFragmentShader() {
-        initValues(mGlSurfaceView);
 
-        String stepsizeXString = "stepsizeX = " + 1.0f / mWidth + ";\n";
-        String stepsizeYString = "stepsizeY = " + 1.0f / mHeight + ";\n";
+        String stepsizeXString = "stepsizeX = " + 1.0f / mPreviewingViewWidth + ";\n";
+        String stepsizeYString = "stepsizeY = " + 1.0f / mPreviewingViewHeight + ";\n";
         String scaleString = "scale = " + scale + ";\n";
 
         String shader = "#extension GL_OES_EGL_image_external : require\n"

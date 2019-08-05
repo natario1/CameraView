@@ -11,8 +11,6 @@ import java.util.Random;
  * Applies lomo-camera style effect to preview.
  */
 public class LamoishEffect extends BaseShaderEffect {
-    private int mWidth;
-    private int mHeight;
     private Random mRandom;
 
     /**
@@ -20,30 +18,18 @@ public class LamoishEffect extends BaseShaderEffect {
      *
      * @param glSurfaceView GLSurfaceView
      */
-    public LamoishEffect(GLSurfaceView glSurfaceView) {
-        this.mGlSurfaceView = glSurfaceView;
-    }
-
-    /**
-     * Init all values that will be used by this shader.
-     *
-     * @param mGlSurfaceView which is responsible for displaying your video
-     */
-    private void initValues(GLSurfaceView mGlSurfaceView) {
-        mWidth = mGlSurfaceView.getWidth();
-        mHeight = mGlSurfaceView.getHeight();
+    public LamoishEffect() {
         mRandom = new Random(new Date().getTime());
     }
 
     @Override
     public String getFragmentShader() {
-        initValues(mGlSurfaceView);
         float scale[] = new float[2];
-        if (mWidth > mHeight) {
+        if (mPreviewingViewWidth > mPreviewingViewHeight) {
             scale[0] = 1f;
-            scale[1] = ((float) mHeight) / mWidth;
+            scale[1] = ((float) mPreviewingViewHeight) / mPreviewingViewWidth;
         } else {
-            scale[0] = ((float) mWidth) / mHeight;
+            scale[0] = ((float) mPreviewingViewWidth) / mPreviewingViewHeight;
             scale[1] = 1f;
         }
         float max_dist = ((float) Math.sqrt(scale[0] * scale[0] + scale[1]
@@ -62,8 +48,8 @@ public class LamoishEffect extends BaseShaderEffect {
 
         String inv_max_distString = "inv_max_dist = " + 1.0f / max_dist + ";\n";
         String stepsizeString = "stepsize = " + 1.0f / 255.0f + ";\n";
-        String stepsizeXString = "stepsizeX = " + 1.0f / mWidth + ";\n";
-        String stepsizeYString = "stepsizeY = " + 1.0f / mHeight + ";\n";
+        String stepsizeXString = "stepsizeX = " + 1.0f / mPreviewingViewWidth + ";\n";
+        String stepsizeYString = "stepsizeY = " + 1.0f / mPreviewingViewHeight + ";\n";
 
         String shader = "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"

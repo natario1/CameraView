@@ -70,7 +70,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
 
-    private BaseShaderEffect mCurrectShaderEffect;
+    private BaseShaderEffect mCurrentShaderEffect;
 
     public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
         super(context, parent);
@@ -167,7 +167,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             });
 
             //init the default shader effect
-            mCurrectShaderEffect = new NoFilterEffect();
+            mCurrentShaderEffect = new NoFilterEffect();
         }
 
         @RendererThread
@@ -216,7 +216,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             synchronized (mRendererFrameCallbacks) {
                 // Need to synchronize when iterating the Collections.synchronizedSet
                 for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY, mCurrectShaderEffect);
+                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY, mCurrentShaderEffect);
                 }
             }
         }
@@ -317,7 +317,9 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     }
 
     public void setShaderEffect(BaseShaderEffect shaderEffect){
-        mCurrectShaderEffect = shaderEffect;
+        mCurrentShaderEffect = shaderEffect;
+        shaderEffect.setPreviewingViewWidthAndHeight(getView().getWidth(), getView().getHeight());
+
         mOutputViewport.changeShaderEffect(shaderEffect);
     }
 }
