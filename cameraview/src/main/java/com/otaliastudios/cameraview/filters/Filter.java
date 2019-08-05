@@ -60,7 +60,7 @@ public abstract class Filter {
     int mPreviewingViewWidth = 0;
     int mPreviewingViewHeight = 0;
 
-    public void setPreviewingViewSize(int width, int height) {
+    public void setOutputSize(int width, int height) {
         mPreviewingViewWidth = width;
         mPreviewingViewHeight = height;
     }

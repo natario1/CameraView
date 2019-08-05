@@ -112,27 +112,12 @@ public class EglViewport extends EglElement {
         mFilterChanged = true;
     }
 
-
-
     public void drawFrame(int textureId, float[] textureMatrix) {
         drawFrame(textureId, textureMatrix,
                 mVertexCoordinatesArray,
                 mTextureCoordinatesArray);
     }
 
-    /**
-     * The issue with the CIRCLE shader is that if the textureMatrix has a scale value,
-     * it fails miserably, not taking the scale into account.
-     * So what we can do here is
-     *
-     * - read textureMatrix scaleX and scaleY values. This is pretty much impossible to do from the matrix itself
-     *   without making risky assumptions over the order of operations.
-     *   https://www.opengl.org/discussion_boards/showthread.php/159215-Is-it-possible-to-extract-rotation-translation-scale-given-a-matrix
-     *   So we prefer passing scaleX and scaleY here to the draw function.
-     * - pass these values to the vertex shader
-     * - pass them to the fragment shader
-     * - in the fragment shader, take this scale value into account
-     */
     private void drawFrame(int textureId, float[] textureMatrix,
                            FloatBuffer vertexBuffer,
                            FloatBuffer texBuffer) {
