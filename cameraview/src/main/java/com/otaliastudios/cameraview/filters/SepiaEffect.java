@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Converts preview to Sepia tone.
@@ -12,6 +12,7 @@ public class SepiaEffect extends Filter {
     public SepiaEffect() {
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
         float weights[] = {805.0f / 2048.0f, 715.0f / 2048.0f,

@@ -1,5 +1,7 @@
 package com.otaliastudios.cameraview.filters;
 
+import androidx.annotation.NonNull;
+
 /**
  * A Base abstract class that every effect must extend so that there is a common getShader method.
  * <p>
@@ -24,7 +26,7 @@ public abstract class Filter {
      * Vertex shader code written in Shader Language (C) and stored as String.
      * This wil be used by GL to apply any effect.
      */
-
+    @NonNull
     String mVertexShader =
             "uniform mat4 uMVPMatrix;\n" +
                     "uniform mat4 uTexMatrix;\n" +
@@ -41,6 +43,7 @@ public abstract class Filter {
      * Fragment shader code written in Shader Language (C) and stored as String.
      * This wil be used by GL to apply any effect.
      */
+    @NonNull
     String mFragmentShader =
             "#extension GL_OES_EGL_image_external : require\n"
                     + "precision mediump float;\n"
@@ -57,7 +60,7 @@ public abstract class Filter {
     int mPreviewingViewWidth = 0;
     int mPreviewingViewHeight = 0;
 
-    public void setPreviewingViewSize(int width, int height){
+    public void setPreviewingViewSize(int width, int height) {
         mPreviewingViewWidth = width;
         mPreviewingViewHeight = height;
     }
@@ -108,6 +111,7 @@ public abstract class Filter {
      *
      * @return complete shader code in C
      */
+    @NonNull
     public String getVertexShader() {
         return mVertexShader;
     }
@@ -118,6 +122,7 @@ public abstract class Filter {
      *
      * @return complete shader code in C
      */
+    @NonNull
     public abstract String getFragmentShader();
 
 }

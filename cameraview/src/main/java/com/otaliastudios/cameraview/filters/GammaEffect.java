@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Apply Gamma Effect on preview being played
@@ -19,7 +19,7 @@ public class GammaEffect extends Filter {
      *
      * @param gammaValue Range should be between 0.0 - 1.0 with 0.5 being normal.
      */
-    public void setGammaValue(float gammaValue){
+    public void setGammaValue(float gammaValue) {
         if (gammaValue < 0.0f)
             gammaValue = 0.0f;
         else if (gammaValue > 1.0f)
@@ -36,6 +36,7 @@ public class GammaEffect extends Filter {
         return gammaValue / 2.0f;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

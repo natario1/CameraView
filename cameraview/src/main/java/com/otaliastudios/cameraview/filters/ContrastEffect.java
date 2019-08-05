@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
+
 /**
  * Adjusts the contrast of the preview.
  */
@@ -14,10 +15,11 @@ public class ContrastEffect extends Filter {
     }
 
     /**
-     *setContrast
+     * setContrast
+     *
      * @param contrast Range should be between 0.0- 1.0 with 0.0 being normal.
      */
-    public void setContrast(float contrast){
+    public void setContrast(float contrast) {
         if (contrast < 0.0f)
             contrast = 0.0f;
         else if (contrast > 1.0f)
@@ -34,6 +36,7 @@ public class ContrastEffect extends Filter {
         return contrast - 1.0f;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

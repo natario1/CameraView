@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Inverts the preview colors. This can also be known as negative Effect.
@@ -12,6 +12,7 @@ public class InvertColorsEffect extends Filter {
     public InvertColorsEffect() {
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

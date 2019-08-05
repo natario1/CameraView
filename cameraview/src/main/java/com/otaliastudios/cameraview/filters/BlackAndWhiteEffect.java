@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Converts the preview into black and white colors
@@ -11,9 +11,10 @@ public class BlackAndWhiteEffect extends Filter {
     /**
      * Initialize effect
      */
-    public BlackAndWhiteEffect(){
+    public BlackAndWhiteEffect() {
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

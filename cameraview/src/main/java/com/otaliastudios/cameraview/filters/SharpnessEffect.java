@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Sharpens the preview.
@@ -11,12 +11,13 @@ public class SharpnessEffect extends Filter {
     /**
      * Initialize Effect
      */
-    public SharpnessEffect() { }
+    public SharpnessEffect() {
+    }
 
     /**
      * @param value Float, between 0 and 1. 0 means no change.
      */
-    public void setSharpnessValue(float value){
+    public void setSharpnessValue(float value) {
         if (value < 0.0f)
             value = 0.0f;
         else if (value > 1.0f)
@@ -29,6 +30,7 @@ public class SharpnessEffect extends Filter {
         return scale;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

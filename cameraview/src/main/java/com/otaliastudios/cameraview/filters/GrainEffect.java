@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 import java.util.Date;
 import java.util.Random;
@@ -23,9 +23,9 @@ public class GrainEffect extends Filter {
      * setDistortionStrength
      *
      * @param strength Float, between 0.0f and 1.0. Zero means no distortion, while 1
-     *              indicates the maximum amount of adjustment.
+     *                 indicates the maximum amount of adjustment.
      */
-    public void setDistortionStrength(float strength){
+    public void setDistortionStrength(float strength) {
         if (strength < 0.0f)
             strength = 0.0f;
         else if (strength > 1.0f)
@@ -37,6 +37,7 @@ public class GrainEffect extends Filter {
         return strength;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
         float seed[] = {mRandom.nextFloat(), mRandom.nextFloat()};

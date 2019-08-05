@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Adjusts color temperature of the preview.
@@ -16,9 +16,9 @@ public class TemperatureEffect extends Filter {
 
     /**
      * @param scale Float, between 0 and 1, with 0 indicating cool, and 1
-     *                indicating warm. A value of of 0.5 indicates no change.
+     *              indicating warm. A value of of 0.5 indicates no change.
      */
-    public void setTemperatureScale(float scale){
+    public void setTemperatureScale(float scale) {
         if (scale < 0.0f)
             scale = 0.0f;
         else if (scale > 1.0f)
@@ -30,6 +30,7 @@ public class TemperatureEffect extends Filter {
         return scale;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

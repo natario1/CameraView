@@ -322,6 +322,11 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     private void changeCurrentFilter(){
+        if (camera.getPreview() != Preview.GL_SURFACE) {
+            message("Filters are supported only for GLSurfaceView", true);
+            return;
+        }
+
         switch (mCurrentEffect){
             case NO_EFFECT:
                 mCurrentEffect = AUTO_FIX_EFFECT;

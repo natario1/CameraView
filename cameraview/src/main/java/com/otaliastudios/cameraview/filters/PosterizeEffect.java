@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Applies Posterization effect to Preview.
@@ -12,6 +12,7 @@ public class PosterizeEffect extends Filter {
     public PosterizeEffect() {
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

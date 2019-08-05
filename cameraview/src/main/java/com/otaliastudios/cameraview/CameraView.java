@@ -2132,7 +2132,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     //region Effects
 
-    public void setFilter(Filters filter) {
+    public void setFilter(@NonNull Filters filter) {
         if (mCameraPreview instanceof GlCameraPreview) {
             Filter shaderEffect = filter.newInstance();
             ((GlCameraPreview) mCameraPreview).setShaderEffect(shaderEffect);
@@ -2141,7 +2141,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
     }
 
-    public void setFilter(Filter shaderEffect) {
+    public void setFilter(@NonNull Filter shaderEffect) {
         if (mCameraPreview instanceof GlCameraPreview) {
             ((GlCameraPreview) mCameraPreview).setShaderEffect(shaderEffect);
         } else {

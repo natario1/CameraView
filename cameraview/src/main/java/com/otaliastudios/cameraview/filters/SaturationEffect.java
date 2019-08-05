@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Adjusts color saturation of preview.
@@ -36,6 +36,7 @@ public class SaturationEffect extends Filter {
         return (scale + 1.0f) / 2.0f;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
         float shift = 1.0f / 255.0f;

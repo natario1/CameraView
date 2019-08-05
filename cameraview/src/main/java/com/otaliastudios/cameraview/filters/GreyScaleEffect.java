@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Converts preview to GreyScale.
@@ -12,6 +12,7 @@ public class GreyScaleEffect extends Filter {
     public GreyScaleEffect() {
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

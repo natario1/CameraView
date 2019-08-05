@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 
 /**
@@ -19,6 +19,7 @@ public class CustomEffect extends Filter {
         this.mFragmentShader = fragmentShader;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
         return mFragmentShader;

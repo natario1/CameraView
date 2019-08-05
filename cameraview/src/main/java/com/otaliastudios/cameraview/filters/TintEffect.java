@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview.filters;
 
 import android.graphics.Color;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 
 /**
@@ -17,7 +17,7 @@ public class TintEffect extends Filter {
     public TintEffect() {
     }
 
-    public void setTintColor(int color){
+    public void setTintColor(int color) {
         this.mTint = color;
     }
 
@@ -25,6 +25,7 @@ public class TintEffect extends Filter {
         return mTint;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
         float color_ratio[] = {0.21f, 0.71f, 0.07f};

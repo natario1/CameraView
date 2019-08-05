@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 
 /**
@@ -18,9 +18,10 @@ public class VignetteEffect extends Filter {
 
     /**
      * setVignetteEffectScale
+     *
      * @param scale Float, between 0.0 and 1. 0
      */
-    public void setVignetteEffectScale(float scale){
+    public void setVignetteEffectScale(float scale) {
         if (scale < 0.0f)
             scale = 0.0f;
         else if (scale > 1.0f)
@@ -30,9 +31,10 @@ public class VignetteEffect extends Filter {
 
     /**
      * setVignetteEffectShade
+     *
      * @param shade Float, between 0.0 and 1. 0
      */
-    public void setVignetteEffectShade(float shade){
+    public void setVignetteEffectShade(float shade) {
         if (shade < 0.0f)
             shade = 0.0f;
         else if (shade > 1.0f)
@@ -40,6 +42,7 @@ public class VignetteEffect extends Filter {
         this.mShade = shade;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
         float scale[] = new float[2];

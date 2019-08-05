@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Adjusts the brightness of the preview.
@@ -36,6 +36,7 @@ public class BrightnessEffect extends Filter {
         return brightnessValue - 1.0f;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

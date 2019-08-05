@@ -4,6 +4,8 @@ package com.otaliastudios.cameraview.internal.egl;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
+import androidx.annotation.NonNull;
+
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.filters.Filter;
 import com.otaliastudios.cameraview.filters.NoFilterEffect;
@@ -110,7 +112,7 @@ public class EglViewport extends EglElement {
         return texId;
     }
 
-    public void changeShaderEffect(Filter shaderEffect){
+    public void changeShaderEffect(@NonNull Filter shaderEffect){
         this.mShaderEffect = shaderEffect;
         mIsShaderChanged = true;
     }

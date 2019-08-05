@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Attempts to auto-fix the preview based on histogram equalization.
@@ -32,6 +32,7 @@ public class AutoFixEffect extends Filter {
         this.scale = scale;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

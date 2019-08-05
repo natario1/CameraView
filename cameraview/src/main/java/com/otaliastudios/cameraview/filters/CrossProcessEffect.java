@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Applies a cross process effect on preview, in which the red and green channels
@@ -14,6 +14,7 @@ public class CrossProcessEffect extends Filter {
     public CrossProcessEffect() {
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
 

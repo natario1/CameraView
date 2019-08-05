@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Applies back-light filling to the preview.
@@ -19,7 +19,7 @@ public class FillLightEffect extends Filter {
      *
      * @param strength Float, between 0.0 and 1.0 where 0.0 means no change.
      */
-    public void setStrength(float strength){
+    public void setStrength(float strength) {
         if (strength < 0.0f)
             strength = 0f;
         else if (strength > 1.0f)
@@ -32,6 +32,7 @@ public class FillLightEffect extends Filter {
         return strength;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
         float fade_gamma = 0.3f;

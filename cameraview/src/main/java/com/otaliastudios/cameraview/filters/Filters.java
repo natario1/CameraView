@@ -25,7 +25,7 @@ public enum Filters {
     TINT_EFFECT,
     VIGNETTE_EFFECT;
 
-    public Filter newInstance(){
+    public Filter newInstance() {
         Filter shaderEffect;
         switch (this) {
 

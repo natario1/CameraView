@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview.filters;
 
 import android.graphics.Color;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 /**
  * Representation of preview using only two color tones.
@@ -21,10 +21,10 @@ public class DuotoneEffect extends Filter {
     /**
      * setDuoToneColors
      *
-     * @param firstColor   Integer, representing an ARGB color with 8 bits per channel.
-     *                     May be created using Color class.
+     * @param firstColor  Integer, representing an ARGB color with 8 bits per channel.
+     *                    May be created using Color class.
      * @param secondColor Integer, representing an ARGB color with 8 bits per channel.
-     *                     May be created using Color class.
+     *                    May be created using Color class.
      */
     public void setDuoToneColors(int firstColor, int secondColor) {
         this.mFirstColor = firstColor;
@@ -39,6 +39,7 @@ public class DuotoneEffect extends Filter {
         return mSecondColor;
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
         float first[] = {Color.red(mFirstColor) / 255f,

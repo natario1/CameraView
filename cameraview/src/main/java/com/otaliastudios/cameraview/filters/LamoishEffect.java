@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import androidx.annotation.NonNull;
 
 import java.util.Date;
 import java.util.Random;
@@ -13,13 +13,12 @@ public class LamoishEffect extends Filter {
 
     /**
      * Initialize Effect
-     *
-     * @param glSurfaceView GLSurfaceView
      */
     public LamoishEffect() {
         mRandom = new Random(new Date().getTime());
     }
 
+    @NonNull
     @Override
     public String getFragmentShader() {
         float scale[] = new float[2];
