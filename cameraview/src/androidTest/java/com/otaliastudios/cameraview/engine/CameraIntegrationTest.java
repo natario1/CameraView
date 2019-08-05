@@ -86,7 +86,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @Before
     public void setUp() {
         LOG.e("Test started. Setting up camera.");
-        WorkerHandler.destroy();
+        WorkerHandler.destroyAll();
 
         uiSync(new Runnable() {
             @Override
@@ -126,7 +126,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     public void tearDown() {
         LOG.e("Test ended. Tearing down camera.");
         camera.destroy();
-        WorkerHandler.destroy();
+        WorkerHandler.destroyAll();
     }
 
     private void waitForUiException() throws Throwable {

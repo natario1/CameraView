@@ -36,6 +36,8 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         }
     });
 
+    private long mFirstTimeUs = Long.MIN_VALUE;
+
     public TextureMediaEncoder(@NonNull TextureConfig config) {
         super(config.copy());
     }
@@ -51,7 +53,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
          * Nanoseconds, in no meaningful time-base. Will be used for offsets only.
          * Typically this comes from {@link SurfaceTexture#getTimestamp()}.
          */
-        public long timestamp;
+        public long timestampNanos;
 
         /**
          * Milliseconds in the {@link System#currentTimeMillis()} reference.
@@ -64,10 +66,9 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
          */
         public float[] transform = new float[16];
 
-        /**
-         * The transformation matrix for the overlay texture, if any.
-         */
-        public float[] overlayTransform = new float[16];
+        private long timestampUs() {
+            return timestampNanos / 1000L;
+        }
     }
 
     /**
@@ -94,9 +95,38 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         super.onPrepare(controller, maxLengthMillis);
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
-        mWindow.makeCurrent(); // drawing will happen on the InputWindowSurface, which
-        // is backed by mVideoEncoder.getInputSurface()
+        mWindow.makeCurrent();
         mViewport = new EglViewport();
+    }
+
+    /**
+     * Any number of pending events > 1 means that we should skip this frame.
+     * To avoid skipping too many frames, we'll use 2 for now, but this just means
+     * that we'll be drawing the same frame twice.
+     *
+     * When an event is posted, the textureId data has already been updated so we're
+     * too late to draw the old one and it should be skipped.
+     *
+     * This is especially important if we perform overlay drawing here, since that
+     * makes this class thread busy and slows down the event dispatching.
+     *
+     * @param timestampUs frame timestamp
+     * @return true to render
+     */
+    @Override
+    protected boolean shouldRenderFrame(long timestampUs) {
+        if (!super.shouldRenderFrame(timestampUs)) {
+            return false;
+        } else if (mFrameNumber <= 10) {
+            // Always render the first few frames, or muxer fails.
+            return true;
+        } else if (getPendingEvents(FRAME_EVENT) > 2) {
+            LOG.w("shouldRenderFrame - Dropping frame because we already have too many pending events:",
+                    getPendingEvents(FRAME_EVENT));
+            return false;
+        } else {
+            return true;
+        }
     }
 
     @EncoderThread
@@ -107,30 +137,46 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         if (frame == null) {
             throw new IllegalArgumentException("Got null frame for FRAME_EVENT.");
         }
-        if (frame.timestamp == 0) { // grafika
+        if (!shouldRenderFrame(frame.timestampUs())) {
             mFramePool.recycle(frame);
             return;
         }
-        if (mFrameNumber < 0) { // We were asked to stop.
-            mFramePool.recycle(frame);
-            return;
-        }
-        mFrameNumber++;
+
+        // Notify we're got the first frame and its absolute time.
         if (mFrameNumber == 1) {
             notifyFirstFrameMillis(frame.timestampMillis);
         }
 
+        // Notify we have reached the max length value.
+        if (mFirstTimeUs == Long.MIN_VALUE) mFirstTimeUs = frame.timestampUs();
+        if (!hasReachedMaxLength()) {
+            boolean didReachMaxLength = (frame.timestampUs() - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
+            if (didReachMaxLength) {
+                LOG.w("onEvent -",
+                        "frameNumber:", mFrameNumber,
+                        "timestampUs:", frame.timestampUs(),
+                        "firstTimeUs:", mFirstTimeUs,
+                        "- reached max length! deltaUs:", frame.timestampUs() - mFirstTimeUs);
+                notifyMaxLengthReached();
+            }
+        }
+
         // First, drain any previous data.
-        LOG.i("onEvent", "frameNumber:", mFrameNumber, "timestamp:", frame.timestamp, "- draining.");
+        LOG.i("onEvent -",
+                "frameNumber:", mFrameNumber,
+                "timestampUs:", frame.timestampUs(),
+                "- draining.");
         drainOutput(false);
 
         // Then draw on the surface.
-        LOG.i("onEvent", "frameNumber:", mFrameNumber, "timestamp:", frame.timestamp, "- drawing.");
+        LOG.i("onEvent -",
+                "frameNumber:", mFrameNumber,
+                "timestampUs:", frame.timestampUs(),
+                "- rendering.");
 
         // 1. We must scale this matrix like GlCameraPreview does, because it might have some cropping.
         // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
         float[] transform = frame.transform;
-        float[] overlayTransform = frame.overlayTransform;
         float scaleX = mConfig.scaleX;
         float scaleY = mConfig.scaleY;
         float scaleTranslX = (1F - scaleX) / 2F;
@@ -148,15 +194,16 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
 
         // 3. Do the same for overlays with their own rotation.
         if (mConfig.hasOverlay()) {
-            Matrix.translateM(overlayTransform, 0, 0.5F, 0.5F, 0);
-            Matrix.rotateM(overlayTransform, 0, mConfig.overlayRotation, 0, 0, 1);
-            Matrix.translateM(overlayTransform, 0, -0.5F, -0.5F, 0);
+            mConfig.overlayDrawer.draw(mConfig.overlayTarget);
+            Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, 0.5F, 0.5F, 0);
+            Matrix.rotateM(mConfig.overlayDrawer.getTransform(), 0, mConfig.overlayRotation, 0, 0, 1);
+            Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, -0.5F, -0.5F, 0);
         }
         mViewport.drawFrame(mConfig.textureId, transform);
         if (mConfig.hasOverlay()) {
-            mViewport.drawFrame(mConfig.overlayTextureId, overlayTransform);
+            mConfig.overlayDrawer.render();
         }
-        mWindow.setPresentationTime(frame.timestamp);
+        mWindow.setPresentationTime(frame.timestampNanos);
         mWindow.swapBuffers();
         mFramePool.recycle(frame);
     }

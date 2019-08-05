@@ -426,10 +426,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             int height, width;
             if (freeWidth) {
                 height = heightValue;
-                width = (int) (height / ratio);
+                width = Math.round(height / ratio);
             } else {
                 width = widthValue;
-                height = (int) (width * ratio);
+                height = Math.round(width * ratio);
             }
             LOG.i("onMeasure:", "one dimension was free, we adapted it to fit the aspect ratio.",
                     "(" + width + "x" + height + ")");
@@ -446,10 +446,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             int height, width;
             if (freeWidth) {
                 height = heightValue;
-                width = Math.min((int) (height / ratio), widthValue);
+                width = Math.min(Math.round(height / ratio), widthValue);
             } else {
                 width = widthValue;
-                height = Math.min((int) (width * ratio), heightValue);
+                height = Math.min(Math.round(width * ratio), heightValue);
             }
             LOG.i("onMeasure:", "one dimension was EXACTLY, another AT_MOST.",
                     "We have TRIED to fit the aspect ratio, but it's not guaranteed.",
@@ -466,10 +466,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (atMostRatio >= ratio) {
             // We must reduce height.
             width = widthValue;
-            height = (int) (width * ratio);
+            height = Math.round(width * ratio);
         } else {
             height = heightValue;
-            width = (int) (height / ratio);
+            width = Math.round(height / ratio);
         }
         LOG.i("onMeasure:", "both dimension were AT_MOST.",
                 "We fit the preview aspect ratio.",
@@ -1467,9 +1467,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @see #takePicture()
      */
     public void takePictureSnapshot() {
-        if (getWidth() == 0 || getHeight() == 0) return;
         PictureResult.Stub stub = new PictureResult.Stub();
-        mCameraEngine.takePictureSnapshot(stub, AspectRatio.of(getWidth(), getHeight()));
+        mCameraEngine.takePictureSnapshot(stub);
     }
 
 
@@ -1501,9 +1500,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param file a file where the video will be saved
      */
     public void takeVideoSnapshot(@NonNull File file) {
-        if (getWidth() == 0 || getHeight() == 0) return;
         VideoResult.Stub stub = new VideoResult.Stub();
-        mCameraEngine.takeVideoSnapshot(stub, file, AspectRatio.of(getWidth(), getHeight()));
+        mCameraEngine.takeVideoSnapshot(stub, file);
         mUiHandler.post(new Runnable() {
             @Override
             public void run() {

@@ -1,19 +1,15 @@
 package com.otaliastudios.cameraview.video;
 
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
-import android.view.Surface;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;
-import com.otaliastudios.cameraview.internal.egl.EglViewport;
+import com.otaliastudios.cameraview.overlay.OverlayDrawer;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
@@ -60,14 +56,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private int mDesiredState = STATE_NOT_RECORDING;
     private int mTextureId = 0;
 
-    private int mOverlayTextureId = 0;
-    private SurfaceTexture mOverlaySurfaceTexture;
-    private Surface mOverlaySurface;
     private Overlay mOverlay;
+    private OverlayDrawer mOverlayDrawer;
     private boolean mHasOverlay;
     private int mOverlayRotation;
-
-    private EglViewport mViewport;
 
     public SnapshotVideoRecorder(@NonNull CameraEngine engine,
                                  @NonNull GlCameraPreview preview,
@@ -87,8 +79,16 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     }
 
     @Override
-    protected void onStop() {
-        mDesiredState = STATE_NOT_RECORDING;
+    protected void onStop(boolean isCameraShutdown) {
+        if (isCameraShutdown) {
+            // The renderer callback might never be called. From my tests, it's not.
+            LOG.i("Stopping the encoder engine from isCameraShutdown.");
+            mDesiredState = STATE_NOT_RECORDING;
+            mCurrentState = STATE_NOT_RECORDING;
+            mEncoderEngine.stop();
+        } else {
+            mDesiredState = STATE_NOT_RECORDING;
+        }
     }
 
     @RendererThread
@@ -96,11 +96,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     public void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
         if (mHasOverlay) {
-            mViewport = new EglViewport();
-            mOverlayTextureId = mViewport.createTexture();
-            mOverlaySurfaceTexture = new SurfaceTexture(mOverlayTextureId);
-            mOverlaySurfaceTexture.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
-            mOverlaySurface = new Surface(mOverlaySurfaceTexture);
+            mOverlayDrawer = new OverlayDrawer(mOverlay, mResult.size);
         }
     }
 
@@ -109,9 +105,6 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY, Filter shaderEffect) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
             LOG.i("Starting the encoder engine.");
-
-            //set current shader effect
-            mViewport.changeShaderEffect(shaderEffect);
 
             // Set default options
             if (mResult.videoFrameRate <= 0) mResult.videoFrameRate = DEFAULT_VIDEO_FRAMERATE;
@@ -141,9 +134,13 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             videoConfig.textureId = mTextureId;
             videoConfig.scaleX = scaleX;
             videoConfig.scaleY = scaleY;
+            // Get egl context from the RendererThread, which is the one in which we have created
+            // the textureId and the overlayTextureId, managed by the GlSurfaceView.
+            // Next operations can then be performed on different threads using this handle.
             videoConfig.eglContext = EGL14.eglGetCurrentContext();
             if (mHasOverlay) {
-                videoConfig.overlayTextureId = mOverlayTextureId;
+                videoConfig.overlayTarget = Overlay.Target.VIDEO_SNAPSHOT;
+                videoConfig.overlayDrawer = mOverlayDrawer;
                 videoConfig.overlayRotation = mOverlayRotation;
             }
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(videoConfig);
@@ -170,28 +167,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             LOG.v("dispatching frame.");
             TextureMediaEncoder textureEncoder = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
             TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
-            frame.timestamp = surfaceTexture.getTimestamp();
+            frame.timestampNanos = surfaceTexture.getTimestamp();
             frame.timestampMillis = System.currentTimeMillis(); // NOTE: this is an approximation but it seems to work.
             surfaceTexture.getTransformMatrix(frame.transform);
-
-            // get overlay
-            if (mHasOverlay) {
-                try {
-                    final Canvas surfaceCanvas = mOverlaySurface.lockCanvas(null);
-                    surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                    mOverlay.drawOn(Overlay.Target.VIDEO_SNAPSHOT, surfaceCanvas);
-                    mOverlaySurface.unlockCanvasAndPost(surfaceCanvas);
-                } catch (Surface.OutOfResourcesException e) {
-                    LOG.w("Got Surface.OutOfResourcesException while drawing video overlays", e);
-                }
-                mOverlaySurfaceTexture.updateTexImage();
-                mOverlaySurfaceTexture.getTransformMatrix(frame.overlayTransform);
-            }
-
-            if (mEncoderEngine != null) {
-                // Can happen on teardown. At least it used to.
-                // NOTE: If this still happens, I would say we can still crash on mOverlaySurface
-                // calls above. We might have to add some synchronization.
+            if (mEncoderEngine != null) { // Can happen on teardown. At least it used to.
                 mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
             }
         }
@@ -239,13 +218,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         mDesiredState = STATE_NOT_RECORDING;
         mPreview.removeRendererFrameCallback(SnapshotVideoRecorder.this);
         mPreview = null;
-        if (mOverlaySurfaceTexture != null) {
-            mOverlaySurfaceTexture.release();
-            mOverlaySurfaceTexture = null;
-        }
-        if (mOverlaySurface != null) {
-            mOverlaySurface.release();
-            mOverlaySurface = null;
+        if (mOverlayDrawer != null) {
+            mOverlayDrawer.release();
+            mOverlayDrawer = null;
         }
         mEncoderEngine = null;
         dispatchResult();

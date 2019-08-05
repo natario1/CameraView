@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
@@ -218,12 +219,23 @@ public class WorkerHandlerTest extends BaseTest {
     public void testDestroy() {
         final WorkerHandler handler = WorkerHandler.get("handler");
         assertTrue(handler.getThread().isAlive());
-        WorkerHandler.destroy();
+        handler.destroy();
         // Wait for the thread to die.
         try { handler.getThread().join(500); } catch (InterruptedException ignore) {}
         assertFalse(handler.getThread().isAlive());
         WorkerHandler newHandler = WorkerHandler.get("handler");
         assertNotSame(handler, newHandler);
         assertTrue(newHandler.getThread().isAlive());
+    }
+
+    @Test
+    public void testDestroyAll() {
+        final WorkerHandler handler1 = WorkerHandler.get("handler1");
+        final WorkerHandler handler2 = WorkerHandler.get("handler2");
+        WorkerHandler.destroyAll();
+        WorkerHandler newHandler1 = WorkerHandler.get("handler1");
+        WorkerHandler newHandler2 = WorkerHandler.get("handler2");
+        assertNotSame(handler1, newHandler1);
+        assertNotSame(handler2, newHandler2);
     }
 }
