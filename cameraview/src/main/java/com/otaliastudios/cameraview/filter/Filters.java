@@ -16,7 +16,6 @@ import com.otaliastudios.cameraview.filters.GrayscaleFilter;
 import com.otaliastudios.cameraview.filters.HueFilter;
 import com.otaliastudios.cameraview.filters.InvertColorsFilter;
 import com.otaliastudios.cameraview.filters.LomoishFilter;
-import com.otaliastudios.cameraview.filters.NoFilter;
 import com.otaliastudios.cameraview.filters.PosterizeFilter;
 import com.otaliastudios.cameraview.filters.SaturationFilter;
 import com.otaliastudios.cameraview.filters.SepiaFilter;

@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.filter.Filter;
-import com.otaliastudios.cameraview.filters.NoFilter;
+import com.otaliastudios.cameraview.filter.NoFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 

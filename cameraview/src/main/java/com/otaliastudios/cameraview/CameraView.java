@@ -49,6 +49,7 @@ import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filter.Filters;
+import com.otaliastudios.cameraview.filter.NoFilter;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -2143,7 +2144,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * {@link #takePictureSnapshot()} and any video snapshot taken with
      * {@link #takeVideoSnapshot(File)}.
      *
-     * Use {@link com.otaliastudios.cameraview.filters.NoFilter} to clear the existing filter,
+     * Use {@link NoFilter} to clear the existing filter,
      * and take a look at the {@link Filters} class for commonly used filters.
      *
      * @see Filters

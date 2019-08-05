@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.filters;
+package com.otaliastudios.cameraview.filter;
 
 import androidx.annotation.NonNull;
 
