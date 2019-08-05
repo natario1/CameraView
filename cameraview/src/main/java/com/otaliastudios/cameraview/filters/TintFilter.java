@@ -2,25 +2,47 @@ package com.otaliastudios.cameraview.filters;
 
 import android.graphics.Color;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 
 /**
- * Tints the preview with specified color..
+ * Tints the frames with specified color.
  */
 public class TintFilter extends BaseFilter {
     private int mTint = 0xFFFF0000;
 
+    @SuppressWarnings("WeakerAccess")
     public TintFilter() { }
 
-    public void setTintColor(int color) {
+    /**
+     * Sets the current tint.
+     * @param color current tint
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void setTint(@ColorInt int color) {
         this.mTint = color;
     }
 
-    public int getTintColor() {
+    /**
+     * Returns the current tint.
+     *
+     * @see #setTint(int)
+     * @return tint
+     */
+    @SuppressWarnings("WeakerAccess")
+    @ColorInt
+    public int getTint() {
         return mTint;
+    }
+
+    @Override
+    protected BaseFilter onCopy() {
+        TintFilter filter = new TintFilter();
+        filter.setTint(getTint());
+        return filter;
     }
 
     @NonNull

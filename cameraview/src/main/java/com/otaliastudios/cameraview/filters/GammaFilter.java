@@ -5,37 +5,48 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Apply Gamma Effect on preview being played
+ * Applies gamma correction to the frames.
  */
 public class GammaFilter extends BaseFilter {
-    private float gammaValue = 2.0f;
+
+    private float gamma = 2.0f;
+
+    @SuppressWarnings("WeakerAccess")
+    public GammaFilter() { }
 
     /**
-     * Initialize Effect
-     */
-    public GammaFilter() {
-    }
-
-    /**
-     * setGammaValue
+     * Sets the new gamma value in the 0.0 - 1.0 range.
+     * The 0.5 value means no correction will be applied.
      *
-     * @param gammaValue Range should be between 0.0 - 1.0 with 0.5 being normal.
+     * @param gamma gamma value
      */
-    public void setGammaValue(float gammaValue) {
-        if (gammaValue < 0.0f)
-            gammaValue = 0.0f;
-        else if (gammaValue > 1.0f)
-            gammaValue = 1.0f;
-
+    @SuppressWarnings("WeakerAccess")
+    public void setGamma(float gamma) {
+        if (gamma < 0.0f) gamma = 0.0f;
+        if (gamma > 1.0f) gamma = 1.0f;
         //since the shader excepts a range of 0.0 - 2.0
         //will multiply the 2.0 to every value
-        this.gammaValue = gammaValue * 2.0f;
+        this.gamma = gamma * 2.0f;
     }
 
-    public float getGammaValue() {
+    /**
+     * Returns the current gamma.
+     *
+     * @see #setGamma(float)
+     * @return gamma
+     */
+    @SuppressWarnings({"unused", "WeakerAccess"})
+    public float getGamma() {
         //since the shader excepts a range of 0.0 - 2.0
         //to keep it between 0.0f - 1.0f range, will divide it with 2.0
-        return gammaValue / 2.0f;
+        return gamma / 2.0f;
+    }
+
+    @Override
+    protected BaseFilter onCopy() {
+        GammaFilter filter = new GammaFilter();
+        filter.setGamma(getGamma());
+        return filter;
     }
 
     @NonNull
@@ -45,7 +56,7 @@ public class GammaFilter extends BaseFilter {
                 + "precision mediump float;\n"
                 + "varying vec2 vTextureCoord;\n"
                 + "uniform samplerExternalOES sTexture;\n"
-                + "float gamma=" + gammaValue + ";\n"
+                + "float gamma=" + gamma + ";\n"
                 + "void main() {\n"
                 + "  vec4 textureColor = texture2D(sTexture, vTextureCoord);\n"
                 + "  gl_FragColor = vec4(pow(textureColor.rgb, vec3(gamma)), textureColor.w);\n"

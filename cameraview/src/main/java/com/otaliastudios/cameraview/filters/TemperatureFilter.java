@@ -5,27 +5,46 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Adjusts color temperature of the preview.
+ * Adjusts color temperature.
  */
 public class TemperatureFilter extends BaseFilter {
+
     private float scale = 0f;
 
+    @SuppressWarnings("WeakerAccess")
     public TemperatureFilter() { }
 
     /**
-     * @param scale Float, between 0 and 1, with 0 indicating cool, and 1
-     *              indicating warm. A value of of 0.5 indicates no change.
+     * Sets the new temperature value:
+     * 0.0: cool colors
+     * 0.5: no change
+     * 1.0: warm colors
+     *
+     * @param value new value
      */
-    public void setTemperatureScale(float scale) {
-        if (scale < 0.0f)
-            scale = 0.0f;
-        else if (scale > 1.0f)
-            scale = 1.0f;
-        this.scale = scale;
+    @SuppressWarnings("WeakerAccess")
+    public void setTemperature(float value) {
+        if (value < 0.0f) value = 0.0f;
+        if (value > 1.0f) value = 1.0f;
+        this.scale = value;
     }
 
-    public float getTemperatureScale() {
+    /**
+     * Returns the current temperature.
+     *
+     * @see #setTemperature(float)
+     * @return temperature
+     */
+    @SuppressWarnings("WeakerAccess")
+    public float getTemperature() {
         return scale;
+    }
+
+    @Override
+    protected BaseFilter onCopy() {
+        TemperatureFilter filter = new TemperatureFilter();
+        filter.setTemperature(getTemperature());
+        return filter;
     }
 
     @NonNull

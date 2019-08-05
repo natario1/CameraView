@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Converts preview to Sepia tone.
+ * Converts frames to sepia tone.
  */
 public class SepiaFilter extends BaseFilter {
 

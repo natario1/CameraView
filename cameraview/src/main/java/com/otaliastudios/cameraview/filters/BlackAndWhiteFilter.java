@@ -9,7 +9,6 @@ import com.otaliastudios.cameraview.filter.BaseFilter;
  */
 public class BlackAndWhiteFilter extends BaseFilter {
 
-
     public BlackAndWhiteFilter() { }
 
     @NonNull

@@ -70,7 +70,7 @@ public interface Filter {
      * @param width width
      * @param height height
      */
-    void setOutputSize(int width, int height);
+    void setSize(int width, int height);
 
     /**
      * Clones this filter creating a new instance of it.

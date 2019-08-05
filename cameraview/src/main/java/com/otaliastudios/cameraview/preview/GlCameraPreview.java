@@ -171,7 +171,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
         @Override
         public void onSurfaceChanged(GL10 gl, final int width, final int height) {
             gl.glViewport(0, 0, width, height);
-            mCurrentFilter.setOutputSize(width, height);
+            mCurrentFilter.setSize(width, height);
             if (!mDispatched) {
                 dispatchOnSurfaceAvailable(width, height);
                 mDispatched = true;
@@ -327,7 +327,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
     @Override
     public void setFilter(@NonNull Filter filter) {
         if (hasSurface()) {
-            filter.setOutputSize(mOutputSurfaceWidth, mOutputSurfaceHeight);
+            filter.setSize(mOutputSurfaceWidth, mOutputSurfaceHeight);
         }
         mCurrentFilter = filter;
         if (mOutputViewport != null) {

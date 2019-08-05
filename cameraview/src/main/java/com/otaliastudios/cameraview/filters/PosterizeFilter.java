@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Applies Posterization effect to Preview.
+ * Applies a posterization effect to the input frames.
  */
 public class PosterizeFilter extends BaseFilter {
 

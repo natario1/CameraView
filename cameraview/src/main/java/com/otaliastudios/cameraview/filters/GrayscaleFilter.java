@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Converts preview to GreyScale.
+ * Converts frames to gray scale.
  */
 public class GrayscaleFilter extends BaseFilter {
 

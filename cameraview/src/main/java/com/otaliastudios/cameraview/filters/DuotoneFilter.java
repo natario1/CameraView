@@ -2,41 +2,85 @@ package com.otaliastudios.cameraview.filters;
 
 import android.graphics.Color;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Representation of preview using only two color tones.
+ * Representation of input frames using only two color tones.
  */
 public class DuotoneFilter extends BaseFilter {
+
     // Default values
     private int mFirstColor = Color.MAGENTA;
     private int mSecondColor = Color.YELLOW;
 
+    @SuppressWarnings("WeakerAccess")
+    public DuotoneFilter() { }
 
-    public DuotoneFilter() {
+    /**
+     * Sets the two duotone ARGB colors.
+     * @param firstColor first
+     * @param secondColor second
+     */
+    @SuppressWarnings({"unused", "WeakerAccess"})
+    public void setColors(@ColorInt int firstColor, @ColorInt int secondColor) {
+        setFirstColor(firstColor);
+        setSecondColor(secondColor);
     }
 
     /**
-     * setDuotoneColors
+     * Sets the first of the duotone ARGB colors.
+     * Defaults to {@link Color#MAGENTA}.
      *
-     * @param firstColor  Integer, representing an ARGB color with 8 bits per channel.
-     *                    May be created using Color class.
-     * @param secondColor Integer, representing an ARGB color with 8 bits per channel.
-     *                    May be created using Color class.
+     * @param color first color
      */
-    public void setDuotoneColors(int firstColor, int secondColor) {
-        this.mFirstColor = firstColor;
-        this.mSecondColor = secondColor;
+    @SuppressWarnings("WeakerAccess")
+    public void setFirstColor(@ColorInt int color) {
+        mFirstColor = color;
     }
 
+    /**
+     * Sets the second of the duotone ARGB colors.
+     * Defaults to {@link Color#YELLOW}.
+     *
+     * @param color second color
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void setSecondColor(@ColorInt int color) {
+        mSecondColor = color;
+    }
+
+    /**
+     * Returns the first color.
+     *
+     * @see #setFirstColor(int)
+     * @return first
+     */
+    @SuppressWarnings("unused")
+    @ColorInt
     public int getFirstColor() {
         return mFirstColor;
     }
 
+    /**
+     * Returns the second color.
+     *
+     * @see #setSecondColor(int)
+     * @return second
+     */
+    @SuppressWarnings("unused")
+    @ColorInt
     public int getSecondColor() {
         return mSecondColor;
+    }
+
+    @Override
+    protected BaseFilter onCopy() {
+        DuotoneFilter filter = new DuotoneFilter();
+        filter.setColors(mFirstColor, mSecondColor);
+        return filter;
     }
 
     @NonNull

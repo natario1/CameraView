@@ -5,37 +5,51 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Adjusts color saturation of preview.
+ * Adjusts color saturation.
  */
 public class SaturationFilter extends BaseFilter {
+
     private float scale = 1.0f;
 
-    /**
-     * Initialize Effect
-     */
-    public SaturationFilter() {
-    }
+    @SuppressWarnings("WeakerAccess")
+    public SaturationFilter() { }
 
     /**
-     * @param value Float, between 0.0 and 1. 0 means no change, while 0.0 indicates
-     *              full desaturated, i.e. grayscale.
-     *              and 1.0 indicates full saturation
+     * Sets the saturation correction value:
+     * 0.0: fully desaturated, grayscale.
+     * 0.5: no change.
+     * 1.0: fully saturated.
+     *
+     * @param value new value
      */
-    public void setSaturationValue(float value) {
-        if (value < 0.0f)
-            value = 0.0f;
-        else if (value > 1.0f)
-            value = 1.0f;
+    @SuppressWarnings("WeakerAccess")
+    public void setSaturation(float value) {
+        if (value < 0.0f) value = 0.0f;
+        if (value > 1.0f) value = 1.0f;
 
         //since the shader excepts a range of -1.0 to 1.0
         //will multiply it by 2.0f and subtract 1.0 to every value
         this.scale = (2.0f * value) - 1.0f;
     }
 
-    public float getSaturationValue() {
+    /**
+     * Returns the current saturation.
+     *
+     * @see #setSaturation(float)
+     * @return saturation
+     */
+    @SuppressWarnings("WeakerAccess")
+    public float getSaturation() {
         //since the shader excepts a range of -1.0 to 1.0
         //will add 1.0 to every value and divide it by 2.0f
         return (scale + 1.0f) / 2.0f;
+    }
+
+    @Override
+    protected BaseFilter onCopy() {
+        SaturationFilter filter = new SaturationFilter();
+        filter.setSaturation(getSaturation());
+        return filter;
     }
 
     @NonNull

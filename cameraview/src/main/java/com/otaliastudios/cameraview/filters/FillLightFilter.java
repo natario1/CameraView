@@ -5,29 +5,45 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Applies back-light filling to the preview.
+ * Applies back-light filling to the frames.
  */
 public class FillLightFilter extends BaseFilter {
+
     private float strength = 0.5f;
 
+    @SuppressWarnings("WeakerAccess")
     public FillLightFilter() { }
 
     /**
-     * setStrength
+     * Sets the current strength.
+     * 0.0: no change.
+     * 1.0: max strength.
      *
-     * @param strength Float, between 0.0 and 1.0 where 0.0 means no change.
+     * @param strength strength
      */
+    @SuppressWarnings("WeakerAccess")
     public void setStrength(float strength) {
-        if (strength < 0.0f)
-            strength = 0f;
-        else if (strength > 1.0f)
-            strength = 1f;
-
+        if (strength < 0.0f) strength = 0f;
+        if (strength > 1.0f) strength = 1f;
         this.strength = strength;
     }
 
+    /**
+     * Returns the current strength.
+     *
+     * @see #setStrength(float)
+     * @return strength
+     */
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public float getStrength() {
         return strength;
+    }
+
+    @Override
+    protected BaseFilter onCopy() {
+        FillLightFilter filter = new FillLightFilter();
+        filter.setStrength(getStrength());
+        return filter;
     }
 
     @NonNull

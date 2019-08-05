@@ -149,7 +149,7 @@ public abstract class BaseFilter implements Filter {
     }
 
     @Override
-    public void setOutputSize(int width, int height) {
+    public void setSize(int width, int height) {
         outputSize = new Size(width, height);
     }
 
@@ -198,13 +198,12 @@ public abstract class BaseFilter implements Filter {
     }
 
     @Override
-    public BaseFilter copy() {
+    public final BaseFilter copy() {
         BaseFilter copy = onCopy();
-        copy.setOutputSize(outputSize.getWidth(), outputSize.getHeight());
+        copy.setSize(outputSize.getWidth(), outputSize.getHeight());
         return copy;
     }
 
-    @SuppressWarnings("WeakerAccess")
     protected BaseFilter onCopy() {
         try {
             return getClass().newInstance();

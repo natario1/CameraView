@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Inverts the preview colors. This can also be known as negative Effect.
+ * Inverts the input colors. This is also known as negative effect.
  */
 public class InvertColorsFilter extends BaseFilter {
 

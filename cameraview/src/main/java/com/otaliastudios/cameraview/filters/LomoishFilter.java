@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.Random;
 
 /**
- * Applies lomo-camera style effect to preview.
+ * Applies a lomo-camera style effect to the input frames.
  */
 public class LomoishFilter extends BaseFilter {
 
@@ -16,12 +16,11 @@ public class LomoishFilter extends BaseFilter {
     private int mOutputWidth = 1;
     private int mOutputHeight = 1;
 
-    public LomoishFilter() {
-    }
+    public LomoishFilter() { }
 
     @Override
-    public void setOutputSize(int width, int height) {
-        super.setOutputSize(width, height);
+    public void setSize(int width, int height) {
+        super.setSize(width, height);
         mOutputWidth = width;
         mOutputHeight = height;
     }

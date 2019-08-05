@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.Random;
 
 /**
- * Applies film grain effect to preview.
+ * Applies film grain effect to the frames.
  */
 public class GrainFilter extends BaseFilter {
 
@@ -17,32 +17,46 @@ public class GrainFilter extends BaseFilter {
     private int mOutputWidth = 1;
     private int mOutputHeight = 1;
 
-
+    @SuppressWarnings("WeakerAccess")
     public GrainFilter() { }
 
     @Override
-    public void setOutputSize(int width, int height) {
-        super.setOutputSize(width, height);
+    public void setSize(int width, int height) {
+        super.setSize(width, height);
         mOutputWidth = width;
         mOutputHeight = height;
     }
 
     /**
-     * setDistortionStrength
+     * Sets the current distortion strength.
+     * 0.0: no distortion.
+     * 1.0: maximum distortion.
      *
-     * @param strength Float, between 0.0f and 1.0. Zero means no distortion, while 1
-     *                 indicates the maximum amount of adjustment.
+     * @param strength strength
      */
-    public void setDistortionStrength(float strength) {
-        if (strength < 0.0f)
-            strength = 0.0f;
-        else if (strength > 1.0f)
-            strength = 1.0f;
+    @SuppressWarnings("WeakerAccess")
+    public void setStrength(float strength) {
+        if (strength < 0.0f) strength = 0.0f;
+        if (strength > 1.0f) strength = 1.0f;
         this.strength = strength;
     }
 
+    /**
+     * Returns the current strength.
+     *
+     * @see #setStrength(float)
+     * @return strength
+     */
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public float getStrength() {
         return strength;
+    }
+
+    @Override
+    protected BaseFilter onCopy() {
+        GrainFilter filter = new GrainFilter();
+        filter.setStrength(getStrength());
+        return filter;
     }
 
     @NonNull

@@ -8,19 +8,19 @@ import java.util.Date;
 import java.util.Random;
 
 /**
- * Applies black and white documentary style effect on preview.
+ * Applies black and white documentary style effect.
  */
 public class DocumentaryFilter extends BaseFilter {
+
     private final Random mRandom = new Random(new Date().getTime());
     private int mOutputWidth = 1;
     private int mOutputHeight = 1;
 
-    public DocumentaryFilter() {
-    }
+    public DocumentaryFilter() { }
 
     @Override
-    public void setOutputSize(int width, int height) {
-        super.setOutputSize(width, height);
+    public void setSize(int width, int height) {
+        super.setSize(width, height);
         mOutputWidth = width;
         mOutputHeight = height;
     }

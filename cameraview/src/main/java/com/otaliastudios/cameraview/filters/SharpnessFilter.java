@@ -5,36 +5,54 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Sharpens the preview.
+ * Sharpens the input frames.
  */
 public class SharpnessFilter extends BaseFilter {
+
     private float scale = 0.5f;
     private int mOutputWidth = 1;
     private int mOutputHeight = 1;
 
+    @SuppressWarnings("WeakerAccess")
     public SharpnessFilter() { }
 
     @Override
-    public void setOutputSize(int width, int height) {
-        super.setOutputSize(width, height);
+    public void setSize(int width, int height) {
+        super.setSize(width, height);
         mOutputWidth = width;
         mOutputHeight = height;
     }
 
     /**
-     * @param value Float, between 0 and 1. 0 means no change.
+     * Sets the current sharpness value:
+     * 0.0: no change.
+     * 1.0: maximum sharpness.
+     *
+     * @param value new sharpness
      */
-    public void setSharpnessValue(float value) {
-        if (value < 0.0f)
-            value = 0.0f;
-        else if (value > 1.0f)
-            value = 1.0f;
-
+    @SuppressWarnings("WeakerAccess")
+    public void setSharpness(float value) {
+        if (value < 0.0f) value = 0.0f;
+        if (value > 1.0f) value = 1.0f;
         this.scale = value;
     }
 
-    public float getSharpnessValue() {
+    /**
+     * Returns the current sharpness.
+     *
+     * @see #setSharpness(float)
+     * @return sharpness
+     */
+    @SuppressWarnings("WeakerAccess")
+    public float getSharpness() {
         return scale;
+    }
+
+    @Override
+    protected BaseFilter onCopy() {
+        SharpnessFilter filter = new SharpnessFilter();
+        filter.setSharpness(getSharpness());
+        return filter;
     }
 
     @NonNull

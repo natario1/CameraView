@@ -5,33 +5,49 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Adjusts the contrast of the preview.
+ * Adjusts the contrast.
  */
 public class ContrastFilter extends BaseFilter {
     private float contrast = 2.0f;
 
+    @SuppressWarnings("WeakerAccess")
     public ContrastFilter() { }
 
     /**
-     * setContrast
+     * Sets the current contrast adjustment.
+     * 0.0: no adjustment
+     * 1.0: maximum adjustment
      *
-     * @param contrast Range should be between 0.0- 1.0 with 0.0 being normal.
+     * @param contrast contrast
      */
+    @SuppressWarnings("WeakerAccess")
     public void setContrast(float contrast) {
-        if (contrast < 0.0f)
-            contrast = 0.0f;
-        else if (contrast > 1.0f)
-            contrast = 1.0f;
-
+        if (contrast < 0.0f) contrast = 0.0f;
+        if (contrast > 1.0f) contrast = 1.0f;
         //since the shader excepts a range of 1.0 - 2.0
         //will add the 1.0 to every value
         this.contrast = contrast + 1.0f;
     }
 
+    /**
+     * Returns the current contrast.
+     *
+     * @see #setContrast(float)
+     * @return contrast
+     */
+    @SuppressWarnings({"unused", "WeakerAccess"})
     public float getContrast() {
         //since the shader excepts a range of 1.0 - 2.0
         //to keep it between 0.0f - 1.0f range, will subtract the 1.0 to every value
         return contrast - 1.0f;
+    }
+
+
+    @Override
+    protected BaseFilter onCopy() {
+        ContrastFilter filter = new ContrastFilter();
+        filter.setContrast(getContrast());
+        return filter;
     }
 
     @NonNull

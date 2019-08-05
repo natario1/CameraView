@@ -6,7 +6,7 @@ import com.otaliastudios.cameraview.filter.BaseFilter;
 
 
 /**
- * Applies lomo-camera style effect to your preview.
+ * Applies a vignette effect to input frames.
  */
 public class VignetteFilter extends BaseFilter {
 
@@ -15,21 +15,22 @@ public class VignetteFilter extends BaseFilter {
     private int mOutputWidth = 1;
     private int mOutputHeight = 1;
 
+    @SuppressWarnings("WeakerAccess")
     public VignetteFilter() { }
 
     @Override
-    public void setOutputSize(int width, int height) {
-        super.setOutputSize(width, height);
+    public void setSize(int width, int height) {
+        super.setSize(width, height);
         mOutputWidth = width;
         mOutputHeight = height;
     }
 
     /**
-     * setVignetteEffectScale
-     *
-     * @param scale Float, between 0.0 and 1. 0
+     * Sets the vignette effect scale (0.0 - 1.0).
+     * @param scale new scale
      */
-    public void setVignetteEffectScale(float scale) {
+    @SuppressWarnings("WeakerAccess")
+    public void setVignetteScale(float scale) {
         if (scale < 0.0f)
             scale = 0.0f;
         else if (scale > 1.0f)
@@ -38,16 +39,44 @@ public class VignetteFilter extends BaseFilter {
     }
 
     /**
-     * setVignetteEffectShade
-     *
-     * @param shade Float, between 0.0 and 1. 0
+     * Sets the vignette effect shade (0.0 - 1.0).
+     * @param shade new shade
      */
-    public void setVignetteEffectShade(float shade) {
-        if (shade < 0.0f)
-            shade = 0.0f;
-        else if (shade > 1.0f)
-            shade = 1.0f;
+    @SuppressWarnings("WeakerAccess")
+    public void setVignetteShade(float shade) {
+        if (shade < 0.0f) shade = 0.0f;
+        if (shade > 1.0f) shade = 1.0f;
         this.mShade = shade;
+    }
+
+    /**
+     * Gets the current vignette scale.
+     *
+     * @see #setVignetteScale(float)
+     * @return scale
+     */
+    @SuppressWarnings("WeakerAccess")
+    public float getVignetteScale() {
+        return mScale;
+    }
+
+    /**
+     * Gets the current vignette shade.
+     *
+     * @see #setVignetteShade(float)
+     * @return shade
+     */
+    @SuppressWarnings("WeakerAccess")
+    public float getVignetteShade() {
+        return mShade;
+    }
+
+    @Override
+    protected BaseFilter onCopy() {
+        VignetteFilter filter = new VignetteFilter();
+        filter.setVignetteScale(getVignetteScale());
+        filter.setVignetteShade(getVignetteShade());
+        return filter;
     }
 
     @NonNull
