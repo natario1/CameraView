@@ -48,6 +48,7 @@ import com.otaliastudios.cameraview.engine.Camera2Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.filter.Filter;
+import com.otaliastudios.cameraview.filter.FilterParser;
 import com.otaliastudios.cameraview.filter.Filters;
 import com.otaliastudios.cameraview.filter.NoFilter;
 import com.otaliastudios.cameraview.frame.Frame;
@@ -111,6 +112,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private HashMap<Gesture, GestureAction> mGestureMap = new HashMap<>(4);
     private Preview mPreview;
     private Engine mEngine;
+    private Filter mPendingFilter;
 
     // Components
     @VisibleForTesting CameraCallbacks mCameraCallbacks;
@@ -179,6 +181,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         SizeSelectorParser sizeSelectors = new SizeSelectorParser(a);
         GestureParser gestures = new GestureParser(a);
         MarkerParser markers = new MarkerParser(a);
+        FilterParser filters = new FilterParser(a);
 
         a.recycle();
 
@@ -236,6 +239,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // Apply markers
         setAutoFocusMarker(markers.getAutoFocusMarker());
 
+        // Apply filters
+        setFilter(filters.getFilter());
+
         if (!isInEditMode()) {
             mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
         }
@@ -263,6 +269,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraPreview = instantiatePreview(mPreview, getContext(), this);
         LOG.w("doInstantiateEngine:", "instantiated. preview:", mCameraPreview.getClass().getSimpleName());
         mCameraEngine.setPreview(mCameraPreview);
+        if (mPendingFilter != null) {
+            setFilter(mPendingFilter);
+            mPendingFilter = null;
+        }
     }
 
 
@@ -2151,7 +2161,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param filter a new filter
      */
     public void setFilter(@NonNull Filter filter) {
-        if (mCameraPreview instanceof FilterCameraPreview) {
+        if (mCameraPreview == null) {
+            mPendingFilter = filter;
+        } else if (!(filter instanceof NoFilter) && !mExperimental) {
+            LOG.w("Filters are an experimental features and need the experimental flag set.");
+        } else if (mCameraPreview instanceof FilterCameraPreview) {
             ((FilterCameraPreview) mCameraPreview).setFilter(filter);
         } else {
             LOG.w("setFilter() is supported only for GL_SURFACE. Preview:", mPreview);
