@@ -2,7 +2,6 @@ package com.otaliastudios.cameraview.filter;
 
 import androidx.annotation.NonNull;
 
-import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filters.AutoFixFilter;
 import com.otaliastudios.cameraview.filters.BlackAndWhiteFilter;
 import com.otaliastudios.cameraview.filters.BrightnessFilter;
@@ -33,27 +32,71 @@ import com.otaliastudios.cameraview.filters.VignetteFilter;
  * pass it to {@link com.otaliastudios.cameraview.CameraView#setFilter(Filter)}.
  */
 public enum Filters {
+
+    /** @see NoFilter */
     NONE(NoFilter.class),
+
+    /** @see AutoFixFilter */
     AUTO_FIX(AutoFixFilter.class),
+
+    /** @see BlackAndWhiteFilter */
     BLACK_AND_WHITE(BlackAndWhiteFilter.class),
+
+    /** @see BrightnessFilter */
     BRIGHTNESS(BrightnessFilter.class),
+
+    /** @see ContrastFilter */
     CONTRAST(ContrastFilter.class),
+
+    /** @see CrossProcessFilter */
     CROSS_PROCESS(CrossProcessFilter.class),
+
+    /** @see DocumentaryFilter */
     DOCUMENTARY(DocumentaryFilter.class),
+
+    /** @see DuotoneFilter */
     DUOTONE(DuotoneFilter.class),
+
+    /** @see FillLightFilter */
     FILL_LIGHT(FillLightFilter.class),
+
+    /** @see GammaFilter */
     GAMMA(GammaFilter.class),
+
+    /** @see GrainFilter */
     GRAIN(GrainFilter.class),
+
+    /** @see GrayscaleFilter */
     GRAYSCALE(GrayscaleFilter.class),
+
+    /** @see HueFilter */
     HUE(HueFilter.class),
+
+    /** @see InvertColorsFilter */
     INVERT_COLORS(InvertColorsFilter.class),
+
+    /** @see LomoishFilter */
     LOMOISH(LomoishFilter.class),
+
+    /** @see PosterizeFilter */
     POSTERIZE(PosterizeFilter.class),
+
+    /** @see SaturationFilter */
     SATURATION(SaturationFilter.class),
+
+    /** @see SepiaFilter */
     SEPIA(SepiaFilter.class),
+
+    /** @see SharpnessFilter */
     SHARPNESS(SharpnessFilter.class),
+
+    /** @see TemperatureFilter */
     TEMPERATURE(TemperatureFilter.class),
+
+    /** @see TintFilter */
     TINT(TintFilter.class),
+
+    /** @see VignetteFilter */
     VIGNETTE(VignetteFilter.class);
 
     private Class<? extends Filter> filterClass;
