@@ -3,13 +3,15 @@ package com.otaliastudios.cameraview.filters;
 import androidx.annotation.NonNull;
 
 /**
- * Inverts the preview colors. This can also be known as negative Effect.
+ * Converts the preview into black and white colors
  */
-public class InvertColorsEffect extends Filter {
+public class BlackAndWhiteFilter extends Filter {
+
+
     /**
-     * Initialize Effect
+     * Initialize effect
      */
-    public InvertColorsEffect() {
+    public BlackAndWhiteFilter() {
     }
 
     @NonNull
@@ -21,9 +23,9 @@ public class InvertColorsEffect extends Filter {
                 + "varying vec2 vTextureCoord;\n"
                 + "uniform samplerExternalOES sTexture;\n" + "void main() {\n"
                 + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
-                + "  float colorR = (1.0 - color.r) / 1.0;\n"
-                + "  float colorG = (1.0 - color.g) / 1.0;\n"
-                + "  float colorB = (1.0 - color.b) / 1.0;\n"
+                + "  float colorR = (color.r + color.g + color.b) / 3.0;\n"
+                + "  float colorG = (color.r + color.g + color.b) / 3.0;\n"
+                + "  float colorB = (color.r + color.g + color.b) / 3.0;\n"
                 + "  gl_FragColor = vec4(colorR, colorG, colorB, color.a);\n"
                 + "}\n";
 

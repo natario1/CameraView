@@ -5,13 +5,13 @@ import androidx.annotation.NonNull;
 /**
  * Apply Hue effect on the preview
  */
-public class HueEffect extends Filter {
+public class HueFilter extends Filter {
     float hueValue = 0.0f;
 
     /**
      * Initialize Effect
      */
-    public HueEffect() {
+    public HueFilter() {
     }
 
     /**

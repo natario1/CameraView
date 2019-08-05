@@ -5,13 +5,13 @@ import androidx.annotation.NonNull;
 /**
  * Adjusts the brightness of the preview.
  */
-public class BrightnessEffect extends Filter {
+public class BrightnessFilter extends Filter {
     private float brightnessValue = 2.0f;
 
     /**
      * Initialize Effect
      */
-    public BrightnessEffect() {
+    public BrightnessFilter() {
     }
 
     /**

@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 /**
  * This class is to implement any custom effect.
  */
-public class CustomEffect extends Filter {
+public class CustomFilter extends Filter {
 
     /**
      * Parameterized constructor with vertex and fragment shader as parameter
@@ -14,7 +14,7 @@ public class CustomEffect extends Filter {
      * @param vertexShader
      * @param fragmentShader
      */
-    public CustomEffect(String vertexShader, String fragmentShader) {
+    public CustomFilter(String vertexShader, String fragmentShader) {
         this.mVertexShader = vertexShader;
         this.mFragmentShader = fragmentShader;
     }

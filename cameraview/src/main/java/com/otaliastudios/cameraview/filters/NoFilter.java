@@ -2,7 +2,7 @@ package com.otaliastudios.cameraview.filters;
 
 import androidx.annotation.NonNull;
 
-public class NoFilterEffect extends Filter {
+public class NoFilter extends Filter {
 
     @NonNull
     @Override

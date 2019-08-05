@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.filters.Filter;
-import com.otaliastudios.cameraview.filters.NoFilterEffect;
+import com.otaliastudios.cameraview.filters.NoFilter;
 
 import java.nio.FloatBuffer;
 
@@ -67,7 +67,7 @@ public class EglViewport extends EglElement {
         mTextureUnit = GLES20.GL_TEXTURE0;
 
         //init the default shader effect
-        mShaderEffect = new NoFilterEffect();
+        mShaderEffect = new NoFilter();
         initProgram();
     }
 

@@ -5,13 +5,13 @@ import androidx.annotation.NonNull;
 /**
  * Adjusts the contrast of the preview.
  */
-public class ContrastEffect extends Filter {
+public class ContrastFilter extends Filter {
     private float contrast = 2.0f;
 
     /**
      * Initialize Effect
      */
-    public ContrastEffect() {
+    public ContrastFilter() {
     }
 
     /**

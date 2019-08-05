@@ -5,13 +5,13 @@ import androidx.annotation.NonNull;
 /**
  * Adjusts color saturation of preview.
  */
-public class SaturationEffect extends Filter {
+public class SaturationFilter extends Filter {
     private float scale = 1.0f;
 
     /**
      * Initialize Effect
      */
-    public SaturationEffect() {
+    public SaturationFilter() {
     }
 
     /**

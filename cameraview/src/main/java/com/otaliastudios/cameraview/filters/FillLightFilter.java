@@ -5,13 +5,13 @@ import androidx.annotation.NonNull;
 /**
  * Applies back-light filling to the preview.
  */
-public class FillLightEffect extends Filter {
+public class FillLightFilter extends Filter {
     private float strength = 0.5f;
 
     /**
      * Initialize Effect
      */
-    public FillLightEffect() {
+    public FillLightFilter() {
     }
 
     /**

@@ -5,14 +5,14 @@ import androidx.annotation.NonNull;
 /**
  * Attempts to auto-fix the preview based on histogram equalization.
  */
-public class AutoFixEffect extends Filter {
+public class AutoFixFilter extends Filter {
 
     private float scale = 1.0f;
 
     /**
      * Initialize Effect
      */
-    public AutoFixEffect() {
+    public AutoFixFilter() {
     }
 
     public float getScale() {

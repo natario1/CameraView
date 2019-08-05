@@ -3,13 +3,13 @@ package com.otaliastudios.cameraview.filters;
 import androidx.annotation.NonNull;
 
 /**
- * Converts preview to GreyScale.
+ * Applies Posterization effect to Preview.
  */
-public class GreyScaleEffect extends Filter {
+public class PosterizeFilter extends Filter {
     /**
      * Initialize Effect
      */
-    public GreyScaleEffect() {
+    public PosterizeFilter() {
     }
 
     @NonNull
@@ -21,10 +21,11 @@ public class GreyScaleEffect extends Filter {
                 + "uniform samplerExternalOES sTexture;\n"
                 + "varying vec2 vTextureCoord;\n" + "void main() {\n"
                 + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
-                + "  float y = dot(color, vec4(0.299, 0.587, 0.114, 0));\n"
-                + "  gl_FragColor = vec4(y, y, y, color.a);\n" + "}\n";
-        ;
-
+                + "  vec3 pcolor;\n"
+                + "  pcolor.r = (color.r >= 0.5) ? 0.75 : 0.25;\n"
+                + "  pcolor.g = (color.g >= 0.5) ? 0.75 : 0.25;\n"
+                + "  pcolor.b = (color.b >= 0.5) ? 0.75 : 0.25;\n"
+                + "  gl_FragColor = vec4(pcolor, color.a);\n" + "}\n";
         return shader;
 
     }

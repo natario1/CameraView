@@ -1,122 +1,122 @@
 package com.otaliastudios.cameraview.filters;
 
 public enum Filters {
-    NO_EFFECT,
+    NO_FILTER,
 
-    AUTO_FIX_EFFECT,
-    BLACK_AND_WHITE_EFFECT,
-    BRIGHTNESS_EFFECT,
-    CONTRAST_EFFECT,
-    CROSS_PROCESS_EFFECT,
-    DOCUMENTARY_EFFECT,
-    DUO_TONE_COLOR_EFFECT,
-    FILL_LIGHT_EFFECT,
-    GAMMA_EFFECT,
-    GRAIN_EFFECT,
-    GREY_SCALE_EFFECT,
-    HUE_EFFECT,
-    INVERT_COLOR_EFFECT,
-    LAMOISH_EFFECT,
-    POSTERIZE_EFFECT,
-    SATURATION_EFFECT,
-    SEPIA_EFFECT,
-    SHARPNESS_EFFECT,
-    TEMPERATURE_EFFECT,
-    TINT_EFFECT,
-    VIGNETTE_EFFECT;
+    AUTO_FIX_FILTER,
+    BLACK_AND_WHITE_FILTER,
+    BRIGHTNESS_FILTER,
+    CONTRAST_FILTER,
+    CROSS_PROCESS_FILTER,
+    DOCUMENTARY_FILTER,
+    DUO_TONE_COLOR_FILTER,
+    FILL_LIGHT_FILTER,
+    GAMMA_FILTER,
+    GRAIN_FILTER,
+    GREY_SCALE_FILTER,
+    HUE_FILTER,
+    INVERT_COLOR_FILTER,
+    LAMOISH_FILTER,
+    POSTERIZE_FILTER,
+    SATURATION_FILTER,
+    SEPIA_FILTER,
+    SHARPNESS_FILTER,
+    TEMPERATURE_FILTER,
+    TINT_FILTER,
+    VIGNETTE_FILTER;
 
     public Filter newInstance() {
         Filter shaderEffect;
         switch (this) {
 
-            case AUTO_FIX_EFFECT:
-                shaderEffect = new AutoFixEffect();
+            case AUTO_FIX_FILTER:
+                shaderEffect = new AutoFixFilter();
                 break;
 
-            case BLACK_AND_WHITE_EFFECT:
-                shaderEffect = new BlackAndWhiteEffect();
+            case BLACK_AND_WHITE_FILTER:
+                shaderEffect = new BlackAndWhiteFilter();
                 break;
 
-            case BRIGHTNESS_EFFECT:
-                shaderEffect = new BrightnessEffect();
+            case BRIGHTNESS_FILTER:
+                shaderEffect = new BrightnessFilter();
                 break;
 
-            case CONTRAST_EFFECT:
-                shaderEffect = new ContrastEffect();
+            case CONTRAST_FILTER:
+                shaderEffect = new ContrastFilter();
                 break;
 
-            case CROSS_PROCESS_EFFECT:
-                shaderEffect = new CrossProcessEffect();
+            case CROSS_PROCESS_FILTER:
+                shaderEffect = new CrossProcessFilter();
                 break;
 
-            case DOCUMENTARY_EFFECT:
-                shaderEffect = new DocumentaryEffect();
+            case DOCUMENTARY_FILTER:
+                shaderEffect = new DocumentaryFilter();
                 break;
 
-            case DUO_TONE_COLOR_EFFECT:
-                shaderEffect = new DuotoneEffect();
+            case DUO_TONE_COLOR_FILTER:
+                shaderEffect = new DuotoneFilter();
                 break;
 
-            case FILL_LIGHT_EFFECT:
-                shaderEffect = new FillLightEffect();
+            case FILL_LIGHT_FILTER:
+                shaderEffect = new FillLightFilter();
                 break;
 
-            case GAMMA_EFFECT:
-                shaderEffect = new GammaEffect();
+            case GAMMA_FILTER:
+                shaderEffect = new GammaFilter();
                 break;
 
-            case GRAIN_EFFECT:
-                shaderEffect = new GrainEffect();
+            case GRAIN_FILTER:
+                shaderEffect = new GrainFilter();
                 break;
 
-            case GREY_SCALE_EFFECT:
-                shaderEffect = new GreyScaleEffect();
+            case GREY_SCALE_FILTER:
+                shaderEffect = new GreyScaleFilter();
                 break;
 
-            case HUE_EFFECT:
-                shaderEffect = new HueEffect();
+            case HUE_FILTER:
+                shaderEffect = new HueFilter();
                 break;
 
-            case INVERT_COLOR_EFFECT:
-                shaderEffect = new InvertColorsEffect();
+            case INVERT_COLOR_FILTER:
+                shaderEffect = new InvertColorsFilter();
                 break;
 
-            case LAMOISH_EFFECT:
-                shaderEffect = new LamoishEffect();
+            case LAMOISH_FILTER:
+                shaderEffect = new LamoishFilter();
                 break;
 
-            case POSTERIZE_EFFECT:
-                shaderEffect = new PosterizeEffect();
+            case POSTERIZE_FILTER:
+                shaderEffect = new PosterizeFilter();
                 break;
 
-            case SATURATION_EFFECT:
-                shaderEffect = new SaturationEffect();
+            case SATURATION_FILTER:
+                shaderEffect = new SaturationFilter();
                 break;
 
-            case SEPIA_EFFECT:
-                shaderEffect = new SepiaEffect();
+            case SEPIA_FILTER:
+                shaderEffect = new SepiaFilter();
                 break;
 
-            case SHARPNESS_EFFECT:
-                shaderEffect = new SharpnessEffect();
+            case SHARPNESS_FILTER:
+                shaderEffect = new SharpnessFilter();
                 break;
 
-            case TEMPERATURE_EFFECT:
-                shaderEffect = new TemperatureEffect();
+            case TEMPERATURE_FILTER:
+                shaderEffect = new TemperatureFilter();
                 break;
 
-            case TINT_EFFECT:
-                shaderEffect = new TintEffect();
+            case TINT_FILTER:
+                shaderEffect = new TintFilter();
                 break;
 
-            case VIGNETTE_EFFECT:
-                shaderEffect = new VignetteEffect();
+            case VIGNETTE_FILTER:
+                shaderEffect = new VignetteFilter();
                 break;
 
 
-            case NO_EFFECT:
+            case NO_FILTER:
             default:
-                shaderEffect = new NoFilterEffect();
+                shaderEffect = new NoFilter();
         }
 
         return shaderEffect;

@@ -5,13 +5,13 @@ import androidx.annotation.NonNull;
 /**
  * Apply Gamma Effect on preview being played
  */
-public class GammaEffect extends Filter {
+public class GammaFilter extends Filter {
     private float gammaValue = 2.0f;
 
     /**
      * Initialize Effect
      */
-    public GammaEffect() {
+    public GammaFilter() {
     }
 
     /**

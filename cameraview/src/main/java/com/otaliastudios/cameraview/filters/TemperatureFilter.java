@@ -5,13 +5,13 @@ import androidx.annotation.NonNull;
 /**
  * Adjusts color temperature of the preview.
  */
-public class TemperatureEffect extends Filter {
+public class TemperatureFilter extends Filter {
     private float scale = 0f;
 
     /**
      * Initialize Effect
      */
-    public TemperatureEffect() {
+    public TemperatureFilter() {
     }
 
     /**

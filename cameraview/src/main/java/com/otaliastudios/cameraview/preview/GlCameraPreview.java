@@ -16,7 +16,7 @@ import com.otaliastudios.cameraview.R;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.filters.Filter;
-import com.otaliastudios.cameraview.filters.NoFilterEffect;
+import com.otaliastudios.cameraview.filters.NoFilter;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 import java.util.Collections;
@@ -167,7 +167,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             });
 
             //init the default shader effect
-            mCurrentShaderEffect = new NoFilterEffect();
+            mCurrentShaderEffect = new NoFilter();
         }
 
         @RendererThread

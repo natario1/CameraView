@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 /**
  * Representation of preview using only two color tones.
  */
-public class DuotoneEffect extends Filter {
+public class DuotoneFilter extends Filter {
     // Default values
     private int mFirstColor = Color.MAGENTA;
     private int mSecondColor = Color.YELLOW;
@@ -15,7 +15,7 @@ public class DuotoneEffect extends Filter {
     /**
      * Initialize effect
      */
-    public DuotoneEffect() {
+    public DuotoneFilter() {
     }
 
     /**
