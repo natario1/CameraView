@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * Apply Hue effect on the preview
  */
-public class HueFilter extends Filter {
+public class HueFilter extends BaseFilter {
     float hueValue = 0.0f;
 
     /**

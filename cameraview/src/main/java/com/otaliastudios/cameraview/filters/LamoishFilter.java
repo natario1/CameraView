@@ -8,7 +8,7 @@ import java.util.Random;
 /**
  * Applies lomo-camera style effect to preview.
  */
-public class LamoishFilter extends Filter {
+public class LamoishFilter extends BaseFilter {
     private Random mRandom;
 
     /**

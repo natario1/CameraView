@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * Applies Posterization effect to Preview.
  */
-public class PosterizeFilter extends Filter {
+public class PosterizeFilter extends BaseFilter {
     /**
      * Initialize Effect
      */

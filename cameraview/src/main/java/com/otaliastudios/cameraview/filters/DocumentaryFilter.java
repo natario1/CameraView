@@ -8,7 +8,7 @@ import java.util.Random;
 /**
  * Applies black and white documentary style effect on preview.
  */
-public class DocumentaryFilter extends Filter {
+public class DocumentaryFilter extends BaseFilter {
     private Random mRandom;
 
     public DocumentaryFilter() {

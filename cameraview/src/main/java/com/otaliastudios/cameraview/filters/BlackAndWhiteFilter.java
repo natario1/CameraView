@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * Converts the preview into black and white colors
  */
-public class BlackAndWhiteFilter extends Filter {
+public class BlackAndWhiteFilter extends BaseFilter {
 
 
     /**

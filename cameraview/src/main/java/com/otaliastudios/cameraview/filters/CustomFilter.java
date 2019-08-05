@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 /**
  * This class is to implement any custom effect.
  */
-public class CustomFilter extends Filter {
+public class CustomFilter extends BaseFilter {
 
     /**
      * Parameterized constructor with vertex and fragment shader as parameter

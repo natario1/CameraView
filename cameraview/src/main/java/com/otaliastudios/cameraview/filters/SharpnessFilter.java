@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * Sharpens the preview.
  */
-public class SharpnessFilter extends Filter {
+public class SharpnessFilter extends BaseFilter {
     private float scale = 0.5f;
 
     /**

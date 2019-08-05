@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 /**
  * Tints the preview with specified color..
  */
-public class TintFilter extends Filter {
+public class TintFilter extends BaseFilter {
     private int mTint = 0xFFFF0000;
 
     /**

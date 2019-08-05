@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 /**
  * Applies lomo-camera style effect to your preview.
  */
-public class VignetteFilter extends Filter {
+public class VignetteFilter extends BaseFilter {
     private float mScale = 0.85f;
     private float mShade = 0.5f;
 

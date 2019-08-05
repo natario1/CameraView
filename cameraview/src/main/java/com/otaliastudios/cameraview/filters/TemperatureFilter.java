@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * Adjusts color temperature of the preview.
  */
-public class TemperatureFilter extends Filter {
+public class TemperatureFilter extends BaseFilter {
     private float scale = 0f;
 
     /**

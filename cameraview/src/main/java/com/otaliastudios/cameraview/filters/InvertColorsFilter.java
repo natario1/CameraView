@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * Inverts the preview colors. This can also be known as negative Effect.
  */
-public class InvertColorsFilter extends Filter {
+public class InvertColorsFilter extends BaseFilter {
     /**
      * Initialize Effect
      */

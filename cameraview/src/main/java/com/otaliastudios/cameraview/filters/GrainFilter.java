@@ -8,7 +8,7 @@ import java.util.Random;
 /**
  * Applies film grain effect to preview.
  */
-public class GrainFilter extends Filter {
+public class GrainFilter extends BaseFilter {
     private float strength = 0.5f;
     private Random mRandom;
 

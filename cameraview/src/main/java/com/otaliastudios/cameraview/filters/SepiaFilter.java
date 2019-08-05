@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * Converts preview to Sepia tone.
  */
-public class SepiaFilter extends Filter {
+public class SepiaFilter extends BaseFilter {
     /**
      * Initialize Effect
      */
