@@ -317,8 +317,8 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     }
 
     public void setShaderEffect(@NonNull Filter shaderEffect){
-        mCurrentShaderEffect = shaderEffect;
         shaderEffect.setPreviewingViewSize(getView().getWidth(), getView().getHeight());
+        mCurrentShaderEffect = shaderEffect;
 
         mOutputViewport.changeShaderEffect(shaderEffect);
     }

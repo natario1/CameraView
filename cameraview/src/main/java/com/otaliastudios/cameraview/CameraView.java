@@ -2133,17 +2133,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     //region Effects
 
     public void setFilter(@NonNull Filters filter) {
-        if (mCameraPreview instanceof GlCameraPreview) {
-            Filter shaderEffect = filter.newInstance();
-            ((GlCameraPreview) mCameraPreview).setShaderEffect(shaderEffect);
-        } else {
-            LOG.w("setFilter", "setFilter is supported only for GLSurfaceView");
-        }
+        setFilter(filter.newInstance());
     }
 
-    public void setFilter(@NonNull Filter shaderEffect) {
+    public void setFilter(@NonNull Filter filter) {
         if (mCameraPreview instanceof GlCameraPreview) {
-            ((GlCameraPreview) mCameraPreview).setShaderEffect(shaderEffect);
+            ((GlCameraPreview) mCameraPreview).setShaderEffect(filter);
         } else {
             LOG.w("setFilter", "setFilter is supported only for GLSurfaceView");
         }
