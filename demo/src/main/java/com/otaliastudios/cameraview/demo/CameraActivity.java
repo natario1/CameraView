@@ -49,7 +49,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private ViewGroup controlPanel;
     private long mCaptureTime;
 
-    private Filters mCurrentEffect = NONE;
+    private int mCurrentFilter = 0;
+    private final Filters[] mAllFilters = Filters.values();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -321,84 +322,17 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
-    private void changeCurrentFilter(){
+    private void changeCurrentFilter() {
         if (camera.getPreview() != Preview.GL_SURFACE) {
-            message("Filters are supported only for GLSurfaceView", true);
+            message("Filters are supported only when preview is Preview.GL_SURFACE.", true);
             return;
         }
-
-        switch (mCurrentEffect){
-            case NONE:
-                mCurrentEffect = AUTO_FIX;
-                break;
-            case AUTO_FIX:
-                mCurrentEffect = BLACK_AND_WHITE;
-                break;
-            case BLACK_AND_WHITE:
-                mCurrentEffect = BRIGHTNESS;
-                break;
-            case BRIGHTNESS:
-                mCurrentEffect = CONTRAST;
-                break;
-            case CONTRAST:
-                mCurrentEffect = CROSS_PROCESS;
-                break;
-            case CROSS_PROCESS:
-                mCurrentEffect = DOCUMENTARY;
-                break;
-            case DOCUMENTARY:
-                mCurrentEffect = DUOTONE;
-                break;
-            case DUOTONE:
-                mCurrentEffect = FILL_LIGHT;
-                break;
-            case FILL_LIGHT:
-                mCurrentEffect = GAMMA;
-                break;
-            case GAMMA:
-                mCurrentEffect = GRAIN;
-                break;
-            case GRAIN:
-                mCurrentEffect = GRAYSCALE;
-                break;
-            case GRAYSCALE:
-                mCurrentEffect = HUE;
-                break;
-            case HUE:
-                mCurrentEffect = INVERT_COLORS;
-                break;
-            case INVERT_COLORS:
-                mCurrentEffect = LAMOISH;
-                break;
-            case LAMOISH:
-                mCurrentEffect = POSTERIZE;
-                break;
-            case POSTERIZE:
-                mCurrentEffect = SATURATION;
-                break;
-            case SATURATION:
-                mCurrentEffect = SEPIA;
-                break;
-            case SEPIA:
-                mCurrentEffect = SHARPNESS;
-                break;
-            case SHARPNESS:
-                mCurrentEffect = TEMPERATURE;
-                break;
-            case TEMPERATURE:
-                mCurrentEffect = TINT;
-                break;
-            case TINT:
-                mCurrentEffect = VIGNETTE;
-                break;
-
-            case VIGNETTE:
-            default:
-                mCurrentEffect = NONE;
-                break;
+        if (mCurrentFilter < mAllFilters.length - 1) {
+            mCurrentFilter++;
+        } else {
+            mCurrentFilter = 0;
         }
-
-        camera.setFilter(mCurrentEffect);
+        camera.setFilter(mAllFilters[mCurrentFilter]);
     }
 
     @Override
