@@ -15,7 +15,7 @@ public class HueFilter extends Filter {
     }
 
     /**
-     * Hue value chart - https://cloud.githubusercontent.com/assets/2201511/21810115/b99ac22a-d74a-11e6-9f6c-ef74d15c88c7.jpg" >
+     * Hue value chart - https://cloud.githubusercontent.com/assets/2201511/21810115/b99ac22a-d74a-11e6-9f6c-ef74d15c88c7.jpg"
      *
      * @param hueDegrees Range of value should be between 0 to 360 degrees as described in the image above
      */
