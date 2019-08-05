@@ -104,9 +104,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     @Override
     public void onFilterChanged(@NonNull Filter filter) {
-        mCurrentFilter = filter;
+        mCurrentFilter = filter.copy();
         if (mEncoderEngine != null) {
-            mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, filter);
+            mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
         }
     }
 
