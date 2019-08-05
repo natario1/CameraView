@@ -8,11 +8,7 @@ import androidx.annotation.NonNull;
 public class FillLightFilter extends BaseFilter {
     private float strength = 0.5f;
 
-    /**
-     * Initialize Effect
-     */
-    public FillLightFilter() {
-    }
+    public FillLightFilter() { }
 
     /**
      * setStrength
@@ -44,18 +40,16 @@ public class FillLightFilter extends BaseFilter {
         String multString = "mult = " + mult + ";\n";
         String igammaString = "igamma = " + igamma + ";\n";
 
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
+        return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "uniform samplerExternalOES sTexture;\n"
                 + " float mult;\n"
                 + " float igamma;\n"
                 + "varying vec2 vTextureCoord;\n"
-                + "void main()\n"
-                + "{\n"
+                + "void main() {\n"
                 // Parameters that were created above
                 + multString
                 + igammaString
-
                 + "  const vec3 color_weights = vec3(0.25, 0.5, 0.25);\n"
                 + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
                 + "  float lightmask = dot(color.rgb, color_weights);\n"
@@ -64,10 +58,8 @@ public class FillLightFilter extends BaseFilter {
                 + "  vec3 diff = pow(mult * color.rgb, igamma * ones) - color.rgb;\n"
                 + "  diff = min(diff, 1.0);\n"
                 + "  vec3 new_color = min(color.rgb + diff * backmask, 1.0);\n"
-                + "  gl_FragColor = vec4(new_color, color.a);\n" + "}\n";
-
-        return shader;
-
+                + "  gl_FragColor = vec4(new_color, color.a);\n"
+                + "}\n";
     }
 
 }

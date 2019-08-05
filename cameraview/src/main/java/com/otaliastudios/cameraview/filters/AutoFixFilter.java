@@ -9,11 +9,7 @@ public class AutoFixFilter extends BaseFilter {
 
     private float scale = 1.0f;
 
-    /**
-     * Initialize Effect
-     */
-    public AutoFixFilter() {
-    }
+    public AutoFixFilter() { }
 
     public float getScale() {
         return scale;
@@ -35,34 +31,25 @@ public class AutoFixFilter extends BaseFilter {
     @NonNull
     @Override
     public String getFragmentShader() {
-
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
+        return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "uniform samplerExternalOES tex_sampler_0;\n"
                 + "uniform samplerExternalOES tex_sampler_1;\n"
                 + "uniform samplerExternalOES tex_sampler_2;\n"
-                + " float scale;\n" + " float shift_scale;\n"
-                + " float hist_offset;\n" + " float hist_scale;\n"
-                + " float density_offset;\n" + " float density_scale;\n"
-                + "varying vec2 vTextureCoord;\n" + "void main() {\n"
-                + "  shift_scale = "
-                + (1.0f / 256f)
-                + ";\n"
-                + "  hist_offset = "
-                + (0.5f / 766f)
-                + ";\n"
-                + "  hist_scale = "
-                + (765f / 766f)
-                + ";\n"
-                + "  density_offset = "
-                + (0.5f / 1024f)
-                + ";\n"
-                + "  density_scale = "
-                + (1023f / 1024f)
-                + ";\n"
-                + "  scale = "
-                + scale
-                + ";\n"
+                + "float scale;\n"
+                + "float shift_scale;\n"
+                + "float hist_offset;\n"
+                + "float hist_scale;\n"
+                + "float density_offset;\n"
+                + "float density_scale;\n"
+                + "varying vec2 vTextureCoord;\n"
+                + "void main() {\n"
+                + "  shift_scale = " + (1.0f / 256f) + ";\n"
+                + "  hist_offset = " + (0.5f / 766f) + ";\n"
+                + "  hist_scale = " + (765f / 766f) + ";\n"
+                + "  density_offset = " + (0.5f / 1024f) + ";\n"
+                + "  density_scale = " + (1023f / 1024f) + ";\n"
+                + "  scale = " + scale + ";\n"
                 + "  const vec3 weights = vec3(0.33333, 0.33333, 0.33333);\n"
                 + "  vec4 color = texture2D(tex_sampler_0, vTextureCoord);\n"
                 + "  float energy = dot(color.rgb, weights);\n"
@@ -88,9 +75,7 @@ public class AutoFixFilter extends BaseFilter {
                 + "    gl_FragColor = color;\n"
                 + "  } else {\n"
                 + "    gl_FragColor = vec4(color.rgb * dst_energy / energy, color.a);\n"
-                + "  }\n" + "}\n";
-
-        return shader;
-
+                + "  }\n"
+                + "}\n";
     }
 }

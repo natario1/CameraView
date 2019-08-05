@@ -7,11 +7,16 @@ import androidx.annotation.NonNull;
  */
 public class SharpnessFilter extends BaseFilter {
     private float scale = 0.5f;
+    private int mOutputWidth = 1;
+    private int mOutputHeight = 1;
 
-    /**
-     * Initialize Effect
-     */
-    public SharpnessFilter() {
+    public SharpnessFilter() { }
+
+    @Override
+    public void setOutputSize(int width, int height) {
+        super.setOutputSize(width, height);
+        mOutputWidth = width;
+        mOutputHeight = height;
     }
 
     /**
@@ -33,12 +38,11 @@ public class SharpnessFilter extends BaseFilter {
     @NonNull
     @Override
     public String getFragmentShader() {
-
-        String stepsizeXString = "stepsizeX = " + 1.0f / mPreviewingViewWidth + ";\n";
-        String stepsizeYString = "stepsizeY = " + 1.0f / mPreviewingViewHeight + ";\n";
+        String stepsizeXString = "stepsizeX = " + 1.0f / mOutputWidth + ";\n";
+        String stepsizeYString = "stepsizeY = " + 1.0f / mOutputHeight + ";\n";
         String scaleString = "scale = " + scale + ";\n";
 
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
+        return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "uniform samplerExternalOES sTexture;\n"
                 + " float scale;\n"
@@ -67,8 +71,6 @@ public class SharpnessFilter extends BaseFilter {
                 + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
                 + "  gl_FragColor = vec4(color.rgb - 2.0 * scale * nbr_color, color.a);\n"
                 + "}\n";
-
-        return shader;
 
     }
 

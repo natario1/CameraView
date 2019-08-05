@@ -23,7 +23,7 @@ public enum Filters {
     GRAYSCALE(GrayscaleFilter.class),
     HUE(HueFilter.class),
     INVERT_COLORS(InvertColorsFilter.class),
-    LAMOISH(LamoishFilter.class),
+    LOMOISH(LomoishFilter.class),
     POSTERIZE(PosterizeFilter.class),
     SATURATION(SaturationFilter.class),
     SEPIA(SepiaFilter.class),

@@ -12,9 +12,7 @@ public class DuotoneFilter extends BaseFilter {
     private int mFirstColor = Color.MAGENTA;
     private int mSecondColor = Color.YELLOW;
 
-    /**
-     * Initialize effect
-     */
+
     public DuotoneFilter() {
     }
 
@@ -42,14 +40,14 @@ public class DuotoneFilter extends BaseFilter {
     @NonNull
     @Override
     public String getFragmentShader() {
-        float first[] = {Color.red(mFirstColor) / 255f,
+        float[] first = {Color.red(mFirstColor) / 255f,
                 Color.green(mFirstColor) / 255f, Color.blue(mFirstColor) / 255f};
-        float second[] = {Color.red(mSecondColor) / 255f,
+        float[] second = {Color.red(mSecondColor) / 255f,
                 Color.green(mSecondColor) / 255f,
                 Color.blue(mSecondColor) / 255f};
 
-        String firstColorString[] = new String[3];
-        String secondColorString[] = new String[3];
+        String[] firstColorString = new String[3];
+        String[] secondColorString = new String[3];
 
         firstColorString[0] = "first[0] = " + first[0] + ";\n";
         firstColorString[1] = "first[1] = " + first[1] + ";\n";
@@ -59,11 +57,11 @@ public class DuotoneFilter extends BaseFilter {
         secondColorString[1] = "second[1] = " + second[1] + ";\n";
         secondColorString[2] = "second[2] = " + second[2] + ";\n";
 
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
+        return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "uniform samplerExternalOES sTexture;\n"
-                + " vec3 first;\n"
-                + " vec3 second;\n"
+                + "vec3 first;\n"
+                + "vec3 second;\n"
                 + "varying vec2 vTextureCoord;\n"
                 + "void main() {\n"
                 // Parameters that were created above
@@ -73,13 +71,10 @@ public class DuotoneFilter extends BaseFilter {
                 + secondColorString[0]
                 + secondColorString[1]
                 + secondColorString[2]
-
                 + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
                 + "  float energy = (color.r + color.g + color.b) * 0.3333;\n"
                 + "  vec3 new_color = (1.0 - energy) * first + energy * second;\n"
-                + "  gl_FragColor = vec4(new_color.rgb, color.a);\n" + "}\n";
-
-        return shader;
-
+                + "  gl_FragColor = vec4(new_color.rgb, color.a);\n"
+                + "}\n";
     }
 }

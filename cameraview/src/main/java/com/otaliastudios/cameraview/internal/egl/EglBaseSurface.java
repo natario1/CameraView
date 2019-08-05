@@ -25,6 +25,7 @@ import androidx.annotation.RequiresApi;
 import android.util.Log;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.internal.GlUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,7 +41,7 @@ import java.nio.ByteOrder;
  * There can be multiple surfaces associated with a single context.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class EglBaseSurface extends EglElement {
+public class EglBaseSurface {
     protected static final String TAG = EglBaseSurface.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
@@ -187,7 +188,7 @@ public class EglBaseSurface extends EglElement {
         buf.order(ByteOrder.LITTLE_ENDIAN);
         GLES20.glReadPixels(0, 0, width, height,
                 GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
-        check("glReadPixels");
+        GlUtils.checkError("glReadPixels");
         buf.rewind();
 
         BufferedOutputStream bos = null;
@@ -229,7 +230,7 @@ public class EglBaseSurface extends EglElement {
         ByteBuffer buf = ByteBuffer.allocateDirect(width * height * 4);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         GLES20.glReadPixels(0, 0, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
-        check("glReadPixels");
+        GlUtils.checkError("glReadPixels");
         buf.rewind();
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream(buf.array().length);

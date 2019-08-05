@@ -1,6 +1,13 @@
 package com.otaliastudios.cameraview.filters;
 
+import android.opengl.GLES20;
+
 import androidx.annotation.NonNull;
+
+import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.internal.GlUtils;
+
+import java.nio.FloatBuffer;
 
 /**
  * A Base abstract class that every effect must extend so that there is a common getShader method.
@@ -22,99 +29,164 @@ import androidx.annotation.NonNull;
  */
 public abstract class BaseFilter implements Filter {
 
-    /**
-     * Vertex shader code written in Shader Language (C) and stored as String.
-     * This wil be used by GL to apply any effect.
-     */
+    private final static String TAG = BaseFilter.class.getSimpleName();
+    private final static CameraLogger LOG = CameraLogger.create(TAG);
+
+    private final static String DEFAULT_VERTEX_POSITION_NAME = "aPosition";
+    private final static String DEFAULT_VERTEX_TEXTURE_COORDINATE_NAME = "aTextureCoord";
+    private final static String DEFAULT_VERTEX_MVP_MATRIX_NAME = "uMVPMatrix";
+    private final static String DEFAULT_VERTEX_TRANSFORM_MATRIX_NAME = "uTexMatrix";
+    private final static String DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME = "vTextureCoord";
+
     @NonNull
-    String mVertexShader =
-            "uniform mat4 uMVPMatrix;\n" +
-                    "uniform mat4 uTexMatrix;\n" +
-                    "attribute vec4 aPosition;\n" +
-                    "attribute vec4 aTextureCoord;\n" +
-                    "varying vec2 vTextureCoord;\n" +
-                    "void main() {\n" +
-                    "    gl_Position = uMVPMatrix * aPosition;\n" +
-                    "    vTextureCoord = (uTexMatrix * aTextureCoord).xy;\n" +
-                    "}\n";
+    private static String createDefaultVertexShader(@NonNull String vertexPositionName,
+                                                    @NonNull String vertexTextureCoordinateName,
+                                                    @NonNull String vertexModelViewProjectionMatrixName,
+                                                    @NonNull String vertexTransformMatrixName,
+                                                    @NonNull String fragmentTextureCoordinateName) {
+        return "uniform mat4 "+vertexModelViewProjectionMatrixName+";\n" +
+                "uniform mat4 "+vertexTransformMatrixName+";\n" +
+                "attribute vec4 "+vertexPositionName+";\n" +
+                "attribute vec4 "+vertexTextureCoordinateName+";\n" +
+                "varying vec2 "+fragmentTextureCoordinateName+";\n" +
+                "void main() {\n" +
+                "    gl_Position = "+vertexModelViewProjectionMatrixName+" * "+vertexPositionName+";\n" +
+                "    vTextureCoord = ("+vertexTransformMatrixName+" * "+vertexTextureCoordinateName+").xy;\n" +
+                "}\n";
+    }
 
-
-    /**
-     * Fragment shader code written in Shader Language (C) and stored as String.
-     * This wil be used by GL to apply any effect.
-     */
     @NonNull
-    String mFragmentShader =
-            "#extension GL_OES_EGL_image_external : require\n"
-                    + "precision mediump float;\n"
-                    + "varying vec2 vTextureCoord;\n"
-                    + "uniform samplerExternalOES sTexture;\n"
-                    + "void main() {\n"
-                    + "  gl_FragColor = texture2D(sTexture, vTextureCoord);\n"
-                    + "}\n";
-
-    /**
-     * Width and height of previewing GlSurfaceview.
-     * This will be used by a few effects.
-     */
-    int mPreviewingViewWidth = 0;
-    int mPreviewingViewHeight = 0;
-
-    public void setOutputSize(int width, int height) {
-        mPreviewingViewWidth = width;
-        mPreviewingViewHeight = height;
+    private static String createDefaultFragmentShader(@NonNull String fragmentTextureCoordinateName) {
+        return "#extension GL_OES_EGL_image_external : require\n"
+                + "precision mediump float;\n"
+                + "varying vec2 "+fragmentTextureCoordinateName+";\n"
+                + "uniform samplerExternalOES sTexture;\n"
+                + "void main() {\n"
+                + "  gl_FragColor = texture2D(sTexture, "+fragmentTextureCoordinateName+");\n"
+                + "}\n";
     }
 
-    /**
-     * Local variable name which were used in the shader code.
-     * These will be used by openGL program to render these vertex and fragment shader
-     */
-    private String mPositionVariableName = "aPosition";
-    private String mTextureCoordinateVariableName = "aTextureCoord";
-    private String mMVPMatrixVariableName = "uMVPMatrix";
-    private String mTextureMatrixVariableName = "uTexMatrix";
+    // When the model/view/projection matrix is identity, this will exactly cover the viewport.
+    private static final FloatBuffer VERTEX_POSITION = GlUtils.floatBuffer(new float[]{
+            -1.0f, -1.0f, // 0 bottom left
+            1.0f, -1.0f, // 1 bottom right
+            -1.0f, 1.0f, // 2 top left
+            1.0f, 1.0f, // 3 top right
+    });
 
-    public String getPositionVariableName() {
-        return mPositionVariableName;
+    private static final FloatBuffer TEXTURE_COORDINATES = GlUtils.floatBuffer(new float[]{
+            0.0f, 0.0f, // 0 bottom left
+            1.0f, 0.0f, // 1 bottom right
+            0.0f, 1.0f, // 2 top left
+            1.0f, 1.0f  // 3 top right
+    });
+
+
+    private int vertexModelViewProjectionMatrixLocation = -1;
+    private int vertexTranformMatrixLocation = -1;
+    private int vertexPositionLocation = -1;
+    private int vertexTextureCoordinateLocation = -1;
+
+    @SuppressWarnings("WeakerAccess")
+    protected String vertexPositionName = DEFAULT_VERTEX_POSITION_NAME;
+    @SuppressWarnings("WeakerAccess")
+    protected String vertexTextureCoordinateName = DEFAULT_VERTEX_TEXTURE_COORDINATE_NAME;
+    @SuppressWarnings("WeakerAccess")
+    protected String vertexModelViewProjectionMatrixName = DEFAULT_VERTEX_MVP_MATRIX_NAME;
+    @SuppressWarnings("WeakerAccess")
+    protected String vertexTransformMatrixName = DEFAULT_VERTEX_TRANSFORM_MATRIX_NAME;
+    @SuppressWarnings({"unused", "WeakerAccess"})
+    protected String fragmentTextureCoordinateName = DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME;
+
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    protected String createDefaultVertexShader() {
+        return createDefaultVertexShader(vertexPositionName,
+                vertexTextureCoordinateName,
+                vertexModelViewProjectionMatrixName,
+                vertexTransformMatrixName,
+                fragmentTextureCoordinateName);
     }
 
-    public void setPositionVariableName(String positionVariableName) {
-        this.mPositionVariableName = positionVariableName;
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    protected String createDefaultFragmentShader() {
+        return createDefaultFragmentShader(fragmentTextureCoordinateName);
     }
 
-    public String getTexttureCoordinateVariableName() {
-        return mTextureCoordinateVariableName;
-    }
-
-    public void setTexttureCoordinateVariableName(String texttureCoordinateVariableName) {
-        this.mTextureCoordinateVariableName = texttureCoordinateVariableName;
-    }
-
-    public String getMVPMatrixVariableName() {
-        return mMVPMatrixVariableName;
-    }
-
-    public void setMVPMatrixVariableName(String mvpMatrixVariableName) {
-        this.mMVPMatrixVariableName = mvpMatrixVariableName;
-    }
-
-    public String getTextureMatrixVariableName() {
-        return mTextureMatrixVariableName;
-    }
-
-    public void setTextureMatrixVariableName(String textureMatrixVariableName) {
-        this.mTextureMatrixVariableName = textureMatrixVariableName;
-    }
-
-    /**
-     * Get vertex Shader code
-     *
-     * @return complete shader code in C
-     */
     @Override
+    public void onCreate(int programHandle) {
+        vertexPositionLocation = GLES20.glGetAttribLocation(programHandle, vertexPositionName);
+        GlUtils.checkLocation(vertexPositionLocation, vertexPositionName);
+        vertexTextureCoordinateLocation = GLES20.glGetAttribLocation(programHandle, vertexTextureCoordinateName);
+        GlUtils.checkLocation(vertexTextureCoordinateLocation, vertexTextureCoordinateName);
+        vertexModelViewProjectionMatrixLocation = GLES20.glGetUniformLocation(programHandle, vertexModelViewProjectionMatrixName);
+        GlUtils.checkLocation(vertexModelViewProjectionMatrixLocation, vertexModelViewProjectionMatrixName);
+        vertexTranformMatrixLocation = GLES20.glGetUniformLocation(programHandle, vertexTransformMatrixName);
+        GlUtils.checkLocation(vertexTranformMatrixLocation, vertexTransformMatrixName);
+    }
+
+    @Override
+    public void onDestroy() {
+        vertexModelViewProjectionMatrixLocation = -1;
+        vertexTranformMatrixLocation = -1;
+        vertexTextureCoordinateLocation = -1;
+        vertexPositionLocation = -1;
+    }
+
     @NonNull
+    @Override
     public String getVertexShader() {
-        return mVertexShader;
+        return createDefaultVertexShader();
+    }
+
+    @Override
+    public void setOutputSize(int width, int height) {
+
+    }
+
+    @Override
+    public void draw(float[] transformMatrix) {
+        onPreDraw(transformMatrix);
+        onDraw();
+        onPostDraw();
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected void onPreDraw(float[] transformMatrix) {
+        // Copy the model / view / projection matrix over.
+        GLES20.glUniformMatrix4fv(vertexModelViewProjectionMatrixLocation, 1, false, GlUtils.IDENTITY_MATRIX, 0);
+        GlUtils.checkError("glUniformMatrix4fv");
+
+        // Copy the texture transformation matrix over.
+        GLES20.glUniformMatrix4fv(vertexTranformMatrixLocation, 1, false, transformMatrix, 0);
+        GlUtils.checkError("glUniformMatrix4fv");
+
+        // Enable the "aPosition" vertex attribute.
+        // Connect vertexBuffer to "aPosition".
+        GLES20.glEnableVertexAttribArray(vertexPositionLocation);
+        GlUtils.checkError("glEnableVertexAttribArray");
+        GLES20.glVertexAttribPointer(vertexPositionLocation, 2, GLES20.GL_FLOAT, false, 8, VERTEX_POSITION);
+        GlUtils.checkError("glVertexAttribPointer");
+
+        // Enable the "aTextureCoord" vertex attribute.
+        // Connect texBuffer to "aTextureCoord".
+        GLES20.glEnableVertexAttribArray(vertexTextureCoordinateLocation);
+        GlUtils.checkError("glEnableVertexAttribArray");
+        GLES20.glVertexAttribPointer(vertexTextureCoordinateLocation, 2, GLES20.GL_FLOAT, false, 8, TEXTURE_COORDINATES);
+        GlUtils.checkError("glVertexAttribPointer");
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected void onDraw() {
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        GlUtils.checkError("glDrawArrays");
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected void onPostDraw() {
+        GLES20.glDisableVertexAttribArray(vertexPositionLocation);
+        GLES20.glDisableVertexAttribArray(vertexTextureCoordinateLocation);
     }
 
 }

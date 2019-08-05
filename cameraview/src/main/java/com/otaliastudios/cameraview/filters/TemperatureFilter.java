@@ -8,11 +8,7 @@ import androidx.annotation.NonNull;
 public class TemperatureFilter extends BaseFilter {
     private float scale = 0f;
 
-    /**
-     * Initialize Effect
-     */
-    public TemperatureFilter() {
-    }
+    public TemperatureFilter() { }
 
     /**
      * @param scale Float, between 0 and 1, with 0 indicating cool, and 1
@@ -33,13 +29,11 @@ public class TemperatureFilter extends BaseFilter {
     @NonNull
     @Override
     public String getFragmentShader() {
-
         String scaleString = "scale = " + (2.0f * scale - 1.0f) + ";\n";
-
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
+        return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "uniform samplerExternalOES sTexture;\n"
-                + " float scale;\n"
+                + "float scale;\n"
                 + "varying vec2 vTextureCoord;\n"
                 + "void main() {\n" // Parameters that were created above
                 + scaleString
@@ -52,10 +46,10 @@ public class TemperatureFilter extends BaseFilter {
                 + "  }\n"
                 + "  float max_value = max(new_color.r, max(new_color.g, new_color.b));\n"
                 + "  if (max_value > 1.0) { \n"
-                + "     new_color /= max_value;\n" + "  } \n"
-                + "  gl_FragColor = vec4(new_color, color.a);\n" + "}\n";
-
-        return shader;
+                + "     new_color /= max_value;\n"
+                + "  } \n"
+                + "  gl_FragColor = vec4(new_color, color.a);\n"
+                + "}\n";
 
     }
 }

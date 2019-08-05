@@ -7,13 +7,19 @@ import androidx.annotation.NonNull;
  * Applies lomo-camera style effect to your preview.
  */
 public class VignetteFilter extends BaseFilter {
+
     private float mScale = 0.85f;
     private float mShade = 0.5f;
+    private int mOutputWidth = 1;
+    private int mOutputHeight = 1;
 
-    /**
-     * Initialize Effect
-     */
-    public VignetteFilter() {
+    public VignetteFilter() { }
+
+    @Override
+    public void setOutputSize(int width, int height) {
+        super.setOutputSize(width, height);
+        mOutputWidth = width;
+        mOutputHeight = height;
     }
 
     /**
@@ -45,32 +51,30 @@ public class VignetteFilter extends BaseFilter {
     @NonNull
     @Override
     public String getFragmentShader() {
-        float scale[] = new float[2];
-        if (mPreviewingViewWidth > mPreviewingViewHeight) {
+        float[] scale = new float[2];
+        if (mOutputWidth > mOutputHeight) {
             scale[0] = 1f;
-            scale[1] = ((float) mPreviewingViewHeight) / mPreviewingViewWidth;
+            scale[1] = ((float) mOutputHeight) / mOutputWidth;
         } else {
-            scale[0] = ((float) mPreviewingViewWidth) / mPreviewingViewHeight;
+            scale[0] = ((float) mOutputWidth) / mOutputHeight;
             scale[1] = 1f;
         }
         float max_dist = ((float) Math.sqrt(scale[0] * scale[0] + scale[1]
                 * scale[1])) * 0.5f;
 
-        String scaleString[] = new String[2];
-
+        String[] scaleString = new String[2];
         scaleString[0] = "scale[0] = " + scale[0] + ";\n";
         scaleString[1] = "scale[1] = " + scale[1] + ";\n";
         String inv_max_distString = "inv_max_dist = " + 1.0f / max_dist + ";\n";
         String shadeString = "shade = " + mShade + ";\n";
 
-        // The 'range' is between 1.3 to 0.6. When scale is zero then range is
-        // 1.3
+        // The 'range' is between 1.3 to 0.6. When scale is zero then range is 1.3
         // which means no vignette at all because the luminousity difference is
         // less than 1/256 and will cause nothing.
         String rangeString = "range = "
                 + (1.30f - (float) Math.sqrt(mScale) * 0.7f) + ";\n";
 
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
+        return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "uniform samplerExternalOES sTexture;\n"
                 + " float range;\n"
@@ -92,8 +96,5 @@ public class VignetteFilter extends BaseFilter {
                 + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
                 + "  gl_FragColor = vec4(color.rgb * lumen, color.a);\n"
                 + "}\n";
-
-        return shader;
-
     }
 }

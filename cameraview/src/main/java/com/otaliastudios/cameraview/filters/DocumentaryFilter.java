@@ -9,30 +9,38 @@ import java.util.Random;
  * Applies black and white documentary style effect on preview.
  */
 public class DocumentaryFilter extends BaseFilter {
-    private Random mRandom;
+    private final Random mRandom = new Random(new Date().getTime());
+    private int mOutputWidth = 1;
+    private int mOutputHeight = 1;
 
     public DocumentaryFilter() {
-        mRandom = new Random(new Date().getTime());
+    }
+
+    @Override
+    public void setOutputSize(int width, int height) {
+        super.setOutputSize(width, height);
+        mOutputWidth = width;
+        mOutputHeight = height;
     }
 
     @NonNull
     @Override
     public String getFragmentShader() {
-        float scale[] = new float[2];
-        if (mPreviewingViewWidth > mPreviewingViewHeight) {
+        float[] scale = new float[2];
+        if (mOutputWidth > mOutputHeight) {
             scale[0] = 1f;
-            scale[1] = ((float) mPreviewingViewHeight) / mPreviewingViewWidth;
+            scale[1] = ((float) mOutputHeight) / mOutputWidth;
         } else {
-            scale[0] = ((float) mPreviewingViewWidth) / mPreviewingViewHeight;
+            scale[0] = ((float) mOutputWidth) / mOutputHeight;
             scale[1] = 1f;
         }
         float max_dist = ((float) Math.sqrt(scale[0] * scale[0] + scale[1]
                 * scale[1])) * 0.5f;
 
-        float seed[] = {mRandom.nextFloat(), mRandom.nextFloat()};
+        float[] seed = {mRandom.nextFloat(), mRandom.nextFloat()};
 
-        String scaleString[] = new String[2];
-        String seedString[] = new String[2];
+        String[] scaleString = new String[2];
+        String[] seedString = new String[2];
 
         scaleString[0] = "scale[0] = " + scale[0] + ";\n";
         scaleString[1] = "scale[1] = " + scale[1] + ";\n";
@@ -43,7 +51,7 @@ public class DocumentaryFilter extends BaseFilter {
         String inv_max_distString = "inv_max_dist = " + 1.0f / max_dist + ";\n";
         String stepsizeString = "stepsize = " + 1.0f / 255.0f + ";\n";
 
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
+        return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "uniform samplerExternalOES sTexture;\n"
                 + " vec2 seed;\n"
@@ -78,19 +86,14 @@ public class DocumentaryFilter extends BaseFilter {
                 + "  vec3 xform = clamp(2.0 * color.rgb, 0.0, 1.0);\n"
                 + "  vec3 temp = clamp(2.0 * (color.rgb + stepsize), 0.0, 1.0);\n"
                 + "  vec3 new_color = clamp(xform + (temp - xform) * (dither - 0.5), 0.0, 1.0);\n"
-                +
                 // grayscale
-                "  float gray = dot(new_color, vec3(0.299, 0.587, 0.114));\n"
+                + "  float gray = dot(new_color, vec3(0.299, 0.587, 0.114));\n"
                 + "  new_color = vec3(gray, gray, gray);\n"
-                +
                 // vignette
-                "  vec2 coord = vTextureCoord - vec2(0.5, 0.5);\n"
+                + "  vec2 coord = vTextureCoord - vec2(0.5, 0.5);\n"
                 + "  float dist = length(coord * scale);\n"
                 + "  float lumen = 0.85 / (1.0 + exp((dist * inv_max_dist - 0.83) * 20.0)) + 0.15;\n"
                 + "  gl_FragColor = vec4(new_color * lumen, color.a);\n"
                 + "}\n";
-
-        return shader;
-
     }
 }

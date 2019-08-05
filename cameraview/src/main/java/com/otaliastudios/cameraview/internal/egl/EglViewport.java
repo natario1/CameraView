@@ -9,50 +9,16 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.filters.Filter;
 import com.otaliastudios.cameraview.filters.NoFilter;
+import com.otaliastudios.cameraview.internal.GlUtils;
 
-import java.nio.FloatBuffer;
 
-/**
- * This is a mix of 3 grafika classes, FullFrameRect, Texture2dProgram, Drawable2d.
- */
-public class EglViewport extends EglElement {
+public class EglViewport {
 
     private final static CameraLogger LOG = CameraLogger.create(EglViewport.class.getSimpleName());
 
-    // Stuff from Drawable2d.FULL_RECTANGLE
-    // A full square, extending from -1 to +1 in both dimensions.
-    // When the model/view/projection matrix is identity, this will exactly cover the viewport.
-    private static final float[] FULL_RECTANGLE_COORDS = {
-            -1.0f, -1.0f,   // 0 bottom left
-            1.0f, -1.0f,   // 1 bottom right
-            -1.0f, 1.0f,   // 2 top left
-            1.0f, 1.0f,   // 3 top right
-    };
-
-    // Stuff from Drawable2d.FULL_RECTANGLE
-    // A full square, extending from -1 to +1 in both dimensions.
-    private static final float[] FULL_RECTANGLE_TEX_COORDS = {
-            0.0f, 0.0f,     // 0 bottom left
-            1.0f, 0.0f,     // 1 bottom right
-            0.0f, 1.0f,     // 2 top left
-            1.0f, 1.0f      // 3 top right
-    };
-
-    // Stuff from Drawable2d.FULL_RECTANGLE
-    private final static int VERTEX_COUNT = FULL_RECTANGLE_COORDS.length / 2;
-    private FloatBuffer mVertexCoordinatesArray = floatBuffer(FULL_RECTANGLE_COORDS);
-    private FloatBuffer mTextureCoordinatesArray = floatBuffer(FULL_RECTANGLE_TEX_COORDS);
-
-    // Stuff from Texture2dProgram
     private int mProgramHandle = -1;
     private int mTextureTarget;
     private int mTextureUnit;
-
-    // Program attributes
-    private int muMVPMatrixLocation;
-    private int muTexMatrixLocation;
-    private int maPositionLocation;
-    private int maTextureCoordLocation;
 
     private Filter mFilter;
     private boolean mFilterChanged = false;
@@ -70,19 +36,13 @@ public class EglViewport extends EglElement {
 
     private void createProgram() {
         release(); // Release old program if present.
-        mProgramHandle = createProgram(mFilter.getVertexShader(), mFilter.getFragmentShader());
-        maPositionLocation = GLES20.glGetAttribLocation(mProgramHandle, mFilter.getPositionVariableName());
-        checkLocation(maPositionLocation, mFilter.getPositionVariableName());
-        maTextureCoordLocation = GLES20.glGetAttribLocation(mProgramHandle, mFilter.getTexttureCoordinateVariableName());
-        checkLocation(maTextureCoordLocation, mFilter.getTexttureCoordinateVariableName());
-        muMVPMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, mFilter.getMVPMatrixVariableName());
-        checkLocation(muMVPMatrixLocation, mFilter.getMVPMatrixVariableName());
-        muTexMatrixLocation = GLES20.glGetUniformLocation(mProgramHandle, mFilter.getTextureMatrixVariableName());
-        checkLocation(muTexMatrixLocation, mFilter.getTextureMatrixVariableName());
+        mProgramHandle = GlUtils.createProgram(mFilter.getVertexShader(), mFilter.getFragmentShader());
+        mFilter.onCreate(mProgramHandle);
     }
 
     public void release() {
         if (mProgramHandle != -1) {
+            mFilter.onDestroy();
             GLES20.glDeleteProgram(mProgramHandle);
             mProgramHandle = -1;
         }
@@ -91,18 +51,18 @@ public class EglViewport extends EglElement {
     public int createTexture() {
         int[] textures = new int[1];
         GLES20.glGenTextures(1, textures, 0);
-        check("glGenTextures");
+        GlUtils.checkError("glGenTextures");
 
         int texId = textures[0];
         GLES20.glActiveTexture(mTextureUnit);
         GLES20.glBindTexture(mTextureTarget, texId);
-        check("glBindTexture " + texId);
+        GlUtils.checkError("glBindTexture " + texId);
 
         GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-        check("glTexParameter");
+        GlUtils.checkError("glTexParameter");
 
         return texId;
     }
@@ -113,60 +73,23 @@ public class EglViewport extends EglElement {
     }
 
     public void drawFrame(int textureId, float[] textureMatrix) {
-        drawFrame(textureId, textureMatrix,
-                mVertexCoordinatesArray,
-                mTextureCoordinatesArray);
-    }
-
-    private void drawFrame(int textureId, float[] textureMatrix,
-                           FloatBuffer vertexBuffer,
-                           FloatBuffer texBuffer) {
-
         if (mFilterChanged) {
             createProgram();
             mFilterChanged = false;
         }
 
-        check("draw start");
+        GlUtils.checkError("draw start");
 
-        // Select the program.
+        // Select the program and the active texture.
         GLES20.glUseProgram(mProgramHandle);
-        check("glUseProgram");
-
-        // Set the texture.
+        GlUtils.checkError("glUseProgram");
         GLES20.glActiveTexture(mTextureUnit);
         GLES20.glBindTexture(mTextureTarget, textureId);
 
-        // Copy the model / view / projection matrix over.
-        GLES20.glUniformMatrix4fv(muMVPMatrixLocation, 1, false, IDENTITY_MATRIX, 0);
-        check("glUniformMatrix4fv");
+        // Draw.
+        mFilter.draw(textureMatrix);
 
-        // Copy the texture transformation matrix over.
-        GLES20.glUniformMatrix4fv(muTexMatrixLocation, 1, false, textureMatrix, 0);
-        check("glUniformMatrix4fv");
-
-        // Enable the "aPosition" vertex attribute.
-        // Connect vertexBuffer to "aPosition".
-        GLES20.glEnableVertexAttribArray(maPositionLocation);
-        check("glEnableVertexAttribArray");
-        GLES20.glVertexAttribPointer(maPositionLocation, 2, GLES20.GL_FLOAT, false, 8, vertexBuffer);
-        check("glVertexAttribPointer");
-
-        // Enable the "aTextureCoord" vertex attribute.
-        // Connect texBuffer to "aTextureCoord".
-        GLES20.glEnableVertexAttribArray(maTextureCoordLocation);
-        check("glEnableVertexAttribArray");
-        GLES20.glVertexAttribPointer(maTextureCoordLocation, 2, GLES20.GL_FLOAT, false, 8, texBuffer);
-        check("glVertexAttribPointer");
-
-
-        // Draw the rect.
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_COUNT);
-        check("glDrawArrays");
-
-        // Done -- disable vertex array, texture, and program.
-        GLES20.glDisableVertexAttribArray(maPositionLocation);
-        GLES20.glDisableVertexAttribArray(maTextureCoordLocation);
+        // Release.
         GLES20.glBindTexture(mTextureTarget, 0);
         GLES20.glUseProgram(0);
     }

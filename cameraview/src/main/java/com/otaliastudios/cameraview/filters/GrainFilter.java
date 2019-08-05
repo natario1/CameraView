@@ -9,14 +9,20 @@ import java.util.Random;
  * Applies film grain effect to preview.
  */
 public class GrainFilter extends BaseFilter {
-    private float strength = 0.5f;
-    private Random mRandom;
 
-    /**
-     * Initialize Effect
-     */
-    public GrainFilter() {
-        mRandom = new Random(new Date().getTime());
+    private float strength = 0.5f;
+    private Random mRandom = new Random(new Date().getTime());
+    private int mOutputWidth = 1;
+    private int mOutputHeight = 1;
+
+
+    public GrainFilter() { }
+
+    @Override
+    public void setOutputSize(int width, int height) {
+        super.setOutputSize(width, height);
+        mOutputWidth = width;
+        mOutputHeight = height;
     }
 
     /**
@@ -40,17 +46,17 @@ public class GrainFilter extends BaseFilter {
     @NonNull
     @Override
     public String getFragmentShader() {
-        float seed[] = {mRandom.nextFloat(), mRandom.nextFloat()};
+        float[] seed = {mRandom.nextFloat(), mRandom.nextFloat()};
         String scaleString = "scale = " + strength + ";\n";
-        String seedString[] = new String[2];
+        String[] seedString = new String[2];
         seedString[0] = "seed[0] = " + seed[0] + ";\n";
         seedString[1] = "seed[1] = " + seed[1] + ";\n";
-        String stepX = "stepX = " + 0.5f / mPreviewingViewWidth + ";\n";
-        String stepY = "stepY = " + 0.5f / mPreviewingViewHeight + ";\n";
+        String stepX = "stepX = " + 0.5f / mOutputWidth + ";\n";
+        String stepY = "stepY = " + 0.5f / mOutputHeight + ";\n";
 
         // locString[1] = "loc[1] = loc[1]+" + seedString[1] + ";\n";
 
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
+        return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + " vec2 seed;\n"
                 + "varying vec2 vTextureCoord;\n"
@@ -92,7 +98,6 @@ public class GrainFilter extends BaseFilter {
                 + "  gl_FragColor = vec4(color.rgb * weight, color.a);\n"
                 + "  gl_FragColor = gl_FragColor+vec4(rand(vTextureCoord + seed), rand(vTextureCoord + seed),rand(vTextureCoord + seed),1);\n"
                 + "}\n";
-        return shader;
 
     }
 }

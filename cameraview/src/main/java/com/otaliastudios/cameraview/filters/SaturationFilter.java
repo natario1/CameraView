@@ -40,11 +40,11 @@ public class SaturationFilter extends BaseFilter {
     @Override
     public String getFragmentShader() {
         float shift = 1.0f / 255.0f;
-        float weights[] = {2f / 8f, 5f / 8f, 1f / 8f};
-        float exponents[] = new float[3];
+        float[] weights = {2f / 8f, 5f / 8f, 1f / 8f};
+        float[] exponents = new float[3];
 
-        String weightsString[] = new String[3];
-        String exponentsString[] = new String[3];
+        String[] weightsString = new String[3];
+        String[] exponentsString = new String[3];
         exponentsString[0] = "";
         exponentsString[1] = "";
         exponentsString[2] = "";
@@ -65,11 +65,15 @@ public class SaturationFilter extends BaseFilter {
         weightsString[2] = "weights[2] = " + weights[2] + ";\n";
         String shiftString = "shift = " + shift + ";\n";
 
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
+        return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
-                + "uniform samplerExternalOES sTexture;\n" + " float scale;\n"
-                + " float shift;\n" + " vec3 weights;\n" + " vec3 exponents;\n"
-                + "varying vec2 vTextureCoord;\n" + "void main() {\n"
+                + "uniform samplerExternalOES sTexture;\n"
+                + "float scale;\n"
+                + "float shift;\n"
+                + "vec3 weights;\n"
+                + "vec3 exponents;\n"
+                + "varying vec2 vTextureCoord;\n"
+                + "void main() {\n"
                 // Parameters that were created above
                 + weightsString[0]
                 + weightsString[1]
@@ -94,9 +98,6 @@ public class SaturationFilter extends BaseFilter {
                 + "  float max_color = max(max(max(verynew_color.r, verynew_color.g), verynew_color.b), 1.0);\n"
                 + "  gl_FragColor = gl_FragColor+vec4(verynew_color / max_color, color.a);\n"
                 + "}\n";
-
-        return shader;
-
     }
 
 }

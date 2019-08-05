@@ -7,6 +7,6 @@ public class NoFilter extends BaseFilter {
     @NonNull
     @Override
     public String getFragmentShader() {
-        return mFragmentShader;
+        return createDefaultFragmentShader();
     }
 }

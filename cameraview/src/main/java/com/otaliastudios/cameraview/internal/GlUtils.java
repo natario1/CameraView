@@ -1,8 +1,10 @@
-package com.otaliastudios.cameraview.internal.egl;
+package com.otaliastudios.cameraview.internal;
 
 
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+
+import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.CameraLogger;
 
@@ -10,18 +12,18 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-class EglElement {
+public class GlUtils {
 
-    private final static CameraLogger LOG = CameraLogger.create(EglElement.class.getSimpleName());
+    private final static String TAG = GlUtils.class.getSimpleName();
+    private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     // Identity matrix for general use.
-    protected static final float[] IDENTITY_MATRIX = new float[16];
+    public static final float[] IDENTITY_MATRIX = new float[16];
     static {
         Matrix.setIdentityM(IDENTITY_MATRIX, 0);
     }
 
-    // Check for GLES errors.
-    protected static void check(String opName) {
+    public static void checkError(@NonNull String opName) {
         int error = GLES20.glGetError();
         if (error != GLES20.GL_NO_ERROR) {
             String message = LOG.e("Error during", opName, "glError 0x", Integer.toHexString(error));
@@ -29,18 +31,17 @@ class EglElement {
         }
     }
 
-    // Check for valid location.
-    protected static void checkLocation(int location, String label) {
+    public static void checkLocation(int location, @NonNull String name) {
         if (location < 0) {
-            String message = LOG.e("Unable to locate", label, "in program");
+            String message = LOG.e("Unable to locate", name, "in program");
             throw new RuntimeException(message);
         }
     }
-
     // Compiles the given shader, returns a handle.
-    protected static int loadShader(int shaderType, String source) {
+    @SuppressWarnings("WeakerAccess")
+    public static int loadShader(int shaderType, @NonNull String source) {
         int shader = GLES20.glCreateShader(shaderType);
-        check("glCreateShader type=" + shaderType);
+        checkError("glCreateShader type=" + shaderType);
         GLES20.glShaderSource(shader, source);
         GLES20.glCompileShader(shader);
         int[] compiled = new int[1];
@@ -54,21 +55,21 @@ class EglElement {
     }
 
     // Creates a program with given vertex shader and pixel shader.
-    protected static int createProgram(String vertexSource, String fragmentSource) {
+    public static int createProgram(@NonNull String vertexSource, @NonNull String fragmentSource) {
         int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource);
         if (vertexShader == 0) return 0;
         int pixelShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource);
         if (pixelShader == 0) return 0;
 
         int program = GLES20.glCreateProgram();
-        check("glCreateProgram");
+        checkError("glCreateProgram");
         if (program == 0) {
             LOG.e("Could not create program");
         }
         GLES20.glAttachShader(program, vertexShader);
-        check("glAttachShader");
+        checkError("glAttachShader");
         GLES20.glAttachShader(program, pixelShader);
-        check("glAttachShader");
+        checkError("glAttachShader");
         GLES20.glLinkProgram(program);
         int[] linkStatus = new int[1];
         GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
@@ -81,7 +82,7 @@ class EglElement {
     }
 
     // Allocates a direct float buffer, and populates it with the float array data.
-    protected static FloatBuffer floatBuffer(float[] coords) {
+    public static FloatBuffer floatBuffer(@NonNull float[] coords) {
         // Allocate a direct ByteBuffer, using 4 bytes per float, and copy coords into it.
         ByteBuffer bb = ByteBuffer.allocateDirect(coords.length * 4);
         bb.order(ByteOrder.nativeOrder());
