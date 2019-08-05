@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Inverts the preview colors. This can also be known as negative Effect.
  */
-public class InvertColorsEffect extends BaseShaderEffect {
+public class InvertColorsEffect extends Filter {
     /**
      * Initialize Effect
      */

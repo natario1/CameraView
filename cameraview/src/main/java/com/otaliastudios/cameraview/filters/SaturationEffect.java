@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Adjusts color saturation of preview.
  */
-public class SaturationEffect extends BaseShaderEffect {
+public class SaturationEffect extends Filter {
     private float scale = 1.0f;
 
     /**

@@ -1,12 +1,12 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Applies a cross process effect on preview, in which the red and green channels
  * are enhanced while the blue channel is restricted.
  */
-public class CrossProcessEffect extends BaseShaderEffect {
+public class CrossProcessEffect extends Filter {
 
     /**
      * Initialize Effect

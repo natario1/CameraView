@@ -13,12 +13,10 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.location.Location;
 import android.media.MediaActionSound;
-import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,6 +47,8 @@ import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.engine.offset.Reference;
+import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filters.Filters;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -71,8 +71,6 @@ import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
 import com.otaliastudios.cameraview.preview.TextureCameraPreview;
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
-import com.otaliastudios.cameraview.shadereffects.ShaderEffectFactory;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
@@ -2136,33 +2134,20 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     //region Effects
 
-    public GLSurfaceView getCurrentPreviewingGlSurfaceView() {
+    public void setFilter(Filters filter) {
         if (mCameraPreview instanceof GlCameraPreview) {
-            return ((GlCameraPreview) mCameraPreview).getView();
-        }
-
-        LOG.w("getCurrentPreviewingGlSurfaceView", "current preview is not GLSurfaceView");
-        return null;
-    }
-
-    public void changeEffect(ShaderEffectFactory.ShaderEffects effect) {
-        if (mCameraPreview instanceof GlCameraPreview) {
-            GLSurfaceView previewingSurfaceView = getCurrentPreviewingGlSurfaceView();
-            if (previewingSurfaceView != null) {
-                BaseShaderEffect shaderEffect = ShaderEffectFactory.getShaderFromFactory(effect, previewingSurfaceView);
-
-                ((GlCameraPreview) mCameraPreview).setShaderEffect(shaderEffect);
-            }
+            Filter shaderEffect = filter.newInstance();
+            ((GlCameraPreview) mCameraPreview).setShaderEffect(shaderEffect);
         } else {
-            LOG.w("changeEffect", "changeEffect is supported only for GLSurfaceView");
+            LOG.w("setFilter", "setFilter is supported only for GLSurfaceView");
         }
     }
 
-    public void changeEffect(BaseShaderEffect shaderEffect) {
+    public void setFilter(Filter shaderEffect) {
         if (mCameraPreview instanceof GlCameraPreview) {
             ((GlCameraPreview) mCameraPreview).setShaderEffect(shaderEffect);
         } else {
-            LOG.w("changeEffect", "changeEffect is supported only for GLSurfaceView");
+            LOG.w("setFilter", "setFilter is supported only for GLSurfaceView");
         }
     }
 

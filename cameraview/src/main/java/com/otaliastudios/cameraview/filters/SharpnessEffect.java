@@ -1,12 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import android.opengl.GLSurfaceView;
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Sharpens the preview.
  */
-public class SharpnessEffect extends BaseShaderEffect {
+public class SharpnessEffect extends Filter {
     private float scale = 0.5f;
 
     /**

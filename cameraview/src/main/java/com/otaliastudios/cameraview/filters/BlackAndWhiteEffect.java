@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Converts the preview into black and white colors
  */
-public class BlackAndWhiteEffect extends BaseShaderEffect {
+public class BlackAndWhiteEffect extends Filter {
 
 
     /**

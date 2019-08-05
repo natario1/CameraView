@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Attempts to auto-fix the preview based on histogram equalization.
  */
-public class AutoFixEffect extends BaseShaderEffect {
+public class AutoFixEffect extends Filter {
 
     private float scale = 1.0f;
 

@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Apply Hue effect on the preview
  */
-public class HueEffect extends BaseShaderEffect {
+public class HueEffect extends Filter {
     float hueValue = 0.0f;
 
     /**

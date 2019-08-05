@@ -1,10 +1,10 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 /**
  * Adjusts the contrast of the preview.
  */
-public class ContrastEffect extends BaseShaderEffect {
+public class ContrastEffect extends Filter {
     private float contrast = 2.0f;
 
     /**

@@ -1,6 +1,4 @@
-package com.otaliastudios.cameraview.shadereffects;
-
-import android.opengl.GLSurfaceView;
+package com.otaliastudios.cameraview.filters;
 
 /**
  * A Base abstract class that every effect must extend so that there is a common getShader method.
@@ -20,7 +18,7 @@ import android.opengl.GLSurfaceView;
  * <p>
  * The default implementation of this class is NoEffect.
  */
-public abstract class BaseShaderEffect {
+public abstract class Filter {
 
     /**
      * Vertex shader code written in Shader Language (C) and stored as String.

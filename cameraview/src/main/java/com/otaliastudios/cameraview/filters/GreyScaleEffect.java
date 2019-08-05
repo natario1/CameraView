@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Converts preview to GreyScale.
  */
-public class GreyScaleEffect extends BaseShaderEffect {
+public class GreyScaleEffect extends Filter {
     /**
      * Initialize Effect
      */

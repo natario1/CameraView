@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Applies back-light filling to the preview.
  */
-public class FillLightEffect extends BaseShaderEffect {
+public class FillLightEffect extends Filter {
     private float strength = 0.5f;
 
     /**

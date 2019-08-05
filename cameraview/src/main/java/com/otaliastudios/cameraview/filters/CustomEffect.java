@@ -1,12 +1,12 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 
 /**
  * This class is to implement any custom effect.
  */
-public class CustomEffect extends BaseShaderEffect {
+public class CustomEffect extends Filter {
 
     /**
      * Parameterized constructor with vertex and fragment shader as parameter

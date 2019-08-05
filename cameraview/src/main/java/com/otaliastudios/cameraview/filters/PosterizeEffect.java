@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Applies Posterization effect to Preview.
  */
-public class PosterizeEffect extends BaseShaderEffect {
+public class PosterizeEffect extends Filter {
     /**
      * Initialize Effect
      */

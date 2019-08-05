@@ -17,7 +17,7 @@ import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.video.encoding.AudioConfig;
 import com.otaliastudios.cameraview.video.encoding.AudioMediaEncoder;
@@ -106,7 +106,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     @RendererThread
     @Override
-    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY, BaseShaderEffect shaderEffect) {
+    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY, Filter shaderEffect) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
             LOG.i("Starting the encoder engine.");
 

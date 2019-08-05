@@ -1,8 +1,6 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 import java.util.Date;
 import java.util.Random;
@@ -10,7 +8,7 @@ import java.util.Random;
 /**
  * Applies black and white documentary style effect on preview.
  */
-public class DocumentaryEffect extends BaseShaderEffect {
+public class DocumentaryEffect extends Filter {
     private Random mRandom;
 
     public DocumentaryEffect() {

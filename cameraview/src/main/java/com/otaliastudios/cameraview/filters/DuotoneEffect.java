@@ -1,13 +1,13 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
 import android.graphics.Color;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Representation of preview using only two color tones.
  */
-public class DuotoneEffect extends BaseShaderEffect {
+public class DuotoneEffect extends Filter {
     // Default values
     private int mFirstColor = Color.MAGENTA;
     private int mSecondColor = Color.YELLOW;

@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Adjusts color temperature of the preview.
  */
-public class TemperatureEffect extends BaseShaderEffect {
+public class TemperatureEffect extends Filter {
     private float scale = 0f;
 
     /**

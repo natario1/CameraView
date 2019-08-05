@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Converts preview to Sepia tone.
  */
-public class SepiaEffect extends BaseShaderEffect {
+public class SepiaEffect extends Filter {
     /**
      * Initialize Effect
      */

@@ -1,8 +1,6 @@
 package com.otaliastudios.cameraview.demo;
 
-import android.animation.Animator;
 import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -14,13 +12,10 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.otaliastudios.cameraview.CameraException;
@@ -32,15 +27,16 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Preview;
+import com.otaliastudios.cameraview.filters.Filters;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
-import com.otaliastudios.cameraview.shadereffects.ShaderEffectFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.otaliastudios.cameraview.filters.Filters.*;
 
 
 public class CameraActivity extends AppCompatActivity implements View.OnClickListener, OptionView.Callback {
@@ -53,7 +49,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private ViewGroup controlPanel;
     private long mCaptureTime;
 
-    private ShaderEffectFactory.ShaderEffects mCurrentEffect = ShaderEffectFactory.ShaderEffects.NO_EFFECT;
+    private Filters mCurrentEffect = NO_EFFECT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -321,76 +317,76 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private void changeCurrentFilter(){
         switch (mCurrentEffect){
             case NO_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.AUTO_FIX_EFFECT;
+                mCurrentEffect = AUTO_FIX_EFFECT;
                 break;
             case AUTO_FIX_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.BLACK_AND_WHITE_EFFECT;
+                mCurrentEffect = BLACK_AND_WHITE_EFFECT;
                 break;
             case BLACK_AND_WHITE_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.BRIGHTNESS_EFFECT;
+                mCurrentEffect = BRIGHTNESS_EFFECT;
                 break;
             case BRIGHTNESS_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.CONTRAST_EFFECT;
+                mCurrentEffect = CONTRAST_EFFECT;
                 break;
             case CONTRAST_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.CROSS_PROCESS_EFFECT;
+                mCurrentEffect = CROSS_PROCESS_EFFECT;
                 break;
             case CROSS_PROCESS_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.DOCUMENTARY_EFFECT;
+                mCurrentEffect = DOCUMENTARY_EFFECT;
                 break;
             case DOCUMENTARY_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.DUO_TONE_COLOR_EFFECT;
+                mCurrentEffect = DUO_TONE_COLOR_EFFECT;
                 break;
             case DUO_TONE_COLOR_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.FILL_LIGHT_EFFECT;
+                mCurrentEffect = FILL_LIGHT_EFFECT;
                 break;
             case FILL_LIGHT_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.GAMMA_EFFECT;
+                mCurrentEffect = GAMMA_EFFECT;
                 break;
             case GAMMA_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.GRAIN_EFFECT;
+                mCurrentEffect = GRAIN_EFFECT;
                 break;
             case GRAIN_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.GREY_SCALE_EFFECT;
+                mCurrentEffect = GREY_SCALE_EFFECT;
                 break;
             case GREY_SCALE_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.HUE_EFFECT;
+                mCurrentEffect = HUE_EFFECT;
                 break;
             case HUE_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.INVERT_COLOR_EFFECT;
+                mCurrentEffect = INVERT_COLOR_EFFECT;
                 break;
             case INVERT_COLOR_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.LAMOISH_EFFECT;
+                mCurrentEffect = LAMOISH_EFFECT;
                 break;
             case LAMOISH_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.POSTERIZE_EFFECT;
+                mCurrentEffect = POSTERIZE_EFFECT;
                 break;
             case POSTERIZE_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.SATURATION_EFFECT;
+                mCurrentEffect = SATURATION_EFFECT;
                 break;
             case SATURATION_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.SEPIA_EFFECT;
+                mCurrentEffect = SEPIA_EFFECT;
                 break;
             case SEPIA_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.SHARPNESS_EFFECT;
+                mCurrentEffect = SHARPNESS_EFFECT;
                 break;
             case SHARPNESS_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.TEMPERATURE_EFFECT;
+                mCurrentEffect = TEMPERATURE_EFFECT;
                 break;
             case TEMPERATURE_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.TINT_EFFECT;
+                mCurrentEffect = TINT_EFFECT;
                 break;
             case TINT_EFFECT:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.VIGNETTE_EFFECT;
+                mCurrentEffect = VIGNETTE_EFFECT;
                 break;
 
             case VIGNETTE_EFFECT:
             default:
-                mCurrentEffect = ShaderEffectFactory.ShaderEffects.NO_EFFECT;
+                mCurrentEffect = NO_EFFECT;
                 break;
         }
 
-        camera.changeEffect(mCurrentEffect);
+        camera.setFilter(mCurrentEffect);
     }
 
     @Override

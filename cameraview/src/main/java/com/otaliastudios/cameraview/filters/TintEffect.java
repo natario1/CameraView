@@ -1,14 +1,14 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
 import android.graphics.Color;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 
 /**
  * Tints the preview with specified color..
  */
-public class TintEffect extends BaseShaderEffect {
+public class TintEffect extends Filter {
     private int mTint = 0xFFFF0000;
 
     /**

@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Apply Gamma Effect on preview being played
  */
-public class GammaEffect extends BaseShaderEffect {
+public class GammaEffect extends Filter {
     private float gammaValue = 2.0f;
 
     /**

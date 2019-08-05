@@ -1,11 +1,11 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 /**
  * Adjusts the brightness of the preview.
  */
-public class BrightnessEffect extends BaseShaderEffect {
+public class BrightnessEffect extends Filter {
     private float brightnessValue = 2.0f;
 
     /**

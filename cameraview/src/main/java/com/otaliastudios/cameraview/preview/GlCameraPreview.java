@@ -15,8 +15,8 @@ import android.view.ViewGroup;
 import com.otaliastudios.cameraview.R;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.utils.Op;
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.NoFilterEffect;
+import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filters.NoFilterEffect;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 import java.util.Collections;
@@ -70,7 +70,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
 
-    private BaseShaderEffect mCurrentShaderEffect;
+    private Filter mCurrentShaderEffect;
 
     public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
         super(context, parent);
@@ -316,7 +316,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         return new Renderer();
     }
 
-    public void setShaderEffect(BaseShaderEffect shaderEffect){
+    public void setShaderEffect(Filter shaderEffect){
         mCurrentShaderEffect = shaderEffect;
         shaderEffect.setPreviewingViewWidthAndHeight(getView().getWidth(), getView().getHeight());
 

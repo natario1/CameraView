@@ -1,14 +1,12 @@
-package com.otaliastudios.cameraview.shadereffects.effects;
+package com.otaliastudios.cameraview.filters;
 
-import android.opengl.GLSurfaceView;
-
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
+import com.otaliastudios.cameraview.filters.Filter;
 
 
 /**
  * Applies lomo-camera style effect to your preview.
  */
-public class VignetteEffect extends BaseShaderEffect {
+public class VignetteEffect extends Filter {
     private float mScale = 0.85f;
     private float mShade = 0.5f;
 

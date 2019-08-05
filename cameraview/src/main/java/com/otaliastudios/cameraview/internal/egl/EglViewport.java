@@ -5,8 +5,8 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.shadereffects.BaseShaderEffect;
-import com.otaliastudios.cameraview.shadereffects.effects.NoFilterEffect;
+import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filters.NoFilterEffect;
 
 import java.nio.FloatBuffer;
 
@@ -54,7 +54,7 @@ public class EglViewport extends EglElement {
     // private int muTexOffsetLoc; // Used for filtering
     // private int muColorAdjustLoc; // Used for filtering
 
-    private BaseShaderEffect mShaderEffect;
+    private Filter mShaderEffect;
 
     private boolean mIsShaderChanged = false;
 
@@ -111,7 +111,7 @@ public class EglViewport extends EglElement {
         return texId;
     }
 
-    public void changeShaderEffect(BaseShaderEffect shaderEffect){
+    public void changeShaderEffect(Filter shaderEffect){
         this.mShaderEffect = shaderEffect;
         mIsShaderChanged = true;
     }
