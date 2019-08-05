@@ -68,6 +68,7 @@ import com.otaliastudios.cameraview.markers.MarkerLayout;
 import com.otaliastudios.cameraview.markers.MarkerParser;
 import com.otaliastudios.cameraview.overlay.OverlayLayout;
 import com.otaliastudios.cameraview.preview.CameraPreview;
+import com.otaliastudios.cameraview.preview.FilterCameraPreview;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.SurfaceCameraPreview;
 import com.otaliastudios.cameraview.preview.TextureCameraPreview;
@@ -2132,17 +2133,27 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     //endregion
 
-    //region Effects
+    //region Filters
 
-    public void setFilter(@NonNull Filters filter) {
-        setFilter(filter.newInstance());
-    }
-
+    /**
+     * Applies a real-time filter to the camera preview, if it supports it.
+     * The only preview type that does so is currently {@link Preview#GL_SURFACE}.
+     *
+     * The filter will be applied to any picture snapshot taken with
+     * {@link #takePictureSnapshot()} and any video snapshot taken with
+     * {@link #takeVideoSnapshot(File)}.
+     *
+     * Use {@link com.otaliastudios.cameraview.filters.NoFilter} to clear the existing filter,
+     * and take a look at the {@link Filters} class for commonly used filters.
+     *
+     * @see Filters
+     * @param filter a new filter
+     */
     public void setFilter(@NonNull Filter filter) {
-        if (mCameraPreview instanceof GlCameraPreview) {
-            ((GlCameraPreview) mCameraPreview).setShaderEffect(filter);
+        if (mCameraPreview instanceof FilterCameraPreview) {
+            ((FilterCameraPreview) mCameraPreview).setFilter(filter);
         } else {
-            LOG.w("setFilter", "setFilter is supported only for GLSurfaceView");
+            LOG.w("setFilter() is supported only for GL_SURFACE. Preview:", mPreview);
         }
     }
 

@@ -30,7 +30,7 @@ public interface RendererFrameCallback {
      * @param scaleY the scaleY (in REF_VIEW) value
      */
     @RendererThread
-    void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY, Filter shaderEffect);
+    void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY);
 
     /**
      * Called on the change of shader filter

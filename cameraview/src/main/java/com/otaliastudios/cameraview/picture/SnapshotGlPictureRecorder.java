@@ -97,9 +97,9 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
             @RendererThread
             @Override
-            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY, Filter shaderEffect) {
+            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
                 mPreview.removeRendererFrameCallback(this);
-                SnapshotGlPictureRecorder.this.onRendererFrame(surfaceTexture, scaleX, scaleY, shaderEffect);
+                SnapshotGlPictureRecorder.this.onRendererFrame(surfaceTexture, scaleX, scaleY);
             }
 
             @Override
@@ -151,7 +151,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
      */
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    private void onRendererFrame(final @NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY, @NonNull Filter filter) {
+    private void onRendererFrame(final @NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
         // Get egl context from the RendererThread, which is the one in which we have created
         // the textureId and the overlayTextureId, managed by the GlSurfaceView.
         // Next operations can then be performed on different threads using this handle.

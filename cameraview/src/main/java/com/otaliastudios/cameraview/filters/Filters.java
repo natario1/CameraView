@@ -2,6 +2,12 @@ package com.otaliastudios.cameraview.filters;
 
 import androidx.annotation.NonNull;
 
+/**
+ * Contains commonly used {@link Filter}s.
+ *
+ * You can use {@link #newInstance()} to create a new instance and
+ * pass it to {@link com.otaliastudios.cameraview.CameraView#setFilter(Filter)}.
+ */
 public enum Filters {
     NONE(NoFilter.class),
     AUTO_FIX(AutoFixFilter.class),
@@ -32,6 +38,10 @@ public enum Filters {
         this.filterClass = filterClass;
     }
 
+    /**
+     * Returns a new instance of the given filter.
+     * @return a new instance
+     */
     @NonNull
     public Filter newInstance() {
         try {

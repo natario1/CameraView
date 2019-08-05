@@ -63,11 +63,13 @@ public class EglViewport extends EglElement {
     private boolean mIsShaderChanged = false;
 
     public EglViewport() {
+        this(new NoFilter());
+    }
+
+    public EglViewport(@NonNull Filter filter) {
         mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
         mTextureUnit = GLES20.GL_TEXTURE0;
-
-        //init the default shader effect
-        mShaderEffect = new NoFilter();
+        mShaderEffect = filter;
         initProgram();
     }
 

@@ -58,7 +58,7 @@ import javax.microedition.khronos.opengles.GL10;
  * Callbacks are guaranteed to be called on the renderer thread, which means that we can fetch
  * the GL context that was created and is managed by the {@link GLSurfaceView}.
  */
-public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture> {
+public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceTexture> {
 
     private boolean mDispatched;
     private final float[] mTransformMatrix = new float[16];
@@ -69,8 +69,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     @VisibleForTesting float mCropScaleX = 1F;
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
-
-    private Filter mCurrentShaderEffect;
+    private Filter mCurrentFilter;
 
     public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
         super(context, parent);
@@ -142,7 +141,8 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         @RendererThread
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            mOutputViewport = new EglViewport();
+            if (mCurrentFilter == null) mCurrentFilter = new NoFilter();
+            mOutputViewport = new EglViewport(mCurrentFilter);
             mOutputTextureId = mOutputViewport.createTexture();
             mInputSurfaceTexture = new SurfaceTexture(mOutputTextureId);
             getView().queueEvent(new Runnable() {
@@ -165,15 +165,13 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
                     getView().requestRender(); // requestRender is thread-safe.
                 }
             });
-
-            //init the default shader effect
-            mCurrentShaderEffect = new NoFilter();
         }
 
         @RendererThread
         @Override
         public void onSurfaceChanged(GL10 gl, final int width, final int height) {
             gl.glViewport(0, 0, width, height);
+            mCurrentFilter.setPreviewingViewSize(width, height);
             if (!mDispatched) {
                 dispatchOnSurfaceAvailable(width, height);
                 mDispatched = true;
@@ -216,7 +214,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             synchronized (mRendererFrameCallbacks) {
                 // Need to synchronize when iterating the Collections.synchronizedSet
                 for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY, mCurrentShaderEffect);
+                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
                 }
             }
         }
@@ -284,7 +282,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             public void run() {
                 mRendererFrameCallbacks.add(callback);
                 if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
-                callback.onFilterChanged(mCurrentShaderEffect);
+                callback.onFilterChanged(mCurrentFilter);
             }
         });
     }
@@ -317,14 +315,30 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         return new Renderer();
     }
 
-    public void setShaderEffect(@NonNull Filter shaderEffect){
-        shaderEffect.setPreviewingViewSize(getView().getWidth(), getView().getHeight());
-        mCurrentShaderEffect = shaderEffect;
+    //region Filters
 
-        mOutputViewport.changeShaderFilter(shaderEffect);
 
-        for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-            callback.onFilterChanged(shaderEffect);
+    @NonNull
+    @Override
+    public Filter getCurrentFilter() {
+        return mCurrentFilter;
+    }
+
+    @Override
+    public void setFilter(@NonNull Filter filter) {
+        if (hasSurface()) {
+            filter.setPreviewingViewSize(mOutputSurfaceWidth, mOutputSurfaceHeight);
+        }
+        mCurrentFilter = filter;
+        if (mOutputViewport != null) {
+            mOutputViewport.changeShaderFilter(filter);
+        }
+
+        // Need to synchronize when iterating the Collections.synchronizedSet
+        synchronized (mRendererFrameCallbacks) {
+            for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                callback.onFilterChanged(filter);
+            }
         }
     }
 }
