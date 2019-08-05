@@ -245,6 +245,9 @@ task mergedCoverageReport(type: JacocoReport) {
         // TODO these below could be testable ALSO outside of the integration tests
         classFilter.add('**/com/otaliastudios/cameraview/video/encoding/**.*')
     }
+    // We don't test OpenGL filters.
+    classFilter.add('**/com/otaliastudios/cameraview/filters/**.*')
+
     classDirectories = fileTree(dir: classDir, excludes: classFilter);
 
     reports.html.enabled = true
