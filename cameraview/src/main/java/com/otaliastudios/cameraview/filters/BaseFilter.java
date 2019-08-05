@@ -65,22 +65,20 @@ public abstract class BaseFilter implements Filter {
                 + "  gl_FragColor = texture2D(sTexture, "+fragmentTextureCoordinateName+");\n"
                 + "}\n";
     }
-
     // When the model/view/projection matrix is identity, this will exactly cover the viewport.
-    private static final FloatBuffer VERTEX_POSITION = GlUtils.floatBuffer(new float[]{
+    private FloatBuffer vertexPosition = GlUtils.floatBuffer(new float[]{
             -1.0f, -1.0f, // 0 bottom left
             1.0f, -1.0f, // 1 bottom right
             -1.0f, 1.0f, // 2 top left
             1.0f, 1.0f, // 3 top right
     });
 
-    private static final FloatBuffer TEXTURE_COORDINATES = GlUtils.floatBuffer(new float[]{
+    private FloatBuffer textureCoordinates = GlUtils.floatBuffer(new float[]{
             0.0f, 0.0f, // 0 bottom left
             1.0f, 0.0f, // 1 bottom right
             0.0f, 1.0f, // 2 top left
             1.0f, 1.0f  // 3 top right
     });
-
 
     private int vertexModelViewProjectionMatrixLocation = -1;
     private int vertexTranformMatrixLocation = -1;
@@ -127,11 +125,8 @@ public abstract class BaseFilter implements Filter {
     }
 
     @Override
-    public void onDestroy() {
-        vertexModelViewProjectionMatrixLocation = -1;
-        vertexTranformMatrixLocation = -1;
-        vertexTextureCoordinateLocation = -1;
-        vertexPositionLocation = -1;
+    public void onDestroy(int programHandle) {
+        // Do nothing.
     }
 
     @NonNull
@@ -165,15 +160,15 @@ public abstract class BaseFilter implements Filter {
         // Enable the "aPosition" vertex attribute.
         // Connect vertexBuffer to "aPosition".
         GLES20.glEnableVertexAttribArray(vertexPositionLocation);
-        GlUtils.checkError("glEnableVertexAttribArray");
-        GLES20.glVertexAttribPointer(vertexPositionLocation, 2, GLES20.GL_FLOAT, false, 8, VERTEX_POSITION);
+        GlUtils.checkError("glEnableVertexAttribArray: " + vertexPositionLocation);
+        GLES20.glVertexAttribPointer(vertexPositionLocation, 2, GLES20.GL_FLOAT, false, 8, vertexPosition);
         GlUtils.checkError("glVertexAttribPointer");
 
         // Enable the "aTextureCoord" vertex attribute.
         // Connect texBuffer to "aTextureCoord".
         GLES20.glEnableVertexAttribArray(vertexTextureCoordinateLocation);
         GlUtils.checkError("glEnableVertexAttribArray");
-        GLES20.glVertexAttribPointer(vertexTextureCoordinateLocation, 2, GLES20.GL_FLOAT, false, 8, TEXTURE_COORDINATES);
+        GLES20.glVertexAttribPointer(vertexTextureCoordinateLocation, 2, GLES20.GL_FLOAT, false, 8, textureCoordinates);
         GlUtils.checkError("glVertexAttribPointer");
     }
 

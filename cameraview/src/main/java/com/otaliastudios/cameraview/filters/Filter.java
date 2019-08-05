@@ -7,7 +7,7 @@ public interface Filter {
 
     void onCreate(int programHandle);
 
-    void onDestroy();
+    void onDestroy(int programHandle);
 
     void draw(float[] transformMatrix);
 

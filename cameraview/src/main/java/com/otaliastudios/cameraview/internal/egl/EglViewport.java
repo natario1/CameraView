@@ -42,7 +42,7 @@ public class EglViewport {
 
     public void release() {
         if (mProgramHandle != -1) {
-            mFilter.onDestroy();
+            mFilter.onDestroy(mProgramHandle);
             GLES20.glDeleteProgram(mProgramHandle);
             mProgramHandle = -1;
         }
