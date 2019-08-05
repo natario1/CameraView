@@ -4,12 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
-
-import androidx.annotation.VisibleForTesting;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageInfo;
@@ -22,14 +16,20 @@ import android.media.MediaActionSound;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import androidx.annotation.ColorInt;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.OnLifecycleEvent;
 
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Control;
@@ -37,21 +37,22 @@ import com.otaliastudios.cameraview.controls.ControlParser;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
-import com.otaliastudios.cameraview.engine.Camera2Engine;
-import com.otaliastudios.cameraview.engine.offset.Reference;
-import com.otaliastudios.cameraview.markers.MarkerLayout;
-import com.otaliastudios.cameraview.engine.Camera1Engine;
-import com.otaliastudios.cameraview.engine.CameraEngine;
-import com.otaliastudios.cameraview.frame.Frame;
-import com.otaliastudios.cameraview.frame.FrameProcessor;
-import com.otaliastudios.cameraview.gesture.Gesture;
-import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.engine.Camera1Engine;
+import com.otaliastudios.cameraview.engine.Camera2Engine;
+import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.engine.offset.Reference;
+import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filters.Filters;
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameProcessor;
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.gesture.GestureFinder;
 import com.otaliastudios.cameraview.gesture.GestureParser;
 import com.otaliastudios.cameraview.gesture.PinchGestureFinder;
@@ -61,6 +62,9 @@ import com.otaliastudios.cameraview.internal.GridLinesLayout;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.OrientationHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.markers.AutoFocusMarker;
+import com.otaliastudios.cameraview.markers.AutoFocusTrigger;
+import com.otaliastudios.cameraview.markers.MarkerLayout;
 import com.otaliastudios.cameraview.markers.MarkerParser;
 import com.otaliastudios.cameraview.overlay.OverlayLayout;
 import com.otaliastudios.cameraview.preview.CameraPreview;
@@ -72,8 +76,6 @@ import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.size.SizeSelector;
 import com.otaliastudios.cameraview.size.SizeSelectorParser;
 import com.otaliastudios.cameraview.size.SizeSelectors;
-import com.otaliastudios.cameraview.markers.AutoFocusMarker;
-import com.otaliastudios.cameraview.markers.AutoFocusTrigger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -84,7 +86,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static android.view.View.MeasureSpec.AT_MOST;
 import static android.view.View.MeasureSpec.EXACTLY;
 import static android.view.View.MeasureSpec.UNSPECIFIED;
-
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 /**
@@ -572,6 +573,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             LOG.i("onTouchEvent", "tap!");
             onGesture(mTapGestureFinder, options);
         }
+
         return true;
     }
 
@@ -2125,6 +2127,22 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             mOverlayLayout.addView(child, params);
         } else {
             super.addView(child, index, params);
+        }
+    }
+
+    //endregion
+
+    //region Effects
+
+    public void setFilter(@NonNull Filters filter) {
+        setFilter(filter.newInstance());
+    }
+
+    public void setFilter(@NonNull Filter filter) {
+        if (mCameraPreview instanceof GlCameraPreview) {
+            ((GlCameraPreview) mCameraPreview).setShaderEffect(filter);
+        } else {
+            LOG.w("setFilter", "setFilter is supported only for GLSurfaceView");
         }
     }
 

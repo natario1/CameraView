@@ -44,15 +44,31 @@
 
     </com.otaliastudios.cameraview.CameraView>
 
-    <ImageButton
-        android:id="@+id/toggleCamera"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_margin="16dp"
-        android:layout_gravity="top|end"
-        android:background="@drawable/background"
-        android:elevation="3dp"
-        app:srcCompat="@drawable/ic_switch" />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="96dp"
+        android:layout_gravity="bottom|start">
+
+        <ImageButton
+            android:id="@+id/changeFilter"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_margin="16dp"
+            android:background="@drawable/background"
+            android:elevation="3dp"
+            app:srcCompat="@drawable/ic_filters" />
+
+        <ImageButton
+            android:id="@+id/toggleCamera"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_margin="16dp"
+            android:background="@drawable/background"
+            android:elevation="3dp"
+            app:srcCompat="@drawable/ic_switch" />
+    </LinearLayout>
 
     <!-- Controls -->
     <LinearLayout

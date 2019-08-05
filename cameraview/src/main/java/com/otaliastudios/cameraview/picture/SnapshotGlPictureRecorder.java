@@ -2,9 +2,6 @@ package com.otaliastudios.cameraview.picture;
 
 import android.annotation.TargetApi;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
@@ -14,7 +11,6 @@ import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.internal.Issue514Workaround;
 import com.otaliastudios.cameraview.internal.egl.EglBaseSurface;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.controls.Facing;
@@ -30,6 +26,7 @@ import com.otaliastudios.cameraview.overlay.OverlayDrawer;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
+import com.otaliastudios.cameraview.filters.Filter;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -100,9 +97,15 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
             @RendererThread
             @Override
-            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
+            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY, Filter shaderEffect) {
                 mPreview.removeRendererFrameCallback(this);
-                SnapshotGlPictureRecorder.this.onRendererFrame(surfaceTexture, scaleX, scaleY);
+                SnapshotGlPictureRecorder.this.onRendererFrame(surfaceTexture, scaleX, scaleY, shaderEffect);
+            }
+
+            @Override
+            public void
+            onFilterChanged(@NonNull Filter filter) {
+                mViewport.changeShaderFilter(filter);
             }
         });
     }
@@ -148,7 +151,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
      */
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    private void onRendererFrame(final @NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
+    private void onRendererFrame(final @NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY, @NonNull Filter filter) {
         // Get egl context from the RendererThread, which is the one in which we have created
         // the textureId and the overlayTextureId, managed by the GlSurfaceView.
         // Next operations can then be performed on different threads using this handle.

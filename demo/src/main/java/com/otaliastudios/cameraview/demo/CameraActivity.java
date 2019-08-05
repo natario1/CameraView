@@ -1,8 +1,6 @@
 package com.otaliastudios.cameraview.demo;
 
-import android.animation.Animator;
 import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -14,13 +12,10 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.otaliastudios.cameraview.CameraException;
@@ -32,6 +27,7 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Preview;
+import com.otaliastudios.cameraview.filters.Filters;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 
@@ -39,6 +35,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.otaliastudios.cameraview.filters.Filters.*;
 
 
 public class CameraActivity extends AppCompatActivity implements View.OnClickListener, OptionView.Callback {
@@ -50,6 +48,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private CameraView camera;
     private ViewGroup controlPanel;
     private long mCaptureTime;
+
+    private Filters mCurrentEffect = NO_FILTER;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +95,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         findViewById(R.id.captureVideo).setOnClickListener(this);
         findViewById(R.id.captureVideoSnapshot).setOnClickListener(this);
         findViewById(R.id.toggleCamera).setOnClickListener(this);
+        findViewById(R.id.changeFilter).setOnClickListener(this);
 
         controlPanel = findViewById(R.id.controls);
         ViewGroup group = (ViewGroup) controlPanel.getChildAt(0);
@@ -243,6 +244,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             case R.id.captureVideo: captureVideo(); break;
             case R.id.captureVideoSnapshot: captureVideoSnapshot(); break;
             case R.id.toggleCamera: toggleCamera(); break;
+            case R.id.changeFilter: changeCurrentFilter(); break;
         }
     }
 
@@ -317,6 +319,86 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 message("Switched to front camera!", false);
                 break;
         }
+    }
+
+    private void changeCurrentFilter(){
+        if (camera.getPreview() != Preview.GL_SURFACE) {
+            message("Filters are supported only for GLSurfaceView", true);
+            return;
+        }
+
+        switch (mCurrentEffect){
+            case NO_FILTER:
+                mCurrentEffect = AUTO_FIX_FILTER;
+                break;
+            case AUTO_FIX_FILTER:
+                mCurrentEffect = BLACK_AND_WHITE_FILTER;
+                break;
+            case BLACK_AND_WHITE_FILTER:
+                mCurrentEffect = BRIGHTNESS_FILTER;
+                break;
+            case BRIGHTNESS_FILTER:
+                mCurrentEffect = CONTRAST_FILTER;
+                break;
+            case CONTRAST_FILTER:
+                mCurrentEffect = CROSS_PROCESS_FILTER;
+                break;
+            case CROSS_PROCESS_FILTER:
+                mCurrentEffect = DOCUMENTARY_FILTER;
+                break;
+            case DOCUMENTARY_FILTER:
+                mCurrentEffect = DUO_TONE_COLOR_FILTER;
+                break;
+            case DUO_TONE_COLOR_FILTER:
+                mCurrentEffect = FILL_LIGHT_FILTER;
+                break;
+            case FILL_LIGHT_FILTER:
+                mCurrentEffect = GAMMA_FILTER;
+                break;
+            case GAMMA_FILTER:
+                mCurrentEffect = GRAIN_FILTER;
+                break;
+            case GRAIN_FILTER:
+                mCurrentEffect = GREY_SCALE_FILTER;
+                break;
+            case GREY_SCALE_FILTER:
+                mCurrentEffect = HUE_FILTER;
+                break;
+            case HUE_FILTER:
+                mCurrentEffect = INVERT_COLOR_FILTER;
+                break;
+            case INVERT_COLOR_FILTER:
+                mCurrentEffect = LAMOISH_FILTER;
+                break;
+            case LAMOISH_FILTER:
+                mCurrentEffect = POSTERIZE_FILTER;
+                break;
+            case POSTERIZE_FILTER:
+                mCurrentEffect = SATURATION_FILTER;
+                break;
+            case SATURATION_FILTER:
+                mCurrentEffect = SEPIA_FILTER;
+                break;
+            case SEPIA_FILTER:
+                mCurrentEffect = SHARPNESS_FILTER;
+                break;
+            case SHARPNESS_FILTER:
+                mCurrentEffect = TEMPERATURE_FILTER;
+                break;
+            case TEMPERATURE_FILTER:
+                mCurrentEffect = TINT_FILTER;
+                break;
+            case TINT_FILTER:
+                mCurrentEffect = VIGNETTE_FILTER;
+                break;
+
+            case VIGNETTE_FILTER:
+            default:
+                mCurrentEffect = NO_FILTER;
+                break;
+        }
+
+        camera.setFilter(mCurrentEffect);
     }
 
     @Override

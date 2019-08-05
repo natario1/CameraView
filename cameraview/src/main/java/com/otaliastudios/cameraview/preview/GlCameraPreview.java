@@ -15,6 +15,8 @@ import android.view.ViewGroup;
 import com.otaliastudios.cameraview.R;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filters.NoFilter;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 import java.util.Collections;
@@ -67,6 +69,8 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     @VisibleForTesting float mCropScaleX = 1F;
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
+
+    private Filter mCurrentShaderEffect;
 
     public GlCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
         super(context, parent);
@@ -161,6 +165,9 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
                     getView().requestRender(); // requestRender is thread-safe.
                 }
             });
+
+            //init the default shader effect
+            mCurrentShaderEffect = new NoFilter();
         }
 
         @RendererThread
@@ -209,7 +216,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             synchronized (mRendererFrameCallbacks) {
                 // Need to synchronize when iterating the Collections.synchronizedSet
                 for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
+                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY, mCurrentShaderEffect);
                 }
             }
         }
@@ -277,6 +284,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             public void run() {
                 mRendererFrameCallbacks.add(callback);
                 if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
+                callback.onFilterChanged(mCurrentShaderEffect);
             }
         });
     }
@@ -307,5 +315,16 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
     @NonNull
     protected Renderer instantiateRenderer() {
         return new Renderer();
+    }
+
+    public void setShaderEffect(@NonNull Filter shaderEffect){
+        shaderEffect.setPreviewingViewSize(getView().getWidth(), getView().getHeight());
+        mCurrentShaderEffect = shaderEffect;
+
+        mOutputViewport.changeShaderFilter(shaderEffect);
+
+        for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+            callback.onFilterChanged(shaderEffect);
+        }
     }
 }
