@@ -284,6 +284,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
             public void run() {
                 mRendererFrameCallbacks.add(callback);
                 if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
+                callback.onFilterChanged(mCurrentShaderEffect);
             }
         });
     }
@@ -320,6 +321,10 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         shaderEffect.setPreviewingViewSize(getView().getWidth(), getView().getHeight());
         mCurrentShaderEffect = shaderEffect;
 
-        mOutputViewport.changeShaderEffect(shaderEffect);
+        mOutputViewport.changeShaderFilter(shaderEffect);
+
+        for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+            callback.onFilterChanged(shaderEffect);
+        }
     }
 }

@@ -4,15 +4,16 @@ import android.graphics.SurfaceTexture;
 import android.opengl.Matrix;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.filters.Filter;
 import com.otaliastudios.cameraview.internal.egl.EglCore;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
 import com.otaliastudios.cameraview.internal.utils.Pool;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 /**
  * Default implementation for video encoding.
@@ -24,6 +25,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     public final static String FRAME_EVENT = "frame";
+    public final static String FILTER_EVENT = "filter";
 
     private int mTransformRotation;
     private EglCore mEglCore;
@@ -132,80 +134,85 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     @EncoderThread
     @Override
     protected void onEvent(@NonNull String event, @Nullable Object data) {
-        if (!event.equals(FRAME_EVENT)) return;
-        Frame frame = (Frame) data;
-        if (frame == null) {
-            throw new IllegalArgumentException("Got null frame for FRAME_EVENT.");
-        }
-        if (!shouldRenderFrame(frame.timestampUs())) {
-            mFramePool.recycle(frame);
-            return;
-        }
 
-        // Notify we're got the first frame and its absolute time.
-        if (mFrameNumber == 1) {
-            notifyFirstFrameMillis(frame.timestampMillis);
-        }
-
-        // Notify we have reached the max length value.
-        if (mFirstTimeUs == Long.MIN_VALUE) mFirstTimeUs = frame.timestampUs();
-        if (!hasReachedMaxLength()) {
-            boolean didReachMaxLength = (frame.timestampUs() - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
-            if (didReachMaxLength) {
-                LOG.w("onEvent -",
-                        "frameNumber:", mFrameNumber,
-                        "timestampUs:", frame.timestampUs(),
-                        "firstTimeUs:", mFirstTimeUs,
-                        "- reached max length! deltaUs:", frame.timestampUs() - mFirstTimeUs);
-                notifyMaxLengthReached();
+        if (event.equals(FILTER_EVENT)) {
+            Filter filter = (Filter) data;
+            mViewport.changeShaderFilter(filter);
+        } else if (event.equals(FRAME_EVENT)) {
+            Frame frame = (Frame) data;
+            if (frame == null) {
+                throw new IllegalArgumentException("Got null frame for FRAME_EVENT.");
             }
+            if (!shouldRenderFrame(frame.timestampUs())) {
+                mFramePool.recycle(frame);
+                return;
+            }
+
+            // Notify we're got the first frame and its absolute time.
+            if (mFrameNumber == 1) {
+                notifyFirstFrameMillis(frame.timestampMillis);
+            }
+
+            // Notify we have reached the max length value.
+            if (mFirstTimeUs == Long.MIN_VALUE) mFirstTimeUs = frame.timestampUs();
+            if (!hasReachedMaxLength()) {
+                boolean didReachMaxLength = (frame.timestampUs() - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
+                if (didReachMaxLength) {
+                    LOG.w("onEvent -",
+                            "frameNumber:", mFrameNumber,
+                            "timestampUs:", frame.timestampUs(),
+                            "firstTimeUs:", mFirstTimeUs,
+                            "- reached max length! deltaUs:", frame.timestampUs() - mFirstTimeUs);
+                    notifyMaxLengthReached();
+                }
+            }
+
+            // First, drain any previous data.
+            LOG.i("onEvent -",
+                    "frameNumber:", mFrameNumber,
+                    "timestampUs:", frame.timestampUs(),
+                    "- draining.");
+            drainOutput(false);
+
+            // Then draw on the surface.
+            LOG.i("onEvent -",
+                    "frameNumber:", mFrameNumber,
+                    "timestampUs:", frame.timestampUs(),
+                    "- rendering.");
+
+            // 1. We must scale this matrix like GlCameraPreview does, because it might have some cropping.
+            // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
+            float[] transform = frame.transform;
+            float scaleX = mConfig.scaleX;
+            float scaleY = mConfig.scaleY;
+            float scaleTranslX = (1F - scaleX) / 2F;
+            float scaleTranslY = (1F - scaleY) / 2F;
+            Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
+            Matrix.scaleM(transform, 0, scaleX, scaleY, 1);
+
+            // 2. We also must rotate this matrix. In GlCameraPreview it is not needed because it is a live
+            // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
+            // Rotation also takes place with respect to the origin (the Z axis), so we must
+            // translate to origin, rotate, then back to where we were.
+            Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
+            Matrix.rotateM(transform, 0, mTransformRotation, 0, 0, 1);
+            Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
+
+            // 3. Do the same for overlays with their own rotation.
+            if (mConfig.hasOverlay()) {
+                mConfig.overlayDrawer.draw(mConfig.overlayTarget);
+                Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, 0.5F, 0.5F, 0);
+                Matrix.rotateM(mConfig.overlayDrawer.getTransform(), 0, mConfig.overlayRotation, 0, 0, 1);
+                Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, -0.5F, -0.5F, 0);
+            }
+            mViewport.drawFrame(mConfig.textureId, transform);
+            if (mConfig.hasOverlay()) {
+                mConfig.overlayDrawer.render();
+            }
+            mWindow.setPresentationTime(frame.timestampNanos);
+            mWindow.swapBuffers();
+            mFramePool.recycle(frame);
         }
-
-        // First, drain any previous data.
-        LOG.i("onEvent -",
-                "frameNumber:", mFrameNumber,
-                "timestampUs:", frame.timestampUs(),
-                "- draining.");
-        drainOutput(false);
-
-        // Then draw on the surface.
-        LOG.i("onEvent -",
-                "frameNumber:", mFrameNumber,
-                "timestampUs:", frame.timestampUs(),
-                "- rendering.");
-
-        // 1. We must scale this matrix like GlCameraPreview does, because it might have some cropping.
-        // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
-        float[] transform = frame.transform;
-        float scaleX = mConfig.scaleX;
-        float scaleY = mConfig.scaleY;
-        float scaleTranslX = (1F - scaleX) / 2F;
-        float scaleTranslY = (1F - scaleY) / 2F;
-        Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
-        Matrix.scaleM(transform, 0, scaleX, scaleY, 1);
-
-        // 2. We also must rotate this matrix. In GlCameraPreview it is not needed because it is a live
-        // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
-        // Rotation also takes place with respect to the origin (the Z axis), so we must
-        // translate to origin, rotate, then back to where we were.
-        Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
-        Matrix.rotateM(transform, 0, mTransformRotation, 0, 0, 1);
-        Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
-
-        // 3. Do the same for overlays with their own rotation.
-        if (mConfig.hasOverlay()) {
-            mConfig.overlayDrawer.draw(mConfig.overlayTarget);
-            Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, 0.5F, 0.5F, 0);
-            Matrix.rotateM(mConfig.overlayDrawer.getTransform(), 0, mConfig.overlayRotation, 0, 0, 1);
-            Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, -0.5F, -0.5F, 0);
-        }
-        mViewport.drawFrame(mConfig.textureId, transform);
-        if (mConfig.hasOverlay()) {
-            mConfig.overlayDrawer.render();
-        }
-        mWindow.setPresentationTime(frame.timestampNanos);
-        mWindow.swapBuffers();
-        mFramePool.recycle(frame);
     }
 
     @Override

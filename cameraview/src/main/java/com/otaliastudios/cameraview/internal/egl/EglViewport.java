@@ -112,7 +112,7 @@ public class EglViewport extends EglElement {
         return texId;
     }
 
-    public void changeShaderEffect(@NonNull Filter shaderEffect){
+    public void changeShaderFilter(@NonNull Filter shaderEffect){
         this.mShaderEffect = shaderEffect;
         mIsShaderChanged = true;
     }
