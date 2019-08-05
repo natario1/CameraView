@@ -1,10 +1,11 @@
-package com.otaliastudios.cameraview.filters;
+package com.otaliastudios.cameraview.filter;
 
 import android.opengl.GLES20;
 
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.filters.NoFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -116,7 +117,6 @@ public abstract class BaseFilter implements Filter {
                 fragmentTextureCoordinateName);
     }
 
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     protected String createDefaultFragmentShader() {
         return createDefaultFragmentShader(fragmentTextureCoordinateName);

@@ -15,7 +15,7 @@ import android.view.ViewGroup;
 import com.otaliastudios.cameraview.R;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.utils.Op;
-import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filters.NoFilter;
 import com.otaliastudios.cameraview.size.AspectRatio;
 

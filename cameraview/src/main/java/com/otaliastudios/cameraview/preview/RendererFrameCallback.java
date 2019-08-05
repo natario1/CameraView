@@ -4,7 +4,7 @@ import android.graphics.SurfaceTexture;
 
 import androidx.annotation.NonNull;
 
-import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filter.Filter;
 
 /**
  * Callback for renderer frames.

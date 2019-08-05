@@ -2,6 +2,8 @@ package com.otaliastudios.cameraview.filters;
 
 import androidx.annotation.NonNull;
 
+import com.otaliastudios.cameraview.filter.BaseFilter;
+
 
 /**
  * Applies lomo-camera style effect to your preview.

@@ -1,6 +1,7 @@
-package com.otaliastudios.cameraview.filters;
+package com.otaliastudios.cameraview.filter;
 
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.filters.NoFilter;
 
 import androidx.annotation.NonNull;
 

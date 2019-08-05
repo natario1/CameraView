@@ -4,6 +4,8 @@ import android.graphics.Color;
 
 import androidx.annotation.NonNull;
 
+import com.otaliastudios.cameraview.filter.BaseFilter;
+
 
 /**
  * Tints the preview with specified color..

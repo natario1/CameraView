@@ -2,6 +2,8 @@ package com.otaliastudios.cameraview.filters;
 
 import androidx.annotation.NonNull;
 
+import com.otaliastudios.cameraview.filter.BaseFilter;
+
 /**
  * Applies a cross process effect on preview, in which the red and green channels
  * are enhanced while the blue channel is restricted.

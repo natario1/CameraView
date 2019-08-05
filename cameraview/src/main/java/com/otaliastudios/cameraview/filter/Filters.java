@@ -1,6 +1,30 @@
-package com.otaliastudios.cameraview.filters;
+package com.otaliastudios.cameraview.filter;
 
 import androidx.annotation.NonNull;
+
+import com.otaliastudios.cameraview.filter.Filter;
+import com.otaliastudios.cameraview.filters.AutoFixFilter;
+import com.otaliastudios.cameraview.filters.BlackAndWhiteFilter;
+import com.otaliastudios.cameraview.filters.BrightnessFilter;
+import com.otaliastudios.cameraview.filters.ContrastFilter;
+import com.otaliastudios.cameraview.filters.CrossProcessFilter;
+import com.otaliastudios.cameraview.filters.DocumentaryFilter;
+import com.otaliastudios.cameraview.filters.DuotoneFilter;
+import com.otaliastudios.cameraview.filters.FillLightFilter;
+import com.otaliastudios.cameraview.filters.GammaFilter;
+import com.otaliastudios.cameraview.filters.GrainFilter;
+import com.otaliastudios.cameraview.filters.GrayscaleFilter;
+import com.otaliastudios.cameraview.filters.HueFilter;
+import com.otaliastudios.cameraview.filters.InvertColorsFilter;
+import com.otaliastudios.cameraview.filters.LomoishFilter;
+import com.otaliastudios.cameraview.filters.NoFilter;
+import com.otaliastudios.cameraview.filters.PosterizeFilter;
+import com.otaliastudios.cameraview.filters.SaturationFilter;
+import com.otaliastudios.cameraview.filters.SepiaFilter;
+import com.otaliastudios.cameraview.filters.SharpnessFilter;
+import com.otaliastudios.cameraview.filters.TemperatureFilter;
+import com.otaliastudios.cameraview.filters.TintFilter;
+import com.otaliastudios.cameraview.filters.VignetteFilter;
 
 /**
  * Contains commonly used {@link Filter}s.
