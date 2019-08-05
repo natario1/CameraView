@@ -19,14 +19,14 @@ public class DuotoneFilter extends Filter {
     }
 
     /**
-     * setDuoToneColors
+     * setDuotoneColors
      *
      * @param firstColor  Integer, representing an ARGB color with 8 bits per channel.
      *                    May be created using Color class.
      * @param secondColor Integer, representing an ARGB color with 8 bits per channel.
      *                    May be created using Color class.
      */
-    public void setDuoToneColors(int firstColor, int secondColor) {
+    public void setDuotoneColors(int firstColor, int secondColor) {
         this.mFirstColor = firstColor;
         this.mSecondColor = secondColor;
     }

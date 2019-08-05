@@ -5,11 +5,11 @@ import androidx.annotation.NonNull;
 /**
  * Converts preview to GreyScale.
  */
-public class GreyScaleFilter extends Filter {
+public class GrayscaleFilter extends Filter {
     /**
      * Initialize Effect
      */
-    public GreyScaleFilter() {
+    public GrayscaleFilter() {
     }
 
     @NonNull

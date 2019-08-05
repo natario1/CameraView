@@ -49,7 +49,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private ViewGroup controlPanel;
     private long mCaptureTime;
 
-    private Filters mCurrentEffect = NO_FILTER;
+    private Filters mCurrentEffect = NONE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -328,73 +328,73 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         }
 
         switch (mCurrentEffect){
-            case NO_FILTER:
-                mCurrentEffect = AUTO_FIX_FILTER;
+            case NONE:
+                mCurrentEffect = AUTO_FIX;
                 break;
-            case AUTO_FIX_FILTER:
-                mCurrentEffect = BLACK_AND_WHITE_FILTER;
+            case AUTO_FIX:
+                mCurrentEffect = BLACK_AND_WHITE;
                 break;
-            case BLACK_AND_WHITE_FILTER:
-                mCurrentEffect = BRIGHTNESS_FILTER;
+            case BLACK_AND_WHITE:
+                mCurrentEffect = BRIGHTNESS;
                 break;
-            case BRIGHTNESS_FILTER:
-                mCurrentEffect = CONTRAST_FILTER;
+            case BRIGHTNESS:
+                mCurrentEffect = CONTRAST;
                 break;
-            case CONTRAST_FILTER:
-                mCurrentEffect = CROSS_PROCESS_FILTER;
+            case CONTRAST:
+                mCurrentEffect = CROSS_PROCESS;
                 break;
-            case CROSS_PROCESS_FILTER:
-                mCurrentEffect = DOCUMENTARY_FILTER;
+            case CROSS_PROCESS:
+                mCurrentEffect = DOCUMENTARY;
                 break;
-            case DOCUMENTARY_FILTER:
-                mCurrentEffect = DUO_TONE_COLOR_FILTER;
+            case DOCUMENTARY:
+                mCurrentEffect = DUOTONE;
                 break;
-            case DUO_TONE_COLOR_FILTER:
-                mCurrentEffect = FILL_LIGHT_FILTER;
+            case DUOTONE:
+                mCurrentEffect = FILL_LIGHT;
                 break;
-            case FILL_LIGHT_FILTER:
-                mCurrentEffect = GAMMA_FILTER;
+            case FILL_LIGHT:
+                mCurrentEffect = GAMMA;
                 break;
-            case GAMMA_FILTER:
-                mCurrentEffect = GRAIN_FILTER;
+            case GAMMA:
+                mCurrentEffect = GRAIN;
                 break;
-            case GRAIN_FILTER:
-                mCurrentEffect = GREY_SCALE_FILTER;
+            case GRAIN:
+                mCurrentEffect = GRAYSCALE;
                 break;
-            case GREY_SCALE_FILTER:
-                mCurrentEffect = HUE_FILTER;
+            case GRAYSCALE:
+                mCurrentEffect = HUE;
                 break;
-            case HUE_FILTER:
-                mCurrentEffect = INVERT_COLOR_FILTER;
+            case HUE:
+                mCurrentEffect = INVERT_COLORS;
                 break;
-            case INVERT_COLOR_FILTER:
-                mCurrentEffect = LAMOISH_FILTER;
+            case INVERT_COLORS:
+                mCurrentEffect = LAMOISH;
                 break;
-            case LAMOISH_FILTER:
-                mCurrentEffect = POSTERIZE_FILTER;
+            case LAMOISH:
+                mCurrentEffect = POSTERIZE;
                 break;
-            case POSTERIZE_FILTER:
-                mCurrentEffect = SATURATION_FILTER;
+            case POSTERIZE:
+                mCurrentEffect = SATURATION;
                 break;
-            case SATURATION_FILTER:
-                mCurrentEffect = SEPIA_FILTER;
+            case SATURATION:
+                mCurrentEffect = SEPIA;
                 break;
-            case SEPIA_FILTER:
-                mCurrentEffect = SHARPNESS_FILTER;
+            case SEPIA:
+                mCurrentEffect = SHARPNESS;
                 break;
-            case SHARPNESS_FILTER:
-                mCurrentEffect = TEMPERATURE_FILTER;
+            case SHARPNESS:
+                mCurrentEffect = TEMPERATURE;
                 break;
-            case TEMPERATURE_FILTER:
-                mCurrentEffect = TINT_FILTER;
+            case TEMPERATURE:
+                mCurrentEffect = TINT;
                 break;
-            case TINT_FILTER:
-                mCurrentEffect = VIGNETTE_FILTER;
+            case TINT:
+                mCurrentEffect = VIGNETTE;
                 break;
 
-            case VIGNETTE_FILTER:
+            case VIGNETTE:
             default:
-                mCurrentEffect = NO_FILTER;
+                mCurrentEffect = NONE;
                 break;
         }
 
