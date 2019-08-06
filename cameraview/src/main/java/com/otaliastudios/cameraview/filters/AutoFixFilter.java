@@ -5,12 +5,13 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Attempts to auto-fix the frames based on histogram equalization.
  */
-public class AutoFixFilter extends BaseFilter {
+public class AutoFixFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -61,7 +62,6 @@ public class AutoFixFilter extends BaseFilter {
     private float scale = 1.0f;
     private int scaleLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public AutoFixFilter() { }
 
     /**
@@ -84,6 +84,16 @@ public class AutoFixFilter extends BaseFilter {
      */
     public float getScale() {
         return scale;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        setScale(value);
+    }
+
+    @Override
+    public float getParameter1() {
+        return getScale();
     }
 
     @NonNull
@@ -110,13 +120,5 @@ public class AutoFixFilter extends BaseFilter {
         super.onPreDraw(transformMatrix);
         GLES20.glUniform1f(scaleLocation, scale);
         GlUtils.checkError("glUniform1f");
-    }
-
-
-    @Override
-    protected BaseFilter onCopy() {
-        AutoFixFilter filter = new AutoFixFilter();
-        filter.setScale(getScale());
-        return filter;
     }
 }

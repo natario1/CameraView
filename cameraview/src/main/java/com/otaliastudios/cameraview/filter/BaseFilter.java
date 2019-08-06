@@ -160,7 +160,6 @@ public abstract class BaseFilter implements Filter {
         onPostDraw();
     }
 
-    @SuppressWarnings("WeakerAccess")
     protected void onPreDraw(float[] transformMatrix) {
         // Copy the model / view / projection matrix over.
         GLES20.glUniformMatrix4fv(vertexModelViewProjectionMatrixLocation, 1, false, GlUtils.IDENTITY_MATRIX, 0);
@@ -202,6 +201,12 @@ public abstract class BaseFilter implements Filter {
     public final BaseFilter copy() {
         BaseFilter copy = onCopy();
         copy.setSize(outputSize.getWidth(), outputSize.getHeight());
+        if (this instanceof OneParameterFilter) {
+            ((OneParameterFilter) copy).setParameter1(((OneParameterFilter) this).getParameter1());
+        }
+        if (this instanceof TwoParameterFilter) {
+            ((TwoParameterFilter) copy).setParameter2(((TwoParameterFilter) this).getParameter2());
+        }
         return copy;
     }
 
