@@ -1,17 +1,49 @@
 package com.otaliastudios.cameraview.filters;
 
+import android.opengl.GLES20;
+
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Sharpens the input frames.
  */
 public class SharpnessFilter extends BaseFilter {
 
+    private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
+            + "precision mediump float;\n"
+            + "uniform samplerExternalOES sTexture;\n"
+            + "uniform float scale;\n"
+            + "uniform float stepsizeX;\n"
+            + "uniform float stepsizeY;\n"
+            + "varying vec2 vTextureCoord;\n"
+            + "void main() {\n"
+            + "  vec3 nbr_color = vec3(0.0, 0.0, 0.0);\n"
+            + "  vec2 coord;\n"
+            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  coord.x = vTextureCoord.x - 0.5 * stepsizeX;\n"
+            + "  coord.y = vTextureCoord.y - stepsizeY;\n"
+            + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
+            + "  coord.x = vTextureCoord.x - stepsizeX;\n"
+            + "  coord.y = vTextureCoord.y + 0.5 * stepsizeY;\n"
+            + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
+            + "  coord.x = vTextureCoord.x + stepsizeX;\n"
+            + "  coord.y = vTextureCoord.y - 0.5 * stepsizeY;\n"
+            + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
+            + "  coord.x = vTextureCoord.x + stepsizeX;\n"
+            + "  coord.y = vTextureCoord.y + 0.5 * stepsizeY;\n"
+            + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
+            + "  gl_FragColor = vec4(color.rgb - 2.0 * scale * nbr_color, color.a);\n"
+            + "}\n";
+
     private float scale = 0.5f;
-    private int mOutputWidth = 1;
-    private int mOutputHeight = 1;
+    private int width = 1;
+    private int height = 1;
+    private int scaleLocation = -1;
+    private int stepSizeXLocation = -1;
+    private int stepSizeYLocation = -1;
 
     @SuppressWarnings("WeakerAccess")
     public SharpnessFilter() { }
@@ -19,8 +51,8 @@ public class SharpnessFilter extends BaseFilter {
     @Override
     public void setSize(int width, int height) {
         super.setSize(width, height);
-        mOutputWidth = width;
-        mOutputHeight = height;
+        this.width = width;
+        this.height = height;
     }
 
     /**
@@ -48,50 +80,45 @@ public class SharpnessFilter extends BaseFilter {
         return scale;
     }
 
+    @NonNull
+    @Override
+    public String getFragmentShader() {
+        return FRAGMENT_SHADER;
+    }
+
+    @Override
+    public void onCreate(int programHandle) {
+        super.onCreate(programHandle);
+        scaleLocation = GLES20.glGetUniformLocation(programHandle, "scale");
+        GlUtils.checkLocation(scaleLocation, "scale");
+        stepSizeXLocation = GLES20.glGetUniformLocation(programHandle, "stepsizeX");
+        GlUtils.checkLocation(stepSizeXLocation, "stepsizeX");
+        stepSizeYLocation = GLES20.glGetUniformLocation(programHandle, "stepsizeY");
+        GlUtils.checkLocation(stepSizeYLocation, "stepsizeY");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        scaleLocation = -1;
+        stepSizeXLocation = -1;
+        stepSizeYLocation = -1;
+    }
+
+    @Override
+    protected void onPreDraw(float[] transformMatrix) {
+        super.onPreDraw(transformMatrix);
+        GLES20.glUniform1f(scaleLocation, scale);
+        GlUtils.checkError("glUniform1f");
+        GLES20.glUniform1f(stepSizeXLocation, 1.0F / width);
+        GlUtils.checkError("glUniform1f");
+        GLES20.glUniform1f(stepSizeYLocation, 1.0F / height);
+        GlUtils.checkError("glUniform1f");
+    }
     @Override
     protected BaseFilter onCopy() {
         SharpnessFilter filter = new SharpnessFilter();
         filter.setSharpness(getSharpness());
         return filter;
     }
-
-    @NonNull
-    @Override
-    public String getFragmentShader() {
-        String stepsizeXString = "stepsizeX = " + 1.0f / mOutputWidth + ";\n";
-        String stepsizeYString = "stepsizeY = " + 1.0f / mOutputHeight + ";\n";
-        String scaleString = "scale = " + scale + ";\n";
-
-        return "#extension GL_OES_EGL_image_external : require\n"
-                + "precision mediump float;\n"
-                + "uniform samplerExternalOES sTexture;\n"
-                + " float scale;\n"
-                + " float stepsizeX;\n"
-                + " float stepsizeY;\n"
-                + "varying vec2 vTextureCoord;\n"
-                + "void main() {\n"
-                // Parameters that were created above
-                + stepsizeXString
-                + stepsizeYString
-                + scaleString
-                + "  vec3 nbr_color = vec3(0.0, 0.0, 0.0);\n"
-                + "  vec2 coord;\n"
-                + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
-                + "  coord.x = vTextureCoord.x - 0.5 * stepsizeX;\n"
-                + "  coord.y = vTextureCoord.y - stepsizeY;\n"
-                + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
-                + "  coord.x = vTextureCoord.x - stepsizeX;\n"
-                + "  coord.y = vTextureCoord.y + 0.5 * stepsizeY;\n"
-                + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
-                + "  coord.x = vTextureCoord.x + stepsizeX;\n"
-                + "  coord.y = vTextureCoord.y - 0.5 * stepsizeY;\n"
-                + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
-                + "  coord.x = vTextureCoord.x + stepsizeX;\n"
-                + "  coord.y = vTextureCoord.y + 0.5 * stepsizeY;\n"
-                + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
-                + "  gl_FragColor = vec4(color.rgb - 2.0 * scale * nbr_color, color.a);\n"
-                + "}\n";
-
-    }
-
 }
