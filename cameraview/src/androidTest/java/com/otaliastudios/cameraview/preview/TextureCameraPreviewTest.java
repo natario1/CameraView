@@ -11,10 +11,10 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class TextureCameraPreviewTest extends CameraPreviewTest {
+public class TextureCameraPreviewTest extends CameraPreviewTest<TextureCameraPreview> {
 
     @Override
-    protected CameraPreview createPreview(Context context, ViewGroup parent) {
+    protected TextureCameraPreview createPreview(Context context, ViewGroup parent) {
         return new TextureCameraPreview(context, parent);
     }
 

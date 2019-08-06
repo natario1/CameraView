@@ -23,16 +23,16 @@ import static org.junit.Assert.*;
 
 import static org.mockito.Mockito.*;
 
-public abstract class CameraPreviewTest extends BaseTest {
+public abstract class CameraPreviewTest<T extends CameraPreview> extends BaseTest {
 
     private final static long DELAY = 4000;
 
-    protected abstract CameraPreview createPreview(Context context, ViewGroup parent);
+    protected abstract T createPreview(Context context, ViewGroup parent);
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
-    protected CameraPreview preview;
+    protected T preview;
     @SuppressWarnings("WeakerAccess")
     protected Size surfaceSize;
     private CameraPreview.SurfaceCallback callback;
