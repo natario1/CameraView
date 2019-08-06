@@ -7,12 +7,13 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.TwoParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Representation of input frames using only two color tones.
  */
-public class DuotoneFilter extends BaseFilter {
+public class DuotoneFilter extends BaseFilter implements TwoParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -33,7 +34,6 @@ public class DuotoneFilter extends BaseFilter {
     private int mFirstColorLocation = -1;
     private int mSecondColorLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public DuotoneFilter() { }
 
     /**
@@ -41,7 +41,7 @@ public class DuotoneFilter extends BaseFilter {
      * @param firstColor first
      * @param secondColor second
      */
-    @SuppressWarnings({"unused", "WeakerAccess"})
+    @SuppressWarnings({"unused"})
     public void setColors(@ColorInt int firstColor, @ColorInt int secondColor) {
         setFirstColor(firstColor);
         setSecondColor(secondColor);
@@ -93,6 +93,27 @@ public class DuotoneFilter extends BaseFilter {
         return mSecondColor;
     }
 
+    @Override
+    public void setParameter1(float value) {
+        // no easy way to transform 0...1 into a color.
+        setFirstColor((int) (value * Integer.MAX_VALUE));
+    }
+
+    @Override
+    public float getParameter1() {
+        return (float) getFirstColor() / Integer.MAX_VALUE;
+    }
+
+    @Override
+    public void setParameter2(float value) {
+        // no easy way to transform 0...1 into a color.
+        setSecondColor((int) (value * Integer.MAX_VALUE));
+    }
+
+    @Override
+    public float getParameter2() {
+        return (float) getSecondColor() / Integer.MAX_VALUE;
+    }
 
     @NonNull
     @Override
@@ -133,12 +154,5 @@ public class DuotoneFilter extends BaseFilter {
         super.onDestroy();
         mFirstColorLocation = -1;
         mSecondColorLocation = -1;
-    }
-
-    @Override
-    protected BaseFilter onCopy() {
-        DuotoneFilter filter = new DuotoneFilter();
-        filter.setColors(getFirstColor(), getSecondColor());
-        return filter;
     }
 }

@@ -5,12 +5,13 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Applies a hue effect on the input frames.
  */
-public class HueFilter extends BaseFilter {
+public class HueFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -41,7 +42,6 @@ public class HueFilter extends BaseFilter {
     private float hue = 0.0f;
     private int hueLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public HueFilter() { }
 
     /**
@@ -52,7 +52,7 @@ public class HueFilter extends BaseFilter {
      */
     @SuppressWarnings({"unused", "WeakerAccess"})
     public void setHue(float hue) {
-        this.hue = hue;
+        this.hue = hue % 360;
     }
 
     /**
@@ -64,6 +64,16 @@ public class HueFilter extends BaseFilter {
     @SuppressWarnings("WeakerAccess")
     public float getHue() {
         return hue;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        setHue(value * 360F);
+    }
+
+    @Override
+    public float getParameter1() {
+        return getHue() / 360F;
     }
 
     @NonNull
@@ -92,12 +102,5 @@ public class HueFilter extends BaseFilter {
         float shaderHue = ((hue - 45) / 45f + 0.5f) * -1;
         GLES20.glUniform1f(hueLocation, shaderHue);
         GlUtils.checkError("glUniform1f");
-    }
-
-    @Override
-    protected BaseFilter onCopy() {
-        HueFilter filter = new HueFilter();
-        filter.setHue(getHue());
-        return filter;
     }
 }

@@ -5,12 +5,13 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Adjusts the brightness of the frames.
  */
-public class BrightnessFilter extends BaseFilter {
+public class BrightnessFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -22,28 +23,24 @@ public class BrightnessFilter extends BaseFilter {
             + "  gl_FragColor = brightness * color;\n"
             + "}\n";
 
-    private float brightness = 2.0f;
+    private float brightness = 2.0f; // 1.0F...2.0F
     private int brightnessLocation = -1;
 
 
-    @SuppressWarnings("WeakerAccess")
     public BrightnessFilter() { }
 
     /**
      * Sets the brightness adjustment.
-     * 0.0: normal brightness.
-     * 1.0: high brightness.
+     * 1.0: normal brightness.
+     * 2.0: high brightness.
      *
      * @param brightness brightness.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "unused"})
     public void setBrightness(float brightness) {
-        if (brightness < 0.0f) brightness = 0.0f;
-        if (brightness > 1.0f) brightness = 1.0f;
-
-        //since the shader excepts a range of 1.0 - 2.0
-        // will add the 1.0 to every value
-        this.brightness = 1.0f + brightness;
+        if (brightness < 1.0f) brightness = 1.0f;
+        if (brightness > 2.0f) brightness = 2.0f;
+        this.brightness = brightness;
     }
 
     /**
@@ -54,9 +51,19 @@ public class BrightnessFilter extends BaseFilter {
      */
     @SuppressWarnings({"unused", "WeakerAccess"})
     public float getBrightness() {
-        //since the shader excepts a range of 1.0 - 2.0
-        //to keep it between 0.0f - 1.0f range, will subtract the 1.0 to every value
-        return brightness - 1.0f;
+        return brightness;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        // parameter is 0...1, brightness is 1...2.
+        setBrightness(value + 1);
+    }
+
+    @Override
+    public float getParameter1() {
+        // parameter is 0...1, brightness is 1...2.
+        return getBrightness() - 1F;
     }
 
     @NonNull
@@ -83,13 +90,5 @@ public class BrightnessFilter extends BaseFilter {
         super.onPreDraw(transformMatrix);
         GLES20.glUniform1f(brightnessLocation, brightness);
         GlUtils.checkError("glUniform1f");
-    }
-
-
-    @Override
-    protected BaseFilter onCopy() {
-        BrightnessFilter filter = new BrightnessFilter();
-        filter.setBrightness(getBrightness());
-        return filter;
     }
 }

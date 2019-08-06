@@ -5,12 +5,13 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Applies gamma correction to the frames.
  */
-public class GammaFilter extends BaseFilter {
+public class GammaFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -25,22 +26,19 @@ public class GammaFilter extends BaseFilter {
     private float gamma = 2.0f;
     private int gammaLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public GammaFilter() { }
 
     /**
-     * Sets the new gamma value in the 0.0 - 1.0 range.
-     * The 0.5 value means no correction will be applied.
+     * Sets the new gamma value in the 0.0 - 2.0 range.
+     * The 1.0 value means no correction will be applied.
      *
      * @param gamma gamma value
      */
     @SuppressWarnings("WeakerAccess")
     public void setGamma(float gamma) {
         if (gamma < 0.0f) gamma = 0.0f;
-        if (gamma > 1.0f) gamma = 1.0f;
-        //since the shader excepts a range of 0.0 - 2.0
-        //will multiply the 2.0 to every value
-        this.gamma = gamma * 2.0f;
+        if (gamma > 2.0f) gamma = 2.0f;
+        this.gamma = gamma;
     }
 
     /**
@@ -49,11 +47,19 @@ public class GammaFilter extends BaseFilter {
      * @see #setGamma(float)
      * @return gamma
      */
-    @SuppressWarnings({"unused", "WeakerAccess"})
+    @SuppressWarnings("WeakerAccess")
     public float getGamma() {
-        //since the shader excepts a range of 0.0 - 2.0
-        //to keep it between 0.0f - 1.0f range, will divide it with 2.0
-        return gamma / 2.0f;
+        return gamma;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        setGamma(value * 2F);
+    }
+
+    @Override
+    public float getParameter1() {
+        return getGamma() / 2F;
     }
 
     @NonNull
@@ -80,13 +86,5 @@ public class GammaFilter extends BaseFilter {
         super.onPreDraw(transformMatrix);
         GLES20.glUniform1f(gammaLocation, gamma);
         GlUtils.checkError("glUniform1f");
-
-    }
-
-    @Override
-    protected BaseFilter onCopy() {
-        GammaFilter filter = new GammaFilter();
-        filter.setGamma(getGamma());
-        return filter;
     }
 }

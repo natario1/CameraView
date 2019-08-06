@@ -5,13 +5,14 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.TwoParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 
 /**
  * Applies a vignette effect to input frames.
  */
-public class VignetteFilter extends BaseFilter {
+public class VignetteFilter extends BaseFilter implements TwoParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -30,8 +31,8 @@ public class VignetteFilter extends BaseFilter {
             + "  gl_FragColor = vec4(color.rgb * lumen, color.a);\n"
             + "}\n";
 
-    private float mScale = 0.85f;
-    private float mShade = 0.5f;
+    private float mScale = 0.85f; // 0...1
+    private float mShade = 0.5f; // 0...1
     private int mWidth = 1;
     private int mHeight = 1;
 
@@ -40,7 +41,6 @@ public class VignetteFilter extends BaseFilter {
     private int mShadeLocation = -1;
     private int mScaleLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public VignetteFilter() { }
 
     @Override
@@ -92,6 +92,27 @@ public class VignetteFilter extends BaseFilter {
     @SuppressWarnings("WeakerAccess")
     public float getVignetteShade() {
         return mShade;
+    }
+
+
+    @Override
+    public void setParameter1(float value) {
+        setVignetteScale(value);
+    }
+
+    @Override
+    public float getParameter1() {
+        return getVignetteScale();
+    }
+
+    @Override
+    public void setParameter2(float value) {
+        setVignetteShade(value);
+    }
+
+    @Override
+    public float getParameter2() {
+        return getVignetteShade();
     }
 
     @NonNull
@@ -149,13 +170,5 @@ public class VignetteFilter extends BaseFilter {
         float range = (1.30f - (float) Math.sqrt(mScale) * 0.7f);
         GLES20.glUniform1f(mRangeLocation, range);
         GlUtils.checkError("glUniform1f");
-    }
-
-    @Override
-    protected BaseFilter onCopy() {
-        VignetteFilter filter = new VignetteFilter();
-        filter.setVignetteScale(getVignetteScale());
-        filter.setVignetteShade(getVignetteShade());
-        return filter;
     }
 }

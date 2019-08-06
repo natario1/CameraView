@@ -5,12 +5,13 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Applies back-light filling to the frames.
  */
-public class FillLightFilter extends BaseFilter {
+public class FillLightFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -34,7 +35,6 @@ public class FillLightFilter extends BaseFilter {
     private int multiplierLocation = -1;
     private int gammaLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public FillLightFilter() { }
 
     /**
@@ -62,6 +62,15 @@ public class FillLightFilter extends BaseFilter {
         return strength;
     }
 
+    @Override
+    public void setParameter1(float value) {
+        setStrength(value);
+    }
+
+    @Override
+    public float getParameter1() {
+        return getStrength();
+    }
 
     @NonNull
     @Override
@@ -98,13 +107,5 @@ public class FillLightFilter extends BaseFilter {
         float gamma = 1.0f / faded;
         GLES20.glUniform1f(gammaLocation, gamma);
         GlUtils.checkError("glUniform1f");
-    }
-
-
-    @Override
-    protected BaseFilter onCopy() {
-        FillLightFilter filter = new FillLightFilter();
-        filter.setStrength(getStrength());
-        return filter;
     }
 }

@@ -7,13 +7,14 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 
 /**
  * Tints the frames with specified color.
  */
-public class TintFilter extends BaseFilter {
+public class TintFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -33,7 +34,6 @@ public class TintFilter extends BaseFilter {
     private int tint = Color.RED;
     private int tintLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public TintFilter() { }
 
     /**
@@ -55,6 +55,17 @@ public class TintFilter extends BaseFilter {
     @ColorInt
     public int getTint() {
         return tint;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        // no easy way to transform 0...1 into a color.
+        setTint((int) (value * Integer.MAX_VALUE));
+    }
+
+    @Override
+    public float getParameter1() {
+        return (float) getTint() / Integer.MAX_VALUE;
     }
 
     @NonNull
@@ -86,12 +97,5 @@ public class TintFilter extends BaseFilter {
         };
         GLES20.glUniform3fv(tintLocation, 1, channels, 0);
         GlUtils.checkError("glUniform3fv");
-    }
-
-    @Override
-    protected BaseFilter onCopy() {
-        TintFilter filter = new TintFilter();
-        filter.setTint(getTint());
-        return filter;
     }
 }

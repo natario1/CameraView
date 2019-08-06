@@ -5,12 +5,13 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Adjusts color saturation.
  */
-public class SaturationFilter extends BaseFilter {
+public class SaturationFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -37,29 +38,25 @@ public class SaturationFilter extends BaseFilter {
             + "  gl_FragColor = gl_FragColor+vec4(verynew_color / max_color, color.a);\n"
             + "}\n";
 
-    private float scale = 1.0f;
+    private float scale = 1F; // -1...1
     private int scaleLocation = -1;
     private int exponentsLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public SaturationFilter() { }
 
     /**
      * Sets the saturation correction value:
-     * 0.0: fully desaturated, grayscale.
-     * 0.5: no change.
-     * 1.0: fully saturated.
+     * -1.0: fully desaturated, grayscale.
+     * 0.0: no change.
+     * +1.0: fully saturated.
      *
      * @param value new value
      */
     @SuppressWarnings("WeakerAccess")
     public void setSaturation(float value) {
-        if (value < 0.0f) value = 0.0f;
-        if (value > 1.0f) value = 1.0f;
-
-        //since the shader excepts a range of -1.0 to 1.0
-        //will multiply it by 2.0f and subtract 1.0 to every value
-        this.scale = (2.0f * value) - 1.0f;
+        if (value < -1F) value = -1F;
+        if (value > 1F) value = 1F;
+        scale = value;
     }
 
     /**
@@ -70,9 +67,17 @@ public class SaturationFilter extends BaseFilter {
      */
     @SuppressWarnings("WeakerAccess")
     public float getSaturation() {
-        //since the shader excepts a range of -1.0 to 1.0
-        //will add 1.0 to every value and divide it by 2.0f
-        return (scale + 1.0f) / 2.0f;
+        return scale;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        setSaturation(2F * value - 1F);
+    }
+
+    @Override
+    public float getParameter1() {
+        return (getSaturation() + 1F) / 2F;
     }
 
     @NonNull
@@ -115,12 +120,5 @@ public class SaturationFilter extends BaseFilter {
             GLES20.glUniform3f(exponentsLocation, 0F, 0F, 0F);
             GlUtils.checkError("glUniform3f");
         }
-    }
-
-    @Override
-    protected BaseFilter onCopy() {
-        SaturationFilter filter = new SaturationFilter();
-        filter.setSaturation(getSaturation());
-        return filter;
     }
 }

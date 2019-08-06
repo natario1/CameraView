@@ -210,6 +210,7 @@ public abstract class BaseFilter implements Filter {
         return copy;
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected BaseFilter onCopy() {
         try {
             return getClass().newInstance();

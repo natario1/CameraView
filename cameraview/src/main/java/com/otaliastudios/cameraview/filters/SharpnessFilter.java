@@ -5,12 +5,13 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Sharpens the input frames.
  */
-public class SharpnessFilter extends BaseFilter {
+public class SharpnessFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -45,7 +46,6 @@ public class SharpnessFilter extends BaseFilter {
     private int stepSizeXLocation = -1;
     private int stepSizeYLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public SharpnessFilter() { }
 
     @Override
@@ -78,6 +78,16 @@ public class SharpnessFilter extends BaseFilter {
     @SuppressWarnings("WeakerAccess")
     public float getSharpness() {
         return scale;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        setSharpness(value);
+    }
+
+    @Override
+    public float getParameter1() {
+        return getSharpness();
     }
 
     @NonNull
@@ -114,11 +124,5 @@ public class SharpnessFilter extends BaseFilter {
         GlUtils.checkError("glUniform1f");
         GLES20.glUniform1f(stepSizeYLocation, 1.0F / height);
         GlUtils.checkError("glUniform1f");
-    }
-    @Override
-    protected BaseFilter onCopy() {
-        SharpnessFilter filter = new SharpnessFilter();
-        filter.setSharpness(getSharpness());
-        return filter;
     }
 }

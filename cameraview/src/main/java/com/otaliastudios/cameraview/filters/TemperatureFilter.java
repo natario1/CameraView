@@ -5,12 +5,13 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Adjusts color temperature.
  */
-public class TemperatureFilter extends BaseFilter {
+public class TemperatureFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -32,24 +33,23 @@ public class TemperatureFilter extends BaseFilter {
             + "  gl_FragColor = vec4(new_color, color.a);\n"
             + "}\n";
 
-    private float scale = 0f;
+    private float scale = 1F; // -1...1
     private int scaleLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public TemperatureFilter() { }
 
     /**
      * Sets the new temperature value:
-     * 0.0: cool colors
-     * 0.5: no change
+     * -1.0: cool colors
+     * 0.0: no change
      * 1.0: warm colors
      *
      * @param value new value
      */
     @SuppressWarnings("WeakerAccess")
     public void setTemperature(float value) {
-        if (value < 0.0f) value = 0.0f;
-        if (value > 1.0f) value = 1.0f;
+        if (value < -1F) value = -1F;
+        if (value > 1F) value = 1F;
         this.scale = value;
     }
 
@@ -62,6 +62,16 @@ public class TemperatureFilter extends BaseFilter {
     @SuppressWarnings("WeakerAccess")
     public float getTemperature() {
         return scale;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        setTemperature((2F * value - 1F));
+    }
+
+    @Override
+    public float getParameter1() {
+        return (getTemperature() + 1F) / 2F;
     }
 
     @NonNull
@@ -86,14 +96,7 @@ public class TemperatureFilter extends BaseFilter {
     @Override
     protected void onPreDraw(float[] transformMatrix) {
         super.onPreDraw(transformMatrix);
-        GLES20.glUniform1f(scaleLocation, (2.0f * scale - 1.0f));
+        GLES20.glUniform1f(scaleLocation, scale);
         GlUtils.checkError("glUniform1f");
-    }
-
-    @Override
-    protected BaseFilter onCopy() {
-        TemperatureFilter filter = new TemperatureFilter();
-        filter.setTemperature(getTemperature());
-        return filter;
     }
 }

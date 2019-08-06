@@ -5,6 +5,7 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 import java.util.Random;
@@ -12,7 +13,7 @@ import java.util.Random;
 /**
  * Applies film grain effect to the frames.
  */
-public class GrainFilter extends BaseFilter {
+public class GrainFilter extends BaseFilter implements OneParameterFilter {
 
     private final static Random RANDOM = new Random();
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
@@ -95,6 +96,15 @@ public class GrainFilter extends BaseFilter {
         return strength;
     }
 
+    @Override
+    public void setParameter1(float value) {
+        setStrength(value);
+    }
+
+    @Override
+    public float getParameter1() {
+        return getStrength();
+    }
 
     @NonNull
     @Override
@@ -130,12 +140,5 @@ public class GrainFilter extends BaseFilter {
         GlUtils.checkError("glUniform1f");
         GLES20.glUniform1f(stepYLocation, 0.5f / height);
         GlUtils.checkError("glUniform1f");
-    }
-
-    @Override
-    protected BaseFilter onCopy() {
-        GrainFilter filter = new GrainFilter();
-        filter.setStrength(getStrength());
-        return filter;
     }
 }

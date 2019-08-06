@@ -5,12 +5,13 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Adjusts the contrast.
  */
-public class ContrastFilter extends BaseFilter {
+public class ContrastFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
@@ -25,26 +26,23 @@ public class ContrastFilter extends BaseFilter {
             + "  gl_FragColor = color;\n"
             + "}\n";
 
-    private float contrast = 2.0f;
+    private float contrast = 2F;
     private int contrastLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public ContrastFilter() { }
 
     /**
      * Sets the current contrast adjustment.
-     * 0.0: no adjustment
-     * 1.0: maximum adjustment
+     * 1.0: no adjustment
+     * 2.0: increased contrast
      *
      * @param contrast contrast
      */
     @SuppressWarnings("WeakerAccess")
     public void setContrast(float contrast) {
-        if (contrast < 0.0f) contrast = 0.0f;
-        if (contrast > 1.0f) contrast = 1.0f;
-        //since the shader excepts a range of 1.0 - 2.0
-        //will add the 1.0 to every value
-        this.contrast = contrast + 1.0f;
+        if (contrast < 1.0f) contrast = 1.0f;
+        if (contrast > 2.0f) contrast = 2.0f;
+        this.contrast = contrast;
     }
 
     /**
@@ -55,9 +53,19 @@ public class ContrastFilter extends BaseFilter {
      */
     @SuppressWarnings({"unused", "WeakerAccess"})
     public float getContrast() {
-        //since the shader excepts a range of 1.0 - 2.0
-        //to keep it between 0.0f - 1.0f range, will subtract the 1.0 to every value
-        return contrast - 1.0f;
+        return contrast;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        // parameter is 0...1, contrast is 1...2.
+        setContrast(value + 1);
+    }
+
+    @Override
+    public float getParameter1() {
+        // parameter is 0...1, contrast is 1...2.
+        return getContrast() - 1F;
     }
 
     @NonNull
@@ -84,12 +92,5 @@ public class ContrastFilter extends BaseFilter {
         super.onPreDraw(transformMatrix);
         GLES20.glUniform1f(contrastLocation, contrast);
         GlUtils.checkError("glUniform1f");
-    }
-
-    @Override
-    protected BaseFilter onCopy() {
-        ContrastFilter filter = new ContrastFilter();
-        filter.setContrast(getContrast());
-        return filter;
     }
 }
