@@ -26,7 +26,7 @@ import com.otaliastudios.cameraview.overlay.OverlayDrawer;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
-import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -97,15 +97,14 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
             @RendererThread
             @Override
-            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY, Filter shaderEffect) {
+            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
                 mPreview.removeRendererFrameCallback(this);
-                SnapshotGlPictureRecorder.this.onRendererFrame(surfaceTexture, scaleX, scaleY, shaderEffect);
+                SnapshotGlPictureRecorder.this.onRendererFrame(surfaceTexture, scaleX, scaleY);
             }
 
             @Override
-            public void
-            onFilterChanged(@NonNull Filter filter) {
-                mViewport.changeShaderFilter(filter);
+            public void onFilterChanged(@NonNull Filter filter) {
+                mViewport.setFilter(filter.copy());
             }
         });
     }
@@ -151,7 +150,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
      */
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    private void onRendererFrame(final @NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY, @NonNull Filter filter) {
+    private void onRendererFrame(final @NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
         // Get egl context from the RendererThread, which is the one in which we have created
         // the textureId and the overlayTextureId, managed by the GlSurfaceView.
         // Next operations can then be performed on different threads using this handle.

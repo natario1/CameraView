@@ -131,6 +131,8 @@
 
         <attr name="cameraAutoFocusMarker" format="string|reference"/>
 
+        <attr name="cameraFilter" format="string|reference"/>
+
         <attr name="cameraUseDeviceOrientation" format="boolean"/>
 
         <attr name="cameraExperimental" format="boolean" />

@@ -1,59 +1,90 @@
 package com.otaliastudios.cameraview.filters;
 
+import android.opengl.GLES20;
+
 import androidx.annotation.NonNull;
 
+import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
+import com.otaliastudios.cameraview.internal.GlUtils;
+
 /**
- * Apply Gamma Effect on preview being played
+ * Applies gamma correction to the frames.
  */
-public class GammaFilter extends Filter {
-    private float gammaValue = 2.0f;
+public class GammaFilter extends BaseFilter implements OneParameterFilter {
+
+    private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
+            + "precision mediump float;\n"
+            + "varying vec2 vTextureCoord;\n"
+            + "uniform samplerExternalOES sTexture;\n"
+            + "uniform float gamma;\n"
+            + "void main() {\n"
+            + "  vec4 textureColor = texture2D(sTexture, vTextureCoord);\n"
+            + "  gl_FragColor = vec4(pow(textureColor.rgb, vec3(gamma)), textureColor.w);\n"
+            + "}\n";
+
+    private float gamma = 2.0f;
+    private int gammaLocation = -1;
+
+    public GammaFilter() { }
 
     /**
-     * Initialize Effect
-     */
-    public GammaFilter() {
-    }
-
-    /**
-     * setGammaValue
+     * Sets the new gamma value in the 0.0 - 2.0 range.
+     * The 1.0 value means no correction will be applied.
      *
-     * @param gammaValue Range should be between 0.0 - 1.0 with 0.5 being normal.
+     * @param gamma gamma value
      */
-    public void setGammaValue(float gammaValue) {
-        if (gammaValue < 0.0f)
-            gammaValue = 0.0f;
-        else if (gammaValue > 1.0f)
-            gammaValue = 1.0f;
-
-        //since the shader excepts a range of 0.0 - 2.0
-        //will multiply the 2.0 to every value
-        this.gammaValue = gammaValue * 2.0f;
+    @SuppressWarnings("WeakerAccess")
+    public void setGamma(float gamma) {
+        if (gamma < 0.0f) gamma = 0.0f;
+        if (gamma > 2.0f) gamma = 2.0f;
+        this.gamma = gamma;
     }
 
-    public float getGammaValue() {
-        //since the shader excepts a range of 0.0 - 2.0
-        //to keep it between 0.0f - 1.0f range, will divide it with 2.0
-        return gammaValue / 2.0f;
+    /**
+     * Returns the current gamma.
+     *
+     * @see #setGamma(float)
+     * @return gamma
+     */
+    @SuppressWarnings("WeakerAccess")
+    public float getGamma() {
+        return gamma;
+    }
+
+    @Override
+    public void setParameter1(float value) {
+        setGamma(value * 2F);
+    }
+
+    @Override
+    public float getParameter1() {
+        return getGamma() / 2F;
     }
 
     @NonNull
     @Override
     public String getFragmentShader() {
+        return FRAGMENT_SHADER;
+    }
 
-        String shader = "#extension GL_OES_EGL_image_external : require\n"
-                + "precision mediump float;\n"
+    @Override
+    public void onCreate(int programHandle) {
+        super.onCreate(programHandle);
+        gammaLocation = GLES20.glGetUniformLocation(programHandle, "gamma");
+        GlUtils.checkLocation(gammaLocation, "gamma");
+    }
 
-                + "varying vec2 vTextureCoord;\n"
-                + "uniform samplerExternalOES sTexture;\n"
-                + "float gamma=" + gammaValue + ";\n"
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        gammaLocation = -1;
+    }
 
-                + "void main() {\n"
-
-                + "vec4 textureColor = texture2D(sTexture, vTextureCoord);\n"
-                + "gl_FragColor = vec4(pow(textureColor.rgb, vec3(gamma)), textureColor.w);\n"
-
-                + "}\n";
-
-        return shader;
+    @Override
+    protected void onPreDraw(float[] transformMatrix) {
+        super.onPreDraw(transformMatrix);
+        GLES20.glUniform1f(gammaLocation, gamma);
+        GlUtils.checkError("glUniform1f");
     }
 }

@@ -7,15 +7,17 @@ import androidx.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 
-public class MockCameraPreview extends CameraPreview<View, Void> {
+public class MockCameraPreview extends FilterCameraPreview<View, Void> {
 
     public MockCameraPreview(Context context, ViewGroup parent) {
         super(context, parent);
     }
 
     private View rootView;
+    private Filter filter;
 
     @Override
     public boolean supportsCropping() {
@@ -46,5 +48,16 @@ public class MockCameraPreview extends CameraPreview<View, Void> {
     @Override
     public View getRootView() {
         return rootView;
+    }
+
+    @Override
+    public void setFilter(@NonNull Filter filter) {
+        this.filter = filter;
+    }
+
+    @NonNull
+    @Override
+    public Filter getCurrentFilter() {
+        return filter;
     }
 }

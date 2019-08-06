@@ -13,7 +13,7 @@ import com.otaliastudios.cameraview.overlay.OverlayDrawer;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
-import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.video.encoding.AudioConfig;
 import com.otaliastudios.cameraview.video.encoding.AudioMediaEncoder;
@@ -102,9 +102,17 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         }
     }
 
+    @Override
+    public void onFilterChanged(@NonNull Filter filter) {
+        mCurrentFilter = filter.copy();
+        if (mEncoderEngine != null) {
+            mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
+        }
+    }
+
     @RendererThread
     @Override
-    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY, Filter shaderEffect) {
+    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
             LOG.i("Starting the encoder engine.");
 
@@ -160,13 +168,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             // Engine
             mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, audioEncoder,
                     mResult.maxDuration, mResult.maxSize, SnapshotVideoRecorder.this);
-
-
-            //set current filter
-            if (mEncoderEngine != null) {
-                mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
-            }
-
+            mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
             mEncoderEngine.start();
             mResult.rotation = 0; // We will rotate the result instead.
             mCurrentState = STATE_RECORDING;
@@ -190,15 +192,6 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mEncoderEngine.stop();
         }
 
-    }
-
-    @Override
-    public void onFilterChanged(@NonNull Filter filter) {
-        mCurrentFilter = filter;
-
-        if (mEncoderEngine != null) {
-            mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, filter);
-        }
     }
 
     @Override

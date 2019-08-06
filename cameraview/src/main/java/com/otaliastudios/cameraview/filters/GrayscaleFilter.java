@@ -5,22 +5,21 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
 /**
- * Converts the frames into black and white colors.
+ * Converts frames to gray scale.
  */
-public class BlackAndWhiteFilter extends BaseFilter {
+public class GrayscaleFilter extends BaseFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
+            + "uniform samplerExternalOES sTexture;\n"
             + "varying vec2 vTextureCoord;\n"
-            + "uniform samplerExternalOES sTexture;\n" + "void main() {\n"
+            + "void main() {\n"
             + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
-            + "  float colorR = (color.r + color.g + color.b) / 3.0;\n"
-            + "  float colorG = (color.r + color.g + color.b) / 3.0;\n"
-            + "  float colorB = (color.r + color.g + color.b) / 3.0;\n"
-            + "  gl_FragColor = vec4(colorR, colorG, colorB, color.a);\n"
+            + "  float y = dot(color, vec4(0.299, 0.587, 0.114, 0));\n"
+            + "  gl_FragColor = vec4(y, y, y, color.a);\n"
             + "}\n";
 
-    public BlackAndWhiteFilter() { }
+    public GrayscaleFilter() { }
 
     @NonNull
     @Override

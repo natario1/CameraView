@@ -65,7 +65,6 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     private final static CameraLogger LOG = CameraLogger.create(CameraIntegrationTest.class.getSimpleName());
     private final static long DELAY = 8000;
-    private final static long VIDEO_DELAY = 16000;
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
@@ -183,7 +182,20 @@ public abstract class CameraIntegrationTest extends BaseTest {
         }));
 
         // Wait for onVideoTaken and check.
-        VideoResult result = video.await(VIDEO_DELAY);
+        VideoResult result = video.await(DELAY);
+
+        // It seems that when running all the tests together, the device can go in some
+        // power saving mode which makes the CPU extremely slow. This is especially problematic
+        // with video snapshots where we do lots of processing. The videoEnd callback can return
+        // long after the actual stop() call, so if we're still processing, let's wait more.
+        if (expectSuccess && camera.isTakingVideo()) {
+            while (camera.isTakingVideo()) {
+                video.listen();
+                result = video.await(DELAY);
+            }
+        }
+
+        // Now we should be OK.
         if (expectSuccess) {
             assertEquals("Should call onVideoRecordingEnd", 0, onVideoRecordingEnd.getCount());
             assertNotNull("Should end video", result);

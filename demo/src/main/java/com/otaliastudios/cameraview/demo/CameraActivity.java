@@ -27,7 +27,8 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Preview;
-import com.otaliastudios.cameraview.filters.Filters;
+import com.otaliastudios.cameraview.filter.Filters;
+import com.otaliastudios.cameraview.filters.BrightnessFilter;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 
@@ -35,8 +36,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.otaliastudios.cameraview.filters.Filters.*;
 
 
 public class CameraActivity extends AppCompatActivity implements View.OnClickListener, OptionView.Callback {
@@ -49,7 +48,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private ViewGroup controlPanel;
     private long mCaptureTime;
 
-    private Filters mCurrentEffect = NO_FILTER;
+    private int mCurrentFilter = 0;
+    private final Filters[] mAllFilters = Filters.values();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -321,84 +321,17 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
-    private void changeCurrentFilter(){
+    private void changeCurrentFilter() {
         if (camera.getPreview() != Preview.GL_SURFACE) {
-            message("Filters are supported only for GLSurfaceView", true);
+            message("Filters are supported only when preview is Preview.GL_SURFACE.", true);
             return;
         }
-
-        switch (mCurrentEffect){
-            case NO_FILTER:
-                mCurrentEffect = AUTO_FIX_FILTER;
-                break;
-            case AUTO_FIX_FILTER:
-                mCurrentEffect = BLACK_AND_WHITE_FILTER;
-                break;
-            case BLACK_AND_WHITE_FILTER:
-                mCurrentEffect = BRIGHTNESS_FILTER;
-                break;
-            case BRIGHTNESS_FILTER:
-                mCurrentEffect = CONTRAST_FILTER;
-                break;
-            case CONTRAST_FILTER:
-                mCurrentEffect = CROSS_PROCESS_FILTER;
-                break;
-            case CROSS_PROCESS_FILTER:
-                mCurrentEffect = DOCUMENTARY_FILTER;
-                break;
-            case DOCUMENTARY_FILTER:
-                mCurrentEffect = DUO_TONE_COLOR_FILTER;
-                break;
-            case DUO_TONE_COLOR_FILTER:
-                mCurrentEffect = FILL_LIGHT_FILTER;
-                break;
-            case FILL_LIGHT_FILTER:
-                mCurrentEffect = GAMMA_FILTER;
-                break;
-            case GAMMA_FILTER:
-                mCurrentEffect = GRAIN_FILTER;
-                break;
-            case GRAIN_FILTER:
-                mCurrentEffect = GREY_SCALE_FILTER;
-                break;
-            case GREY_SCALE_FILTER:
-                mCurrentEffect = HUE_FILTER;
-                break;
-            case HUE_FILTER:
-                mCurrentEffect = INVERT_COLOR_FILTER;
-                break;
-            case INVERT_COLOR_FILTER:
-                mCurrentEffect = LAMOISH_FILTER;
-                break;
-            case LAMOISH_FILTER:
-                mCurrentEffect = POSTERIZE_FILTER;
-                break;
-            case POSTERIZE_FILTER:
-                mCurrentEffect = SATURATION_FILTER;
-                break;
-            case SATURATION_FILTER:
-                mCurrentEffect = SEPIA_FILTER;
-                break;
-            case SEPIA_FILTER:
-                mCurrentEffect = SHARPNESS_FILTER;
-                break;
-            case SHARPNESS_FILTER:
-                mCurrentEffect = TEMPERATURE_FILTER;
-                break;
-            case TEMPERATURE_FILTER:
-                mCurrentEffect = TINT_FILTER;
-                break;
-            case TINT_FILTER:
-                mCurrentEffect = VIGNETTE_FILTER;
-                break;
-
-            case VIGNETTE_FILTER:
-            default:
-                mCurrentEffect = NO_FILTER;
-                break;
+        if (mCurrentFilter < mAllFilters.length - 1) {
+            mCurrentFilter++;
+        } else {
+            mCurrentFilter = 0;
         }
-
-        camera.setFilter(mCurrentEffect);
+        camera.setFilter(mAllFilters[mCurrentFilter].newInstance());
     }
 
     @Override

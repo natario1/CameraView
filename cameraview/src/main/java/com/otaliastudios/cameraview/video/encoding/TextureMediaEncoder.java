@@ -9,7 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.filters.Filter;
+import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.internal.egl.EglCore;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
@@ -31,7 +31,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     private EglCore mEglCore;
     private EglWindowSurface mWindow;
     private EglViewport mViewport;
-    private Pool<Frame> mFramePool = new Pool<>(100, new Pool.Factory<Frame>() {
+    private Pool<Frame> mFramePool = new Pool<>(Integer.MAX_VALUE, new Pool.Factory<Frame>() {
         @Override
         public Frame create() {
             return new Frame();
@@ -137,7 +137,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
 
         if (event.equals(FILTER_EVENT)) {
             Filter filter = (Filter) data;
-            mViewport.changeShaderFilter(filter);
+            mViewport.setFilter(filter);
         } else if (event.equals(FRAME_EVENT)) {
             Frame frame = (Frame) data;
             if (frame == null) {
@@ -224,7 +224,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
             mWindow = null;
         }
         if (mViewport != null) {
-            mViewport.release(true);
+            mViewport.release();
             mViewport = null;
         }
         if (mEglCore != null) {

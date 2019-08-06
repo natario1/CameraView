@@ -22,6 +22,9 @@ import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.filter.Filter;
+import com.otaliastudios.cameraview.filter.Filters;
+import com.otaliastudios.cameraview.filter.NoFilter;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -65,7 +68,7 @@ public class CameraViewTest extends BaseTest {
 
     private CameraView cameraView;
     private MockCameraEngine mockController;
-    private CameraPreview mockPreview;
+    private MockCameraPreview mockPreview;
     private boolean hasPermissions;
 
     @Before
@@ -825,4 +828,30 @@ public class CameraViewTest extends BaseTest {
 
     //endregion
     // TODO: test permissions
+
+    //region Filter
+
+    @Test(expected = RuntimeException.class)
+    public void testSetFilter_notExperimental() {
+        cameraView.setExperimental(false);
+        cameraView.setFilter(Filters.AUTO_FIX.newInstance());
+    }
+
+    @Test
+    public void testSetFilter_notExperimental_noFilter() {
+        cameraView.setExperimental(false);
+        cameraView.setFilter(Filters.NONE.newInstance());
+        // no exception thrown
+    }
+
+    @Test
+    public void testSetFilter() {
+        cameraView.setExperimental(true);
+        Filter filter = Filters.AUTO_FIX.newInstance();
+        cameraView.setFilter(filter);
+        verify(mockPreview, times(1)).setFilter(filter);
+        assertEquals(filter, cameraView.getFilter());
+        //noinspection ResultOfMethodCallIgnored
+        verify(mockPreview, times(1)).getCurrentFilter();
+    }
 }
