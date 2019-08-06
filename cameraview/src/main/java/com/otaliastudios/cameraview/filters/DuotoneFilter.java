@@ -123,6 +123,7 @@ public class DuotoneFilter extends BaseFilter {
                 Color.blue(mSecondColor) / 255f
         };
         GLES20.glUniform3fv(mFirstColorLocation, 1, first, 0);
+        GlUtils.checkError("glUniform3fv");
         GLES20.glUniform3fv(mSecondColorLocation, 1, second, 0);
         GlUtils.checkError("glUniform3fv");
     }
