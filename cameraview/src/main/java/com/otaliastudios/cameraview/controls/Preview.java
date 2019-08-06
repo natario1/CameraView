@@ -29,7 +29,8 @@ public enum Preview implements Control {
     /**
      * Preview engine based on {@link android.opengl.GLSurfaceView}.
      * This is the best engine available. Supports video snapshots,
-     * and picture snapshots while taking videos.
+     * supports picture snapshots while taking videos, supports
+     * watermarks and overlays, supports real-time filters.
      */
     GL_SURFACE(2);
 

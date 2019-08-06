@@ -14,6 +14,7 @@ addressing most of the common issues and needs, and still leaving you with flexi
 
 - Fast & reliable
 - Gestures support [[docs]](docs/gestures.html)
+- Real-time filters [[docs]](docs/filters.html)
 - Camera1 or Camera2 powered engine [[docs]](docs/previews.html)
 - Frame processing support [[docs]](docs/frame-processing.html)
 - Watermarks & animated overlays [[docs]](docs/watermarks-and-overlays.html)

@@ -31,7 +31,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     private EglCore mEglCore;
     private EglWindowSurface mWindow;
     private EglViewport mViewport;
-    private Pool<Frame> mFramePool = new Pool<>(100, new Pool.Factory<Frame>() {
+    private Pool<Frame> mFramePool = new Pool<>(Integer.MAX_VALUE, new Pool.Factory<Frame>() {
         @Override
         public Frame create() {
             return new Frame();

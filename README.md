@@ -21,6 +21,7 @@ api 'com.otaliastudios:cameraview:2.0.0'
 
 - Fast & reliable
 - Gestures support [[docs]](https://natario1.github.io/CameraView/docs/gestures.html)
+- Real-time filters [[docs]](https://natario1.github.io/CameraView/docs/filters.html)
 - Camera1 or Camera2 powered engine [[docs]](https://natario1.github.io/CameraView/docs/previews.html)
 - Frame processing support [[docs]](https://natario1.github.io/CameraView/docs/frame-processing.html)
 - Watermarks & animated overlays [[docs]](https://natario1.github.io/CameraView/docs/watermarks-and-overlays.html)
@@ -101,6 +102,7 @@ motivation boost to push the library forward.
     app:cameraAutoFocusResetDelay="@integer/autofocus_delay"
     app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker"
     app:cameraUseDeviceOrientation="true|false"
+    app:cameraFilter="@string/real_time_filter"
     app:cameraExperimental="false|true">
     
     <!-- Watermark! -->
