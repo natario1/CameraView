@@ -1,14 +1,32 @@
 package com.otaliastudios.cameraview.filters;
 
+import android.opengl.GLES20;
+
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Adjusts the contrast.
  */
 public class ContrastFilter extends BaseFilter {
+
+    private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
+            + "precision mediump float;\n"
+            + "uniform samplerExternalOES sTexture;\n"
+            + "uniform float contrast;\n"
+            + "varying vec2 vTextureCoord;\n"
+            + "void main() {\n"
+            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  color -= 0.5;\n"
+            + "  color *= contrast;\n"
+            + "  color += 0.5;\n"
+            + "  gl_FragColor = color;\n"
+            + "}\n";
+
     private float contrast = 2.0f;
+    private int contrastLocation = -1;
 
     @SuppressWarnings("WeakerAccess")
     public ContrastFilter() { }
@@ -42,6 +60,31 @@ public class ContrastFilter extends BaseFilter {
         return contrast - 1.0f;
     }
 
+    @NonNull
+    @Override
+    public String getFragmentShader() {
+        return FRAGMENT_SHADER;
+    }
+
+    @Override
+    public void onCreate(int programHandle) {
+        super.onCreate(programHandle);
+        contrastLocation = GLES20.glGetUniformLocation(programHandle, "contrast");
+        GlUtils.checkLocation(contrastLocation, "contrast");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        contrastLocation = -1;
+    }
+
+    @Override
+    protected void onPreDraw(float[] transformMatrix) {
+        super.onPreDraw(transformMatrix);
+        GLES20.glUniform1f(contrastLocation, contrast);
+        GlUtils.checkError("glUniform1f");
+    }
 
     @Override
     protected BaseFilter onCopy() {
@@ -49,23 +92,4 @@ public class ContrastFilter extends BaseFilter {
         filter.setContrast(getContrast());
         return filter;
     }
-
-    @NonNull
-    @Override
-    public String getFragmentShader() {
-        return "#extension GL_OES_EGL_image_external : require\n"
-                + "precision mediump float;\n"
-                + "uniform samplerExternalOES sTexture;\n"
-                + "float contrast;\n"
-                + "varying vec2 vTextureCoord;\n"
-                + "void main() {\n"
-                + "  contrast =" + contrast + ";\n"
-                + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
-                + "  color -= 0.5;\n"
-                + "  color *= contrast;\n"
-                + "  color += 0.5;\n"
-                + "  gl_FragColor = color;\n" + "}\n";
-
-    }
-
 }

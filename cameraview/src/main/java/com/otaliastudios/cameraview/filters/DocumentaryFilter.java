@@ -1,10 +1,12 @@
 package com.otaliastudios.cameraview.filters;
 
+import android.opengl.GLES20;
+
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.internal.GlUtils;
 
-import java.util.Date;
 import java.util.Random;
 
 /**
@@ -12,54 +14,31 @@ import java.util.Random;
  */
 public class DocumentaryFilter extends BaseFilter {
 
-    private final Random mRandom = new Random(new Date().getTime());
-    private int mOutputWidth = 1;
-    private int mOutputHeight = 1;
+    private final Random mRandom = new Random();
+    private int mWidth = 1;
+    private int mHeight = 1;
+    private int mScaleLocation = -1;
+    private int mMaxDistLocation = -1;
 
     public DocumentaryFilter() { }
 
     @Override
     public void setSize(int width, int height) {
         super.setSize(width, height);
-        mOutputWidth = width;
-        mOutputHeight = height;
+        mWidth = width;
+        mHeight = height;
     }
 
     @NonNull
     @Override
     public String getFragmentShader() {
-        float[] scale = new float[2];
-        if (mOutputWidth > mOutputHeight) {
-            scale[0] = 1f;
-            scale[1] = ((float) mOutputHeight) / mOutputWidth;
-        } else {
-            scale[0] = ((float) mOutputWidth) / mOutputHeight;
-            scale[1] = 1f;
-        }
-        float max_dist = ((float) Math.sqrt(scale[0] * scale[0] + scale[1]
-                * scale[1])) * 0.5f;
-
-        float[] seed = {mRandom.nextFloat(), mRandom.nextFloat()};
-
-        String[] scaleString = new String[2];
-        String[] seedString = new String[2];
-
-        scaleString[0] = "scale[0] = " + scale[0] + ";\n";
-        scaleString[1] = "scale[1] = " + scale[1] + ";\n";
-
-        seedString[0] = "seed[0] = " + seed[0] + ";\n";
-        seedString[1] = "seed[1] = " + seed[1] + ";\n";
-
-        String inv_max_distString = "inv_max_dist = " + 1.0f / max_dist + ";\n";
-        String stepsizeString = "stepsize = " + 1.0f / 255.0f + ";\n";
-
         return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "uniform samplerExternalOES sTexture;\n"
-                + " vec2 seed;\n"
-                + " float stepsize;\n"
-                + " float inv_max_dist;\n"
-                + " vec2 scale;\n"
+                + "vec2 seed;\n"
+                + "float stepsize;\n"
+                + "uniform float inv_max_dist;\n"
+                + "uniform vec2 scale;\n"
                 + "varying vec2 vTextureCoord;\n"
                 + "float rand(vec2 loc) {\n"
                 + "  float theta1 = dot(loc, vec2(0.9898, 0.233));\n"
@@ -74,13 +53,9 @@ public class DocumentaryFilter extends BaseFilter {
                 + "  return fract(part1 + part2 + part3);\n"
                 + "}\n"
                 + "void main() {\n"
-                // Parameters that were created above
-                + scaleString[0]
-                + scaleString[1]
-                + seedString[0]
-                + seedString[1]
-                + inv_max_distString
-                + stepsizeString
+                + "  seed[0] = " + mRandom.nextFloat() + ";\n"
+                + "  seed[1] = " + mRandom.nextFloat() + ";\n"
+                + "  stepsize = " + 1.0f / 255.0f + ";\n"
 
                 // black white
                 + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
@@ -97,5 +72,42 @@ public class DocumentaryFilter extends BaseFilter {
                 + "  float lumen = 0.85 / (1.0 + exp((dist * inv_max_dist - 0.83) * 20.0)) + 0.15;\n"
                 + "  gl_FragColor = vec4(new_color * lumen, color.a);\n"
                 + "}\n";
+    }
+
+    @Override
+    public void onCreate(int programHandle) {
+        super.onCreate(programHandle);
+        mScaleLocation = GLES20.glGetUniformLocation(programHandle, "scale");
+        GlUtils.checkLocation(mScaleLocation, "scale");
+        mMaxDistLocation = GLES20.glGetUniformLocation(programHandle, "inv_max_dist");
+        GlUtils.checkLocation(mMaxDistLocation, "inv_max_dist");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mScaleLocation = -1;
+        mMaxDistLocation = -1;
+    }
+
+    @Override
+    protected void onPreDraw(float[] transformMatrix) {
+        super.onPreDraw(transformMatrix);
+        float[] scale = new float[2];
+        if (mWidth > mHeight) {
+            scale[0] = 1f;
+            scale[1] = ((float) mHeight) / mWidth;
+        } else {
+            scale[0] = ((float) mWidth) / mHeight;
+            scale[1] = 1f;
+        }
+        GLES20.glUniform2fv(mScaleLocation, 1, scale, 0);
+        GlUtils.checkError("glUniform2fv");
+
+        float maxDist = ((float) Math.sqrt(scale[0] * scale[0] + scale[1] * scale[1])) * 0.5f;
+        float invMaxDist = 1F / maxDist;
+        GLES20.glUniform1f(mMaxDistLocation, invMaxDist);
+        GlUtils.checkError("glUniform1f");
+
     }
 }

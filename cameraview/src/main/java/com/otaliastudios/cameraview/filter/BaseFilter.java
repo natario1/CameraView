@@ -116,6 +116,7 @@ public abstract class BaseFilter implements Filter {
                 fragmentTextureCoordinateName);
     }
 
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     protected String createDefaultFragmentShader() {
         return createDefaultFragmentShader(fragmentTextureCoordinateName);
@@ -134,7 +135,7 @@ public abstract class BaseFilter implements Filter {
     }
 
     @Override
-    public void onDestroy(int programHandle) {
+    public void onDestroy() {
         vertexPositionLocation = -1;
         vertexTextureCoordinateLocation = -1;
         vertexModelViewProjectionMatrixLocation = -1;
@@ -196,6 +197,7 @@ public abstract class BaseFilter implements Filter {
         GLES20.glDisableVertexAttribArray(vertexTextureCoordinateLocation);
     }
 
+    @NonNull
     @Override
     public final BaseFilter copy() {
         BaseFilter copy = onCopy();

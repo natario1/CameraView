@@ -1,15 +1,30 @@
 package com.otaliastudios.cameraview.filters;
 
+import android.opengl.GLES20;
+
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Adjusts the brightness of the frames.
  */
 public class BrightnessFilter extends BaseFilter {
 
+    private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
+            + "precision mediump float;\n"
+            + "uniform samplerExternalOES sTexture;\n"
+            + "uniform float brightness;\n"
+            + "varying vec2 vTextureCoord;\n"
+            + "void main() {\n"
+            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  gl_FragColor = brightness * color;\n"
+            + "}\n";
+
     private float brightness = 2.0f;
+    private int brightnessLocation = -1;
+
 
     @SuppressWarnings("WeakerAccess")
     public BrightnessFilter() { }
@@ -44,26 +59,37 @@ public class BrightnessFilter extends BaseFilter {
         return brightness - 1.0f;
     }
 
+    @NonNull
+    @Override
+    public String getFragmentShader() {
+        return FRAGMENT_SHADER;
+    }
+
+    @Override
+    public void onCreate(int programHandle) {
+        super.onCreate(programHandle);
+        brightnessLocation = GLES20.glGetUniformLocation(programHandle, "brightness");
+        GlUtils.checkLocation(brightnessLocation, "brightness");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        brightnessLocation = -1;
+    }
+
+    @Override
+    protected void onPreDraw(float[] transformMatrix) {
+        super.onPreDraw(transformMatrix);
+        GLES20.glUniform1f(brightnessLocation, brightness);
+        GlUtils.checkError("glUniform1f");
+    }
+
+
     @Override
     protected BaseFilter onCopy() {
         BrightnessFilter filter = new BrightnessFilter();
         filter.setBrightness(getBrightness());
         return filter;
     }
-
-    @NonNull
-    @Override
-    public String getFragmentShader() {
-        return "#extension GL_OES_EGL_image_external : require\n"
-                + "precision mediump float;\n"
-                + "uniform samplerExternalOES sTexture;\n"
-                + "float brightness ;\n"
-                + "varying vec2 vTextureCoord;\n"
-                + "void main() {\n"
-                + "  brightness =" + brightness + ";\n"
-                + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
-                + "  gl_FragColor = brightness * color;\n"
-                + "}\n";
-    }
-
 }

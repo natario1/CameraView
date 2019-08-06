@@ -2157,6 +2157,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Use {@link NoFilter} to clear the existing filter,
      * and take a look at the {@link Filters} class for commonly used filters.
      *
+     * This method will throw an exception if the current preview does not support real-time filters.
+     * Make sure you use {@link Preview#GL_SURFACE} (the default).
+     *
      * @see Filters
      * @param filter a new filter
      */
@@ -2164,12 +2167,35 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (mCameraPreview == null) {
             mPendingFilter = filter;
         } else if (!(filter instanceof NoFilter) && !mExperimental) {
-            LOG.w("Filters are an experimental features and need the experimental flag set.");
+            throw new RuntimeException("Filters are an experimental features and need the experimental flag set.");
         } else if (mCameraPreview instanceof FilterCameraPreview) {
             ((FilterCameraPreview) mCameraPreview).setFilter(filter);
         } else {
-            LOG.w("setFilter() is supported only for GL_SURFACE. Preview:", mPreview);
+            throw new RuntimeException("Filters are only supported by the GL_SURFACE preview. Current:" + mPreview);
         }
+    }
+
+    /**
+     * Returns the current real-time filter applied to the camera preview.
+     *
+     * This method will throw an exception if the current preview does not support real-time filters.
+     * Make sure you use {@link Preview#GL_SURFACE} (the default).
+     *
+     * @see #setFilter(Filter)
+     * @return the current filter
+     */
+    @NonNull
+    public Filter getFilter() {
+        if (!mExperimental) {
+            throw new RuntimeException("Filters are an experimental features and need the experimental flag set.");
+        } else if (mCameraPreview == null) {
+            return mPendingFilter;
+        } else if (mCameraPreview instanceof FilterCameraPreview) {
+            return ((FilterCameraPreview) mCameraPreview).getCurrentFilter();
+        } else {
+            throw new RuntimeException("Filters are only supported by the GL_SURFACE preview. Current:" + mPreview);
+        }
+
     }
 
     //endregion

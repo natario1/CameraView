@@ -52,9 +52,8 @@ public interface Filter {
     /**
      * The filter program is about to be destroyed.
      *
-     * @param programHandle handle
      */
-    void onDestroy(int programHandle);
+    void onDestroy();
 
     /**
      * Called to render the actual texture. The given transformation matrix
@@ -78,5 +77,6 @@ public interface Filter {
      *
      * @return a clone
      */
+    @NonNull
     Filter copy();
 }
