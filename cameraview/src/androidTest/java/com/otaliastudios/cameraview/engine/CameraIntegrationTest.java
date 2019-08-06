@@ -189,8 +189,14 @@ public abstract class CameraIntegrationTest extends BaseTest {
         // with video snapshots where we do lots of processing. The videoEnd callback can return
         // long after the actual stop() call, so if we're still processing, let's wait more.
         if (expectSuccess && camera.isTakingVideo()) {
-            return waitForVideoResult(true);
-        } else if (expectSuccess) {
+            while (camera.isTakingVideo()) {
+                video.listen();
+                result = video.await(DELAY);
+            }
+        }
+
+        // Now we should be OK.
+        if (expectSuccess) {
             assertEquals("Should call onVideoRecordingEnd", 0, onVideoRecordingEnd.getCount());
             assertNotNull("Should end video", result);
         } else {

@@ -16,13 +16,12 @@ public class FilterParser {
 
     public FilterParser(@NonNull TypedArray array) {
         String filterName = array.getString(R.styleable.CameraView_cameraFilter);
-        if (filterName != null) {
-            try {
-                Class<?> filterClass = Class.forName(filterName);
-                filter = (Filter) filterClass.newInstance();
-            } catch (Exception ignore) {
-                filter = new NoFilter();
-            }
+        try {
+            //noinspection ConstantConditions
+            Class<?> filterClass = Class.forName(filterName);
+            filter = (Filter) filterClass.newInstance();
+        } catch (Exception ignore) {
+            filter = new NoFilter();
         }
     }
 
