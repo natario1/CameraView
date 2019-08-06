@@ -332,12 +332,6 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             mCurrentFilter = 0;
         }
         camera.setFilter(mAllFilters[mCurrentFilter].newInstance());
-        /* BrightnessFilter filter = (BrightnessFilter) camera.getFilter();
-        if (filter.getBrightness() == 1.0F) {
-            filter.setBrightness(0.0F);
-        } else {
-            filter.setBrightness(filter.getBrightness() + 0.2F);
-        } */
     }
 
     @Override
