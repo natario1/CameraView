@@ -1,15 +1,29 @@
 package com.otaliastudios.cameraview.filters;
 
+import android.opengl.GLES20;
+
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
+import com.otaliastudios.cameraview.internal.GlUtils;
 
 /**
  * Applies gamma correction to the frames.
  */
 public class GammaFilter extends BaseFilter {
 
+    private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
+            + "precision mediump float;\n"
+            + "varying vec2 vTextureCoord;\n"
+            + "uniform samplerExternalOES sTexture;\n"
+            + "uniform float gamma;\n"
+            + "void main() {\n"
+            + "  vec4 textureColor = texture2D(sTexture, vTextureCoord);\n"
+            + "  gl_FragColor = vec4(pow(textureColor.rgb, vec3(gamma)), textureColor.w);\n"
+            + "}\n";
+
     private float gamma = 2.0f;
+    private int gammaLocation = -1;
 
     @SuppressWarnings("WeakerAccess")
     public GammaFilter() { }
@@ -42,24 +56,37 @@ public class GammaFilter extends BaseFilter {
         return gamma / 2.0f;
     }
 
+    @NonNull
+    @Override
+    public String getFragmentShader() {
+        return FRAGMENT_SHADER;
+    }
+
+    @Override
+    public void onCreate(int programHandle) {
+        super.onCreate(programHandle);
+        gammaLocation = GLES20.glGetUniformLocation(programHandle, "gamma");
+        GlUtils.checkLocation(gammaLocation, "gamma");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        gammaLocation = -1;
+    }
+
+    @Override
+    protected void onPreDraw(float[] transformMatrix) {
+        super.onPreDraw(transformMatrix);
+        GLES20.glUniform1f(gammaLocation, gamma);
+        GlUtils.checkError("glUniform1f");
+
+    }
+
     @Override
     protected BaseFilter onCopy() {
         GammaFilter filter = new GammaFilter();
         filter.setGamma(getGamma());
         return filter;
-    }
-
-    @NonNull
-    @Override
-    public String getFragmentShader() {
-        return "#extension GL_OES_EGL_image_external : require\n"
-                + "precision mediump float;\n"
-                + "varying vec2 vTextureCoord;\n"
-                + "uniform samplerExternalOES sTexture;\n"
-                + "float gamma=" + gamma + ";\n"
-                + "void main() {\n"
-                + "  vec4 textureColor = texture2D(sTexture, vTextureCoord);\n"
-                + "  gl_FragColor = vec4(pow(textureColor.rgb, vec3(gamma)), textureColor.w);\n"
-                + "}\n";
     }
 }
