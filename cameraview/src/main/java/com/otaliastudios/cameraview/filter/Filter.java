@@ -18,6 +18,14 @@ import java.io.File;
  *
  * Advanced users can create custom filters using GLES.
  * It is recommended to extend {@link BaseFilter} instead of this class.
+ *
+ * All {@link Filter}s should have a no-op public constructor.
+ * This ensures that you can pass the filter class to XML attribute {@code app:cameraFilter},
+ * and also helps {@link BaseFilter} automatically make a copy of the filter.
+ *
+ * Parameterized filters can implement {@link OneParameterFilter} and {@link TwoParameterFilter}
+ * to receive parameters in the 0F-1F range. This helps in making filter copies and also let us
+ * map the filter parameter to gestures.
  */
 public interface Filter {
 
@@ -65,6 +73,7 @@ public interface Filter {
 
     /**
      * Called anytime the output size changes.
+     *
      * @param width width
      * @param height height
      */
