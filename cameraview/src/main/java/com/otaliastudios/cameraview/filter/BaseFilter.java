@@ -97,7 +97,7 @@ public abstract class BaseFilter implements Filter {
     private int vertexPositionLocation = -1;
     private int vertexTextureCoordinateLocation = -1;
     private int programHandle = -1;
-    private Size outputSize;
+    private Size size;
 
     @SuppressWarnings("WeakerAccess")
     protected String vertexPositionName = DEFAULT_VERTEX_POSITION_NAME;
@@ -156,7 +156,7 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void setSize(int width, int height) {
-        outputSize = new Size(width, height);
+        size = new Size(width, height);
     }
 
     @Override
@@ -210,7 +210,7 @@ public abstract class BaseFilter implements Filter {
     @Override
     public final BaseFilter copy() {
         BaseFilter copy = onCopy();
-        copy.setSize(outputSize.getWidth(), outputSize.getHeight());
+        copy.setSize(size.getWidth(), size.getHeight());
         if (this instanceof OneParameterFilter) {
             ((OneParameterFilter) copy).setParameter1(((OneParameterFilter) this).getParameter1());
         }
