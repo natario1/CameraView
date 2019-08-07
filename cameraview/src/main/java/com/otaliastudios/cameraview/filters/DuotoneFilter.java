@@ -55,7 +55,8 @@ public class DuotoneFilter extends BaseFilter implements TwoParameterFilter {
      */
     @SuppressWarnings("WeakerAccess")
     public void setFirstColor(@ColorInt int color) {
-        mFirstColor = color;
+        // Remove any alpha.
+        mFirstColor = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
     }
 
     /**
@@ -66,7 +67,8 @@ public class DuotoneFilter extends BaseFilter implements TwoParameterFilter {
      */
     @SuppressWarnings("WeakerAccess")
     public void setSecondColor(@ColorInt int color) {
-        mSecondColor = color;
+        // Remove any alpha.
+        mSecondColor = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
     }
 
     /**
@@ -96,23 +98,23 @@ public class DuotoneFilter extends BaseFilter implements TwoParameterFilter {
     @Override
     public void setParameter1(float value) {
         // no easy way to transform 0...1 into a color.
-        setFirstColor((int) (value * Integer.MAX_VALUE));
+        setFirstColor((int) (value * 0xFFFFFF));
     }
 
     @Override
     public float getParameter1() {
-        return (float) getFirstColor() / Integer.MAX_VALUE;
+        return (float) getFirstColor() / 0xFFFFFF;
     }
 
     @Override
     public void setParameter2(float value) {
         // no easy way to transform 0...1 into a color.
-        setSecondColor((int) (value * Integer.MAX_VALUE));
+        setSecondColor((int) (value * 0xFFFFFF));
     }
 
     @Override
     public float getParameter2() {
-        return (float) getSecondColor() / Integer.MAX_VALUE;
+        return (float) getSecondColor() / 0xFFFFFF;
     }
 
     @NonNull

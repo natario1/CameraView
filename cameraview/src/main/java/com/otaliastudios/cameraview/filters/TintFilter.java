@@ -42,7 +42,8 @@ public class TintFilter extends BaseFilter implements OneParameterFilter {
      */
     @SuppressWarnings("WeakerAccess")
     public void setTint(@ColorInt int color) {
-        this.tint = color;
+        // Remove any alpha.
+        this.tint = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
     }
 
     /**
@@ -60,12 +61,12 @@ public class TintFilter extends BaseFilter implements OneParameterFilter {
     @Override
     public void setParameter1(float value) {
         // no easy way to transform 0...1 into a color.
-        setTint((int) (value * Integer.MAX_VALUE));
+        setTint((int) (value * 0xFFFFFF));
     }
 
     @Override
     public float getParameter1() {
-        return (float) getTint() / Integer.MAX_VALUE;
+        return (float) getTint() / 0xFFFFFF;
     }
 
     @NonNull
