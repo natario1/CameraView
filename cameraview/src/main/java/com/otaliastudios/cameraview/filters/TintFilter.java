@@ -66,7 +66,9 @@ public class TintFilter extends BaseFilter implements OneParameterFilter {
 
     @Override
     public float getParameter1() {
-        return (float) getTint() / 0xFFFFFF;
+        int color = getTint();
+        color = Color.argb(0, Color.red(color), Color.green(color), Color.blue(color));
+        return (float) color / 0xFFFFFF;
     }
 
     @NonNull

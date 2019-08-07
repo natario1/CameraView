@@ -103,7 +103,9 @@ public class DuotoneFilter extends BaseFilter implements TwoParameterFilter {
 
     @Override
     public float getParameter1() {
-        return (float) getFirstColor() / 0xFFFFFF;
+        int color = getFirstColor();
+        color = Color.argb(0, Color.red(color), Color.green(color), Color.blue(color));
+        return (float) color / 0xFFFFFF;
     }
 
     @Override
@@ -114,7 +116,9 @@ public class DuotoneFilter extends BaseFilter implements TwoParameterFilter {
 
     @Override
     public float getParameter2() {
-        return (float) getSecondColor() / 0xFFFFFF;
+        int color = getSecondColor();
+        color = Color.argb(0, Color.red(color), Color.green(color), Color.blue(color));
+        return (float) color / 0xFFFFFF;
     }
 
     @NonNull
