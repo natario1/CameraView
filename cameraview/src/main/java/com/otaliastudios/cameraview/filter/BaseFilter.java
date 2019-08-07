@@ -96,6 +96,7 @@ public abstract class BaseFilter implements Filter {
     private int vertexTranformMatrixLocation = -1;
     private int vertexPositionLocation = -1;
     private int vertexTextureCoordinateLocation = -1;
+    private int programHandle = -1;
     private Size outputSize;
 
     @SuppressWarnings("WeakerAccess")
@@ -127,6 +128,7 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void onCreate(int programHandle) {
+        this.programHandle = programHandle;
         vertexPositionLocation = GLES20.glGetAttribLocation(programHandle, vertexPositionName);
         GlUtils.checkLocation(vertexPositionLocation, vertexPositionName);
         vertexTextureCoordinateLocation = GLES20.glGetAttribLocation(programHandle, vertexTextureCoordinateName);
@@ -139,6 +141,7 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void onDestroy() {
+        programHandle = -1;
         vertexPositionLocation = -1;
         vertexTextureCoordinateLocation = -1;
         vertexModelViewProjectionMatrixLocation = -1;
@@ -158,9 +161,13 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void draw(float[] transformMatrix) {
-        onPreDraw(transformMatrix);
-        onDraw();
-        onPostDraw();
+        if (programHandle == -1) {
+            LOG.w("Filter.draw() called after destroying the filter. This can happen rarely because of threading.");
+        } else {
+            onPreDraw(transformMatrix);
+            onDraw();
+            onPostDraw();
+        }
     }
 
     protected void onPreDraw(float[] transformMatrix) {
