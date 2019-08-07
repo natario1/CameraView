@@ -51,6 +51,8 @@ import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filter.FilterParser;
 import com.otaliastudios.cameraview.filter.Filters;
 import com.otaliastudios.cameraview.filter.NoFilter;
+import com.otaliastudios.cameraview.filter.OneParameterFilter;
+import com.otaliastudios.cameraview.filter.TwoParameterFilter;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -625,6 +627,30 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 if (newValue != oldValue) {
                     float[] bounds = new float[]{minValue, maxValue};
                     mCameraEngine.setExposureCorrection(newValue, bounds, points, true);
+                }
+                break;
+
+            case FILTER_CONTROL_1:
+                if (!mExperimental) break;
+                if (getFilter() instanceof OneParameterFilter) {
+                    OneParameterFilter filter = (OneParameterFilter) getFilter();
+                    oldValue = filter.getParameter1();
+                    newValue = source.computeValue(oldValue, 0, 1);
+                    if (newValue != oldValue) {
+                        filter.setParameter1(newValue);
+                    }
+                }
+                break;
+
+            case FILTER_CONTROL_2:
+                if (!mExperimental) break;
+                if (getFilter() instanceof TwoParameterFilter) {
+                    TwoParameterFilter filter = (TwoParameterFilter) getFilter();
+                    oldValue = filter.getParameter2();
+                    newValue = source.computeValue(oldValue, 0, 1);
+                    if (newValue != oldValue) {
+                        filter.setParameter2(newValue);
+                    }
                 }
                 break;
         }

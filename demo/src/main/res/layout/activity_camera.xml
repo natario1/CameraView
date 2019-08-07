@@ -26,8 +26,8 @@
         app:cameraGestureTap="autoFocus"
         app:cameraGestureLongTap="none"
         app:cameraGesturePinch="zoom"
-        app:cameraGestureScrollHorizontal="exposureCorrection"
-        app:cameraGestureScrollVertical="none"
+        app:cameraGestureScrollHorizontal="filterControl1"
+        app:cameraGestureScrollVertical="exposureCorrection"
         app:cameraMode="picture"
         app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker">
 

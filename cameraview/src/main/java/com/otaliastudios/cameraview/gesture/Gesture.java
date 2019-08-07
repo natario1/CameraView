@@ -22,6 +22,8 @@ public enum Gesture {
      *
      * - {@link GestureAction#ZOOM}
      * - {@link GestureAction#EXPOSURE_CORRECTION}
+     * - {@link GestureAction#FILTER_CONTROL_1}
+     * - {@link GestureAction#FILTER_CONTROL_2}
      * - {@link GestureAction#NONE}
      */
     PINCH(GestureType.CONTINUOUS),
@@ -52,6 +54,8 @@ public enum Gesture {
      *
      * - {@link GestureAction#ZOOM}
      * - {@link GestureAction#EXPOSURE_CORRECTION}
+     * - {@link GestureAction#FILTER_CONTROL_1}
+     * - {@link GestureAction#FILTER_CONTROL_2}
      * - {@link GestureAction#NONE}
      */
     SCROLL_HORIZONTAL(GestureType.CONTINUOUS),
@@ -62,6 +66,8 @@ public enum Gesture {
      *
      * - {@link GestureAction#ZOOM}
      * - {@link GestureAction#EXPOSURE_CORRECTION}
+     * - {@link GestureAction#FILTER_CONTROL_1}
+     * - {@link GestureAction#FILTER_CONTROL_2}
      * - {@link GestureAction#NONE}
      */
     SCROLL_VERTICAL(GestureType.CONTINUOUS);

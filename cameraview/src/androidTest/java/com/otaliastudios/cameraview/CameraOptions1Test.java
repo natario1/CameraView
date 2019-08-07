@@ -221,6 +221,8 @@ public class CameraOptions1Test extends BaseTest {
         assertTrue(o.supports(GestureAction.TAKE_PICTURE));
         assertTrue(o.supports(GestureAction.NONE));
         assertTrue(o.supports(GestureAction.ZOOM));
+        assertTrue(o.supports(GestureAction.FILTER_CONTROL_1));
+        assertTrue(o.supports(GestureAction.FILTER_CONTROL_2));
         assertFalse(o.supports(GestureAction.EXPOSURE_CORRECTION));
     }
 
