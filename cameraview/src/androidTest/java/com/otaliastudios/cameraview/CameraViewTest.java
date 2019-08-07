@@ -359,6 +359,7 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testGestureAction_filterControl1() {
         mockController.setMockEngineState(true);
+        mockController.setMockCameraOptions(mock(CameraOptions.class));
         DuotoneFilter filter = new DuotoneFilter(); // supports two parameters
         filter.setParameter1(0F);
         filter = spy(filter);
@@ -400,6 +401,7 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testGestureAction_filterControl2() {
         mockController.setMockEngineState(true);
+        mockController.setMockCameraOptions(mock(CameraOptions.class));
         DuotoneFilter filter = new DuotoneFilter(); // supports two parameters
         filter.setParameter2(0F);
         filter = spy(filter);
