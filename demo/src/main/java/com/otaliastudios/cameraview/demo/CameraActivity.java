@@ -331,7 +331,9 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         } else {
             mCurrentFilter = 0;
         }
-        camera.setFilter(mAllFilters[mCurrentFilter].newInstance());
+        Filters filter = mAllFilters[mCurrentFilter];
+        camera.setFilter(filter.newInstance());
+        message(filter.toString(), false);
     }
 
     @Override

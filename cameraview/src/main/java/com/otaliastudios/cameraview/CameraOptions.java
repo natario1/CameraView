@@ -273,6 +273,8 @@ public class CameraOptions {
             case AUTO_FOCUS:
                 return isAutoFocusSupported();
             case TAKE_PICTURE:
+            case FILTER_CONTROL_1:
+            case FILTER_CONTROL_2:
             case NONE:
                 return true;
             case ZOOM:

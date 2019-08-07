@@ -25,6 +25,7 @@ import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filter.Filters;
 import com.otaliastudios.cameraview.filter.NoFilter;
+import com.otaliastudios.cameraview.filters.DuotoneFilter;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -353,6 +354,90 @@ public class CameraViewTest extends BaseTest {
         factor.value = 1f;
         cameraView.dispatchTouchEvent(event);
         assertTrue(mockController.mExposureCorrectionChanged);
+    }
+
+    @Test
+    public void testGestureAction_filterControl1() {
+        mockController.setMockEngineState(true);
+        mockController.setMockCameraOptions(mock(CameraOptions.class));
+        DuotoneFilter filter = new DuotoneFilter(); // supports two parameters
+        filter.setParameter1(0F);
+        filter = spy(filter);
+        cameraView.setExperimental(true);
+        cameraView.setFilter(filter);
+        mockController.mExposureCorrectionChanged = false;
+        MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
+        final FactorHolder factor = new FactorHolder();
+        uiSync(new Runnable() {
+            @Override
+            public void run() {
+                cameraView.mScrollGestureFinder = new ScrollGestureFinder(cameraView.mCameraCallbacks) {
+                    @Override
+                    protected boolean handleTouchEvent(@NonNull MotionEvent event) {
+                        setGesture(Gesture.SCROLL_HORIZONTAL);
+                        return true;
+                    }
+
+                    @Override
+                    protected float getFactor() {
+                        return factor.value;
+                    }
+                };
+                cameraView.mapGesture(Gesture.SCROLL_HORIZONTAL, GestureAction.FILTER_CONTROL_1);
+            }
+        });
+
+        // If factor is 0, we return the same value. The filter should not be notified.
+        factor.value = 0f;
+        cameraView.dispatchTouchEvent(event);
+        verify(filter, never()).setParameter1(anyFloat());
+
+        // For larger factors, the value is scaled. The filter should be notified.
+        factor.value = 1f;
+        cameraView.dispatchTouchEvent(event);
+        verify(filter, times(1)).setParameter1(anyFloat());
+    }
+
+    @Test
+    public void testGestureAction_filterControl2() {
+        mockController.setMockEngineState(true);
+        mockController.setMockCameraOptions(mock(CameraOptions.class));
+        DuotoneFilter filter = new DuotoneFilter(); // supports two parameters
+        filter.setParameter2(0F);
+        filter = spy(filter);
+        cameraView.setExperimental(true);
+        cameraView.setFilter(filter);
+        mockController.mExposureCorrectionChanged = false;
+        MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
+        final FactorHolder factor = new FactorHolder();
+        uiSync(new Runnable() {
+            @Override
+            public void run() {
+                cameraView.mScrollGestureFinder = new ScrollGestureFinder(cameraView.mCameraCallbacks) {
+                    @Override
+                    protected boolean handleTouchEvent(@NonNull MotionEvent event) {
+                        setGesture(Gesture.SCROLL_HORIZONTAL);
+                        return true;
+                    }
+
+                    @Override
+                    protected float getFactor() {
+                        return factor.value;
+                    }
+                };
+                cameraView.mapGesture(Gesture.SCROLL_HORIZONTAL, GestureAction.FILTER_CONTROL_2);
+            }
+        });
+
+        // If factor is 0, we return the same value. The filter should not be notified.
+        factor.value = 0f;
+        cameraView.dispatchTouchEvent(event);
+        verify(filter, never()).setParameter2(anyFloat());
+
+        // For larger factors, the value is scaled. The filter should be notified.
+        factor.value = 1f;
+        cameraView.dispatchTouchEvent(event);
+        verify(filter, times(1)).setParameter2(anyFloat());
     }
 
     //endregion

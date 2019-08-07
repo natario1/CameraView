@@ -60,8 +60,27 @@ public enum GestureAction {
      * - {@link Gesture#SCROLL_HORIZONTAL}
      * - {@link Gesture#SCROLL_VERTICAL}
      */
-    EXPOSURE_CORRECTION(4, GestureType.CONTINUOUS);
+    EXPOSURE_CORRECTION(4, GestureType.CONTINUOUS),
 
+    /**
+     * Controls the first parameter of a real-time {@link com.otaliastudios.cameraview.filter.Filter},
+     * if it accepts one. This action can be mapped to continuous gestures:
+     *
+     * - {@link Gesture#PINCH}
+     * - {@link Gesture#SCROLL_HORIZONTAL}
+     * - {@link Gesture#SCROLL_VERTICAL}
+     */
+    FILTER_CONTROL_1(5, GestureType.CONTINUOUS),
+
+    /**
+     * Controls the second parameter of a real-time {@link com.otaliastudios.cameraview.filter.Filter},
+     * if it accepts one. This action can be mapped to continuous gestures:
+     *
+     * - {@link Gesture#PINCH}
+     * - {@link Gesture#SCROLL_HORIZONTAL}
+     * - {@link Gesture#SCROLL_VERTICAL}
+     */
+    FILTER_CONTROL_2(6, GestureType.CONTINUOUS);
 
     final static GestureAction DEFAULT_PINCH = NONE;
     final static GestureAction DEFAULT_TAP = NONE;

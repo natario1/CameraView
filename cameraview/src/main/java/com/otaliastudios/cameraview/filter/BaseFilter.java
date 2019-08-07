@@ -96,7 +96,8 @@ public abstract class BaseFilter implements Filter {
     private int vertexTranformMatrixLocation = -1;
     private int vertexPositionLocation = -1;
     private int vertexTextureCoordinateLocation = -1;
-    private Size outputSize;
+    private int programHandle = -1;
+    private Size size;
 
     @SuppressWarnings("WeakerAccess")
     protected String vertexPositionName = DEFAULT_VERTEX_POSITION_NAME;
@@ -127,6 +128,7 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void onCreate(int programHandle) {
+        this.programHandle = programHandle;
         vertexPositionLocation = GLES20.glGetAttribLocation(programHandle, vertexPositionName);
         GlUtils.checkLocation(vertexPositionLocation, vertexPositionName);
         vertexTextureCoordinateLocation = GLES20.glGetAttribLocation(programHandle, vertexTextureCoordinateName);
@@ -139,6 +141,7 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void onDestroy() {
+        programHandle = -1;
         vertexPositionLocation = -1;
         vertexTextureCoordinateLocation = -1;
         vertexModelViewProjectionMatrixLocation = -1;
@@ -153,14 +156,18 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void setSize(int width, int height) {
-        outputSize = new Size(width, height);
+        size = new Size(width, height);
     }
 
     @Override
     public void draw(float[] transformMatrix) {
-        onPreDraw(transformMatrix);
-        onDraw();
-        onPostDraw();
+        if (programHandle == -1) {
+            LOG.w("Filter.draw() called after destroying the filter. This can happen rarely because of threading.");
+        } else {
+            onPreDraw(transformMatrix);
+            onDraw();
+            onPostDraw();
+        }
     }
 
     protected void onPreDraw(float[] transformMatrix) {
@@ -203,7 +210,7 @@ public abstract class BaseFilter implements Filter {
     @Override
     public final BaseFilter copy() {
         BaseFilter copy = onCopy();
-        copy.setSize(outputSize.getWidth(), outputSize.getHeight());
+        copy.setSize(size.getWidth(), size.getHeight());
         if (this instanceof OneParameterFilter) {
             ((OneParameterFilter) copy).setParameter1(((OneParameterFilter) this).getParameter1());
         }
