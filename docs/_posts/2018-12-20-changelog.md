@@ -8,6 +8,17 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+## v2.1.0
+
+This release adds experimental support for [real-time filters](../docs.filters.html) thanks to [@agrawalsuneet][agrawalsuneet].
+Please read the documentation page for usage instructions.
+
+- New: Real-time filters support ([#527][527])
+- New: Add filters through XML ([#535][535])
+- New: Map filter controls to scroll/pinch gestures ([#537][537])
+
+https://github.com/natario1/CameraView/compare/v2.0.0...v2.1.0
+
 ## v2.0.0
 
 - Fix: bug with picture recorder ([#521][521])
@@ -272,3 +283,5 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [517]: https://github.com/natario1/CameraView/pull/517
 [521]: https://github.com/natario1/CameraView/pull/521
 [528]: https://github.com/natario1/CameraView/pull/528
+[535]: https://github.com/natario1/CameraView/pull/535
+[537]: https://github.com/natario1/CameraView/pull/537
