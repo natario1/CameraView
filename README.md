@@ -38,6 +38,8 @@ Read the [official website](https://natario1.github.io/CameraView) for setup ins
 You might also be interested in [changelog](https://natario1.github.io/CameraView/about/changelog.html)
 or in the [v1 migration guide](https://natario1.github.io/CameraView/extra/v1-migration-guide.html).
 
+*Post-processing videos or want to reduce video size before uploading? Take a look at our [Transcoder](https://github.com/natario1/Transcoder).*
+
 &#10240;  <!-- Hack to add whitespace -->
 
 <p align="center">
