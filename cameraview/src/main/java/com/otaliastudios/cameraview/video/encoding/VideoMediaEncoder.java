@@ -67,7 +67,11 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
         format.setInteger("rotation-degrees", mConfig.rotation);
 
         try {
-            mMediaCodec = MediaCodec.createEncoderByType(mConfig.mimeType);
+            if (mConfig.encoder != null) {
+                mMediaCodec = MediaCodec.createByCodecName(mConfig.encoder);
+            } else {
+                mMediaCodec = MediaCodec.createEncoderByType(mConfig.mimeType);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

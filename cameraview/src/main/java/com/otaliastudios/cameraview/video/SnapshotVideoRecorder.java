@@ -5,6 +5,7 @@ import android.opengl.EGL14;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.internal.DeviceEncoders;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
@@ -121,26 +122,30 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             if (mResult.videoBitRate <= 0) mResult.videoBitRate = estimateVideoBitRate(mResult.size, mResult.videoFrameRate);
             if (mResult.audioBitRate <= 0) mResult.audioBitRate = DEFAULT_AUDIO_BITRATE;
 
-            // Video. Ensure width and height are divisible by 2, as I have read somewhere.
-            Size size = mResult.size;
-            int width = size.getWidth();
-            int height = size.getHeight();
-            width = width % 2 == 0 ? width : width + 1;
-            height = height % 2 == 0 ? height : height + 1;
-            String type = "";
+            // Define mime types
+            String videoType = "";
             switch (mResult.videoCodec) {
-                case H_263: type = "video/3gpp"; break; // MediaFormat.MIMETYPE_VIDEO_H263;
-                case H_264: type = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
-                case DEVICE_DEFAULT: type = "video/avc"; break;
+                case H_263: videoType = "video/3gpp"; break; // MediaFormat.MIMETYPE_VIDEO_H263;
+                case H_264: videoType = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
+                case DEVICE_DEFAULT: videoType = "video/avc"; break;
             }
-            LOG.w("Creating frame encoder. Rotation:", mResult.rotation);
+            String audioType = "audio/mp4a-latm";
+
+            // Check the availability of values
+            DeviceEncoders deviceEncoders = new DeviceEncoders(videoType, audioType);
+            mResult.size = deviceEncoders.getSupportedVideoSize(mResult.size);
+            mResult.videoBitRate = deviceEncoders.getSupportedVideoBitRate(mResult.videoBitRate);
+            mResult.audioBitRate = deviceEncoders.getSupportedAudioBitRate(mResult.audioBitRate);
+
+            // Video
             TextureConfig videoConfig = new TextureConfig();
-            videoConfig.width = width;
-            videoConfig.height = height;
+            videoConfig.width = mResult.size.getWidth();
+            videoConfig.height = mResult.size.getHeight();
             videoConfig.bitRate = mResult.videoBitRate;
             videoConfig.frameRate = mResult.videoFrameRate;
             videoConfig.rotation = mResult.rotation;
-            videoConfig.mimeType = type;
+            videoConfig.mimeType = videoType;
+            videoConfig.encoder = deviceEncoders.getVideoEncoder();
             videoConfig.textureId = mTextureId;
             videoConfig.scaleX = scaleX;
             videoConfig.scaleY = scaleY;
@@ -162,6 +167,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 audioConfig.bitRate = mResult.audioBitRate;
                 if (mResult.audio == Audio.MONO) audioConfig.channels = 1;
                 if (mResult.audio == Audio.STEREO) audioConfig.channels = 2;
+                audioConfig.encoder = deviceEncoders.getAudioEncoder();
                 audioEncoder = new AudioMediaEncoder(audioConfig);
             }
 
