@@ -173,8 +173,12 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             }
 
             // Engine
-            mEncoderEngine = new MediaEncoderEngine(mResult.file, videoEncoder, audioEncoder,
-                    mResult.maxDuration, mResult.maxSize, SnapshotVideoRecorder.this);
+            mEncoderEngine = new MediaEncoderEngine(mResult.file,
+                    videoEncoder,
+                    audioEncoder,
+                    mResult.maxDuration,
+                    mResult.maxSize,
+                    SnapshotVideoRecorder.this);
             mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
             mEncoderEngine.start();
             mResult.rotation = 0; // We will rotate the result instead.

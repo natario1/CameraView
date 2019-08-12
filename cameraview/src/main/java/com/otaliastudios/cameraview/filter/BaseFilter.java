@@ -19,7 +19,7 @@ import java.nio.FloatBuffer;
  * to be changed. Most effects can be rendered by simply changing the fragment shader, thus
  * by overriding {@link #getFragmentShader()}.
  *
- * All {@link BaseFilter}s should have a no-op public constructor.
+ * All {@link BaseFilter}s should have a no-arguments public constructor.
  * This class will try to automatically implement {@link #copy()} thanks to this.
  * If your filter implements public parameters, please implement {@link OneParameterFilter}
  * and {@link TwoParameterFilter} to handle them and have them passed automatically to copies.
@@ -226,9 +226,9 @@ public abstract class BaseFilter implements Filter {
         try {
             return getClass().newInstance();
         } catch (IllegalAccessException e) {
-            throw new RuntimeException("Filters should have a public no-op constructor.", e);
+            throw new RuntimeException("Filters should have a public no-arguments constructor.", e);
         } catch (InstantiationException e) {
-            throw new RuntimeException("Filters should have a public no-op constructor.", e);
+            throw new RuntimeException("Filters should have a public no-arguments constructor.", e);
         }
     }
 }
