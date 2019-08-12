@@ -150,6 +150,11 @@ public class DeviceEncoders {
                     " Desired:" + height +
                     " Range:" + mVideoCapabilities.getSupportedHeights());
         }
+        if (!mVideoCapabilities.isSizeSupported(width, height)) {
+            throw new RuntimeException("Size not supported for unknown reason." +
+                    " Might be an aspect ratio issue." +
+                    " Desired size:" + size);
+        }
         Size adjusted = new Size(width, height);
         LOG.i("getSupportedVideoSize -", "inputSize:", size, "adjustedSize:", adjusted);
         return adjusted;

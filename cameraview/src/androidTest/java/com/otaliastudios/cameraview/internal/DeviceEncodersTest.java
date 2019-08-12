@@ -38,7 +38,7 @@ public class DeviceEncodersTest extends BaseTest {
 
     // This is guaranteed to work, see
     // https://developer.android.com/guide/topics/media/media-formats
-    private final static Size GUARANTEED_SIZE = new Size(360, 380);
+    private final static Size GUARANTEED_SIZE = new Size(176, 144);
 
     private boolean enabled;
 
