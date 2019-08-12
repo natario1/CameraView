@@ -171,6 +171,23 @@ public class DeviceEncoders {
     }
 
     /**
+     * Returns a video frame rate supported by the device encoders.
+     * This means adjusting the input frame rate if needed, to match encoder constraints.
+     *
+     * @param frameRate input rate
+     * @return adjusted rate
+     */
+    @SuppressLint("NewApi")
+    public int getSupportedVideoFrameRate(@NonNull Size size, int frameRate) {
+        if (!mEnabled) return frameRate;
+        int newFrameRate = (int) (double) mVideoCapabilities
+                .getSupportedFrameRatesFor(size.getWidth(), size.getHeight())
+                .clamp((double) frameRate);
+        LOG.i("getSupportedVideoFrameRate -", "inputRate:", frameRate, "adjustedRate:", newFrameRate);
+        return newFrameRate;
+    }
+
+    /**
      * Returns an audio bit rate supported by the device encoders.
      * This means adjusting the input bit rate if needed, to match encoder constraints.
      *

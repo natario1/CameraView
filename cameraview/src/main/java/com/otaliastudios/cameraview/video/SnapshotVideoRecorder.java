@@ -136,6 +136,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mResult.size = deviceEncoders.getSupportedVideoSize(mResult.size);
             mResult.videoBitRate = deviceEncoders.getSupportedVideoBitRate(mResult.videoBitRate);
             mResult.audioBitRate = deviceEncoders.getSupportedAudioBitRate(mResult.audioBitRate);
+            mResult.videoFrameRate = deviceEncoders.getSupportedVideoFrameRate(mResult.size, mResult.videoFrameRate);
 
             // Video
             TextureConfig videoConfig = new TextureConfig();
