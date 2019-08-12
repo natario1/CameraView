@@ -148,18 +148,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     public CameraView(@NonNull Context context) {
         super(context, null);
-        init(context, null);
+        initialize(context, null);
     }
 
     public CameraView(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init(context, attrs);
+        initialize(context, attrs);
     }
 
     //region Init
 
     @SuppressWarnings("WrongConstant")
-    private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
+    private void initialize(@NonNull Context context, @Nullable AttributeSet attrs) {
         setWillNotDraw(false);
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
         ControlParser controls = new ControlParser(context, a);
