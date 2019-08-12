@@ -138,8 +138,8 @@ public class DeviceEncoders {
         if (!ENABLED) return size;
         int width = size.getWidth();
         int height = size.getHeight();
-        while (width % mVideoCapabilities.getWidthAlignment() != 0) width++;
-        while (height % mVideoCapabilities.getHeightAlignment() != 0) height++;
+        while (width % mVideoCapabilities.getWidthAlignment() != 0) width--;
+        while (height % mVideoCapabilities.getHeightAlignment() != 0) height--;
         if (!mVideoCapabilities.getSupportedWidths().contains(width)) {
             throw new RuntimeException("Width not supported after adjustment." +
                     " Desired:" + width +

@@ -36,6 +36,10 @@ import static org.mockito.Mockito.when;
 @MediumTest
 public class DeviceEncodersTest extends BaseTest {
 
+    // This is guaranteed to work, see
+    // https://developer.android.com/guide/topics/media/media-formats
+    private final static Size GUARANTEED_SIZE = new Size(360, 380);
+
     private boolean enabled;
 
     @Before
@@ -113,7 +117,7 @@ public class DeviceEncodersTest extends BaseTest {
     public void testGetSupportedVideoSize_disabled() {
         DeviceEncoders.ENABLED = false;
         DeviceEncoders deviceEncoders = create();
-        Size input = new Size(500, 500);
+        Size input = new Size(GUARANTEED_SIZE.getWidth(), GUARANTEED_SIZE.getHeight());
         Size output = deviceEncoders.getSupportedVideoSize(input);
         assertSame(input, output);
     }
@@ -122,7 +126,7 @@ public class DeviceEncodersTest extends BaseTest {
     public void testGetSupportedVideoSize_hugeWidth() {
         DeviceEncoders deviceEncoders = create();
         if (DeviceEncoders.ENABLED) {
-            Size input = new Size(Integer.MAX_VALUE, 500);
+            Size input = new Size(Integer.MAX_VALUE, GUARANTEED_SIZE.getHeight());
             deviceEncoders.getSupportedVideoSize(input);
         } else {
             throw new RuntimeException("Test should pass.");
@@ -133,7 +137,7 @@ public class DeviceEncodersTest extends BaseTest {
     public void testGetSupportedVideoSize_hugeHeight() {
         DeviceEncoders deviceEncoders = create();
         if (DeviceEncoders.ENABLED) {
-            Size input = new Size(500, Integer.MAX_VALUE);
+            Size input = new Size(GUARANTEED_SIZE.getWidth(), Integer.MAX_VALUE);
             deviceEncoders.getSupportedVideoSize(input);
         } else {
             throw new RuntimeException("Test should pass.");
@@ -144,10 +148,11 @@ public class DeviceEncodersTest extends BaseTest {
     public void testGetSupportedVideoSize_alignsSize() {
         DeviceEncoders deviceEncoders = create();
         if (DeviceEncoders.ENABLED) {
-            Size input = new Size(501, 501);
+            Size input = new Size(GUARANTEED_SIZE.getWidth() + 1,
+                    GUARANTEED_SIZE.getHeight() + 1);
             Size output = deviceEncoders.getSupportedVideoSize(input);
-            assertTrue(output.getWidth() >= input.getWidth());
-            assertTrue(output.getHeight() >= input.getHeight());
+            assertTrue(output.getWidth() <= input.getWidth());
+            assertTrue(output.getHeight() <= input.getHeight());
         }
     }
 
@@ -198,7 +203,7 @@ public class DeviceEncodersTest extends BaseTest {
         DeviceEncoders.ENABLED = false;
         DeviceEncoders deviceEncoders = create();
         int input = 1000;
-        int output = deviceEncoders.getSupportedVideoFrameRate(new Size(1000, 1000), input);
+        int output = deviceEncoders.getSupportedVideoFrameRate(GUARANTEED_SIZE, input);
         assertEquals(input, output);
     }
 
@@ -208,7 +213,7 @@ public class DeviceEncodersTest extends BaseTest {
         if (DeviceEncoders.ENABLED) {
             // Ensure it's clamped: we can pass a negative value and check it's >= 0.
             int input = -10;
-            Size inputSize = deviceEncoders.getSupportedVideoSize(new Size(1000, 1000));
+            Size inputSize = deviceEncoders.getSupportedVideoSize(GUARANTEED_SIZE);
             int output = deviceEncoders.getSupportedVideoFrameRate(inputSize, input);
             assertNotEquals(input, output);
             assertTrue(output >= 0);
