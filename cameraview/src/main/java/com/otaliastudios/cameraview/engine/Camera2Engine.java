@@ -726,9 +726,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
+    protected void onStopVideo() {
         boolean wasRecordingFullVideo = mVideoRecorder instanceof Full2VideoRecorder;
-        super.onVideoResult(result, exception);
         if (wasRecordingFullVideo) {
             // We have to stop all repeating requests and restart them.
             try {
@@ -739,6 +738,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 throw createCameraException(e);
             }
         }
+        super.onStopVideo();
     }
 
     //endregion
