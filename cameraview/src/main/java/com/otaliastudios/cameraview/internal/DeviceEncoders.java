@@ -1,20 +1,17 @@
 package com.otaliastudios.cameraview.internal;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
+import androidx.annotation.VisibleForTesting;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.size.Size;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,7 +26,8 @@ public class DeviceEncoders {
     private final static String TAG = DeviceEncoders.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
-    private final boolean mEnabled;
+    @VisibleForTesting static boolean ENABLED = Build.VERSION.SDK_INT >= 21;
+
     @SuppressWarnings("FieldCanBeLocal")
     private final MediaCodecInfo mVideoEncoder;
     @SuppressWarnings("FieldCanBeLocal")
@@ -39,10 +37,9 @@ public class DeviceEncoders {
 
     @SuppressLint("NewApi")
     public DeviceEncoders(@NonNull String videoType, @NonNull String audioType) {
-        mEnabled = Build.VERSION.SDK_INT >= 21;
         // We could still get a list of MediaCodecInfo for API >= 16, but it seems that the APIs
         // for querying the availability of a specified MediaFormat were only added in 21 anyway.
-        if (mEnabled) {
+        if (ENABLED) {
             List<MediaCodecInfo> encoders = getDeviceEncoders();
             mVideoEncoder = findDeviceEncoder(encoders, videoType);
             LOG.i("Enabled. Found video encoder:", mVideoEncoder.getName());
@@ -63,9 +60,10 @@ public class DeviceEncoders {
      * Collects all the device encoders, which means excluding decoders.
      * @return encoders
      */
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @NonNull
-    private List<MediaCodecInfo> getDeviceEncoders() {
+    @SuppressLint("NewApi")
+    @VisibleForTesting
+    List<MediaCodecInfo> getDeviceEncoders() {
         ArrayList<MediaCodecInfo> results = new ArrayList<>();
         MediaCodecInfo[] array = new MediaCodecList(MediaCodecList.REGULAR_CODECS).getCodecInfos();
         for (MediaCodecInfo info : array) {
@@ -82,8 +80,9 @@ public class DeviceEncoders {
      * @return true if hardware
      */
     @SuppressLint("NewApi")
-    private boolean isHardwareEncoder(@NonNull MediaCodecInfo encoder) {
-        return !encoder.getName().startsWith("OMX.google");
+    @VisibleForTesting
+    boolean isHardwareEncoder(@NonNull String encoder) {
+        return !encoder.startsWith("OMX.google");
     }
 
     /**
@@ -96,7 +95,8 @@ public class DeviceEncoders {
      */
     @SuppressLint("NewApi")
     @NonNull
-    private MediaCodecInfo findDeviceEncoder(@NonNull List<MediaCodecInfo> encoders, @NonNull String mimeType) {
+    @VisibleForTesting
+    MediaCodecInfo findDeviceEncoder(@NonNull List<MediaCodecInfo> encoders, @NonNull String mimeType) {
         ArrayList<MediaCodecInfo> results = new ArrayList<>();
         for (MediaCodecInfo encoder : encoders) {
             String[] types = encoder.getSupportedTypes();
@@ -111,8 +111,8 @@ public class DeviceEncoders {
         Collections.sort(results, new Comparator<MediaCodecInfo>() {
             @Override
             public int compare(MediaCodecInfo o1, MediaCodecInfo o2) {
-                boolean hw1 = isHardwareEncoder(o1);
-                boolean hw2 = isHardwareEncoder(o2);
+                boolean hw1 = isHardwareEncoder(o1.getName());
+                boolean hw2 = isHardwareEncoder(o2.getName());
                 if (hw1 && hw2) return 0;
                 if (hw1) return -1;
                 if (hw2) return 1;
@@ -135,7 +135,7 @@ public class DeviceEncoders {
     @SuppressLint("NewApi")
     @NonNull
     public Size getSupportedVideoSize(@NonNull Size size) {
-        if (!mEnabled) return size;
+        if (!ENABLED) return size;
         int width = size.getWidth();
         int height = size.getHeight();
         while (width % mVideoCapabilities.getWidthAlignment() != 0) width++;
@@ -164,7 +164,7 @@ public class DeviceEncoders {
      */
     @SuppressLint("NewApi")
     public int getSupportedVideoBitRate(int bitRate) {
-        if (!mEnabled) return bitRate;
+        if (!ENABLED) return bitRate;
         int newBitRate = mVideoCapabilities.getBitrateRange().clamp(bitRate);
         LOG.i("getSupportedVideoBitRate -", "inputRate:", bitRate, "adjustedRate:", newBitRate);
         return newBitRate;
@@ -179,7 +179,7 @@ public class DeviceEncoders {
      */
     @SuppressLint("NewApi")
     public int getSupportedVideoFrameRate(@NonNull Size size, int frameRate) {
-        if (!mEnabled) return frameRate;
+        if (!ENABLED) return frameRate;
         int newFrameRate = (int) (double) mVideoCapabilities
                 .getSupportedFrameRatesFor(size.getWidth(), size.getHeight())
                 .clamp((double) frameRate);
@@ -196,7 +196,7 @@ public class DeviceEncoders {
      */
     @SuppressLint("NewApi")
     public int getSupportedAudioBitRate(int bitRate) {
-        if (!mEnabled) return bitRate;
+        if (!ENABLED) return bitRate;
         int newBitRate = mAudioCapabilities.getBitrateRange().clamp(bitRate);
         LOG.i("getSupportedAudioBitRate -", "inputRate:", bitRate, "adjustedRate:", newBitRate);
         return newBitRate;
