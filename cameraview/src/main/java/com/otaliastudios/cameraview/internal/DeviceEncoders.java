@@ -114,8 +114,8 @@ public class DeviceEncoders {
                 boolean hw1 = isHardwareEncoder(o1);
                 boolean hw2 = isHardwareEncoder(o2);
                 if (hw1 && hw2) return 0;
-                if (hw1) return 1;
-                if (hw2) return -1;
+                if (hw1) return -1;
+                if (hw2) return 1;
                 return 0;
             }
         });
