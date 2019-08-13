@@ -53,7 +53,7 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
 
     @EncoderThread
     @Override
-    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthUs) {
         MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
 
         // Failing to specify some of these can cause the MediaCodec configure() call to throw an unhelpful exception.

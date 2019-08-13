@@ -122,7 +122,7 @@ public abstract class MediaEncoder {
     private MediaCodecBuffers mBuffers;
     private final Map<String, AtomicInteger> mPendingEvents = new HashMap<>();
 
-    private long mMaxLengthMillis;
+    private long mMaxLengthUs;
     private boolean mMaxLengthReached;
 
     private long mStartTimeMillis = 0; // In System.currentTimeMillis()
@@ -171,14 +171,14 @@ public abstract class MediaEncoder {
      * works, we might have {@link #onStop()} or {@link #onStopped()} to be executed before
      * the previous step has completed.
      */
-    final void prepare(@NonNull final MediaEncoderEngine.Controller controller, final long maxLengthMillis) {
+    final void prepare(@NonNull final MediaEncoderEngine.Controller controller, final long maxLengthUs) {
         if (mState >= STATE_PREPARING) {
             LOG.e(mName, "Wrong state while preparing. Aborting.", mState);
             return;
         }
         mController = controller;
         mBufferInfo = new MediaCodec.BufferInfo();
-        mMaxLengthMillis = maxLengthMillis;
+        mMaxLengthUs = maxLengthUs;
         mWorker = WorkerHandler.get(mName);
         mWorker.getThread().setPriority(Thread.MAX_PRIORITY);
         LOG.i(mName, "Prepare was called. Posting.");
@@ -187,7 +187,7 @@ public abstract class MediaEncoder {
             public void run() {
                 LOG.i(mName, "Prepare was called. Executing.");
                 setState(STATE_PREPARING);
-                onPrepare(controller, maxLengthMillis);
+                onPrepare(controller, maxLengthUs);
                 setState(STATE_PREPARED);
             }
         });
@@ -277,10 +277,10 @@ public abstract class MediaEncoder {
      * At this point subclasses MUST create the {@link #mMediaCodec} object.
      *
      * @param controller the muxer controller
-     * @param maxLengthMillis the maxLength in millis
+     * @param maxLengthUs the maxLength in microseconds
      */
     @EncoderThread
-    protected abstract void onPrepare(@NonNull final MediaEncoderEngine.Controller controller, final long maxLengthMillis);
+    protected abstract void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthUs);
 
     /**
      * Start recording. This might be a lightweight operation
@@ -465,11 +465,11 @@ public abstract class MediaEncoder {
                 if (!drainAll
                         && !mMaxLengthReached
                         && mFirstTimeUs != Long.MIN_VALUE
-                        && mLastTimeUs - mFirstTimeUs > mMaxLengthMillis * 1000) {
+                        && mLastTimeUs - mFirstTimeUs > mMaxLengthUs) {
                     LOG.w(mName, "DRAINING - Reached maxLength! mLastTimeUs:", mLastTimeUs,
                             "mStartTimeUs:", mFirstTimeUs,
                             "mDeltaUs:", mLastTimeUs - mFirstTimeUs,
-                            "mMaxLengthUs:", mMaxLengthMillis * 1000);
+                            "mMaxLengthUs:", mMaxLengthUs);
                     onMaxLengthReached();
                     break;
                 }
@@ -492,7 +492,7 @@ public abstract class MediaEncoder {
     protected abstract int getEncodedBitRate();
 
     /**
-     * Returns the max length setting, in milliseconds, which can be used
+     * Returns the max length setting, in microseconds, which can be used
      * to compute the current state and eventually call {@link #notifyMaxLengthReached()}.
      * This is not a requirement for subclasses - we do this check anyway when draining,
      * but doing so might be better.
@@ -500,8 +500,8 @@ public abstract class MediaEncoder {
      * @return the max length setting
      */
     @SuppressWarnings("WeakerAccess")
-    protected long getMaxLengthMillis() {
-        return mMaxLengthMillis;
+    protected long getMaxLengthUs() {
+        return mMaxLengthUs;
     }
 
     /**

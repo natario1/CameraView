@@ -62,7 +62,7 @@ public class AudioMediaEncoder extends MediaEncoder {
 
     @EncoderThread
     @Override
-    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthUs) {
         final MediaFormat audioFormat = MediaFormat.createAudioFormat(
                 mConfig.mimeType,
                 mConfig.samplingFrequency,
@@ -248,7 +248,7 @@ public class AudioMediaEncoder extends MediaEncoder {
 
             // See if we reached the max length value.
             if (!hasReachedMaxLength()) {
-                boolean didReachMaxLength = (mLastTimeUs - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
+                boolean didReachMaxLength = (mLastTimeUs - mFirstTimeUs) > getMaxLengthUs();
                 if (didReachMaxLength && !endOfStream) {
                     LOG.w("read thread - this frame reached the maxLength! deltaUs:", mLastTimeUs - mFirstTimeUs);
                     notifyMaxLengthReached();

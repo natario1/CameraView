@@ -146,23 +146,23 @@ public class MediaEncoderEngine {
         for (MediaEncoder encoder : mEncoders) {
             bitRate += encoder.getEncodedBitRate();
         }
-        int bytePerSecond = bitRate / 8;
-        long sizeMaxDuration = (maxSize / bytePerSecond) * 1000L;
-
-        long finalMaxDuration = Long.MAX_VALUE;
+        int byteRate = bitRate / 8;
+        long sizeMaxDurationUs = (maxSize / byteRate) * 1000L * 1000L;
+        long maxDurationUs = maxDuration * 1000L;
+        long finalMaxDurationUs = Long.MAX_VALUE;
         if (maxSize > 0 && maxDuration > 0) {
-            mPossibleEndReason = sizeMaxDuration < maxDuration ? END_BY_MAX_SIZE : END_BY_MAX_DURATION;
-            finalMaxDuration = Math.min(sizeMaxDuration, maxDuration);
+            mPossibleEndReason = sizeMaxDurationUs < maxDurationUs ? END_BY_MAX_SIZE : END_BY_MAX_DURATION;
+            finalMaxDurationUs = Math.min(sizeMaxDurationUs, maxDurationUs);
         } else if (maxSize > 0) {
             mPossibleEndReason = END_BY_MAX_SIZE;
-            finalMaxDuration = sizeMaxDuration;
+            finalMaxDurationUs = sizeMaxDurationUs;
         } else if (maxDuration > 0) {
             mPossibleEndReason = END_BY_MAX_DURATION;
-            finalMaxDuration = maxDuration;
+            finalMaxDurationUs = maxDurationUs;
         }
-        LOG.w("Computed a max duration of", (finalMaxDuration / 1000F));
+        LOG.w("Computed a max duration of", (finalMaxDurationUs / 1000000F));
         for (MediaEncoder encoder : mEncoders) {
-            encoder.prepare(mController, finalMaxDuration);
+            encoder.prepare(mController, finalMaxDurationUs);
         }
     }
 
