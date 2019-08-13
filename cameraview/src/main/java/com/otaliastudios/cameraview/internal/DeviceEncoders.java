@@ -20,6 +20,34 @@ import java.util.List;
 /**
  * Checks the capabilities of device encoders and adjust parameters to ensure
  * that they'll be supported by the final encoder.
+ * This can choose the encoder in two ways, based on the mode flag:
+ *
+ * 1. {@link #MODE_TAKE_FIRST}
+ *
+ * Chooses the encoder as the first one that matches the given mime type.
+ * This is what {@link android.media.MediaCodec#createEncoderByType(String)} does,
+ * and what {@link android.media.MediaRecorder} also does when recording.
+ *
+ * The list is ordered based on the encoder definitions in system/etc/media_codecs.xml,
+ * as explained here: https://source.android.com/devices/media , for example.
+ * So taking the first means respecting the vendor priorities and should generally be
+ * a good idea.
+ *
+ * About {@link android.media.MediaRecorder}, we know it uses this option from here:
+ * https://stackoverflow.com/q/57479564/4288782 where all links to source code are shown.
+ * - StagefrightRecorder (https://android.googlesource.com/platform/frameworks/av/+/master/media/libmediaplayerservice/StagefrightRecorder.cpp#1782)
+ * - MediaCodecSource (https://android.googlesource.com/platform/frameworks/av/+/master/media/libstagefright/MediaCodecSource.cpp#515)
+ * - MediaCodecList (https://android.googlesource.com/platform/frameworks/av/+/master/media/libstagefright/MediaCodecList.cpp#322)
+ *
+ * To be fair, what {@link android.media.MediaRecorder} does is actually choose the first one
+ * that configures itself without errors. We currently do not offer this option here. TODO
+ *
+ * 2. {@link #MODE_PREFER_HARDWARE}
+ *
+ * This takes the list - as ordered by the vendor - and just sorts it such that hardware encoders
+ * are preferred over software ones. It's questionable whether this is good or not. Some vendors
+ * might forget to put hardware encoders first in the list, some others might put poor hardware
+ * encoders on the bottom of the list on purpose.
  */
 public class DeviceEncoders {
 
@@ -27,6 +55,9 @@ public class DeviceEncoders {
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     @VisibleForTesting static boolean ENABLED = Build.VERSION.SDK_INT >= 21;
+
+    public final static int MODE_TAKE_FIRST = 0;
+    public final static int MODE_PREFER_HARDWARE = 1;
 
     @SuppressWarnings("FieldCanBeLocal")
     private final MediaCodecInfo mVideoEncoder;
@@ -36,14 +67,14 @@ public class DeviceEncoders {
     private final MediaCodecInfo.AudioCapabilities mAudioCapabilities;
 
     @SuppressLint("NewApi")
-    public DeviceEncoders(@NonNull String videoType, @NonNull String audioType) {
+    public DeviceEncoders(@NonNull String videoType, @NonNull String audioType, int mode) {
         // We could still get a list of MediaCodecInfo for API >= 16, but it seems that the APIs
         // for querying the availability of a specified MediaFormat were only added in 21 anyway.
         if (ENABLED) {
             List<MediaCodecInfo> encoders = getDeviceEncoders();
-            mVideoEncoder = findDeviceEncoder(encoders, videoType);
+            mVideoEncoder = findDeviceEncoder(encoders, videoType, mode);
             LOG.i("Enabled. Found video encoder:", mVideoEncoder.getName());
-            mAudioEncoder = findDeviceEncoder(encoders, audioType);
+            mAudioEncoder = findDeviceEncoder(encoders, audioType, mode);
             LOG.i("Enabled. Found audio encoder:", mAudioEncoder.getName());
             mVideoCapabilities = mVideoEncoder.getCapabilitiesForType(videoType).getVideoCapabilities();
             mAudioCapabilities = mAudioEncoder.getCapabilitiesForType(audioType).getAudioCapabilities();
@@ -74,7 +105,8 @@ public class DeviceEncoders {
 
     /**
      * Whether an encoder is a hardware encoder or not. We don't have an API to check this,
-     * but it seems that we can assume that all OMX.google encoders are software encoders.
+     * but we can follow what libstagefright does:
+     * https://android.googlesource.com/platform/frameworks/av/+/master/media/libstagefright/MediaCodecList.cpp#293
      *
      * @param encoder encoder
      * @return true if hardware
@@ -82,21 +114,28 @@ public class DeviceEncoders {
     @SuppressLint("NewApi")
     @VisibleForTesting
     boolean isHardwareEncoder(@NonNull String encoder) {
-        return !encoder.startsWith("OMX.google");
+        encoder = encoder.toLowerCase();
+        boolean isSoftwareEncoder = encoder.startsWith("omx.google.")
+                || encoder.startsWith("c2.android.")
+                || (!encoder.startsWith("omx.") && !encoder.startsWith("c2."));
+        return !isSoftwareEncoder;
     }
 
     /**
-     * Finds the encoder we'll be using.
-     * The way we do this is to list all possible encoders and prefer the hardware encoders
-     * over software encoders. Throws if we find no encoder for this type.
+     * Finds the encoder we'll be using, depending on the given mode flag:
+     * - {@link #MODE_TAKE_FIRST} will just take the first of the list
+     * - {@link #MODE_PREFER_HARDWARE} will prefer hardware encoders
+     * Throws if we find no encoder for this type.
      *
+     * @param encoders encoders
      * @param mimeType mime type
+     * @param mode mode
      * @return encoder
      */
     @SuppressLint("NewApi")
     @NonNull
     @VisibleForTesting
-    MediaCodecInfo findDeviceEncoder(@NonNull List<MediaCodecInfo> encoders, @NonNull String mimeType) {
+    MediaCodecInfo findDeviceEncoder(@NonNull List<MediaCodecInfo> encoders, @NonNull String mimeType, int mode) {
         ArrayList<MediaCodecInfo> results = new ArrayList<>();
         for (MediaCodecInfo encoder : encoders) {
             String[] types = encoder.getSupportedTypes();
@@ -108,17 +147,19 @@ public class DeviceEncoders {
             }
         }
         LOG.i("findDeviceEncoder -", "type:", mimeType, "encoders:", results.size());
-        Collections.sort(results, new Comparator<MediaCodecInfo>() {
-            @Override
-            public int compare(MediaCodecInfo o1, MediaCodecInfo o2) {
-                boolean hw1 = isHardwareEncoder(o1.getName());
-                boolean hw2 = isHardwareEncoder(o2.getName());
-                if (hw1 && hw2) return 0;
-                if (hw1) return -1;
-                if (hw2) return 1;
-                return 0;
-            }
-        });
+        if (mode == MODE_PREFER_HARDWARE) {
+            Collections.sort(results, new Comparator<MediaCodecInfo>() {
+                @Override
+                public int compare(MediaCodecInfo o1, MediaCodecInfo o2) {
+                    boolean hw1 = isHardwareEncoder(o1.getName());
+                    boolean hw2 = isHardwareEncoder(o2.getName());
+                    if (hw1 && hw2) return 0;
+                    if (hw1) return -1;
+                    if (hw2) return 1;
+                    return 0;
+                }
+            });
+        }
         if (results.isEmpty()) {
             throw new RuntimeException("No encoders for type:" + mimeType);
         }

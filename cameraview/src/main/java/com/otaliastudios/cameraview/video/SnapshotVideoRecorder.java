@@ -132,7 +132,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             String audioType = "audio/mp4a-latm";
 
             // Check the availability of values
-            DeviceEncoders deviceEncoders = new DeviceEncoders(videoType, audioType);
+            DeviceEncoders deviceEncoders = new DeviceEncoders(videoType, audioType, DeviceEncoders.MODE_PREFER_HARDWARE);
             mResult.size = deviceEncoders.getSupportedVideoSize(mResult.size);
             mResult.videoBitRate = deviceEncoders.getSupportedVideoBitRate(mResult.videoBitRate);
             mResult.audioBitRate = deviceEncoders.getSupportedAudioBitRate(mResult.audioBitRate);

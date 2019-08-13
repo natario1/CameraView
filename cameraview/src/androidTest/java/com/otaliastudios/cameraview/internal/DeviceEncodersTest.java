@@ -55,7 +55,10 @@ public class DeviceEncodersTest extends BaseTest {
 
     @NonNull
     private DeviceEncoders create() {
-        return new DeviceEncoders("video/avc", "audio/mp4a-latm");
+        return new DeviceEncoders(
+                "video/avc",
+                "audio/mp4a-latm",
+                DeviceEncoders.MODE_TAKE_FIRST);
     }
 
     @Test
@@ -83,7 +86,8 @@ public class DeviceEncodersTest extends BaseTest {
         DeviceEncoders deviceEncoders = create();
         if (DeviceEncoders.ENABLED) {
             List<MediaCodecInfo> allEncoders = deviceEncoders.getDeviceEncoders();
-            MediaCodecInfo encoder = deviceEncoders.findDeviceEncoder(allEncoders, "video/avc");
+            MediaCodecInfo encoder = deviceEncoders.findDeviceEncoder(allEncoders,
+                    "video/avc", DeviceEncoders.MODE_TAKE_FIRST);
             assertNotNull(encoder);
             List<String> encoderTypes = Arrays.asList(encoder.getSupportedTypes());
             assertTrue(encoderTypes.contains("video/avc"));
