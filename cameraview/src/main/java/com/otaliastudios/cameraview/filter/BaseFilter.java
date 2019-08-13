@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.filter;
 import android.opengl.GLES20;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.internal.GlUtils;
@@ -96,8 +97,8 @@ public abstract class BaseFilter implements Filter {
     private int vertexTranformMatrixLocation = -1;
     private int vertexPositionLocation = -1;
     private int vertexTextureCoordinateLocation = -1;
-    private int programHandle = -1;
-    private Size size;
+    @VisibleForTesting int programHandle = -1;
+    @VisibleForTesting Size size;
 
     @SuppressWarnings("WeakerAccess")
     protected String vertexPositionName = DEFAULT_VERTEX_POSITION_NAME;
@@ -120,7 +121,6 @@ public abstract class BaseFilter implements Filter {
                 fragmentTextureCoordinateName);
     }
 
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     protected String createDefaultFragmentShader() {
         return createDefaultFragmentShader(fragmentTextureCoordinateName);
@@ -210,7 +210,9 @@ public abstract class BaseFilter implements Filter {
     @Override
     public final BaseFilter copy() {
         BaseFilter copy = onCopy();
-        copy.setSize(size.getWidth(), size.getHeight());
+        if (size != null) {
+            copy.setSize(size.getWidth(), size.getHeight());
+        }
         if (this instanceof OneParameterFilter) {
             ((OneParameterFilter) copy).setParameter1(((OneParameterFilter) this).getParameter1());
         }
@@ -220,7 +222,6 @@ public abstract class BaseFilter implements Filter {
         return copy;
     }
 
-    @SuppressWarnings("WeakerAccess")
     protected BaseFilter onCopy() {
         try {
             return getClass().newInstance();

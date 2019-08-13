@@ -13,6 +13,7 @@ import androidx.test.annotation.UiThreadTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import com.otaliastudios.cameraview.BaseEglTest;
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.internal.egl.EglBaseSurface;
 import com.otaliastudios.cameraview.internal.egl.EglCore;
@@ -45,29 +46,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class OverlayDrawerTest extends BaseTest {
-
-    private final static int WIDTH = 100;
-    private final static int HEIGHT = 100;
-
-    private EglCore eglCore;
-    private EglBaseSurface eglSurface;
-
-    @Before
-    public void setUp() {
-        eglCore = new EglCore(null, EglCore.FLAG_RECORDABLE);
-        eglSurface = new EglBaseSurface(eglCore);
-        eglSurface.createOffscreenSurface(WIDTH, HEIGHT);
-        eglSurface.makeCurrent();
-    }
-
-    @After
-    public void tearDown() {
-        eglSurface.releaseEglSurface();
-        eglSurface = null;
-        eglCore.release();
-        eglCore = null;
-    }
+public class OverlayDrawerTest extends BaseEglTest {
 
     @Test
     public void testDraw() {
