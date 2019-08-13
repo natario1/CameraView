@@ -1664,6 +1664,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * (for example if the surface is not ready). This is the preview size, rotated to match
      * the output orientation, and cropped to the visible part.
      *
+     * This also includes the {@link #setSnapshotMaxWidth(int)} and
+     * {@link #setSnapshotMaxHeight(int)} constraints.
+     *
+     * This does NOT include any constraints specific to video encoding, which are
+     * device specific and depend on the capabilities of the device codec.
+     *
      * @return the size of snapshots
      */
     @Nullable

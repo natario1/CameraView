@@ -11,6 +11,7 @@ import androidx.test.rule.ActivityTestRule;
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
 import com.otaliastudios.cameraview.controls.Grid;
+import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
 import org.junit.After;
@@ -122,30 +123,27 @@ public class DeviceEncodersTest extends BaseTest {
         assertSame(input, output);
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testGetSupportedVideoSize_hugeWidth() {
+    @Test
+    public void testGetSupportedVideoSize_scalesDown() {
         DeviceEncoders deviceEncoders = create();
         if (DeviceEncoders.ENABLED) {
-            Size input = new Size(Integer.MAX_VALUE, GUARANTEED_SIZE.getHeight());
-            deviceEncoders.getSupportedVideoSize(input);
-        } else {
-            throw new RuntimeException("Test should pass.");
-        }
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testGetSupportedVideoSize_hugeHeight() {
-        DeviceEncoders deviceEncoders = create();
-        if (DeviceEncoders.ENABLED) {
-            Size input = new Size(GUARANTEED_SIZE.getWidth(), Integer.MAX_VALUE);
-            deviceEncoders.getSupportedVideoSize(input);
-        } else {
-            throw new RuntimeException("Test should pass.");
+            Size input = new Size(
+                    GUARANTEED_SIZE.getWidth() * 1000,
+                    GUARANTEED_SIZE.getHeight() * 1000);
+            try {
+                Size output = deviceEncoders.getSupportedVideoSize(input);
+                assertTrue(AspectRatio.of(input).matches(output, 0.01F));
+            } catch (RuntimeException e) {
+                // The scaled down size happens to be not supported.
+                // I see no way of testing this easily if we're not sure of supported ranges.
+                // This depends highly on the alignment since scaling down, while keeping AR,
+                // can change the alignment and require width / height changes.
+            }
         }
     }
 
     @Test
-    public void testGetSupportedVideoSize_alignsSize() {
+    public void testGetSupportedVideoSize_aligns() {
         DeviceEncoders deviceEncoders = create();
         if (DeviceEncoders.ENABLED) {
             Size input = new Size(GUARANTEED_SIZE.getWidth() + 1,
