@@ -122,7 +122,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
             }
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
             mMediaRecorder.setAudioEncoder(mProfile.audioCodec);
-            mMediaRecorder.setAudioEncodingBitRate(mProfile.audioBitRate);
+            mMediaRecorder.setAudioEncodingBitRate(stub.audioBitRate);
         }
 
         // Set other params
