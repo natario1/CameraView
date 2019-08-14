@@ -1194,7 +1194,6 @@ public abstract class CameraEngine implements
     }
 
     protected void onStopVideo() {
-        LOG.i("stopVideo", "executing.", "isTakingVideo?", isTakingVideo());
         if (mVideoRecorder != null) {
             mVideoRecorder.stop(false);
             mVideoRecorder = null;
