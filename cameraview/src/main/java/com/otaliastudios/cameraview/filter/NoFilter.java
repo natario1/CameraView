@@ -4,7 +4,10 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
 
-public class NoFilter extends BaseFilter {
+/**
+ * A {@link Filter} that draws frames without any modification.
+ */
+public final class NoFilter extends BaseFilter {
 
     @NonNull
     @Override
