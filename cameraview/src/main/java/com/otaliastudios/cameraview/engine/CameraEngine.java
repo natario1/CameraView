@@ -1188,12 +1188,16 @@ public abstract class CameraEngine implements
             @Override
             public void run() {
                 LOG.i("stopVideo", "executing.", "isTakingVideo?", isTakingVideo());
-                if (mVideoRecorder != null) {
-                    mVideoRecorder.stop(false);
-                    mVideoRecorder = null;
-                }
+                onStopVideo();
             }
         });
+    }
+
+    protected void onStopVideo() {
+        if (mVideoRecorder != null) {
+            mVideoRecorder.stop(false);
+            mVideoRecorder = null;
+        }
     }
 
     @CallSuper

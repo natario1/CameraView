@@ -89,12 +89,12 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
 
     @EncoderThread
     @Override
-    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthMillis) {
+    protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthUs) {
         // We rotate the texture using transformRotation. Pass rotation=0 to super so that
         // no rotation metadata is written into the output file.
         mTransformRotation = mConfig.rotation;
         mConfig.rotation = 0;
-        super.onPrepare(controller, maxLengthMillis);
+        super.onPrepare(controller, maxLengthUs);
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent();
@@ -156,7 +156,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
             // Notify we have reached the max length value.
             if (mFirstTimeUs == Long.MIN_VALUE) mFirstTimeUs = frame.timestampUs();
             if (!hasReachedMaxLength()) {
-                boolean didReachMaxLength = (frame.timestampUs() - mFirstTimeUs) > getMaxLengthMillis() * 1000L;
+                boolean didReachMaxLength = (frame.timestampUs() - mFirstTimeUs) > getMaxLengthUs();
                 if (didReachMaxLength) {
                     LOG.w("onEvent -",
                             "frameNumber:", mFrameNumber,

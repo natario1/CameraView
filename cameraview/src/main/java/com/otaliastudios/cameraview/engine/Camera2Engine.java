@@ -726,11 +726,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
-        boolean wasRecordingFullVideo = mVideoRecorder instanceof Full2VideoRecorder;
-        super.onVideoResult(result, exception);
-        if (wasRecordingFullVideo) {
-            // We have to stop all repeating requests and restart them.
+    protected void onStopVideo() {
+        // When video ends, we have to restart the repeating request for TEMPLATE_PREVIEW,
+        // this time without the video recorder surface. We do this before stopping the
+        // recorder. If we stop first, the camera will try to fill an "abandoned" Surface
+        // and, on some devices with a poor internal implementation, this crashes. See #549
+        boolean isFullVideo = mVideoRecorder instanceof Full2VideoRecorder;
+        if (isFullVideo) {
             try {
                 createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
                 addRepeatingRequestBuilderSurfaces();
@@ -739,6 +741,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 throw createCameraException(e);
             }
         }
+        super.onStopVideo();
     }
 
     //endregion

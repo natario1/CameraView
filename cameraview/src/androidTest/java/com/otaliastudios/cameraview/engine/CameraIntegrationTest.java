@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.PointF;
 import android.hardware.Camera;
 import android.os.Build;
+import android.os.Handler;
 
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.CameraException;
@@ -526,9 +527,6 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Test
     public void testStartEndVideo() {
-        // Fails on Travis. Some emulators can't deal with MediaRecorder,
-        // Error while starting MediaRecorder. java.lang.RuntimeException: start failed.
-        // as documented. This works locally though.
         camera.setMode(Mode.VIDEO);
         openSync(true);
         takeVideoSync(true, 4000);
@@ -540,6 +538,43 @@ public abstract class CameraIntegrationTest extends BaseTest {
         // TODO should check api level for snapshot?
         openSync(true);
         takeVideoSnapshotSync(true, 4000);
+        waitForVideoResult(true);
+    }
+
+    @Test
+    public void testStartEndVideo_withManualStop() {
+        camera.setMode(Mode.VIDEO);
+        openSync(true);
+        takeVideoSync(true);
+        uiSync(new Runnable() {
+            @Override
+            public void run() {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        camera.stopVideo();
+                    }
+                }, 5000);
+            }
+        });
+        waitForVideoResult(true);
+    }
+
+    @Test
+    public void testStartEndVideoSnapshot_withManualStop() {
+        openSync(true);
+        takeVideoSnapshotSync(true);
+        uiSync(new Runnable() {
+            @Override
+            public void run() {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        camera.stopVideo();
+                    }
+                }, 5000);
+            }
+        });
         waitForVideoResult(true);
     }
 
