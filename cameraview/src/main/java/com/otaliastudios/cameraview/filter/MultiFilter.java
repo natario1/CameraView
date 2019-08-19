@@ -4,6 +4,7 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.otaliastudios.cameraview.internal.GlUtils;
 import com.otaliastudios.cameraview.size.Size;
@@ -40,7 +41,8 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
 
     private final static int TARGET = GLES20.GL_TEXTURE_2D;
 
-    private static class State {
+    @VisibleForTesting
+    static class State {
         boolean isCreated = false;
         int programHandle = -1;
         int framebufferId = -1;
@@ -48,8 +50,8 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
         Size size = null;
     }
 
-    private final List<Filter> filters = new ArrayList<>();
-    private final Map<Filter, State> states = new HashMap<>();
+    @VisibleForTesting final List<Filter> filters = new ArrayList<>();
+    @VisibleForTesting final Map<Filter, State> states = new HashMap<>();
     private final Object lock = new Object();
     private Size size = null;
     private float parameter1 = 0F;
