@@ -15,6 +15,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A {@link MultiFilter} is a special {@link Filter} that can group one or more filters together.
+ * When this happens, filters are applied in sequence:
+ * - the first filter reads from input frames
+ * - the second filters reads the output of the first
+ * And so on, until the last filter which will read from the previous and write to the real output.
+ *
+ * New filters can be added at any time through {@link #addFilter(Filter)}, but currently they
+ * can not be removed because we can not easily ensure that they would be correctly released.
+ *
+ * The {@link MultiFilter} does also implement {@link OneParameterFilter} and {@link TwoParameterFilter},
+ * dispatching all the parameter calls to child filters, assuming they support it.
+ *
+ * There are some important technical caveats when using {@link MultiFilter}:
+ * - each child filter requires the allocation of a GL framebuffer. Using a large number of filters
+ *   will likely cause memory issues (e.g. https://stackoverflow.com/q/6354208/4288782).
+ * - some of the children need to write into {@link GLES20#GL_TEXTURE_2D} instead of
+ *   {@link GLES11Ext#GL_TEXTURE_EXTERNAL_OES}! To achieve this, we replace samplerExternalOES
+ *   with sampler2D in your fragment shader code. This might cause issues for some shaders.
+ */
 @SuppressWarnings("unused")
 public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilter {
 
@@ -35,11 +55,19 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
     private float parameter1 = 0F;
     private float parameter2 = 0F;
 
+    /**
+     * Creates a new group with the given filters.
+     * @param filters children
+     */
     @SuppressWarnings("WeakerAccess")
     public MultiFilter(@NonNull Filter... filters) {
         this(Arrays.asList(filters));
     }
 
+    /**
+     * Creates a new group with the given filters.
+     * @param filters children
+     */
     @SuppressWarnings("WeakerAccess")
     public MultiFilter(@NonNull Collection<Filter> filters) {
         for (Filter filter : filters) {
@@ -47,6 +75,12 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
         }
     }
 
+    /**
+     * Adds a new filter. It will be used in the next frame.
+     * If the filter is a {@link MultiFilter}, we'll use its children instead.
+     *
+     * @param filter a new filter
+     */
     @SuppressWarnings("WeakerAccess")
     public void addFilter(@NonNull Filter filter) {
         if (filter instanceof MultiFilter) {
@@ -153,12 +187,14 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
     @NonNull
     @Override
     public String getVertexShader() {
+        // Whatever, we won't be using this.
         return new NoFilter().getVertexShader();
     }
 
     @NonNull
     @Override
     public String getFragmentShader() {
+        // Whatever, we won't be using this.
         return new NoFilter().getFragmentShader();
     }
 
