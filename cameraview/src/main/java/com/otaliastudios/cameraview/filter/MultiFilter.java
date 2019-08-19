@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public class MultiFilter implements Filter {
+public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilter {
 
     private final static int TARGET = GLES20.GL_TEXTURE_2D;
 
@@ -32,6 +32,8 @@ public class MultiFilter implements Filter {
     private final Map<Filter, State> states = new HashMap<>();
     private final Object lock = new Object();
     private Size size = null;
+    private float parameter1 = 0F;
+    private float parameter2 = 0F;
 
     @SuppressWarnings("WeakerAccess")
     public MultiFilter(@NonNull Filter... filters) {
@@ -238,5 +240,39 @@ public class MultiFilter implements Filter {
             }
             return copy;
         }
+    }
+
+    @Override
+    public void setParameter1(float parameter1) {
+        this.parameter1 = parameter1;
+        synchronized (lock) {
+            for (Filter filter : filters) {
+                if (filter instanceof OneParameterFilter) {
+                    ((OneParameterFilter) filter).setParameter1(parameter1);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void setParameter2(float parameter2) {
+        this.parameter2 = parameter2;
+        synchronized (lock) {
+            for (Filter filter : filters) {
+                if (filter instanceof TwoParameterFilter) {
+                    ((TwoParameterFilter) filter).setParameter2(parameter2);
+                }
+            }
+        }
+    }
+
+    @Override
+    public float getParameter1() {
+        return parameter1;
+    }
+
+    @Override
+    public float getParameter2() {
+        return parameter2;
     }
 }
