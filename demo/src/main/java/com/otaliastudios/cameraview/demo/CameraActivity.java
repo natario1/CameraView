@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
@@ -28,7 +29,9 @@ import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.filter.Filters;
+import com.otaliastudios.cameraview.filter.MultiFilter;
 import com.otaliastudios.cameraview.filters.BrightnessFilter;
+import com.otaliastudios.cameraview.filters.DuotoneFilter;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 
@@ -334,6 +337,12 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         Filters filter = mAllFilters[mCurrentFilter];
         camera.setFilter(filter.newInstance());
         message(filter.toString(), false);
+
+        // To test MultiFilter:
+        // DuotoneFilter duotone = new DuotoneFilter();
+        // duotone.setFirstColor(Color.RED);
+        // duotone.setSecondColor(Color.GREEN);
+        // camera.setFilter(new MultiFilter(filter.newInstance(), duotone));
     }
 
     @Override
