@@ -252,7 +252,13 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
                 }
 
                 // Perform the actual drawing.
-                filter.draw(transformMatrix);
+                // The first filter should apply all the transformations. Then,
+                // since they are applied, we should use a no-op matrix.
+                if (isFirst) {
+                    filter.draw(transformMatrix);
+                } else {
+                    filter.draw(GlUtils.IDENTITY_MATRIX);
+                }
 
                 // Set the input for the next cycle:
                 // It is the framebuffer texture from this cycle. If this is the last

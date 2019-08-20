@@ -342,7 +342,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         // DuotoneFilter duotone = new DuotoneFilter();
         // duotone.setFirstColor(Color.RED);
         // duotone.setSecondColor(Color.GREEN);
-        // camera.setFilter(new MultiFilter(filter.newInstance(), duotone));
+        // camera.setFilter(new MultiFilter(duotone, filter.newInstance()));
     }
 
     @Override
