@@ -24,9 +24,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -172,8 +174,8 @@ public class MultiFilterTest extends BaseEglTest {
             public Object answer(InvocationOnMock invocation) {
                 MultiFilter.State state = multiFilter.states.get(filter1);
                 assertNotNull(state);
-                assertTrue(state.framebufferId != -1);
-                assertTrue(state.textureId != -1);
+                assertTrue(state.isCreated);
+                assertTrue(state.isFramebufferCreated);
 
                 GLES20.glGetIntegerv(GLES20.GL_FRAMEBUFFER_BINDING, result, 0);
                 assertTrue(result[0] != 0);
@@ -181,20 +183,22 @@ public class MultiFilterTest extends BaseEglTest {
             }
         }).when(filter1).draw(matrix);
 
+        // Note: second filter is drawn with the identity matrix!
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocation) {
                 // The last filter has no FBO / texture.
                 MultiFilter.State state = multiFilter.states.get(filter2);
                 assertNotNull(state);
-                assertEquals(-1, state.framebufferId);
-                assertEquals(-1, state.textureId);
+                assertTrue(state.isCreated);
+                assertFalse(state.isFramebufferCreated);
 
                 GLES20.glGetIntegerv(GLES20.GL_FRAMEBUFFER_BINDING, result, 0);
                 assertEquals(0, result[0]);
                 return null;
+
             }
-        }).when(filter2).draw(matrix);
+        }).when(filter2).draw(any(float[].class));
 
         EglViewport viewport = new EglViewport(multiFilter);
         int texture = viewport.createTexture();
@@ -203,7 +207,7 @@ public class MultiFilterTest extends BaseEglTest {
 
         // Verify that both are drawn.
         verify(filter1, times(1)).draw(matrix);
-        verify(filter2, times(1)).draw(matrix);
+        verify(filter2, times(1)).draw(any(float[].class));
     }
 
 }
