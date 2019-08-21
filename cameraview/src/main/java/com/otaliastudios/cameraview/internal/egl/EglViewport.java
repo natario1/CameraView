@@ -21,7 +21,7 @@ public class EglViewport {
     private int mTextureUnit;
 
     private Filter mFilter;
-    private boolean mFilterChanged = false;
+    private Filter mPendingFilter;
 
     public EglViewport() {
         this(new NoFilter());
@@ -35,7 +35,6 @@ public class EglViewport {
     }
 
     private void createProgram() {
-        release(); // Release old program if present.
         mProgramHandle = GlUtils.createProgram(mFilter.getVertexShader(), mFilter.getFragmentShader());
         mFilter.onCreate(mProgramHandle);
     }
@@ -67,15 +66,18 @@ public class EglViewport {
         return texId;
     }
 
-    public void setFilter(@NonNull Filter filter){
-        this.mFilter = filter;
-        mFilterChanged = true;
+    public void setFilter(@NonNull Filter filter) {
+        // TODO see if this is needed. If setFilter is always called from the correct GL thread,
+        // we don't need to wait for a new draw call (which might not even happen).
+        mPendingFilter = filter;
     }
 
     public void drawFrame(int textureId, float[] textureMatrix) {
-        if (mFilterChanged) {
+        if (mPendingFilter != null) {
+            release();
+            mFilter = mPendingFilter;
+            mPendingFilter = null;
             createProgram();
-            mFilterChanged = false;
         }
 
         GlUtils.checkError("draw start");

@@ -104,9 +104,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     }
 
     @Override
-    public void onFilterChanged(@NonNull Filter filter) {
+    public void onRendererFilterChanged(@NonNull Filter filter) {
         mCurrentFilter = filter.copy();
         if (mEncoderEngine != null) {
+            mCurrentFilter.setSize(mResult.size.getWidth(), mResult.size.getHeight());
             mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
         }
     }
@@ -161,6 +162,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             }
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(videoConfig);
 
+            // Adjustment
+            mResult.rotation = 0; // We will rotate the result instead.
+            mCurrentFilter.setSize(mResult.size.getWidth(), mResult.size.getWidth());
+
             // Audio
             AudioMediaEncoder audioEncoder = null;
             if (mResult.audio == Audio.ON || mResult.audio == Audio.MONO || mResult.audio == Audio.STEREO) {
@@ -181,7 +186,6 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                     SnapshotVideoRecorder.this);
             mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
             mEncoderEngine.start();
-            mResult.rotation = 0; // We will rotate the result instead.
             mCurrentState = STATE_RECORDING;
         }
 

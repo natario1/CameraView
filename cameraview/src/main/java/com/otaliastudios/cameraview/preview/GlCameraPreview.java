@@ -141,7 +141,9 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
         @RendererThread
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            if (mCurrentFilter == null) mCurrentFilter = new NoFilter();
+            if (mCurrentFilter == null) {
+                mCurrentFilter = new NoFilter();
+            }
             mOutputViewport = new EglViewport(mCurrentFilter);
             mOutputTextureId = mOutputViewport.createTexture();
             mInputSurfaceTexture = new SurfaceTexture(mOutputTextureId);
@@ -282,7 +284,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
             public void run() {
                 mRendererFrameCallbacks.add(callback);
                 if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
-                callback.onFilterChanged(mCurrentFilter);
+                callback.onRendererFilterChanged(mCurrentFilter);
             }
         });
     }
@@ -325,20 +327,26 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
     }
 
     @Override
-    public void setFilter(@NonNull Filter filter) {
+    public void setFilter(final @NonNull Filter filter) {
+        mCurrentFilter = filter;
         if (hasSurface()) {
             filter.setSize(mOutputSurfaceWidth, mOutputSurfaceHeight);
         }
-        mCurrentFilter = filter;
-        if (mOutputViewport != null) {
-            mOutputViewport.setFilter(filter);
-        }
 
-        // Need to synchronize when iterating the Collections.synchronizedSet
-        synchronized (mRendererFrameCallbacks) {
-            for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                callback.onFilterChanged(filter);
+        getView().queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                if (mOutputViewport != null) {
+                    mOutputViewport.setFilter(filter);
+                }
+
+                // Need to synchronize when iterating the Collections.synchronizedSet
+                synchronized (mRendererFrameCallbacks) {
+                    for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                        callback.onRendererFilterChanged(filter);
+                    }
+                }
             }
-        }
+        });
     }
 }

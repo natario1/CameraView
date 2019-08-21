@@ -33,10 +33,11 @@ public interface RendererFrameCallback {
     void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY);
 
     /**
-     * Called on the change of shader filter
-     * We should update the EglViewPort once you receives this event
+     * Called when the renderer filter changes. This is guaranteed to be called at least once
+     * before the first {@link #onRendererFrame(SurfaceTexture, float, float)}.
      *
-     * @param filter the new filter applied
+     * @param filter the new filter
      */
-    void onFilterChanged(@NonNull Filter filter);
+    @RendererThread
+    void onRendererFilterChanged(@NonNull Filter filter);
 }
