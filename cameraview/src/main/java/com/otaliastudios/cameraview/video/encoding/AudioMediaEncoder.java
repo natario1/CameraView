@@ -71,7 +71,11 @@ public class AudioMediaEncoder extends MediaEncoder {
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, mConfig.audioFormatChannels());
         audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         try {
-            mMediaCodec = MediaCodec.createEncoderByType(mConfig.mimeType);
+            if (mConfig.encoder != null) {
+                mMediaCodec = MediaCodec.createByCodecName(mConfig.encoder);
+            } else {
+                mMediaCodec = MediaCodec.createEncoderByType(mConfig.mimeType);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

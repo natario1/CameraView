@@ -148,18 +148,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     public CameraView(@NonNull Context context) {
         super(context, null);
-        init(context, null);
+        initialize(context, null);
     }
 
     public CameraView(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init(context, attrs);
+        initialize(context, attrs);
     }
 
     //region Init
 
     @SuppressWarnings("WrongConstant")
-    private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
+    private void initialize(@NonNull Context context, @Nullable AttributeSet attrs) {
         setWillNotDraw(false);
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
         ControlParser controls = new ControlParser(context, a);
@@ -1663,6 +1663,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Returns the size used for snapshots, or null if it hasn't been computed
      * (for example if the surface is not ready). This is the preview size, rotated to match
      * the output orientation, and cropped to the visible part.
+     *
+     * This also includes the {@link #setSnapshotMaxWidth(int)} and
+     * {@link #setSnapshotMaxHeight(int)} constraints.
+     *
+     * This does NOT include any constraints specific to video encoding, which are
+     * device specific and depend on the capabilities of the device codec.
      *
      * @return the size of snapshots
      */

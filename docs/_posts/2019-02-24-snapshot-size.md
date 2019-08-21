@@ -42,6 +42,17 @@ This is very useful as it decouples the snapshot size logic from the preview. By
 you can have a pleasant, good looking preview stream, while still capturing fast, low-res snapshots
 with no issues.
 
+### Video Codec requirements
+
+When taking video snapshots, the video codec that the device provides might require extra constraints,
+like
+
+- width / height alignment
+- maximum width or height 
+
+CameraView will try to read these requirements and apply them, which can result in video snapshots
+that are smaller than you would expect, or with a **very slightly** different aspect ratio.
+
 ### XML Attributes
 
 ```xml

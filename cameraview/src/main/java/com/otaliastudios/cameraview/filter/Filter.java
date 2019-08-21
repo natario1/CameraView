@@ -19,7 +19,7 @@ import java.io.File;
  * Advanced users can create custom filters using GLES.
  * It is recommended to extend {@link BaseFilter} instead of this class.
  *
- * All {@link Filter}s should have a no-op public constructor.
+ * All {@link Filter}s should have a no-arguments public constructor.
  * This ensures that you can pass the filter class to XML attribute {@code app:cameraFilter},
  * and also helps {@link BaseFilter} automatically make a copy of the filter.
  *

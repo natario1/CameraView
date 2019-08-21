@@ -6,6 +6,8 @@ import android.media.MediaRecorder;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.VideoCodec;
+import com.otaliastudios.cameraview.internal.DeviceEncoders;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -45,49 +47,85 @@ public abstract class FullVideoRecorder extends VideoRecorder {
 
     protected boolean onPrepareMediaRecorder(@NonNull VideoResult.Stub stub, @NonNull MediaRecorder mediaRecorder) {
         mMediaRecorder = mediaRecorder;
-        Size size = stub.rotation % 180 != 0 ? stub.size.flip() : stub.size;
-        if (stub.audio == Audio.ON || stub.audio == Audio.MONO || stub.audio == Audio.STEREO) {
-            // Must be called before setOutputFormat.
+        boolean hasAudio = stub.audio == Audio.ON
+                || stub.audio == Audio.MONO
+                || stub.audio == Audio.STEREO;
+        if (hasAudio) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         }
-
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
-        if (stub.videoFrameRate <= 0) {
-            mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
-            stub.videoFrameRate = mProfile.videoFrameRate;
-        } else {
-            mMediaRecorder.setVideoFrameRate(stub.videoFrameRate);
+
+        // Get the audio mime type
+        // https://android.googlesource.com/platform/frameworks/av/+/master/media/libmediaplayerservice/StagefrightRecorder.cpp#1096
+        // https://github.com/MrAlex94/Waterfox-Old/blob/master/media/libstagefright/frameworks/av/media/libstagefright/MediaDefs.cpp
+        String audioType;
+        switch (mProfile.audioCodec) {
+            case MediaRecorder.AudioEncoder.AMR_NB: audioType = "audio/3gpp"; break;
+            case MediaRecorder.AudioEncoder.AMR_WB: audioType = "audio/amr-wb"; break;
+            case MediaRecorder.AudioEncoder.AAC:
+            case MediaRecorder.AudioEncoder.HE_AAC:
+            case MediaRecorder.AudioEncoder.AAC_ELD: audioType = "audio/mp4a-latm"; break;
+            case MediaRecorder.AudioEncoder.VORBIS: audioType = "audio/vorbis"; break;
+            case MediaRecorder.AudioEncoder.DEFAULT:
+            default: audioType = "audio/3gpp";
         }
-        mMediaRecorder.setVideoSize(size.getWidth(), size.getHeight());
-        switch (stub.videoCodec) {
-            case H_263: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263); break;
-            case H_264: mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264); break;
-            case DEVICE_DEFAULT: mMediaRecorder.setVideoEncoder(mProfile.videoCodec); break;
+
+        // Get the video mime type
+        // https://android.googlesource.com/platform/frameworks/av/+/master/media/libmediaplayerservice/StagefrightRecorder.cpp#1650
+        // https://github.com/MrAlex94/Waterfox-Old/blob/master/media/libstagefright/frameworks/av/media/libstagefright/MediaDefs.cpp
+        String videoType;
+        if (stub.videoCodec == VideoCodec.H_264) mProfile.videoCodec = MediaRecorder.VideoEncoder.H264;
+        if (stub.videoCodec == VideoCodec.H_263) mProfile.videoCodec = MediaRecorder.VideoEncoder.H263;
+        switch (mProfile.videoCodec) {
+            case MediaRecorder.VideoEncoder.H263: videoType = "video/3gpp"; break;
+            case MediaRecorder.VideoEncoder.H264: videoType = "video/avc"; break;
+            case MediaRecorder.VideoEncoder.MPEG_4_SP: videoType = "video/mp4v-es"; break;
+            case MediaRecorder.VideoEncoder.VP8: videoType = "video/x-vnd.on2.vp8"; break;
+            case MediaRecorder.VideoEncoder.HEVC: videoType = "video/hevc"; break;
+            case MediaRecorder.VideoEncoder.DEFAULT:
+            default: videoType = "video/avc";
         }
-        if (stub.videoBitRate <= 0) {
-            mMediaRecorder.setVideoEncodingBitRate(mProfile.videoBitRate);
-            stub.videoBitRate = mProfile.videoBitRate;
-        } else {
-            mMediaRecorder.setVideoEncodingBitRate(stub.videoBitRate);
+
+        // Merge stub and profile
+        stub.videoFrameRate = stub.videoFrameRate > 0 ? stub.videoFrameRate : mProfile.videoFrameRate;
+        stub.videoBitRate = stub.videoBitRate > 0 ? stub.videoBitRate : mProfile.videoBitRate;
+        if (hasAudio) {
+            stub.audioBitRate = stub.audioBitRate > 0 ? stub.audioBitRate : mProfile.audioBitRate;
         }
-        if (stub.audio == Audio.ON || stub.audio == Audio.MONO || stub.audio == Audio.STEREO) {
+
+        // Check DeviceEncoders support
+        DeviceEncoders encoders = new DeviceEncoders(videoType, audioType, DeviceEncoders.MODE_TAKE_FIRST);
+        boolean flip = stub.rotation % 180 != 0;
+        if (flip) stub.size = stub.size.flip();
+        stub.size = encoders.getSupportedVideoSize(stub.size);
+        stub.videoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);
+        stub.audioBitRate = encoders.getSupportedAudioBitRate(stub.audioBitRate);
+        stub.videoFrameRate = encoders.getSupportedVideoFrameRate(stub.size, stub.videoFrameRate);
+        if (flip) stub.size = stub.size.flip();
+
+        // Set video params
+        mMediaRecorder.setVideoSize(
+                flip ? stub.size.getHeight() : stub.size.getWidth(),
+                flip ? stub.size.getWidth() : stub.size.getHeight());
+        mMediaRecorder.setVideoFrameRate(stub.videoFrameRate);
+        mMediaRecorder.setVideoEncoder(mProfile.videoCodec);
+        mMediaRecorder.setVideoEncodingBitRate(stub.videoBitRate);
+
+        // Set audio params
+        if (hasAudio) {
             if (stub.audio == Audio.ON) {
                 mMediaRecorder.setAudioChannels(mProfile.audioChannels);
             } else if (stub.audio == Audio.MONO) {
                 mMediaRecorder.setAudioChannels(1);
-            } else //noinspection ConstantConditions
-                if (stub.audio == Audio.STEREO) {
+            } else if (stub.audio == Audio.STEREO) {
                 mMediaRecorder.setAudioChannels(2);
             }
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
             mMediaRecorder.setAudioEncoder(mProfile.audioCodec);
-            if (stub.audioBitRate <= 0) {
-                mMediaRecorder.setAudioEncodingBitRate(mProfile.audioBitRate);
-                stub.audioBitRate = mProfile.audioBitRate;
-            } else {
-                mMediaRecorder.setAudioEncodingBitRate(stub.audioBitRate);
-            }
+            mMediaRecorder.setAudioEncodingBitRate(stub.audioBitRate);
         }
+
+        // Set other params
         if (stub.location != null) {
             mMediaRecorder.setLocation(
                     (float) stub.location.getLatitude(),
@@ -113,6 +151,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
             }
         });
 
+        // Prepare the Recorder
         try {
             mMediaRecorder.prepare();
             mMediaRecorderPrepared = true;
