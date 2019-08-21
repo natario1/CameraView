@@ -104,7 +104,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     }
 
     @Override
-    public void onFilterChanged(@NonNull Filter filter) {
+    public void onRendererFilterChanged(@NonNull Filter filter) {
         mCurrentFilter = filter.copy();
         if (mEncoderEngine != null) {
             mCurrentFilter.setSize(mResult.size.getWidth(), mResult.size.getHeight());

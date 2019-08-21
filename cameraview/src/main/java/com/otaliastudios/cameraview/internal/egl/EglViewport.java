@@ -67,6 +67,8 @@ public class EglViewport {
     }
 
     public void setFilter(@NonNull Filter filter) {
+        // TODO see if this is needed. If setFilter is always called from the correct GL thread,
+        // we don't need to wait for a new draw call (which might not even happen).
         mPendingFilter = filter;
     }
 
