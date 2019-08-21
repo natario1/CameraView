@@ -138,6 +138,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private boolean mKeepScreenOn;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private boolean mExperimental;
+    private boolean mInEditor;
 
     // Overlays
     @VisibleForTesting OverlayLayout mOverlayLayout;
@@ -160,6 +161,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @SuppressWarnings("WrongConstant")
     private void initialize(@NonNull Context context, @Nullable AttributeSet attrs) {
+        mInEditor = isInEditMode();
+        if (mInEditor) return;
+
         setWillNotDraw(false);
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CameraView, 0, 0);
         ControlParser controls = new ControlParser(context, a);
@@ -244,9 +248,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // Apply filters
         setFilter(filters.getFilter());
 
-        if (!isInEditMode()) {
-            mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
-        }
+        // Create the orientation helper
+        mOrientationHelper = new OrientationHelper(context, mCameraCallbacks);
     }
 
     /**
@@ -324,22 +327,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        if (mInEditor) return;
         if (mCameraPreview == null) {
-
             // isHardwareAccelerated will return the real value only after we are
             // attached. That's why we instantiate the preview here.
             doInstantiatePreview();
         }
-        if (!isInEditMode()) {
-            mOrientationHelper.enable(getContext());
-        }
+        mOrientationHelper.enable(getContext());
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        if (!isInEditMode()) {
-            mOrientationHelper.disable();
-        }
+        if (!mInEditor) mOrientationHelper.disable();
         super.onDetachedFromWindow();
     }
 
@@ -374,6 +373,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (mInEditor) {
+            final int width = MeasureSpec.getSize(widthMeasureSpec);
+            final int height = MeasureSpec.getSize(heightMeasureSpec);
+            super.onMeasure(MeasureSpec.makeMeasureSpec(width, EXACTLY),
+                    MeasureSpec.makeMeasureSpec(height, EXACTLY));
+            return;
+        }
+
         Size previewSize = mCameraEngine.getPreviewStreamSize(Reference.VIEW);
         if (previewSize == null) {
             LOG.w("onMeasure:", "surface is not ready. Calling default behavior.");
@@ -595,7 +602,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     // Some gesture layout detected a gesture. It's not known at this moment:
     // (1) if it was mapped to some action (we check here)
     // (2) if it's supported by the camera (CameraEngine checks)
-    private void onGesture(GestureFinder source, @NonNull CameraOptions options) {
+    private void onGesture(@NonNull GestureFinder source, @NonNull CameraOptions options) {
         Gesture gesture = source.getGesture();
         GestureAction action = mGestureMap.get(gesture);
         PointF[] points = source.getPoints();
@@ -691,7 +698,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     public void open() {
-        if (!isEnabled()) return;
+        if (mInEditor) return;
         if (mCameraPreview != null) mCameraPreview.onResume();
         if (checkPermissions(getAudio())) {
             // Update display orientation for current CameraEngine
@@ -760,6 +767,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     public void close() {
+        if (mInEditor) return;
         mCameraEngine.stop();
         if (mCameraPreview != null) mCameraPreview.onPause();
     }
@@ -771,6 +779,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     public void destroy() {
+        if (mInEditor) return;
         clearCameraListeners();
         clearFrameProcessors();
         mCameraEngine.destroy();
@@ -2158,7 +2167,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @Override
     public LayoutParams generateLayoutParams(AttributeSet attributeSet) {
-        if (mOverlayLayout.isOverlay(attributeSet)) {
+        if (!mInEditor && mOverlayLayout.isOverlay(attributeSet)) {
             return mOverlayLayout.generateLayoutParams(attributeSet);
         }
         return super.generateLayoutParams(attributeSet);
@@ -2167,7 +2176,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     // We don't support removeView on overlays for now.
     @Override
     public void addView(View child, int index, ViewGroup.LayoutParams params) {
-        if (mOverlayLayout.isOverlay(params)) {
+        if (!mInEditor && mOverlayLayout.isOverlay(params)) {
             mOverlayLayout.addView(child, params);
         } else {
             super.addView(child, index, params);
