@@ -37,10 +37,10 @@
             android:layout_width="72dp"
             android:layout_height="72dp"
             android:layout_gravity="bottom|end"
-            app:layout_drawOnPreview="true"
-            app:layout_drawOnVideoSnapshot="true"
+            android:src="@mipmap/logo_foreground"
             app:layout_drawOnPictureSnapshot="true"
-            android:src="@mipmap/logo_foreground"/>
+            app:layout_drawOnPreview="true"
+            app:layout_drawOnVideoSnapshot="true" />
 
     </com.otaliastudios.cameraview.CameraView>
 
