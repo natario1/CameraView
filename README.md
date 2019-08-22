@@ -12,6 +12,10 @@
 
 *Post-processing videos or want to reduce video size before uploading? Take a look at our [Transcoder](https://github.com/natario1/Transcoder).*
 
+*Like the project, make profit from it, or simply want to thank back? Please consider [donating](https://natario1.github.io/CameraView/extra/donate)!*
+
+*Need support, consulting, or have any other business-related question? Feel free to <a href="mailto:mat.iavarone@gmail.com">get in touch</a>.*
+
 # CameraView
 
 CameraView is a well documented, high-level library that makes capturing pictures and videos easy,
@@ -36,10 +40,6 @@ api 'com.otaliastudios:cameraview:2.1.0'
 - Works down to API level 15
 - Well tested
 
-Read the [official website](https://natario1.github.io/CameraView) for setup instructions and documentation.
-You might also be interested in [changelog](https://natario1.github.io/CameraView/about/changelog.html)
-or in the [v1 migration guide](https://natario1.github.io/CameraView/extra/v1-migration-guide.html).
-
 &#10240;  <!-- Hack to add whitespace -->
 
 <p align="center">
@@ -48,12 +48,43 @@ or in the [v1 migration guide](https://natario1.github.io/CameraView/extra/v1-mi
 
 &#10240;  <!-- Hack to add whitespace -->
 
-If you like the project, use it with profit, or simply want to thank back, please consider [donating
-to the project](https://natario1.github.io/CameraView/extra/donate) now! You can either make a one time
-donation or become a sponsor, in which case your company logo will immediately show up here.
+## Support 
 
-Thank you for any contribution - it is a nice reward for what has been done until now, and a 
-motivation boost to push the library forward.
+If you like the project, make profit from it, or simply want to thank back, please consider
+[donating](https://natario1.github.io/CameraView/extra/donate) now! You can either make a one time
+donation or become a sponsor, in which case your company logo will immediately show up below.
+
+CameraView is trusted and supported by [ShareChat](https://sharechat.com/), a social media app with over 14 million daily active users. 
+
+<p align="center">
+  <img src="docs/static/sharechat.png" width="100%">
+</p>
+
+Feel free to <a href="mailto:mat.iavarone@gmail.com">contact me</a> for support, consulting or any other business-related question.
+
+Thanks to all our backers... [[become a backer]](https://opencollective.com/cameraview#backer)
+
+<a href="https://opencollective.com/cameraview#backers" target="_blank"><img src="https://opencollective.com/cameraview/backers.svg?width=890"></a>
+
+...and to all our sponsors! [[become a sponsor]](https://opencollective.com/cameraview#sponsor)
+
+<a href="https://opencollective.com/cameraview/sponsor/0/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/cameraview/sponsor/1/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/cameraview/sponsor/2/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/cameraview/sponsor/3/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/cameraview/sponsor/4/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/cameraview/sponsor/5/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/cameraview/sponsor/6/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/cameraview/sponsor/7/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/cameraview/sponsor/8/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/cameraview/sponsor/9/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/9/avatar.svg"></a>
+
+## Setup
+
+Please read the [official website](https://natario1.github.io/CameraView) for setup instructions and documentation.
+You might also be interested in our [changelog](https://natario1.github.io/CameraView/about/changelog.html)
+or in the [v1 migration guide](https://natario1.github.io/CameraView/extra/v1-migration-guide.html). 
+Using CameraView is extremely simple:
 
 ```xml
 <com.otaliastudios.cameraview.CameraView
@@ -119,25 +150,3 @@ motivation boost to push the library forward.
         
 </com.otaliastudios.cameraview.CameraView>
 ```
-
-## Backers
-
-Thanks to all backers! [Become a backer.](https://opencollective.com/cameraview#backer)
-
-<a href="https://opencollective.com/cameraview#backers" target="_blank"><img src="https://opencollective.com/cameraview/backers.svg?width=890"></a>
-
-## Sponsors
-
-Thanks to sponsors! [Become a sponsor](https://opencollective.com/cameraview#sponsor) and have your logo here.
-
-<a href="https://opencollective.com/cameraview/sponsor/0/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/cameraview/sponsor/1/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/cameraview/sponsor/2/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/cameraview/sponsor/3/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/cameraview/sponsor/4/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/cameraview/sponsor/5/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/cameraview/sponsor/6/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/cameraview/sponsor/7/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/cameraview/sponsor/8/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/cameraview/sponsor/9/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/9/avatar.svg"></a>
-
