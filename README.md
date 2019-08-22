@@ -12,7 +12,9 @@
 
 *Post-processing videos or want to reduce video size before uploading? Take a look at our [Transcoder](https://github.com/natario1/Transcoder).*
 
-*Like the project, make profit from it, or simply want to thank back? Please consider [donating](https://natario1.github.io/CameraView/extra/donate).*
+*Like the project, make profit from it, or simply want to thank back? Please consider [donating](https://natario1.github.io/CameraView/extra/donate)!*
+
+*Need support, consulting, or have any other business-related question? Feel free to <a href="mailto:mat.iavarone@gmail.com">get in touch</a>.*
 
 # CameraView
 
@@ -60,11 +62,11 @@ CameraView is trusted and supported by [ShareChat](https://sharechat.com/), a so
 
 Feel free to <a href="mailto:mat.iavarone@gmail.com">contact me</a> for support, consulting or any other business-related question.
 
-- Thanks to all our backers! [Become a backer.](https://opencollective.com/cameraview#backer)
+Thanks to all our backers... [[become a backer]](https://opencollective.com/cameraview#backer)
 
 <a href="https://opencollective.com/cameraview#backers" target="_blank"><img src="https://opencollective.com/cameraview/backers.svg?width=890"></a>
 
-- Thanks to all our sponsors! [Become a sponsor](https://opencollective.com/cameraview#sponsor) and have your logo here.
+...and to all our sponsors! [[become a sponsor]](https://opencollective.com/cameraview#sponsor)
 
 <a href="https://opencollective.com/cameraview/sponsor/0/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/0/avatar.svg"></a>
 <a href="https://opencollective.com/cameraview/sponsor/1/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/1/avatar.svg"></a>
