@@ -60,15 +60,11 @@ CameraView is trusted and supported by [ShareChat](https://sharechat.com/), a so
 
 Feel free to <a href="mailto:mat.iavarone@gmail.com">contact me</a> for support, consulting or any other business-related question.
 
-### Backers
-
-Thanks to all backers! [Become a backer.](https://opencollective.com/cameraview#backer)
+- Thanks to all our backers! [Become a backer.](https://opencollective.com/cameraview#backer)
 
 <a href="https://opencollective.com/cameraview#backers" target="_blank"><img src="https://opencollective.com/cameraview/backers.svg?width=890"></a>
 
-### Sponsors
-
-Thanks to sponsors! [Become a sponsor](https://opencollective.com/cameraview#sponsor) and have your logo here.
+- Thanks to all our sponsors! [Become a sponsor](https://opencollective.com/cameraview#sponsor) and have your logo here.
 
 <a href="https://opencollective.com/cameraview/sponsor/0/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/0/avatar.svg"></a>
 <a href="https://opencollective.com/cameraview/sponsor/1/website" target="_blank"><img src="https://opencollective.com/cameraview/sponsor/1/avatar.svg"></a>
