@@ -726,31 +726,38 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    protected void onStopVideo() {
-        boolean isFullVideo = mVideoRecorder instanceof Full2VideoRecorder;
-        if (isFullVideo) {
-            // Workaround for #549: when video ends we must stop the recorder and remove the recorder
-            // surface from camera outputs. On some devices, order matters. If we stop the recorder
-            // and AFTER send camera frames to it, the camera will try to fill the recorder "abandoned"
-            // Surface and on some devices with a poor internal implementation (LEGACY?) this crashes.
-            try {
-                mSession.stopRepeating();
-                mSession.abortCaptures();
-            } catch (CameraAccessException e) {
-                throw createCameraException(e);
-            }
+    public void onVideoRecordingEnd() {
+        super.onVideoRecordingEnd();
+        // When video ends we must stop the recorder and remove the recorder surface from camera outputs.
+        // This is done in onVideoResult. However, on some devices, order matters. If we stop the recorder
+        // and AFTER send camera frames to it, the camera will try to fill the recorder "abandoned"
+        // Surface and on some devices with a poor internal implementation (HW_LEVEL_LEGACY) this crashes.
+        // So if the conditions are met, we restore here. Issue #549.
+        boolean needsIssue549Workaround = (mVideoRecorder instanceof Full2VideoRecorder) ||
+                (readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
+                        == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
+        if (needsIssue549Workaround) {
+            maybeRestorePreviewTemplateAfterVideo();
         }
-        super.onStopVideo();
-
     }
 
     @Override
     public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
-        boolean isFullVideo = mVideoRecorder instanceof Full2VideoRecorder;
         super.onVideoResult(result, exception);
-        if (isFullVideo) {
-            // When video ends, we must restart the repeating request for TEMPLATE_PREVIEW,
-            // this time without the video recorder surface.
+        maybeRestorePreviewTemplateAfterVideo();
+    }
+
+    /**
+     * Some video recorders might change the camera template to {@link CameraDevice#TEMPLATE_RECORD}.
+     * After the video is taken, we should restore the template preview, which also means that
+     * we'll remove any extra surface target that was added by the video recorder.
+     *
+     * This method avoids doing this twice by checking the request tag, as set by
+     * the {@link #createRepeatingRequestBuilder(int)} method.
+     */
+    private void maybeRestorePreviewTemplateAfterVideo() {
+        int template = (int) mRepeatingRequest.getTag();
+        if (template != CameraDevice.TEMPLATE_PREVIEW) {
             try {
                 createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
                 addRepeatingRequestBuilderSurfaces();
@@ -759,7 +766,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 throw createCameraException(e);
             }
         }
-
     }
 
     //endregion
