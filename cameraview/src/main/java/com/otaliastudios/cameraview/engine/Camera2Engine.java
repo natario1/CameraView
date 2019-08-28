@@ -101,9 +101,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private ImageReader mPictureReader;
     private final boolean mPictureCaptureStopsPreview = false; // can make configurable at some point
 
-    // Autofocus
-    private PointF mAutoFocusPoint;
-    private Gesture mAutoFocusGesture;
+    // 3A Metering
+    private PointF mMeteringPoint;
+    private Gesture mMeteringGesture;
+    private boolean mMeteringAEDone;
+    private boolean mMeteringAEStarted;
+    private boolean mMeteringAFDone;
+    private boolean mMeteringAFSuccess;
+    private boolean mMeteringAWBDone;
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -234,7 +239,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
                             ((Full2PictureRecorder) mPictureRecorder).onCaptureProgressed(partialResult);
                         }
-                        if (isInAutoFocus()) onAutoFocusCapture(partialResult);
+                        if (isMetering()) onMeteringCapture(partialResult);
                     }
 
                     @Override
@@ -243,7 +248,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
                             ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
                         }
-                        if (isInAutoFocus()) onAutoFocusCapture(result);
+                        if (isMetering()) onMeteringCapture(result);
                     }
 
                 };
@@ -554,8 +559,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
         removeRepeatingRequestBuilderSurfaces();
         mRepeatingRequest = null;
-        mAutoFocusPoint = null;
-        mAutoFocusGesture = null;
+        mMeteringPoint = null;
+        mMeteringGesture = null;
         LOG.i("onStopPreview:", "Returning.");
         return Tasks.forResult(null);
     }
@@ -853,12 +858,24 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             for (int mode : modes) {
                 for (int availableMode : availableModes) {
                     if (mode == availableMode) {
+                        LOG.i("applyFlash: setting CONTROL_AE_MODE to", mode);
                         builder.set(CaptureRequest.CONTROL_AE_MODE, mode);
                         if (mFlash == Flash.TORCH) {
                             builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+                            LOG.i("applyFlash: setting FLASH_MODE to", CaptureRequest.FLASH_MODE_TORCH);
                         } else if (mFlash == Flash.OFF) {
                             builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+                            LOG.i("applyFlash: setting FLASH_MODE to", CaptureRequest.FLASH_MODE_OFF);
+                        } else { // Go to OFF anyway, the AE mode will deal with flash.
+                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+                            LOG.i("applyFlash: setting FLASH_MODE to", CaptureRequest.FLASH_MODE_OFF);
                         }
+
+                        // On some devices, switching from TORCH/OFF to AUTO/ON is not immediately
+                        // reflected (for example, torch stays active) unless we do as follows.
+                        // It's just a way to wake up the AE routine.
+                        builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
                         return true;
                     }
                 }
@@ -1105,21 +1122,26 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //endregion
 
-    //region Auto Focus
+    //region 3A Metering
 
     @Override
     public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
-        LOG.i("startAutoFocus", "dispatching. Gesture:", gesture);
+        // TODO Should change this name at some point, and deprecate AF methods
+        startMetering(gesture, point);
+    }
+
+    private void startMetering(@Nullable final Gesture gesture, @NonNull final PointF point) {
+        LOG.i("startMetering", "dispatching. Gesture:", gesture);
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("startAutoFocus", "executing. Preview state:", getPreviewState());
+                LOG.i("startMetering", "executing. Preview state:", getPreviewState());
                 // This will only work when we have a preview, since it launches the preview in the end.
                 // Even without this it would need the bind state at least, since we need the preview size.
                 if (!mCameraOptions.isAutoFocusSupported()) return;
                 if (getPreviewState() < STATE_STARTED) return;
-                mAutoFocusPoint = point;
-                mAutoFocusGesture = gesture;
+                mMeteringPoint = point;
+                mMeteringGesture = gesture;
 
                 // This is a good Q/A. https://stackoverflow.com/a/33181620/4288782
                 // At first, the point is relative to the View system and does not account our own cropping.
@@ -1233,9 +1255,30 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // When this ends, we will reset everything. We know CONTROL_AF_MODE_AUTO is available
                 // because we have called cameraOptions.isAutoFocusSupported().
                 mCallback.dispatchOnFocusStart(gesture, point);
+                // AF
                 mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
                 mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-                mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+                mMeteringAFDone = false;
+                // AE
+                boolean isLegacy = readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1) !=
+                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
+                Integer aeMode = mRepeatingRequestBuilder.get(CaptureRequest.CONTROL_AE_MODE);
+                boolean isAEOn = aeMode != null &&
+                        (aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON
+                        || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH
+                        || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH
+                        || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
+                boolean supportsAE = !isLegacy && isAEOn;
+                if (supportsAE) {
+                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                            CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+                }
+                mMeteringAEStarted = false;
+                mMeteringAEDone = !supportsAE; // If supported, we're not done.
+                // AWB
+                mMeteringAWBDone = true; // TODO support this if possible
+
+                // 9. Apply everything.
                 applyRepeatingRequestBuilder();
             }
         });
@@ -1265,32 +1308,44 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     /**
-     * Whether we are in an auto focus operation, which means that
+     * Whether we are in a metering operation, which means, among other things, that
      * {@link CaptureResult#CONTROL_AF_MODE} is set to {@link CaptureResult#CONTROL_AF_MODE_AUTO}.
-     * @return true if we're in auto focus
+     * @return true if we're in a metering operation
      */
-    private boolean isInAutoFocus() {
-        return mAutoFocusPoint != null;
+    private boolean isMetering() {
+        return mMeteringPoint != null;
     }
 
     /**
-     * If this is called, we're in autofocus and {@link CaptureResult#CONTROL_AF_MODE}
-     * is set to {@link CaptureResult#CONTROL_AF_MODE_AUTO}.
+     * If this is called, we're in 3A metering.
      * @param result the result
      */
-    private void onAutoFocusCapture(@NonNull CaptureResult result) {
-        Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-        if (afState == null) {
-            LOG.i("onAutoFocusCapture", "afState is null! This can happen for partial results. Waiting.");
-            return;
+    private void onMeteringCapture(@NonNull CaptureResult result) {
+        checkMeteringAutoFocus(result);
+        checkMeteringAutoExposure(result);
+        checkMeteringAutoWhiteBalance(result);
+        if (mMeteringAFDone && mMeteringAEDone && mMeteringAWBDone) {
+            // Use the AF success for dispatching the callback, since the public
+            // callback is currently related to AF.
+            onMeteringEnd(mMeteringAFSuccess);
         }
+    }
+
+    private void checkMeteringAutoFocus(@NonNull CaptureResult result) {
+        if (mMeteringAFDone || !(result instanceof TotalCaptureResult)) return;
+        Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
+        LOG.i("checkMeteringAutoFocus:", "afState:", afState);
+        if (afState == null) return;
+
         switch (afState) {
             case CaptureRequest.CONTROL_AF_STATE_FOCUSED_LOCKED: {
-                onAutoFocusEnd(true);
+                mMeteringAFDone = true;
+                mMeteringAFSuccess = true;
                 break;
             }
             case CaptureRequest.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED: {
-                onAutoFocusEnd(false);
+                mMeteringAFDone = true;
+                mMeteringAFSuccess = false;
                 break;
             }
             case CaptureRequest.CONTROL_AF_STATE_INACTIVE: break;
@@ -1299,36 +1354,63 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    /**
-     * Called by {@link #onAutoFocusCapture(CaptureResult)} when we detect that the
-     * auto focus operataion has ended.
-     * @param success true if success
-     */
-    private void onAutoFocusEnd(boolean success) {
-        Gesture gesture = mAutoFocusGesture;
-        PointF point = mAutoFocusPoint;
-        mAutoFocusGesture = null;
-        mAutoFocusPoint = null;
-        if (point == null) return;
-        mCallback.dispatchOnFocusEnd(gesture, success, point);
-        mHandler.remove(mAutoFocusResetRunnable);
-        if (shouldResetAutoFocus()) {
-            mHandler.post(getAutoFocusResetDelay(), mAutoFocusResetRunnable);
+    private void checkMeteringAutoExposure(@NonNull CaptureResult result) {
+        if (mMeteringAEDone || !(result instanceof TotalCaptureResult)) return;
+        Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+        LOG.i("checkMeteringAutoExposure:", "aeState:", aeState);
+        if (aeState == null) return;
+
+        if (!mMeteringAEStarted) {
+            if (aeState == CaptureRequest.CONTROL_AE_STATE_PRECAPTURE) {
+                mMeteringAEStarted = true;
+            }
+        } else {
+            if (aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED
+                    || aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
+                mMeteringAEDone = true;
+            }
         }
     }
 
-    private Runnable mAutoFocusResetRunnable = new Runnable() {
+    private void checkMeteringAutoWhiteBalance(@NonNull CaptureResult result) {
+        if (mMeteringAWBDone) return;
+        // No op until being implemented.
+    }
+
+    /**
+     * Called by {@link #onMeteringCapture(CaptureResult)} when we detect that the
+     * auto focus operataion has ended.
+     * @param success true if success
+     */
+    private void onMeteringEnd(boolean success) {
+        LOG.w("onMeteringEnd - success:", success);
+        Gesture gesture = mMeteringGesture;
+        PointF point = mMeteringPoint;
+        mMeteringGesture = null;
+        mMeteringPoint = null;
+        if (point == null) return;
+        mCallback.dispatchOnFocusEnd(gesture, success, point);
+        mHandler.remove(mMeteringResetRunnable);
+        if (shouldResetAutoFocus()) {
+            mHandler.post(getAutoFocusResetDelay(), mMeteringResetRunnable);
+        }
+    }
+
+    private Runnable mMeteringResetRunnable = new Runnable() {
         @Override
         public void run() {
             if (getEngineState() < STATE_STARTED) return;
+            LOG.i("Running the 3A metering reset runnable.");
             Rect whole = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE, new Rect());
             MeteringRectangle[] rectangle = new MeteringRectangle[]{new MeteringRectangle(whole, MeteringRectangle.METERING_WEIGHT_DONT_CARE)};
-            int maxReagionsAf = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
-            int maxReagionsAe = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
-            int maxReagionsAwb = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
-            if (maxReagionsAf > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, rectangle);
-            if (maxReagionsAe > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, rectangle);
-            if (maxReagionsAwb > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, rectangle);
+            int maxRegionsAf = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
+            int maxRegionsAe = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
+            int maxRegionsAwb = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
+            if (maxRegionsAf > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, rectangle);
+            if (maxRegionsAe > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, rectangle);
+            if (maxRegionsAwb > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, rectangle);
+            // mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+            // mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL);
             applyDefaultFocus(mRepeatingRequestBuilder);
             applyRepeatingRequestBuilder(); // only if preview started already
         }

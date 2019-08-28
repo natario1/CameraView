@@ -177,7 +177,6 @@ public abstract class Mapper {
             HDR.put(Hdr.ON, 18 /* CameraCharacteristics.CONTROL_SCENE_MODE_HDR */);
         }
 
-        @SuppressWarnings("ConstantConditions")
         @Override
         public <T> T map(Flash flash) {
             return (T) FLASH.get(flash);
