@@ -136,6 +136,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         }
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     private CameraOptions openSync(boolean expectSuccess) {
         camera.open();
         final Op<CameraOptions> open = new Op<>(true);
@@ -143,10 +144,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
         CameraOptions result = open.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Can open", result);
-            // Extra wait for the bind state.
-            // TODO fix this and other while {} in this class in a more elegant way.
-            //noinspection StatementWithEmptyBody
+            // Extra wait for the bind and preview state, so we run tests in a fully operational
+            // state. If we didn't do so, we could have null values, for example, in getPictureSize
+            // or in getSnapshotSize.
             while (controller.getBindState() != CameraEngine.STATE_STARTED) {}
+            while (controller.getPreviewState() != CameraEngine.STATE_STARTED) {}
         } else {
             assertNull("Should not open", result);
         }
@@ -194,6 +196,9 @@ public abstract class CameraIntegrationTest extends BaseTest {
                 video.listen();
                 result = video.await(DELAY);
             }
+            // Sleep another 1000, because camera.isTakingVideo() might return false even
+            // if the result still has to be dispatched. Rare but could happen.
+            try { Thread.sleep(1000); } catch (InterruptedException ignore) {}
         }
 
         // Now we should be OK.
@@ -684,14 +689,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
         assertEquals(1, latch.getCount());
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Test
     public void testCapturePicture_size() {
         openSync(true);
-        // PictureSize can still be null after opened.
-        // TODO be more elegant
-        while (camera.getPictureSize() == null) {}
         Size size = camera.getPictureSize();
+        assertNotNull(size);
         camera.takePicture();
         PictureResult result = waitForPictureResult(true);
         assertNotNull(result);
@@ -734,14 +736,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
         assertEquals(1, latch.getCount());
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Test
     public void testCaptureSnapshot_size() {
         openSync(true);
-        // SnapshotSize can still be null after opened.
-        // TODO be more elegant
-        while (camera.getSnapshotSize() == null) {}
         Size size = camera.getSnapshotSize();
+        assertNotNull(size);
         camera.takePictureSnapshot();
 
         PictureResult result = waitForPictureResult(true);
@@ -764,8 +763,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
         // Expect 30 frames
         CountDownLatch latch = new CountDownLatch(30);
         doCountDown(latch).when(mock).process(any(Frame.class));
-        boolean did = latch.await(60, TimeUnit.SECONDS);
-        assertTrue(did);
+        boolean did = latch.await(15, TimeUnit.SECONDS);
+        assertTrue("Latch count should be 0: " + latch.getCount(), did);
     }
 
     @Test
@@ -811,6 +810,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         openSync(true);
         takeVideoSync(true,4000);
         waitForVideoResult(true);
+
         assert30Frames(processor);
     }
 

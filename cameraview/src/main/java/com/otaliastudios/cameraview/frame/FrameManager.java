@@ -203,6 +203,31 @@ public class FrameManager {
     }
 
     /**
+     * Called by child frames when they are released.
+     * This might be called from old Frames that belong to an old 'setUp'
+     * of this FrameManager instance. So the buffer size might be different,
+     * for instance.
+     *
+     * @param frame the released frame
+     */
+    void onFrameReleased(@NonNull Frame frame, @NonNull byte[] buffer) {
+        if (!isSetUp()) return;
+        // If frame queue is full, let's drop everything.
+        // If frame queue accepts this frame, let's recycle the buffer as well.
+        if (mFrameQueue.offer(frame)) {
+            int currSize = buffer.length;
+            int reqSize = mBufferSize;
+            if (currSize == reqSize) {
+                if (mBufferMode == BUFFER_MODE_DISPATCH) {
+                    mBufferCallback.onBufferAvailable(buffer);
+                } else {
+                    mBufferQueue.offer(buffer);
+                }
+            }
+        }
+    }
+
+    /**
      * Releases all frames controlled by this manager and
      * clears the pool.
      * In BUFFER_MODE_ENQUEUE, releases also all the buffers.
@@ -221,31 +246,5 @@ public class FrameManager {
         mBufferSize = -1;
         mFrameSize = null;
         mFrameFormat = -1;
-    }
-
-    /**
-     * Called by child frames when they are released.
-     * This might be called from old Frames that belong to an old 'setUp'
-     * of this FrameManager instance. So the buffer size might be different,
-     * for instance.
-     *
-     * @param frame the released frame
-     */
-    void onFrameReleased(@NonNull Frame frame) {
-        if (!isSetUp()) return;
-        // If frame queue is full, let's drop everything.
-        // If frame queue accepts this frame, let's recycle the buffer as well.
-        if (mFrameQueue.offer(frame)) {
-            byte[] buffer = frame.getData();
-            int currSize = buffer.length;
-            int reqSize = mBufferSize;
-            if (currSize == reqSize) {
-                if (mBufferMode == BUFFER_MODE_DISPATCH) {
-                    mBufferCallback.onBufferAvailable(buffer);
-                } else {
-                    mBufferQueue.offer(buffer);
-                }
-            }
-        }
     }
 }

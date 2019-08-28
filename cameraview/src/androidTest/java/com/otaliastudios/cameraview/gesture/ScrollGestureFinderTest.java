@@ -21,6 +21,8 @@ import static org.junit.Assert.assertTrue;
 @SmallTest
 public class ScrollGestureFinderTest extends GestureFinderTest<ScrollGestureFinder> {
 
+    private final static long WAIT = 2000; // 500 was too short
+
     @Override
     protected ScrollGestureFinder createFinder(@NonNull GestureFinder.Controller controller) {
         return new ScrollGestureFinder(controller);
@@ -42,7 +44,7 @@ public class ScrollGestureFinderTest extends GestureFinderTest<ScrollGestureFind
         touchOp.listen();
         touchOp.start();
         onLayout().perform(swipeUp());
-        Gesture found = touchOp.await(500);
+        Gesture found = touchOp.await(WAIT);
         assertNull(found);
     }
 
@@ -50,7 +52,7 @@ public class ScrollGestureFinderTest extends GestureFinderTest<ScrollGestureFind
         touchOp.listen();
         touchOp.start();
         onLayout().perform(scroll);
-        Gesture found = touchOp.await(500);
+        Gesture found = touchOp.await(WAIT);
         assertEquals(found, expected);
 
         // How will this move our parameter?

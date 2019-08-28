@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -52,7 +54,7 @@ public class FrameTest {
         final Frame frame = new Frame(manager);
         frame.setContent(new byte[2], 1000, 90, new Size(10, 10), ImageFormat.NV21);
         frame.release();
-        verify(manager, times(1)).onFrameReleased(frame);
+        verify(manager, times(1)).onFrameReleased(eq(frame), any(byte[].class));
 
         assertThrows(new Runnable() { public void run() { frame.getTime(); }});
         assertThrows(new Runnable() { public void run() { frame.getFormat(); }});

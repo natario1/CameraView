@@ -727,12 +727,30 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     protected void onStopVideo() {
-        // When video ends, we have to restart the repeating request for TEMPLATE_PREVIEW,
-        // this time without the video recorder surface. We do this before stopping the
-        // recorder. If we stop first, the camera will try to fill an "abandoned" Surface
-        // and, on some devices with a poor internal implementation, this crashes. See #549
         boolean isFullVideo = mVideoRecorder instanceof Full2VideoRecorder;
         if (isFullVideo) {
+            // Workaround for #549: when video ends we must stop the recorder and remove the recorder
+            // surface from camera outputs. On some devices, order matters. If we stop the recorder
+            // and AFTER send camera frames to it, the camera will try to fill the recorder "abandoned"
+            // Surface and on some devices with a poor internal implementation (LEGACY?) this crashes.
+            try {
+                mSession.stopRepeating();
+                mSession.abortCaptures();
+            } catch (CameraAccessException e) {
+                throw createCameraException(e);
+            }
+        }
+        super.onStopVideo();
+
+    }
+
+    @Override
+    public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
+        boolean isFullVideo = mVideoRecorder instanceof Full2VideoRecorder;
+        super.onVideoResult(result, exception);
+        if (isFullVideo) {
+            // When video ends, we must restart the repeating request for TEMPLATE_PREVIEW,
+            // this time without the video recorder surface.
             try {
                 createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
                 addRepeatingRequestBuilderSurfaces();
@@ -741,7 +759,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 throw createCameraException(e);
             }
         }
-        super.onStopVideo();
+
     }
 
     //endregion

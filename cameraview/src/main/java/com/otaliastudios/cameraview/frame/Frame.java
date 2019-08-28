@@ -44,7 +44,7 @@ public class Frame {
         if (!hasContent()) {
             LOG.e("Frame is dead! time:", mTime, "lastTime:", mLastTime);
             throw new RuntimeException("You should not access a released frame. " +
-                    "If this frame was passed to a FrameProcessor, you can only use its contents synchronously," +
+                    "If this frame was passed to a FrameProcessor, you can only use its contents synchronously, " +
                     "for the duration of the process() method.");
         }
     }
@@ -80,12 +80,16 @@ public class Frame {
     public void release() {
         if (!hasContent()) return;
         LOG.v("Frame with time", mTime, "is being released.");
-        mManager.onFrameReleased(this);
+        byte[] data = mData;
         mData = null;
         mRotation = 0;
         mTime = -1;
         mSize = null;
         mFormat = -1;
+        // After the manager is notified, this frame instance can be taken by
+        // someone else, possibly from another thread. So this should be the
+        // last call in this method. If we null data after, we can have issues.
+        mManager.onFrameReleased(this, data);
     }
 
     /**

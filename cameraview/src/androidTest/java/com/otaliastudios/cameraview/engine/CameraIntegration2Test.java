@@ -27,4 +27,9 @@ public class CameraIntegration2Test extends CameraIntegrationTest {
     protected Engine getEngine() {
         return Engine.CAMERA2;
     }
+
+    @Override
+    public void testFrameProcessing_afterVideo() throws Exception {
+        super.testFrameProcessing_afterVideo();
+    }
 }
