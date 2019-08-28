@@ -498,7 +498,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         mPreview.setStreamSize(previewSizeForView.getWidth(), previewSizeForView.getHeight());
         mPreview.setDrawRotation(getAngles().offset(Reference.BASE, Reference.VIEW, Axis.ABSOLUTE));
         if (hasFrameProcessors()) {
-            getFrameManager().setUp(ImageFormat.getBitsPerPixel(FRAME_PROCESSING_FORMAT), mFrameProcessingSize);
+            getFrameManager().setUp(FRAME_PROCESSING_FORMAT, mFrameProcessingSize);
         }
 
         LOG.i("onStartPreview", "Starting preview.");
@@ -1050,13 +1050,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
         image.close();
         if (getPreviewState() == STATE_STARTED) {
-            // After bind, we have a mFrameProcessingSize
             // After preview, the frame manager is correctly set up
             Frame frame = getFrameManager().getFrame(data,
                     System.currentTimeMillis(),
-                    getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR),
-                    mFrameProcessingSize,
-                    FRAME_PROCESSING_FORMAT);
+                    getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR));
             mCallback.dispatchFrame(frame);
         } else {
             getFrameManager().onBufferUnused(data);

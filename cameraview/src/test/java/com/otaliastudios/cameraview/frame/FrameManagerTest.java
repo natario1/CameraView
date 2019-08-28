@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview.frame;
 
 
+import android.graphics.ImageFormat;
+
 import com.otaliastudios.cameraview.size.Size;
 
 import org.junit.After;
@@ -33,12 +35,12 @@ public class FrameManagerTest {
     @Test
     public void testAllocate() {
         FrameManager manager = new FrameManager(1, callback);
-        manager.setUp(4, new Size(50, 50));
+        manager.setUp(ImageFormat.NV21, new Size(50, 50));
         verify(callback, times(1)).onBufferAvailable(any(byte[].class));
         reset(callback);
 
         manager = new FrameManager(5, callback);
-        manager.setUp(4, new Size(50, 50));
+        manager.setUp(ImageFormat.NV21, new Size(50, 50));
         verify(callback, times(5)).onBufferAvailable(any(byte[].class));
     }
 
@@ -46,12 +48,12 @@ public class FrameManagerTest {
     public void testFrameRecycling() {
         // A 1-pool manager will always recycle the same frame.
         FrameManager manager = new FrameManager(1, callback);
-        manager.setUp(4, new Size(50, 50));
+        manager.setUp(ImageFormat.NV21, new Size(50, 50));
 
-        Frame first = manager.getFrame(null, 0, 0, null, 0);
+        Frame first = manager.getFrame(null, 0, 0);
         first.release();
 
-        Frame second = manager.getFrame(null, 0, 0, null, 0);
+        Frame second = manager.getFrame(null, 0, 0);
         second.release();
 
         assertEquals(first, second);
@@ -60,11 +62,11 @@ public class FrameManagerTest {
     @Test
     public void testOnFrameReleased_alreadyFull() {
         FrameManager manager = new FrameManager(1, callback);
-        int length = manager.setUp(4, new Size(50, 50));
+        int length = manager.setUp(ImageFormat.NV21, new Size(50, 50));
 
-        Frame frame1 = manager.getFrame(new byte[length], 0, 0, null, 0);
+        Frame frame1 = manager.getFrame(new byte[length], 0, 0);
         // Since frame1 is already taken and poolSize = 1, a new Frame is created.
-        Frame frame2 = manager.getFrame(new byte[length], 0, 0, null, 0);
+        Frame frame2 = manager.getFrame(new byte[length], 0, 0);
         // Release the first frame so it goes back into the pool.
         manager.onFrameReleased(frame1);
         reset(callback);
@@ -77,11 +79,11 @@ public class FrameManagerTest {
     @Test
     public void testOnFrameReleased_sameLength() {
         FrameManager manager = new FrameManager(1, callback);
-        int length = manager.setUp(4, new Size(50, 50));
+        int length = manager.setUp(ImageFormat.NV21, new Size(50, 50));
 
         // A camera preview frame comes. Request a frame.
         byte[] picture = new byte[length];
-        Frame frame = manager.getFrame(picture, 0, 0, null, 0);
+        Frame frame = manager.getFrame(picture, 0, 0);
 
         // Release the frame and ensure that onBufferAvailable is called.
         reset(callback);
@@ -92,31 +94,19 @@ public class FrameManagerTest {
     @Test
     public void testOnFrameReleased_differentLength() {
         FrameManager manager = new FrameManager(1, callback);
-        int length = manager.setUp(4, new Size(50, 50));
+        int length = manager.setUp(ImageFormat.NV21, new Size(50, 50));
 
         // A camera preview frame comes. Request a frame.
         byte[] picture = new byte[length];
-        Frame frame = manager.getFrame(picture, 0, 0, null, 0);
+        Frame frame = manager.getFrame(picture, 0, 0);
 
         // Don't release the frame. Change the allocation size.
-        manager.setUp(2, new Size(15, 15));
+        manager.setUp(ImageFormat.NV16, new Size(15, 15));
 
         // Now release the old frame and ensure that onBufferAvailable is NOT called,
         // because the released data has wrong length.
         manager.onFrameReleased(frame);
         reset(callback);
         verify(callback, never()).onBufferAvailable(picture);
-    }
-
-    @Test
-    public void testRelease() {
-        FrameManager manager = new FrameManager(1, callback);
-        int length = manager.setUp(4, new Size(50, 50));
-        Frame first = manager.getFrame(new byte[length], 0, 0, null, 0);
-        first.release(); // Store this frame in the queue.
-
-        // Release the whole manager and ensure it clears the frame.
-        manager.release();
-        assertNull(first.mManager);
     }
 }

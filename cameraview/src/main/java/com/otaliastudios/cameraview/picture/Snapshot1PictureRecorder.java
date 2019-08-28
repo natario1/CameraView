@@ -87,7 +87,7 @@ public class Snapshot1PictureRecorder extends PictureRecorder {
                 // It seems that the buffers are already cleared here, so we need to allocate again.
                 camera.setPreviewCallbackWithBuffer(null); // Release anything left
                 camera.setPreviewCallbackWithBuffer(mEngine1); // Add ourselves
-                mEngine1.getFrameManager().setUp(ImageFormat.getBitsPerPixel(mFormat), previewStreamSize);
+                mEngine1.getFrameManager().setUp(mFormat, previewStreamSize);
             }
         });
     }

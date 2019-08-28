@@ -4,7 +4,6 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
 
 /**
  * A preview frame to be processed by {@link FrameProcessor}s.
@@ -14,7 +13,7 @@ public class Frame {
     private final static String TAG = Frame.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
-    @VisibleForTesting FrameManager mManager;
+    private final FrameManager mManager;
 
     private byte[] mData = null;
     private long mTime = -1;
@@ -27,21 +26,7 @@ public class Frame {
         mManager = manager;
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean isAlive() {
-        return mData != null;
-    }
-
-    private void ensureAlive() {
-        if (!isAlive()) {
-            LOG.e("Frame is dead! time:", mTime, "lastTime:", mLastTime);
-            throw new RuntimeException("You should not access a released frame. " +
-                    "If this frame was passed to a FrameProcessor, you can only use its contents synchronously," +
-                    "for the duration of the process() method.");
-        }
-    }
-
-    void set(@NonNull byte[] data, long time, int rotation, @NonNull Size size, int format) {
+    void setContent(@NonNull byte[] data, long time, int rotation, @NonNull Size size, int format) {
         this.mData = data;
         this.mTime = time;
         this.mLastTime = time;
@@ -49,6 +34,21 @@ public class Frame {
         this.mSize = size;
         this.mFormat = format;
     }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private boolean hasContent() {
+        return mData != null;
+    }
+
+    private void ensureHasContent() {
+        if (!hasContent()) {
+            LOG.e("Frame is dead! time:", mTime, "lastTime:", mLastTime);
+            throw new RuntimeException("You should not access a released frame. " +
+                    "If this frame was passed to a FrameProcessor, you can only use its contents synchronously," +
+                    "for the duration of the process() method.");
+        }
+    }
+
 
     @Override
     public boolean equals(Object obj) {
@@ -63,14 +63,13 @@ public class Frame {
      *
      * @return a frozen Frame
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Frame freeze() {
-        ensureAlive();
+        ensureHasContent();
         byte[] data = new byte[mData.length];
         System.arraycopy(mData, 0, data, 0, mData.length);
         Frame other = new Frame(mManager);
-        other.set(data, mTime, mRotation, mSize, mFormat);
+        other.setContent(data, mTime, mRotation, mSize, mFormat);
         return other;
     }
 
@@ -79,23 +78,14 @@ public class Frame {
      * that are not useful anymore.
      */
     public void release() {
-        if (!isAlive()) return;
-        LOG.v("Frame with time", mTime, "is being released. Has manager:", mManager != null);
-
-        if (mManager != null) {
-            // If needed, the manager will call releaseManager on us.
-            mManager.onFrameReleased(this);
-        }
+        if (!hasContent()) return;
+        LOG.v("Frame with time", mTime, "is being released.");
+        mManager.onFrameReleased(this);
         mData = null;
         mRotation = 0;
         mTime = -1;
         mSize = null;
         mFormat = -1;
-    }
-
-    // Once this is called, this instance is not usable anymore.
-    void releaseManager() {
-        mManager = null;
     }
 
     /**
@@ -104,7 +94,7 @@ public class Frame {
      */
     @NonNull
     public byte[] getData() {
-        ensureAlive();
+        ensureHasContent();
         return mData;
     }
 
@@ -115,7 +105,7 @@ public class Frame {
      * @return time data
      */
     public long getTime() {
-        ensureAlive();
+        ensureHasContent();
         return mTime;
     }
 
@@ -127,7 +117,7 @@ public class Frame {
      * @return clock-wise rotation
      */
     public int getRotation() {
-        ensureAlive();
+        ensureHasContent();
         return mRotation;
     }
 
@@ -138,7 +128,7 @@ public class Frame {
      */
     @NonNull
     public Size getSize() {
-        ensureAlive();
+        ensureHasContent();
         return mSize;
     }
 
@@ -151,7 +141,7 @@ public class Frame {
      * @see android.graphics.ImageFormat
      */
     public int getFormat() {
-        ensureAlive();
+        ensureHasContent();
         return mFormat;
     }
 }

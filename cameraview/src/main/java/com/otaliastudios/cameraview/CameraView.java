@@ -2097,28 +2097,30 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void dispatchFrame(final Frame frame) {
+        public void dispatchFrame(@NonNull final Frame frame) {
+            // The getTime() below might crash if developers incorrectly release frames asynchronously.
             mLogger.v("dispatchFrame:", frame.getTime(), "processors:", mFrameProcessors.size());
             if (mFrameProcessors.isEmpty()) {
                 // Mark as released. This instance will be reused.
                 frame.release();
-                return;
-            }
-            mFrameProcessorsHandler.run(new Runnable() {
-                @Override
-                public void run() {
-                    for (FrameProcessor processor : mFrameProcessors) {
-                        try {
-                            processor.process(frame);
-                        } catch (Exception e) {
-                            mLogger.w("dispatchFrame:",
-                                    "Error during processor implementation.",
-                                    "Can happen when camera is closed while processors are running.", e);
+            } else {
+                // Dispatch this frame to frame processors.
+                mFrameProcessorsHandler.run(new Runnable() {
+                    @Override
+                    public void run() {
+                        mLogger.v("dispatchFrame: dispatching", frame.getTime(), "to processors.");
+                        for (FrameProcessor processor : mFrameProcessors) {
+                            try {
+                                processor.process(frame);
+                            } catch (Exception e) {
+                                // Don't let a single processor crash the processor thread.
+                                mLogger.w("Frame processor crashed:", e);
+                            }
                         }
+                        frame.release();
                     }
-                    frame.release();
-                }
-            });
+                });
+            }
         }
 
         @Override
