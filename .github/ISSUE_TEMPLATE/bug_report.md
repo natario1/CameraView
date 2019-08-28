@@ -8,9 +8,9 @@ assignees: ''
 ---
 
 ### Describe the bug
-A clear and concise description of what the bug is.
-
+Please add a clear description of what the bug is, **and** fill the list below.
 - CameraView version: *version number*
+- Camera engine used: *camera1/camera2/both*
 - Reproducible in official demo app: *yes/no*
 - Device / Android version: *Pixel, API 28*
 
@@ -23,11 +23,23 @@ Steps to reproduce the behavior, possibly in the demo app:
 ### Expected behavior
 A clear and concise description of what you expected to happen.
 
+### XML layout
+Part of the XML layout with the CameraView declaration, so we can read its attributes.
+
+```xml
+<CameraView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"       
+    ...>
+</CameraView>
+```
+
 ### Screenshots
 If applicable, add screenshots to help explain your problem.
 
 ### Logs
 Use `CameraLogger.setLogLevel(LEVEL_VERBOSE)` to see all logs into LogCat.
+
 Use `CameraLogger.registerLogger()` to export to file or crash reporting service.
 
 ### APK
