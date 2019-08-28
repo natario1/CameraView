@@ -1049,7 +1049,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             return;
         }
         image.close();
-        if (getEngineState() == STATE_STARTED) {
+        if (getPreviewState() == STATE_STARTED) {
+            // After bind, we have a mFrameProcessingSize
+            // After preview, the frame manager is correctly set up
             Frame frame = getFrameManager().getFrame(data,
                     System.currentTimeMillis(),
                     getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR),
