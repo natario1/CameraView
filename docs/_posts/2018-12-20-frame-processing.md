@@ -57,7 +57,13 @@ public void process(@NonNull Frame frame) {
     // EXAMPLE 1:
     // Firebase and Google APIs will often return a Task.
     // You can use Tasks.await() to complete the task on the current thread.
-    Tasks.await(firebaseDetector.detectInImage(firebaseImage));
+    // Read: https://developers.google.com/android/guides/tasks#blocking
+    try {
+        result = Tasks.await(firebaseDetector.detectInImage(firebaseImage));
+    catch (Exception e) {
+        // Firebase task failed.
+    }
+    
     
     // EXAMPLE 2:
     // For other async consumers, you can use, for example, a CountDownLatch.
