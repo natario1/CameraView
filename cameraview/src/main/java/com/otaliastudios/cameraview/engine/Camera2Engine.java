@@ -14,7 +14,6 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
-import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
 import android.media.Image;
@@ -61,14 +60,13 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener {
+public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener, Meter.Callback {
 
     private static final String TAG = Camera2Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -101,14 +99,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private ImageReader mPictureReader;
     private final boolean mPictureCaptureStopsPreview = false; // can make configurable at some point
 
-    // 3A Metering
-    private PointF mMeteringPoint;
-    private Gesture mMeteringGesture;
-    private boolean mMeteringAEDone;
-    private boolean mMeteringAEStarted;
-    private boolean mMeteringAFDone;
-    private boolean mMeteringAFSuccess;
-    private boolean mMeteringAWBDone;
+    // 3A metering
+    private Meter mMeter;
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -239,7 +231,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
                             ((Full2PictureRecorder) mPictureRecorder).onCaptureProgressed(partialResult);
                         }
-                        if (isMetering()) onMeteringCapture(partialResult);
+                        if (mMeter != null && mMeter.isMetering()) {
+                            mMeter.onCapture(partialResult);
+                        }
                     }
 
                     @Override
@@ -248,7 +242,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
                             ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
                         }
-                        if (isMetering()) onMeteringCapture(result);
+                        if (mMeter != null && mMeter.isMetering()) {
+                            mMeter.onCapture(result);
+                        }
                     }
 
                 };
@@ -559,8 +555,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
         removeRepeatingRequestBuilderSurfaces();
         mRepeatingRequest = null;
-        mMeteringPoint = null;
-        mMeteringGesture = null;
+        mMeter = null;
         LOG.i("onStopPreview:", "Returning.");
         return Tasks.forResult(null);
     }
@@ -1138,302 +1133,84 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 LOG.i("startMetering", "executing. Preview state:", getPreviewState());
                 // This will only work when we have a preview, since it launches the preview in the end.
                 // Even without this it would need the bind state at least, since we need the preview size.
-                if (!mCameraOptions.isAutoFocusSupported()) return;
                 if (getPreviewState() < STATE_STARTED) return;
-                mMeteringPoint = point;
-                mMeteringGesture = gesture;
 
-                // This is a good Q/A. https://stackoverflow.com/a/33181620/4288782
-                // At first, the point is relative to the View system and does not account our own cropping.
-                // Will keep updating these two below.
-                PointF referencePoint = new PointF(point.x, point.y);
-                Size referenceSize /* = previewSurfaceSize */;
-
-                // 1. Account for cropping.
-                Size previewStreamSize = getPreviewStreamSize(Reference.VIEW);
-                Size previewSurfaceSize = mPreview.getSurfaceSize();
-                if (previewStreamSize == null) throw new IllegalStateException("getPreviewStreamSize should not be null at this point.");
-                AspectRatio previewStreamAspectRatio = AspectRatio.of(previewStreamSize);
-                AspectRatio previewSurfaceAspectRatio = AspectRatio.of(previewSurfaceSize);
-                if (mPreview.isCropping()) {
-                    if (previewStreamAspectRatio.toFloat() > previewSurfaceAspectRatio.toFloat()) {
-                        // Stream is larger. The x coordinate must be increased: a touch on the left side
-                        // of the surface is not on the left size of stream (it's more to the right).
-                        float scale = previewStreamAspectRatio.toFloat() / previewSurfaceAspectRatio.toFloat();
-                        referencePoint.x += previewSurfaceSize.getWidth() * (scale - 1F) / 2F;
-
-                    } else {
-                        // Stream is taller. The y coordinate must be increased: a touch on the top side
-                        // of the surface is not on the top size of stream (it's a bit lower).
-                        float scale = previewSurfaceAspectRatio.toFloat() / previewStreamAspectRatio.toFloat();
-                        referencePoint.x += previewSurfaceSize.getHeight() * (scale - 1F) / 2F;
-                    }
+                // Reset the old meter if present.
+                if (mMeter != null) {
+                    mMeter.resetMetering();
                 }
 
-                // 2. Scale to the stream coordinates (not the surface).
-                referencePoint.x *= (float) previewStreamSize.getWidth() / previewSurfaceSize.getWidth();
-                referencePoint.y *= (float) previewStreamSize.getHeight() / previewSurfaceSize.getHeight();
-                referenceSize = previewStreamSize;
+                // The meter will check the current state to see if AF/AE/AWB should be run.
+                // - AE should be on CONTROL_AE_MODE_ON* (depends on setFlash())
+                // - AWB should be on CONTROL_AWB_MODE_AUTO (depends on setWhiteBalance())
+                // - AF should be on CONTROL_AF_MODE_AUTO
+                // The last one depends on us because the library has no focus API and we have
+                // just been asked to fo auto focus. So let's do this. This operation is reverted
+                // during onMeteringReset().
+                if (!mCameraOptions.isAutoFocusSupported()) return;
+                mRepeatingRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_AUTO);
 
-                // 3. Rotate to the stream coordinate system.
-                // Not elegant, but the sin/cos way was failing.
-                int angle = getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE);
-                boolean flip = angle % 180 != 0;
-                float tempX = referencePoint.x; float tempY = referencePoint.y;
-                if (angle == 0) {
-                    referencePoint.x = tempX;
-                    referencePoint.y = tempY;
-                } else if (angle == 90) {
-                    //noinspection SuspiciousNameCombination
-                    referencePoint.x = tempY;
-                    referencePoint.y = referenceSize.getWidth() - tempX;
-                } else if (angle == 180) {
-                    referencePoint.x = referenceSize.getWidth() - tempX;
-                    referencePoint.y = referenceSize.getHeight() - tempY;
-                } else if (angle == 270) {
-                    referencePoint.x = referenceSize.getHeight() - tempY;
-                    //noinspection SuspiciousNameCombination
-                    referencePoint.y = tempX;
-                } else {
-                    throw new IllegalStateException("Unexpected angle " + angle);
-                }
-                referenceSize = flip ? referenceSize.flip() : referenceSize;
-
-                // These points are now referencing the stream rect on the sensor array.
-                // But we still have to figure out how the stream rect is laid on the sensor array.
-                // https://source.android.com/devices/camera/camera3_crop_reprocess.html
-                // For sanity, let's assume it is centered.
-                // For sanity, let's also assume that the crop region is equal to the stream region.
-
-                // 4. Move to the active sensor array coordinate system.
-                Rect activeRect = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
-                        new Rect(0, 0, referenceSize.getWidth(), referenceSize.getHeight()));
-                referencePoint.x += (activeRect.width() - referenceSize.getWidth()) / 2F;
-                referencePoint.y += (activeRect.height() - referenceSize.getHeight()) / 2F;
-                referenceSize = new Size(activeRect.width(), activeRect.height());
-
-                // 5. Account for zoom! This only works for mZoomValue = 0.
-                // We must scale down with respect to the reference size center. If mZoomValue = 1,
-                // This must leave everything unchanged.
-                float maxZoom = readCharacteristic(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
-                        1F /* no zoom */);
-                float currZoom = 1 + mZoomValue * (maxZoom - 1); // 1 ... maxZoom
-                float currReduction = 1 / currZoom;
-                float referenceCenterX = referenceSize.getWidth() / 2F;
-                float referenceCenterY = referenceSize.getHeight() / 2F;
-                referencePoint.x = referenceCenterX + currReduction * (referencePoint.x - referenceCenterX);
-                referencePoint.y = referenceCenterY + currReduction * (referencePoint.y - referenceCenterY);
-
-                // 6. NOW we can compute the metering regions.
-                float visibleWidth = referenceSize.getWidth() * currReduction;
-                float visibleHeight = referenceSize.getHeight() * currReduction;
-                MeteringRectangle area1 = createMeteringRectangle(referencePoint, referenceSize, visibleWidth, visibleHeight, 0.05F, 1000);
-                MeteringRectangle area2 = createMeteringRectangle(referencePoint, referenceSize, visibleWidth, visibleHeight, 0.1F, 100);
-
-                // 7. And finally dispatch them...
-                List<MeteringRectangle> areas = Arrays.asList(area1, area2);
-                int maxReagionsAf = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
-                int maxReagionsAe = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
-                int maxReagionsAwb = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
-                if (maxReagionsAf > 0) {
-                    int max = Math.min(maxReagionsAf, areas.size());
-                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
-                            areas.subList(0, max).toArray(new MeteringRectangle[]{}));
-                }
-                if (maxReagionsAe > 0) {
-                    int max = Math.min(maxReagionsAe, areas.size());
-                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
-                            areas.subList(0, max).toArray(new MeteringRectangle[]{}));
-                }
-                if (maxReagionsAwb > 0) {
-                    int max = Math.min(maxReagionsAwb, areas.size());
-                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
-                            areas.subList(0, max).toArray(new MeteringRectangle[]{}));
-                }
-
-                // 8. Set AF mode to AUTO so it doesn't use the CONTINUOUS schedule.
-                // When this ends, we will reset everything. We know CONTROL_AF_MODE_AUTO is available
-                // because we have called cameraOptions.isAutoFocusSupported().
-                mCallback.dispatchOnFocusStart(gesture, point);
-                // AF
-                mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
-                mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-                mMeteringAFDone = false;
-                // AE
-                boolean isNotLegacy = readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1) !=
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
-                Integer aeMode = mRepeatingRequestBuilder.get(CaptureRequest.CONTROL_AE_MODE);
-                boolean isAEOn = aeMode != null &&
-                        (aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON
-                        || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH
-                        || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH
-                        || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
-                boolean supportsAE = isNotLegacy && isAEOn;
-                if (supportsAE) {
-                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                            CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-                }
-                mMeteringAEStarted = false;
-                mMeteringAEDone = !supportsAE; // If supported, we're not done.
-                // AWB
-                Integer awbMode = mRepeatingRequestBuilder.get(CaptureRequest.CONTROL_AWB_MODE);
-                boolean supportsAWB = isNotLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
-                mMeteringAWBDone = !supportsAWB; // legacy devices do not have the awb state
-                if (supportsAWB) {
-                    // Remove any lock. We're not setting any, but just in case.
-                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
-                }
-
-                // 9. Apply everything.
-                applyRepeatingRequestBuilder();
+                // Create the meter and start.
+                mMeter = new Meter(Camera2Engine.this,
+                        mRepeatingRequestBuilder,
+                        mCameraCharacteristics,
+                        Camera2Engine.this);
+                mMeter.startMetering(point, gesture);
             }
         });
     }
 
     /**
-     * Creates a metering rectangle around the center point.
-     * The rectangle will have a size that's a factor of the visible width and height.
-     * The rectangle will also be constrained to be inside the given boundaries,
-     * so we don't exceed them in case the center point is exactly on one side for example.
-     * @return a new rectangle
+     * Called by {@link Meter} when the metering process has started.
+     * We are currently exposing an auto focus API so that's what we dispatch.
+     * @param point point
+     * @param gesture gesture
      */
-    @NonNull
-    private MeteringRectangle createMeteringRectangle(
-            @NonNull PointF center, @NonNull Size boundaries,
-            float visibleWidth, float visibleHeight,
-            float factor, int weight) {
-        float halfWidth = factor * visibleWidth / 2F;
-        float halfHeight = factor * visibleHeight / 2F;
-        return new MeteringRectangle(
-                (int) Math.max(0, center.x - halfWidth),
-                (int) Math.max(0, center.y - halfHeight),
-                (int) Math.min(boundaries.getWidth(), halfWidth * 2F),
-                (int) Math.min(boundaries.getHeight(), halfHeight * 2F),
-                weight
-        );
+    @Override
+    public void onMeteringStarted(@NonNull PointF point, @Nullable Gesture gesture) {
+        LOG.w("onMeteringStarted - point:", point, "gesture:", gesture);
+        mCallback.dispatchOnFocusStart(gesture, point);
+        applyRepeatingRequestBuilder();
     }
 
     /**
-     * Whether we are in a metering operation, which means, among other things, that
-     * {@link CaptureResult#CONTROL_AF_MODE} is set to {@link CaptureResult#CONTROL_AF_MODE_AUTO}.
-     * @return true if we're in a metering operation
+     * Called by {@link Meter} when the metering process has ended.
+     * We are currently exposing an auto focus API so that's what we dispatch.
+     * @param point point
+     * @param gesture gesture
+     * @param success success
      */
-    private boolean isMetering() {
-        return mMeteringPoint != null;
-    }
-
-    /**
-     * If this is called, we're in 3A metering.
-     * @param result the result
-     */
-    private void onMeteringCapture(@NonNull CaptureResult result) {
-        checkMeteringAutoFocus(result);
-        checkMeteringAutoExposure(result);
-        checkMeteringAutoWhiteBalance(result);
-        if (mMeteringAFDone && mMeteringAEDone && mMeteringAWBDone) {
-            // Use the AF success for dispatching the callback, since the public
-            // callback is currently related to AF.
-            onMeteringEnd(mMeteringAFSuccess);
-        }
-    }
-
-    private void checkMeteringAutoFocus(@NonNull CaptureResult result) {
-        if (mMeteringAFDone || !(result instanceof TotalCaptureResult)) return;
-        Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-        LOG.i("checkMeteringAutoFocus:", "afState:", afState);
-        if (afState == null) return;
-
-        switch (afState) {
-            case CaptureRequest.CONTROL_AF_STATE_FOCUSED_LOCKED: {
-                mMeteringAFDone = true;
-                mMeteringAFSuccess = true;
-                break;
-            }
-            case CaptureRequest.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED: {
-                mMeteringAFDone = true;
-                mMeteringAFSuccess = false;
-                break;
-            }
-            case CaptureRequest.CONTROL_AF_STATE_INACTIVE: break;
-            case CaptureRequest.CONTROL_AF_STATE_ACTIVE_SCAN: break;
-            default: break;
-        }
-    }
-
-    private void checkMeteringAutoExposure(@NonNull CaptureResult result) {
-        if (mMeteringAEDone || !(result instanceof TotalCaptureResult)) return;
-        Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-        LOG.i("checkMeteringAutoExposure:", "aeState:", aeState);
-        if (aeState == null) return;
-
-        if (!mMeteringAEStarted) {
-            if (aeState == CaptureRequest.CONTROL_AE_STATE_PRECAPTURE) {
-                mMeteringAEStarted = true;
-            }
-        } else {
-            if (aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED
-                    || aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
-                mMeteringAEDone = true;
-            }
-        }
-    }
-
-    private void checkMeteringAutoWhiteBalance(@NonNull CaptureResult result) {
-        if (mMeteringAWBDone || !(result instanceof TotalCaptureResult)) return;
-        Integer awbState = result.get(CaptureResult.CONTROL_AWB_STATE);
-        LOG.i("checkMeteringAutoWhiteBalance:", "awbState:", awbState);
-        if (awbState == null) return;
-
-        switch (awbState) {
-            case CaptureRequest.CONTROL_AWB_STATE_CONVERGED: {
-                mMeteringAWBDone = true;
-                break;
-            }
-            case CaptureRequest.CONTROL_AWB_STATE_LOCKED: break;
-            case CaptureRequest.CONTROL_AWB_STATE_INACTIVE: break;
-            case CaptureRequest.CONTROL_AWB_STATE_SEARCHING: break;
-            default: break;
-        }
-    }
-
-    /**
-     * Called by {@link #onMeteringCapture(CaptureResult)} when we detect that the
-     * auto focus operataion has ended.
-     * @param success true if success
-     */
-    private void onMeteringEnd(boolean success) {
-        LOG.w("onMeteringEnd - success:", success);
-        Gesture gesture = mMeteringGesture;
-        PointF point = mMeteringPoint;
-        mMeteringGesture = null;
-        mMeteringPoint = null;
-        if (point == null) return;
+    @Override
+    public void onMeteringEnd(@NonNull PointF point, @Nullable Gesture gesture, boolean success) {
+        LOG.w("onMeteringEnd - point:", point, "gesture:", gesture, "success:", success);
         mCallback.dispatchOnFocusEnd(gesture, success, point);
-        mHandler.remove(mMeteringResetRunnable);
-        if (shouldResetAutoFocus()) {
-            mHandler.post(getAutoFocusResetDelay(), mMeteringResetRunnable);
-        }
     }
 
-    private Runnable mMeteringResetRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (getEngineState() < STATE_STARTED) return;
-            LOG.i("Running the 3A metering reset runnable.");
-            Rect whole = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE, new Rect());
-            MeteringRectangle[] rectangle = new MeteringRectangle[]{new MeteringRectangle(whole, MeteringRectangle.METERING_WEIGHT_DONT_CARE)};
-            int maxRegionsAf = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
-            int maxRegionsAe = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
-            int maxRegionsAwb = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
-            if (maxRegionsAf > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, rectangle);
-            if (maxRegionsAe > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, rectangle);
-            if (maxRegionsAwb > 0) mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, rectangle);
-            // mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
-            // mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL);
-            applyDefaultFocus(mRepeatingRequestBuilder);
-            applyRepeatingRequestBuilder(); // only if preview started already
-        }
-    };
+    /**
+     * When metering is reset, we're not sure that the engine is still alive.
+     * We should check this here.
+     * @param point point
+     * @param gesture gesture
+     * @return true if metering can be reset
+     */
+    @Override
+    public boolean canResetMetering(@NonNull PointF point, @Nullable Gesture gesture) {
+        return getEngineState() == STATE_STARTED;
+    }
+
+    /**
+     * Called by {@link Meter} after resetting the metering parameters.
+     * We should apply them, and also go back to default focus.
+     * @param point point
+     * @param gesture gesture
+     */
+    @Override
+    public void onMeteringReset(@NonNull PointF point, @Nullable Gesture gesture) {
+        applyDefaultFocus(mRepeatingRequestBuilder);
+        applyRepeatingRequestBuilder(); // only if preview started already
+    }
 
     //endregion
 }
