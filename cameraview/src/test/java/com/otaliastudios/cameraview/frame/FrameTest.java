@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,23 +37,24 @@ public class FrameTest {
 
     @Test
     public void testEquals() {
+        // Only time should count.
         Frame f1 = new Frame(manager);
         long time = 1000;
-        f1.set(null, time, 90, null, ImageFormat.NV21);
+        f1.setContent(new byte[3], time, 90, new Size(5, 5), ImageFormat.NV21);
         Frame f2 = new Frame(manager);
-        f2.set(new byte[2], time, 0, new Size(10, 10), ImageFormat.NV21);
+        f2.setContent(new byte[2], time, 0, new Size(10, 10), ImageFormat.NV21);
         assertEquals(f1, f2);
 
-        f2.set(new byte[2], time + 1, 0, new Size(10, 10), ImageFormat.NV21);
+        f2.setContent(new byte[2], time + 1, 0, new Size(10, 10), ImageFormat.NV21);
         assertNotEquals(f1, f2);
     }
 
     @Test
     public void testReleaseThrows() {
         final Frame frame = new Frame(manager);
-        frame.set(new byte[2], 1000, 90, new Size(10, 10), ImageFormat.NV21);
+        frame.setContent(new byte[2], 1000, 90, new Size(10, 10), ImageFormat.NV21);
         frame.release();
-        verify(manager, times(1)).onFrameReleased(frame);
+        verify(manager, times(1)).onFrameReleased(eq(frame), any(byte[].class));
 
         assertThrows(new Runnable() { public void run() { frame.getTime(); }});
         assertThrows(new Runnable() { public void run() { frame.getFormat(); }});
@@ -70,14 +73,6 @@ public class FrameTest {
     }
 
     @Test
-    public void testReleaseManager() {
-        Frame frame = new Frame(manager);
-        assertNotNull(frame.mManager);
-        frame.releaseManager();
-        assertNull(frame.mManager);
-    }
-
-    @Test
     public void testFreeze() {
         Frame frame = new Frame(manager);
         byte[] data = new byte[]{0, 1, 5, 0, 7, 3, 4, 5};
@@ -85,7 +80,7 @@ public class FrameTest {
         int rotation = 90;
         Size size = new Size(10, 10);
         int format = ImageFormat.NV21;
-        frame.set(data, time, rotation, size, format);
+        frame.setContent(data, time, rotation, size, format);
 
         Frame frozen = frame.freeze();
         assertArrayEquals(data, frozen.getData());
@@ -94,7 +89,7 @@ public class FrameTest {
         assertEquals(size, frozen.getSize());
 
         // Mutate the first, ensure that frozen is not affected
-        frame.set(new byte[]{3, 2, 1}, 50, 180, new Size(1, 1), ImageFormat.JPEG);
+        frame.setContent(new byte[]{3, 2, 1}, 50, 180, new Size(1, 1), ImageFormat.JPEG);
         assertArrayEquals(data, frozen.getData());
         assertEquals(time, frozen.getTime());
         assertEquals(rotation, frozen.getRotation());

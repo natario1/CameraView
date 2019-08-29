@@ -133,7 +133,7 @@ public abstract class CameraEngine implements
         void dispatchOnFocusEnd(@Nullable Gesture trigger, boolean success, @NonNull PointF where);
         void dispatchOnZoomChanged(final float newValue, @Nullable final PointF[] fingers);
         void dispatchOnExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers);
-        void dispatchFrame(Frame frame);
+        void dispatchFrame(@NonNull Frame frame);
         void dispatchError(CameraException exception);
         void dispatchOnVideoRecordingStart();
         void dispatchOnVideoRecordingEnd();

@@ -210,7 +210,7 @@ public class Camera1Engine extends CameraEngine implements
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
-        getFrameManager().setUp(ImageFormat.getBitsPerPixel(PREVIEW_FORMAT), mPreviewStreamSize);
+        getFrameManager().setUp(PREVIEW_FORMAT, mPreviewStreamSize);
 
         LOG.i("onStartPreview", "Starting preview with startPreview().");
         try {
@@ -654,12 +654,15 @@ public class Camera1Engine extends CameraEngine implements
     }
 
     @Override
-    public void onPreviewFrame(@NonNull byte[] data, Camera camera) {
+    public void onPreviewFrame(byte[] data, Camera camera) {
+        if (data == null) {
+            // Let's test this with an exception.
+            throw new RuntimeException("Camera1 returns null data from onPreviewFrame! " +
+                    "This would make the frame processors crash later.");
+        }
         Frame frame = getFrameManager().getFrame(data,
                 System.currentTimeMillis(),
-                getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR),
-                mPreviewStreamSize,
-                PREVIEW_FORMAT);
+                getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR));
         mCallback.dispatchFrame(frame);
     }
 

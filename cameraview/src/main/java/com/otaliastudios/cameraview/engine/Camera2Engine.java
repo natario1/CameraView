@@ -498,7 +498,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         mPreview.setStreamSize(previewSizeForView.getWidth(), previewSizeForView.getHeight());
         mPreview.setDrawRotation(getAngles().offset(Reference.BASE, Reference.VIEW, Axis.ABSOLUTE));
         if (hasFrameProcessors()) {
-            getFrameManager().setUp(ImageFormat.getBitsPerPixel(FRAME_PROCESSING_FORMAT), mFrameProcessingSize);
+            getFrameManager().setUp(FRAME_PROCESSING_FORMAT, mFrameProcessingSize);
         }
 
         LOG.i("onStartPreview", "Starting preview.");
@@ -726,13 +726,38 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    protected void onStopVideo() {
-        // When video ends, we have to restart the repeating request for TEMPLATE_PREVIEW,
-        // this time without the video recorder surface. We do this before stopping the
-        // recorder. If we stop first, the camera will try to fill an "abandoned" Surface
-        // and, on some devices with a poor internal implementation, this crashes. See #549
-        boolean isFullVideo = mVideoRecorder instanceof Full2VideoRecorder;
-        if (isFullVideo) {
+    public void onVideoRecordingEnd() {
+        super.onVideoRecordingEnd();
+        // When video ends we must stop the recorder and remove the recorder surface from camera outputs.
+        // This is done in onVideoResult. However, on some devices, order matters. If we stop the recorder
+        // and AFTER send camera frames to it, the camera will try to fill the recorder "abandoned"
+        // Surface and on some devices with a poor internal implementation (HW_LEVEL_LEGACY) this crashes.
+        // So if the conditions are met, we restore here. Issue #549.
+        boolean needsIssue549Workaround = (mVideoRecorder instanceof Full2VideoRecorder) ||
+                (readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
+                        == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
+        if (needsIssue549Workaround) {
+            maybeRestorePreviewTemplateAfterVideo();
+        }
+    }
+
+    @Override
+    public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
+        super.onVideoResult(result, exception);
+        maybeRestorePreviewTemplateAfterVideo();
+    }
+
+    /**
+     * Some video recorders might change the camera template to {@link CameraDevice#TEMPLATE_RECORD}.
+     * After the video is taken, we should restore the template preview, which also means that
+     * we'll remove any extra surface target that was added by the video recorder.
+     *
+     * This method avoids doing this twice by checking the request tag, as set by
+     * the {@link #createRepeatingRequestBuilder(int)} method.
+     */
+    private void maybeRestorePreviewTemplateAfterVideo() {
+        int template = (int) mRepeatingRequest.getTag();
+        if (template != CameraDevice.TEMPLATE_PREVIEW) {
             try {
                 createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
                 addRepeatingRequestBuilderSurfaces();
@@ -741,7 +766,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 throw createCameraException(e);
             }
         }
-        super.onStopVideo();
     }
 
     //endregion
@@ -1049,12 +1073,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             return;
         }
         image.close();
-        if (getEngineState() == STATE_STARTED) {
+        if (getPreviewState() == STATE_STARTED) {
+            // After preview, the frame manager is correctly set up
             Frame frame = getFrameManager().getFrame(data,
                     System.currentTimeMillis(),
-                    getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR),
-                    mFrameProcessingSize,
-                    FRAME_PROCESSING_FORMAT);
+                    getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR));
             mCallback.dispatchFrame(frame);
         } else {
             getFrameManager().onBufferUnused(data);
