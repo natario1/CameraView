@@ -27,7 +27,11 @@ public class AutoFocus extends MeteringParameter {
         isMetered = false;
 
         Integer afMode = builder.get(CaptureRequest.CONTROL_AF_MODE);
-        isSupported = afMode != null && afMode == CaptureRequest.CONTROL_AF_MODE_AUTO;
+        isSupported = afMode != null &&
+                (afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO
+                || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                || afMode == CameraCharacteristics.CONTROL_AF_MODE_MACRO);
         if (isSupported) {
             builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
         }

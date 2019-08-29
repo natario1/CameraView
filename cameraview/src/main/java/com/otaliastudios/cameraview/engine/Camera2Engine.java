@@ -1143,10 +1143,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // The meter will check the current state to see if AF/AE/AWB should be run.
                 // - AE should be on CONTROL_AE_MODE_ON* (depends on setFlash())
                 // - AWB should be on CONTROL_AWB_MODE_AUTO (depends on setWhiteBalance())
-                // - AF should be on CONTROL_AF_MODE_AUTO
+                // - AF should be on CONTROL_AF_MODE_AUTO (or others)
                 // The last one depends on us because the library has no focus API and we have
-                // just been asked to fo auto focus. So let's do this. This operation is reverted
-                // during onMeteringReset().
+                // just been asked to fo auto focus. So let's do this - go to auto and remove any
+                // CONTINUOUS value that might not be what we want here.
+                // Note that this operation is reverted during onMeteringReset().
                 if (!mCameraOptions.isAutoFocusSupported()) return;
                 mRepeatingRequestBuilder.set(
                         CaptureRequest.CONTROL_AF_MODE,
