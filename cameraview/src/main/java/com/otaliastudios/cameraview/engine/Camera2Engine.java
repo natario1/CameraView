@@ -1260,7 +1260,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
                 mMeteringAFDone = false;
                 // AE
-                boolean isLegacy = readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1) !=
+                boolean isNotLegacy = readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1) !=
                         CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
                 Integer aeMode = mRepeatingRequestBuilder.get(CaptureRequest.CONTROL_AE_MODE);
                 boolean isAEOn = aeMode != null &&
@@ -1268,7 +1268,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
-                boolean supportsAE = !isLegacy && isAEOn;
+                boolean supportsAE = isNotLegacy && isAEOn;
                 if (supportsAE) {
                     mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                             CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
@@ -1277,7 +1277,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 mMeteringAEDone = !supportsAE; // If supported, we're not done.
                 // AWB
                 Integer awbMode = mRepeatingRequestBuilder.get(CaptureRequest.CONTROL_AWB_MODE);
-                boolean supportsAWB = !isLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
+                boolean supportsAWB = isNotLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
                 mMeteringAWBDone = !supportsAWB; // legacy devices do not have the awb state
                 if (supportsAWB) {
                     // Remove any lock. We're not setting any, but just in case.
