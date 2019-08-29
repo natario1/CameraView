@@ -37,7 +37,8 @@ public class AutoExposure extends MeteringParameter {
                 (aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH
-                        || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
+                        || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
+                        || aeMode == 5 /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */);
         isSupported = isNotLegacy && isAEOn;
 
         if (isSupported) {

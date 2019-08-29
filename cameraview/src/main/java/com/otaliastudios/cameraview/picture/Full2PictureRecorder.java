@@ -35,7 +35,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private static final int STATE_IDLE = 0;
-    private static final int STATE_WAITING_FOCUS_LOCK = 1;
+    private static final int STATE_WAITING_AUTOFOCUS = 1;
     private static final int STATE_WAITING_PRECAPTURE_START = 2;
     private static final int STATE_WAITING_PRECAPTURE_END = 3;
     private static final int STATE_WAITING_CAPTURE = 4;
@@ -74,10 +74,10 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
 
     @Override
     public void take() {
-        runFocusLock();
+        runAutoFocus();
     }
 
-    private boolean supportsFocusLock() {
+    private boolean supportsAutoFocus() {
         //noinspection ConstantConditions
         int afMode = mBuilder.get(CaptureRequest.CONTROL_AF_MODE);
         // Exclude OFF and EDOF as per their docs.
@@ -87,10 +87,10 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
                 || afMode == CameraCharacteristics.CONTROL_AF_MODE_MACRO;
     }
 
-    private void runFocusLock() {
-        if (supportsFocusLock()) {
+    private void runAutoFocus() {
+        if (supportsAutoFocus()) {
             try {
-                mState = STATE_WAITING_FOCUS_LOCK;
+                mState = STATE_WAITING_AUTOFOCUS;
                 mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
                 mSession.capture(mBuilder.build(), mCallback, null);
             } catch (CameraAccessException e) {
@@ -180,7 +180,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     private void process(@NonNull CaptureResult result) {
         switch (mState) {
             case STATE_IDLE: break;
-            case STATE_WAITING_FOCUS_LOCK: {
+            case STATE_WAITING_AUTOFOCUS: {
                 Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
                 if (afState == null
                         || afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED
@@ -261,7 +261,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
         } catch (IOException ignore) { }
 
         // Before leaving, unlock focus.
-        if (supportsFocusLock()) {
+        if (supportsAutoFocus()) {
             try {
                 mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                         CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
