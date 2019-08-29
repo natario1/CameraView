@@ -1276,7 +1276,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 mMeteringAEStarted = false;
                 mMeteringAEDone = !supportsAE; // If supported, we're not done.
                 // AWB
-                mMeteringAWBDone = true; // TODO support this if possible
+                Integer awbMode = mRepeatingRequestBuilder.get(CaptureRequest.CONTROL_AWB_MODE);
+                boolean supportsAWB = !isLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
+                mMeteringAWBDone = !supportsAWB; // legacy devices do not have the awb state
+                if (supportsAWB) {
+                    // Remove any lock. We're not setting any, but just in case.
+                    mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
+                }
 
                 // 9. Apply everything.
                 applyRepeatingRequestBuilder();
@@ -1373,8 +1379,21 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     private void checkMeteringAutoWhiteBalance(@NonNull CaptureResult result) {
-        if (mMeteringAWBDone) return;
-        // No op until being implemented.
+        if (mMeteringAWBDone || !(result instanceof TotalCaptureResult)) return;
+        Integer awbState = result.get(CaptureResult.CONTROL_AWB_STATE);
+        LOG.i("checkMeteringAutoWhiteBalance:", "awbState:", awbState);
+        if (awbState == null) return;
+
+        switch (awbState) {
+            case CaptureRequest.CONTROL_AWB_STATE_CONVERGED: {
+                mMeteringAWBDone = true;
+                break;
+            }
+            case CaptureRequest.CONTROL_AWB_STATE_LOCKED: break;
+            case CaptureRequest.CONTROL_AWB_STATE_INACTIVE: break;
+            case CaptureRequest.CONTROL_AWB_STATE_SEARCHING: break;
+            default: break;
+        }
     }
 
     /**
