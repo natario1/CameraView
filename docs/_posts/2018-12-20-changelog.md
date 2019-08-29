@@ -8,6 +8,16 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+## v2.2.0
+
+- [Real time filters] New: `SimpleFilter` class accepts a fragment shader in the constructor ([#552][552])
+- [Real time filters] New: `MultiFilter` to apply more than one filter at the same time ([#559][559])
+- [Video] Improvement: query device encoders before configuring them. Should fix issues on multiple devices ([#545][545])
+- [Video] Fix: `takeVideoSnapshot` not working unless you set a max duration ([#551][551])
+- [Video] Fix: `takeVideo` crashing on Camera2 LEGACY devices ([#551][551])
+- [Frame Processing] Fix: fixed dead Frames issues and improved error messages ([#572][572])
+- Fix: fixed `CameraView` appearance in the layout editor ([#564][564])
+
 ## v2.1.0
 
 This release adds experimental support for [real-time filters](../docs.filters.html) thanks to [@agrawalsuneet][agrawalsuneet].
@@ -282,6 +292,14 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [513]: https://github.com/natario1/CameraView/pull/513
 [517]: https://github.com/natario1/CameraView/pull/517
 [521]: https://github.com/natario1/CameraView/pull/521
+[527]: https://github.com/natario1/CameraView/pull/527
 [528]: https://github.com/natario1/CameraView/pull/528
+[530]: https://github.com/natario1/CameraView/pull/530
 [535]: https://github.com/natario1/CameraView/pull/535
 [537]: https://github.com/natario1/CameraView/pull/537
+[545]: https://github.com/natario1/CameraView/pull/545
+[551]: https://github.com/natario1/CameraView/pull/551
+[552]: https://github.com/natario1/CameraView/pull/552
+[559]: https://github.com/natario1/CameraView/pull/559
+[564]: https://github.com/natario1/CameraView/pull/564
+[572]: https://github.com/natario1/CameraView/pull/572
