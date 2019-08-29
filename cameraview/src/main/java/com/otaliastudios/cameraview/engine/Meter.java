@@ -86,6 +86,7 @@ public class Meter {
 
     private static final String TAG = Meter.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
+    private static final int FORCED_END_DELAY = 2500;
 
     private final CameraEngine mEngine;
     private final CaptureRequest.Builder mBuilder;
@@ -95,6 +96,7 @@ public class Meter {
     private Gesture mGesture;
 
     private boolean mIsMetering;
+    private long mMeteringStartTime;
     private MeteringParameter mAutoFocus = new AutoFocus();
     private MeteringParameter mAutoWhiteBalance = new AutoWhiteBalance();
     private MeteringParameter mAutoExposure = new AutoExposure();
@@ -229,6 +231,7 @@ public class Meter {
 
         // Dispatch to callback
         mCallback.onMeteringStarted(mPoint, mGesture);
+        mMeteringStartTime = System.currentTimeMillis();
     }
 
     /**
@@ -271,20 +274,29 @@ public class Meter {
      */
     @SuppressWarnings("WeakerAccess")
     public void onCapture(@NonNull CaptureResult result) {
+        if (!mIsMetering) return; // We're not interested in results anymore
         if (!(result instanceof TotalCaptureResult)) return; // Let's ignore these, contents are missing/wrong
+        
         if (!mAutoFocus.isMetered()) mAutoFocus.onCapture(result);
         if (!mAutoExposure.isMetered()) mAutoExposure.onCapture(result);
         if (!mAutoWhiteBalance.isMetered()) mAutoWhiteBalance.onCapture(result);
         if (mAutoFocus.isMetered() && mAutoExposure.isMetered() && mAutoWhiteBalance.isMetered()) {
             // Use the AF success for dispatching the callback, since the public
             // callback is currently related to AF.
-            mCallback.onMeteringEnd(mPoint, mGesture, mAutoFocus.isSuccessful());
-            mIsMetering = false;
-
-            mEngine.mHandler.remove(mResetRunnable);
-            if (mEngine.shouldResetAutoFocus()) {
-                mEngine.mHandler.post(mEngine.getAutoFocusResetDelay(), mResetRunnable);
-            }
+            LOG.i("onCapture:", "all MeteringParameters have converged. Dispatching onMeteringEnd");
+            onMeteringEnd(mAutoFocus.isSuccessful());
+        } else if (System.currentTimeMillis() - mMeteringStartTime >= FORCED_END_DELAY) {
+            LOG.i("onCapture:", "FORCED_END_DELAY was reached. Some MeteringParameter is stuck. Forcing end.");
+            onMeteringEnd(false);
+        }
+    }
+    
+    private void onMeteringEnd(boolean success) {
+        mCallback.onMeteringEnd(mPoint, mGesture, success);
+        mIsMetering = false;
+        mEngine.mHandler.remove(mResetRunnable);
+        if (mEngine.shouldResetAutoFocus()) {
+            mEngine.mHandler.post(mEngine.getAutoFocusResetDelay(), mResetRunnable);
         }
     }
 
