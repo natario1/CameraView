@@ -177,14 +177,8 @@ public class CameraOptions {
             int[] aeModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
             //noinspection ConstantConditions
             for (int aeMode : aeModes) {
-                Flash value = mapper.unmapFlash(aeMode);
-                if (value != null) supportedFlash.add(value);
-            }
-            // Check for torch specifically since the Mapper flash support is not so good.
-            // If OFF works, it means we have AE_MODE_OFF or AE_MODE_ON. This means we can use
-            // the torch control.
-            if (supportedFlash.contains(Flash.OFF)) {
-                supportedFlash.add(Flash.TORCH);
+                Set<Flash> flashes = mapper.unmapFlash(aeMode);
+                supportedFlash.addAll(flashes);
             }
         }
 

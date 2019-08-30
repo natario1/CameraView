@@ -3,8 +3,10 @@ package com.otaliastudios.cameraview.engine.mappers;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.controls.Control;
@@ -14,212 +16,153 @@ import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A Mapper maps camera engine constants to CameraView constants.
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public abstract class Camera2Mapper {
+public class Camera2Mapper {
 
-    private static com.otaliastudios.cameraview.engine.mappers.Camera2Mapper sInstance;
+    private static Camera2Mapper sInstance;
 
-    public static com.otaliastudios.cameraview.engine.mappers.Camera2Mapper get() {
-        if (sInstance == null) sInstance = new Camera2Mapper();
+    public static Camera2Mapper get() {
+        if (sInstance == null) {
+            sInstance = new Camera2Mapper();
+        }
         return sInstance;
     }
 
-    public static com.otaliastudios.cameraview.engine.mappers.Camera2Mapper get(@NonNull Engine engine) {
-        if (engine == Engine.CAMERA1) {
-            if (sInstance == null) sInstance = new Camera1Mapper();
-            return sInstance;
-        } else if (engine == Engine.CAMERA2 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (CAMERA2 == null) CAMERA2 = new Camera2Mapper();
-            return CAMERA2;
-        } else {
-            throw new IllegalArgumentException("Unknown engine or unsupported API level.");
-        }
+    private static final Map<Facing, Integer> FACING = new HashMap<>();
+    private static final Map<WhiteBalance, Integer> WB = new HashMap<>();
+    private static final Map<Hdr, Integer> HDR = new HashMap<>();
+
+    static {
+        FACING.put(Facing.BACK, CameraCharacteristics.LENS_FACING_BACK);
+        FACING.put(Facing.FRONT, CameraCharacteristics.LENS_FACING_FRONT);
+        WB.put(WhiteBalance.AUTO, CameraCharacteristics.CONTROL_AWB_MODE_AUTO);
+        WB.put(WhiteBalance.CLOUDY, CameraCharacteristics.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT);
+        WB.put(WhiteBalance.DAYLIGHT, CameraCharacteristics.CONTROL_AWB_MODE_DAYLIGHT);
+        WB.put(WhiteBalance.FLUORESCENT, CameraCharacteristics.CONTROL_AWB_MODE_FLUORESCENT);
+        WB.put(WhiteBalance.INCANDESCENT, CameraCharacteristics.CONTROL_AWB_MODE_INCANDESCENT);
+        HDR.put(Hdr.OFF, CameraCharacteristics.CONTROL_SCENE_MODE_DISABLED);
+        HDR.put(Hdr.ON, 18 /* CameraCharacteristics.CONTROL_SCENE_MODE_HDR */);
     }
 
     private Camera2Mapper() {}
 
-    public abstract <T> T map(Flash flash);
+    @NonNull
+    public List<Pair<Integer, Integer>> map(@NonNull Flash flash) {
+        List<Pair<Integer, Integer>> result = new ArrayList<>();
+        switch (flash) {
+            case ON: {
+                result.add(new Pair<>(
+                        CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH,
+                        CameraCharacteristics.FLASH_MODE_OFF));
+                break;
+            }
+            case AUTO: {
+                result.add(new Pair<>(
+                        CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH,
+                        CameraCharacteristics.FLASH_MODE_OFF));
+                result.add(new Pair<>(
+                        CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE,
+                        CameraCharacteristics.FLASH_MODE_OFF));
+                break;
+            }
+            case OFF: {
+                result.add(new Pair<>(
+                        CameraCharacteristics.CONTROL_AE_MODE_ON,
+                        CameraCharacteristics.FLASH_MODE_OFF));
+                result.add(new Pair<>(
+                        CameraCharacteristics.CONTROL_AE_MODE_OFF,
+                        CameraCharacteristics.FLASH_MODE_OFF));
+                break;
+            }
+            case TORCH: {
+                // When AE_MODE is ON or OFF, we can finally use the flash mode
+                // low level control to either turn flash off or open the torch
+                result.add(new Pair<>(
+                        CameraCharacteristics.CONTROL_AE_MODE_ON,
+                        CameraCharacteristics.FLASH_MODE_TORCH));
+                result.add(new Pair<>(
+                        CameraCharacteristics.CONTROL_AE_MODE_OFF,
+                        CameraCharacteristics.FLASH_MODE_TORCH));
+                break;
+            }
+        }
+        return  result;
+    }
 
-    public abstract <T> T map(Facing facing);
+    public int map(@NonNull Facing facing) {
+        //noinspection ConstantConditions
+        return FACING.get(facing);
+    }
 
-    public abstract <T> T map(WhiteBalance whiteBalance);
+    public int map(@NonNull WhiteBalance whiteBalance) {
+        //noinspection ConstantConditions
+        return WB.get(whiteBalance);
+    }
 
-    public abstract <T> T map(Hdr hdr);
+    public int map(@NonNull Hdr hdr) {
+        //noinspection ConstantConditions
+        return HDR.get(hdr);
+    }
 
-    public abstract <T> Flash unmapFlash(T cameraConstant);
+    @NonNull
+    public Set<Flash> unmapFlash(int cameraConstant) {
+        Set<Flash> result = new HashSet<>();
+        switch (cameraConstant) {
+            case CameraCharacteristics.CONTROL_AE_MODE_OFF:
+            case CameraCharacteristics.CONTROL_AE_MODE_ON: {
+                result.add(Flash.OFF);
+                result.add(Flash.TORCH);
+                break;
+            }
+            case CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH: {
+                result.add(Flash.ON);
+                break;
+            }
+            case CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH:
+            case CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE: {
+                result.add(Flash.AUTO);
+                break;
+            }
+            case CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH:
+            default: break; // we don't support external flash
+        }
+        return result;
+    }
 
-    public abstract <T> Facing unmapFacing(T cameraConstant);
+    @Nullable
+    public Facing unmapFacing(int cameraConstant) {
+        return reverseLookup(FACING, cameraConstant);
+    }
 
-    public abstract <T> WhiteBalance unmapWhiteBalance(T cameraConstant);
+    @Nullable
+    public WhiteBalance unmapWhiteBalance(int cameraConstant) {
+        return reverseLookup(WB, cameraConstant);
+    }
 
-    public abstract <T> Hdr unmapHdr(T cameraConstant);
+    @Nullable
+    public Hdr unmapHdr(int cameraConstant) {
+        return reverseLookup(HDR, cameraConstant);
+    }
 
-    @SuppressWarnings("WeakerAccess")
-    protected <C extends Control, T> C reverseLookup(HashMap<C, T> map, T object) {
+    @Nullable
+    private <C extends Control, T> C reverseLookup(@NonNull Map<C, T> map, @NonNull T object) {
         for (C value : map.keySet()) {
             if (object.equals(map.get(value))) {
                 return value;
             }
         }
         return null;
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    protected <C extends Control, T> C reverseListLookup(HashMap<C, List<T>> map, T object) {
-        for (C value : map.keySet()) {
-            List<T> list = map.get(value);
-            if (list == null) continue;
-            for (T candidate : list) {
-                if (object.equals(candidate)) {
-                    return value;
-                }
-            }
-        }
-        return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static class Camera1Mapper extends com.otaliastudios.cameraview.engine.mappers.Camera2Mapper {
-
-        private static final HashMap<Flash, String> FLASH = new HashMap<>();
-        private static final HashMap<WhiteBalance, String> WB = new HashMap<>();
-        private static final HashMap<Facing, Integer> FACING = new HashMap<>();
-        private static final HashMap<Hdr, String> HDR = new HashMap<>();
-
-        static {
-            FLASH.put(Flash.OFF, Camera.Parameters.FLASH_MODE_OFF);
-            FLASH.put(Flash.ON, Camera.Parameters.FLASH_MODE_ON);
-            FLASH.put(Flash.AUTO, Camera.Parameters.FLASH_MODE_AUTO);
-            FLASH.put(Flash.TORCH, Camera.Parameters.FLASH_MODE_TORCH);
-            FACING.put(Facing.BACK, Camera.CameraInfo.CAMERA_FACING_BACK);
-            FACING.put(Facing.FRONT, Camera.CameraInfo.CAMERA_FACING_FRONT);
-            WB.put(WhiteBalance.AUTO, Camera.Parameters.WHITE_BALANCE_AUTO);
-            WB.put(WhiteBalance.INCANDESCENT, Camera.Parameters.WHITE_BALANCE_INCANDESCENT);
-            WB.put(WhiteBalance.FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
-            WB.put(WhiteBalance.DAYLIGHT, Camera.Parameters.WHITE_BALANCE_DAYLIGHT);
-            WB.put(WhiteBalance.CLOUDY, Camera.Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT);
-            HDR.put(Hdr.OFF, Camera.Parameters.SCENE_MODE_AUTO);
-            if (Build.VERSION.SDK_INT >= 17) {
-                HDR.put(Hdr.ON, Camera.Parameters.SCENE_MODE_HDR);
-            } else {
-                HDR.put(Hdr.ON, "hdr");
-            }
-        }
-
-        @Override
-        public <T> T map(Flash flash) {
-            return (T) FLASH.get(flash);
-        }
-
-        @Override
-        public <T> T map(Facing facing) {
-            return (T) FACING.get(facing);
-        }
-
-        @Override
-        public <T> T map(WhiteBalance whiteBalance) {
-            return (T) WB.get(whiteBalance);
-        }
-
-        @Override
-        public <T> T map(Hdr hdr) {
-            return (T) HDR.get(hdr);
-        }
-
-        @Override
-        public <T> Flash unmapFlash(T cameraConstant) {
-            return reverseLookup(FLASH, (String) cameraConstant);
-        }
-
-        @Override
-        public <T> Facing unmapFacing(T cameraConstant) {
-            return reverseLookup(FACING, (Integer) cameraConstant);
-        }
-
-        @Override
-        public <T> WhiteBalance unmapWhiteBalance(T cameraConstant) {
-            return reverseLookup(WB, (String) cameraConstant);
-        }
-
-        @Override
-        public <T> Hdr unmapHdr(T cameraConstant) {
-            return reverseLookup(HDR, (String) cameraConstant);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    private static class Camera2Mapper extends com.otaliastudios.cameraview.engine.mappers.Camera2Mapper {
-
-        private static final HashMap<Flash, List<Integer>> FLASH = new HashMap<>();
-        private static final HashMap<Facing, Integer> FACING = new HashMap<>();
-        private static final HashMap<WhiteBalance, Integer> WB = new HashMap<>();
-        private static final HashMap<Hdr, Integer> HDR = new HashMap<>();
-
-        static {
-            // OFF and TORCH have also a second condition - to CameraCharacteristics.CONTROL_FLASH_MODE - but that does not
-            // fit into the Mapper interface. TODO review this
-            FLASH.put(Flash.OFF, Arrays.asList(CameraCharacteristics.CONTROL_AE_MODE_ON, CameraCharacteristics.CONTROL_AE_MODE_OFF));
-            FLASH.put(Flash.TORCH, Arrays.asList(CameraCharacteristics.CONTROL_AE_MODE_ON, CameraCharacteristics.CONTROL_AE_MODE_OFF));
-            FLASH.put(Flash.AUTO, Arrays.asList(CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH, CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE));
-            FLASH.put(Flash.ON, Collections.singletonList(CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH));
-            FACING.put(Facing.BACK, CameraCharacteristics.LENS_FACING_BACK);
-            FACING.put(Facing.FRONT, CameraCharacteristics.LENS_FACING_FRONT);
-            WB.put(WhiteBalance.AUTO, CameraCharacteristics.CONTROL_AWB_MODE_AUTO);
-            WB.put(WhiteBalance.CLOUDY, CameraCharacteristics.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT);
-            WB.put(WhiteBalance.DAYLIGHT, CameraCharacteristics.CONTROL_AWB_MODE_DAYLIGHT);
-            WB.put(WhiteBalance.FLUORESCENT, CameraCharacteristics.CONTROL_AWB_MODE_FLUORESCENT);
-            WB.put(WhiteBalance.INCANDESCENT, CameraCharacteristics.CONTROL_AWB_MODE_INCANDESCENT);
-            HDR.put(Hdr.OFF, CameraCharacteristics.CONTROL_SCENE_MODE_DISABLED);
-            HDR.put(Hdr.ON, 18 /* CameraCharacteristics.CONTROL_SCENE_MODE_HDR */);
-        }
-
-        @Override
-        public <T> T map(Flash flash) {
-            return (T) FLASH.get(flash);
-        }
-
-        @Override
-        public <T> T map(Facing facing) {
-            return (T) FACING.get(facing);
-        }
-
-        @Override
-        public <T> T map(WhiteBalance whiteBalance) {
-            return (T) WB.get(whiteBalance);
-        }
-
-        @Override
-        public <T> T map(Hdr hdr) {
-            return (T) HDR.get(hdr);
-        }
-
-        @Override
-        public <T> Flash unmapFlash(T cameraConstant) {
-            return reverseListLookup(FLASH, (Integer) cameraConstant);
-        }
-
-        @Override
-        public <T> Facing unmapFacing(T cameraConstant) {
-            return reverseLookup(FACING, (Integer) cameraConstant);
-        }
-
-        @Override
-        public <T> WhiteBalance unmapWhiteBalance(T cameraConstant) {
-            return reverseLookup(WB, (Integer) cameraConstant);
-        }
-
-        @Override
-        public <T> Hdr unmapHdr(T cameraConstant) {
-            return reverseLookup(HDR, (Integer) cameraConstant);
-        }
     }
 }

@@ -19,6 +19,7 @@ import android.location.Location;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
+import android.util.Pair;
 import android.util.Rational;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -60,6 +61,7 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -871,31 +873,25 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private boolean applyFlash(@NonNull CaptureRequest.Builder builder,
                                @NonNull Flash oldFlash) {
         if (mCameraOptions.supports(mFlash)) {
-            List<Integer> modes = mMapper.map(mFlash);
-            int[] availableModes = readCharacteristic(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES, new int[]{});
-            for (int mode : modes) {
-                for (int availableMode : availableModes) {
-                    if (mode == availableMode) {
-                        LOG.i("applyFlash: setting CONTROL_AE_MODE to", mode);
-                        builder.set(CaptureRequest.CONTROL_AE_MODE, mode);
-                        if (mFlash == Flash.TORCH) {
-                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-                            LOG.i("applyFlash: setting FLASH_MODE to", CaptureRequest.FLASH_MODE_TORCH);
-                        } else if (mFlash == Flash.OFF) {
-                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
-                            LOG.i("applyFlash: setting FLASH_MODE to", CaptureRequest.FLASH_MODE_OFF);
-                        } else { // Go to OFF anyway, the AE mode will deal with flash.
-                            builder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
-                            LOG.i("applyFlash: setting FLASH_MODE to", CaptureRequest.FLASH_MODE_OFF);
-                        }
+            int[] availableAeModesArray = readCharacteristic(
+                    CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES, new int[]{});
+            List<Integer> availableAeModes = new ArrayList<>();
+            for (int mode : availableAeModesArray) { availableAeModes.add(mode); }
 
-                        // On some devices, switching from TORCH/OFF to AUTO/ON is not immediately
-                        // reflected (for example, torch stays active) unless we do as follows.
-                        // It's just a way to wake up the AE routine.
-                        builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-                        return true;
-                    }
+            List<Pair<Integer, Integer>> pairs = mMapper.map(mFlash);
+            for (Pair<Integer, Integer> pair : pairs) {
+                if (availableAeModes.contains(pair.first)) {
+                    LOG.i("applyFlash: setting CONTROL_AE_MODE to", pair.first);
+                    LOG.i("applyFlash: setting FLASH_MODE to", pair.second);
+                    builder.set(CaptureRequest.CONTROL_AE_MODE, pair.first);
+                    builder.set(CaptureRequest.FLASH_MODE, pair.second);
+
+                    // On some devices, switching from TORCH/OFF to AUTO/ON is not immediately
+                    // reflected (for example, torch stays active) unless we do as follows.
+                    // It's just a way to wake up the AE routine.
+                    builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                            CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+                    return true;
                 }
             }
         }
@@ -948,7 +944,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private boolean applyWhiteBalance(@NonNull CaptureRequest.Builder builder,
                                       @NonNull WhiteBalance oldWhiteBalance) {
         if (mCameraOptions.supports(mWhiteBalance)) {
-            Integer whiteBalance = mMapper.map(mWhiteBalance);
+            int whiteBalance = mMapper.map(mWhiteBalance);
             builder.set(CaptureRequest.CONTROL_AWB_MODE, whiteBalance);
             return true;
         }
@@ -976,7 +972,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private boolean applyHdr(@NonNull CaptureRequest.Builder builder, @NonNull Hdr oldHdr) {
         if (mCameraOptions.supports(mHdr)) {
-            Integer hdr = mMapper.map(mHdr);
+            int hdr = mMapper.map(mHdr);
             builder.set(CaptureRequest.CONTROL_SCENE_MODE, hdr);
             return true;
         }
