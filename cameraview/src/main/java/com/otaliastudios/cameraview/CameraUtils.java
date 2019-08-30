@@ -11,7 +11,7 @@ import android.os.Handler;
 
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
-import com.otaliastudios.cameraview.engine.Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Mapper;
 import com.otaliastudios.cameraview.internal.utils.ExifHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 

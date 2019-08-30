@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.engine;
+package com.otaliastudios.cameraview.engine.mappers;
 
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;

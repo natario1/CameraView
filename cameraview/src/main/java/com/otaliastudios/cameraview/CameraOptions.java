@@ -19,7 +19,7 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Preview;
-import com.otaliastudios.cameraview.engine.Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Mapper;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.controls.Hdr;
