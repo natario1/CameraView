@@ -19,7 +19,8 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Preview;
-import com.otaliastudios.cameraview.engine.mappers.Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -63,7 +64,7 @@ public class CameraOptions {
 
     public CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
-        Mapper mapper = Mapper.get(Engine.CAMERA1);
+        Camera1Mapper mapper = Camera1Mapper.get();
 
         // Facing
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
@@ -148,7 +149,7 @@ public class CameraOptions {
     // Camera2Engine constructor.
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     public CameraOptions(@NonNull CameraManager manager, @NonNull String  cameraId, boolean flipSizes) throws CameraAccessException {
-        Mapper mapper = Mapper.get(Engine.CAMERA2);
+        Camera2Mapper mapper = Camera2Mapper.get();
         CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(cameraId);
 
         // Facing

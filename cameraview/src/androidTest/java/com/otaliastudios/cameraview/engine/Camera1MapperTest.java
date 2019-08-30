@@ -9,7 +9,7 @@ import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
-import com.otaliastudios.cameraview.engine.mappers.Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -22,9 +22,9 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class MapperTest extends BaseTest {
+public class Camera1MapperTest extends BaseTest {
 
-    private Mapper mapper = Mapper.get(Engine.CAMERA1);
+    private Camera1Mapper mapper = Camera1Mapper.get();
 
     @Test
     public void testMap() {

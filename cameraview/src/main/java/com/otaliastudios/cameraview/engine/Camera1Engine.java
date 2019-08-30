@@ -22,7 +22,7 @@ import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.controls.Engine;
-import com.otaliastudios.cameraview.engine.mappers.Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.frame.Frame;
@@ -62,13 +62,13 @@ public class Camera1Engine extends CameraEngine implements
     private static final int PREVIEW_FORMAT = ImageFormat.NV21;
     @VisibleForTesting static final int AUTOFOCUS_END_DELAY_MILLIS = 2500;
 
+    private final Camera1Mapper mMapper = Camera1Mapper.get();
     private Camera mCamera;
     @VisibleForTesting int mCameraId;
     private Runnable mFocusEndRunnable;
 
     public Camera1Engine(@NonNull Callback callback) {
         super(callback);
-        mMapper = Mapper.get(Engine.CAMERA1);
     }
 
     //region Utilities
@@ -444,7 +444,7 @@ public class Camera1Engine extends CameraEngine implements
 
     private boolean applyFlash(@NonNull Camera.Parameters params, @NonNull Flash oldFlash) {
         if (mCameraOptions.supports(mFlash)) {
-            params.setFlashMode((String) mMapper.map(mFlash));
+            params.setFlashMode(mMapper.map(mFlash));
             return true;
         }
         mFlash = oldFlash;
@@ -497,7 +497,7 @@ public class Camera1Engine extends CameraEngine implements
 
     private boolean applyWhiteBalance(@NonNull Camera.Parameters params, @NonNull WhiteBalance oldWhiteBalance) {
         if (mCameraOptions.supports(mWhiteBalance)) {
-            params.setWhiteBalance((String) mMapper.map(mWhiteBalance));
+            params.setWhiteBalance(mMapper.map(mWhiteBalance));
             return true;
         }
         mWhiteBalance = oldWhiteBalance;
@@ -522,7 +522,7 @@ public class Camera1Engine extends CameraEngine implements
 
     private boolean applyHdr(@NonNull Camera.Parameters params, @NonNull Hdr oldHdr) {
         if (mCameraOptions.supports(mHdr)) {
-            params.setSceneMode((String) mMapper.map(mHdr));
+            params.setSceneMode(mMapper.map(mHdr));
             return true;
         }
         mHdr = oldHdr;

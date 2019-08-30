@@ -36,13 +36,12 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
-import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
-import com.otaliastudios.cameraview.engine.mappers.Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.frame.Frame;
@@ -83,6 +82,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private CaptureRequest.Builder mRepeatingRequestBuilder;
     private CaptureRequest mRepeatingRequest;
     private CameraCaptureSession.CaptureCallback mRepeatingRequestCallback;
+    private final Camera2Mapper mMapper = Camera2Mapper.get();
 
     // Frame processing
     private Size mFrameProcessingSize;
@@ -105,7 +105,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     public Camera2Engine(Callback callback) {
         super(callback);
-        mMapper = Mapper.get(Engine.CAMERA2);
         mManager = (CameraManager) mCallback.getContext().getSystemService(Context.CAMERA_SERVICE);
         mFrameConversionHandler = WorkerHandler.get("CameraFrameConversion");
     }

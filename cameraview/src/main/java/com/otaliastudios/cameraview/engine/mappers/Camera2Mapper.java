@@ -4,6 +4,9 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+
 import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
@@ -16,21 +19,23 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-
 /**
  * A Mapper maps camera engine constants to CameraView constants.
  */
-public abstract class Mapper {
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+public abstract class Camera2Mapper {
 
-    private static Mapper CAMERA1;
-    private static Mapper CAMERA2;
+    private static com.otaliastudios.cameraview.engine.mappers.Camera2Mapper sInstance;
 
-    public static Mapper get(@NonNull Engine engine) {
+    public static com.otaliastudios.cameraview.engine.mappers.Camera2Mapper get() {
+        if (sInstance == null) sInstance = new Camera2Mapper();
+        return sInstance;
+    }
+
+    public static com.otaliastudios.cameraview.engine.mappers.Camera2Mapper get(@NonNull Engine engine) {
         if (engine == Engine.CAMERA1) {
-            if (CAMERA1 == null) CAMERA1 = new Camera1Mapper();
-            return CAMERA1;
+            if (sInstance == null) sInstance = new Camera1Mapper();
+            return sInstance;
         } else if (engine == Engine.CAMERA2 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if (CAMERA2 == null) CAMERA2 = new Camera2Mapper();
             return CAMERA2;
@@ -39,7 +44,7 @@ public abstract class Mapper {
         }
     }
 
-    private Mapper() {}
+    private Camera2Mapper() {}
 
     public abstract <T> T map(Flash flash);
 
@@ -82,7 +87,7 @@ public abstract class Mapper {
     }
 
     @SuppressWarnings("unchecked")
-    private static class Camera1Mapper extends Mapper {
+    private static class Camera1Mapper extends com.otaliastudios.cameraview.engine.mappers.Camera2Mapper {
 
         private static final HashMap<Flash, String> FLASH = new HashMap<>();
         private static final HashMap<WhiteBalance, String> WB = new HashMap<>();
@@ -152,7 +157,7 @@ public abstract class Mapper {
 
     @SuppressWarnings("unchecked")
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    private static class Camera2Mapper extends Mapper {
+    private static class Camera2Mapper extends com.otaliastudios.cameraview.engine.mappers.Camera2Mapper {
 
         private static final HashMap<Flash, List<Integer>> FLASH = new HashMap<>();
         private static final HashMap<Facing, Integer> FACING = new HashMap<>();
