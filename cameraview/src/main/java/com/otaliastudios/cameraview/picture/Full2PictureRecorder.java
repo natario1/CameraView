@@ -81,7 +81,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     private boolean supportsAutoFocus() {
         //noinspection ConstantConditions
         int afMode = mBuilder.get(CaptureRequest.CONTROL_AF_MODE);
-        // Exclude OFF and EDOF as per their docs.
+        // Exclude OFF and EDOF as per docs.
         return afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO
                 || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE
                 || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO

@@ -66,6 +66,11 @@ public class AutoExposure extends MeteringParameter {
         if (!isStarted) {
             if (aeState == CaptureRequest.CONTROL_AE_STATE_PRECAPTURE) {
                 isStarted = true;
+            } else if (aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED
+                    || aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED) {
+                // PRECAPTURE is a transient state, so also check for the final states.
+                isMetered = true;
+                isSuccessful = true;
             }
         } else {
             if (aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED

@@ -196,22 +196,24 @@ public class CameraOptions {
             if (value != null) supportedHdr.add(value);
         }
 
-        //zoom
+        // Zoom
         Float maxZoom = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
         if(maxZoom != null) {
             zoomSupported = maxZoom > 1;
         }
 
 
-        // autofocus
-        int[] afModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
-        autoFocusSupported = false;
-        //noinspection ConstantConditions
-        for (int afMode : afModes) {
-            if (afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO) {
-                autoFocusSupported = true;
-            }
-        }
+        // AutoFocus
+        // This now means 3A metering with respect to a specific region of the screen.
+        // Some controls (AF, AE) have special triggers that might or might not be supported.
+        // But they can also be on some continuous search mode so that the trigger is not needed.
+        // What really matters in my opinion is the availability of regions.
+        Integer afRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
+        Integer aeRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE);
+        Integer awbRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB);
+        autoFocusSupported = (afRegions != null && afRegions > 0)
+                || (aeRegions != null && aeRegions > 0)
+                || (awbRegions != null && awbRegions > 0);
 
         // Exposure correction
         Range<Integer> exposureRange = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
@@ -430,8 +432,9 @@ public class CameraOptions {
 
 
     /**
-     * Whether auto focus is supported. This means you can map gestures to
-     * {@link GestureAction#AUTO_FOCUS} and focus will be changed on tap.
+     * Whether auto focus (metering with respect to a specific region of the screen) is
+     * supported. If it is, you can map gestures to {@link GestureAction#AUTO_FOCUS}
+     * and metering will change on tap.
      *
      * @return whether auto focus is supported.
      */

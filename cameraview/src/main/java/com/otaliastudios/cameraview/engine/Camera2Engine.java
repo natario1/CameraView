@@ -811,6 +811,29 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
+    private void applyFocusForMetering(@NonNull CaptureRequest.Builder builder) {
+        // All focus modes support the AF trigger, except OFF and EDOF.
+        // However, unlike the preview, we'd prefer AUTO to any CONTINUOUS value.
+        int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
+        List<Integer> modes = new ArrayList<>();
+        for (int mode : modesArray) { modes.add(mode); }
+        if (modes.contains(CaptureRequest.CONTROL_AF_MODE_AUTO)) {
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+            return;
+        }
+        if (getMode() == Mode.VIDEO &&
+                modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+            return;
+        }
+
+        if (modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) {
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            //noinspection UnnecessaryReturnStatement
+            return;
+        }
+    }
+
     @Override
     public void setFlash(@NonNull Flash flash) {
         final Flash old = mFlash;
@@ -1135,23 +1158,22 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // Even without this it would need the bind state at least, since we need the preview size.
                 if (getPreviewState() < STATE_STARTED) return;
 
+                // The camera options API still has the auto focus API but it really
+                // refers to 3A metering.
+                if (!mCameraOptions.isAutoFocusSupported()) return;
+
                 // Reset the old meter if present.
                 if (mMeter != null) {
                     mMeter.resetMetering();
                 }
 
-                // The meter will check the current state to see if AF/AE/AWB should be run.
-                // - AE should be on CONTROL_AE_MODE_ON* (depends on setFlash())
-                // - AWB should be on CONTROL_AWB_MODE_AUTO (depends on setWhiteBalance())
-                // - AF should be on CONTROL_AF_MODE_AUTO (or others)
-                // The last one depends on us because the library has no focus API and we have
-                // just been asked to fo auto focus. So let's do this - go to auto and remove any
-                // CONTINUOUS value that might not be what we want here.
-                // Note that this operation is reverted during onMeteringReset().
-                if (!mCameraOptions.isAutoFocusSupported()) return;
-                mRepeatingRequestBuilder.set(
-                        CaptureRequest.CONTROL_AF_MODE,
-                        CaptureRequest.CONTROL_AF_MODE_AUTO);
+                // The meter will check the current configuration to see if AF/AE/AWB should run.
+                // - AE should be on CONTROL_AE_MODE_ON*    (this depends on setFlash())
+                // - AWB should be on CONTROL_AWB_MODE_AUTO (this depends on setWhiteBalance())
+                // - AF should be on CONTROL_AF_MODE_AUTO or others
+                // The last one is under our control because the library has no focus API.
+                // So let's set a good af mode here. This operation is reverted during onMeteringReset().
+                applyFocusForMetering(mRepeatingRequestBuilder);
 
                 // Create the meter and start.
                 mMeter = new Meter(Camera2Engine.this,

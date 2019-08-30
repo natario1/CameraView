@@ -38,7 +38,8 @@ public class AutoWhiteBalance extends MeteringParameter {
         }
 
         // Even if auto is not supported, change the regions anyway.
-        int maxRegions = readCharacteristic(characteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
+        int maxRegions = readCharacteristic(characteristics,
+                CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
         if (maxRegions > 0) {
             int max = Math.min(maxRegions, areas.size());
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS,

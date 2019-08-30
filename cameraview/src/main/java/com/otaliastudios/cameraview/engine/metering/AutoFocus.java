@@ -27,6 +27,7 @@ public class AutoFocus extends MeteringParameter {
         isMetered = false;
 
         Integer afMode = builder.get(CaptureRequest.CONTROL_AF_MODE);
+        // Exclude OFF and EDOF as per docs.
         isSupported = afMode != null &&
                 (afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO
                 || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE
