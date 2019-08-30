@@ -18,6 +18,7 @@ import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.engine.offset.Angles;
@@ -154,7 +155,6 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess") protected final Callback mCallback;
     @SuppressWarnings("WeakerAccess") protected CameraPreview mPreview;
     @SuppressWarnings("WeakerAccess") protected CameraOptions mCameraOptions;
-    @SuppressWarnings("WeakerAccess") protected Mapper mMapper;
     @SuppressWarnings("WeakerAccess") protected PictureRecorder mPictureRecorder;
     @SuppressWarnings("WeakerAccess") protected VideoRecorder mVideoRecorder;
     @SuppressWarnings("WeakerAccess") protected Size mCaptureSize;

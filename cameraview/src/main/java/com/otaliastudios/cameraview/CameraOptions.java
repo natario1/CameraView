@@ -19,7 +19,8 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Preview;
-import com.otaliastudios.cameraview.engine.Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -63,7 +64,7 @@ public class CameraOptions {
 
     public CameraOptions(@NonNull Camera.Parameters params, boolean flipSizes) {
         List<String> strings;
-        Mapper mapper = Mapper.get(Engine.CAMERA1);
+        Camera1Mapper mapper = Camera1Mapper.get();
 
         // Facing
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
@@ -148,7 +149,7 @@ public class CameraOptions {
     // Camera2Engine constructor.
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     public CameraOptions(@NonNull CameraManager manager, @NonNull String  cameraId, boolean flipSizes) throws CameraAccessException {
-        Mapper mapper = Mapper.get(Engine.CAMERA2);
+        Camera2Mapper mapper = Camera2Mapper.get();
         CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(cameraId);
 
         // Facing
@@ -176,14 +177,8 @@ public class CameraOptions {
             int[] aeModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
             //noinspection ConstantConditions
             for (int aeMode : aeModes) {
-                Flash value = mapper.unmapFlash(aeMode);
-                if (value != null) supportedFlash.add(value);
-            }
-            // Check for torch specifically since the Mapper flash support is not so good.
-            // If OFF works, it means we have AE_MODE_OFF or AE_MODE_ON. This means we can use
-            // the torch control.
-            if (supportedFlash.contains(Flash.OFF)) {
-                supportedFlash.add(Flash.TORCH);
+                Set<Flash> flashes = mapper.unmapFlash(aeMode);
+                supportedFlash.addAll(flashes);
             }
         }
 
@@ -196,22 +191,24 @@ public class CameraOptions {
             if (value != null) supportedHdr.add(value);
         }
 
-        //zoom
+        // Zoom
         Float maxZoom = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
         if(maxZoom != null) {
             zoomSupported = maxZoom > 1;
         }
 
 
-        // autofocus
-        int[] afModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
-        autoFocusSupported = false;
-        //noinspection ConstantConditions
-        for (int afMode : afModes) {
-            if (afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO) {
-                autoFocusSupported = true;
-            }
-        }
+        // AutoFocus
+        // This now means 3A metering with respect to a specific region of the screen.
+        // Some controls (AF, AE) have special triggers that might or might not be supported.
+        // But they can also be on some continuous search mode so that the trigger is not needed.
+        // What really matters in my opinion is the availability of regions.
+        Integer afRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
+        Integer aeRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE);
+        Integer awbRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB);
+        autoFocusSupported = (afRegions != null && afRegions > 0)
+                || (aeRegions != null && aeRegions > 0)
+                || (awbRegions != null && awbRegions > 0);
 
         // Exposure correction
         Range<Integer> exposureRange = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
@@ -430,8 +427,9 @@ public class CameraOptions {
 
 
     /**
-     * Whether auto focus is supported. This means you can map gestures to
-     * {@link GestureAction#AUTO_FOCUS} and focus will be changed on tap.
+     * Whether auto focus (metering with respect to a specific region of the screen) is
+     * supported. If it is, you can map gestures to {@link GestureAction#AUTO_FOCUS}
+     * and metering will change on tap.
      *
      * @return whether auto focus is supported.
      */

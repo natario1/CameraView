@@ -20,7 +20,7 @@
         app:cameraPreview="glSurface"
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
-        app:cameraFlash="off"
+        app:cameraFlash="auto"
         app:cameraAudio="on"
         app:cameraFacing="back"
         app:cameraGestureTap="autoFocus"

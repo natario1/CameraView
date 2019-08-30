@@ -35,11 +35,12 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private static final int STATE_IDLE = 0;
-    private static final int STATE_WAITING_FOCUS_LOCK = 1;
-    private static final int STATE_WAITING_PRECAPTURE_START = 2;
-    private static final int STATE_WAITING_PRECAPTURE_END = 3;
-    private static final int STATE_WAITING_CAPTURE = 4;
-    private static final int STATE_WAITING_IMAGE = 5;
+    private static final int STATE_WAITING_FIRST_FRAME = 1;
+    private static final int STATE_WAITING_AUTOFOCUS = 2;
+    private static final int STATE_WAITING_PRECAPTURE_START = 3;
+    private static final int STATE_WAITING_PRECAPTURE_END = 4;
+    private static final int STATE_WAITING_CAPTURE = 5;
+    private static final int STATE_WAITING_IMAGE = 6;
 
     private static final int REQUEST_TAG = CameraDevice.TEMPLATE_STILL_CAPTURE;
 
@@ -74,23 +75,27 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
 
     @Override
     public void take() {
-        runFocusLock();
+        mState = STATE_WAITING_FIRST_FRAME;
     }
 
-    private boolean supportsFocusLock() {
+    private boolean supportsAutoFocus() {
         //noinspection ConstantConditions
         int afMode = mBuilder.get(CaptureRequest.CONTROL_AF_MODE);
-        // Exclude OFF and EDOF as per their docs.
+        // Exclude OFF and EDOF as per docs.
         return afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO
                 || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE
                 || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO
                 || afMode == CameraCharacteristics.CONTROL_AF_MODE_MACRO;
     }
 
-    private void runFocusLock() {
-        if (supportsFocusLock()) {
+    private void runAutoFocus(@NonNull CaptureResult lastResult) {
+        Integer afState = lastResult.get(CaptureResult.CONTROL_AF_STATE);
+        boolean shouldSkip = afState != null && afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED;
+        boolean supports = supportsAutoFocus();
+        LOG.i("runAutoFocus:", "supports:", supports, "shouldSkip:", shouldSkip, "afState:", afState);
+        if (supports && !shouldSkip) {
             try {
-                mState = STATE_WAITING_FOCUS_LOCK;
+                mState = STATE_WAITING_AUTOFOCUS;
                 mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
                 mSession.capture(mBuilder.build(), mCallback, null);
             } catch (CameraAccessException e) {
@@ -99,8 +104,8 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
                 dispatchResult();
             }
         } else {
-            LOG.w("Device does not support focus lock. Running precapture.");
-            runPrecapture(null);
+            LOG.w("Device does not support auto focus. Running precapture.");
+            runPrecapture(lastResult);
         }
     }
 
@@ -118,12 +123,12 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
                 || aeMode == 5 /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */;
     }
 
-    private void runPrecapture(@Nullable CaptureResult lastResult) {
-        //noinspection ConstantConditions
-        boolean shouldSkipPrecapture = lastResult != null
-                && lastResult.get(CaptureResult.CONTROL_AE_STATE) != null
-                && lastResult.get(CaptureResult.CONTROL_AE_STATE) == CaptureResult.CONTROL_AE_STATE_CONVERGED;
-        if (supportsPrecapture() && !shouldSkipPrecapture) {
+    private void runPrecapture(@NonNull CaptureResult lastResult) {
+        Integer aeState = lastResult.get(CaptureResult.CONTROL_AE_STATE);
+        boolean shouldSkip = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED;
+        boolean supports = supportsPrecapture();
+        LOG.i("runPrecapture:", "supports:", supports, "shouldSkip:", shouldSkip, "aeState:", aeState);
+        if (supports && !shouldSkip) {
             try {
                 mState = STATE_WAITING_PRECAPTURE_START;
                 mBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
@@ -170,7 +175,8 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     }
 
     public void onCaptureProgressed(@NonNull CaptureResult result) {
-        process(result);
+        // Let's ignore these. They often do not have good results.
+        // process(result);
     }
 
     public void onCaptureCompleted(@NonNull CaptureResult result) {
@@ -180,7 +186,11 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     private void process(@NonNull CaptureResult result) {
         switch (mState) {
             case STATE_IDLE: break;
-            case STATE_WAITING_FOCUS_LOCK: {
+            case STATE_WAITING_FIRST_FRAME: {
+                runAutoFocus(result);
+                break;
+            }
+            case STATE_WAITING_AUTOFOCUS: {
                 Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
                 if (afState == null
                         || afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED
@@ -261,7 +271,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
         } catch (IOException ignore) { }
 
         // Before leaving, unlock focus.
-        if (supportsFocusLock()) {
+        if (supportsAutoFocus()) {
             try {
                 mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                         CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);

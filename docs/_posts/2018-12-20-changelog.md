@@ -20,7 +20,7 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 
 ## v2.1.0
 
-This release adds experimental support for [real-time filters](../docs.filters.html) thanks to [@agrawalsuneet][agrawalsuneet].
+This release adds experimental support for [real-time filters](../docs/filters.html) thanks to [@agrawalsuneet][agrawalsuneet].
 Please read the documentation page for usage instructions.
 
 - New: Real-time filters support ([#527][527])

@@ -4,10 +4,9 @@ package com.otaliastudios.cameraview;
 import android.hardware.Camera;
 
 import com.otaliastudios.cameraview.controls.Audio;
-import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
-import com.otaliastudios.cameraview.engine.Mapper;
+import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -252,11 +251,11 @@ public class CameraOptions1Test extends BaseTest {
         }
 
         CameraOptions o = new CameraOptions(mock(Camera.Parameters.class), false);
-        Mapper m = Mapper.get(Engine.CAMERA1);
+        Camera1Mapper m = Camera1Mapper.get();
         Collection<Facing> s = o.getSupportedControls(Facing.class);
         assertEquals(s.size(), supported.size());
         for (Facing facing : s) {
-            assertTrue(supported.contains(m.<Integer>map(facing)));
+            assertTrue(supported.contains(m.mapFacing(facing)));
             assertTrue(o.supports(facing));
         }
     }
