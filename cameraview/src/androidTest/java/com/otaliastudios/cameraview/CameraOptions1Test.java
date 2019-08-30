@@ -4,7 +4,6 @@ package com.otaliastudios.cameraview;
 import android.hardware.Camera;
 
 import com.otaliastudios.cameraview.controls.Audio;
-import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
@@ -256,7 +255,7 @@ public class CameraOptions1Test extends BaseTest {
         Collection<Facing> s = o.getSupportedControls(Facing.class);
         assertEquals(s.size(), supported.size());
         for (Facing facing : s) {
-            assertTrue(supported.contains(m.map(facing)));
+            assertTrue(supported.contains(m.mapFacing(facing)));
             assertTrue(o.supports(facing));
         }
     }

@@ -61,7 +61,6 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -290,7 +289,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     protected boolean collectCameraInfo(@NonNull Facing facing) {
-        int internalFacing = mMapper.map(facing);
+        int internalFacing = mMapper.mapFacing(facing);
         String[] cameraIds = null;
         try {
             cameraIds = mManager.getCameraIdList();
@@ -878,7 +877,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             List<Integer> availableAeModes = new ArrayList<>();
             for (int mode : availableAeModesArray) { availableAeModes.add(mode); }
 
-            List<Pair<Integer, Integer>> pairs = mMapper.map(mFlash);
+            List<Pair<Integer, Integer>> pairs = mMapper.mapFlash(mFlash);
             for (Pair<Integer, Integer> pair : pairs) {
                 if (availableAeModes.contains(pair.first)) {
                     LOG.i("applyFlash: setting CONTROL_AE_MODE to", pair.first);
@@ -944,7 +943,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private boolean applyWhiteBalance(@NonNull CaptureRequest.Builder builder,
                                       @NonNull WhiteBalance oldWhiteBalance) {
         if (mCameraOptions.supports(mWhiteBalance)) {
-            int whiteBalance = mMapper.map(mWhiteBalance);
+            int whiteBalance = mMapper.mapWhiteBalance(mWhiteBalance);
             builder.set(CaptureRequest.CONTROL_AWB_MODE, whiteBalance);
             return true;
         }
@@ -972,7 +971,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private boolean applyHdr(@NonNull CaptureRequest.Builder builder, @NonNull Hdr oldHdr) {
         if (mCameraOptions.supports(mHdr)) {
-            int hdr = mMapper.map(mHdr);
+            int hdr = mMapper.mapHdr(mHdr);
             builder.set(CaptureRequest.CONTROL_SCENE_MODE, hdr);
             return true;
         }

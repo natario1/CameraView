@@ -58,24 +58,24 @@ public class Camera1Mapper {
     private Camera1Mapper() {}
 
     @NonNull
-    public String map(@NonNull Flash flash) {
+    public String mapFlash(@NonNull Flash flash) {
         //noinspection ConstantConditions
         return FLASH.get(flash);
     }
 
-    public int map(@NonNull Facing facing) {
+    public int mapFacing(@NonNull Facing facing) {
         //noinspection ConstantConditions
         return FACING.get(facing);
     }
 
     @NonNull
-    public String map(@NonNull WhiteBalance whiteBalance) {
+    public String mapWhiteBalance(@NonNull WhiteBalance whiteBalance) {
         //noinspection ConstantConditions
         return WB.get(whiteBalance);
     }
 
     @NonNull
-    public String map(@NonNull Hdr hdr) {
+    public String mapHdr(@NonNull Hdr hdr) {
         //noinspection ConstantConditions
         return HDR.get(hdr);
     }

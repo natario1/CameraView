@@ -59,7 +59,7 @@ public class Camera2Mapper {
     private Camera2Mapper() {}
 
     @NonNull
-    public List<Pair<Integer, Integer>> map(@NonNull Flash flash) {
+    public List<Pair<Integer, Integer>> mapFlash(@NonNull Flash flash) {
         List<Pair<Integer, Integer>> result = new ArrayList<>();
         switch (flash) {
             case ON: {
@@ -101,17 +101,17 @@ public class Camera2Mapper {
         return  result;
     }
 
-    public int map(@NonNull Facing facing) {
+    public int mapFacing(@NonNull Facing facing) {
         //noinspection ConstantConditions
         return FACING.get(facing);
     }
 
-    public int map(@NonNull WhiteBalance whiteBalance) {
+    public int mapWhiteBalance(@NonNull WhiteBalance whiteBalance) {
         //noinspection ConstantConditions
         return WB.get(whiteBalance);
     }
 
-    public int map(@NonNull Hdr hdr) {
+    public int mapHdr(@NonNull Hdr hdr) {
         //noinspection ConstantConditions
         return HDR.get(hdr);
     }

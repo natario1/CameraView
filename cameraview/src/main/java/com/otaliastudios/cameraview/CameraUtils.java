@@ -9,7 +9,6 @@ import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.os.Handler;
 
-import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.internal.utils.ExifHelper;
@@ -61,7 +60,7 @@ public class CameraUtils {
      */
     public static boolean hasCameraFacing(@SuppressWarnings("unused") @NonNull Context context,
                                           @NonNull Facing facing) {
-        int internal = Camera1Mapper.get().map(facing);
+        int internal = Camera1Mapper.get().mapFacing(facing);
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
