@@ -281,10 +281,11 @@ public class Meter {
         if (!mAutoExposure.isMetered()) mAutoExposure.onCapture(result);
         if (!mAutoWhiteBalance.isMetered()) mAutoWhiteBalance.onCapture(result);
         if (mAutoFocus.isMetered() && mAutoExposure.isMetered() && mAutoWhiteBalance.isMetered()) {
-            // Use the AF success for dispatching the callback, since the public
-            // callback is currently related to AF.
             LOG.i("onCapture:", "all MeteringParameters have converged. Dispatching onMeteringEnd");
-            onMeteringEnd(mAutoFocus.isSuccessful());
+            boolean success = mAutoFocus.isSuccessful()
+                    && mAutoExposure.isSuccessful()
+                    && mAutoWhiteBalance.isSuccessful();
+            onMeteringEnd(success);
         } else if (System.currentTimeMillis() - mMeteringStartTime >= FORCED_END_DELAY) {
             LOG.i("onCapture:", "FORCED_END_DELAY was reached. Some MeteringParameter is stuck. Forcing end.");
             onMeteringEnd(false);

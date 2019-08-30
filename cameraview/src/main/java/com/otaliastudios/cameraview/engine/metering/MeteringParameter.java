@@ -33,11 +33,13 @@ public abstract class MeteringParameter {
     }
 
     public final boolean isMetered() {
+        // A non supported parameter should always appear as metered
         return isMetered || !isSupported;
     }
 
     public final boolean isSuccessful() {
-        return isSuccessful && isSupported;
+        // A non supported parameter should always appear as successful
+        return isSuccessful || !isSupported;
     }
 
     public abstract void startMetering(@NonNull CameraCharacteristics characteristics,
