@@ -187,13 +187,14 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
         @Override
         public void onDrawFrame(GL10 gl) {
             if (mInputSurfaceTexture == null) return;
-            // Latch the latest frame.  If there isn't anything new,
-            // we'll just re-use whatever was there before.
-            mInputSurfaceTexture.updateTexImage();
             if (mInputStreamWidth <= 0 || mInputStreamHeight <= 0) {
                 // Skip drawing. Camera was not opened.
                 return;
             }
+
+            // Latch the latest frame. If there isn't anything new,
+            // we'll just re-use whatever was there before.
+            mInputSurfaceTexture.updateTexImage();
             mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
             LOG.v("onDrawFrame:", "timestamp:", mInputSurfaceTexture.getTimestamp());
 
