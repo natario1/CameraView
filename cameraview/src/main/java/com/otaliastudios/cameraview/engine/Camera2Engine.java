@@ -104,6 +104,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     // 3A metering
     private Meter mMeter;
+    private Gesture mMeteringGesture;
+    private PictureResult.Stub mDelayedPictureStub;
+    private AspectRatio mDelayedPictureRatio;
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -613,30 +616,44 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio, boolean doMetering) {
         stub.size = getUncroppedSnapshotSize(Reference.OUTPUT); // Not the real size: it will be cropped to match the view ratio
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR); // Actually it will be rotated and set to 0.
-        if (mPreview instanceof GlCameraPreview) {
-            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio, getOverlay());
+        if (doMetering) {
+            mDelayedPictureStub = stub;
+            mDelayedPictureRatio = outputRatio;
+            startMetering(null, null);
         } else {
-            throw new RuntimeException("takePictureSnapshot with Camera2 is only supported with Preview.GL_SURFACE");
+            if (!(mPreview instanceof GlCameraPreview)) {
+                throw new RuntimeException("takePictureSnapshot with Camera2 is only supported with Preview.GL_SURFACE");
+            }
+            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this,
+                    (GlCameraPreview) mPreview,
+                    outputRatio,
+                    getOverlay());
+            mPictureRecorder.take();
         }
-        mPictureRecorder.take();
     }
 
     @Override
     protected void onTakePicture(@NonNull PictureResult.Stub stub, boolean doMetering) {
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
         stub.size = getPictureSize(Reference.OUTPUT);
-        try {
-            CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            applyAllParameters(builder);
-            mPictureRecorder = new Full2PictureRecorder(stub, this,
-                    mSession,
-                    mRepeatingRequestCallback,
-                    builder,
-                    mPictureReader,
-                    mPictureCaptureStopsPreview);
-            mPictureRecorder.take();
-        } catch (CameraAccessException e) {
-            throw createCameraException(e);
+
+        if (doMetering) {
+            mDelayedPictureStub = stub;
+            startMetering(null, null);
+        } else {
+            try {
+                CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                applyAllParameters(builder);
+                mPictureRecorder = new Full2PictureRecorder(stub, this,
+                        mSession,
+                        mRepeatingRequestCallback,
+                        builder,
+                        mPictureReader,
+                        mPictureCaptureStopsPreview);
+                mPictureRecorder.take();
+            } catch (CameraAccessException e) {
+                throw createCameraException(e);
+            }
         }
     }
 
@@ -1136,11 +1153,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
-        // TODO Should change this name at some point, and deprecate AF methods
         startMetering(gesture, point);
     }
 
-    private void startMetering(@Nullable final Gesture gesture, @NonNull final PointF point) {
+    private void startMetering(@Nullable final Gesture gesture, @Nullable final PointF point) {
         LOG.i("startMetering", "dispatching. Gesture:", gesture);
         mHandler.run(new Runnable() {
             @Override
@@ -1151,8 +1167,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 if (getPreviewState() < STATE_STARTED) return;
 
                 // The camera options API still has the auto focus API but it really
-                // refers to 3A metering.
-                if (!mCameraOptions.isAutoFocusSupported()) return;
+                // refers to "3A metering to a specific point". So if we have one, let's check.
+                if (point != null && !mCameraOptions.isAutoFocusSupported()) return;
 
                 // Reset the old meter if present.
                 if (mMeter != null) {
@@ -1168,11 +1184,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 applyFocusForMetering(mRepeatingRequestBuilder);
 
                 // Create the meter and start.
+                mMeteringGesture = gesture;
                 mMeter = new Meter(Camera2Engine.this,
                         mRepeatingRequestBuilder,
                         mCameraCharacteristics,
                         Camera2Engine.this);
-                mMeter.startMetering(mLastRepeatingResult, point, gesture);
+                mMeter.startMetering(mLastRepeatingResult, point);
             }
         });
     }
@@ -1181,13 +1198,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * Called by {@link Meter} when the metering process has started.
      * We are currently exposing an auto focus API so that's what we dispatch.
      * @param point point
-     * @param gesture gesture
+     *
      */
     @Override
-    public void onMeteringStarted(@Nullable PointF point, @Nullable Gesture gesture) {
-        LOG.w("onMeteringStarted - point:", point, "gesture:", gesture);
+    public void onMeteringStarted(@Nullable PointF point) {
+        LOG.w("onMeteringStarted - point:", point, "gesture:", mMeteringGesture);
         if (point != null) {
-            mCallback.dispatchOnFocusStart(gesture, point);
+            mCallback.dispatchOnFocusStart(mMeteringGesture, point);
         }
         applyRepeatingRequestBuilder();
     }
@@ -1196,14 +1213,21 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * Called by {@link Meter} when the metering process has ended.
      * We are currently exposing an auto focus API so that's what we dispatch.
      * @param point point
-     * @param gesture gesture
      * @param success success
      */
     @Override
-    public void onMeteringEnd(@Nullable PointF point, @Nullable Gesture gesture, boolean success) {
-        LOG.w("onMeteringEnd - point:", point, "gesture:", gesture, "success:", success);
+    public void onMeteringEnd(@Nullable PointF point, boolean success) {
+        LOG.w("onMeteringEnd - point:", point, "gesture:", mMeteringGesture, "success:", success);
         if (point != null) {
-            mCallback.dispatchOnFocusEnd(gesture, success, point);
+            mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
+        } else {
+            if (mDelayedPictureStub.isSnapshot) {
+                onTakePictureSnapshot(mDelayedPictureStub, mDelayedPictureRatio, false);
+            } else {
+                onTakePicture(mDelayedPictureStub, false);
+            }
+            mDelayedPictureStub = null;
+            mDelayedPictureRatio = null;
         }
     }
 
@@ -1211,11 +1235,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * When metering is reset, we're not sure that the engine is still alive.
      * We should check this here.
      * @param point point
-     * @param gesture gesture
      * @return true if metering can be reset
      */
     @Override
-    public boolean canResetMetering(@Nullable PointF point, @Nullable Gesture gesture) {
+    public boolean canResetMetering(@Nullable PointF point) {
         return getEngineState() == STATE_STARTED;
     }
 
@@ -1223,10 +1246,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * Called by {@link Meter} after resetting the metering parameters.
      * We should apply them, and also go back to default focus.
      * @param point point
-     * @param gesture gesture
+     *
      */
     @Override
-    public void onMeteringReset(@Nullable PointF point, @Nullable Gesture gesture) {
+    public void onMeteringReset(@Nullable PointF point) {
         applyDefaultFocus(mRepeatingRequestBuilder);
         applyRepeatingRequestBuilder(); // only if preview started already
     }

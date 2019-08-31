@@ -20,19 +20,17 @@ import com.otaliastudios.cameraview.engine.metering.AutoWhiteBalance;
 import com.otaliastudios.cameraview.engine.metering.MeteringParameter;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
-import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * Helps Camera2-based engines to perform 3A (auto focus, auto exposure and auto white balance)
  * metering. Users are required to:
  *
- * - Call {@link #startMetering(PointF, Gesture)} to start
+ * - Call {@link #startMetering(CaptureResult, PointF)} to start
  * - Call {@link #onCapture(CaptureResult)} when they have partial or total results, as long as the
  *   meter is still in a metering operation, which can be checked through {@link #isMetering()}
  * - Call {@link #resetMetering()} to reset the metering parameters if needed. This is done automatically
@@ -51,38 +49,36 @@ public class Meter {
          * Notifies that metering has started. At this point implementors should apply
          * the builder onto the preview.
          * @param point point
-         * @param gesture gesture
+         *
          */
-        void onMeteringStarted(@Nullable PointF point, @Nullable Gesture gesture);
+        void onMeteringStarted(@Nullable PointF point);
 
         /**
          * Notifies that metering has ended. No action is required for implementors.
          * From now on, {@link #isMetering()} will return false so the meter should not
          * be passed capture results anymore.
          * @param point point
-         * @param gesture gesture
          * @param success success
          */
-        void onMeteringEnd(@Nullable PointF point, @Nullable Gesture gesture, boolean success);
+        void onMeteringEnd(@Nullable PointF point, boolean success);
 
         /**
          * Notifies that metering has been reset. From now on, this meter instance
          * is done, although in theory it could be reused by calling
-         * {@link #startMetering(CaptureResult, PointF, Gesture)} again.
+         * {@link #startMetering(CaptureResult, PointF)} again.
          * @param point point
-         * @param gesture gesture
+         *
          */
-        void onMeteringReset(@Nullable PointF point, @Nullable Gesture gesture);
+        void onMeteringReset(@Nullable PointF point);
 
         /**
          * Whether metering can be reset. Since it happens at a future time, this should
          * return true if the engine is still in a legit state for this operation.
          * @param point point
-         * @param gesture gesture
          * @return true if can reset
          */
         // TODO is this useful? engine could do its checks onMeteringReset()
-        boolean canResetMetering(@Nullable PointF point, @Nullable Gesture gesture);
+        boolean canResetMetering(@Nullable PointF point);
     }
 
     private static final String TAG = Meter.class.getSimpleName();
@@ -94,7 +90,6 @@ public class Meter {
     private final CameraCharacteristics mCharacteristics;
     private final Callback mCallback;
     private PointF mPoint;
-    private Gesture mGesture;
 
     private boolean mIsMetering;
     private long mMeteringStartTime;
@@ -124,12 +119,10 @@ public class Meter {
      * Starts a metering sequence.
      * @param lastResult the last result
      * @param point point
-     * @param gesture gesture
      */
     @SuppressWarnings("WeakerAccess")
-    public void startMetering(@NonNull CaptureResult lastResult, @Nullable PointF point, @Nullable Gesture gesture) {
+    public void startMetering(@NonNull CaptureResult lastResult, @Nullable PointF point) {
         mPoint = point;
-        mGesture = gesture;
         mIsMetering = true;
 
         List<MeteringRectangle> areas = new ArrayList<>();
@@ -179,7 +172,7 @@ public class Meter {
         mAutoExposure.startMetering(mCharacteristics, mBuilder, areas, lastResult, skipIfPossible);
 
         // Dispatch to callback
-        mCallback.onMeteringStarted(mPoint, mGesture);
+        mCallback.onMeteringStarted(mPoint);
         mMeteringStartTime = System.currentTimeMillis();
     }
 
@@ -319,7 +312,7 @@ public class Meter {
 
     /**
      * True if we're metering. False if we're not, for example if we're waiting for
-     * a reset call, or if {@link #startMetering(CaptureResult, PointF, Gesture)} was never called.
+     * a reset call, or if {@link #startMetering(CaptureResult, PointF)} was never called.
      * @return true if metering
      */
     @SuppressWarnings("WeakerAccess")
@@ -353,7 +346,7 @@ public class Meter {
     }
     
     private void onMeteringEnd(boolean success) {
-        mCallback.onMeteringEnd(mPoint, mGesture, success);
+        mCallback.onMeteringEnd(mPoint, success);
         mIsMetering = false;
         mEngine.mHandler.remove(mResetRunnable);
         if (mEngine.shouldResetAutoFocus()) {
@@ -368,7 +361,7 @@ public class Meter {
     @SuppressWarnings("WeakerAccess")
     public void resetMetering() {
         mEngine.mHandler.remove(mResetRunnable);
-        if (mCallback.canResetMetering(mPoint, mGesture)) {
+        if (mCallback.canResetMetering(mPoint)) {
             LOG.i("Resetting the meter parameters.");
             MeteringRectangle whole = null;
             if (mPoint != null) {
@@ -380,7 +373,7 @@ public class Meter {
             mAutoFocus.resetMetering(mCharacteristics, mBuilder, whole);
             mAutoWhiteBalance.resetMetering(mCharacteristics, mBuilder, whole);
             mAutoExposure.resetMetering(mCharacteristics, mBuilder, whole);
-            mCallback.onMeteringReset(mPoint, mGesture);
+            mCallback.onMeteringReset(mPoint);
         }
     }
 
