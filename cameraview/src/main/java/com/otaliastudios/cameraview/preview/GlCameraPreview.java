@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.preview;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+import android.hardware.camera2.CaptureResult;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import androidx.annotation.NonNull;
@@ -194,6 +195,8 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
                 return;
             }
             mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
+            LOG.v("onDrawFrame:", "timestamp:", mInputSurfaceTexture.getTimestamp());
+
 
             // For Camera2, apply the draw rotation.
             // See TextureCameraPreview.setDrawRotation() for info.
