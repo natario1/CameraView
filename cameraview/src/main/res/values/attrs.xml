@@ -141,6 +141,10 @@
 
         <attr name="cameraUseDeviceOrientation" format="boolean"/>
 
+        <attr name="cameraPictureMetering" format="boolean|reference"/>
+
+        <attr name="cameraPictureSnapshotMetering" format="boolean|reference"/>
+
         <attr name="cameraExperimental" format="boolean" />
 
     </declare-styleable>

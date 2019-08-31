@@ -167,6 +167,8 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess") protected float mZoomValue;
     @SuppressWarnings("WeakerAccess") protected float mExposureCorrectionValue;
     @SuppressWarnings("WeakerAccess") protected boolean mPlaySounds;
+    @SuppressWarnings("WeakerAccess") protected boolean mPictureMetering;
+    @SuppressWarnings("WeakerAccess") protected boolean mPictureSnapshotMetering;
 
     // Can be private
     @VisibleForTesting Handler mCrashHandler;
@@ -1006,6 +1008,22 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess")
     protected final boolean shouldResetAutoFocus() {
         return mAutoFocusResetDelayMillis > 0 && mAutoFocusResetDelayMillis != Long.MAX_VALUE;
+    }
+
+    public final void setPictureMetering(boolean enable) {
+        mPictureMetering = enable;
+    }
+
+    public final boolean getPictureMetering() {
+        return mPictureMetering;
+    }
+
+    public final void setPictureSnapshotMetering(boolean enable) {
+        mPictureSnapshotMetering = enable;
+    }
+
+    public final boolean getPictureSnapshotMetering() {
+        return mPictureSnapshotMetering;
     }
 
     //endregion
