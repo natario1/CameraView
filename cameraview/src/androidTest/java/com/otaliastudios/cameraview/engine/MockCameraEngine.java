@@ -123,12 +123,12 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     @Override
-    protected void onTakePicture(@NonNull PictureResult.Stub stub) {
+    protected void onTakePicture(@NonNull PictureResult.Stub stub, boolean doMetering) {
 
     }
 
     @Override
-    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio) {
+    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio, boolean doMetering) {
 
     }
 
