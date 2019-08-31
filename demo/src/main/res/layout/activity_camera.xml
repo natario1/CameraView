@@ -20,7 +20,7 @@
         app:cameraPreview="glSurface"
         app:cameraPlaySounds="true"
         app:cameraGrid="off"
-        app:cameraFlash="auto"
+        app:cameraFlash="on"
         app:cameraAudio="on"
         app:cameraFacing="back"
         app:cameraGestureTap="autoFocus"
@@ -29,6 +29,7 @@
         app:cameraGestureScrollHorizontal="filterControl1"
         app:cameraGestureScrollVertical="exposureCorrection"
         app:cameraMode="picture"
+        app:cameraPictureSnapshotMetering="true"
         app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker">
 
         <!-- Watermark -->

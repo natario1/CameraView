@@ -38,14 +38,13 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     private static final int STATE_WAITING_CAPTURE = 1;
     private static final int STATE_WAITING_IMAGE = 2;
 
-    private static final int REQUEST_TAG = CameraDevice.TEMPLATE_STILL_CAPTURE;
-
     private CameraCaptureSession mSession;
     private CameraCaptureSession.CaptureCallback mCallback;
     private ImageReader mPictureReader;
     private CaptureRequest.Builder mPictureBuilder;
     private boolean mStopPreviewBeforeCapture;
     private int mState = STATE_IDLE;
+    private int mSequenceId;
 
     public Full2PictureRecorder(@NonNull PictureResult.Stub stub,
                                 @Nullable PictureResultListener listener,
@@ -67,7 +66,6 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     public void take() {
         try {
             mState = STATE_WAITING_CAPTURE;
-            mPictureBuilder.setTag(REQUEST_TAG);
             mPictureBuilder.addTarget(mPictureReader.getSurface());
             mPictureBuilder.set(CaptureRequest.JPEG_ORIENTATION, mResult.rotation);
             if (mStopPreviewBeforeCapture) {
@@ -79,7 +77,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
                 mSession.stopRepeating();
                 mSession.abortCaptures();
             }
-            mSession.capture(mPictureBuilder.build(), mCallback, null);
+            mSequenceId = mSession.capture(mPictureBuilder.build(), mCallback, null);
         } catch (CameraAccessException e) {
             mResult = null;
             mError = e;
@@ -88,14 +86,16 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     }
 
     public void onCaptureStarted(@NonNull CaptureRequest request) {
-        if (request.getTag() == (Integer) REQUEST_TAG) {
-            dispatchOnShutter(false);
+        if (mState == STATE_WAITING_CAPTURE) {
+            if (request.getTag() == mPictureBuilder.build().getTag()) {
+                dispatchOnShutter(false);
+            }
         }
     }
 
     public void onCaptureCompleted(@NonNull TotalCaptureResult result) {
         if (mState == STATE_WAITING_CAPTURE) {
-            if (result.getRequest().getTag() == (Integer) REQUEST_TAG) {
+            if (result.getSequenceId() == mSequenceId) {
                 // This has no real use for now other than logging.
                 LOG.i("onCaptureCompleted:", "Got result, moving to STATE_WAITING_IMAGE");
                 mState = STATE_WAITING_IMAGE;

@@ -70,15 +70,6 @@ public class Meter {
          *
          */
         void onMeteringReset(@Nullable PointF point);
-
-        /**
-         * Whether metering can be reset. Since it happens at a future time, this should
-         * return true if the engine is still in a legit state for this operation.
-         * @param point point
-         * @return true if can reset
-         */
-        // TODO is this useful? engine could do its checks onMeteringReset()
-        boolean canResetMetering(@Nullable PointF point);
     }
 
     private static final String TAG = Meter.class.getSimpleName();
@@ -315,7 +306,6 @@ public class Meter {
      * a reset call, or if {@link #startMetering(CaptureResult, PointF)} was never called.
      * @return true if metering
      */
-    @SuppressWarnings("WeakerAccess")
     public boolean isMetering() {
         return mIsMetering;
     }
@@ -361,20 +351,18 @@ public class Meter {
     @SuppressWarnings("WeakerAccess")
     public void resetMetering() {
         mEngine.mHandler.remove(mResetRunnable);
-        if (mCallback.canResetMetering(mPoint)) {
-            LOG.i("Resetting the meter parameters.");
-            MeteringRectangle whole = null;
-            if (mPoint != null) {
-                // If we have a point, we must reset the metering areas.
-                Rect wholeRect = mCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-                if (wholeRect == null) wholeRect = new Rect();
-                whole = new MeteringRectangle(wholeRect, MeteringRectangle.METERING_WEIGHT_DONT_CARE);
-            }
-            mAutoFocus.resetMetering(mCharacteristics, mBuilder, whole);
-            mAutoWhiteBalance.resetMetering(mCharacteristics, mBuilder, whole);
-            mAutoExposure.resetMetering(mCharacteristics, mBuilder, whole);
-            mCallback.onMeteringReset(mPoint);
+        LOG.i("Resetting the meter parameters.");
+        MeteringRectangle whole = null;
+        if (mPoint != null) {
+            // If we have a point, we must reset the metering areas.
+            Rect wholeRect = mCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            if (wholeRect == null) wholeRect = new Rect();
+            whole = new MeteringRectangle(wholeRect, MeteringRectangle.METERING_WEIGHT_DONT_CARE);
         }
+        mAutoFocus.resetMetering(mCharacteristics, mBuilder, whole);
+        mAutoWhiteBalance.resetMetering(mCharacteristics, mBuilder, whole);
+        mAutoExposure.resetMetering(mCharacteristics, mBuilder, whole);
+        mCallback.onMeteringReset(mPoint);
     }
 
     private Runnable mResetRunnable = new Runnable() {

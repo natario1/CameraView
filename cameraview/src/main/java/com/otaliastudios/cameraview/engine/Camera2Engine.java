@@ -52,6 +52,7 @@ import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.ImageHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
+import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
@@ -81,7 +82,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private CameraCharacteristics mCameraCharacteristics;
     private CameraCaptureSession mSession;
     private CaptureRequest.Builder mRepeatingRequestBuilder;
-    private CaptureRequest mRepeatingRequest;
     private CameraCaptureSession.CaptureCallback mRepeatingRequestCallback;
     private CaptureResult mLastRepeatingResult;
     private final Camera2Mapper mMapper = Camera2Mapper.get();
@@ -216,7 +216,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private void applyRepeatingRequestBuilder(boolean checkStarted, int errorReason, @Nullable final Runnable onFirstFrame) {
         if (!checkStarted || getPreviewState() == STATE_STARTED) {
             try {
-                mRepeatingRequest = mRepeatingRequestBuilder.build();
+                CaptureRequest repeatingRequest = mRepeatingRequestBuilder.build();
                 final AtomicBoolean firstFrame = new AtomicBoolean(false);
                 mRepeatingRequestCallback = new CameraCaptureSession.CaptureCallback() {
                     @Override
@@ -245,13 +245,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
                             ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
                         }
+                        if (mPictureRecorder instanceof Snapshot2PictureRecorder) {
+                            ((Snapshot2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
+                        }
                         if (mMeter != null && mMeter.isMetering()) {
                             mMeter.onCapture(result);
                         }
                     }
 
                 };
-                mSession.setRepeatingRequest(mRepeatingRequest, mRepeatingRequestCallback, null);
+                mSession.setRepeatingRequest(repeatingRequest, mRepeatingRequestCallback, null);
             } catch (CameraAccessException e) {
                 throw new CameraException(e, errorReason);
             }
@@ -543,6 +546,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             mVideoRecorder = null;
         }
         mPictureRecorder = null;
+        if (mMeter != null) {
+            mMeter.resetMetering();
+            mMeter = null;
+        }
         if (hasFrameProcessors()) {
             getFrameManager().release();
         }
@@ -557,8 +564,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             throw createCameraException(e);
         }
         removeRepeatingRequestBuilderSurfaces();
-        mRepeatingRequest = null;
-        mMeter = null;
         LOG.i("onStopPreview:", "Returning.");
         return Tasks.forResult(null);
     }
@@ -617,17 +622,21 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         stub.size = getUncroppedSnapshotSize(Reference.OUTPUT); // Not the real size: it will be cropped to match the view ratio
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR); // Actually it will be rotated and set to 0.
         if (doMetering) {
+            LOG.i("onTakePictureSnapshot:", "doMetering is true. Delaying.");
             mDelayedPictureStub = stub;
             mDelayedPictureRatio = outputRatio;
             startMetering(null, null);
         } else {
+            LOG.i("onTakePictureSnapshot:", "doMetering is false. Performing.");
             if (!(mPreview instanceof GlCameraPreview)) {
                 throw new RuntimeException("takePictureSnapshot with Camera2 is only supported with Preview.GL_SURFACE");
             }
-            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this,
+            mPictureRecorder = new Snapshot2PictureRecorder(stub, this,
                     (GlCameraPreview) mPreview,
                     outputRatio,
-                    getOverlay());
+                    mSession,
+                    mRepeatingRequestCallback,
+                    mRepeatingRequestBuilder);
             mPictureRecorder.take();
         }
     }
@@ -636,11 +645,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     protected void onTakePicture(@NonNull PictureResult.Stub stub, boolean doMetering) {
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
         stub.size = getPictureSize(Reference.OUTPUT);
-
         if (doMetering) {
+            LOG.i("onTakePicture:", "doMetering is true. Delaying.");
             mDelayedPictureStub = stub;
             startMetering(null, null);
         } else {
+            LOG.i("onTakePicture:", "doMetering is false. Performing.");
             try {
                 CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 applyAllParameters(builder);
@@ -771,7 +781,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * the {@link #createRepeatingRequestBuilder(int)} method.
      */
     private void maybeRestorePreviewTemplateAfterVideo() {
-        int template = (int) mRepeatingRequest.getTag();
+        int template = (int) mRepeatingRequestBuilder.build().getTag();
         if (template != CameraDevice.TEMPLATE_PREVIEW) {
             try {
                 createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
@@ -902,8 +912,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     // On some devices, switching from TORCH/OFF to AUTO/ON is not immediately
                     // reflected (for example, torch stays active) unless we do as follows.
                     // It's just a way to wake up the AE routine.
-                    builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                            CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+                    // TODO this works but seems to cause other issues.
+                    // builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                    //         CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
                     return true;
                 }
             }
@@ -1221,6 +1232,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (point != null) {
             mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
         } else {
+            LOG.w("onMeteringEnd - restoring the picture capturing. isSnapshot:", mDelayedPictureStub.isSnapshot);
             if (mDelayedPictureStub.isSnapshot) {
                 onTakePictureSnapshot(mDelayedPictureStub, mDelayedPictureRatio, false);
             } else {
@@ -1232,17 +1244,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     /**
-     * When metering is reset, we're not sure that the engine is still alive.
-     * We should check this here.
-     * @param point point
-     * @return true if metering can be reset
-     */
-    @Override
-    public boolean canResetMetering(@Nullable PointF point) {
-        return getEngineState() == STATE_STARTED;
-    }
-
-    /**
      * Called by {@link Meter} after resetting the metering parameters.
      * We should apply them, and also go back to default focus.
      * @param point point
@@ -1250,8 +1251,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      */
     @Override
     public void onMeteringReset(@Nullable PointF point) {
-        applyDefaultFocus(mRepeatingRequestBuilder);
-        applyRepeatingRequestBuilder(); // only if preview started already
+        if (getEngineState() == STATE_STARTED) {
+            applyDefaultFocus(mRepeatingRequestBuilder);
+            applyRepeatingRequestBuilder(); // only if preview started already
+        }
     }
 
     //endregion
