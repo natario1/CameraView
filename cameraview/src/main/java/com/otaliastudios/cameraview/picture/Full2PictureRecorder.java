@@ -68,6 +68,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
             mState = STATE_WAITING_CAPTURE;
             mPictureBuilder.addTarget(mPictureReader.getSurface());
             mPictureBuilder.set(CaptureRequest.JPEG_ORIENTATION, mResult.rotation);
+            mPictureBuilder.setTag(CameraDevice.TEMPLATE_STILL_CAPTURE);
             if (mStopPreviewBeforeCapture) {
                 // These two are present in official samples and are probably meant to speed things up?
                 // But from my tests, they actually make everything slower. So this is disabled by default
@@ -87,7 +88,7 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
 
     public void onCaptureStarted(@NonNull CaptureRequest request) {
         if (mState == STATE_WAITING_CAPTURE) {
-            if (request.getTag() == mPictureBuilder.build().getTag()) {
+            if (request.getTag() == (Integer) CameraDevice.TEMPLATE_STILL_CAPTURE) {
                 dispatchOnShutter(false);
             }
         }

@@ -24,7 +24,7 @@ import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implements RendererFrameCallback {
+public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
 
     private final static String TAG = Snapshot2PictureRecorder.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
@@ -64,6 +64,27 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
         mBuilder = builder;
     }
 
+    private final RendererFrameCallback mRendererCallback = new RendererFrameCallback() {
+        @Override
+        public void onRendererTextureCreated(int textureId) {
+            Snapshot2PictureRecorder.super.onRendererTextureCreated(textureId);
+        }
+
+        @Override
+        public void onRendererFilterChanged(@NonNull Filter filter) {
+            Snapshot2PictureRecorder.super.onRendererFilterChanged(filter);
+        }
+
+        @Override
+        public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
+            mLastFrameSurfaceTexture = surfaceTexture;
+            mLastFrameScaleX = scaleX;
+            mLastFrameScaleY = scaleY;
+            mLastFrameScaleEGLContext = EGL14.eglGetCurrentContext();
+            maybeTakeFrame();
+        }
+    };
+
     @Override
     public void take() {
         if (!mEngine.getPictureSnapshotMetering()) {
@@ -72,7 +93,7 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
         }
 
         LOG.i("take:", "Engine does metering, adding our CONTROL_CAPTURE_INTENT.");
-        mPreview.addRendererFrameCallback(this);
+        mPreview.addRendererFrameCallback(mRendererCallback);
         mState = STATE_WAITING_CAPTURE;
         try {
             mOldCaptureIntent = mBuilder.get(CaptureRequest.CONTROL_CAPTURE_INTENT);
@@ -84,25 +105,6 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
             mError = e;
             dispatchResult();
         }
-    }
-
-    @Override
-    public void onRendererTextureCreated(int textureId) {
-        super.onRendererTextureCreated(textureId);
-    }
-
-    @Override
-    public void onRendererFilterChanged(@NonNull Filter filter) {
-        super.onRendererFilterChanged(filter);
-    }
-
-    @Override
-    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY) {
-        mLastFrameSurfaceTexture = surfaceTexture;
-        mLastFrameScaleX = scaleX;
-        mLastFrameScaleY = scaleY;
-        mLastFrameScaleEGLContext = EGL14.eglGetCurrentContext();
-        maybeTakeFrame();
     }
 
     public void onCaptureCompleted(@NonNull TotalCaptureResult result) {
@@ -158,7 +160,7 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
                 mSession.setRepeatingRequest(mBuilder.build(), mCallback, null);
             } catch (CameraAccessException ignore) {}
         }
-        mPreview.removeRendererFrameCallback(this);
+        mPreview.removeRendererFrameCallback(mRendererCallback);
         mState = STATE_IDLE;
         super.dispatchResult();
     }

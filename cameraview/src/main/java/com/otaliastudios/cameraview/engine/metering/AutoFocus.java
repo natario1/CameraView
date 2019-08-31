@@ -37,7 +37,9 @@ public class AutoFocus extends MeteringParameter {
     @Override
     protected boolean checkShouldSkip(@NonNull CaptureResult lastResult) {
         Integer afState = lastResult.get(CaptureResult.CONTROL_AF_STATE);
-        boolean result = afState != null && afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED;
+        boolean result = afState != null &&
+                (afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED ||
+                afState == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED);
         LOG.i("checkShouldSkip:", result);
         return result;
     }
@@ -81,6 +83,11 @@ public class AutoFocus extends MeteringParameter {
             case CaptureRequest.CONTROL_AF_STATE_ACTIVE_SCAN: break;
             default: break;
         }
+    }
+
+    @Override
+    protected void onMetered(@NonNull CaptureRequest.Builder builder) {
+        // Do nothing.
     }
 
     @Override

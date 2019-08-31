@@ -7,11 +7,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.View;
@@ -236,6 +239,18 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             super.onVideoRecordingEnd();
             message("Video taken. Processing...", false);
             LOG.w("onVideoRecordingEnd!");
+        }
+
+        @Override
+        public void onExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) {
+            super.onExposureCorrectionChanged(newValue, bounds, fingers);
+            message("Exposure correction:" + newValue, false);
+        }
+
+        @Override
+        public void onZoomChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) {
+            super.onZoomChanged(newValue, bounds, fingers);
+            message("Zoom:" + newValue, false);
         }
     }
 

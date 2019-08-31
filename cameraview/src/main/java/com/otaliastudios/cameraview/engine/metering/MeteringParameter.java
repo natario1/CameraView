@@ -67,12 +67,16 @@ public abstract class MeteringParameter {
                                             @NonNull List<MeteringRectangle> areas,
                                             boolean supportsProcessing);
 
-    public final void onCapture(@NonNull CaptureResult result) {
+    public final void onCapture(@NonNull CaptureRequest.Builder builder,
+                                @NonNull CaptureResult result) {
         if (isMetered()) return;
         processCapture(result);
+        if (isMetered()) onMetered(builder);
     }
 
     protected abstract void processCapture(@NonNull CaptureResult result);
+
+    protected abstract void onMetered(@NonNull CaptureRequest.Builder builder);
 
     public final void resetMetering(@NonNull CameraCharacteristics characteristics,
                                     @NonNull CaptureRequest.Builder builder,

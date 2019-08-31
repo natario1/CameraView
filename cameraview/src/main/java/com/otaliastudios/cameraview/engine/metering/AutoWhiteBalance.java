@@ -46,8 +46,7 @@ public class AutoWhiteBalance extends MeteringParameter {
                                    @NonNull List<MeteringRectangle> areas,
                                    boolean supportsProcessing) {
         if (supportsProcessing) {
-            // Remove any lock. We're not setting any, but just in case.
-            // This would make processing be stuck into the process method.
+            // Remove any lock. This would make processing be stuck into the process method.
             builder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
         }
 
@@ -81,10 +80,18 @@ public class AutoWhiteBalance extends MeteringParameter {
     }
 
     @Override
+    protected void onMetered(@NonNull CaptureRequest.Builder builder) {
+        builder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
+    }
+
+    @Override
     protected void onResetMetering(@NonNull CameraCharacteristics characteristics,
                                    @NonNull CaptureRequest.Builder builder,
                                    @Nullable MeteringRectangle area,
                                    boolean supportsProcessing) {
+        if (supportsProcessing) {
+            builder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
+        }
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
         if (area != null && maxRegions > 0) {

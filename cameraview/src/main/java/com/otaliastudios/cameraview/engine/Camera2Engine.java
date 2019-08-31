@@ -167,9 +167,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @SuppressWarnings("UnusedReturnValue")
     @NonNull
     private CaptureRequest.Builder createRepeatingRequestBuilder(int template) throws CameraAccessException {
+        CaptureRequest.Builder oldBuilder = mRepeatingRequestBuilder;
         mRepeatingRequestBuilder = mCamera.createCaptureRequest(template);
         mRepeatingRequestBuilder.setTag(template);
-        applyAllParameters(mRepeatingRequestBuilder);
+        applyAllParameters(mRepeatingRequestBuilder, oldBuilder);
         return mRepeatingRequestBuilder;
     }
 
@@ -653,7 +654,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             LOG.i("onTakePicture:", "doMetering is false. Performing.");
             try {
                 CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-                applyAllParameters(builder);
+                applyAllParameters(builder, mRepeatingRequestBuilder);
                 mPictureRecorder = new Full2PictureRecorder(stub, this,
                         mSession,
                         mRepeatingRequestCallback,
@@ -797,7 +798,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Parameters
 
-    private void applyAllParameters(@NonNull CaptureRequest.Builder builder) {
+    private void applyAllParameters(@NonNull CaptureRequest.Builder builder,
+                                    @Nullable CaptureRequest.Builder oldBuilder) {
+        LOG.i("applyAllParameters:", "called for tag", builder.build().getTag());
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         applyDefaultFocus(builder);
         applyFlash(builder, Flash.OFF);
@@ -806,6 +809,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         applyHdr(builder, Hdr.OFF);
         applyZoom(builder, 0F);
         applyExposureCorrection(builder, 0F);
+
+        if (oldBuilder != null) {
+            // We might be in a metering operation, or the old builder might have some special
+            // metering parameters. Copy these special keys over to the new builder.
+            // These are the keys changed by MeteringParameters, or by us in applyFocusForMetering.
+            builder.set(CaptureRequest.CONTROL_AF_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AF_REGIONS));
+            builder.set(CaptureRequest.CONTROL_AE_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AE_REGIONS));
+            builder.set(CaptureRequest.CONTROL_AWB_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AWB_REGIONS));
+            builder.set(CaptureRequest.CONTROL_AE_LOCK, oldBuilder.get(CaptureRequest.CONTROL_AE_LOCK));
+            builder.set(CaptureRequest.CONTROL_AWB_LOCK, oldBuilder.get(CaptureRequest.CONTROL_AWB_LOCK));
+            builder.set(CaptureRequest.CONTROL_AF_MODE, oldBuilder.get(CaptureRequest.CONTROL_AF_MODE));
+        }
     }
 
     private void applyDefaultFocus(@NonNull CaptureRequest.Builder builder) {
@@ -1184,6 +1199,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // Reset the old meter if present.
                 if (mMeter != null) {
                     mMeter.resetMetering();
+                    mMeter = null;
                 }
 
                 // The meter will check the current configuration to see if AF/AE/AWB should run.
@@ -1197,7 +1213,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // Create the meter and start.
                 mMeteringGesture = gesture;
                 mMeter = new Meter(Camera2Engine.this,
-                        mRepeatingRequestBuilder,
                         mCameraCharacteristics,
                         Camera2Engine.this);
                 mMeter.startMetering(mLastRepeatingResult, point);
@@ -1214,10 +1229,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onMeteringStarted(@Nullable PointF point) {
         LOG.w("onMeteringStarted - point:", point, "gesture:", mMeteringGesture);
+        applyRepeatingRequestBuilder();
         if (point != null) {
             mCallback.dispatchOnFocusStart(mMeteringGesture, point);
         }
-        applyRepeatingRequestBuilder();
     }
 
     /**
@@ -1229,6 +1244,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onMeteringEnd(@Nullable PointF point, boolean success) {
         LOG.w("onMeteringEnd - point:", point, "gesture:", mMeteringGesture, "success:", success);
+        applyRepeatingRequestBuilder();
         if (point != null) {
             mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
         } else {
@@ -1255,6 +1271,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             applyDefaultFocus(mRepeatingRequestBuilder);
             applyRepeatingRequestBuilder(); // only if preview started already
         }
+    }
+
+    /**
+     * Called by {@link Meter} to get the current capture request
+     * builder so it can apply changes on it.
+     * @return our builder
+     */
+    @NonNull
+    @Override
+    public CaptureRequest.Builder getMeteringBuilder() {
+        return mRepeatingRequestBuilder;
     }
 
     //endregion

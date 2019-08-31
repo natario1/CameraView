@@ -70,6 +70,16 @@ public class Meter {
          *
          */
         void onMeteringReset(@Nullable PointF point);
+
+        /**
+         * Returns the currently used builder. This can change while a metering
+         * operation happens, so the meter will never cache this value.
+         * It is the engine responsibility to copy over values to the new builder
+         * when it changes.
+         * @return a builder
+         */
+        @NonNull
+        CaptureRequest.Builder getMeteringBuilder();
     }
 
     private static final String TAG = Meter.class.getSimpleName();
@@ -77,7 +87,6 @@ public class Meter {
     private static final int FORCED_END_DELAY = 2500;
 
     private final CameraEngine mEngine;
-    private final CaptureRequest.Builder mBuilder;
     private final CameraCharacteristics mCharacteristics;
     private final Callback mCallback;
     private PointF mPoint;
@@ -91,17 +100,14 @@ public class Meter {
     /**
      * Creates a new meter.
      * @param engine the engine
-     * @param builder a capture builder
      * @param characteristics the camera characteristics
      * @param callback the callback
      */
     @SuppressWarnings("WeakerAccess")
     public Meter(@NonNull CameraEngine engine,
-                 @NonNull CaptureRequest.Builder builder,
                  @NonNull CameraCharacteristics characteristics,
                  @NonNull Callback callback) {
         mEngine = engine;
-        mBuilder = builder;
         mCharacteristics = characteristics;
         mCallback = callback;
     }
@@ -158,9 +164,9 @@ public class Meter {
 
         // 7. And finally dispatch everything
         boolean skipIfPossible = mPoint == null;
-        mAutoFocus.startMetering(mCharacteristics, mBuilder, areas, lastResult, skipIfPossible);
-        mAutoWhiteBalance.startMetering(mCharacteristics, mBuilder, areas, lastResult, skipIfPossible);
-        mAutoExposure.startMetering(mCharacteristics, mBuilder, areas, lastResult, skipIfPossible);
+        mAutoFocus.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
+        mAutoWhiteBalance.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
+        mAutoExposure.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
 
         // Dispatch to callback
         mCallback.onMeteringStarted(mPoint);
@@ -239,7 +245,7 @@ public class Meter {
         // The input point and size refer to the stream rect.
         // The stream rect is part of the 'crop region', as described below.
         // https://source.android.com/devices/camera/camera3_crop_reprocess.html
-        Rect cropRect = mBuilder.get(CaptureRequest.SCALER_CROP_REGION);
+        Rect cropRect = mCallback.getMeteringBuilder().get(CaptureRequest.SCALER_CROP_REGION);
         // For now, we don't care about x and y position. Rect should be non-null, but let's be safe.
         int cropRectWidth = cropRect == null ? referenceSize.getWidth() : cropRect.width();
         int cropRectHeight = cropRect == null ? referenceSize.getHeight() : cropRect.height();
@@ -254,7 +260,7 @@ public class Meter {
     private Size applyActiveArrayCoordinates(@NonNull Size referenceSize, @NonNull PointF referencePoint) {
         // The input point and size refer to the scaler crop region.
         // We can query for the crop region position inside the active array, so this is easy.
-        Rect cropRect = mBuilder.get(CaptureRequest.SCALER_CROP_REGION);
+        Rect cropRect = mCallback.getMeteringBuilder().get(CaptureRequest.SCALER_CROP_REGION);
         referencePoint.x += cropRect == null ? 0 : cropRect.left;
         referencePoint.y += cropRect == null ? 0 : cropRect.top;
         // Finally, get the active rect width and height from characteristics.
@@ -320,9 +326,9 @@ public class Meter {
         if (!mIsMetering) return; // We're not interested in results anymore
         if (!(result instanceof TotalCaptureResult)) return; // Let's ignore these, contents are missing/wrong
         
-        if (!mAutoFocus.isMetered()) mAutoFocus.onCapture(result);
-        if (!mAutoExposure.isMetered()) mAutoExposure.onCapture(result);
-        if (!mAutoWhiteBalance.isMetered()) mAutoWhiteBalance.onCapture(result);
+        if (!mAutoFocus.isMetered()) mAutoFocus.onCapture(mCallback.getMeteringBuilder(), result);
+        if (!mAutoExposure.isMetered()) mAutoExposure.onCapture(mCallback.getMeteringBuilder(), result);
+        if (!mAutoWhiteBalance.isMetered()) mAutoWhiteBalance.onCapture(mCallback.getMeteringBuilder(), result);
         if (mAutoFocus.isMetered() && mAutoExposure.isMetered() && mAutoWhiteBalance.isMetered()) {
             LOG.i("onCapture:", "all MeteringParameters have converged. Dispatching onMeteringEnd");
             boolean success = mAutoFocus.isSuccessful()
@@ -359,9 +365,9 @@ public class Meter {
             if (wholeRect == null) wholeRect = new Rect();
             whole = new MeteringRectangle(wholeRect, MeteringRectangle.METERING_WEIGHT_DONT_CARE);
         }
-        mAutoFocus.resetMetering(mCharacteristics, mBuilder, whole);
-        mAutoWhiteBalance.resetMetering(mCharacteristics, mBuilder, whole);
-        mAutoExposure.resetMetering(mCharacteristics, mBuilder, whole);
+        mAutoFocus.resetMetering(mCharacteristics, mCallback.getMeteringBuilder(), whole);
+        mAutoWhiteBalance.resetMetering(mCharacteristics, mCallback.getMeteringBuilder(), whole);
+        mAutoExposure.resetMetering(mCharacteristics, mCallback.getMeteringBuilder(), whole);
         mCallback.onMeteringReset(mPoint);
     }
 

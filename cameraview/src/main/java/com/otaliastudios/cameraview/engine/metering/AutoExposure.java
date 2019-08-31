@@ -57,6 +57,9 @@ public class AutoExposure extends MeteringParameter {
         isStarted = false;
 
         if (supportsProcessing) {
+            // Remove any lock. This would make processing be stuck into the process method.
+            builder.set(CaptureRequest.CONTROL_AE_LOCK, false);
+            // Launch the precapture trigger.
             builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                     CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
         }
@@ -97,6 +100,11 @@ public class AutoExposure extends MeteringParameter {
     }
 
     @Override
+    protected void onMetered(@NonNull CaptureRequest.Builder builder) {
+        builder.set(CaptureRequest.CONTROL_AE_LOCK, true);
+    }
+
+    @Override
     protected void onResetMetering(@NonNull CameraCharacteristics characteristics,
                                    @NonNull CaptureRequest.Builder builder,
                                    @Nullable MeteringRectangle area,
@@ -107,6 +115,7 @@ public class AutoExposure extends MeteringParameter {
             builder.set(CaptureRequest.CONTROL_AE_REGIONS, new MeteringRectangle[]{area});
         }
         if (supportsProcessing) {
+            builder.set(CaptureRequest.CONTROL_AE_LOCK, false);
             // Cleanup any precapture sequence.
             if (Build.VERSION.SDK_INT >= 23) {
                 builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
