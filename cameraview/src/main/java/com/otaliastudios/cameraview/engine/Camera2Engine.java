@@ -53,7 +53,6 @@ import com.otaliastudios.cameraview.internal.utils.ImageHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;
-import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
@@ -813,7 +812,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (oldBuilder != null) {
             // We might be in a metering operation, or the old builder might have some special
             // metering parameters. Copy these special keys over to the new builder.
-            // These are the keys changed by MeteringParameters, or by us in applyFocusForMetering.
+            // These are the keys changed by metering.Parameters, or by us in applyFocusForMetering.
             builder.set(CaptureRequest.CONTROL_AF_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AF_REGIONS));
             builder.set(CaptureRequest.CONTROL_AE_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AE_REGIONS));
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AWB_REGIONS));
@@ -1225,7 +1224,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 mMeter = new Meter(Camera2Engine.this,
                         mCameraCharacteristics,
                         Camera2Engine.this);
-                mMeter.startMetering(mLastRepeatingResult, point);
+                mMeter.startMetering(mLastRepeatingResult, point, point == null);
             }
         });
     }
@@ -1234,7 +1233,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * Called by {@link Meter} when the metering process has started.
      * We are currently exposing an auto focus API so that's what we dispatch.
      * @param point point
-     *
      */
     @Override
     public void onMeteringStarted(@Nullable PointF point) {

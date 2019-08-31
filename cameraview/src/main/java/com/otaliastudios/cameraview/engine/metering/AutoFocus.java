@@ -15,7 +15,7 @@ import com.otaliastudios.cameraview.CameraLogger;
 import java.util.List;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class AutoFocus extends MeteringParameter {
+public class AutoFocus extends Parameter {
 
     private static final String TAG = AutoFocus.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);

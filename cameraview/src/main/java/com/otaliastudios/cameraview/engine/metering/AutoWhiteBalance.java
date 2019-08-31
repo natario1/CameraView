@@ -15,7 +15,7 @@ import com.otaliastudios.cameraview.CameraLogger;
 import java.util.List;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class AutoWhiteBalance extends MeteringParameter {
+public class AutoWhiteBalance extends Parameter {
 
     private static final String TAG = AutoWhiteBalance.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);

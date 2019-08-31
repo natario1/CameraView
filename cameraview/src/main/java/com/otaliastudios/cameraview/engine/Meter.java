@@ -17,7 +17,7 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.metering.AutoExposure;
 import com.otaliastudios.cameraview.engine.metering.AutoFocus;
 import com.otaliastudios.cameraview.engine.metering.AutoWhiteBalance;
-import com.otaliastudios.cameraview.engine.metering.MeteringParameter;
+import com.otaliastudios.cameraview.engine.metering.Parameter;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.size.AspectRatio;
@@ -30,7 +30,7 @@ import java.util.List;
  * Helps Camera2-based engines to perform 3A (auto focus, auto exposure and auto white balance)
  * metering. Users are required to:
  *
- * - Call {@link #startMetering(CaptureResult, PointF)} to start
+ * - Call {@link #startMetering(CaptureResult, PointF, boolean)} to start
  * - Call {@link #onCapture(CaptureResult)} when they have partial or total results, as long as the
  *   meter is still in a metering operation, which can be checked through {@link #isMetering()}
  * - Call {@link #resetMetering()} to reset the metering parameters if needed. This is done automatically
@@ -65,7 +65,7 @@ public class Meter {
         /**
          * Notifies that metering has been reset. From now on, this meter instance
          * is done, although in theory it could be reused by calling
-         * {@link #startMetering(CaptureResult, PointF)} again.
+         * {@link #startMetering(CaptureResult, PointF, boolean)} again.
          * @param point point
          *
          */
@@ -93,9 +93,9 @@ public class Meter {
 
     private boolean mIsMetering;
     private long mMeteringStartTime;
-    private MeteringParameter mAutoFocus = new AutoFocus();
-    private MeteringParameter mAutoWhiteBalance = new AutoWhiteBalance();
-    private MeteringParameter mAutoExposure = new AutoExposure();
+    private Parameter mAutoFocus = new AutoFocus();
+    private Parameter mAutoWhiteBalance = new AutoWhiteBalance();
+    private Parameter mAutoExposure = new AutoExposure();
 
     /**
      * Creates a new meter.
@@ -116,9 +116,12 @@ public class Meter {
      * Starts a metering sequence.
      * @param lastResult the last result
      * @param point point
+     * @param skipIfPossible try skip
      */
     @SuppressWarnings("WeakerAccess")
-    public void startMetering(@NonNull CaptureResult lastResult, @Nullable PointF point) {
+    public void startMetering(@NonNull CaptureResult lastResult,
+                              @Nullable PointF point,
+                              boolean skipIfPossible) {
         mPoint = point;
         mIsMetering = true;
 
@@ -163,7 +166,6 @@ public class Meter {
         }
 
         // 7. And finally dispatch everything
-        boolean skipIfPossible = mPoint == null;
         mAutoFocus.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
         mAutoWhiteBalance.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
         mAutoExposure.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
@@ -309,7 +311,7 @@ public class Meter {
 
     /**
      * True if we're metering. False if we're not, for example if we're waiting for
-     * a reset call, or if {@link #startMetering(CaptureResult, PointF)} was never called.
+     * a reset call, or if {@link #startMetering(CaptureResult, PointF, boolean)} was never called.
      * @return true if metering
      */
     public boolean isMetering() {
@@ -330,13 +332,13 @@ public class Meter {
         if (!mAutoExposure.isMetered()) mAutoExposure.onCapture(mCallback.getMeteringBuilder(), result);
         if (!mAutoWhiteBalance.isMetered()) mAutoWhiteBalance.onCapture(mCallback.getMeteringBuilder(), result);
         if (mAutoFocus.isMetered() && mAutoExposure.isMetered() && mAutoWhiteBalance.isMetered()) {
-            LOG.i("onCapture:", "all MeteringParameters have converged. Dispatching onMeteringEnd");
+            LOG.i("onCapture:", "all Parameters have converged. Dispatching onMeteringEnd");
             boolean success = mAutoFocus.isSuccessful()
                     && mAutoExposure.isSuccessful()
                     && mAutoWhiteBalance.isSuccessful();
             onMeteringEnd(success);
         } else if (System.currentTimeMillis() - mMeteringStartTime >= FORCED_END_DELAY) {
-            LOG.i("onCapture:", "FORCED_END_DELAY was reached. Some MeteringParameter is stuck. Forcing end.");
+            LOG.i("onCapture:", "FORCED_END_DELAY was reached. Some Parameter is stuck. Forcing end.");
             onMeteringEnd(false);
         }
     }

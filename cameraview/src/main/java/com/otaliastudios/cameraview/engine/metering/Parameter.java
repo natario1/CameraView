@@ -13,7 +13,7 @@ import androidx.annotation.RequiresApi;
 import java.util.List;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public abstract class MeteringParameter {
+public abstract class Parameter {
 
     @SuppressWarnings("WeakerAccess")
     protected boolean isSuccessful;
@@ -57,6 +57,19 @@ public abstract class MeteringParameter {
         }
     }
 
+    public final void onCapture(@NonNull CaptureRequest.Builder builder,
+                                @NonNull CaptureResult result) {
+        if (isMetered()) return;
+        processCapture(result);
+        if (isMetered()) onMetered(builder);
+    }
+
+    public final void resetMetering(@NonNull CameraCharacteristics characteristics,
+                                    @NonNull CaptureRequest.Builder builder,
+                                    @Nullable MeteringRectangle area) {
+        onResetMetering(characteristics, builder, area, supportsProcessing);
+    }
+
     protected abstract boolean checkSupportsProcessing(@NonNull CameraCharacteristics characteristics,
                                                        @NonNull CaptureRequest.Builder builder);
 
@@ -67,22 +80,9 @@ public abstract class MeteringParameter {
                                             @NonNull List<MeteringRectangle> areas,
                                             boolean supportsProcessing);
 
-    public final void onCapture(@NonNull CaptureRequest.Builder builder,
-                                @NonNull CaptureResult result) {
-        if (isMetered()) return;
-        processCapture(result);
-        if (isMetered()) onMetered(builder);
-    }
-
     protected abstract void processCapture(@NonNull CaptureResult result);
 
     protected abstract void onMetered(@NonNull CaptureRequest.Builder builder);
-
-    public final void resetMetering(@NonNull CameraCharacteristics characteristics,
-                                    @NonNull CaptureRequest.Builder builder,
-                                    @Nullable MeteringRectangle area) {
-        onResetMetering(characteristics, builder, area, supportsProcessing);
-    }
 
     protected abstract void onResetMetering(@NonNull CameraCharacteristics characteristics,
                                             @NonNull CaptureRequest.Builder builder,

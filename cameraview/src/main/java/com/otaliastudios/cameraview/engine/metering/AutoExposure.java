@@ -15,7 +15,7 @@ import com.otaliastudios.cameraview.CameraLogger;
 import java.util.List;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class AutoExposure extends MeteringParameter {
+public class AutoExposure extends Parameter {
 
     private static final String TAG = AutoExposure.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
