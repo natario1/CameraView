@@ -7,6 +7,7 @@ import android.hardware.camera2.params.MeteringRectangle;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
@@ -20,36 +21,44 @@ public class AutoFocus extends MeteringParameter {
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     @Override
-    public void startMetering(@NonNull CameraCharacteristics characteristics,
-                              @NonNull CaptureRequest.Builder builder,
-                              @NonNull List<MeteringRectangle> areas) {
-        isSuccessful = false;
-        isMetered = false;
-
-        Integer afMode = builder.get(CaptureRequest.CONTROL_AF_MODE);
+    protected boolean checkSupportsProcessing(@NonNull CameraCharacteristics characteristics,
+                                              @NonNull CaptureRequest.Builder builder) {
         // Exclude OFF and EDOF as per docs.
-        isSupported = afMode != null &&
+        Integer afMode = builder.get(CaptureRequest.CONTROL_AF_MODE);
+        return afMode != null &&
                 (afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO
-                || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-                || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                || afMode == CameraCharacteristics.CONTROL_AF_MODE_MACRO);
-        if (isSupported) {
+                        || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                        || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                        || afMode == CameraCharacteristics.CONTROL_AF_MODE_MACRO);
+    }
+
+    @Override
+    protected boolean checkShouldSkip(@NonNull CaptureResult lastResult) {
+        Integer afState = lastResult.get(CaptureResult.CONTROL_AF_STATE);
+        return afState != null && afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED;
+    }
+
+    @Override
+    protected void onStartMetering(@NonNull CameraCharacteristics characteristics,
+                                   @NonNull CaptureRequest.Builder builder,
+                                   @NonNull List<MeteringRectangle> areas,
+                                   boolean supportsProcessing) {
+        if (supportsProcessing) {
             builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
         }
 
         // Even if auto is not supported, change the regions anyway.
-        int maxRegions = readCharacteristic(characteristics, CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
-        if (maxRegions > 0) {
+        int maxRegions = readCharacteristic(characteristics,
+                CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
+        if (!areas.isEmpty() && maxRegions > 0) {
             int max = Math.min(maxRegions, areas.size());
             builder.set(CaptureRequest.CONTROL_AF_REGIONS,
                     areas.subList(0, max).toArray(new MeteringRectangle[]{}));
         }
-
     }
 
     @Override
-    public void onCapture(@NonNull CaptureResult result) {
-        if (isMetered || !isSupported) return;
+    public void processCapture(@NonNull CaptureResult result) {
         Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
         LOG.i("onCapture:", "afState:", afState);
         if (afState == null) return;
@@ -71,16 +80,17 @@ public class AutoFocus extends MeteringParameter {
     }
 
     @Override
-    public void resetMetering(@NonNull CameraCharacteristics characteristics,
-                              @NonNull CaptureRequest.Builder builder,
-                              @NonNull MeteringRectangle area) {
+    protected void onResetMetering(@NonNull CameraCharacteristics characteristics,
+                                   @NonNull CaptureRequest.Builder builder,
+                                   @Nullable MeteringRectangle area,
+                                   boolean supportsProcessing) {
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
-        if (maxRegions > 0) {
+        if (area != null && maxRegions > 0) {
             builder.set(CaptureRequest.CONTROL_AF_REGIONS, new MeteringRectangle[]{area});
         }
 
-        if (isSupported) { // Cleanup any trigger.
+        if (supportsProcessing) { // Cleanup any trigger.
             builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
         }
     }

@@ -7,6 +7,7 @@ import android.hardware.camera2.params.MeteringRectangle;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
@@ -22,13 +23,9 @@ public class AutoExposure extends MeteringParameter {
     private boolean isStarted;
 
     @Override
-    public void startMetering(@NonNull CameraCharacteristics characteristics,
-                              @NonNull CaptureRequest.Builder builder,
-                              @NonNull List<MeteringRectangle> areas) {
-        isSuccessful = false;
-        isMetered = false;
-        isStarted = false;
-
+    protected boolean checkSupportsProcessing(@NonNull CameraCharacteristics characteristics,
+                                              @NonNull CaptureRequest.Builder builder) {
+        // In our case, this means checking if we support the AE precapture trigger.
         boolean isNotLegacy = readCharacteristic(characteristics,
                 CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1) !=
                 CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
@@ -39,9 +36,23 @@ public class AutoExposure extends MeteringParameter {
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
                         || aeMode == 5 /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */);
-        isSupported = isNotLegacy && isAEOn;
+        return isNotLegacy && isAEOn;
+    }
 
-        if (isSupported) {
+    @Override
+    protected boolean checkShouldSkip(@NonNull CaptureResult lastResult) {
+        Integer aeState = lastResult.get(CaptureResult.CONTROL_AE_STATE);
+        return aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED;
+    }
+
+    @Override
+    protected void onStartMetering(@NonNull CameraCharacteristics characteristics,
+                                   @NonNull CaptureRequest.Builder builder,
+                                   @NonNull List<MeteringRectangle> areas,
+                                   boolean supportsProcessing) {
+        isStarted = false;
+
+        if (supportsProcessing) {
             builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                     CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
         }
@@ -49,16 +60,16 @@ public class AutoExposure extends MeteringParameter {
         // Even if precapture is not supported, check the regions anyway.
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
-        if (maxRegions > 0) {
+        if (!areas.isEmpty() && maxRegions > 0) {
             int max = Math.min(maxRegions, areas.size());
             builder.set(CaptureRequest.CONTROL_AE_REGIONS,
                     areas.subList(0, max).toArray(new MeteringRectangle[]{}));
         }
     }
 
+
     @Override
-    public void onCapture(@NonNull CaptureResult result) {
-        if (isMetered || !isSupported) return;
+    public void processCapture(@NonNull CaptureResult result) {
         Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
         LOG.i("onCapture:", "aeState:", aeState);
         if (aeState == null) return;
@@ -82,15 +93,16 @@ public class AutoExposure extends MeteringParameter {
     }
 
     @Override
-    public void resetMetering(@NonNull CameraCharacteristics characteristics,
-                              @NonNull CaptureRequest.Builder builder,
-                              @NonNull MeteringRectangle area) {
+    protected void onResetMetering(@NonNull CameraCharacteristics characteristics,
+                                   @NonNull CaptureRequest.Builder builder,
+                                   @Nullable MeteringRectangle area,
+                                   boolean supportsProcessing) {
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
-        if (maxRegions > 0) {
+        if (area != null && maxRegions > 0) {
             builder.set(CaptureRequest.CONTROL_AE_REGIONS, new MeteringRectangle[]{area});
         }
-        if (isSupported) {
+        if (supportsProcessing) {
             // Cleanup any precapture sequence.
             if (Build.VERSION.SDK_INT >= 23) {
                 builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,

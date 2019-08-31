@@ -24,6 +24,7 @@ import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,7 +53,7 @@ public class Meter {
          * @param point point
          * @param gesture gesture
          */
-        void onMeteringStarted(@NonNull PointF point, @Nullable Gesture gesture);
+        void onMeteringStarted(@Nullable PointF point, @Nullable Gesture gesture);
 
         /**
          * Notifies that metering has ended. No action is required for implementors.
@@ -62,16 +63,16 @@ public class Meter {
          * @param gesture gesture
          * @param success success
          */
-        void onMeteringEnd(@NonNull PointF point, @Nullable Gesture gesture, boolean success);
+        void onMeteringEnd(@Nullable PointF point, @Nullable Gesture gesture, boolean success);
 
         /**
          * Notifies that metering has been reset. From now on, this meter instance
          * is done, although in theory it could be reused by calling
-         * {@link #startMetering(PointF, Gesture)} again.
+         * {@link #startMetering(CaptureResult, PointF, Gesture)} again.
          * @param point point
          * @param gesture gesture
          */
-        void onMeteringReset(@NonNull PointF point, @Nullable Gesture gesture);
+        void onMeteringReset(@Nullable PointF point, @Nullable Gesture gesture);
 
         /**
          * Whether metering can be reset. Since it happens at a future time, this should
@@ -81,7 +82,7 @@ public class Meter {
          * @return true if can reset
          */
         // TODO is this useful? engine could do its checks onMeteringReset()
-        boolean canResetMetering(@NonNull PointF point, @Nullable Gesture gesture);
+        boolean canResetMetering(@Nullable PointF point, @Nullable Gesture gesture);
     }
 
     private static final String TAG = Meter.class.getSimpleName();
@@ -121,53 +122,61 @@ public class Meter {
 
     /**
      * Starts a metering sequence.
+     * @param lastResult the last result
      * @param point point
      * @param gesture gesture
      */
     @SuppressWarnings("WeakerAccess")
-    public void startMetering(@NonNull PointF point, @Nullable Gesture gesture) {
+    public void startMetering(@NonNull CaptureResult lastResult, @Nullable PointF point, @Nullable Gesture gesture) {
         mPoint = point;
         mGesture = gesture;
         mIsMetering = true;
 
-        // This is a good Q/A. https://stackoverflow.com/a/33181620/4288782
-        // At first, the point is relative to the View system and does not account our own cropping.
-        // Will keep updating these two below.
-        final PointF referencePoint = new PointF(mPoint.x, mPoint.y);
-        Size referenceSize = mEngine.mPreview.getSurfaceSize();
+        List<MeteringRectangle> areas = new ArrayList<>();
+        if (point != null) {
+            // This is a good Q/A. https://stackoverflow.com/a/33181620/4288782
+            // At first, the point is relative to the View system and does not account our own cropping.
+            // Will keep updating these two below.
+            final PointF referencePoint = new PointF(mPoint.x, mPoint.y);
+            Size referenceSize = mEngine.mPreview.getSurfaceSize();
 
-        // 1. Account for cropping.
-        // This will enlarge the preview size so that aspect ratio matches.
-        referenceSize = applyPreviewCropping(referenceSize, referencePoint);
+            // 1. Account for cropping.
+            // This will enlarge the preview size so that aspect ratio matches.
+            referenceSize = applyPreviewCropping(referenceSize, referencePoint);
 
-        // 2. Scale to the preview stream coordinates.
-        // This will move to the preview stream coordinates by scaling.
-        referenceSize = applyPreviewScale(referenceSize, referencePoint);
+            // 2. Scale to the preview stream coordinates.
+            // This will move to the preview stream coordinates by scaling.
+            referenceSize = applyPreviewScale(referenceSize, referencePoint);
 
-        // 3. Rotate to the stream coordinate system.
-        // This leaves us with sensor stream coordinates.
-        referenceSize = applyPreviewToSensorRotation(referenceSize, referencePoint);
+            // 3. Rotate to the stream coordinate system.
+            // This leaves us with sensor stream coordinates.
+            referenceSize = applyPreviewToSensorRotation(referenceSize, referencePoint);
 
-        // 4. Move to the crop region coordinate system.
-        // The crop region is the union of all currently active streams.
-        referenceSize = applyCropRegionCoordinates(referenceSize, referencePoint);
+            // 4. Move to the crop region coordinate system.
+            // The crop region is the union of all currently active streams.
+            referenceSize = applyCropRegionCoordinates(referenceSize, referencePoint);
 
-        // 5. Move to the active array coordinate system.
-        referenceSize = applyActiveArrayCoordinates(referenceSize, referencePoint);
+            // 5. Move to the active array coordinate system.
+            referenceSize = applyActiveArrayCoordinates(referenceSize, referencePoint);
 
-        // 6. Now we can compute the metering regions.
-        // We want to define them as a fraction of the visible size which (apart from cropping)
-        // can be obtained through the SENSOR rotated preview stream size.
-        Size visibleSize = mEngine.getPreviewStreamSize(Reference.SENSOR);
-        //noinspection ConstantConditions
-        MeteringRectangle area1 = createMeteringRectangle(referenceSize, referencePoint, visibleSize, 0.05F, 1000);
-        MeteringRectangle area2 = createMeteringRectangle(referenceSize, referencePoint, visibleSize, 0.1F, 100);
-        List<MeteringRectangle> areas = Arrays.asList(area1, area2);
+            // 6. Now we can compute the metering regions.
+            // We want to define them as a fraction of the visible size which (apart from cropping)
+            // can be obtained through the SENSOR rotated preview stream size.
+            Size visibleSize = mEngine.getPreviewStreamSize(Reference.SENSOR);
+            //noinspection ConstantConditions
+            MeteringRectangle area1 = createMeteringRectangle(referenceSize, referencePoint,
+                    visibleSize, 0.05F, 1000);
+            MeteringRectangle area2 = createMeteringRectangle(referenceSize, referencePoint,
+                    visibleSize, 0.1F, 100);
+            areas.add(area1);
+            areas.add(area2);
+        }
 
         // 7. And finally dispatch everything
-        mAutoFocus.startMetering(mCharacteristics, mBuilder, areas);
-        mAutoWhiteBalance.startMetering(mCharacteristics, mBuilder, areas);
-        mAutoExposure.startMetering(mCharacteristics, mBuilder, areas);
+        boolean skipIfPossible = mPoint == null;
+        mAutoFocus.startMetering(mCharacteristics, mBuilder, areas, lastResult, skipIfPossible);
+        mAutoWhiteBalance.startMetering(mCharacteristics, mBuilder, areas, lastResult, skipIfPossible);
+        mAutoExposure.startMetering(mCharacteristics, mBuilder, areas, lastResult, skipIfPossible);
 
         // Dispatch to callback
         mCallback.onMeteringStarted(mPoint, mGesture);
@@ -310,7 +319,7 @@ public class Meter {
 
     /**
      * True if we're metering. False if we're not, for example if we're waiting for
-     * a reset call, or if {@link #startMetering(PointF, Gesture)} was never called.
+     * a reset call, or if {@link #startMetering(CaptureResult, PointF, Gesture)} was never called.
      * @return true if metering
      */
     @SuppressWarnings("WeakerAccess")
@@ -361,12 +370,16 @@ public class Meter {
         mEngine.mHandler.remove(mResetRunnable);
         if (mCallback.canResetMetering(mPoint, mGesture)) {
             LOG.i("Resetting the meter parameters.");
-            Rect whole = mCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-            if (whole == null) whole = new Rect();
-            MeteringRectangle rectangle = new MeteringRectangle(whole, MeteringRectangle.METERING_WEIGHT_DONT_CARE);
-            mAutoFocus.resetMetering(mCharacteristics, mBuilder, rectangle);
-            mAutoWhiteBalance.resetMetering(mCharacteristics, mBuilder, rectangle);
-            mAutoExposure.resetMetering(mCharacteristics, mBuilder, rectangle);
+            MeteringRectangle whole = null;
+            if (mPoint != null) {
+                // If we have a point, we must reset the metering areas.
+                Rect wholeRect = mCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+                if (wholeRect == null) wholeRect = new Rect();
+                whole = new MeteringRectangle(wholeRect, MeteringRectangle.METERING_WEIGHT_DONT_CARE);
+            }
+            mAutoFocus.resetMetering(mCharacteristics, mBuilder, whole);
+            mAutoWhiteBalance.resetMetering(mCharacteristics, mBuilder, whole);
+            mAutoExposure.resetMetering(mCharacteristics, mBuilder, whole);
             mCallback.onMeteringReset(mPoint, mGesture);
         }
     }

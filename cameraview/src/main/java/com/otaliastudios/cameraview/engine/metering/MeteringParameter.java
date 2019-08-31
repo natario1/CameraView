@@ -7,6 +7,7 @@ import android.hardware.camera2.params.MeteringRectangle;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import java.util.List;
@@ -15,13 +16,13 @@ import java.util.List;
 public abstract class MeteringParameter {
 
     @SuppressWarnings("WeakerAccess")
-    protected boolean isSupported;
-
-    @SuppressWarnings("WeakerAccess")
     protected boolean isSuccessful;
 
     @SuppressWarnings("WeakerAccess")
     protected boolean isMetered;
+
+    private boolean shouldSkip;
+    private boolean supportsProcessing;
 
     @SuppressWarnings("WeakerAccess")
     @NonNull
@@ -34,21 +35,53 @@ public abstract class MeteringParameter {
 
     public final boolean isMetered() {
         // A non supported parameter should always appear as metered
-        return isMetered || !isSupported;
+        return isMetered || !supportsProcessing || shouldSkip;
     }
 
     public final boolean isSuccessful() {
         // A non supported parameter should always appear as successful
-        return isSuccessful || !isSupported;
+        return isSuccessful || !supportsProcessing || shouldSkip;
     }
 
-    public abstract void startMetering(@NonNull CameraCharacteristics characteristics,
-                       @NonNull CaptureRequest.Builder builder,
-                       @NonNull List<MeteringRectangle> areas);
+    public final void startMetering(@NonNull CameraCharacteristics characteristics,
+                                    @NonNull CaptureRequest.Builder builder,
+                                    @NonNull List<MeteringRectangle> areas,
+                                    @NonNull CaptureResult lastResult,
+                                    boolean skipIfPossible) {
+        isSuccessful = false;
+        isMetered = false;
+        shouldSkip = skipIfPossible && checkShouldSkip(lastResult);
+        supportsProcessing = checkSupportsProcessing(characteristics, builder);
+        if (!shouldSkip) {
+            onStartMetering(characteristics, builder, areas, supportsProcessing);
+        }
+    }
 
-    public abstract void resetMetering(@NonNull CameraCharacteristics characteristics,
-                       @NonNull CaptureRequest.Builder builder,
-                       @NonNull MeteringRectangle area);
+    protected abstract boolean checkSupportsProcessing(@NonNull CameraCharacteristics characteristics,
+                                                       @NonNull CaptureRequest.Builder builder);
 
-    public abstract void onCapture(@NonNull CaptureResult result);
+    protected abstract boolean checkShouldSkip(@NonNull CaptureResult lastResult);
+
+    protected abstract void onStartMetering(@NonNull CameraCharacteristics characteristics,
+                                            @NonNull CaptureRequest.Builder builder,
+                                            @NonNull List<MeteringRectangle> areas,
+                                            boolean supportsProcessing);
+
+    public final void onCapture(@NonNull CaptureResult result) {
+        if (isMetered()) return;
+        processCapture(result);
+    }
+
+    protected abstract void processCapture(@NonNull CaptureResult result);
+
+    public final void resetMetering(@NonNull CameraCharacteristics characteristics,
+                                    @NonNull CaptureRequest.Builder builder,
+                                    @Nullable MeteringRectangle area) {
+        onResetMetering(characteristics, builder, area, supportsProcessing);
+    }
+
+    protected abstract void onResetMetering(@NonNull CameraCharacteristics characteristics,
+                                            @NonNull CaptureRequest.Builder builder,
+                                            @Nullable MeteringRectangle area,
+                                            boolean supportsProcessing);
 }

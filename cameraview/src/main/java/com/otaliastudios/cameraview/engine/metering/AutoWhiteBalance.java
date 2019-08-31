@@ -7,6 +7,7 @@ import android.hardware.camera2.params.MeteringRectangle;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
@@ -20,37 +21,44 @@ public class AutoWhiteBalance extends MeteringParameter {
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     @Override
-    public void startMetering(@NonNull CameraCharacteristics characteristics,
-                              @NonNull CaptureRequest.Builder builder,
-                              @NonNull List<MeteringRectangle> areas) {
-        isSuccessful = false;
-        isMetered = false;
-
+    protected boolean checkSupportsProcessing(@NonNull CameraCharacteristics characteristics,
+                                              @NonNull CaptureRequest.Builder builder) {
         boolean isNotLegacy = readCharacteristic(characteristics,
                 CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1) !=
                 CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
         Integer awbMode = builder.get(CaptureRequest.CONTROL_AWB_MODE);
-        isSupported = isNotLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
+        return isNotLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
+    }
 
-        if (isSupported) {
+    @Override
+    protected boolean checkShouldSkip(@NonNull CaptureResult lastResult) {
+        Integer awbState = lastResult.get(CaptureResult.CONTROL_AWB_STATE);
+        return awbState != null && awbState == CaptureRequest.CONTROL_AWB_STATE_CONVERGED;
+    }
+
+    @Override
+    protected void onStartMetering(@NonNull CameraCharacteristics characteristics,
+                                   @NonNull CaptureRequest.Builder builder,
+                                   @NonNull List<MeteringRectangle> areas,
+                                   boolean supportsProcessing) {
+        if (supportsProcessing) {
             // Remove any lock. We're not setting any, but just in case.
+            // This would make processing be stuck into the process method.
             builder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
         }
 
         // Even if auto is not supported, change the regions anyway.
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
-        if (maxRegions > 0) {
+        if (!areas.isEmpty() && maxRegions > 0) {
             int max = Math.min(maxRegions, areas.size());
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS,
                     areas.subList(0, max).toArray(new MeteringRectangle[]{}));
         }
-
     }
 
     @Override
-    public void onCapture(@NonNull CaptureResult result) {
-        if (isMetered || !isSupported) return;
+    public void processCapture(@NonNull CaptureResult result) {
         Integer awbState = result.get(CaptureResult.CONTROL_AWB_STATE);
         LOG.i("onCapture:", "awbState:", awbState);
         if (awbState == null) return;
@@ -69,12 +77,13 @@ public class AutoWhiteBalance extends MeteringParameter {
     }
 
     @Override
-    public void resetMetering(@NonNull CameraCharacteristics characteristics,
-                              @NonNull CaptureRequest.Builder builder,
-                              @NonNull MeteringRectangle area) {
+    protected void onResetMetering(@NonNull CameraCharacteristics characteristics,
+                                   @NonNull CaptureRequest.Builder builder,
+                                   @Nullable MeteringRectangle area,
+                                   boolean supportsProcessing) {
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
-        if (maxRegions > 0) {
+        if (area != null && maxRegions > 0) {
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS, new MeteringRectangle[]{area});
         }
     }

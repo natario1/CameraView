@@ -83,6 +83,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private CaptureRequest.Builder mRepeatingRequestBuilder;
     private CaptureRequest mRepeatingRequest;
     private CameraCaptureSession.CaptureCallback mRepeatingRequestCallback;
+    private CaptureResult mLastRepeatingResult;
     private final Camera2Mapper mMapper = Camera2Mapper.get();
 
     // Frame processing
@@ -240,6 +241,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     @Override
                     public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                         super.onCaptureCompleted(session, request, result);
+                        mLastRepeatingResult = result;
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
                             ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
                         }
@@ -1175,7 +1177,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         mRepeatingRequestBuilder,
                         mCameraCharacteristics,
                         Camera2Engine.this);
-                mMeter.startMetering(point, gesture);
+                mMeter.startMetering(mLastRepeatingResult, point, gesture);
             }
         });
     }
@@ -1187,9 +1189,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * @param gesture gesture
      */
     @Override
-    public void onMeteringStarted(@NonNull PointF point, @Nullable Gesture gesture) {
+    public void onMeteringStarted(@Nullable PointF point, @Nullable Gesture gesture) {
         LOG.w("onMeteringStarted - point:", point, "gesture:", gesture);
-        mCallback.dispatchOnFocusStart(gesture, point);
+        if (point != null) {
+            mCallback.dispatchOnFocusStart(gesture, point);
+        }
         applyRepeatingRequestBuilder();
     }
 
@@ -1201,9 +1205,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * @param success success
      */
     @Override
-    public void onMeteringEnd(@NonNull PointF point, @Nullable Gesture gesture, boolean success) {
+    public void onMeteringEnd(@Nullable PointF point, @Nullable Gesture gesture, boolean success) {
         LOG.w("onMeteringEnd - point:", point, "gesture:", gesture, "success:", success);
-        mCallback.dispatchOnFocusEnd(gesture, success, point);
+        if (point != null) {
+            mCallback.dispatchOnFocusEnd(gesture, success, point);
+        }
     }
 
     /**
@@ -1214,7 +1220,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * @return true if metering can be reset
      */
     @Override
-    public boolean canResetMetering(@NonNull PointF point, @Nullable Gesture gesture) {
+    public boolean canResetMetering(@Nullable PointF point, @Nullable Gesture gesture) {
         return getEngineState() == STATE_STARTED;
     }
 
@@ -1225,7 +1231,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * @param gesture gesture
      */
     @Override
-    public void onMeteringReset(@NonNull PointF point, @Nullable Gesture gesture) {
+    public void onMeteringReset(@Nullable PointF point, @Nullable Gesture gesture) {
         applyDefaultFocus(mRepeatingRequestBuilder);
         applyRepeatingRequestBuilder(); // only if preview started already
     }
