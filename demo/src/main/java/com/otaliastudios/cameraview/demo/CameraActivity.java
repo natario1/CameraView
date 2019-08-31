@@ -111,6 +111,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 new Option.Mode(), new Option.Engine(), new Option.Preview(),
                 // Some controls
                 new Option.Flash(), new Option.WhiteBalance(), new Option.Hdr(),
+                new Option.PictureMetering(), new Option.PictureSnapshotMetering(),
                 // Video recording
                 new Option.VideoCodec(), new Option.Audio(),
                 // Gestures
@@ -126,7 +127,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         List<Boolean> dividers = Arrays.asList(
                 false, true,
                 false, false, true,
-                false, false, true,
+                false, false, false, false, true,
                 false, true,
                 false, false, false, false, true,
                 false, false, true,
