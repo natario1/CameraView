@@ -36,13 +36,17 @@ public class AutoExposure extends MeteringParameter {
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
                         || aeMode == 5 /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */);
-        return isNotLegacy && isAEOn;
+        boolean result = isNotLegacy && isAEOn;
+        LOG.i("checkSupportsProcessing:", result);
+        return result;
     }
 
     @Override
     protected boolean checkShouldSkip(@NonNull CaptureResult lastResult) {
         Integer aeState = lastResult.get(CaptureResult.CONTROL_AE_STATE);
-        return aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED;
+        boolean result = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED;
+        LOG.i("checkShouldSkip:", result);
+        return result;
     }
 
     @Override

@@ -25,17 +25,21 @@ public class AutoFocus extends MeteringParameter {
                                               @NonNull CaptureRequest.Builder builder) {
         // Exclude OFF and EDOF as per docs.
         Integer afMode = builder.get(CaptureRequest.CONTROL_AF_MODE);
-        return afMode != null &&
+        boolean result = afMode != null &&
                 (afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO
                         || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE
                         || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO
                         || afMode == CameraCharacteristics.CONTROL_AF_MODE_MACRO);
+        LOG.i("checkSupportsProcessing:", result);
+        return result;
     }
 
     @Override
     protected boolean checkShouldSkip(@NonNull CaptureResult lastResult) {
         Integer afState = lastResult.get(CaptureResult.CONTROL_AF_STATE);
-        return afState != null && afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED;
+        boolean result = afState != null && afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED;
+        LOG.i("checkShouldSkip:", result);
+        return result;
     }
 
     @Override

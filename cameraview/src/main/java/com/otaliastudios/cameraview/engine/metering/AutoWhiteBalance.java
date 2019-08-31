@@ -27,13 +27,17 @@ public class AutoWhiteBalance extends MeteringParameter {
                 CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1) !=
                 CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
         Integer awbMode = builder.get(CaptureRequest.CONTROL_AWB_MODE);
-        return isNotLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
+        boolean result = isNotLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
+        LOG.i("checkSupportsProcessing:", result);
+        return result;
     }
 
     @Override
     protected boolean checkShouldSkip(@NonNull CaptureResult lastResult) {
         Integer awbState = lastResult.get(CaptureResult.CONTROL_AWB_STATE);
-        return awbState != null && awbState == CaptureRequest.CONTROL_AWB_STATE_CONVERGED;
+        boolean result = awbState != null && awbState == CaptureRequest.CONTROL_AWB_STATE_CONVERGED;
+        LOG.i("checkShouldSkip:", result);
+        return result;
     }
 
     @Override
