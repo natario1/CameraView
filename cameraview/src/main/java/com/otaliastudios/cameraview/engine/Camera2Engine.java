@@ -230,9 +230,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     @Override
                     public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
                         super.onCaptureProgressed(session, request, partialResult);
-                        if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).onCaptureProgressed(partialResult);
-                        }
                         if (mMeter != null && mMeter.isMetering()) {
                             mMeter.onCapture(partialResult);
                         }
@@ -632,9 +629,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             applyAllParameters(builder);
             mPictureRecorder = new Full2PictureRecorder(stub, this,
-                    mCameraCharacteristics,
                     mSession,
-                    mRepeatingRequestBuilder,
                     mRepeatingRequestCallback,
                     builder,
                     mPictureReader,

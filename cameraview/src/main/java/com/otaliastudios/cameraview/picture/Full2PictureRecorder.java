@@ -35,18 +35,12 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private static final int STATE_IDLE = 0;
-    private static final int STATE_WAITING_FIRST_FRAME = 1;
-    private static final int STATE_WAITING_AUTOFOCUS = 2;
-    private static final int STATE_WAITING_PRECAPTURE_START = 3;
-    private static final int STATE_WAITING_PRECAPTURE_END = 4;
-    private static final int STATE_WAITING_CAPTURE = 5;
-    private static final int STATE_WAITING_IMAGE = 6;
+    private static final int STATE_WAITING_CAPTURE = 1;
+    private static final int STATE_WAITING_IMAGE = 2;
 
     private static final int REQUEST_TAG = CameraDevice.TEMPLATE_STILL_CAPTURE;
 
     private CameraCaptureSession mSession;
-    private CameraCharacteristics mCharacteristics;
-    private CaptureRequest.Builder mBuilder;
     private CameraCaptureSession.CaptureCallback mCallback;
     private ImageReader mPictureReader;
     private CaptureRequest.Builder mPictureBuilder;
@@ -55,17 +49,13 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
 
     public Full2PictureRecorder(@NonNull PictureResult.Stub stub,
                                 @Nullable PictureResultListener listener,
-                                @NonNull CameraCharacteristics characteristics,
                                 @NonNull CameraCaptureSession session,
-                                @NonNull CaptureRequest.Builder builder,
                                 @NonNull CameraCaptureSession.CaptureCallback callback,
                                 @NonNull CaptureRequest.Builder pictureBuilder,
                                 @NonNull ImageReader pictureReader,
                                 boolean stopPreviewBeforeCapture) {
         super(stub, listener);
-        mCharacteristics = characteristics;
         mSession = session;
-        mBuilder = builder;
         mCallback = callback;
         mPictureBuilder = pictureBuilder;
         mStopPreviewBeforeCapture = stopPreviewBeforeCapture;
@@ -75,77 +65,6 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
 
     @Override
     public void take() {
-        mState = STATE_WAITING_FIRST_FRAME;
-    }
-
-    private boolean supportsAutoFocus() {
-        //noinspection ConstantConditions
-        int afMode = mBuilder.get(CaptureRequest.CONTROL_AF_MODE);
-        // Exclude OFF and EDOF as per docs.
-        return afMode == CameraCharacteristics.CONTROL_AF_MODE_AUTO
-                || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-                || afMode == CameraCharacteristics.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                || afMode == CameraCharacteristics.CONTROL_AF_MODE_MACRO;
-    }
-
-    private void runAutoFocus(@NonNull CaptureResult lastResult) {
-        Integer afState = lastResult.get(CaptureResult.CONTROL_AF_STATE);
-        boolean shouldSkip = afState != null && afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED;
-        boolean supports = supportsAutoFocus();
-        LOG.i("runAutoFocus:", "supports:", supports, "shouldSkip:", shouldSkip, "afState:", afState);
-        if (supports && !shouldSkip) {
-            try {
-                mState = STATE_WAITING_AUTOFOCUS;
-                mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-                mSession.capture(mBuilder.build(), mCallback, null);
-            } catch (CameraAccessException e) {
-                mResult = null;
-                mError = e;
-                dispatchResult();
-            }
-        } else {
-            LOG.w("Device does not support auto focus. Running precapture.");
-            runPrecapture(lastResult);
-        }
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    private boolean supportsPrecapture() {
-        // Precapture is not supported on legacy devices.
-        int level = mCharacteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-        if (level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) return false;
-        // We still have to check the current AE mode, see CaptureResult.CONTROL_AE_STATE.
-        int aeMode = mBuilder.get(CaptureRequest.CONTROL_AE_MODE);
-        return aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON
-                || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH
-                || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH
-                || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
-                || aeMode == 5 /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */;
-    }
-
-    private void runPrecapture(@NonNull CaptureResult lastResult) {
-        Integer aeState = lastResult.get(CaptureResult.CONTROL_AE_STATE);
-        boolean shouldSkip = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED;
-        boolean supports = supportsPrecapture();
-        LOG.i("runPrecapture:", "supports:", supports, "shouldSkip:", shouldSkip, "aeState:", aeState);
-        if (supports && !shouldSkip) {
-            try {
-                mState = STATE_WAITING_PRECAPTURE_START;
-                mBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-                mSession.capture(mBuilder.build(), mCallback, null);
-            } catch (CameraAccessException e) {
-                mResult = null;
-                mError = e;
-                dispatchResult();
-            }
-        } else {
-            LOG.w("Device does not support precapture. Running capture.");
-            runCapture();
-        }
-    }
-
-    private void runCapture() {
         try {
             mState = STATE_WAITING_CAPTURE;
             mPictureBuilder.setTag(REQUEST_TAG);
@@ -174,65 +93,12 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
         }
     }
 
-    public void onCaptureProgressed(@NonNull CaptureResult result) {
-        // Let's ignore these. They often do not have good results.
-        // process(result);
-    }
-
-    public void onCaptureCompleted(@NonNull CaptureResult result) {
-        process(result);
-    }
-
-    private void process(@NonNull CaptureResult result) {
-        switch (mState) {
-            case STATE_IDLE: break;
-            case STATE_WAITING_FIRST_FRAME: {
-                runAutoFocus(result);
-                break;
-            }
-            case STATE_WAITING_AUTOFOCUS: {
-                Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                if (afState == null
-                        || afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED
-                        || afState == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED) {
-                    runPrecapture(result);
-                }
-                break;
-            }
-            case STATE_WAITING_PRECAPTURE_START: {
-                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                if (aeState == null
-                        || aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE
-                        // The one above is a transient state, which means it might not be reported
-                        // by the camera. So in addition let's also check for the precature end states.
-                        || aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED
-                        || aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
-                    mState = STATE_WAITING_PRECAPTURE_END;
-                }
-                break;
-            }
-            case STATE_WAITING_PRECAPTURE_END: {
-                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                if (aeState == null
-                        || aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED
-                        || aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED
-                        // The two above are the correct states. However, just for safety, and
-                        // since we got STATE_WAITING_PRECAPTURE_START already, let's accept anything
-                        // other than the precapturing state. We don't want to get stuck here.
-                        || aeState == CaptureRequest.CONTROL_AE_STATE_SEARCHING // Camera is in normal AE routine. Should never happen.
-                        || aeState == CaptureRequest.CONTROL_AE_STATE_INACTIVE // AE is OFF. Should never happen.
-                        || aeState == CaptureResult.CONTROL_AE_STATE_LOCKED // AE has been locked. Should never happen.
-                ) {
-                    runCapture();
-                }
-                break;
-            }
-            case STATE_WAITING_CAPTURE: {
-                if (result instanceof TotalCaptureResult
-                        && result.getRequest().getTag() == (Integer) REQUEST_TAG) {
-                    mState = STATE_WAITING_IMAGE;
-                }
-                break;
+    public void onCaptureCompleted(@NonNull TotalCaptureResult result) {
+        if (mState == STATE_WAITING_CAPTURE) {
+            if (result.getRequest().getTag() == (Integer) REQUEST_TAG) {
+                // This has no real use for now other than logging.
+                LOG.i("onCaptureCompleted:", "Got result, moving to STATE_WAITING_IMAGE");
+                mState = STATE_WAITING_IMAGE;
             }
         }
     }
@@ -269,16 +135,6 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
             int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
             mResult.rotation = ExifHelper.readExifOrientation(exifOrientation);
         } catch (IOException ignore) { }
-
-        // Before leaving, unlock focus.
-        if (supportsAutoFocus()) {
-            try {
-                mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                        CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
-                mSession.capture(mBuilder.build(), mCallback, null);
-            } catch (CameraAccessException ignore) {
-            }
-        }
 
         // Leave.
         LOG.i("onImageAvailable ended.");
