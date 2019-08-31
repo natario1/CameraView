@@ -875,14 +875,31 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void setFlash(@NonNull Flash flash) {
+    public void setFlash(@NonNull final Flash flash) {
         final Flash old = mFlash;
         mFlash = flash;
         mHandler.run(new Runnable() {
             @Override
             public void run() {
                 if (getEngineState() == STATE_STARTED) {
-                    if (applyFlash(mRepeatingRequestBuilder, old)) {
+                    boolean shouldApply = applyFlash(mRepeatingRequestBuilder, old);
+                    boolean needsWorkaround = getPreviewState() == STATE_STARTED;
+                    if (needsWorkaround) {
+                        // Runtime changes to the flash value are not correctly handled by the driver.
+                        // See https://stackoverflow.com/q/53003383/4288782 for example.
+                        // For this reason, we go back to OFF, capture once, then go to the new one.
+                        mFlash = Flash.OFF;
+                        applyFlash(mRepeatingRequestBuilder, old);
+                        try {
+                            mSession.capture(mRepeatingRequestBuilder.build(), null, null);
+                        } catch (CameraAccessException e) {
+                            throw createCameraException(e);
+                        }
+                        mFlash = flash;
+                        applyFlash(mRepeatingRequestBuilder, old);
+                        applyRepeatingRequestBuilder();
+
+                    } else if (shouldApply) {
                         applyRepeatingRequestBuilder();
                     }
                 }
@@ -923,13 +940,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     LOG.i("applyFlash: setting FLASH_MODE to", pair.second);
                     builder.set(CaptureRequest.CONTROL_AE_MODE, pair.first);
                     builder.set(CaptureRequest.FLASH_MODE, pair.second);
-
-                    // On some devices, switching from TORCH/OFF to AUTO/ON is not immediately
-                    // reflected (for example, torch stays active) unless we do as follows.
-                    // It's just a way to wake up the AE routine.
-                    // TODO this works but seems to cause other issues.
-                    // builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                    //         CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
                     return true;
                 }
             }
