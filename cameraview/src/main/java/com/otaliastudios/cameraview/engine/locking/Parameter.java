@@ -3,11 +3,9 @@ package com.otaliastudios.cameraview.engine.locking;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.params.MeteringRectangle;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import java.util.List;
@@ -19,7 +17,6 @@ public abstract class Parameter {
         void onLockingChange();
     }
 
-    @SuppressWarnings("WeakerAccess")
     protected boolean isSuccessful;
 
     @SuppressWarnings("WeakerAccess")
@@ -29,7 +26,6 @@ public abstract class Parameter {
     private boolean shouldSkip;
     private boolean supportsLocking;
 
-    @SuppressWarnings("WeakerAccess")
     protected Parameter(@NonNull LockingChangeCallback callback) {
         this.callback = callback;
     }
@@ -77,15 +73,6 @@ public abstract class Parameter {
         if (isLocked()) onLocked(builder);
     }
 
-    public final void unlock(@NonNull CameraCharacteristics characteristics,
-                             @NonNull CaptureRequest.Builder builder) {
-        if (supportsLocking) {
-            // Not checking shouldSkip. Though we skipped locking, we're
-            // now asked to unlock, so do it.
-            onUnlock(characteristics, builder);
-        }
-    }
-
     protected abstract boolean checkSupportsLocking(@NonNull CameraCharacteristics characteristics,
                                                     @NonNull CaptureRequest.Builder builder);
 
@@ -97,7 +84,4 @@ public abstract class Parameter {
     protected abstract void processCapture(@NonNull CaptureResult result);
 
     protected abstract void onLocked(@NonNull CaptureRequest.Builder builder);
-
-    protected abstract void onUnlock(@NonNull CameraCharacteristics characteristics,
-                                     @NonNull CaptureRequest.Builder builder);
 }

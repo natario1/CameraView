@@ -6,20 +6,15 @@ import android.hardware.camera2.CaptureResult;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
-
-import java.util.List;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class AutoFocus extends Parameter {
 
     private static final String TAG = AutoFocus.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
-
-    private Integer oldAfMode;
 
     public AutoFocus(@NonNull LockingChangeCallback callback) {
         super(callback);
@@ -46,8 +41,8 @@ public class AutoFocus extends Parameter {
         boolean afStateOk = afState != null &&
                 (afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED ||
                 afState == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED);
-        oldAfMode = lastResult.get(CaptureResult.CONTROL_AF_MODE);
-        boolean afModeOk = oldAfMode != null && oldAfMode == CaptureResult.CONTROL_AF_MODE_AUTO;
+        Integer afMode = lastResult.get(CaptureResult.CONTROL_AF_MODE);
+        boolean afModeOk = afMode != null && afMode == CaptureResult.CONTROL_AF_MODE_AUTO;
         boolean result = afStateOk && afModeOk;
         LOG.i("checkShouldSkip:", result);
         return result;
@@ -89,13 +84,6 @@ public class AutoFocus extends Parameter {
     @Override
     protected void onLocked(@NonNull CaptureRequest.Builder builder) {
         // Do nothing.
-    }
-
-    @Override
-    protected void onUnlock(@NonNull CameraCharacteristics characteristics,
-                            @NonNull CaptureRequest.Builder builder) {
-        builder.set(CaptureRequest.CONTROL_AF_MODE, oldAfMode);
-        notifyBuilderChanged();
     }
 
 }

@@ -1244,10 +1244,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private final Runnable mMeteringResetRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mLocker != null) {
-                mLocker.unlock();
-                mLocker = null;
-            }
+            unlockMetering();
             if (mMeter != null) {
                 mMeter.resetMetering();
                 mMeter = null;
@@ -1282,8 +1279,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 "gesture:", mMeteringGesture,
                 "needsFlash:", mMeteringNeedsFlash,
                 "success:", success);
-        mLocker = new Locker(mCameraCharacteristics, this);
-        mLocker.lock(mLastRepeatingResult, point);
+        lockMetering(point);
     }
 
     /**
@@ -1300,9 +1296,42 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
+    @NonNull
+    @Override
+    public CaptureRequest.Builder getMeteringBuilder() {
+        return mRepeatingRequestBuilder;
+    }
+
+    @Override
+    public void onMeteringChange() {
+        LOG.i("onMeteringChange:", "applying the builder.");
+        applyRepeatingRequestBuilder();
+    }
+
+    //endregion
+
+    //region 3A Locking
+
+    private void unlockMetering() {
+        if (getEngineState() == STATE_STARTED) {
+            mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_LOCK, false);
+            mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
+            applyDefaultFocus(mRepeatingRequestBuilder);
+            applyRepeatingRequestBuilder(); // only if preview started
+        }
+    }
+
+    private void lockMetering(@Nullable PointF point) {
+        if (getPreviewState() == STATE_STARTED) {
+            mLocker = new Locker(mCameraCharacteristics, this);
+            mLocker.lock(mLastRepeatingResult, point);
+        }
+    }
+
     @Override
     public void onLocked(@Nullable PointF point, boolean success) {
         LOG.w("onLocked - point:", point, "gesture:", mMeteringGesture, "success:", success);
+        mLocker = null;
         if (point != null) {
             mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
             mHandler.remove(mMeteringResetRunnable);
@@ -1319,23 +1348,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             mDelayedPictureStub = null;
             mDelayedPictureRatio = null;
         }
-    }
-
-    @Override
-    public void onUnlocked(@Nullable PointF point) {
-        // Nothing to do.
-    }
-
-    @NonNull
-    @Override
-    public CaptureRequest.Builder getMeteringBuilder() {
-        return mRepeatingRequestBuilder;
-    }
-
-    @Override
-    public void onMeteringChange() {
-        LOG.i("onMeteringChange:", "applying the builder.");
-        applyRepeatingRequestBuilder();
     }
 
     @NonNull

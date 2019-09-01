@@ -71,10 +71,4 @@ public class AutoWhiteBalance extends Parameter {
     protected void onLocked(@NonNull CaptureRequest.Builder builder) {
         // Do nothing
     }
-
-    @Override
-    protected void onUnlock(@NonNull CameraCharacteristics characteristics, @NonNull CaptureRequest.Builder builder) {
-        builder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
-        notifyBuilderChanged();
-    }
 }

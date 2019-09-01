@@ -23,8 +23,7 @@ import com.otaliastudios.cameraview.engine.locking.Parameter;
  *
  * - Call {@link #lock(CaptureResult, PointF)} to start
  * - Call {@link #onCapture(CaptureResult)} when they have partial or total results, as long as the
- *   locker is still in a locking operation, which can be checked through {@link #isLocking()} ()}
- * - Call {@link #unlock()} to reset the locked parameters if needed.
+ *   locker is still in a locking operation, which can be checked through {@link #isLocking()}
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Locker {
@@ -41,14 +40,6 @@ public class Locker {
          * @param success success
          */
         void onLocked(@Nullable PointF point, boolean success);
-
-        /**
-         * Notifies that locking has been undone. From now on, this locker instance
-         * is done, although in theory it could be reused by calling
-         * {@link #lock(CaptureResult, PointF)} again.
-         * @param point point
-         */
-        void onUnlocked(@Nullable PointF point);
 
         /**
          * Returns the currently used builder. This can change while a locking
@@ -95,7 +86,6 @@ public class Locker {
      * @param lastResult the last result
      * @param point a point
      */
-    @SuppressWarnings("WeakerAccess")
     public void lock(@NonNull CaptureResult lastResult, @Nullable PointF point) {
         mIsLocking = true;
         mPoint = point;
@@ -133,29 +123,12 @@ public class Locker {
             boolean success = mAutoFocus.isSuccessful()
                     && mAutoExposure.isSuccessful()
                     && mAutoWhiteBalance.isSuccessful();
-            dispatchEnd(success);
+            mCallback.onLocked(mPoint, success);
+            mIsLocking = false;
         } else if (System.currentTimeMillis() - mLockingStartTime >= FORCED_END_DELAY) {
             LOG.i("onCapture:", "FORCED_END_DELAY was reached. Some Parameter is stuck. Forcing end.");
-            dispatchEnd(false);
+            mCallback.onLocked(mPoint, false);
+            mIsLocking = false;
         }
-    }
-    
-    private void dispatchEnd(boolean success) {
-        mCallback.onLocked(mPoint, success);
-        mIsLocking = false;
-    }
-
-    /**
-     * Should be called to unlock.
-     * Note that {@link Callback#onUnlocked(PointF)} will be called immediately,
-     * we're not waiting for the results.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public void unlock() {
-        LOG.i("Unlocking.");
-        mAutoFocus.unlock(mCharacteristics, mCallback.getLockingBuilder());
-        mAutoExposure.unlock(mCharacteristics, mCallback.getLockingBuilder());
-        mAutoWhiteBalance.unlock(mCharacteristics, mCallback.getLockingBuilder());
-        mCallback.onUnlocked(mPoint);
     }
 }
