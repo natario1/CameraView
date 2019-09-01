@@ -816,8 +816,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             builder.set(CaptureRequest.CONTROL_AF_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AF_REGIONS));
             builder.set(CaptureRequest.CONTROL_AE_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AE_REGIONS));
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AWB_REGIONS));
-            builder.set(CaptureRequest.CONTROL_AE_LOCK, oldBuilder.get(CaptureRequest.CONTROL_AE_LOCK));
-            builder.set(CaptureRequest.CONTROL_AWB_LOCK, oldBuilder.get(CaptureRequest.CONTROL_AWB_LOCK));
             builder.set(CaptureRequest.CONTROL_AF_MODE, oldBuilder.get(CaptureRequest.CONTROL_AF_MODE));
         }
     }

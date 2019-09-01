@@ -57,8 +57,6 @@ public class AutoExposure extends Parameter {
         isStarted = false;
 
         if (supportsProcessing) {
-            // Remove any lock. This would make processing be stuck into the process method.
-            builder.set(CaptureRequest.CONTROL_AE_LOCK, false);
             // Launch the precapture trigger.
             builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                     CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
@@ -82,26 +80,57 @@ public class AutoExposure extends Parameter {
         if (aeState == null) return;
 
         if (!isStarted) {
-            if (aeState == CaptureRequest.CONTROL_AE_STATE_PRECAPTURE) {
-                isStarted = true;
-            } else if (aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED
-                    || aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED) {
-                // PRECAPTURE is a transient state, so also check for the final states.
-                isMetered = true;
-                isSuccessful = true;
+            switch (aeState) {
+                case CaptureResult.CONTROL_AE_STATE_PRECAPTURE: {
+                    isStarted = true;
+                    break;
+                }
+                case CaptureResult.CONTROL_AE_STATE_CONVERGED:
+                case CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED: {
+                    // PRECAPTURE is a transient state, so also check for the final states.
+                    isMetered = true;
+                    isSuccessful = true;
+                    break;
+                }
+                case CaptureResult.CONTROL_AE_STATE_LOCKED: {
+                    // There's nothing we can do, AE was locked, triggers are ignored.
+                    isMetered = true;
+                    isSuccessful = false;
+                    break;
+                }
+                case CaptureResult.CONTROL_AE_STATE_INACTIVE:
+                case CaptureResult.CONTROL_AE_STATE_SEARCHING: {
+                    // Wait...
+                    break;
+                }
             }
         } else {
-            if (aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED
-                    || aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
-                isMetered = true;
-                isSuccessful = true;
+            switch (aeState) {
+                case CaptureResult.CONTROL_AE_STATE_CONVERGED:
+                case CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED: {
+                    isMetered = true;
+                    isSuccessful = true;
+                    break;
+                }
+                case CaptureResult.CONTROL_AE_STATE_LOCKED: {
+                    // There's nothing we can do, AE was locked, triggers are ignored.
+                    isMetered = true;
+                    isSuccessful = false;
+                    break;
+                }
+                case CaptureResult.CONTROL_AE_STATE_PRECAPTURE:
+                case CaptureResult.CONTROL_AE_STATE_INACTIVE:
+                case CaptureResult.CONTROL_AE_STATE_SEARCHING: {
+                    // Wait...
+                    break;
+                }
             }
         }
     }
 
     @Override
     protected void onMetered(@NonNull CaptureRequest.Builder builder) {
-        builder.set(CaptureRequest.CONTROL_AE_LOCK, true);
+        // Do nothing
     }
 
     @Override
@@ -115,7 +144,6 @@ public class AutoExposure extends Parameter {
             builder.set(CaptureRequest.CONTROL_AE_REGIONS, new MeteringRectangle[]{area});
         }
         if (supportsProcessing) {
-            builder.set(CaptureRequest.CONTROL_AE_LOCK, false);
             // Cleanup any precapture sequence.
             if (Build.VERSION.SDK_INT >= 23) {
                 builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,

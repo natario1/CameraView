@@ -97,27 +97,30 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
         if (mState == STATE_WAITING_FIRST_FRAME) {
             Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
             if (aeState == null) {
-                LOG.w("onCaptureCompleted:", "aeState is null! This should never happen. Taking snapshot.");
+                LOG.w("onCaptureCompleted:", "aeState is null! This should never happen.",
+                        "Taking snapshot.");
                 mState = STATE_WAITING_IMAGE;
                 super.take();
-            } else if (aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED) {
+            } else if (aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
                 LOG.i("onCaptureCompleted:", "aeState is optimal. Taking snapshot.");
                 mState = STATE_WAITING_IMAGE;
                 super.take();
+            } else if (aeState == CaptureResult.CONTROL_AE_STATE_LOCKED) {
+                LOG.i("onCaptureCompleted:", "aeState is locked. There's nothing we can do.",
+                        "Taking snapshot with no flash.");
+                mState = STATE_WAITING_IMAGE;
+                super.take();
             } else if (aeState != CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
-                LOG.w("onCaptureCompleted:", "aeState is not CONVERGED yet not FLASH_REQUIRED.",
+                LOG.w("onCaptureCompleted:", "aeState is not CONVERGED, FLASH_REQUIRED or LOCKED.", aeState,
                         "This seems to say that metering did not complete before. Let's take the snapshot.");
-                // TODO the metering system might set AE to LOCKED. what to do in this case?
                 mState = STATE_WAITING_IMAGE;
                 super.take();
             } else {
                 // Open the torch. AE_MODE_ON is guaranteed to be supported.
-                // Remove any AE lock that was set by the engine.
                 LOG.w("onCaptureCompleted:", "aeState is FLASH_REQUIRED. Opening torch.");
                 mState = STATE_WAITING_TORCH;
                 mBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
                 mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                mBuilder.set(CaptureRequest.CONTROL_AE_LOCK, false);
                 try {
                     mSession.setRepeatingRequest(mBuilder.build(), mCallback, null);
                 } catch (CameraAccessException e) {
@@ -143,13 +146,30 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
 
         } else if (mState == STATE_WAITING_TORCH_EXPOSURE) {
             Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-            if (aeState != null && (aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED
-                    || aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED)) {
-                LOG.i("onCaptureCompleted:", "We have torch and good torch exposure.", aeState);
+            if (aeState == null) {
+                LOG.w("onCaptureCompleted:", "aeState is null! Taking snasphot.");
                 mState = STATE_WAITING_IMAGE;
                 super.take();
             } else {
-                LOG.i("onCaptureCompleted:", "Waiting for torch exposure...:", aeState);
+                switch (aeState) {
+                    case CaptureResult.CONTROL_AE_STATE_CONVERGED:
+                    case CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED: {
+                        LOG.i("onCaptureCompleted:", "We have torch and good torch exposure.", aeState);
+                        mState = STATE_WAITING_IMAGE;
+                        super.take();
+                        break;
+                    }
+                    case CaptureResult.CONTROL_AE_STATE_LOCKED: {
+                        LOG.w("onCaptureCompleted:", "Final aeState is LOCKED. Should not happen.");
+                        mState = STATE_WAITING_IMAGE;
+                        super.take();
+                        break;
+                    }
+                    default: {
+                        LOG.i("onCaptureCompleted:", "Waiting for torch exposure...:", aeState);
+                        break;
+                    }
+                }
             }
         }
     }

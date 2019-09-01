@@ -45,12 +45,6 @@ public class AutoWhiteBalance extends Parameter {
                                    @NonNull CaptureRequest.Builder builder,
                                    @NonNull List<MeteringRectangle> areas,
                                    boolean supportsProcessing) {
-        if (supportsProcessing) {
-            // Remove any lock. This would make processing be stuck into the process method.
-            builder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
-        }
-
-        // Even if auto is not supported, change the regions anyway.
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
         if (!areas.isEmpty() && maxRegions > 0) {
@@ -72,16 +66,23 @@ public class AutoWhiteBalance extends Parameter {
                 isSuccessful = true;
                 break;
             }
-            case CaptureRequest.CONTROL_AWB_STATE_LOCKED: break;
-            case CaptureRequest.CONTROL_AWB_STATE_INACTIVE: break;
-            case CaptureRequest.CONTROL_AWB_STATE_SEARCHING: break;
-            default: break;
+            case CaptureRequest.CONTROL_AWB_STATE_LOCKED: {
+                // Nothing we can do if AWB was locked.
+                isMetered = true;
+                isSuccessful = false;
+                break;
+            }
+            case CaptureRequest.CONTROL_AWB_STATE_INACTIVE:
+            case CaptureRequest.CONTROL_AWB_STATE_SEARCHING: {
+                // Wait...
+                break;
+            }
         }
     }
 
     @Override
     protected void onMetered(@NonNull CaptureRequest.Builder builder) {
-        builder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
+        // Do nothing
     }
 
     @Override
@@ -89,9 +90,6 @@ public class AutoWhiteBalance extends Parameter {
                                    @NonNull CaptureRequest.Builder builder,
                                    @Nullable MeteringRectangle area,
                                    boolean supportsProcessing) {
-        if (supportsProcessing) {
-            builder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
-        }
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
         if (area != null && maxRegions > 0) {
