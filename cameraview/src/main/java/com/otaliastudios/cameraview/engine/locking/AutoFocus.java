@@ -39,8 +39,11 @@ public class AutoFocus extends Parameter {
     protected boolean checkShouldSkip(@NonNull CaptureResult lastResult) {
         Integer afState = lastResult.get(CaptureResult.CONTROL_AF_STATE);
         boolean afStateOk = afState != null &&
-                (afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED ||
-                afState == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED);
+                (afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED
+                || afState == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED
+                || afState == CaptureResult.CONTROL_AF_STATE_INACTIVE
+                || afState == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED
+                || afState == CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED);
         Integer afMode = lastResult.get(CaptureResult.CONTROL_AF_MODE);
         boolean afModeOk = afMode != null && afMode == CaptureResult.CONTROL_AF_MODE_AUTO;
         boolean result = afStateOk && afModeOk;
