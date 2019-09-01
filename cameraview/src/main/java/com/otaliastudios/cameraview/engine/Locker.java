@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.engine;
 
+import android.graphics.PointF;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -7,6 +8,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
@@ -19,7 +21,7 @@ import com.otaliastudios.cameraview.engine.locking.Parameter;
  * Helps Camera2-based engines to perform 3A locking and unlocking.
  * Users are required to:
  *
- * - Call {@link #lock(CaptureResult)} to start
+ * - Call {@link #lock(CaptureResult, PointF)} to start
  * - Call {@link #onCapture(CaptureResult)} when they have partial or total results, as long as the
  *   locker is still in a locking operation, which can be checked through {@link #isLocking()} ()}
  * - Call {@link #unlock()} to reset the locked parameters if needed.
@@ -35,16 +37,18 @@ public class Locker {
         /**
          * Notifies that locking has ended. No action is required for implementors.
          * From now on, {@link #isLocking()} will return false.
+         * @param point a point
          * @param success success
          */
-        void onLocked(boolean success);
+        void onLocked(@Nullable PointF point, boolean success);
 
         /**
          * Notifies that locking has been undone. From now on, this locker instance
          * is done, although in theory it could be reused by calling
-         * {@link #lock(CaptureResult)} again.
+         * {@link #lock(CaptureResult, PointF)} again.
+         * @param point point
          */
-        void onUnlocked();
+        void onUnlocked(@Nullable PointF point);
 
         /**
          * Returns the currently used builder. This can change while a locking
@@ -64,6 +68,7 @@ public class Locker {
     private final CameraCharacteristics mCharacteristics;
     private final Callback mCallback;
 
+    private PointF mPoint;
     private boolean mIsLocking;
     private Parameter mAutoFocus;
     private Parameter mAutoWhiteBalance;
@@ -88,10 +93,12 @@ public class Locker {
     /**
      * Locks 3A values.
      * @param lastResult the last result
+     * @param point a point
      */
     @SuppressWarnings("WeakerAccess")
-    public void lock(@NonNull CaptureResult lastResult) {
+    public void lock(@NonNull CaptureResult lastResult, @Nullable PointF point) {
         mIsLocking = true;
+        mPoint = point;
         mLockingStartTime = System.currentTimeMillis();
         mAutoFocus.lock(mCharacteristics, mCallback.getLockingBuilder(), lastResult);
         mAutoWhiteBalance.lock(mCharacteristics, mCallback.getLockingBuilder(), lastResult);
@@ -100,7 +107,7 @@ public class Locker {
 
     /**
      * True if we're locking. False if we're not, for example
-     * if {@link #lock(CaptureResult)} was never called.
+     * if {@link #lock(CaptureResult, PointF)} was never called.
      * @return true if locking
      */
     @SuppressWarnings("WeakerAccess")
@@ -134,13 +141,13 @@ public class Locker {
     }
     
     private void dispatchEnd(boolean success) {
-        mCallback.onLocked(success);
+        mCallback.onLocked(mPoint, success);
         mIsLocking = false;
     }
 
     /**
      * Should be called to unlock.
-     * Note that {@link Callback#onUnlocked()} will be called immediately,
+     * Note that {@link Callback#onUnlocked(PointF)} will be called immediately,
      * we're not waiting for the results.
      */
     @SuppressWarnings("WeakerAccess")
@@ -149,6 +156,6 @@ public class Locker {
         mAutoFocus.unlock(mCharacteristics, mCallback.getLockingBuilder());
         mAutoExposure.unlock(mCharacteristics, mCallback.getLockingBuilder());
         mAutoWhiteBalance.unlock(mCharacteristics, mCallback.getLockingBuilder());
-        mCallback.onUnlocked();
+        mCallback.onUnlocked(mPoint);
     }
 }

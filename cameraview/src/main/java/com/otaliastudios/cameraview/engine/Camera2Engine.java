@@ -67,7 +67,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener, Meter.Callback {
+public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener,
+        Meter.Callback,
+        Locker.Callback {
 
     private static final String TAG = Camera2Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -689,6 +691,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             // See comments in Full2PictureRecorder.
             applyRepeatingRequestBuilder();
         }
+        boolean unlock = (fullPicture && getPictureMetering()) ||
+                (!fullPicture && getPictureSnapshotMetering());
+        if (unlock) {
+            if (mLocker != null) {
+                mLocker.unlock();
+                mLocker = null;
+            }
+            if (mMeter != null) {
+                mMeter.resetMetering();
+                mMeter = null;
+            }
+        }
     }
 
     //endregion
@@ -1268,18 +1282,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onMeteringEnd(@Nullable PointF point, boolean success) {
         LOG.w("onMeteringEnd - point:", point, "gesture:", mMeteringGesture, "success:", success);
-        if (point != null) {
-            mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
-        } else {
-            LOG.w("onMeteringEnd - restoring the picture capturing. isSnapshot:", mDelayedPictureStub.isSnapshot);
-            if (mDelayedPictureStub.isSnapshot) {
-                onTakePictureSnapshot(mDelayedPictureStub, mDelayedPictureRatio, false);
-            } else {
-                onTakePicture(mDelayedPictureStub, false);
-            }
-            mDelayedPictureStub = null;
-            mDelayedPictureRatio = null;
-        }
+        mLocker = new Locker(mCameraCharacteristics, this);
+        mLocker.lock(mLastRepeatingResult, point);
     }
 
     /**
@@ -1296,11 +1300,28 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    /**
-     * Called by {@link Meter} to get the current capture request
-     * builder so it can apply changes on it.
-     * @return our builder
-     */
+    @Override
+    public void onLocked(@Nullable PointF point, boolean success) {
+        LOG.w("onLocked - point:", point, "gesture:", mMeteringGesture, "success:", success);
+        if (point != null) {
+            mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
+        } else {
+            LOG.w("onLocked - restoring the picture capturing. isSnapshot:", mDelayedPictureStub.isSnapshot);
+            if (mDelayedPictureStub.isSnapshot) {
+                onTakePictureSnapshot(mDelayedPictureStub, mDelayedPictureRatio, false);
+            } else {
+                onTakePicture(mDelayedPictureStub, false);
+            }
+            mDelayedPictureStub = null;
+            mDelayedPictureRatio = null;
+        }
+    }
+
+    @Override
+    public void onUnlocked(@Nullable PointF point) {
+        // Nothing to do.
+    }
+
     @NonNull
     @Override
     public CaptureRequest.Builder getMeteringBuilder() {
@@ -1310,6 +1331,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onMeteringChange() {
         LOG.i("onMeteringChange:", "applying the builder.");
+        applyRepeatingRequestBuilder();
+    }
+
+    @NonNull
+    @Override
+    public CaptureRequest.Builder getLockingBuilder() {
+        return mRepeatingRequestBuilder;
+    }
+
+    @Override
+    public void onLockingChange() {
+        LOG.i("onLockingChange:", "applying the builder.");
         applyRepeatingRequestBuilder();
     }
 
