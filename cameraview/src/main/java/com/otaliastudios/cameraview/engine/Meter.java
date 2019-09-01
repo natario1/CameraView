@@ -33,9 +33,7 @@ import java.util.List;
  * - Call {@link #startMetering(CaptureResult, PointF, boolean)} to start
  * - Call {@link #onCapture(CaptureResult)} when they have partial or total results, as long as the
  *   meter is still in a metering operation, which can be checked through {@link #isMetering()}
- * - Call {@link #resetMetering()} to reset the metering parameters if needed. This is done automatically
- *   by the meter based on the reset delay configuration in the engine, but can be called explicitly
- *   for example when we have multiple meter requests and want to cancel the old one.
+ * - Call {@link #resetMetering()} to reset the metering parameters if needed.
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Meter {
@@ -349,19 +347,13 @@ public class Meter {
     private void onMeteringEnd(boolean success) {
         mCallback.onMeteringEnd(mPoint, success);
         mIsMetering = false;
-        mEngine.mHandler.remove(mResetRunnable);
-        if (mEngine.shouldResetAutoFocus()) {
-            mEngine.mHandler.post(mEngine.getAutoFocusResetDelay(), mResetRunnable);
-        }
     }
 
     /**
-     * Can be called to perform the reset at a time different than the one
-     * specified by the {@link CameraEngine} reset delay.
+     * Can be called to perform the reset.
      */
     @SuppressWarnings("WeakerAccess")
     public void resetMetering() {
-        mEngine.mHandler.remove(mResetRunnable);
         LOG.i("Resetting the meter parameters.");
         MeteringRectangle whole = null;
         if (mPoint != null) {
@@ -375,11 +367,4 @@ public class Meter {
         mAutoExposure.resetMetering(mCharacteristics, mCallback.getMeteringBuilder(), whole);
         mCallback.onMeteringReset(mPoint);
     }
-
-    private Runnable mResetRunnable = new Runnable() {
-        @Override
-        public void run() {
-            resetMetering();
-        }
-    };
 }

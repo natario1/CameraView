@@ -558,14 +558,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             mVideoRecorder = null;
         }
         mPictureRecorder = null;
-        if (mMeter != null) {
-            mMeter.resetMetering();
-            mMeter = null;
-        }
-        if (mLocker != null) {
-            mLocker.unlock();
-            mLocker = null;
-        }
+        mMeteringResetRunnable.run();
         if (hasFrameProcessors()) {
             getFrameManager().release();
         }
@@ -694,14 +687,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         boolean unlock = (fullPicture && getPictureMetering()) ||
                 (!fullPicture && getPictureSnapshotMetering());
         if (unlock) {
-            if (mLocker != null) {
-                mLocker.unlock();
-                mLocker = null;
-            }
-            if (mMeter != null) {
-                mMeter.resetMetering();
-                mMeter = null;
-            }
+            mMeteringResetRunnable.run();
         }
     }
 
@@ -1232,14 +1218,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 if (point != null && !mCameraOptions.isAutoFocusSupported()) return;
 
                 // Reset the old meter and locker if present.
-                if (mLocker != null) {
-                    mLocker.unlock();
-                    mLocker = null;
-                }
-                if (mMeter != null) {
-                    mMeter.resetMetering();
-                    mMeter = null;
-                }
+                mMeteringResetRunnable.run();
 
                 // The meter will check the current configuration to see if AF/AE/AWB should run.
                 // - AE should be on CONTROL_AE_MODE_ON*    (this depends on setFlash())
@@ -1259,6 +1238,20 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             }
         });
     }
+
+    private final Runnable mMeteringResetRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (mLocker != null) {
+                mLocker.unlock();
+                mLocker = null;
+            }
+            if (mMeter != null) {
+                mMeter.resetMetering();
+                mMeter = null;
+            }
+        }
+    };
 
     /**
      * Called by {@link Meter} when the metering process has started.
@@ -1305,6 +1298,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         LOG.w("onLocked - point:", point, "gesture:", mMeteringGesture, "success:", success);
         if (point != null) {
             mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
+            mHandler.remove(mMeteringResetRunnable);
+            if (shouldResetAutoFocus()) {
+                mHandler.post(getAutoFocusResetDelay(), mMeteringResetRunnable);
+            }
         } else {
             LOG.w("onLocked - restoring the picture capturing. isSnapshot:", mDelayedPictureStub.isSnapshot);
             if (mDelayedPictureStub.isSnapshot) {
