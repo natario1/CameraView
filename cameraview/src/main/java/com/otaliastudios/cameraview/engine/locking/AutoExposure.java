@@ -63,7 +63,7 @@ public class AutoExposure extends Parameter {
         switch (aeState) {
             case CaptureRequest.CONTROL_AE_STATE_LOCKED: {
                 isLocked = true;
-                isSuccessful = false;
+                isSuccessful = true;
                 break;
             }
             case CaptureRequest.CONTROL_AE_STATE_PRECAPTURE:

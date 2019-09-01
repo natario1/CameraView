@@ -263,7 +263,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         }
                         Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                         Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
-                        LOG.i("metering:", "aeState:", aeState, "aeTriggerState:", aeTriggerState);
+                        LOG.v("metering:", "aeState:", aeState, "aeTriggerState:", aeTriggerState);
                     }
 
                 };

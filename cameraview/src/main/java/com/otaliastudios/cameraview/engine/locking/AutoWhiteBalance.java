@@ -55,7 +55,7 @@ public class AutoWhiteBalance extends Parameter {
         switch (awbState) {
             case CaptureRequest.CONTROL_AWB_STATE_LOCKED: {
                 isLocked = true;
-                isSuccessful = false;
+                isSuccessful = true;
                 break;
             }
             case CaptureRequest.CONTROL_AWB_STATE_CONVERGED:
