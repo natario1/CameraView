@@ -1279,7 +1279,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 "gesture:", mMeteringGesture,
                 "needsFlash:", mMeteringNeedsFlash,
                 "success:", success);
-        lockMetering(point);
+        if (point != null) {
+            mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
+            mHandler.remove(mMeteringResetRunnable);
+            if (shouldResetAutoFocus()) {
+                mHandler.post(getAutoFocusResetDelay(), mMeteringResetRunnable);
+            }
+        } else {
+            // Continue with picture capturing.
+            lockMetering(null);
+        }
     }
 
     /**
@@ -1332,13 +1341,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void onLocked(@Nullable PointF point, boolean success) {
         LOG.w("onLocked - point:", point, "gesture:", mMeteringGesture, "success:", success);
         mLocker = null;
-        if (point != null) {
-            mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
-            mHandler.remove(mMeteringResetRunnable);
-            if (shouldResetAutoFocus()) {
-                mHandler.post(getAutoFocusResetDelay(), mMeteringResetRunnable);
-            }
-        } else {
+        if (point == null) {
             LOG.w("onLocked - restoring the picture capturing. isSnapshot:", mDelayedPictureStub.isSnapshot);
             if (mDelayedPictureStub.isSnapshot) {
                 onTakePictureSnapshot(mDelayedPictureStub, mDelayedPictureRatio, false);
