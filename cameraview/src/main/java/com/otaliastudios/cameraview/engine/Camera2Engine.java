@@ -105,7 +105,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     // 3A metering
     private Meter mMeter;
-    private boolean mMeteringNeedsFlash;
     private Gesture mMeteringGesture;
     private Locker mLocker;
     private PictureResult.Stub mDelayedPictureStub;
@@ -644,10 +643,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             mPictureRecorder = new Snapshot2PictureRecorder(stub, this,
                     (GlCameraPreview) mPreview,
                     outputRatio,
+                    mCameraCharacteristics,
                     mSession,
                     mRepeatingRequestCallback,
                     mRepeatingRequestBuilder,
-                    getPictureSnapshotMetering() && mMeteringNeedsFlash);
+                    mLastRepeatingResult);
             mPictureRecorder.take();
         }
     }
@@ -1273,11 +1273,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      */
     @Override
     public void onMeteringEnd(@Nullable PointF point, boolean success) {
-        Integer aeState = mLastRepeatingResult.get(CaptureResult.CONTROL_AE_STATE);
-        mMeteringNeedsFlash = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED;
         LOG.w("onMeteringEnd - point:", point,
                 "gesture:", mMeteringGesture,
-                "needsFlash:", mMeteringNeedsFlash,
                 "success:", success);
         if (point != null) {
             mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
@@ -1286,8 +1283,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 mHandler.post(getAutoFocusResetDelay(), mMeteringResetRunnable);
             }
         } else {
-            // Continue with picture capturing.
-            lockMetering(null);
+            LOG.w("onMeteringEnd - restoring the picture capturing. isSnapshot:", mDelayedPictureStub.isSnapshot);
+            if (mDelayedPictureStub.isSnapshot) {
+                onTakePictureSnapshot(mDelayedPictureStub, mDelayedPictureRatio, false);
+            } else {
+                onTakePicture(mDelayedPictureStub, false);
+            }
+            mDelayedPictureStub = null;
+            mDelayedPictureRatio = null;
         }
     }
 
@@ -1321,6 +1324,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region 3A Locking
 
+    // TODO this might become public API
     private void unlockMetering() {
         if (getEngineState() == STATE_STARTED) {
             mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_LOCK, false);
@@ -1330,27 +1334,19 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    private void lockMetering(@Nullable PointF point) {
+    // TODO this might become public API
+    @SuppressWarnings("unused")
+    private void lockMetering() {
         if (getPreviewState() == STATE_STARTED) {
             mLocker = new Locker(mCameraCharacteristics, this);
-            mLocker.lock(mLastRepeatingResult, point);
+            mLocker.lock(mLastRepeatingResult);
         }
     }
 
     @Override
-    public void onLocked(@Nullable PointF point, boolean success) {
-        LOG.w("onLocked - point:", point, "gesture:", mMeteringGesture, "success:", success);
+    public void onLocked(boolean success) {
+        LOG.w("onLocked - success:", success);
         mLocker = null;
-        if (point == null) {
-            LOG.w("onLocked - restoring the picture capturing. isSnapshot:", mDelayedPictureStub.isSnapshot);
-            if (mDelayedPictureStub.isSnapshot) {
-                onTakePictureSnapshot(mDelayedPictureStub, mDelayedPictureRatio, false);
-            } else {
-                onTakePicture(mDelayedPictureStub, false);
-            }
-            mDelayedPictureStub = null;
-            mDelayedPictureRatio = null;
-        }
     }
 
     @NonNull
