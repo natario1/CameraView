@@ -104,6 +104,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     // 3A metering
     private Meter mMeter;
     private Gesture mMeteringGesture;
+    private Locker mLocker;
     private PictureResult.Stub mDelayedPictureStub;
     private AspectRatio mDelayedPictureRatio;
 
@@ -236,6 +237,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (mMeter != null && mMeter.isMetering()) {
                             mMeter.onCapture(partialResult);
                         }
+                        if (mLocker != null && mLocker.isLocking()) {
+                            mLocker.onCapture(partialResult);
+                        }
                     }
 
                     @Override
@@ -250,6 +254,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         }
                         if (mMeter != null && mMeter.isMetering()) {
                             mMeter.onCapture(result);
+                        }
+                        if (mLocker != null && mLocker.isLocking()) {
+                            mLocker.onCapture(result);
                         }
                         Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                         Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
@@ -552,6 +559,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (mMeter != null) {
             mMeter.resetMetering();
             mMeter = null;
+        }
+        if (mLocker != null) {
+            mLocker.unlock();
+            mLocker = null;
         }
         if (hasFrameProcessors()) {
             getFrameManager().release();
@@ -1206,7 +1217,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // refers to "3A metering to a specific point". So if we have one, let's check.
                 if (point != null && !mCameraOptions.isAutoFocusSupported()) return;
 
-                // Reset the old meter if present.
+                // Reset the old meter and locker if present.
+                if (mLocker != null) {
+                    mLocker.unlock();
+                    mLocker = null;
+                }
                 if (mMeter != null) {
                     mMeter.resetMetering();
                     mMeter = null;
