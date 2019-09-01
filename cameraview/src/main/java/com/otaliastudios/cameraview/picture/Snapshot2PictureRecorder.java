@@ -57,12 +57,12 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
     private boolean mNeedsFlash;
 
     public Snapshot2PictureRecorder(@NonNull PictureResult.Stub stub,
-                                    @NonNull Camera2Engine engine,
-                                    @NonNull GlCameraPreview preview,
-                                    @NonNull AspectRatio outputRatio,
-                                    @NonNull CameraCaptureSession session,
-                                    @NonNull CameraCaptureSession.CaptureCallback callback,
-                                    @NonNull CaptureRequest.Builder builder) {
+                                       @NonNull Camera2Engine engine,
+                                       @NonNull GlCameraPreview preview,
+                                       @NonNull AspectRatio outputRatio,
+                                       @NonNull CameraCaptureSession session,
+                                       @NonNull CameraCaptureSession.CaptureCallback callback,
+                                       @NonNull CaptureRequest.Builder builder) {
         super(stub, engine, preview, outputRatio);
         mEngine = engine;
         mSession = session;
@@ -181,7 +181,10 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
                 mSession.capture(mBuilder.build(), mCallback, null);
                 mBuilder.set(CaptureRequest.FLASH_MODE, mOriginalFlashMode);
                 mSession.capture(mBuilder.build(), mCallback, null);
+                // Revert locks.
                 mBuilder.set(CaptureRequest.CONTROL_AF_MODE, mOriginalAfMode);
+                mBuilder.set(CaptureRequest.CONTROL_AE_LOCK, false);
+                mBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
                 mSession.setRepeatingRequest(mBuilder.build(), mCallback, null);
             } catch (CameraAccessException ignore) {}
         }
