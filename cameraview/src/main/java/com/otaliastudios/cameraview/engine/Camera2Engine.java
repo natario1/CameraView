@@ -105,6 +105,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     // 3A metering
     private Meter mMeter;
+    private boolean mMeteringNeedsFlash;
     private Gesture mMeteringGesture;
     private Locker mLocker;
     private PictureResult.Stub mDelayedPictureStub;
@@ -645,7 +646,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     outputRatio,
                     mSession,
                     mRepeatingRequestCallback,
-                    mRepeatingRequestBuilder);
+                    mRepeatingRequestBuilder,
+                    getPictureSnapshotMetering() && mMeteringNeedsFlash);
             mPictureRecorder.take();
         }
     }
@@ -1274,7 +1276,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      */
     @Override
     public void onMeteringEnd(@Nullable PointF point, boolean success) {
-        LOG.w("onMeteringEnd - point:", point, "gesture:", mMeteringGesture, "success:", success);
+        Integer aeState = mLastRepeatingResult.get(CaptureResult.CONTROL_AE_STATE);
+        mMeteringNeedsFlash = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED;
+        LOG.w("onMeteringEnd - point:", point,
+                "gesture:", mMeteringGesture,
+                "needsFlash:", mMeteringNeedsFlash,
+                "success:", success);
         mLocker = new Locker(mCameraCharacteristics, this);
         mLocker.lock(mLastRepeatingResult, point);
     }
