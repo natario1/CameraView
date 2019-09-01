@@ -1216,6 +1216,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // The last one is under our control because the library has no focus API.
                 // So let's set a good af mode here. This operation is reverted during onMeteringReset().
                 applyFocusForMetering(mRepeatingRequestBuilder);
+                applyRepeatingRequestBuilder();
 
                 // Create the meter and start.
                 mMeteringGesture = gesture;
@@ -1235,7 +1236,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onMeteringStarted(@Nullable PointF point) {
         LOG.w("onMeteringStarted - point:", point, "gesture:", mMeteringGesture);
-        applyRepeatingRequestBuilder();
         if (point != null) {
             mCallback.dispatchOnFocusStart(mMeteringGesture, point);
         }
@@ -1250,7 +1250,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onMeteringEnd(@Nullable PointF point, boolean success) {
         LOG.w("onMeteringEnd - point:", point, "gesture:", mMeteringGesture, "success:", success);
-        applyRepeatingRequestBuilder();
         if (point != null) {
             mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
         } else {
@@ -1288,6 +1287,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public CaptureRequest.Builder getMeteringBuilder() {
         return mRepeatingRequestBuilder;
+    }
+
+    @Override
+    public void onMeteringChange() {
+        applyRepeatingRequestBuilder();
     }
 
     //endregion

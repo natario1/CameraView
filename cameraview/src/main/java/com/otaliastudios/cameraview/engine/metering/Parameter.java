@@ -15,14 +15,24 @@ import java.util.List;
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public abstract class Parameter {
 
+    public interface MeteringChangeCallback {
+        void onMeteringChange();
+    }
+
     @SuppressWarnings("WeakerAccess")
     protected boolean isSuccessful;
 
     @SuppressWarnings("WeakerAccess")
     protected boolean isMetered;
 
+    private MeteringChangeCallback callback;
     private boolean shouldSkip;
     private boolean supportsProcessing;
+
+    @SuppressWarnings("WeakerAccess")
+    protected Parameter(@NonNull MeteringChangeCallback callback) {
+        this.callback = callback;
+    }
 
     @SuppressWarnings("WeakerAccess")
     @NonNull
@@ -31,6 +41,11 @@ public abstract class Parameter {
                                        @NonNull T fallback) {
         T value = characteristics.get(key);
         return value == null ? fallback : value;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected void notifyBuilderChanged() {
+        callback.onMeteringChange();
     }
 
     public final boolean isMetered() {

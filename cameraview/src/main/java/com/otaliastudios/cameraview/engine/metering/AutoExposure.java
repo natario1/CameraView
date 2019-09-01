@@ -20,6 +20,10 @@ public class AutoExposure extends Parameter {
     private static final String TAG = AutoExposure.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
+    public AutoExposure(@NonNull MeteringChangeCallback callback) {
+        super(callback);
+    }
+
     private boolean isStarted;
 
     @Override
@@ -56,10 +60,12 @@ public class AutoExposure extends Parameter {
                                    boolean supportsProcessing) {
         isStarted = false;
 
+        boolean changed = false;
         if (supportsProcessing) {
             // Launch the precapture trigger.
             builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                     CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+            changed = true;
         }
 
         // Even if precapture is not supported, check the regions anyway.
@@ -69,6 +75,13 @@ public class AutoExposure extends Parameter {
             int max = Math.min(maxRegions, areas.size());
             builder.set(CaptureRequest.CONTROL_AE_REGIONS,
                     areas.subList(0, max).toArray(new MeteringRectangle[]{}));
+            changed = true;
+        }
+
+        // Notify change and remove any problematic control for future request
+        if (changed) {
+            notifyBuilderChanged();
+            builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, null);
         }
     }
 
@@ -138,17 +151,23 @@ public class AutoExposure extends Parameter {
                                    @NonNull CaptureRequest.Builder builder,
                                    @Nullable MeteringRectangle area,
                                    boolean supportsProcessing) {
+        boolean changed = false;
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
         if (area != null && maxRegions > 0) {
             builder.set(CaptureRequest.CONTROL_AE_REGIONS, new MeteringRectangle[]{area});
+            changed = true;
         }
         if (supportsProcessing) {
             // Cleanup any precapture sequence.
             if (Build.VERSION.SDK_INT >= 23) {
                 builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                         CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL);
+                changed = true;
             }
+        }
+        if (changed) {
+            notifyBuilderChanged();
         }
     }
 }

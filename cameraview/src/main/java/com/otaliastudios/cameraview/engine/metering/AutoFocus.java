@@ -20,6 +20,10 @@ public class AutoFocus extends Parameter {
     private static final String TAG = AutoFocus.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
+    public AutoFocus(@NonNull MeteringChangeCallback callback) {
+        super(callback);
+    }
+
     @Override
     protected boolean checkSupportsProcessing(@NonNull CameraCharacteristics characteristics,
                                               @NonNull CaptureRequest.Builder builder) {
@@ -49,8 +53,10 @@ public class AutoFocus extends Parameter {
                                    @NonNull CaptureRequest.Builder builder,
                                    @NonNull List<MeteringRectangle> areas,
                                    boolean supportsProcessing) {
+        boolean changed = false;
         if (supportsProcessing) {
             builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
+            changed = true;
         }
 
         // Even if auto is not supported, change the regions anyway.
@@ -60,6 +66,13 @@ public class AutoFocus extends Parameter {
             int max = Math.min(maxRegions, areas.size());
             builder.set(CaptureRequest.CONTROL_AF_REGIONS,
                     areas.subList(0, max).toArray(new MeteringRectangle[]{}));
+            changed = true;
+        }
+
+        // Notify change and remove any problematic control for future request
+        if (changed) {
+            notifyBuilderChanged();
+            builder.set(CaptureRequest.CONTROL_AF_TRIGGER, null);
         }
     }
 
@@ -95,14 +108,20 @@ public class AutoFocus extends Parameter {
                                    @NonNull CaptureRequest.Builder builder,
                                    @Nullable MeteringRectangle area,
                                    boolean supportsProcessing) {
+        boolean changed = false;
         int maxRegions = readCharacteristic(characteristics,
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
         if (area != null && maxRegions > 0) {
             builder.set(CaptureRequest.CONTROL_AF_REGIONS, new MeteringRectangle[]{area});
+            changed = true;
         }
 
         if (supportsProcessing) { // Cleanup any trigger.
             builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+            changed = true;
+        }
+        if (changed) {
+            notifyBuilderChanged();
         }
     }
 }

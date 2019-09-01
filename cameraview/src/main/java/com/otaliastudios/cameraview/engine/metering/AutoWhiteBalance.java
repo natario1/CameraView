@@ -20,6 +20,10 @@ public class AutoWhiteBalance extends Parameter {
     private static final String TAG = AutoWhiteBalance.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
+    public AutoWhiteBalance(@NonNull MeteringChangeCallback callback) {
+        super(callback);
+    }
+
     @Override
     protected boolean checkSupportsProcessing(@NonNull CameraCharacteristics characteristics,
                                               @NonNull CaptureRequest.Builder builder) {
@@ -51,6 +55,7 @@ public class AutoWhiteBalance extends Parameter {
             int max = Math.min(maxRegions, areas.size());
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS,
                     areas.subList(0, max).toArray(new MeteringRectangle[]{}));
+            notifyBuilderChanged();
         }
     }
 
@@ -94,6 +99,7 @@ public class AutoWhiteBalance extends Parameter {
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
         if (area != null && maxRegions > 0) {
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS, new MeteringRectangle[]{area});
+            notifyBuilderChanged();
         }
     }
 }

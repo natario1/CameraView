@@ -42,8 +42,8 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
 
     private final static int STATE_IDLE = 0;
     private final static int STATE_WAITING_FIRST_FRAME = 1;
-    private final static int STATE_WAITING_TORCH = 2;
-    private final static int STATE_WAITING_TORCH_EXPOSURE = 3;
+    private final static int STATE_WAITING_LOCK = 2;
+    private final static int STATE_WAITING_TORCH = 3;
     private final static int STATE_WAITING_IMAGE = 4;
 
     private final Camera2Engine mEngine;
@@ -53,6 +53,8 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
     private int mState = STATE_IDLE;
     private Integer mOriginalAeMode;
     private Integer mOriginalFlashMode;
+    private Integer mOriginalAfMode;
+    private boolean mNeedsFlash;
 
     public Snapshot2PictureRecorder(@NonNull PictureResult.Stub stub,
                                     @NonNull Camera2Engine engine,
@@ -78,6 +80,17 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
             mState = STATE_WAITING_FIRST_FRAME;
             mOriginalAeMode = mBuilder.get(CaptureRequest.CONTROL_AE_MODE);
             mOriginalFlashMode = mBuilder.get(CaptureRequest.FLASH_MODE);
+            mOriginalAfMode = mBuilder.get(CaptureRequest.CONTROL_AF_MODE);
+        }
+    }
+
+    private void applyBuilder() {
+        try {
+            mSession.setRepeatingRequest(mBuilder.build(), mCallback, null);
+        } catch (CameraAccessException e) {
+            mResult = null;
+            mError = e;
+            dispatchResult();
         }
     }
 
@@ -96,81 +109,64 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
     public void onCaptureCompleted(@NonNull TotalCaptureResult result) {
         if (mState == STATE_WAITING_FIRST_FRAME) {
             Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-            if (aeState == null) {
-                LOG.w("onCaptureCompleted:", "aeState is null! This should never happen.",
-                        "Taking snapshot.");
-                mState = STATE_WAITING_IMAGE;
-                super.take();
-            } else if (aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
-                LOG.i("onCaptureCompleted:", "aeState is optimal. Taking snapshot.");
-                mState = STATE_WAITING_IMAGE;
-                super.take();
-            } else if (aeState == CaptureResult.CONTROL_AE_STATE_LOCKED) {
-                LOG.i("onCaptureCompleted:", "aeState is locked. There's nothing we can do.",
-                        "Taking snapshot with no flash.");
-                mState = STATE_WAITING_IMAGE;
-                super.take();
-            } else if (aeState != CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
-                LOG.w("onCaptureCompleted:", "aeState is not CONVERGED, FLASH_REQUIRED or LOCKED.", aeState,
-                        "This seems to say that metering did not complete before. Let's take the snapshot.");
-                mState = STATE_WAITING_IMAGE;
-                super.take();
-            } else {
-                // Open the torch. AE_MODE_ON is guaranteed to be supported.
-                LOG.w("onCaptureCompleted:", "aeState is FLASH_REQUIRED. Opening torch.");
-                mState = STATE_WAITING_TORCH;
-                mBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-                mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                try {
-                    mSession.setRepeatingRequest(mBuilder.build(), mCallback, null);
-                } catch (CameraAccessException e) {
-                    mResult = null;
-                    mError = e;
-                    dispatchResult();
-                }
-            }
+            mNeedsFlash = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED;
+            LOG.i("onCaptureCompleted:", "aeState:", aeState, "needsFlash:", mNeedsFlash);
+            mState = STATE_WAITING_LOCK;
+            // Removing any ongoing precapture or trigger. This should not be needed.
+            // if (Build.VERSION.SDK_INT >= 23) {
+            //    mBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL);
+            // }
+            // mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+            // Lock AE, AWB, AF to their current values
+            mBuilder.set(CaptureRequest.CONTROL_AE_LOCK, true);
+            mBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
+            mBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+            applyBuilder();
+            return;
+        }
 
-        } else if (mState == STATE_WAITING_TORCH) {
+        if (mState == STATE_WAITING_LOCK) {
+            Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+            Integer awbState = result.get(CaptureResult.CONTROL_AWB_STATE);
+            boolean aeLocked = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_LOCKED;
+            boolean awbLocked = awbState != null && awbState == CaptureResult.CONTROL_AWB_STATE_LOCKED;
+            if (aeLocked && awbLocked) {
+                if (mNeedsFlash) {
+                    LOG.i("onCaptureCompleted:", "AE/AWB locked!", "Flash needed, opening torch.");
+                    mState = STATE_WAITING_TORCH;
+                    mBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+                    mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                    applyBuilder();
+                } else {
+                    LOG.i("onCaptureCompleted:", "AE/AWB locked!", "No flash needed, taking picture.");
+                    mState = STATE_WAITING_IMAGE;
+                    super.take();
+                }
+            } else {
+                LOG.i("onCaptureCompleted:", "Waiting for AE/AWB locks...",
+                        "aeState:", aeState, "aeLocked:", aeLocked,
+                        "awbState:", awbState, "awbLocked:", awbLocked);
+            }
+            return;
+        }
+
+
+        if (mState == STATE_WAITING_TORCH) {
             Integer flashState = result.get(CaptureResult.FLASH_STATE);
             if (flashState == null) {
                 LOG.w("onCaptureCompleted:", "Waiting flash, but flashState is null! Taking snapshot.");
                 mState = STATE_WAITING_IMAGE;
                 super.take();
             } else if (flashState == CaptureResult.FLASH_STATE_FIRED) {
-                LOG.i("onCaptureCompleted:", "Waiting flash and we have FIRED state! Waiting exposure.");
-                mState = STATE_WAITING_TORCH_EXPOSURE;
+                LOG.i("onCaptureCompleted:", "Waiting flash and we have FIRED state! Taking snapshot.");
+                mState = STATE_WAITING_IMAGE;
+                super.take();
             } else {
                 LOG.i("onCaptureCompleted:", "aeState is FLASH_REQUIRED but flashState is",
                         flashState, ". Waiting...");
             }
-
-        } else if (mState == STATE_WAITING_TORCH_EXPOSURE) {
-            Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-            if (aeState == null) {
-                LOG.w("onCaptureCompleted:", "aeState is null! Taking snasphot.");
-                mState = STATE_WAITING_IMAGE;
-                super.take();
-            } else {
-                switch (aeState) {
-                    case CaptureResult.CONTROL_AE_STATE_CONVERGED:
-                    case CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED: {
-                        LOG.i("onCaptureCompleted:", "We have torch and good torch exposure.", aeState);
-                        mState = STATE_WAITING_IMAGE;
-                        super.take();
-                        break;
-                    }
-                    case CaptureResult.CONTROL_AE_STATE_LOCKED: {
-                        LOG.w("onCaptureCompleted:", "Final aeState is LOCKED. Should not happen.");
-                        mState = STATE_WAITING_IMAGE;
-                        super.take();
-                        break;
-                    }
-                    default: {
-                        LOG.i("onCaptureCompleted:", "Waiting for torch exposure...:", aeState);
-                        break;
-                    }
-                }
-            }
+            //noinspection UnnecessaryReturnStatement
+            return;
         }
     }
 
@@ -184,6 +180,8 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
                 mBuilder.set(CaptureRequest.CONTROL_AE_MODE, mOriginalAeMode);
                 mSession.capture(mBuilder.build(), mCallback, null);
                 mBuilder.set(CaptureRequest.FLASH_MODE, mOriginalFlashMode);
+                mSession.capture(mBuilder.build(), mCallback, null);
+                mBuilder.set(CaptureRequest.CONTROL_AF_MODE, mOriginalAfMode);
                 mSession.setRepeatingRequest(mBuilder.build(), mCallback, null);
             } catch (CameraAccessException ignore) {}
         }

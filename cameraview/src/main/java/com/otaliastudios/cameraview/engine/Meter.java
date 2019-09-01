@@ -43,7 +43,7 @@ public class Meter {
     /**
      * The meter callback.
      */
-    public interface Callback {
+    public interface Callback extends Parameter.MeteringChangeCallback {
 
         /**
          * Notifies that metering has started. At this point implementors should apply
@@ -93,9 +93,9 @@ public class Meter {
 
     private boolean mIsMetering;
     private long mMeteringStartTime;
-    private Parameter mAutoFocus = new AutoFocus();
-    private Parameter mAutoWhiteBalance = new AutoWhiteBalance();
-    private Parameter mAutoExposure = new AutoExposure();
+    private Parameter mAutoFocus;
+    private Parameter mAutoWhiteBalance;
+    private Parameter mAutoExposure;
 
     /**
      * Creates a new meter.
@@ -110,6 +110,9 @@ public class Meter {
         mEngine = engine;
         mCharacteristics = characteristics;
         mCallback = callback;
+        mAutoFocus = new AutoFocus(callback);
+        mAutoExposure = new AutoExposure(callback);
+        mAutoWhiteBalance = new AutoWhiteBalance(callback);
     }
 
     /**
