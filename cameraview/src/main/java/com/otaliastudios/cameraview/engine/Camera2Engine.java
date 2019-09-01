@@ -251,6 +251,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (mMeter != null && mMeter.isMetering()) {
                             mMeter.onCapture(result);
                         }
+                        Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                        Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
+                        LOG.i("metering:", "aeState:", aeState, "aeTriggerState:", aeTriggerState);
                     }
 
                 };
@@ -1291,6 +1294,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void onMeteringChange() {
+        LOG.i("onMeteringChange:", "applying the builder.");
         applyRepeatingRequestBuilder();
     }
 

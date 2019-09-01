@@ -78,10 +78,12 @@ public class AutoExposure extends Parameter {
             changed = true;
         }
 
-        // Notify change and remove any problematic control for future request
         if (changed) {
             notifyBuilderChanged();
-            builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, null);
+            // Remove any problematic control for future requests
+            // NOTE: activating this invalidates the logic for early exit in processCapture
+            /* builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE); */
         }
     }
 
@@ -89,7 +91,8 @@ public class AutoExposure extends Parameter {
     @Override
     public void processCapture(@NonNull CaptureResult result) {
         Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-        LOG.i("onCapture:", "aeState:", aeState);
+        Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
+        LOG.i("onCapture:", "aeState:", aeState, "aeTriggerState:", aeTriggerState);
         if (aeState == null) return;
 
         if (!isStarted) {
@@ -100,9 +103,14 @@ public class AutoExposure extends Parameter {
                 }
                 case CaptureResult.CONTROL_AE_STATE_CONVERGED:
                 case CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED: {
-                    // PRECAPTURE is a transient state, so also check for the final states.
-                    isMetered = true;
-                    isSuccessful = true;
+                    // PRECAPTURE is a transient state. Being here might mean that precapture run
+                    // and was successful, OR that the trigger was not even received yet. To
+                    // distinguish, check the trigger state.
+                    if (aeTriggerState != null
+                            && aeTriggerState == CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER_START) {
+                        isMetered = true;
+                        isSuccessful = true;
+                    }
                     break;
                 }
                 case CaptureResult.CONTROL_AE_STATE_LOCKED: {

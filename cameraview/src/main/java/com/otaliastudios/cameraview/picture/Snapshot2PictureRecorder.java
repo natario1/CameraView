@@ -112,11 +112,15 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
             mNeedsFlash = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED;
             LOG.i("onCaptureCompleted:", "aeState:", aeState, "needsFlash:", mNeedsFlash);
             mState = STATE_WAITING_LOCK;
+
             // Removing any ongoing precapture or trigger. This should not be needed.
-            // if (Build.VERSION.SDK_INT >= 23) {
-            //    mBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL);
-            // }
-            // mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+            if (Build.VERSION.SDK_INT >= 23) {
+                mBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL);
+            }
+            mBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
+                    CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+
             // Lock AE, AWB, AF to their current values
             mBuilder.set(CaptureRequest.CONTROL_AE_LOCK, true);
             mBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
