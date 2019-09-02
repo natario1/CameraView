@@ -266,10 +266,32 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         Boolean aeLock = result.get(CaptureResult.CONTROL_AE_LOCK);
                         Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
                         Integer afTriggerState = result.get(CaptureResult.CONTROL_AF_TRIGGER);
-                        LOG.v("metering:",
-                                "aeMode:", aeMode, "aeLock:", aeLock,
-                                "aeState:", aeState, "aeTriggerState:", aeTriggerState,
-                                "afState:", afState, "afTriggerState:", afTriggerState);
+                        String log = "metering: aeMode: " + aeMode + " aeLock: " + aeLock +
+                                " aeState: " + aeState + " aeTriggerState: " + aeTriggerState +
+                                " afState: " + afState + " afTriggerState: " + afTriggerState;
+                        if (!log.equals(mLastLog)) {
+                            mLastLog = log;
+                            LOG.w(log);
+                        }
+
+                        // DURING metering (focus skips)
+                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 0 afTriggerState: 0
+                        // aeMode: 3 aeLock: false aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
+                        //
+                        // DURING locking (focus skips)
+                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 1 afState: 0 afTriggerState: 0
+                        // aeMode: 3 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
+                        //
+                        // AFTER locked
+                        // aeMode: 3 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
+                        //
+                        // AFTER super.take() called
+                        // aeMode: 1 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
+                        // aeMode: 1 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
+                        //
+                        // Reverting flash changes + reset lock + reset metering
+                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 2 afState: 2 afTriggerState: 0
+                        // aeMode: 3 aeLock: false aeState: 1 aeTriggerState: 2 afState: 2 afTriggerState: 0
                     }
 
                 };
@@ -279,6 +301,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             }
         }
     }
+
+    private String mLastLog;
+
     //endregion
 
     //region Protected APIs

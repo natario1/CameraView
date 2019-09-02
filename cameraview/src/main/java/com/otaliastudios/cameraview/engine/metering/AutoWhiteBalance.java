@@ -67,14 +67,12 @@ public class AutoWhiteBalance extends Parameter {
 
         switch (awbState) {
             case CaptureRequest.CONTROL_AWB_STATE_CONVERGED: {
-                isMetered = true;
-                isSuccessful = true;
+                notifyMetered(true);
                 break;
             }
             case CaptureRequest.CONTROL_AWB_STATE_LOCKED: {
                 // Nothing we can do if AWB was locked.
-                isMetered = true;
-                isSuccessful = false;
+                notifyMetered(false);
                 break;
             }
             case CaptureRequest.CONTROL_AWB_STATE_INACTIVE:
@@ -86,7 +84,7 @@ public class AutoWhiteBalance extends Parameter {
     }
 
     @Override
-    protected void onMetered(@NonNull CaptureRequest.Builder builder) {
+    protected void onMetered(@NonNull CaptureRequest.Builder builder, boolean success) {
         // Do nothing
     }
 

@@ -54,8 +54,7 @@ public class AutoWhiteBalance extends Parameter {
         if (awbState == null) return;
         switch (awbState) {
             case CaptureRequest.CONTROL_AWB_STATE_LOCKED: {
-                isLocked = true;
-                isSuccessful = true;
+                notifyLocked(true);
                 break;
             }
             case CaptureRequest.CONTROL_AWB_STATE_CONVERGED:
@@ -68,7 +67,7 @@ public class AutoWhiteBalance extends Parameter {
     }
 
     @Override
-    protected void onLocked(@NonNull CaptureRequest.Builder builder) {
+    protected void onLocked(@NonNull CaptureRequest.Builder builder, boolean success) {
         // Do nothing
     }
 }

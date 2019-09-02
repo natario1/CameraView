@@ -72,8 +72,7 @@ public class AutoFocus extends Parameter {
             case CaptureRequest.CONTROL_AF_STATE_INACTIVE:
             case CaptureRequest.CONTROL_AF_STATE_PASSIVE_FOCUSED:
             case CaptureRequest.CONTROL_AF_STATE_PASSIVE_UNFOCUSED: {
-                isLocked = true;
-                isSuccessful = true;
+                notifyLocked(true);
                 break;
             }
             case CaptureRequest.CONTROL_AF_STATE_ACTIVE_SCAN:
@@ -85,7 +84,7 @@ public class AutoFocus extends Parameter {
     }
 
     @Override
-    protected void onLocked(@NonNull CaptureRequest.Builder builder) {
+    protected void onLocked(@NonNull CaptureRequest.Builder builder, boolean success) {
         // Do nothing.
     }
 

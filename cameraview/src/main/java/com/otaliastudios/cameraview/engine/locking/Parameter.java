@@ -8,8 +8,6 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import java.util.List;
-
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public abstract class Parameter {
 
@@ -17,11 +15,8 @@ public abstract class Parameter {
         void onLockingChange();
     }
 
-    protected boolean isSuccessful;
-
-    @SuppressWarnings("WeakerAccess")
-    protected boolean isLocked;
-
+    private boolean isSuccessful;
+    private boolean isLocked;
     private LockingChangeCallback callback;
     private boolean shouldSkip;
     private boolean supportsLocking;
@@ -42,6 +37,12 @@ public abstract class Parameter {
     @SuppressWarnings("WeakerAccess")
     protected void notifyBuilderChanged() {
         callback.onLockingChange();
+    }
+
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
+    protected void notifyLocked(boolean success) {
+        isLocked = true;
+        isSuccessful = success;
     }
 
     public final boolean isLocked() {
@@ -70,7 +71,7 @@ public abstract class Parameter {
                                 @NonNull CaptureResult result) {
         if (isLocked()) return;
         processCapture(result);
-        if (isLocked()) onLocked(builder);
+        if (isLocked()) onLocked(builder, isSuccessful);
     }
 
     protected abstract boolean checkSupportsLocking(@NonNull CameraCharacteristics characteristics,
@@ -83,5 +84,5 @@ public abstract class Parameter {
 
     protected abstract void processCapture(@NonNull CaptureResult result);
 
-    protected abstract void onLocked(@NonNull CaptureRequest.Builder builder);
+    protected abstract void onLocked(@NonNull CaptureRequest.Builder builder, boolean success);
 }

@@ -19,17 +19,12 @@ public abstract class Parameter {
         void onMeteringChange();
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected boolean isSuccessful;
-
-    @SuppressWarnings("WeakerAccess")
-    protected boolean isMetered;
-
+    private boolean isSuccessful;
+    private boolean isMetered;
     private MeteringChangeCallback callback;
     private boolean shouldSkip;
     private boolean supportsProcessing;
 
-    @SuppressWarnings("WeakerAccess")
     protected Parameter(@NonNull MeteringChangeCallback callback) {
         this.callback = callback;
     }
@@ -46,6 +41,12 @@ public abstract class Parameter {
     @SuppressWarnings("WeakerAccess")
     protected void notifyBuilderChanged() {
         callback.onMeteringChange();
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected void notifyMetered(boolean success) {
+        isMetered = true;
+        isSuccessful = success;
     }
 
     public final boolean isMetered() {
@@ -74,9 +75,10 @@ public abstract class Parameter {
 
     public final void onCapture(@NonNull CaptureRequest.Builder builder,
                                 @NonNull CaptureResult result) {
-        if (isMetered()) return;
-        processCapture(result);
-        if (isMetered()) onMetered(builder);
+        if (!isMetered()) {
+            processCapture(result);
+            if (isMetered()) onMetered(builder, isSuccessful);
+        }
     }
 
     public final void resetMetering(@NonNull CameraCharacteristics characteristics,
@@ -97,7 +99,7 @@ public abstract class Parameter {
 
     protected abstract void processCapture(@NonNull CaptureResult result);
 
-    protected abstract void onMetered(@NonNull CaptureRequest.Builder builder);
+    protected abstract void onMetered(@NonNull CaptureRequest.Builder builder, boolean success);
 
     protected abstract void onResetMetering(@NonNull CameraCharacteristics characteristics,
                                             @NonNull CaptureRequest.Builder builder,

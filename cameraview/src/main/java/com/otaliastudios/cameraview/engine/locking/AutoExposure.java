@@ -62,8 +62,7 @@ public class AutoExposure extends Parameter {
         if (aeState == null) return;
         switch (aeState) {
             case CaptureRequest.CONTROL_AE_STATE_LOCKED: {
-                isLocked = true;
-                isSuccessful = true;
+                notifyLocked(true);
                 break;
             }
             case CaptureRequest.CONTROL_AE_STATE_PRECAPTURE:
@@ -78,7 +77,7 @@ public class AutoExposure extends Parameter {
     }
 
     @Override
-    protected void onLocked(@NonNull CaptureRequest.Builder builder) {
+    protected void onLocked(@NonNull CaptureRequest.Builder builder, boolean success) {
         // Do nothing
     }
 }

@@ -84,13 +84,11 @@ public class AutoFocus extends Parameter {
         if (afState == null) return;
         switch (afState) {
             case CaptureRequest.CONTROL_AF_STATE_FOCUSED_LOCKED: {
-                isMetered = true;
-                isSuccessful = true;
+                notifyMetered(true);
                 break;
             }
             case CaptureRequest.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED: {
-                isMetered = true;
-                isSuccessful = false;
+                notifyMetered(false);
                 break;
             }
             case CaptureRequest.CONTROL_AF_STATE_INACTIVE: break;
@@ -100,7 +98,7 @@ public class AutoFocus extends Parameter {
     }
 
     @Override
-    protected void onMetered(@NonNull CaptureRequest.Builder builder) {
+    protected void onMetered(@NonNull CaptureRequest.Builder builder, boolean success) {
         // Do nothing.
     }
 

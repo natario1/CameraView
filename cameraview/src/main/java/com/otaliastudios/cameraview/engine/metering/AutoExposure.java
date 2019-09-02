@@ -108,15 +108,13 @@ public class AutoExposure extends Parameter {
                     // distinguish, check the trigger state.
                     if (aeTriggerState != null
                             && aeTriggerState == CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER_START) {
-                        isMetered = true;
-                        isSuccessful = true;
+                        notifyMetered(true);
                     }
                     break;
                 }
                 case CaptureResult.CONTROL_AE_STATE_LOCKED: {
                     // There's nothing we can do, AE was locked, triggers are ignored.
-                    isMetered = true;
-                    isSuccessful = false;
+                    notifyMetered(false);
                     break;
                 }
                 case CaptureResult.CONTROL_AE_STATE_INACTIVE:
@@ -129,14 +127,12 @@ public class AutoExposure extends Parameter {
             switch (aeState) {
                 case CaptureResult.CONTROL_AE_STATE_CONVERGED:
                 case CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED: {
-                    isMetered = true;
-                    isSuccessful = true;
+                    notifyMetered(true);
                     break;
                 }
                 case CaptureResult.CONTROL_AE_STATE_LOCKED: {
                     // There's nothing we can do, AE was locked, triggers are ignored.
-                    isMetered = true;
-                    isSuccessful = false;
+                    notifyMetered(false);
                     break;
                 }
                 case CaptureResult.CONTROL_AE_STATE_PRECAPTURE:
@@ -150,7 +146,7 @@ public class AutoExposure extends Parameter {
     }
 
     @Override
-    protected void onMetered(@NonNull CaptureRequest.Builder builder) {
+    protected void onMetered(@NonNull CaptureRequest.Builder builder, boolean success) {
         // Do nothing
     }
 
