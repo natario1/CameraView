@@ -18,7 +18,7 @@ import java.util.List;
 public class AutoExposure extends Parameter {
 
     private static final String TAG = AutoExposure.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+    private static final CameraLogger LOG = CameraLogger.create(TAG + "Metering");
 
     public AutoExposure(@NonNull MeteringChangeCallback callback) {
         super(callback);

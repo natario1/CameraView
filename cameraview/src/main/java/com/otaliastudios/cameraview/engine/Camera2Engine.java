@@ -260,9 +260,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (mLocker != null && mLocker.isLocking()) {
                             mLocker.onCapture(result);
                         }
+                        Integer aeMode = result.get(CaptureResult.CONTROL_AE_MODE);
                         Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                        Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
+                        Boolean aeLock = result.get(CaptureResult.CONTROL_AE_LOCK);
                         Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
-                        LOG.v("metering:", "aeState:", aeState, "aeTriggerState:", aeTriggerState);
+                        Integer afTriggerState = result.get(CaptureResult.CONTROL_AF_TRIGGER);
+                        LOG.v("metering:",
+                                "aeMode:", aeMode, "aeLock:", aeLock,
+                                "aeState:", aeState, "aeTriggerState:", aeTriggerState,
+                                "afState:", afState, "afTriggerState:", afTriggerState);
                     }
 
                 };

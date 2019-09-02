@@ -196,7 +196,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
             // we'll just re-use whatever was there before.
             mInputSurfaceTexture.updateTexImage();
             mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
-            LOG.v("onDrawFrame:", "timestamp:", mInputSurfaceTexture.getTimestamp());
+            // LOG.v("onDrawFrame:", "timestamp:", mInputSurfaceTexture.getTimestamp());
 
 
             // For Camera2, apply the draw rotation.

@@ -14,7 +14,7 @@ import com.otaliastudios.cameraview.CameraLogger;
 public class AutoFocus extends Parameter {
 
     private static final String TAG = AutoFocus.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+    private static final CameraLogger LOG = CameraLogger.create(TAG + "Locking");
 
     public AutoFocus(@NonNull LockingChangeCallback callback) {
         super(callback);

@@ -18,7 +18,7 @@ import java.util.List;
 public class AutoWhiteBalance extends Parameter {
 
     private static final String TAG = AutoWhiteBalance.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+    private static final CameraLogger LOG = CameraLogger.create(TAG + "Metering");
 
     public AutoWhiteBalance(@NonNull MeteringChangeCallback callback) {
         super(callback);

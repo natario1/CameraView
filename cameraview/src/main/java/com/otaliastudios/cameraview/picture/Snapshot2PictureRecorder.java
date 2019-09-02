@@ -155,9 +155,12 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
             // Revert our changes.
             LOG.i("dispatchResult:", "Reverting the capture intent changes.");
             try {
-                // See Camera2Engine.setFlash(). It's better to change these one by one.
+                // See Camera2Engine.setFlash() comments: turning TORCH off has bugs and we must do
+                // as follows.
+                mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                mBuilder.set(CaptureRequest.FLASH_MODE, CaptureResult.FLASH_MODE_OFF);
+                mSession.capture(mBuilder.build(), null, null);
                 mBuilder.set(CaptureRequest.CONTROL_AE_MODE, mOriginalAeMode);
-                mSession.capture(mBuilder.build(), mCallback, null);
                 mBuilder.set(CaptureRequest.FLASH_MODE, mOriginalFlashMode);
                 mSession.setRepeatingRequest(mBuilder.build(), mCallback, null);
             } catch (CameraAccessException ignore) {}

@@ -18,7 +18,7 @@ import java.util.List;
 public class AutoFocus extends Parameter {
 
     private static final String TAG = AutoFocus.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+    private static final CameraLogger LOG = CameraLogger.create(TAG + "Metering");
 
     public AutoFocus(@NonNull MeteringChangeCallback callback) {
         super(callback);
