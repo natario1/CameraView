@@ -1,34 +1,30 @@
-package com.otaliastudios.cameraview.engine.locking;
+package com.otaliastudios.cameraview.engine.lock;
 
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.engine.action.ActionHolder;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class AutoExposure extends Parameter {
+public class AutoExposureLock extends BaseLock {
 
-    private static final String TAG = AutoExposure.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG + "Locking");
-
-    public AutoExposure(@NonNull LockingChangeCallback callback) {
-        super(callback);
-    }
+    private final static String TAG = AutoExposureLock.class.getSimpleName();
+    private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     @Override
-    protected boolean checkSupportsLocking(@NonNull CameraCharacteristics characteristics,
-                                           @NonNull CaptureRequest.Builder builder) {
-        boolean isNotLegacy = readCharacteristic(characteristics,
-                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1) !=
-                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
+    protected boolean checkIsSupported(@NonNull ActionHolder holder) {
+        boolean isNotLegacy = readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
+                != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
         // Not sure we should check aeMode as well, probably all aeModes support locking,
         // but this should not be a big issue since we're not even using different AE modes.
-        Integer aeMode = builder.get(CaptureRequest.CONTROL_AE_MODE);
+        Integer aeMode = holder.getBuilder(this).get(CaptureRequest.CONTROL_AE_MODE);
         boolean isAEOn = aeMode != null &&
                 (aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH
@@ -36,37 +32,37 @@ public class AutoExposure extends Parameter {
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
                         || aeMode == 5 /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */);
         boolean result = isNotLegacy && isAEOn;
-        LOG.i("checkSupportsProcessing:", result);
+        LOG.i("checkIsSupported:", result);
         return result;
     }
 
     @Override
-    protected boolean checkShouldSkip(@NonNull CaptureResult lastResult) {
-        Integer aeState = lastResult.get(CaptureResult.CONTROL_AE_STATE);
+    protected boolean checkShouldSkip(@NonNull ActionHolder holder) {
+        Integer aeState = holder.getLastResult(this).get(CaptureResult.CONTROL_AE_STATE);
         boolean result = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_LOCKED;
         LOG.i("checkShouldSkip:", result);
         return result;
     }
 
     @Override
-    protected void onLock(@NonNull CameraCharacteristics characteristics,
-                          @NonNull CaptureRequest.Builder builder) {
+    protected void onStarted(@NonNull ActionHolder holder) {
         int cancelTrigger = Build.VERSION.SDK_INT >= 23
                 ? CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL
                 : CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE;
-        builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, cancelTrigger);
-        builder.set(CaptureRequest.CONTROL_AE_LOCK, true);
-        notifyBuilderChanged();
+        holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, cancelTrigger);
+        holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_LOCK, true);
+        holder.applyBuilder(this);
     }
 
     @Override
-    public void processCapture(@NonNull CaptureResult result) {
+    public void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+        super.onCaptureCompleted(holder, request, result);
         Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
         LOG.i("processCapture:", "aeState:", aeState);
         if (aeState == null) return;
         switch (aeState) {
             case CaptureRequest.CONTROL_AE_STATE_LOCKED: {
-                notifyLocked(true);
+                setState(STATE_COMPLETED);
                 break;
             }
             case CaptureRequest.CONTROL_AE_STATE_PRECAPTURE:
@@ -78,10 +74,5 @@ public class AutoExposure extends Parameter {
                 break;
             }
         }
-    }
-
-    @Override
-    protected void onLocked(@NonNull CaptureRequest.Builder builder, boolean success) {
-        // Do nothing
     }
 }

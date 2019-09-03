@@ -3,21 +3,24 @@ package com.otaliastudios.cameraview.engine.action;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import java.util.Arrays;
 import java.util.List;
 
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Actions {
 
     @NonNull
-    public static Action together(@NonNull BaseAction... actions) {
+    public static BaseAction together(@NonNull BaseAction... actions) {
         return new TogetherAction(Arrays.asList(actions));
     }
 
     @NonNull
-    public static Action sequence(@NonNull BaseAction... actions) {
+    public static BaseAction sequence(@NonNull BaseAction... actions) {
         return new SequenceAction(Arrays.asList(actions));
     }
 

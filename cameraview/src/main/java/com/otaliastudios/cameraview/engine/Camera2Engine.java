@@ -44,6 +44,7 @@ import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
+import com.otaliastudios.cameraview.engine.lock.UnlockAction;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
@@ -70,8 +71,7 @@ import java.util.concurrent.ExecutionException;
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener,
         ActionHolder,
-        Meter.Callback,
-        Locker.Callback {
+        Meter.Callback {
 
     private static final String TAG = Camera2Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -110,7 +110,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     // 3A metering
     private Meter mMeter;
     private Gesture mMeteringGesture;
-    private Locker mLocker;
     private PictureResult.Stub mDelayedPictureStub;
     private AspectRatio mDelayedPictureRatio;
 
@@ -245,21 +244,24 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    private final CameraCaptureSession.CaptureCallback mRepeatingRequestCallback = new CameraCaptureSession.CaptureCallback() {
+    private final CameraCaptureSession.CaptureCallback mRepeatingRequestCallback =
+            new CameraCaptureSession.CaptureCallback() {
         @Override
-        public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
+        public void onCaptureStarted(@NonNull CameraCaptureSession session,
+                                     @NonNull CaptureRequest request,
+                                     long timestamp,
+                                     long frameNumber) {
             for (Action action : mActions) {
                 action.onCaptureStarted(Camera2Engine.this, request);
             }
         }
 
         @Override
-        public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
+        public void onCaptureProgressed(@NonNull CameraCaptureSession session,
+                                        @NonNull CaptureRequest request,
+                                        @NonNull CaptureResult partialResult) {
             if (mMeter != null && mMeter.isMetering()) {
                 mMeter.onCapture(partialResult);
-            }
-            if (mLocker != null && mLocker.isLocking()) {
-                mLocker.onCapture(partialResult);
             }
             for (Action action : mActions) {
                 action.onCaptureProgressed(Camera2Engine.this, request, partialResult);
@@ -267,16 +269,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
 
         @Override
-        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+        public void onCaptureCompleted(@NonNull CameraCaptureSession session,
+                                       @NonNull CaptureRequest request,
+                                       @NonNull TotalCaptureResult result) {
             mLastRepeatingResult = result;
-            if (mPictureRecorder instanceof Snapshot2PictureRecorder) {
-                ((Snapshot2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
-            }
             if (mMeter != null && mMeter.isMetering()) {
                 mMeter.onCapture(result);
-            }
-            if (mLocker != null && mLocker.isLocking()) {
-                mLocker.onCapture(result);
             }
             for (Action action : mActions) {
                 action.onCaptureProgressed(Camera2Engine.this, request, result);
@@ -294,10 +292,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         try {
             CameraCharacteristics characteristics = mManager.getCameraCharacteristics(mCameraId);
             StreamConfigurationMap streamMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            if (streamMap == null)
+            if (streamMap == null) {
                 throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
-            // This works because our previews return either a SurfaceTexture or a SurfaceHolder, which are
-            // accepted class types by the getOutputSizes method.
+            }
+            // This works because our previews return either a SurfaceTexture or a SurfaceHolder,
+            // which are accepted class types by the getOutputSizes method.
             android.util.Size[] sizes = streamMap.getOutputSizes(mPreview.getOutputClass());
             List<Size> candidates = new ArrayList<>(sizes.length);
             for (android.util.Size size : sizes) {
@@ -327,13 +326,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             // However, let's launch an unrecoverable exception.
             throw createCameraException(e);
         }
-        LOG.i("collectCameraInfo", "Facing:", facing, "Internal:", internalFacing, "Cameras:", cameraIds.length);
+        LOG.i("collectCameraInfo", "Facing:", facing,
+                "Internal:", internalFacing,
+                "Cameras:", cameraIds.length);
         for (String cameraId : cameraIds) {
             try {
                 CameraCharacteristics characteristics = mManager.getCameraCharacteristics(cameraId);
                 if (internalFacing == readCharacteristic(characteristics, CameraCharacteristics.LENS_FACING, -99)) {
                     mCameraId = cameraId;
-                    int sensorOffset = readCharacteristic(characteristics, CameraCharacteristics.SENSOR_ORIENTATION, 0);
+                    int sensorOffset = readCharacteristic(characteristics,
+                            CameraCharacteristics.SENSOR_ORIENTATION, 0);
                     getAngles().setSensorOffset(facing, sensorOffset);
                     return true;
                 }
@@ -381,8 +383,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     // However, using trySetException should address this problem - it will only trigger
                     // if the task has no result.
                     //
-                    // Docs say to release this camera instance, however, since we throw an unrecoverable CameraException,
-                    // this will trigger a stop() through the exception handler.
+                    // Docs say to release this camera instance, however, since we throw an unrecoverable
+                    // CameraException, this will trigger a stop() through the exception handler.
                     task.trySetException(new CameraException(CameraException.REASON_DISCONNECTED));
                 }
 
@@ -651,16 +653,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         } else {
             LOG.i("onTakePictureSnapshot:", "doMetering is false. Performing.");
             if (!(mPreview instanceof GlCameraPreview)) {
-                throw new RuntimeException("takePictureSnapshot with Camera2 is only supported with Preview.GL_SURFACE");
+                throw new RuntimeException("takePictureSnapshot with Camera2 is only " +
+                        "supported with Preview.GL_SURFACE");
             }
             mPictureRecorder = new Snapshot2PictureRecorder(stub, this,
-                    (GlCameraPreview) mPreview,
-                    outputRatio,
-                    mCameraCharacteristics,
-                    mSession,
-                    mRepeatingRequestCallback,
-                    mRepeatingRequestBuilder,
-                    mLastRepeatingResult);
+                    (GlCameraPreview) mPreview, outputRatio);
             mPictureRecorder.take();
         }
     }
@@ -1343,40 +1340,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     //region 3A Locking
 
     // TODO this might become public API
+    // TODO add lockMetering
     private void unlockMetering() {
         if (getEngineState() == STATE_STARTED) {
-            mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_LOCK, false);
-            mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
-            // TODO applyDefaultFocus(mRepeatingRequestBuilder);
-            applyRepeatingRequestBuilder(); // only if preview started
+            applyDefaultFocus(mRepeatingRequestBuilder);
+            new UnlockAction().start(this);
         }
-    }
-
-    // TODO this might become public API
-    @SuppressWarnings("unused")
-    private void lockMetering() {
-        if (getPreviewState() == STATE_STARTED) {
-            mLocker = new Locker(mCameraCharacteristics, this);
-            mLocker.lock(mLastRepeatingResult);
-        }
-    }
-
-    @Override
-    public void onLocked(boolean success) {
-        LOG.w("onLocked - success:", success);
-        mLocker = null;
-    }
-
-    @NonNull
-    @Override
-    public CaptureRequest.Builder getLockingBuilder() {
-        return mRepeatingRequestBuilder;
-    }
-
-    @Override
-    public void onLockingChange() {
-        LOG.i("onLockingChange:", "applying the builder.");
-        applyRepeatingRequestBuilder();
     }
 
     //endregion

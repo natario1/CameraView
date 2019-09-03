@@ -2,8 +2,6 @@ package com.otaliastudios.cameraview.picture;
 
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
@@ -15,7 +13,12 @@ import androidx.annotation.RequiresApi;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
-import com.otaliastudios.cameraview.engine.Locker;
+import com.otaliastudios.cameraview.engine.action.Action;
+import com.otaliastudios.cameraview.engine.action.ActionHolder;
+import com.otaliastudios.cameraview.engine.action.Actions;
+import com.otaliastudios.cameraview.engine.action.BaseAction;
+import com.otaliastudios.cameraview.engine.action.CompletionCallback;
+import com.otaliastudios.cameraview.engine.lock.LockAction;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
@@ -37,48 +40,69 @@ import com.otaliastudios.cameraview.size.AspectRatio;
  * I'd still love to use the capture intent instead of this, but was not able yet.
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implements Locker.Callback {
+public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
 
     private final static String TAG = Snapshot2PictureRecorder.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
-    private final static int STATE_IDLE = 0;
-    private final static int STATE_WAITING_LOCKER = 1;
-    private final static int STATE_WAITING_TORCH = 2;
-    private final static int STATE_WAITING_IMAGE = 3;
+    private static class FlashAction extends BaseAction {
 
-    private final CameraCaptureSession mSession;
-    private final CameraCaptureSession.CaptureCallback mCallback;
-    private final CaptureRequest.Builder mBuilder;
-    private final CameraCharacteristics mCharacteristics;
-    private final CaptureResult mFirstResult;
+        @Override
+        protected void onStart(@NonNull ActionHolder holder) {
+            super.onStart(holder);
+            LOG.i("FlashAction:", "Parameters locked, opening torch.");
+            holder.getBuilder(this).set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+            holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            holder.applyBuilder(this);
+        }
+
+        @Override
+        public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                       @NonNull CaptureRequest request,
+                                       @NonNull TotalCaptureResult result) {
+            super.onCaptureCompleted(holder, request, result);
+            Integer flashState = result.get(CaptureResult.FLASH_STATE);
+            if (flashState == null) {
+                LOG.w("FlashAction:", "Waiting flash, but flashState is null! Taking snapshot.");
+                setState(STATE_COMPLETED);
+            } else if (flashState == CaptureResult.FLASH_STATE_FIRED) {
+                LOG.i("FlashAction:", "Waiting flash and we have FIRED state! Taking snapshot.");
+                setState(STATE_COMPLETED);
+            } else {
+                LOG.i("FlashAction:", "Waiting flash but flashState is",
+                        flashState, ". Waiting...");
+            }
+        }
+    }
+
+    private final Action mAction;
+    private final ActionHolder mHolder;
     private final boolean mActionNeeded;
-
-    private int mState = STATE_IDLE;
     private Integer mOriginalAeMode;
     private Integer mOriginalFlashMode;
-    private Locker mLocker;
 
     public Snapshot2PictureRecorder(@NonNull PictureResult.Stub stub,
                                     @NonNull Camera2Engine engine,
                                     @NonNull GlCameraPreview preview,
-                                    @NonNull AspectRatio outputRatio,
-                                    @NonNull CameraCharacteristics characteristics,
-                                    @NonNull CameraCaptureSession session,
-                                    @NonNull CameraCaptureSession.CaptureCallback callback,
-                                    @NonNull CaptureRequest.Builder builder,
-                                    @NonNull CaptureResult lastResult) {
+                                    @NonNull AspectRatio outputRatio) {
         super(stub, engine, preview, outputRatio);
-        mSession = session;
-        mCallback = callback;
-        mBuilder = builder;
-        mCharacteristics = characteristics;
-        mFirstResult = lastResult;
+        mHolder = engine;
 
-        Integer aeState = lastResult.get(CaptureResult.CONTROL_AE_STATE);
+        mAction = Actions.sequence(new LockAction(), new FlashAction());
+        mAction.addCallback(new CompletionCallback() {
+            @Override
+            protected void onActionCompleted(@NonNull Action action) {
+                LOG.i("Taking picture with super.take().");
+                Snapshot2PictureRecorder.super.take();
+            }
+        });
+
+        Integer aeState = mHolder.getLastResult(mAction).get(CaptureResult.CONTROL_AE_STATE);
         mActionNeeded = engine.getPictureSnapshotMetering()
                 && aeState != null
                 && aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED;
+        mOriginalAeMode = mHolder.getBuilder(mAction).get(CaptureRequest.CONTROL_AE_MODE);
+        mOriginalFlashMode = mHolder.getBuilder(mAction).get(CaptureRequest.FLASH_MODE);
     }
 
     @Override
@@ -87,85 +111,26 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
             LOG.i("take:", "Engine does no metering or needs no flash, taking fast snapshot.");
             super.take();
         } else {
-            LOG.i("take:", "Engine needs flash. Locking parameters");
-            mState = STATE_WAITING_LOCKER;
-            mOriginalAeMode = mBuilder.get(CaptureRequest.CONTROL_AE_MODE);
-            mOriginalFlashMode = mBuilder.get(CaptureRequest.FLASH_MODE);
-            mLocker = new Locker(mCharacteristics, this);
-            mLocker.lock(mFirstResult);
-        }
-    }
-
-    private void applyBuilder() {
-        try {
-            mSession.setRepeatingRequest(mBuilder.build(), mCallback, null);
-        } catch (CameraAccessException e) {
-            mResult = null;
-            mError = e;
-            dispatchResult();
-        }
-    }
-
-    @NonNull
-    @Override
-    public CaptureRequest.Builder getLockingBuilder() {
-        return mBuilder;
-    }
-
-    @Override
-    public void onLockingChange() {
-        applyBuilder();
-    }
-
-    @Override
-    public void onLocked(boolean success) {
-        LOG.i("onLocked:", "Parameters locked, opening torch.");
-        mState = STATE_WAITING_TORCH;
-        mBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-        mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-        applyBuilder();
-    }
-
-    public void onCaptureCompleted(@NonNull TotalCaptureResult result) {
-        if (mState == STATE_WAITING_LOCKER) {
-            mLocker.onCapture(result);
-            return;
-        }
-
-        if (mState == STATE_WAITING_TORCH) {
-            Integer flashState = result.get(CaptureResult.FLASH_STATE);
-            if (flashState == null) {
-                LOG.w("onCaptureCompleted:", "Waiting flash, but flashState is null! Taking snapshot.");
-                mState = STATE_WAITING_IMAGE;
-                super.take();
-            } else if (flashState == CaptureResult.FLASH_STATE_FIRED) {
-                LOG.i("onCaptureCompleted:", "Waiting flash and we have FIRED state! Taking snapshot.");
-                mState = STATE_WAITING_IMAGE;
-                super.take();
-            } else {
-                LOG.i("onCaptureCompleted:", "Waiting flash but flashState is",
-                        flashState, ". Waiting...");
-            }
+            LOG.i("take:", "Engine needs flash. Starting action");
+            mAction.start(mHolder);
         }
     }
 
     @Override
     protected void dispatchResult() {
-        if (mState == STATE_WAITING_IMAGE) {
-            // Revert our changes.
-            LOG.i("dispatchResult:", "Reverting the flash changes.");
-            try {
-                // See Camera2Engine.setFlash() comments: turning TORCH off has bugs and we must do
-                // as follows.
-                mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                mBuilder.set(CaptureRequest.FLASH_MODE, CaptureResult.FLASH_MODE_OFF);
-                mSession.capture(mBuilder.build(), null, null);
-                mBuilder.set(CaptureRequest.CONTROL_AE_MODE, mOriginalAeMode);
-                mBuilder.set(CaptureRequest.FLASH_MODE, mOriginalFlashMode);
-                mSession.setRepeatingRequest(mBuilder.build(), mCallback, null);
-            } catch (CameraAccessException ignore) {}
-        }
-        mState = STATE_IDLE;
+        // Revert our changes.
+        LOG.i("dispatchResult:", "Reverting the flash changes.");
+        try {
+            // See Camera2Engine.setFlash() comments: turning TORCH off has bugs and we must do
+            // as follows.
+            CaptureRequest.Builder builder = mHolder.getBuilder(mAction);
+            builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            builder.set(CaptureRequest.FLASH_MODE, CaptureResult.FLASH_MODE_OFF);
+            mHolder.applyBuilder(mAction, builder);
+            builder.set(CaptureRequest.CONTROL_AE_MODE, mOriginalAeMode);
+            builder.set(CaptureRequest.FLASH_MODE, mOriginalFlashMode);
+            mHolder.applyBuilder(mAction);
+        } catch (CameraAccessException ignore) {}
         super.dispatchResult();
     }
 }

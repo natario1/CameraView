@@ -3,12 +3,15 @@ package com.otaliastudios.cameraview.engine.action;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public abstract class BaseAction implements Action {
 
     private final List<ActionCallback> callbacks = new ArrayList<>();
@@ -16,7 +19,7 @@ public abstract class BaseAction implements Action {
     private ActionHolder holder;
 
     @Override
-    public int getState() {
+    public final int getState() {
         return state;
     }
 
@@ -56,6 +59,15 @@ public abstract class BaseAction implements Action {
                 holder.removeAction(this);
             }
         }
+    }
+
+    public boolean isCompleted() {
+        return state == STATE_COMPLETED;
+    }
+
+    @NonNull
+    protected ActionHolder getHolder() {
+        return holder;
     }
 
     @Override

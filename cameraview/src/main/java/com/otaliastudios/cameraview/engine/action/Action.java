@@ -3,12 +3,14 @@ package com.otaliastudios.cameraview.engine.action;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public interface Action {
 
-    int STATE_CREATED = Integer.MIN_VALUE;
     int STATE_COMPLETED = Integer.MAX_VALUE;
 
     int getState();

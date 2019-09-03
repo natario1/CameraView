@@ -15,6 +15,7 @@ import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionCallback;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
+import com.otaliastudios.cameraview.engine.action.CompletionCallback;
 import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -61,12 +62,10 @@ public class Full2VideoRecorder extends FullVideoRecorder {
                 }
             }
         };
-        action.addCallback(new ActionCallback() {
+        action.addCallback(new CompletionCallback() {
             @Override
-            public void onActionStateChanged(@NonNull Action action, int state) {
-                if (state == Action.STATE_COMPLETED) {
-                    Full2VideoRecorder.super.onStart();
-                }
+            protected void onActionCompleted(@NonNull Action action) {
+                Full2VideoRecorder.super.onStart();
             }
         });
         action.start(mHolder);

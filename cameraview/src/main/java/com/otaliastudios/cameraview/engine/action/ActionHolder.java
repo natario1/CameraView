@@ -5,9 +5,12 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public interface ActionHolder {
 
     void addAction(@NonNull Action action);
