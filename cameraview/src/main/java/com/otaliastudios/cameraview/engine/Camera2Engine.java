@@ -44,6 +44,7 @@ import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
+import com.otaliastudios.cameraview.engine.action.OneShotAction;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
@@ -66,7 +67,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener,
@@ -86,7 +86,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private CameraCharacteristics mCameraCharacteristics;
     private CameraCaptureSession mSession;
     private CaptureRequest.Builder mRepeatingRequestBuilder;
-    private CameraCaptureSession.CaptureCallback mRepeatingRequestCallback;
     private TotalCaptureResult mLastRepeatingResult;
     private final Camera2Mapper mMapper = Camera2Mapper.get();
 
@@ -230,106 +229,103 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * {@link #createRepeatingRequestBuilder(int)}.
      */
     private void applyRepeatingRequestBuilder() {
-        applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED, null);
+        applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED);
     }
 
-    private void applyRepeatingRequestBuilder(boolean checkStarted, int errorReason, @Nullable final Runnable onFirstFrame) {
+    private void applyRepeatingRequestBuilder(boolean checkStarted, int errorReason) {
         if (!checkStarted || getPreviewState() == STATE_STARTED) {
             try {
-                CaptureRequest repeatingRequest = mRepeatingRequestBuilder.build();
-                final AtomicBoolean firstFrame = new AtomicBoolean(false);
-                mRepeatingRequestCallback = new CameraCaptureSession.CaptureCallback() {
-                    @Override
-                    public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
-                        super.onCaptureStarted(session, request, timestamp, frameNumber);
-                        if (firstFrame.compareAndSet(false, true) && onFirstFrame != null) {
-                            onFirstFrame.run();
-                        }
-                        if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).onCaptureStarted(request);
-                        }
-                        for (Action action : mActions) {
-                            action.onCaptureStarted(Camera2Engine.this, request);
-                        }
-                    }
-
-                    @Override
-                    public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
-                        super.onCaptureProgressed(session, request, partialResult);
-                        if (mMeter != null && mMeter.isMetering()) {
-                            mMeter.onCapture(partialResult);
-                        }
-                        if (mLocker != null && mLocker.isLocking()) {
-                            mLocker.onCapture(partialResult);
-                        }
-                        for (Action action : mActions) {
-                            action.onCaptureProgressed(Camera2Engine.this, request, partialResult);
-                        }
-                    }
-
-                    @Override
-                    public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                        super.onCaptureCompleted(session, request, result);
-                        mLastRepeatingResult = result;
-                        if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
-                        }
-                        if (mPictureRecorder instanceof Snapshot2PictureRecorder) {
-                            ((Snapshot2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
-                        }
-                        if (mMeter != null && mMeter.isMetering()) {
-                            mMeter.onCapture(result);
-                        }
-                        if (mLocker != null && mLocker.isLocking()) {
-                            mLocker.onCapture(result);
-                        }
-                        for (Action action : mActions) {
-                            action.onCaptureProgressed(Camera2Engine.this, request, result);
-                        }
-                        Integer aeMode = result.get(CaptureResult.CONTROL_AE_MODE);
-                        Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                        Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                        Boolean aeLock = result.get(CaptureResult.CONTROL_AE_LOCK);
-                        Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
-                        Integer afTriggerState = result.get(CaptureResult.CONTROL_AF_TRIGGER);
-                        String log = "aeMode: " + aeMode + " aeLock: " + aeLock +
-                                " aeState: " + aeState + " aeTriggerState: " + aeTriggerState +
-                                " afState: " + afState + " afTriggerState: " + afTriggerState;
-                        if (!log.equals(mLastLog)) {
-                            mLastLog = log;
-                            LOG.w(log);
-                        }
-
-                        // START
-                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 2 afTriggerState: 0
-                        //
-                        // DURING metering (focus skips)
-                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 0 afTriggerState: 0
-                        // aeMode: 3 aeLock: false aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
-                        //
-                        // DURING locking (focus skips)
-                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 1 afState: 0 afTriggerState: 0
-                        // aeMode: 3 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
-                        //
-                        // AFTER locked
-                        // aeMode: 3 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
-                        //
-                        // AFTER super.take() called
-                        // aeMode: 1 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
-                        // aeMode: 1 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
-                        //
-                        // Reverting flash changes + reset lock + reset metering
-                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
-                        // aeMode: 3 aeLock: false aeState: 1 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
-                    }
-
-                };
-                mSession.setRepeatingRequest(repeatingRequest, mRepeatingRequestCallback, null);
+                mSession.setRepeatingRequest(mRepeatingRequestBuilder.build(),
+                        mRepeatingRequestCallback, null);
             } catch (CameraAccessException e) {
                 throw new CameraException(e, errorReason);
             }
         }
     }
+
+    private final CameraCaptureSession.CaptureCallback mRepeatingRequestCallback = new CameraCaptureSession.CaptureCallback() {
+        @Override
+        public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
+            super.onCaptureStarted(session, request, timestamp, frameNumber);
+            if (mPictureRecorder instanceof Full2PictureRecorder) {
+                ((Full2PictureRecorder) mPictureRecorder).onCaptureStarted(request);
+            }
+            for (Action action : mActions) {
+                action.onCaptureStarted(Camera2Engine.this, request);
+            }
+        }
+
+        @Override
+        public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
+            super.onCaptureProgressed(session, request, partialResult);
+            if (mMeter != null && mMeter.isMetering()) {
+                mMeter.onCapture(partialResult);
+            }
+            if (mLocker != null && mLocker.isLocking()) {
+                mLocker.onCapture(partialResult);
+            }
+            for (Action action : mActions) {
+                action.onCaptureProgressed(Camera2Engine.this, request, partialResult);
+            }
+        }
+
+        @Override
+        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+            super.onCaptureCompleted(session, request, result);
+            mLastRepeatingResult = result;
+            if (mPictureRecorder instanceof Full2PictureRecorder) {
+                ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
+            }
+            if (mPictureRecorder instanceof Snapshot2PictureRecorder) {
+                ((Snapshot2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
+            }
+            if (mMeter != null && mMeter.isMetering()) {
+                mMeter.onCapture(result);
+            }
+            if (mLocker != null && mLocker.isLocking()) {
+                mLocker.onCapture(result);
+            }
+            for (Action action : mActions) {
+                action.onCaptureProgressed(Camera2Engine.this, request, result);
+            }
+            Integer aeMode = result.get(CaptureResult.CONTROL_AE_MODE);
+            Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+            Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
+            Boolean aeLock = result.get(CaptureResult.CONTROL_AE_LOCK);
+            Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
+            Integer afTriggerState = result.get(CaptureResult.CONTROL_AF_TRIGGER);
+            String log = "aeMode: " + aeMode + " aeLock: " + aeLock +
+                    " aeState: " + aeState + " aeTriggerState: " + aeTriggerState +
+                    " afState: " + afState + " afTriggerState: " + afTriggerState;
+            if (!log.equals(mLastLog)) {
+                mLastLog = log;
+                LOG.w(log);
+            }
+
+            // START
+            // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 2 afTriggerState: 0
+            //
+            // DURING metering (focus skips)
+            // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 0 afTriggerState: 0
+            // aeMode: 3 aeLock: false aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
+            //
+            // DURING locking (focus skips)
+            // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 1 afState: 0 afTriggerState: 0
+            // aeMode: 3 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
+            //
+            // AFTER locked
+            // aeMode: 3 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
+            //
+            // AFTER super.take() called
+            // aeMode: 1 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
+            // aeMode: 1 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
+            //
+            // Reverting flash changes + reset lock + reset metering
+            // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
+            // aeMode: 3 aeLock: false aeState: 1 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
+        }
+
+    };
 
     private String mLastLog;
 
@@ -583,7 +579,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
         LOG.i("onStartPreview", "Starting preview.");
         addRepeatingRequestBuilderSurfaces();
-        applyRepeatingRequestBuilder(false, CameraException.REASON_FAILED_TO_START_PREVIEW, null);
+        applyRepeatingRequestBuilder(false, CameraException.REASON_FAILED_TO_START_PREVIEW);
         LOG.i("onStartPreview", "Started preview.");
 
         // Start delayed video if needed.
@@ -774,18 +770,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private void doTakeVideo(@NonNull final VideoResult.Stub stub) {
         if (!(mVideoRecorder instanceof Full2VideoRecorder)) {
-            throw new IllegalStateException("doTakeVideo called, but video recorder is not a Full2VideoRecorder! " + mVideoRecorder);
+            throw new IllegalStateException("doTakeVideo called, but video recorder " +
+                    "is not a Full2VideoRecorder! " + mVideoRecorder);
         }
         Full2VideoRecorder recorder = (Full2VideoRecorder) mVideoRecorder;
         try {
             createRepeatingRequestBuilder(CameraDevice.TEMPLATE_RECORD);
             addRepeatingRequestBuilderSurfaces(recorder.getInputSurface());
-            applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED, new Runnable() {
-                @Override
-                public void run() {
-                    mVideoRecorder.start(stub);
-                }
-            });
+            applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED);
         } catch (CameraAccessException e) {
             onVideoResult(null, e);
             throw createCameraException(e);
@@ -793,6 +785,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             onVideoResult(null, e);
             throw e;
         }
+        // Start the video recorder on the first available frame.
+        new OneShotAction(new Runnable() {
+            @Override
+            public void run() {
+                mVideoRecorder.start(stub);
+            }
+        }).start(this);
     }
 
     @WorkerThread
