@@ -44,7 +44,6 @@ import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
-import com.otaliastudios.cameraview.engine.action.OneShotAction;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
@@ -741,6 +740,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             createRepeatingRequestBuilder(CameraDevice.TEMPLATE_RECORD);
             addRepeatingRequestBuilderSurfaces(recorder.getInputSurface());
             applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED);
+            mVideoRecorder.start(stub);
         } catch (CameraAccessException e) {
             onVideoResult(null, e);
             throw createCameraException(e);
@@ -748,13 +748,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             onVideoResult(null, e);
             throw e;
         }
-        // Start the video recorder on the first available frame.
-        new OneShotAction(new Runnable() {
-            @Override
-            public void run() {
-                mVideoRecorder.start(stub);
-            }
-        }).start(this);
     }
 
     @WorkerThread

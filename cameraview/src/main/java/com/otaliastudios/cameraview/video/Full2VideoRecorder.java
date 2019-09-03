@@ -1,6 +1,9 @@
 package com.otaliastudios.cameraview.video;
 
 import android.annotation.SuppressLint;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.view.Surface;
@@ -8,6 +11,10 @@ import android.view.Surface;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
+import com.otaliastudios.cameraview.engine.action.Action;
+import com.otaliastudios.cameraview.engine.action.ActionCallback;
+import com.otaliastudios.cameraview.engine.action.ActionHolder;
+import com.otaliastudios.cameraview.engine.action.BaseAction;
 import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -25,13 +32,44 @@ public class Full2VideoRecorder extends FullVideoRecorder {
     private static final String TAG = Full2VideoRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
+    private ActionHolder mHolder;
+    private boolean mGotFirstFrame;
     private final String mCameraId;
     private Surface mInputSurface;
 
     public Full2VideoRecorder(@NonNull Camera2Engine engine,
                               @NonNull String cameraId) {
         super(engine);
+        mHolder = engine;
         mCameraId = cameraId;
+    }
+
+    @Override
+    protected void onStart() {
+        // Do not start now. Instead, wait for the first frame.
+        // Check that the request is the correct one, using the request tag.
+        // The engine might have been changing the request to add our surface lately,
+        // and we don't want to start on an old frame.
+        Action action = new BaseAction() {
+            @Override
+            public void onCaptureStarted(@NonNull ActionHolder holder, @NonNull CaptureRequest request) {
+                super.onCaptureStarted(holder, request);
+                Object tag = holder.getBuilder(this).build().getTag();
+                Object currentTag = request.getTag();
+                if (tag == null ? currentTag == null : tag.equals(currentTag)) {
+                    setState(STATE_COMPLETED);
+                }
+            }
+        };
+        action.addCallback(new ActionCallback() {
+            @Override
+            public void onActionStateChanged(@NonNull Action action, int state) {
+                if (state == Action.STATE_COMPLETED) {
+                    Full2VideoRecorder.super.onStart();
+                }
+            }
+        });
+        action.start(mHolder);
     }
 
     @SuppressLint("NewApi")
