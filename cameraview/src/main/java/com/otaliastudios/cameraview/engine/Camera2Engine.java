@@ -235,7 +235,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     private void applyRepeatingRequestBuilder(boolean checkStarted, int errorReason) {
-        if (!checkStarted || getPreviewState() == STATE_STARTED) {
+        if (getPreviewState() == STATE_STARTED || !checkStarted) {
             try {
                 mSession.setRepeatingRequest(mRepeatingRequestBuilder.build(),
                         mRepeatingRequestCallback, null);

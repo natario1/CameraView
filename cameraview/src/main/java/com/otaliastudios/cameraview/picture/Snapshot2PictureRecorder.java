@@ -83,8 +83,7 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
 
     @Override
     public void take() {
-        // TODO
-        if (true || !mActionNeeded) {
+        if (!mActionNeeded) {
             LOG.i("take:", "Engine does no metering or needs no flash, taking fast snapshot.");
             super.take();
         } else {
@@ -121,17 +120,10 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
     @Override
     public void onLocked(boolean success) {
         LOG.i("onLocked:", "Parameters locked, opening torch.");
-        if (false) {
-            mState = STATE_WAITING_TORCH;
-            mBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-            mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-            applyBuilder();
-        } else {
-            // TODO
-            LOG.e("Early taking image.");
-            mState = STATE_WAITING_IMAGE;
-            super.take();
-        }
+        mState = STATE_WAITING_TORCH;
+        mBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+        mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+        applyBuilder();
     }
 
     public void onCaptureCompleted(@NonNull TotalCaptureResult result) {
@@ -159,8 +151,7 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
 
     @Override
     protected void dispatchResult() {
-        // TODO
-        if (false && mState == STATE_WAITING_IMAGE) {
+        if (mState == STATE_WAITING_IMAGE) {
             // Revert our changes.
             LOG.i("dispatchResult:", "Reverting the flash changes.");
             try {
