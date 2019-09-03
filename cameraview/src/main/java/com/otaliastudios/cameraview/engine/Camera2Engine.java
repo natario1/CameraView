@@ -42,6 +42,8 @@ import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.engine.action.Action;
+import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
@@ -68,6 +70,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener,
+        ActionHolder,
         Meter.Callback,
         Locker.Callback {
 
@@ -84,7 +87,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private CameraCaptureSession mSession;
     private CaptureRequest.Builder mRepeatingRequestBuilder;
     private CameraCaptureSession.CaptureCallback mRepeatingRequestCallback;
-    private CaptureResult mLastRepeatingResult;
+    private TotalCaptureResult mLastRepeatingResult;
     private final Camera2Mapper mMapper = Camera2Mapper.get();
 
     // Frame processing
@@ -102,6 +105,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     // Picture capturing
     private ImageReader mPictureReader;
     private final boolean mPictureCaptureStopsPreview = false; // can make configurable at some point
+
+    // Actions
+    private final List<Action> mActions = new ArrayList<>();
 
     // 3A metering
     private Meter mMeter;
@@ -242,6 +248,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         if (mPictureRecorder instanceof Full2PictureRecorder) {
                             ((Full2PictureRecorder) mPictureRecorder).onCaptureStarted(request);
                         }
+                        for (Action action : mActions) {
+                            action.onCaptureStarted(Camera2Engine.this, request);
+                        }
                     }
 
                     @Override
@@ -252,6 +261,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         }
                         if (mLocker != null && mLocker.isLocking()) {
                             mLocker.onCapture(partialResult);
+                        }
+                        for (Action action : mActions) {
+                            action.onCaptureProgressed(Camera2Engine.this, request, partialResult);
                         }
                     }
 
@@ -270,6 +282,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         }
                         if (mLocker != null && mLocker.isLocking()) {
                             mLocker.onCapture(result);
+                        }
+                        for (Action action : mActions) {
+                            action.onCaptureProgressed(Camera2Engine.this, request, result);
                         }
                         Integer aeMode = result.get(CaptureResult.CONTROL_AE_MODE);
                         Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
@@ -597,6 +612,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     protected Task<Void> onStopPreview() {
         LOG.i("onStopPreview:", "About to clean up.");
+        // TODO clear actions?
         if (mVideoRecorder != null) {
             // This should synchronously call onVideoResult that will reset the repeating builder
             // to the PREVIEW template. This is very important.
@@ -1408,6 +1424,45 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onLockingChange() {
         LOG.i("onLockingChange:", "applying the builder.");
+        applyRepeatingRequestBuilder();
+    }
+
+    //endregion
+
+    //region Actions
+
+    @Override
+    public void addAction(@NonNull Action action) {
+        if (!mActions.contains(action)) {
+            mActions.add(action);
+        }
+    }
+
+    @Override
+    public void removeAction(@NonNull Action action) {
+        mActions.remove(action);
+    }
+
+    @NonNull
+    @Override
+    public CameraCharacteristics getCharacteristics(@NonNull Action action) {
+        return mCameraCharacteristics;
+    }
+
+    @NonNull
+    @Override
+    public TotalCaptureResult getLastResult(@NonNull Action action) {
+        return mLastRepeatingResult;
+    }
+
+    @NonNull
+    @Override
+    public CaptureRequest.Builder getBuilder(@NonNull Action action) {
+        return mRepeatingRequestBuilder;
+    }
+
+    @Override
+    public void applyBuilder(@NonNull Action source) {
         applyRepeatingRequestBuilder();
     }
 
