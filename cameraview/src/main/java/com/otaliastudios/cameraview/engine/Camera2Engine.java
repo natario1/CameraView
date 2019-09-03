@@ -119,6 +119,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         super(callback);
         mManager = (CameraManager) mCallback.getContext().getSystemService(Context.CAMERA_SERVICE);
         mFrameConversionHandler = WorkerHandler.get("CameraFrameConversion");
+        new LogAction().start(this);
     }
 
     //region Utilities
@@ -288,46 +289,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             for (Action action : mActions) {
                 action.onCaptureProgressed(Camera2Engine.this, request, result);
             }
-            Integer aeMode = result.get(CaptureResult.CONTROL_AE_MODE);
-            Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-            Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-            Boolean aeLock = result.get(CaptureResult.CONTROL_AE_LOCK);
-            Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
-            Integer afTriggerState = result.get(CaptureResult.CONTROL_AF_TRIGGER);
-            String log = "aeMode: " + aeMode + " aeLock: " + aeLock +
-                    " aeState: " + aeState + " aeTriggerState: " + aeTriggerState +
-                    " afState: " + afState + " afTriggerState: " + afTriggerState;
-            if (!log.equals(mLastLog)) {
-                mLastLog = log;
-                LOG.w(log);
-            }
-
-            // START
-            // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 2 afTriggerState: 0
-            //
-            // DURING metering (focus skips)
-            // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 0 afTriggerState: 0
-            // aeMode: 3 aeLock: false aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
-            //
-            // DURING locking (focus skips)
-            // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 1 afState: 0 afTriggerState: 0
-            // aeMode: 3 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
-            //
-            // AFTER locked
-            // aeMode: 3 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
-            //
-            // AFTER super.take() called
-            // aeMode: 1 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
-            // aeMode: 1 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
-            //
-            // Reverting flash changes + reset lock + reset metering
-            // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
-            // aeMode: 3 aeLock: false aeState: 1 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
         }
-
     };
-
-    private String mLastLog;
 
     //endregion
 
