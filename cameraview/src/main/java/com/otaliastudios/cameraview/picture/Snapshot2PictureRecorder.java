@@ -18,6 +18,7 @@ import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.Actions;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 import com.otaliastudios.cameraview.engine.action.CompletionCallback;
+import com.otaliastudios.cameraview.engine.action.TimeoutAction;
 import com.otaliastudios.cameraview.engine.lock.LockAction;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
@@ -44,6 +45,7 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
 
     private final static String TAG = Snapshot2PictureRecorder.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
+    private final static long LOCK_TIMEOUT = 2500;
 
     private static class FlashAction extends BaseAction {
 
@@ -88,7 +90,9 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
         super(stub, engine, preview, outputRatio);
         mHolder = engine;
 
-        mAction = Actions.sequence(new LockAction(), new FlashAction());
+        mAction = Actions.sequence(
+                new TimeoutAction(LOCK_TIMEOUT, new LockAction()),
+                new FlashAction());
         mAction.addCallback(new CompletionCallback() {
             @Override
             protected void onActionCompleted(@NonNull Action action) {
