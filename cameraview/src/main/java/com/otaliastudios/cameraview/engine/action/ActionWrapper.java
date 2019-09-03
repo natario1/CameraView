@@ -8,9 +8,17 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+/**
+ * A simple wrapper around a {@link BaseAction}.
+ * This can be used to add functionality around a base action.
+ */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public abstract class ActionWrapper extends BaseAction {
 
+    /**
+     * Should return the wrapped action.
+     * @return the wrapped action
+     */
     @NonNull
     public abstract BaseAction getAction();
 

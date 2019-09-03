@@ -11,6 +11,17 @@ import androidx.annotation.RequiresApi;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The base implementation of {@link Action} that should always be subclassed,
+ * instead of implementing the root interface itself.
+ *
+ * It holds a list of callbacks and dispatches events to them, plus it cares about
+ * its own lifecycle:
+ * - when {@link #start(ActionHolder)} is called, we add ourselves to the holder list
+ * - when {@link #STATE_COMPLETED} is reached, we remove ouverselves from the holder list
+ *
+ * This is very important in all cases.
+ */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public abstract class BaseAction implements Action {
 
@@ -30,6 +41,11 @@ public abstract class BaseAction implements Action {
         onStart(holder);
     }
 
+    /**
+     * Action was started and will soon receive events from the
+     * holder stream.
+     * @param holder holder
+     */
     protected void onStart(@NonNull ActionHolder holder) {
         // Overrideable
     }
@@ -49,6 +65,11 @@ public abstract class BaseAction implements Action {
         // Overrideable
     }
 
+    /**
+     * Called by subclasses to notify of their state. If state is {@link #STATE_COMPLETED},
+     * this removes this action from the holder.
+     * @param newState new state
+     */
     protected void setState(int newState) {
         if (newState != state) {
             state = newState;
@@ -61,10 +82,19 @@ public abstract class BaseAction implements Action {
         }
     }
 
+    /**
+     * Whether this action has reached the completed state.
+     * @return true if completed
+     */
+    @SuppressWarnings("WeakerAccess")
     public boolean isCompleted() {
         return state == STATE_COMPLETED;
     }
 
+    /**
+     * Returns the holder.
+     * @return the holder
+     */
     @NonNull
     protected ActionHolder getHolder() {
         return holder;

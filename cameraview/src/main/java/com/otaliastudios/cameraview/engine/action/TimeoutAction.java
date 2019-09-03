@@ -7,6 +7,10 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+/**
+ * An {@link Action} that wraps another, and forces the completion
+ * after the given timeout in milliseconds is reached.
+ */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class TimeoutAction extends ActionWrapper {
 

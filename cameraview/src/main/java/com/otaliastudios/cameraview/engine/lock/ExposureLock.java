@@ -13,9 +13,9 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class AutoExposureLock extends BaseLock {
+public class ExposureLock extends BaseLock {
 
-    private final static String TAG = AutoExposureLock.class.getSimpleName();
+    private final static String TAG = ExposureLock.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     @Override

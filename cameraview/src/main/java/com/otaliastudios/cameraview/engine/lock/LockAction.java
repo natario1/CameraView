@@ -13,9 +13,9 @@ import com.otaliastudios.cameraview.engine.action.BaseAction;
 public class LockAction extends ActionWrapper {
 
     private final BaseAction action = Actions.together(
-            new AutoExposureLock(),
-            new AutoFocusLock(),
-            new AutoWhiteBalanceLock()
+            new ExposureLock(),
+            new FocusLock(),
+            new WhiteBalanceLock()
     );
 
     @NonNull

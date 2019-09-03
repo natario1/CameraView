@@ -13,9 +13,9 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class AutoFocusLock extends BaseLock {
+public class FocusLock extends BaseLock {
 
-    private final static String TAG = AutoFocusLock.class.getSimpleName();
+    private final static String TAG = FocusLock.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     @Override

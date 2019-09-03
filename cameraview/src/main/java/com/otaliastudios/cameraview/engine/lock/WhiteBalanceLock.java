@@ -13,9 +13,9 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class AutoWhiteBalanceLock extends BaseLock {
+public class WhiteBalanceLock extends BaseLock {
 
-    private final static String TAG = AutoWhiteBalanceLock.class.getSimpleName();
+    private final static String TAG = WhiteBalanceLock.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     @Override
