@@ -79,7 +79,7 @@ public class AutoExposure extends Parameter {
         }
 
         if (changed) {
-            notifyBuilderChanged();
+            notifyBuilderChanged(false);
             // Remove any problematic control for future requests
             // NOTE: activating this invalidates the logic for early exit in processCapture
             /* builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
@@ -147,7 +147,13 @@ public class AutoExposure extends Parameter {
 
     @Override
     protected void onMetered(@NonNull CaptureRequest.Builder builder, boolean success) {
-        // Do nothing
+        // Undo the trigger.
+        /* TODO thinking about it. int newTrigger = Build.VERSION.SDK_INT >= 23
+                ? CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL
+                : CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE; */
+        builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, null);
+        // builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE);
+        // notifyBuilderChanged();
     }
 
     @Override
@@ -163,15 +169,24 @@ public class AutoExposure extends Parameter {
             changed = true;
         }
         if (supportsProcessing) {
-            // Cleanup any precapture sequence.
-            if (Build.VERSION.SDK_INT >= 23) {
-                builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL);
+            Integer trigger = builder.get(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER);
+            LOG.w("onResetMetering:", "current precapture trigger is", trigger);
+            if (trigger == null || trigger == CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START) {
+                // Undo the trigger. This might happen if we can't meter in time / reset called before.
+                LOG.w("onResetMetering:", "canceling precapture.");
+                int newTrigger = Build.VERSION.SDK_INT >= 23
+                        ? CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL
+                        : CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE;
+                builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, newTrigger);
+
+                builder.set(CaptureRequest.CONTROL_AE_LOCK, true);
+                notifyBuilderChanged(true);
+                builder.set(CaptureRequest.CONTROL_AE_LOCK, false);
                 changed = true;
             }
         }
         if (changed) {
-            notifyBuilderChanged();
+            notifyBuilderChanged(false);
         }
     }
 }

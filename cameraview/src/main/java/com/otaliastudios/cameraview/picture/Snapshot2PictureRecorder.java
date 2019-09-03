@@ -83,7 +83,8 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
 
     @Override
     public void take() {
-        if (!mActionNeeded) {
+        // TODO
+        if (true || !mActionNeeded) {
             LOG.i("take:", "Engine does no metering or needs no flash, taking fast snapshot.");
             super.take();
         } else {
@@ -120,10 +121,17 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
     @Override
     public void onLocked(boolean success) {
         LOG.i("onLocked:", "Parameters locked, opening torch.");
-        mState = STATE_WAITING_TORCH;
-        mBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-        mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-        applyBuilder();
+        if (false) {
+            mState = STATE_WAITING_TORCH;
+            mBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+            mBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            applyBuilder();
+        } else {
+            // TODO
+            LOG.e("Early taking image.");
+            mState = STATE_WAITING_IMAGE;
+            super.take();
+        }
     }
 
     public void onCaptureCompleted(@NonNull TotalCaptureResult result) {
@@ -151,9 +159,10 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder implemen
 
     @Override
     protected void dispatchResult() {
-        if (mState == STATE_WAITING_IMAGE) {
+        // TODO
+        if (false && mState == STATE_WAITING_IMAGE) {
             // Revert our changes.
-            LOG.i("dispatchResult:", "Reverting the capture intent changes.");
+            LOG.i("dispatchResult:", "Reverting the flash changes.");
             try {
                 // See Camera2Engine.setFlash() comments: turning TORCH off has bugs and we must do
                 // as follows.

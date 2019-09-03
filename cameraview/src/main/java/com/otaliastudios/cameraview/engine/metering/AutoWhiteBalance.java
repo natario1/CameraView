@@ -55,7 +55,7 @@ public class AutoWhiteBalance extends Parameter {
             int max = Math.min(maxRegions, areas.size());
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS,
                     areas.subList(0, max).toArray(new MeteringRectangle[]{}));
-            notifyBuilderChanged();
+            notifyBuilderChanged(false);
         }
     }
 
@@ -97,7 +97,7 @@ public class AutoWhiteBalance extends Parameter {
                 CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
         if (area != null && maxRegions > 0) {
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS, new MeteringRectangle[]{area});
-            notifyBuilderChanged();
+            notifyBuilderChanged(false);
         }
     }
 }

@@ -167,8 +167,8 @@ public class Meter {
         }
 
         // 7. And finally dispatch everything
-        mAutoFocus.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
-        mAutoWhiteBalance.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
+        // TODO mAutoFocus.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
+        // TODO mAutoWhiteBalance.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
         mAutoExposure.startMetering(mCharacteristics, mCallback.getMeteringBuilder(), areas, lastResult, skipIfPossible);
 
         // Dispatch to callback
@@ -324,22 +324,21 @@ public class Meter {
      * but only while {@link #isMetering()} returns true.
      * @param result result
      */
-    @SuppressWarnings("WeakerAccess")
     public void onCapture(@NonNull CaptureResult result) {
         if (!mIsMetering) return; // We're not interested in results anymore
         if (!(result instanceof TotalCaptureResult)) return; // Let's ignore these, contents are missing/wrong
         
-        if (!mAutoFocus.isMetered()) mAutoFocus.onCapture(mCallback.getMeteringBuilder(), result);
+        // TODO if (!mAutoFocus.isMetered()) mAutoFocus.onCapture(mCallback.getMeteringBuilder(), result);
         if (!mAutoExposure.isMetered()) mAutoExposure.onCapture(mCallback.getMeteringBuilder(), result);
-        if (!mAutoWhiteBalance.isMetered()) mAutoWhiteBalance.onCapture(mCallback.getMeteringBuilder(), result);
-        if (mAutoFocus.isMetered() && mAutoExposure.isMetered() && mAutoWhiteBalance.isMetered()) {
+        // TODO if (!mAutoWhiteBalance.isMetered()) mAutoWhiteBalance.onCapture(mCallback.getMeteringBuilder(), result);
+        if (/* TODO mAutoFocus.isMetered() && */ mAutoExposure.isMetered() /* && mAutoWhiteBalance.isMetered() */) {
             LOG.i("onCapture:", "all Parameters have converged. Dispatching onMeteringEnd");
-            boolean success = mAutoFocus.isSuccessful()
-                    && mAutoExposure.isSuccessful()
-                    && mAutoWhiteBalance.isSuccessful();
+            boolean success = /* TODO mAutoFocus.isSuccessful()
+                    && */ mAutoExposure.isSuccessful()
+                    /* TODO && mAutoWhiteBalance.isSuccessful() */;
             onMeteringEnd(success);
         } else if (System.currentTimeMillis() - mMeteringStartTime >= FORCED_END_DELAY) {
-            LOG.i("onCapture:", "FORCED_END_DELAY was reached. Some Parameter is stuck. Forcing end.");
+            LOG.e("onCapture:", "FORCED_END_DELAY was reached. Some Parameter is stuck. Forcing end.");
             onMeteringEnd(false);
         }
     }
@@ -362,8 +361,8 @@ public class Meter {
             if (wholeRect == null) wholeRect = new Rect();
             whole = new MeteringRectangle(wholeRect, MeteringRectangle.METERING_WEIGHT_DONT_CARE);
         }
-        mAutoFocus.resetMetering(mCharacteristics, mCallback.getMeteringBuilder(), whole);
-        mAutoWhiteBalance.resetMetering(mCharacteristics, mCallback.getMeteringBuilder(), whole);
+        // TODO mAutoFocus.resetMetering(mCharacteristics, mCallback.getMeteringBuilder(), whole);
+        // TODO mAutoWhiteBalance.resetMetering(mCharacteristics, mCallback.getMeteringBuilder(), whole);
         mAutoExposure.resetMetering(mCharacteristics, mCallback.getMeteringBuilder(), whole);
         mCallback.onMeteringReset(mPoint);
     }

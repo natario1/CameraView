@@ -83,8 +83,8 @@ public class Locker {
     public void lock(@NonNull CaptureResult lastResult) {
         mIsLocking = true;
         mLockingStartTime = System.currentTimeMillis();
-        mAutoFocus.lock(mCharacteristics, mCallback.getLockingBuilder(), lastResult);
-        mAutoWhiteBalance.lock(mCharacteristics, mCallback.getLockingBuilder(), lastResult);
+        // TODO mAutoFocus.lock(mCharacteristics, mCallback.getLockingBuilder(), lastResult);
+        // TODO mAutoWhiteBalance.lock(mCharacteristics, mCallback.getLockingBuilder(), lastResult);
         mAutoExposure.lock(mCharacteristics, mCallback.getLockingBuilder(), lastResult);
     }
 
@@ -103,23 +103,22 @@ public class Locker {
      * but only while {@link #isLocking()} returns true.
      * @param result result
      */
-    @SuppressWarnings("WeakerAccess")
     public void onCapture(@NonNull CaptureResult result) {
         if (!mIsLocking) return; // We're not interested in results anymore
         if (!(result instanceof TotalCaptureResult)) return; // Let's ignore these, contents are missing/wrong
         
-        if (!mAutoFocus.isLocked()) mAutoFocus.onCapture(mCallback.getLockingBuilder(), result);
+        // TODO if (!mAutoFocus.isLocked()) mAutoFocus.onCapture(mCallback.getLockingBuilder(), result);
         if (!mAutoExposure.isLocked()) mAutoExposure.onCapture(mCallback.getLockingBuilder(), result);
-        if (!mAutoWhiteBalance.isLocked()) mAutoWhiteBalance.onCapture(mCallback.getLockingBuilder(), result);
-        if (mAutoFocus.isLocked() && mAutoExposure.isLocked() && mAutoWhiteBalance.isLocked()) {
+        // TODO if (!mAutoWhiteBalance.isLocked()) mAutoWhiteBalance.onCapture(mCallback.getLockingBuilder(), result);
+        if (/* TODO mAutoFocus.isLocked() && */ mAutoExposure.isLocked() /* && mAutoWhiteBalance.isLocked() */) {
             LOG.i("onCapture:", "all Parameters have converged. Dispatching onMeteringEnd");
-            boolean success = mAutoFocus.isSuccessful()
-                    && mAutoExposure.isSuccessful()
-                    && mAutoWhiteBalance.isSuccessful();
+            boolean success = /* TODO mAutoFocus.isSuccessful()
+                    && */ mAutoExposure.isSuccessful()
+                    /* TODO && mAutoWhiteBalance.isSuccessful() */;
             mCallback.onLocked(success);
             mIsLocking = false;
         } else if (System.currentTimeMillis() - mLockingStartTime >= FORCED_END_DELAY) {
-            LOG.i("onCapture:", "FORCED_END_DELAY was reached. Some Parameter is stuck. Forcing end.");
+            LOG.e("onCapture:", "FORCED_END_DELAY was reached. Some Parameter is stuck. Forcing end.");
             mCallback.onLocked(false);
             mIsLocking = false;
         }

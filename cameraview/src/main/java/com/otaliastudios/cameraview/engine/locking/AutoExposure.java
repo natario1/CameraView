@@ -51,6 +51,10 @@ public class AutoExposure extends Parameter {
     @Override
     protected void onLock(@NonNull CameraCharacteristics characteristics,
                           @NonNull CaptureRequest.Builder builder) {
+        int cancelTrigger = Build.VERSION.SDK_INT >= 23
+                ? CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL
+                : CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE;
+        builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, cancelTrigger);
         builder.set(CaptureRequest.CONTROL_AE_LOCK, true);
         notifyBuilderChanged();
     }

@@ -204,6 +204,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
+    private void applyRepeatingRequestBuilderAsSingle() {
+        if (getPreviewState() == STATE_STARTED) {
+            try {
+                mSession.capture(mRepeatingRequestBuilder.build(),
+                        mRepeatingRequestCallback, null);
+            } catch (CameraAccessException e) {
+                throw createCameraException(e);
+            }
+        }
+    }
+
     /**
      * Applies the repeating request builder to the preview, assuming we actually have a preview
      * running. Can be called after changing parameters to the builder.
@@ -266,7 +277,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         Boolean aeLock = result.get(CaptureResult.CONTROL_AE_LOCK);
                         Integer aeTriggerState = result.get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
                         Integer afTriggerState = result.get(CaptureResult.CONTROL_AF_TRIGGER);
-                        String log = "metering: aeMode: " + aeMode + " aeLock: " + aeLock +
+                        String log = "aeMode: " + aeMode + " aeLock: " + aeLock +
                                 " aeState: " + aeState + " aeTriggerState: " + aeTriggerState +
                                 " afState: " + afState + " afTriggerState: " + afTriggerState;
                         if (!log.equals(mLastLog)) {
@@ -274,6 +285,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                             LOG.w(log);
                         }
 
+                        // START
+                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 2 afTriggerState: 0
+                        //
                         // DURING metering (focus skips)
                         // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 0 afTriggerState: 0
                         // aeMode: 3 aeLock: false aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
@@ -290,8 +304,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         // aeMode: 1 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
                         //
                         // Reverting flash changes + reset lock + reset metering
-                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 2 afState: 2 afTriggerState: 0
-                        // aeMode: 3 aeLock: false aeState: 1 aeTriggerState: 2 afState: 2 afTriggerState: 0
+                        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
+                        // aeMode: 3 aeLock: false aeState: 1 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
                     }
 
                 };
@@ -1260,8 +1274,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // - AF should be on CONTROL_AF_MODE_AUTO or others
                 // The last one is under our control because the library has no focus API.
                 // So let's set a good af mode here. This operation is reverted during onMeteringReset().
-                applyFocusForMetering(mRepeatingRequestBuilder);
-                applyRepeatingRequestBuilder();
+                // TODO applyFocusForMetering(mRepeatingRequestBuilder);
+                // TODO applyRepeatingRequestBuilder();
 
                 // Create the meter and start.
                 mMeteringGesture = gesture;
@@ -1335,8 +1349,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onMeteringReset(@Nullable PointF point) {
         if (getEngineState() == STATE_STARTED) {
-            applyDefaultFocus(mRepeatingRequestBuilder);
-            applyRepeatingRequestBuilder(); // only if preview started already
+            // TODO applyDefaultFocus(mRepeatingRequestBuilder);
+            // TODO applyRepeatingRequestBuilder(); // only if preview started already
         }
     }
 
@@ -1347,9 +1361,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void onMeteringChange() {
+    public void onMeteringChange(boolean single) {
         LOG.i("onMeteringChange:", "applying the builder.");
-        applyRepeatingRequestBuilder();
+        if (single) {
+            applyRepeatingRequestBuilderAsSingle();
+        } else {
+            applyRepeatingRequestBuilder();
+        }
     }
 
     //endregion
@@ -1361,7 +1379,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (getEngineState() == STATE_STARTED) {
             mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AE_LOCK, false);
             mRepeatingRequestBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
-            applyDefaultFocus(mRepeatingRequestBuilder);
+            // TODO applyDefaultFocus(mRepeatingRequestBuilder);
             applyRepeatingRequestBuilder(); // only if preview started
         }
     }

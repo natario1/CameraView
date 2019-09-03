@@ -70,7 +70,7 @@ public class AutoFocus extends Parameter {
         }
 
         if (changed) {
-            notifyBuilderChanged();
+            notifyBuilderChanged(false);
             // Remove any problematic control for future requests
             /* builder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                     CaptureRequest.CONTROL_AF_TRIGGER_IDLE); */
@@ -99,7 +99,10 @@ public class AutoFocus extends Parameter {
 
     @Override
     protected void onMetered(@NonNull CaptureRequest.Builder builder, boolean success) {
-        // Do nothing.
+        // TODO thinking about this
+        builder.set(CaptureRequest.CONTROL_AF_TRIGGER, null);
+        // builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+        // notifyBuilderChanged();
     }
 
     @Override
@@ -116,11 +119,15 @@ public class AutoFocus extends Parameter {
         }
 
         if (supportsProcessing) { // Cleanup any trigger.
-            builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
-            changed = true;
+            Integer trigger = builder.get(CaptureRequest.CONTROL_AF_TRIGGER);
+            LOG.w("onResetMetering:", "current focus trigger is", trigger);
+            if (trigger == null || trigger == CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START) {
+                builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+                changed = true;
+            }
         }
         if (changed) {
-            notifyBuilderChanged();
+            notifyBuilderChanged(false);
         }
     }
 }

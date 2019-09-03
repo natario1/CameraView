@@ -16,7 +16,7 @@ import java.util.List;
 public abstract class Parameter {
 
     public interface MeteringChangeCallback {
-        void onMeteringChange();
+        void onMeteringChange(boolean single);
     }
 
     private boolean isSuccessful;
@@ -39,8 +39,8 @@ public abstract class Parameter {
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected void notifyBuilderChanged() {
-        callback.onMeteringChange();
+    protected void notifyBuilderChanged(boolean single) {
+        callback.onMeteringChange(single);
     }
 
     @SuppressWarnings("WeakerAccess")
