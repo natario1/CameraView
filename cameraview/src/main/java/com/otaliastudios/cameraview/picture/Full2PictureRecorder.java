@@ -1,18 +1,18 @@
 package com.otaliastudios.cameraview.picture;
 
 import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.engine.Camera2Engine;
+import com.otaliastudios.cameraview.engine.action.Action;
+import com.otaliastudios.cameraview.engine.action.ActionHolder;
+import com.otaliastudios.cameraview.engine.action.BaseAction;
 import com.otaliastudios.cameraview.internal.utils.ExifHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.exifinterface.media.ExifInterface;
 
@@ -34,81 +33,57 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
     private static final String TAG = Full2PictureRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    private static final int STATE_IDLE = 0;
-    private static final int STATE_WAITING_CAPTURE = 1;
-    private static final int STATE_WAITING_IMAGE = 2;
-
-    private CameraCaptureSession mSession;
-    private CameraCaptureSession.CaptureCallback mCallback;
-    private ImageReader mPictureReader;
-    private CaptureRequest.Builder mPictureBuilder;
-    private boolean mStopPreviewBeforeCapture;
-    private int mState = STATE_IDLE;
-    private int mSequenceId;
+    private final ActionHolder mHolder;
+    private final Action mAction;
+    private final ImageReader mPictureReader;
+    private final CaptureRequest.Builder mPictureBuilder;
 
     public Full2PictureRecorder(@NonNull PictureResult.Stub stub,
-                                @Nullable PictureResultListener listener,
-                                @NonNull CameraCaptureSession session,
-                                @NonNull CameraCaptureSession.CaptureCallback callback,
+                                @NonNull Camera2Engine engine,
                                 @NonNull CaptureRequest.Builder pictureBuilder,
-                                @NonNull ImageReader pictureReader,
-                                boolean stopPreviewBeforeCapture) {
-        super(stub, listener);
-        mSession = session;
-        mCallback = callback;
+                                @NonNull ImageReader pictureReader) {
+        super(stub, engine);
+        mHolder = engine;
         mPictureBuilder = pictureBuilder;
-        mStopPreviewBeforeCapture = stopPreviewBeforeCapture;
         mPictureReader = pictureReader;
         mPictureReader.setOnImageAvailableListener(this, WorkerHandler.get().getHandler());
+        mAction = new BaseAction() {
+
+            @Override
+            protected void onStart(@NonNull ActionHolder holder) {
+                super.onStart(holder);
+                mPictureBuilder.addTarget(mPictureReader.getSurface());
+                mPictureBuilder.set(CaptureRequest.JPEG_ORIENTATION, mResult.rotation);
+                mPictureBuilder.setTag(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                try {
+                    holder.applyBuilder(this, mPictureBuilder);
+                } catch (CameraAccessException e) {
+                    mResult = null;
+                    mError = e;
+                    dispatchResult();
+                }
+            }
+
+            @Override
+            public void onCaptureStarted(@NonNull ActionHolder holder, @NonNull CaptureRequest request) {
+                super.onCaptureStarted(holder, request);
+                if (request.getTag() == (Integer) CameraDevice.TEMPLATE_STILL_CAPTURE) {
+                    LOG.i("onCaptureStarted:", "Dispatching picture shutter.");
+                    dispatchOnShutter(false);
+                    setState(STATE_COMPLETED);
+                }
+            }
+        };
     }
 
     @Override
     public void take() {
-        try {
-            mState = STATE_WAITING_CAPTURE;
-            mPictureBuilder.addTarget(mPictureReader.getSurface());
-            mPictureBuilder.set(CaptureRequest.JPEG_ORIENTATION, mResult.rotation);
-            mPictureBuilder.setTag(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            if (mStopPreviewBeforeCapture) {
-                // These two are present in official samples and are probably meant to speed things up?
-                // But from my tests, they actually make everything slower. So this is disabled by default
-                // with a boolean coming from the engine. Maybe in the future we can make this configurable
-                // as some people might want to stop the preview while picture is being taken even if it
-                // increases the latency.
-                mSession.stopRepeating();
-                mSession.abortCaptures();
-            }
-            mSequenceId = mSession.capture(mPictureBuilder.build(), mCallback, null);
-        } catch (CameraAccessException e) {
-            mResult = null;
-            mError = e;
-            dispatchResult();
-        }
-    }
-
-    public void onCaptureStarted(@NonNull CaptureRequest request) {
-        if (mState == STATE_WAITING_CAPTURE) {
-            if (request.getTag() == (Integer) CameraDevice.TEMPLATE_STILL_CAPTURE) {
-                dispatchOnShutter(false);
-            }
-        }
-    }
-
-    public void onCaptureCompleted(@NonNull TotalCaptureResult result) {
-        if (mState == STATE_WAITING_CAPTURE) {
-            if (result.getSequenceId() == mSequenceId) {
-                // This has no real use for now other than logging.
-                LOG.i("onCaptureCompleted:", "Got result, moving to STATE_WAITING_IMAGE");
-                mState = STATE_WAITING_IMAGE;
-            }
-        }
+        mAction.start(mHolder);
     }
 
     @Override
     public void onImageAvailable(ImageReader reader) {
         LOG.i("onImageAvailable started.");
-        mState = STATE_IDLE;
-
         // Read the JPEG.
         Image image = null;
         //noinspection TryFinallyCanBeTryWithResources
@@ -133,19 +108,13 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
         mResult.rotation = 0;
         try {
             ExifInterface exif = new ExifInterface(new ByteArrayInputStream(mResult.data));
-            int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL);
             mResult.rotation = ExifHelper.readExifOrientation(exifOrientation);
         } catch (IOException ignore) { }
 
         // Leave.
         LOG.i("onImageAvailable ended.");
         dispatchResult();
-    }
-
-
-    @Override
-    protected void dispatchResult() {
-        mState = STATE_IDLE;
-        super.dispatchResult();
     }
 }

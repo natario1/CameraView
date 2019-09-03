@@ -137,6 +137,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return value == null ? fallback : value;
     }
 
+    @SuppressWarnings("DuplicateBranchesInSwitch")
     @NonNull
     private CameraException createCameraException(@NonNull CameraAccessException exception) {
         int reason;
@@ -151,6 +152,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return new CameraException(exception, reason);
     }
 
+    @SuppressWarnings("DuplicateBranchesInSwitch")
     @NonNull
     private CameraException createCameraException(int stateCallbackError) {
         int reason;
@@ -246,10 +248,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private final CameraCaptureSession.CaptureCallback mRepeatingRequestCallback = new CameraCaptureSession.CaptureCallback() {
         @Override
         public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
-            super.onCaptureStarted(session, request, timestamp, frameNumber);
-            if (mPictureRecorder instanceof Full2PictureRecorder) {
-                ((Full2PictureRecorder) mPictureRecorder).onCaptureStarted(request);
-            }
             for (Action action : mActions) {
                 action.onCaptureStarted(Camera2Engine.this, request);
             }
@@ -257,7 +255,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
         @Override
         public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
-            super.onCaptureProgressed(session, request, partialResult);
             if (mMeter != null && mMeter.isMetering()) {
                 mMeter.onCapture(partialResult);
             }
@@ -271,11 +268,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
         @Override
         public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-            super.onCaptureCompleted(session, request, result);
             mLastRepeatingResult = result;
-            if (mPictureRecorder instanceof Full2PictureRecorder) {
-                ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
-            }
             if (mPictureRecorder instanceof Snapshot2PictureRecorder) {
                 ((Snapshot2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
             }
@@ -683,14 +676,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         } else {
             LOG.i("onTakePicture:", "doMetering is false. Performing.");
             try {
+                if (mPictureCaptureStopsPreview) {
+                    // These two are present in official samples and are probably meant to speed things up?
+                    // But from my tests, they actually make everything slower. So this is disabled by default
+                    // with a boolean flag. Maybe in the future we can make this configurable as some
+                    // people might want to stop the preview while picture is being taken even if it
+                    // increases the latency.
+                    mSession.stopRepeating();
+                    mSession.abortCaptures();
+                }
                 CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 applyAllParameters(builder, mRepeatingRequestBuilder);
-                mPictureRecorder = new Full2PictureRecorder(stub, this,
-                        mSession,
-                        mRepeatingRequestCallback,
-                        builder,
-                        mPictureReader,
-                        mPictureCaptureStopsPreview);
+                mPictureRecorder = new Full2PictureRecorder(stub, this, builder, mPictureReader);
                 mPictureRecorder.take();
             } catch (CameraAccessException e) {
                 throw createCameraException(e);
@@ -1419,6 +1416,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void applyBuilder(@NonNull Action source) {
         applyRepeatingRequestBuilder();
+    }
+
+    @Override
+    public void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder) throws CameraAccessException {
+        mSession.capture(builder.build(), mRepeatingRequestCallback, null);
     }
 
     //endregion
