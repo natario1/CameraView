@@ -4,7 +4,7 @@ title: "Snapshot Size"
 subtitle: "Sizing the snapshots output"
 description: "Sizing the snapshots output"
 category: docs
-order: 9
+order: 10
 date: 2019-02-24 17:36:39
 disqus: 1
 ---

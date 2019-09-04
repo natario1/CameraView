@@ -252,6 +252,54 @@ public abstract class Option<T> {
         }
     }
 
+    public static class PictureMetering extends Option<Boolean> {
+
+        public PictureMetering() {
+            super("Picture Metering");
+        }
+
+        @NonNull
+        @Override
+        public Boolean get(@NonNull CameraView view) {
+            return view.getPictureMetering();
+        }
+
+        @NonNull
+        @Override
+        public Collection<Boolean> getAll(@NonNull CameraView view, @NonNull CameraOptions options) {
+            return Arrays.asList(true, false);
+        }
+
+        @Override
+        public void set(@NonNull CameraView view, @NonNull Boolean value) {
+            view.setPictureMetering(value);
+        }
+    }
+
+    public static class PictureSnapshotMetering extends Option<Boolean> {
+
+        public PictureSnapshotMetering() {
+            super("Picture Snapshot Metering");
+        }
+
+        @NonNull
+        @Override
+        public Boolean get(@NonNull CameraView view) {
+            return view.getPictureSnapshotMetering();
+        }
+
+        @NonNull
+        @Override
+        public Collection<Boolean> getAll(@NonNull CameraView view, @NonNull CameraOptions options) {
+            return Arrays.asList(true, false);
+        }
+
+        @Override
+        public void set(@NonNull CameraView view, @NonNull Boolean value) {
+            view.setPictureSnapshotMetering(value);
+        }
+    }
+
     public static class VideoCodec extends ControlOption<com.otaliastudios.cameraview.controls.VideoCodec> {
         public VideoCodec() {
             super(com.otaliastudios.cameraview.controls.VideoCodec.class, "Video Codec");

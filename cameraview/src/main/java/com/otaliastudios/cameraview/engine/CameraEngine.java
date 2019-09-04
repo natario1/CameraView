@@ -167,6 +167,8 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess") protected float mZoomValue;
     @SuppressWarnings("WeakerAccess") protected float mExposureCorrectionValue;
     @SuppressWarnings("WeakerAccess") protected boolean mPlaySounds;
+    @SuppressWarnings("WeakerAccess") protected boolean mPictureMetering;
+    @SuppressWarnings("WeakerAccess") protected boolean mPictureSnapshotMetering;
 
     // Can be private
     @VisibleForTesting Handler mCrashHandler;
@@ -223,6 +225,11 @@ public abstract class CameraEngine implements
         if (mPreview != null) mPreview.setSurfaceCallback(null);
         mPreview = cameraPreview;
         mPreview.setSurfaceCallback(this);
+    }
+
+    @NonNull
+    public CameraPreview getPreview() {
+        return mPreview;
     }
 
     //region Error handling
@@ -1008,6 +1015,22 @@ public abstract class CameraEngine implements
         return mAutoFocusResetDelayMillis > 0 && mAutoFocusResetDelayMillis != Long.MAX_VALUE;
     }
 
+    public final void setPictureMetering(boolean enable) {
+        mPictureMetering = enable;
+    }
+
+    public final boolean getPictureMetering() {
+        return mPictureMetering;
+    }
+
+    public final void setPictureSnapshotMetering(boolean enable) {
+        mPictureSnapshotMetering = enable;
+    }
+
+    public final boolean getPictureSnapshotMetering() {
+        return mPictureSnapshotMetering;
+    }
+
     //endregion
 
     //region Abstract setters and APIs
@@ -1070,7 +1093,6 @@ public abstract class CameraEngine implements
             public void run() {
                 LOG.v("takePicture", "performing. BindState:", getBindState(), "isTakingPicture:", isTakingPicture());
                 if (mMode == Mode.VIDEO) {
-                    // Could redirect to takePictureSnapshot, but it's better if people know what they are doing.
                     throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
                 }
                 if (getBindState() < STATE_STARTED) return;
@@ -1078,7 +1100,7 @@ public abstract class CameraEngine implements
                 stub.isSnapshot = false;
                 stub.location = mLocation;
                 stub.facing = mFacing;
-                onTakePicture(stub);
+                onTakePicture(stub, mPictureMetering);
             }
         });
     }
@@ -1102,7 +1124,7 @@ public abstract class CameraEngine implements
                 // Leave the other parameters to subclasses.
                 //noinspection ConstantConditions
                 AspectRatio ratio = AspectRatio.of(getPreviewSurfaceSize(Reference.OUTPUT));
-                onTakePictureSnapshot(stub, ratio);
+                onTakePictureSnapshot(stub, ratio, mPictureSnapshotMetering);
             }
         });
     }
@@ -1223,10 +1245,10 @@ public abstract class CameraEngine implements
     }
 
     @WorkerThread
-    protected abstract void onTakePicture(@NonNull PictureResult.Stub stub);
+    protected abstract void onTakePicture(@NonNull PictureResult.Stub stub, boolean doMetering);
 
     @WorkerThread
-    protected abstract void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio);
+    protected abstract void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio, boolean doMetering);
 
     @WorkerThread
     protected abstract void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio outputRatio);

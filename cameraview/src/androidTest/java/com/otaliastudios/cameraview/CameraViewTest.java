@@ -171,7 +171,10 @@ public class CameraViewTest extends BaseTest {
         // Self managed
         GestureParser gestures = new GestureParser(empty);
         assertEquals(cameraView.getPlaySounds(), CameraView.DEFAULT_PLAY_SOUNDS);
+        assertEquals(cameraView.getAutoFocusResetDelay(), CameraView.DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS);
         assertEquals(cameraView.getUseDeviceOrientation(), CameraView.DEFAULT_USE_DEVICE_ORIENTATION);
+        assertEquals(cameraView.getPictureMetering(), CameraView.DEFAULT_PICTURE_METERING);
+        assertEquals(cameraView.getPictureSnapshotMetering(), CameraView.DEFAULT_PICTURE_SNAPSHOT_METERING);
         assertEquals(cameraView.getGestureAction(Gesture.TAP), gestures.getTapAction());
         assertEquals(cameraView.getGestureAction(Gesture.LONG_TAP), gestures.getLongTapAction());
         assertEquals(cameraView.getGestureAction(Gesture.PINCH), gestures.getPinchAction());
@@ -647,6 +650,22 @@ public class CameraViewTest extends BaseTest {
         assertTrue(cameraView.getUseDeviceOrientation());
         cameraView.setUseDeviceOrientation(false);
         assertFalse(cameraView.getUseDeviceOrientation());
+    }
+
+    @Test
+    public void testSetPictureMetering() {
+        cameraView.setPictureMetering(true);
+        assertTrue(cameraView.getPictureMetering());
+        cameraView.setPictureMetering(false);
+        assertFalse(cameraView.getPictureMetering());
+    }
+
+    @Test
+    public void testSetPictureSnapshotMetering() {
+        cameraView.setPictureSnapshotMetering(true);
+        assertTrue(cameraView.getPictureSnapshotMetering());
+        cameraView.setPictureSnapshotMetering(false);
+        assertFalse(cameraView.getPictureSnapshotMetering());
     }
 
     @Test

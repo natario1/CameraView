@@ -71,7 +71,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
     private CameraView camera;
-    private CameraEngine controller;
+    protected CameraEngine controller;
     private CameraListener listener;
     private Op<Throwable> uiExceptionOp;
 
@@ -136,7 +136,6 @@ public abstract class CameraIntegrationTest extends BaseTest {
         }
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     private CameraOptions openSync(boolean expectSuccess) {
         camera.open();
         final Op<CameraOptions> open = new Op<>(true);
@@ -144,15 +143,20 @@ public abstract class CameraIntegrationTest extends BaseTest {
         CameraOptions result = open.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Can open", result);
-            // Extra wait for the bind and preview state, so we run tests in a fully operational
-            // state. If we didn't do so, we could have null values, for example, in getPictureSize
-            // or in getSnapshotSize.
-            while (controller.getBindState() != CameraEngine.STATE_STARTED) {}
-            while (controller.getPreviewState() != CameraEngine.STATE_STARTED) {}
+            onOpenSync();
         } else {
             assertNull("Should not open", result);
         }
         return result;
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    protected void onOpenSync() {
+        // Extra wait for the bind and preview state, so we run tests in a fully operational
+        // state. If we didn't do so, we could have null values, for example, in getPictureSize
+        // or in getSnapshotSize.
+        while (controller.getBindState() != CameraEngine.STATE_STARTED) {}
+        while (controller.getPreviewState() != CameraEngine.STATE_STARTED) {}
     }
 
     private void closeSync(boolean expectSuccess) {

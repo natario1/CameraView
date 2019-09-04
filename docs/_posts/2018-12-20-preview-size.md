@@ -4,7 +4,7 @@ title: "Preview Size"
 subtitle: "Measuring behavior"
 description: "Measuring behavior"
 category: docs
-order: 7
+order: 8
 date: 2018-12-20 22:07:17
 disqus: 1
 ---

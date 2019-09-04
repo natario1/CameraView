@@ -81,8 +81,9 @@ public abstract class CameraListener {
 
 
     /**
-     * Notifies that user interacted with the screen and started focus with a gesture,
-     * and the autofocus is trying to focus around that area. This can be used to draw things on screen.
+     * Notifies that user interacted with the screen and started metering with a gesture,
+     * and touch metering routine is trying to focus around that area.
+     * This callback can be used to draw things on screen.
      * Can also be triggered by {@link CameraView#startAutoFocus(float, float)}.
      *
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
@@ -92,12 +93,12 @@ public abstract class CameraListener {
 
 
     /**
-     * Notifies that a gesture focus event just ended, and the camera converged
-     * to a new focus (and possibly exposure and white balance).
+     * Notifies that a touch metering event just ended, and the camera converged
+     * to a new focus, exposure and possibly white balance.
      * This might succeed or not.
      * Can also be triggered by {@link CameraView#startAutoFocus(float, float)}.
      *
-     * @param successful whether camera succeeded
+     * @param successful whether metering succeeded
      * @param point coordinates with respect to CameraView.getWidth() and CameraView.getHeight()
      */
     @UiThread
@@ -105,7 +106,7 @@ public abstract class CameraListener {
 
 
     /**
-     * Noitifies that a finger gesture just caused the camera zoom
+     * Notifies that a finger gesture just caused the camera zoom
      * to be changed. This can be used to draw, for example, a seek bar.
      *
      * @param newValue the new zoom value

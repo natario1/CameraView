@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.preview;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+import android.hardware.camera2.CaptureResult;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import androidx.annotation.NonNull;
@@ -186,14 +187,17 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
         @Override
         public void onDrawFrame(GL10 gl) {
             if (mInputSurfaceTexture == null) return;
-            // Latch the latest frame.  If there isn't anything new,
-            // we'll just re-use whatever was there before.
-            mInputSurfaceTexture.updateTexImage();
             if (mInputStreamWidth <= 0 || mInputStreamHeight <= 0) {
                 // Skip drawing. Camera was not opened.
                 return;
             }
+
+            // Latch the latest frame. If there isn't anything new,
+            // we'll just re-use whatever was there before.
+            mInputSurfaceTexture.updateTexImage();
             mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
+            // LOG.v("onDrawFrame:", "timestamp:", mInputSurfaceTexture.getTimestamp());
+
 
             // For Camera2, apply the draw rotation.
             // See TextureCameraPreview.setDrawRotation() for info.

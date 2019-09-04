@@ -7,11 +7,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.View;
@@ -111,6 +114,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 new Option.Mode(), new Option.Engine(), new Option.Preview(),
                 // Some controls
                 new Option.Flash(), new Option.WhiteBalance(), new Option.Hdr(),
+                new Option.PictureMetering(), new Option.PictureSnapshotMetering(),
                 // Video recording
                 new Option.VideoCodec(), new Option.Audio(),
                 // Gestures
@@ -126,7 +130,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         List<Boolean> dividers = Arrays.asList(
                 false, true,
                 false, false, true,
-                false, false, true,
+                false, false, false, false, true,
                 false, true,
                 false, false, false, false, true,
                 false, false, true,
@@ -235,6 +239,18 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             super.onVideoRecordingEnd();
             message("Video taken. Processing...", false);
             LOG.w("onVideoRecordingEnd!");
+        }
+
+        @Override
+        public void onExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) {
+            super.onExposureCorrectionChanged(newValue, bounds, fingers);
+            message("Exposure correction:" + newValue, false);
+        }
+
+        @Override
+        public void onZoomChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) {
+            super.onZoomChanged(newValue, bounds, fingers);
+            message("Zoom:" + newValue, false);
         }
     }
 

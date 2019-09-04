@@ -31,7 +31,7 @@ import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import android.view.Surface;
 
@@ -75,14 +75,13 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
             @NonNull PictureResult.Stub stub,
             @NonNull CameraEngine engine,
             @NonNull GlCameraPreview preview,
-            @NonNull AspectRatio outputRatio,
-            @Nullable Overlay overlay) {
+            @NonNull AspectRatio outputRatio) {
         super(stub, engine);
         mEngine = engine;
         mPreview = preview;
         mOutputRatio = outputRatio;
-        mOverlay = overlay;
-        mHasOverlay = overlay != null && overlay.drawsOn(Overlay.Target.PICTURE_SNAPSHOT);
+        mOverlay = engine.getOverlay();
+        mHasOverlay = mOverlay != null && mOverlay.drawsOn(Overlay.Target.PICTURE_SNAPSHOT);
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -113,7 +112,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    private void onRendererTextureCreated(int textureId) {
+    protected void onRendererTextureCreated(int textureId) {
         mTextureId = textureId;
         mViewport = new EglViewport();
         // Need to crop the size.
@@ -129,8 +128,28 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    private void onRendererFilterChanged(@NonNull Filter filter) {
+    protected void onRendererFilterChanged(@NonNull Filter filter) {
         mViewport.setFilter(filter.copy());
+    }
+
+    @RendererThread
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    protected void onRendererFrame(@SuppressWarnings("unused") @NonNull final SurfaceTexture surfaceTexture,
+                                 final float scaleX,
+                                 final float scaleY) {
+        // Get egl context from the RendererThread, which is the one in which we have created
+        // the textureId and the overlayTextureId, managed by the GlSurfaceView.
+        // Next operations can then be performed on different threads using this handle.
+        final EGLContext eglContext = EGL14.eglGetCurrentContext();
+        // Calling this invalidates the rotation/scale logic below:
+        // surfaceTexture.getTransformMatrix(mTransform); // TODO activate and fix the logic.
+        WorkerHandler.execute(new Runnable() {
+            @Override
+            public void run() {
+                takeFrame(surfaceTexture, scaleX, scaleY, eglContext);
+
+            }
+        });
     }
 
     /**
@@ -156,78 +175,67 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
      * @param scaleX frame scale x in {@link Reference#VIEW}
      * @param scaleY frame scale y in {@link Reference#VIEW}
      */
-    @RendererThread
+    @WorkerThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    private void onRendererFrame(@SuppressWarnings("unused") @NonNull SurfaceTexture surfaceTexture,
-                                 final float scaleX,
-                                 final float scaleY) {
-        // Get egl context from the RendererThread, which is the one in which we have created
-        // the textureId and the overlayTextureId, managed by the GlSurfaceView.
-        // Next operations can then be performed on different threads using this handle.
-        final EGLContext eglContext = EGL14.eglGetCurrentContext();
-        // Calling this invalidates the rotation/scale logic below:
-        // surfaceTexture.getTransformMatrix(mTransform); // TODO activate and fix the logic.
-        WorkerHandler.execute(new Runnable() {
-            @Override
-            public void run() {
-                // 0. EGL window will need an output.
-                // We create a fake one as explained in javadocs.
-                final int fakeOutputTextureId = 9999;
-                SurfaceTexture fakeOutputSurface = new SurfaceTexture(fakeOutputTextureId);
-                fakeOutputSurface.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
+    protected void takeFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY, @NonNull EGLContext eglContext) {
 
-                // 1. Create an EGL surface
-                final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
-                final EglBaseSurface eglSurface = new EglWindowSurface(core, fakeOutputSurface);
-                eglSurface.makeCurrent();
+        // 0. EGL window will need an output.
+        // We create a fake one as explained in javadocs.
+        final int fakeOutputTextureId = 9999;
+        SurfaceTexture fakeOutputSurface = new SurfaceTexture(fakeOutputTextureId);
+        fakeOutputSurface.setDefaultBufferSize(mResult.size.getWidth(), mResult.size.getHeight());
 
-                // 2. Apply scale and crop
-                boolean flip = mEngine.getAngles().flip(Reference.VIEW, Reference.SENSOR);
-                float realScaleX = flip ? scaleY : scaleX;
-                float realScaleY = flip ? scaleX : scaleY;
-                float scaleTranslX = (1F - realScaleX) / 2F;
-                float scaleTranslY = (1F - realScaleY) / 2F;
-                Matrix.translateM(mTransform, 0, scaleTranslX, scaleTranslY, 0);
-                Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
+        // 1. Create an EGL surface
+        final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
+        final EglBaseSurface eglSurface = new EglWindowSurface(core, fakeOutputSurface);
+        eglSurface.makeCurrent();
 
-                // 3. Apply rotation and flip
-                Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0); // Go back to 0,0
-                Matrix.rotateM(mTransform, 0, -mResult.rotation, 0, 0, 1); // Rotate (not sure why we need the minus)
-                mResult.rotation = 0;
-                if (mResult.facing == Facing.FRONT) { // 5. Flip horizontally for front camera
-                    Matrix.scaleM(mTransform, 0, -1, 1, 1);
-                }
-                Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0); // Go back to old position
+        // 2. Apply scale and crop
+        boolean flip = mEngine.getAngles().flip(Reference.VIEW, Reference.SENSOR);
+        float realScaleX = flip ? scaleY : scaleX;
+        float realScaleY = flip ? scaleX : scaleY;
+        float scaleTranslX = (1F - realScaleX) / 2F;
+        float scaleTranslY = (1F - realScaleY) / 2F;
+        Matrix.translateM(mTransform, 0, scaleTranslX, scaleTranslY, 0);
+        Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
 
-                // 4. Do pretty much the same for overlays
-                if (mHasOverlay) {
-                    // 1. First we must draw on the texture and get latest image
-                    mOverlayDrawer.draw(Overlay.Target.PICTURE_SNAPSHOT);
+        // 3. Apply rotation and flip
+        Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0); // Go back to 0,0
+        Matrix.rotateM(mTransform, 0, -mResult.rotation, 0, 0, 1); // Rotate (not sure why we need the minus)
+        mResult.rotation = 0;
+        if (mResult.facing == Facing.FRONT) { // 5. Flip horizontally for front camera
+            Matrix.scaleM(mTransform, 0, -1, 1, 1);
+        }
+        Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0); // Go back to old position
 
-                    // 2. Then we can apply the transformations
-                    int rotation = mEngine.getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
-                    Matrix.translateM(mOverlayDrawer.getTransform(), 0, 0.5F, 0.5F, 0);
-                    Matrix.rotateM(mOverlayDrawer.getTransform(), 0, rotation, 0, 0, 1);
-                    // No need to flip the x axis for front camera, but need to flip the y axis always.
-                    Matrix.scaleM(mOverlayDrawer.getTransform(), 0, 1, -1, 1);
-                    Matrix.translateM(mOverlayDrawer.getTransform(), 0, -0.5F, -0.5F, 0);
-                }
+        // 4. Do pretty much the same for overlays
+        if (mHasOverlay) {
+            // 1. First we must draw on the texture and get latest image
+            mOverlayDrawer.draw(Overlay.Target.PICTURE_SNAPSHOT);
 
-                // 5. Draw and save
-                mViewport.drawFrame(mTextureId, mTransform);
-                if (mHasOverlay) mOverlayDrawer.render();
-                mResult.format = PictureResult.FORMAT_JPEG;
-                mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
+            // 2. Then we can apply the transformations
+            int rotation = mEngine.getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
+            Matrix.translateM(mOverlayDrawer.getTransform(), 0, 0.5F, 0.5F, 0);
+            Matrix.rotateM(mOverlayDrawer.getTransform(), 0, rotation, 0, 0, 1);
+            // No need to flip the x axis for front camera, but need to flip the y axis always.
+            Matrix.scaleM(mOverlayDrawer.getTransform(), 0, 1, -1, 1);
+            Matrix.translateM(mOverlayDrawer.getTransform(), 0, -0.5F, -0.5F, 0);
+        }
 
-                // 6. Cleanup
-                eglSurface.releaseEglSurface();
-                mViewport.release();
-                fakeOutputSurface.release();
-                if (mHasOverlay) mOverlayDrawer.release();
-                core.release();
-                dispatchResult();
-            }
-        });
+        // 5. Draw and save
+        LOG.i("takeFrame:", "timestamp:", surfaceTexture.getTimestamp());
+        mViewport.drawFrame(mTextureId, mTransform);
+        if (mHasOverlay) mOverlayDrawer.render();
+        mResult.format = PictureResult.FORMAT_JPEG;
+        mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
+
+        // 6. Cleanup
+        eglSurface.releaseEglSurface();
+        mViewport.release();
+        fakeOutputSurface.release();
+        if (mHasOverlay) mOverlayDrawer.release();
+        core.release();
+        dispatchResult();
     }
 
     @Override

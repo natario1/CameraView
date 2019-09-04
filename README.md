@@ -136,6 +136,8 @@ Using CameraView is extremely simple:
     app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker"
     app:cameraUseDeviceOrientation="true|false"
     app:cameraFilter="@string/real_time_filter"
+    app:cameraPictureMetering="true|false"
+    app:cameraPictureSnapshotMetering="false|true"
     app:cameraExperimental="false|true">
     
     <!-- Watermark! -->

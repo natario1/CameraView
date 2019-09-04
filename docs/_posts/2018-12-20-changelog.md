@@ -70,7 +70,7 @@ https://github.com/natario1/CameraView/compare/v2.0.0-beta06...v2.0.0-rc1
 
 If you were using `focus`, just switch to `autoFocus`.
 
-If you were using `focusWithMarker`, you can [add back the old marker](../docs/controls.html#cameraautofocusmarker).
+If you were using `focusWithMarker`, you can [add back the old marker](../docs/metering.html#touch-metering-markers).
 
 https://github.com/natario1/CameraView/compare/v2.0.0-beta05...v2.0.0-beta06
 

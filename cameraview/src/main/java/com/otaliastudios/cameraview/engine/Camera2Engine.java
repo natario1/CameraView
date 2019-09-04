@@ -42,7 +42,14 @@ import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.engine.action.Action;
+import com.otaliastudios.cameraview.engine.action.ActionHolder;
+import com.otaliastudios.cameraview.engine.action.Actions;
+import com.otaliastudios.cameraview.engine.action.BaseAction;
+import com.otaliastudios.cameraview.engine.action.CompletionCallback;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
+import com.otaliastudios.cameraview.engine.meter.MeterAction;
+import com.otaliastudios.cameraview.engine.meter.MeterResetAction;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.frame.Frame;
@@ -52,7 +59,7 @@ import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.ImageHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
-import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
+import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
@@ -64,16 +71,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener, Meter.Callback {
+public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener,
+        ActionHolder {
 
     private static final String TAG = Camera2Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
+    private static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
     private String mCameraId;
@@ -81,8 +89,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private CameraCharacteristics mCameraCharacteristics;
     private CameraCaptureSession mSession;
     private CaptureRequest.Builder mRepeatingRequestBuilder;
-    private CaptureRequest mRepeatingRequest;
-    private CameraCaptureSession.CaptureCallback mRepeatingRequestCallback;
+    private TotalCaptureResult mLastRepeatingResult;
     private final Camera2Mapper mMapper = Camera2Mapper.get();
 
     // Frame processing
@@ -101,13 +108,15 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private ImageReader mPictureReader;
     private final boolean mPictureCaptureStopsPreview = false; // can make configurable at some point
 
-    // 3A metering
-    private Meter mMeter;
+    // Actions
+    private final List<Action> mActions = new ArrayList<>();
+    private MeterAction mMeterAction;
 
     public Camera2Engine(Callback callback) {
         super(callback);
         mManager = (CameraManager) mCallback.getContext().getSystemService(Context.CAMERA_SERVICE);
         mFrameConversionHandler = WorkerHandler.get("CameraFrameConversion");
+        new LogAction().start(this);
     }
 
     //region Utilities
@@ -126,6 +135,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return value == null ? fallback : value;
     }
 
+    @SuppressWarnings("DuplicateBranchesInSwitch")
     @NonNull
     private CameraException createCameraException(@NonNull CameraAccessException exception) {
         int reason;
@@ -140,6 +150,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return new CameraException(exception, reason);
     }
 
+    @SuppressWarnings("DuplicateBranchesInSwitch")
     @NonNull
     private CameraException createCameraException(int stateCallbackError) {
         int reason;
@@ -163,9 +174,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @SuppressWarnings("UnusedReturnValue")
     @NonNull
     private CaptureRequest.Builder createRepeatingRequestBuilder(int template) throws CameraAccessException {
+        CaptureRequest.Builder oldBuilder = mRepeatingRequestBuilder;
         mRepeatingRequestBuilder = mCamera.createCaptureRequest(template);
         mRepeatingRequestBuilder.setTag(template);
-        applyAllParameters(mRepeatingRequestBuilder);
+        applyAllParameters(mRepeatingRequestBuilder, oldBuilder);
         return mRepeatingRequestBuilder;
     }
 
@@ -197,6 +209,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
+    private void applyRepeatingRequestBuilderAsSingle() {
+        if (getPreviewState() == STATE_STARTED) {
+            try {
+                mSession.capture(mRepeatingRequestBuilder.build(),
+                        mRepeatingRequestCallback, null);
+            } catch (CameraAccessException e) {
+                throw createCameraException(e);
+            }
+        }
+    }
+
     /**
      * Applies the repeating request builder to the preview, assuming we actually have a preview
      * running. Can be called after changing parameters to the builder.
@@ -206,55 +229,52 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * {@link #createRepeatingRequestBuilder(int)}.
      */
     private void applyRepeatingRequestBuilder() {
-        applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED, null);
+        applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED);
     }
 
-    private void applyRepeatingRequestBuilder(boolean checkStarted, int errorReason, @Nullable final Runnable onFirstFrame) {
-        if (!checkStarted || getPreviewState() == STATE_STARTED) {
+    private void applyRepeatingRequestBuilder(boolean checkStarted, int errorReason) {
+        if (getPreviewState() == STATE_STARTED || !checkStarted) {
             try {
-                mRepeatingRequest = mRepeatingRequestBuilder.build();
-                final AtomicBoolean firstFrame = new AtomicBoolean(false);
-                mRepeatingRequestCallback = new CameraCaptureSession.CaptureCallback() {
-                    @Override
-                    public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
-                        super.onCaptureStarted(session, request, timestamp, frameNumber);
-                        if (firstFrame.compareAndSet(false, true) && onFirstFrame != null) {
-                            onFirstFrame.run();
-                        }
-                        if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).onCaptureStarted(request);
-                        }
-                    }
-
-                    @Override
-                    public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
-                        super.onCaptureProgressed(session, request, partialResult);
-                        if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).onCaptureProgressed(partialResult);
-                        }
-                        if (mMeter != null && mMeter.isMetering()) {
-                            mMeter.onCapture(partialResult);
-                        }
-                    }
-
-                    @Override
-                    public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                        super.onCaptureCompleted(session, request, result);
-                        if (mPictureRecorder instanceof Full2PictureRecorder) {
-                            ((Full2PictureRecorder) mPictureRecorder).onCaptureCompleted(result);
-                        }
-                        if (mMeter != null && mMeter.isMetering()) {
-                            mMeter.onCapture(result);
-                        }
-                    }
-
-                };
-                mSession.setRepeatingRequest(mRepeatingRequest, mRepeatingRequestCallback, null);
+                mSession.setRepeatingRequest(mRepeatingRequestBuilder.build(),
+                        mRepeatingRequestCallback, null);
             } catch (CameraAccessException e) {
                 throw new CameraException(e, errorReason);
             }
         }
     }
+
+    private final CameraCaptureSession.CaptureCallback mRepeatingRequestCallback
+            = new CameraCaptureSession.CaptureCallback() {
+        @Override
+        public void onCaptureStarted(@NonNull CameraCaptureSession session,
+                                     @NonNull CaptureRequest request,
+                                     long timestamp,
+                                     long frameNumber) {
+            for (Action action : mActions) {
+                action.onCaptureStarted(Camera2Engine.this, request);
+            }
+        }
+
+        @Override
+        public void onCaptureProgressed(@NonNull CameraCaptureSession session,
+                                        @NonNull CaptureRequest request,
+                                        @NonNull CaptureResult partialResult) {
+            for (Action action : mActions) {
+                action.onCaptureProgressed(Camera2Engine.this, request, partialResult);
+            }
+        }
+
+        @Override
+        public void onCaptureCompleted(@NonNull CameraCaptureSession session,
+                                       @NonNull CaptureRequest request,
+                                       @NonNull TotalCaptureResult result) {
+            mLastRepeatingResult = result;
+            for (Action action : mActions) {
+                action.onCaptureCompleted(Camera2Engine.this, request, result);
+            }
+        }
+    };
+
     //endregion
 
     //region Protected APIs
@@ -265,10 +285,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         try {
             CameraCharacteristics characteristics = mManager.getCameraCharacteristics(mCameraId);
             StreamConfigurationMap streamMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            if (streamMap == null)
+            if (streamMap == null) {
                 throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
-            // This works because our previews return either a SurfaceTexture or a SurfaceHolder, which are
-            // accepted class types by the getOutputSizes method.
+            }
+            // This works because our previews return either a SurfaceTexture or a SurfaceHolder,
+            // which are accepted class types by the getOutputSizes method.
             android.util.Size[] sizes = streamMap.getOutputSizes(mPreview.getOutputClass());
             List<Size> candidates = new ArrayList<>(sizes.length);
             for (android.util.Size size : sizes) {
@@ -298,13 +319,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             // However, let's launch an unrecoverable exception.
             throw createCameraException(e);
         }
-        LOG.i("collectCameraInfo", "Facing:", facing, "Internal:", internalFacing, "Cameras:", cameraIds.length);
+        LOG.i("collectCameraInfo", "Facing:", facing,
+                "Internal:", internalFacing,
+                "Cameras:", cameraIds.length);
         for (String cameraId : cameraIds) {
             try {
                 CameraCharacteristics characteristics = mManager.getCameraCharacteristics(cameraId);
                 if (internalFacing == readCharacteristic(characteristics, CameraCharacteristics.LENS_FACING, -99)) {
                     mCameraId = cameraId;
-                    int sensorOffset = readCharacteristic(characteristics, CameraCharacteristics.SENSOR_ORIENTATION, 0);
+                    int sensorOffset = readCharacteristic(characteristics,
+                            CameraCharacteristics.SENSOR_ORIENTATION, 0);
                     getAngles().setSensorOffset(facing, sensorOffset);
                     return true;
                 }
@@ -352,8 +376,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     // However, using trySetException should address this problem - it will only trigger
                     // if the task has no result.
                     //
-                    // Docs say to release this camera instance, however, since we throw an unrecoverable CameraException,
-                    // this will trigger a stop() through the exception handler.
+                    // Docs say to release this camera instance, however, since we throw an unrecoverable
+                    // CameraException, this will trigger a stop() through the exception handler.
                     task.trySetException(new CameraException(CameraException.REASON_DISCONNECTED));
                 }
 
@@ -505,7 +529,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
         LOG.i("onStartPreview", "Starting preview.");
         addRepeatingRequestBuilderSurfaces();
-        applyRepeatingRequestBuilder(false, CameraException.REASON_FAILED_TO_START_PREVIEW, null);
+        applyRepeatingRequestBuilder(false, CameraException.REASON_FAILED_TO_START_PREVIEW);
         LOG.i("onStartPreview", "Started preview.");
 
         // Start delayed video if needed.
@@ -555,8 +579,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             throw createCameraException(e);
         }
         removeRepeatingRequestBuilderSurfaces();
-        mRepeatingRequest = null;
-        mMeter = null;
         LOG.i("onStopPreview:", "Returning.");
         return Tasks.forResult(null);
     }
@@ -611,35 +633,66 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @WorkerThread
     @Override
-    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio) {
-        stub.size = getUncroppedSnapshotSize(Reference.OUTPUT); // Not the real size: it will be cropped to match the view ratio
-        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR); // Actually it will be rotated and set to 0.
-        if (mPreview instanceof GlCameraPreview) {
-            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio, getOverlay());
+    protected void onTakePictureSnapshot(@NonNull final PictureResult.Stub stub, @NonNull final AspectRatio outputRatio, boolean doMetering) {
+        if (doMetering) {
+            LOG.i("onTakePictureSnapshot:", "doMetering is true. Delaying.");
+            Action action = Actions.timeout(METER_TIMEOUT, createMeterAction(null));
+            action.addCallback(new CompletionCallback() {
+                @Override
+                protected void onActionCompleted(@NonNull Action action) {
+                    onTakePictureSnapshot(stub, outputRatio, false);
+                }
+            });
+            action.start(this);
         } else {
-            throw new RuntimeException("takePictureSnapshot with Camera2 is only supported with Preview.GL_SURFACE");
+            LOG.i("onTakePictureSnapshot:", "doMetering is false. Performing.");
+            if (!(mPreview instanceof GlCameraPreview)) {
+                throw new RuntimeException("takePictureSnapshot with Camera2 is only " +
+                        "supported with Preview.GL_SURFACE");
+            }
+            // stub.size is not the real size: it will be cropped to the given ratio
+            // stub.rotation will be set to 0 - we rotate the texture instead.
+            stub.size = getUncroppedSnapshotSize(Reference.OUTPUT);
+            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+            mPictureRecorder = new Snapshot2PictureRecorder(stub, this,
+                    (GlCameraPreview) mPreview, outputRatio);
+            mPictureRecorder.take();
         }
-        mPictureRecorder.take();
     }
 
     @Override
-    protected void onTakePicture(@NonNull PictureResult.Stub stub) {
-        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
-        stub.size = getPictureSize(Reference.OUTPUT);
-        try {
-            CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            applyAllParameters(builder);
-            mPictureRecorder = new Full2PictureRecorder(stub, this,
-                    mCameraCharacteristics,
-                    mSession,
-                    mRepeatingRequestBuilder,
-                    mRepeatingRequestCallback,
-                    builder,
-                    mPictureReader,
-                    mPictureCaptureStopsPreview);
-            mPictureRecorder.take();
-        } catch (CameraAccessException e) {
-            throw createCameraException(e);
+    protected void onTakePicture(@NonNull final PictureResult.Stub stub, boolean doMetering) {
+        if (doMetering) {
+            LOG.i("onTakePicture:", "doMetering is true. Delaying.");
+            Action action = Actions.timeout(METER_TIMEOUT, createMeterAction(null));
+            action.addCallback(new CompletionCallback() {
+                @Override
+                protected void onActionCompleted(@NonNull Action action) {
+                    onTakePicture(stub, false);
+                }
+            });
+            action.start(this);
+        } else {
+            LOG.i("onTakePicture:", "doMetering is false. Performing.");
+            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+            stub.size = getPictureSize(Reference.OUTPUT);
+            try {
+                if (mPictureCaptureStopsPreview) {
+                    // These two are present in official samples and are probably meant to speed things up?
+                    // But from my tests, they actually make everything slower. So this is disabled by default
+                    // with a boolean flag. Maybe in the future we can make this configurable as some
+                    // people might want to stop the preview while picture is being taken even if it
+                    // increases the latency.
+                    mSession.stopRepeating();
+                    mSession.abortCaptures();
+                }
+                CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                applyAllParameters(builder, mRepeatingRequestBuilder);
+                mPictureRecorder = new Full2PictureRecorder(stub, this, builder, mPictureReader);
+                mPictureRecorder.take();
+            } catch (CameraAccessException e) {
+                throw createCameraException(e);
+            }
         }
     }
 
@@ -648,8 +701,15 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         boolean fullPicture = mPictureRecorder instanceof Full2PictureRecorder;
         super.onPictureResult(result, error);
         if (fullPicture && mPictureCaptureStopsPreview) {
-            // See comments in Full2PictureRecorder.
             applyRepeatingRequestBuilder();
+        }
+
+        // Some picture recorders might lock metering, and we usually run a metering sequence
+        // before running the recorders. So, run an unlock/reset sequence if needed.
+        boolean unlock = (fullPicture && getPictureMetering())
+                || (!fullPicture && getPictureSnapshotMetering());
+        if (unlock) {
+            unlockAndResetMetering();
         }
     }
 
@@ -672,18 +732,15 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private void doTakeVideo(@NonNull final VideoResult.Stub stub) {
         if (!(mVideoRecorder instanceof Full2VideoRecorder)) {
-            throw new IllegalStateException("doTakeVideo called, but video recorder is not a Full2VideoRecorder! " + mVideoRecorder);
+            throw new IllegalStateException("doTakeVideo called, but video recorder " +
+                    "is not a Full2VideoRecorder! " + mVideoRecorder);
         }
         Full2VideoRecorder recorder = (Full2VideoRecorder) mVideoRecorder;
         try {
             createRepeatingRequestBuilder(CameraDevice.TEMPLATE_RECORD);
             addRepeatingRequestBuilderSurfaces(recorder.getInputSurface());
-            applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED, new Runnable() {
-                @Override
-                public void run() {
-                    mVideoRecorder.start(stub);
-                }
-            });
+            applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED);
+            mVideoRecorder.start(stub);
         } catch (CameraAccessException e) {
             onVideoResult(null, e);
             throw createCameraException(e);
@@ -757,7 +814,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * the {@link #createRepeatingRequestBuilder(int)} method.
      */
     private void maybeRestorePreviewTemplateAfterVideo() {
-        int template = (int) mRepeatingRequest.getTag();
+        int template = (int) mRepeatingRequestBuilder.build().getTag();
         if (template != CameraDevice.TEMPLATE_PREVIEW) {
             try {
                 createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
@@ -773,7 +830,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Parameters
 
-    private void applyAllParameters(@NonNull CaptureRequest.Builder builder) {
+    private void applyAllParameters(@NonNull CaptureRequest.Builder builder,
+                                    @Nullable CaptureRequest.Builder oldBuilder) {
+        LOG.i("applyAllParameters:", "called for tag", builder.build().getTag());
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         applyDefaultFocus(builder);
         applyFlash(builder, Flash.OFF);
@@ -782,6 +841,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         applyHdr(builder, Hdr.OFF);
         applyZoom(builder, 0F);
         applyExposureCorrection(builder, 0F);
+
+        if (oldBuilder != null) {
+            // We might be in a metering operation, or the old builder might have some special
+            // metering parameters. Copy these special keys over to the new builder.
+            // These are the keys changed by metering.Parameters, or by us in applyFocusForMetering.
+            builder.set(CaptureRequest.CONTROL_AF_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AF_REGIONS));
+            builder.set(CaptureRequest.CONTROL_AE_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AE_REGIONS));
+            builder.set(CaptureRequest.CONTROL_AWB_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AWB_REGIONS));
+            builder.set(CaptureRequest.CONTROL_AF_MODE, oldBuilder.get(CaptureRequest.CONTROL_AF_MODE));
+            // Do NOT copy exposure or focus triggers!
+        }
     }
 
     private void applyDefaultFocus(@NonNull CaptureRequest.Builder builder) {
@@ -836,14 +906,31 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void setFlash(@NonNull Flash flash) {
+    public void setFlash(@NonNull final Flash flash) {
         final Flash old = mFlash;
         mFlash = flash;
         mHandler.run(new Runnable() {
             @Override
             public void run() {
                 if (getEngineState() == STATE_STARTED) {
-                    if (applyFlash(mRepeatingRequestBuilder, old)) {
+                    boolean shouldApply = applyFlash(mRepeatingRequestBuilder, old);
+                    boolean needsWorkaround = getPreviewState() == STATE_STARTED;
+                    if (needsWorkaround) {
+                        // Runtime changes to the flash value are not correctly handled by the driver.
+                        // See https://stackoverflow.com/q/53003383/4288782 for example.
+                        // For this reason, we go back to OFF, capture once, then go to the new one.
+                        mFlash = Flash.OFF;
+                        applyFlash(mRepeatingRequestBuilder, old);
+                        try {
+                            mSession.capture(mRepeatingRequestBuilder.build(), null, null);
+                        } catch (CameraAccessException e) {
+                            throw createCameraException(e);
+                        }
+                        mFlash = flash;
+                        applyFlash(mRepeatingRequestBuilder, old);
+                        applyRepeatingRequestBuilder();
+
+                    } else if (shouldApply) {
                         applyRepeatingRequestBuilder();
                     }
                 }
@@ -884,12 +971,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     LOG.i("applyFlash: setting FLASH_MODE to", pair.second);
                     builder.set(CaptureRequest.CONTROL_AE_MODE, pair.first);
                     builder.set(CaptureRequest.FLASH_MODE, pair.second);
-
-                    // On some devices, switching from TORCH/OFF to AUTO/ON is not immediately
-                    // reflected (for example, torch stays active) unless we do as follows.
-                    // It's just a way to wake up the AE routine.
-                    builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                            CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
                     return true;
                 }
             }
@@ -1139,95 +1220,136 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
-        // TODO Should change this name at some point, and deprecate AF methods
-        startMetering(gesture, point);
-    }
-
-    private void startMetering(@Nullable final Gesture gesture, @NonNull final PointF point) {
-        LOG.i("startMetering", "dispatching. Gesture:", gesture);
+        LOG.i("startAutoFocus", "dispatching. Gesture:", gesture);
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("startMetering", "executing. Preview state:", getPreviewState());
+                LOG.i("startAutoFocus", "executing. Preview state:", getPreviewState());
                 // This will only work when we have a preview, since it launches the preview in the end.
                 // Even without this it would need the bind state at least, since we need the preview size.
                 if (getPreviewState() < STATE_STARTED) return;
 
                 // The camera options API still has the auto focus API but it really
-                // refers to 3A metering.
+                // refers to "3A metering to a specific point". Since we have a point, check.
                 if (!mCameraOptions.isAutoFocusSupported()) return;
 
-                // Reset the old meter if present.
-                if (mMeter != null) {
-                    mMeter.resetMetering();
-                }
-
-                // The meter will check the current configuration to see if AF/AE/AWB should run.
-                // - AE should be on CONTROL_AE_MODE_ON*    (this depends on setFlash())
-                // - AWB should be on CONTROL_AWB_MODE_AUTO (this depends on setWhiteBalance())
-                // - AF should be on CONTROL_AF_MODE_AUTO or others
-                // The last one is under our control because the library has no focus API.
-                // So let's set a good af mode here. This operation is reverted during onMeteringReset().
-                applyFocusForMetering(mRepeatingRequestBuilder);
-
                 // Create the meter and start.
-                mMeter = new Meter(Camera2Engine.this,
-                        mRepeatingRequestBuilder,
-                        mCameraCharacteristics,
-                        Camera2Engine.this);
-                mMeter.startMetering(point, gesture);
+                mCallback.dispatchOnFocusStart(gesture, point);
+                final MeterAction action = createMeterAction(point);
+                Action wrapper = Actions.timeout(METER_TIMEOUT, action);
+                wrapper.start(Camera2Engine.this);
+                wrapper.addCallback(new CompletionCallback() {
+                    @Override
+                    protected void onActionCompleted(@NonNull Action a) {
+                        mCallback.dispatchOnFocusEnd(gesture, action.isSuccessful(), point);
+                        mHandler.remove(mUnlockAndResetMeteringRunnable);
+                        if (shouldResetAutoFocus()) {
+                            mHandler.post(getAutoFocusResetDelay(), mUnlockAndResetMeteringRunnable);
+                        }
+                    }
+                });
             }
         });
     }
 
-    /**
-     * Called by {@link Meter} when the metering process has started.
-     * We are currently exposing an auto focus API so that's what we dispatch.
-     * @param point point
-     * @param gesture gesture
-     */
+    @NonNull
+    private MeterAction createMeterAction(@Nullable PointF point) {
+        // Before creating any new meter action, abort the old one.
+        if (mMeterAction != null) mMeterAction.abort(this);
+        // The meter will check the current configuration to see if AF/AE/AWB should run.
+        // - AE should be on CONTROL_AE_MODE_ON*    (this depends on setFlash())
+        // - AWB should be on CONTROL_AWB_MODE_AUTO (this depends on setWhiteBalance())
+        // - AF should be on CONTROL_AF_MODE_AUTO or others
+        // The last one is under our control because the library has no focus API.
+        // So let's set a good af mode here. This operation is reverted during onMeteringReset().
+        applyFocusForMetering(mRepeatingRequestBuilder);
+        mMeterAction = new MeterAction(Camera2Engine.this, point, point == null);
+        return mMeterAction;
+    }
+
+    private final Runnable mUnlockAndResetMeteringRunnable = new Runnable() {
+        @Override
+        public void run() {
+            unlockAndResetMetering();
+        }
+    };
+
+    private void unlockAndResetMetering() {
+        if (getEngineState() == STATE_STARTED) {
+            Actions.sequence(
+                    new BaseAction() {
+                        @Override
+                        protected void onStart(@NonNull ActionHolder holder) {
+                            super.onStart(holder);
+                            applyDefaultFocus(holder.getBuilder(this));
+                            holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_LOCK, false);
+                            holder.getBuilder(this).set(CaptureRequest.CONTROL_AWB_LOCK, false);
+                            holder.applyBuilder(this);
+                            setState(STATE_COMPLETED);
+                            // TODO should wait results?
+                        }
+                    },
+                    new MeterResetAction()
+            ).start(Camera2Engine.this);
+        }
+    }
+
+    //endregion
+
+    //region Actions
+
     @Override
-    public void onMeteringStarted(@NonNull PointF point, @Nullable Gesture gesture) {
-        LOG.w("onMeteringStarted - point:", point, "gesture:", gesture);
-        mCallback.dispatchOnFocusStart(gesture, point);
+    public void addAction(final @NonNull Action action) {
+        // This is likely to be called during a Capture callback while we iterate
+        // on the actions list, or worse, from other threads. We must use mHandler.post.
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (!mActions.contains(action)) {
+                    mActions.add(action);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void removeAction(final @NonNull Action action) {
+        // This is likely to be called during a Capture callback while we iterate
+        // on the actions list, or worse, from other threads. We must use mHandler.post.
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mActions.remove(action);
+            }
+        });
+    }
+
+    @NonNull
+    @Override
+    public CameraCharacteristics getCharacteristics(@NonNull Action action) {
+        return mCameraCharacteristics;
+    }
+
+    @NonNull
+    @Override
+    public TotalCaptureResult getLastResult(@NonNull Action action) {
+        return mLastRepeatingResult;
+    }
+
+    @NonNull
+    @Override
+    public CaptureRequest.Builder getBuilder(@NonNull Action action) {
+        return mRepeatingRequestBuilder;
+    }
+
+    @Override
+    public void applyBuilder(@NonNull Action source) {
         applyRepeatingRequestBuilder();
     }
 
-    /**
-     * Called by {@link Meter} when the metering process has ended.
-     * We are currently exposing an auto focus API so that's what we dispatch.
-     * @param point point
-     * @param gesture gesture
-     * @param success success
-     */
     @Override
-    public void onMeteringEnd(@NonNull PointF point, @Nullable Gesture gesture, boolean success) {
-        LOG.w("onMeteringEnd - point:", point, "gesture:", gesture, "success:", success);
-        mCallback.dispatchOnFocusEnd(gesture, success, point);
-    }
-
-    /**
-     * When metering is reset, we're not sure that the engine is still alive.
-     * We should check this here.
-     * @param point point
-     * @param gesture gesture
-     * @return true if metering can be reset
-     */
-    @Override
-    public boolean canResetMetering(@NonNull PointF point, @Nullable Gesture gesture) {
-        return getEngineState() == STATE_STARTED;
-    }
-
-    /**
-     * Called by {@link Meter} after resetting the metering parameters.
-     * We should apply them, and also go back to default focus.
-     * @param point point
-     * @param gesture gesture
-     */
-    @Override
-    public void onMeteringReset(@NonNull PointF point, @Nullable Gesture gesture) {
-        applyDefaultFocus(mRepeatingRequestBuilder);
-        applyRepeatingRequestBuilder(); // only if preview started already
+    public void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder) throws CameraAccessException {
+        mSession.capture(builder.build(), mRepeatingRequestCallback, null);
     }
 
     //endregion

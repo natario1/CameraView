@@ -23,7 +23,7 @@ public enum GestureAction {
     NONE(0, GestureType.ONE_SHOT),
 
     /**
-     * Auto focus control, typically assigned to the tap gesture.
+     * Touch metering control, typically assigned to the tap gesture.
      * This action can be mapped to one shot gestures:
      *
      * - {@link Gesture#TAP}
