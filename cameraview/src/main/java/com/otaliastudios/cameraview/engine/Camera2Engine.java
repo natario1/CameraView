@@ -68,7 +68,6 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -111,6 +110,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     // Actions
     private final List<Action> mActions = new ArrayList<>();
+    private MeterAction mMeterAction;
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -1230,10 +1230,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // refers to "3A metering to a specific point". Since we have a point, check.
                 if (!mCameraOptions.isAutoFocusSupported()) return;
 
-                // Reset the old meter and locker if present.
-                // TODO implement this with abort() API!
-                // mMeteringResetRunnable.run();
-
                 // Create the meter and start.
                 mCallback.dispatchOnFocusStart(gesture, point);
                 final MeterAction action = createMeterAction(point);
@@ -1255,6 +1251,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @NonNull
     private MeterAction createMeterAction(@Nullable PointF point) {
+        // Before creating any new meter action, abort the old one.
+        if (mMeterAction != null) mMeterAction.abort(this);
         // The meter will check the current configuration to see if AF/AE/AWB should run.
         // - AE should be on CONTROL_AE_MODE_ON*    (this depends on setFlash())
         // - AWB should be on CONTROL_AWB_MODE_AUTO (this depends on setWhiteBalance())
@@ -1262,7 +1260,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         // The last one is under our control because the library has no focus API.
         // So let's set a good af mode here. This operation is reverted during onMeteringReset().
         applyFocusForMetering(mRepeatingRequestBuilder);
-        return new MeterAction(Camera2Engine.this, point, point == null);
+        mMeterAction = new MeterAction(Camera2Engine.this, point, point == null);
+        return mMeterAction;
     }
 
     private final Runnable mUnlockAndResetMeteringRunnable = new Runnable() {
