@@ -1235,7 +1235,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
-     * Sets an {@link AutoFocusMarker} to be notified of autofocus start, end and fail events
+     * Sets an {@link AutoFocusMarker} to be notified of metering start, end and fail events
      * so that it can draw elements on screen.
      *
      * @param autoFocusMarker the marker, or null
@@ -1246,25 +1246,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
-     * Sets the current delay in milliseconds to reset the focus after an autofocus process.
+     * Sets the current delay in milliseconds to reset the focus after a metering event.
      *
-     * @param delayMillis desired delay (in milliseconds).  If the delay
+     * @param delayMillis desired delay (in milliseconds). If the delay
      *                    is less than or equal to 0 or equal to Long.MAX_VALUE,
-     *                    the autofocus will not be reset.
+     *                    the values will not be reset.
      */
     public void setAutoFocusResetDelay(long delayMillis) {
         mCameraEngine.setAutoFocusResetDelay(delayMillis);
     }
 
     /**
-     * Returns the current delay in milliseconds to reset the focus after an autofocus process.
-     * @return the current autofocus reset delay in milliseconds.
+     * Returns the current delay in milliseconds to reset the focus after a metering event.
+     *
+     * @return the current reset delay in milliseconds
      */
     @SuppressWarnings("unused")
     public long getAutoFocusResetDelay() { return mCameraEngine.getAutoFocusResetDelay(); }
 
     /**
-     * Starts an autofocus process at the given coordinates, with respect
+     * Starts a 3A touch metering process at the given coordinates, with respect
      * to the view width and height.
      *
      * @param x should be between 0 and getWidth()

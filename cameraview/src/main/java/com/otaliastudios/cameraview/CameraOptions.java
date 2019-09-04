@@ -427,7 +427,7 @@ public class CameraOptions {
 
 
     /**
-     * Whether auto focus (metering with respect to a specific region of the screen) is
+     * Whether touch metering (metering with respect to a specific region of the screen) is
      * supported. If it is, you can map gestures to {@link GestureAction#AUTO_FOCUS}
      * and metering will change on tap.
      *
