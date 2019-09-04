@@ -18,11 +18,11 @@ public class MeterResetAction extends ActionWrapper {
 
     private final BaseAction action;
 
-    public MeterResetAction(boolean resetAreas) {
+    public MeterResetAction() {
         this.action = Actions.together(
-                new ExposureReset(resetAreas),
-                new FocusReset(resetAreas),
-                new WhiteBalanceReset(resetAreas)
+                new ExposureReset(),
+                new FocusReset(),
+                new WhiteBalanceReset()
         );
     }
 

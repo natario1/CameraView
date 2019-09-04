@@ -67,7 +67,7 @@ public abstract class BaseAction implements Action {
      * holder stream anymore. It will soon be marked as completed.
      * @param holder holder
      */
-    @SuppressWarnings({"WeakerAccess", "unused"})
+    @SuppressWarnings("unused")
     protected void onAbort(@NonNull ActionHolder holder) {
         // Overrideable
     }
@@ -100,6 +100,7 @@ public abstract class BaseAction implements Action {
             }
             if (state == STATE_COMPLETED) {
                 holder.removeAction(this);
+                onCompleted(holder);
             }
         }
     }
@@ -108,9 +109,16 @@ public abstract class BaseAction implements Action {
      * Whether this action has reached the completed state.
      * @return true if completed
      */
-    @SuppressWarnings("WeakerAccess")
     public boolean isCompleted() {
         return state == STATE_COMPLETED;
+    }
+
+    /**
+     * Called when this action has completed (possibly aborted).
+     * @param holder holder
+     */
+    protected void onCompleted(@NonNull ActionHolder holder) {
+        // Overrideable
     }
 
     /**
@@ -130,7 +138,6 @@ public abstract class BaseAction implements Action {
      * @param <T> key type
      * @return value or fallback
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     protected <T> T readCharacteristic(@NonNull CameraCharacteristics.Key<T> key,
                                        @NonNull T fallback) {

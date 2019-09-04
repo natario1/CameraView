@@ -62,7 +62,13 @@ public class FocusMeter extends BaseMeter {
         holder.applyBuilder(this);
     }
 
-    // TODO Set trigger to null?
+    @Override
+    protected void onCompleted(@NonNull ActionHolder holder) {
+        super.onCompleted(holder);
+        // Remove (but not apply) the risky parameter so it is not included in new requests.
+        // Documentation about this key says that this should be allowed.
+        holder.getBuilder(this).set(CaptureRequest.CONTROL_AF_TRIGGER, null);
+    }
 
     @Override
     public void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request,

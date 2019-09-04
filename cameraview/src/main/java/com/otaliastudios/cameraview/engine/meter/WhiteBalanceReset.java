@@ -22,8 +22,9 @@ public class WhiteBalanceReset extends BaseReset {
     private static final String TAG = WhiteBalanceReset.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
-    public WhiteBalanceReset(boolean resetArea) {
-        super(resetArea);
+    @SuppressWarnings("WeakerAccess")
+    public WhiteBalanceReset() {
+        super(true);
     }
 
     @Override

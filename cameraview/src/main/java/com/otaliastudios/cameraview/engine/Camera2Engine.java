@@ -45,8 +45,8 @@ import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.Actions;
+import com.otaliastudios.cameraview.engine.action.BaseAction;
 import com.otaliastudios.cameraview.engine.action.CompletionCallback;
-import com.otaliastudios.cameraview.engine.lock.UnlockAction;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.engine.meter.MeterAction;
 import com.otaliastudios.cameraview.engine.meter.MeterResetAction;
@@ -243,8 +243,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    private final CameraCaptureSession.CaptureCallback mRepeatingRequestCallback =
-            new CameraCaptureSession.CaptureCallback() {
+    private final CameraCaptureSession.CaptureCallback mRepeatingRequestCallback
+            = new CameraCaptureSession.CaptureCallback() {
         @Override
         public void onCaptureStarted(@NonNull CameraCaptureSession session,
                                      @NonNull CaptureRequest request,
@@ -701,11 +701,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         boolean fullPicture = mPictureRecorder instanceof Full2PictureRecorder;
         super.onPictureResult(result, error);
         if (fullPicture && mPictureCaptureStopsPreview) {
-            // See comments in Full2PictureRecorder.
             applyRepeatingRequestBuilder();
         }
-        boolean unlock = (fullPicture && getPictureMetering()) ||
-                (!fullPicture && getPictureSnapshotMetering());
+
+        // Some picture recorders might lock metering, and we usually run a metering sequence
+        // before running the recorders. So, run an unlock/reset sequence if needed.
+        boolean unlock = (fullPicture && getPictureMetering())
+                || (!fullPicture && getPictureSnapshotMetering());
         if (unlock) {
             unlockAndResetMetering();
         }
@@ -848,6 +850,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             builder.set(CaptureRequest.CONTROL_AE_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AE_REGIONS));
             builder.set(CaptureRequest.CONTROL_AWB_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AWB_REGIONS));
             builder.set(CaptureRequest.CONTROL_AF_MODE, oldBuilder.get(CaptureRequest.CONTROL_AF_MODE));
+            // Do NOT copy exposure or focus triggers!
         }
     }
 
@@ -1273,10 +1276,20 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private void unlockAndResetMetering() {
         if (getEngineState() == STATE_STARTED) {
-            applyDefaultFocus(mRepeatingRequestBuilder);
             Actions.sequence(
-                    new UnlockAction(),
-                    new MeterResetAction(true)
+                    new BaseAction() {
+                        @Override
+                        protected void onStart(@NonNull ActionHolder holder) {
+                            super.onStart(holder);
+                            applyDefaultFocus(holder.getBuilder(this));
+                            holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_LOCK, false);
+                            holder.getBuilder(this).set(CaptureRequest.CONTROL_AWB_LOCK, false);
+                            holder.applyBuilder(this);
+                            setState(STATE_COMPLETED);
+                            // TODO should wait results?
+                        }
+                    },
+                    new MeterResetAction()
             ).start(Camera2Engine.this);
         }
     }

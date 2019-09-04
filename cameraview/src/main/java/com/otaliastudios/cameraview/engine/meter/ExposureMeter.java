@@ -24,11 +24,10 @@ public class ExposureMeter extends BaseMeter {
     private static final int STATE_WAITING_PRECAPTURE = 0;
     private static final int STATE_WAITING_PRECAPTURE_END = 1;
 
+    @SuppressWarnings("WeakerAccess")
     public ExposureMeter(@NonNull List<MeteringRectangle> areas, boolean skipIfPossible) {
         super(areas, skipIfPossible);
     }
-
-    // TODO set trigger to null?
 
     @Override
     protected boolean checkIsSupported(@NonNull ActionHolder holder) {
@@ -74,6 +73,14 @@ public class ExposureMeter extends BaseMeter {
         // Apply
         holder.applyBuilder(this);
         setState(STATE_WAITING_PRECAPTURE);
+    }
+
+    @Override
+    protected void onCompleted(@NonNull ActionHolder holder) {
+        super.onCompleted(holder);
+        // Remove (but not apply) the risky parameter so it is not included in new requests.
+        // Documentation about this key says that this should be allowed.
+        holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, null);
     }
 
     @Override
