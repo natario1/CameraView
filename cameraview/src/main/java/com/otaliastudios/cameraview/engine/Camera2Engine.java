@@ -44,8 +44,13 @@ import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
+import com.otaliastudios.cameraview.engine.action.Actions;
+import com.otaliastudios.cameraview.engine.action.CompletionCallback;
+import com.otaliastudios.cameraview.engine.action.TimeoutAction;
 import com.otaliastudios.cameraview.engine.lock.UnlockAction;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
+import com.otaliastudios.cameraview.engine.meter.MeterAction;
+import com.otaliastudios.cameraview.engine.meter.MeterResetAction;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.frame.Frame;
@@ -70,14 +75,14 @@ import java.util.concurrent.ExecutionException;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener,
-        ActionHolder,
-        Meter.Callback {
+        ActionHolder {
 
     private static final String TAG = Camera2Engine.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
+    private static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
     private String mCameraId;
@@ -106,12 +111,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     // Actions
     private final List<Action> mActions = new ArrayList<>();
-
-    // 3A metering
-    private Meter mMeter;
-    private Gesture mMeteringGesture;
-    private PictureResult.Stub mDelayedPictureStub;
-    private AspectRatio mDelayedPictureRatio;
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -260,9 +259,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         public void onCaptureProgressed(@NonNull CameraCaptureSession session,
                                         @NonNull CaptureRequest request,
                                         @NonNull CaptureResult partialResult) {
-            if (mMeter != null && mMeter.isMetering()) {
-                mMeter.onCapture(partialResult);
-            }
             for (Action action : mActions) {
                 action.onCaptureProgressed(Camera2Engine.this, request, partialResult);
             }
@@ -273,9 +269,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                                        @NonNull CaptureRequest request,
                                        @NonNull TotalCaptureResult result) {
             mLastRepeatingResult = result;
-            if (mMeter != null && mMeter.isMetering()) {
-                mMeter.onCapture(result);
-            }
             for (Action action : mActions) {
                 action.onCaptureProgressed(Camera2Engine.this, request, result);
             }
@@ -572,7 +565,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             mVideoRecorder = null;
         }
         mPictureRecorder = null;
-        mMeteringResetRunnable.run();
         if (hasFrameProcessors()) {
             getFrameManager().release();
         }
@@ -641,20 +633,27 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @WorkerThread
     @Override
-    protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub, @NonNull AspectRatio outputRatio, boolean doMetering) {
-        stub.size = getUncroppedSnapshotSize(Reference.OUTPUT); // Not the real size: it will be cropped to match the view ratio
-        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR); // Actually it will be rotated and set to 0.
+    protected void onTakePictureSnapshot(@NonNull final PictureResult.Stub stub, @NonNull final AspectRatio outputRatio, boolean doMetering) {
         if (doMetering) {
             LOG.i("onTakePictureSnapshot:", "doMetering is true. Delaying.");
-            mDelayedPictureStub = stub;
-            mDelayedPictureRatio = outputRatio;
-            startMetering(null, null);
+            Action action = new TimeoutAction(METER_TIMEOUT, createMeterAction(null));
+            action.addCallback(new CompletionCallback() {
+                @Override
+                protected void onActionCompleted(@NonNull Action action) {
+                    onTakePictureSnapshot(stub, outputRatio, false);
+                }
+            });
+            action.start(this);
         } else {
             LOG.i("onTakePictureSnapshot:", "doMetering is false. Performing.");
             if (!(mPreview instanceof GlCameraPreview)) {
                 throw new RuntimeException("takePictureSnapshot with Camera2 is only " +
                         "supported with Preview.GL_SURFACE");
             }
+            // stub.size is not the real size: it will be cropped to the given ratio
+            // stub.rotation will be set to 0 - we rotate the texture instead.
+            stub.size = getUncroppedSnapshotSize(Reference.OUTPUT);
+            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
             mPictureRecorder = new Snapshot2PictureRecorder(stub, this,
                     (GlCameraPreview) mPreview, outputRatio);
             mPictureRecorder.take();
@@ -662,15 +661,21 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    protected void onTakePicture(@NonNull PictureResult.Stub stub, boolean doMetering) {
-        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
-        stub.size = getPictureSize(Reference.OUTPUT);
+    protected void onTakePicture(@NonNull final PictureResult.Stub stub, boolean doMetering) {
         if (doMetering) {
             LOG.i("onTakePicture:", "doMetering is true. Delaying.");
-            mDelayedPictureStub = stub;
-            startMetering(null, null);
+            Action action = new TimeoutAction(METER_TIMEOUT, createMeterAction(null));
+            action.addCallback(new CompletionCallback() {
+                @Override
+                protected void onActionCompleted(@NonNull Action action) {
+                    onTakePicture(stub, false);
+                }
+            });
+            action.start(this);
         } else {
             LOG.i("onTakePicture:", "doMetering is false. Performing.");
+            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+            stub.size = getPictureSize(Reference.OUTPUT);
             try {
                 if (mPictureCaptureStopsPreview) {
                     // These two are present in official samples and are probably meant to speed things up?
@@ -702,7 +707,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         boolean unlock = (fullPicture && getPictureMetering()) ||
                 (!fullPicture && getPictureSnapshotMetering());
         if (unlock) {
-            mMeteringResetRunnable.run();
+            unlockAndResetMetering();
         }
     }
 
@@ -1212,138 +1217,68 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
-        startMetering(gesture, point);
-    }
-
-    private void startMetering(@Nullable final Gesture gesture, @Nullable final PointF point) {
-        LOG.i("startMetering", "dispatching. Gesture:", gesture);
+        LOG.i("startAutoFocus", "dispatching. Gesture:", gesture);
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("startMetering", "executing. Preview state:", getPreviewState());
+                LOG.i("startAutoFocus", "executing. Preview state:", getPreviewState());
                 // This will only work when we have a preview, since it launches the preview in the end.
                 // Even without this it would need the bind state at least, since we need the preview size.
                 if (getPreviewState() < STATE_STARTED) return;
 
                 // The camera options API still has the auto focus API but it really
-                // refers to "3A metering to a specific point". So if we have one, let's check.
-                if (point != null && !mCameraOptions.isAutoFocusSupported()) return;
+                // refers to "3A metering to a specific point". Since we have a point, check.
+                if (!mCameraOptions.isAutoFocusSupported()) return;
 
                 // Reset the old meter and locker if present.
-                mMeteringResetRunnable.run();
-
-                // The meter will check the current configuration to see if AF/AE/AWB should run.
-                // - AE should be on CONTROL_AE_MODE_ON*    (this depends on setFlash())
-                // - AWB should be on CONTROL_AWB_MODE_AUTO (this depends on setWhiteBalance())
-                // - AF should be on CONTROL_AF_MODE_AUTO or others
-                // The last one is under our control because the library has no focus API.
-                // So let's set a good af mode here. This operation is reverted during onMeteringReset().
-                // TODO applyFocusForMetering(mRepeatingRequestBuilder);
-                // TODO applyRepeatingRequestBuilder();
+                // TODO implement this with abort() API!
+                // mMeteringResetRunnable.run();
 
                 // Create the meter and start.
-                mMeteringGesture = gesture;
-                mMeter = new Meter(Camera2Engine.this,
-                        mCameraCharacteristics,
-                        Camera2Engine.this);
-                mMeter.startMetering(mLastRepeatingResult, point, point == null);
+                mCallback.dispatchOnFocusStart(gesture, point);
+                final MeterAction action = createMeterAction(point);
+                final TimeoutAction wrapper = new TimeoutAction(METER_TIMEOUT, action);
+                wrapper.start(Camera2Engine.this);
+                wrapper.addCallback(new CompletionCallback() {
+                    @Override
+                    protected void onActionCompleted(@NonNull Action a) {
+                        mCallback.dispatchOnFocusEnd(gesture, action.isSuccessful(), point);
+                        mHandler.remove(mUnlockAndResetMeteringRunnable);
+                        if (shouldResetAutoFocus()) {
+                            mHandler.post(getAutoFocusResetDelay(), mUnlockAndResetMeteringRunnable);
+                        }
+                    }
+                });
             }
         });
     }
 
-    private final Runnable mMeteringResetRunnable = new Runnable() {
+    @NonNull
+    private MeterAction createMeterAction(@Nullable PointF point) {
+        // The meter will check the current configuration to see if AF/AE/AWB should run.
+        // - AE should be on CONTROL_AE_MODE_ON*    (this depends on setFlash())
+        // - AWB should be on CONTROL_AWB_MODE_AUTO (this depends on setWhiteBalance())
+        // - AF should be on CONTROL_AF_MODE_AUTO or others
+        // The last one is under our control because the library has no focus API.
+        // So let's set a good af mode here. This operation is reverted during onMeteringReset().
+        applyFocusForMetering(mRepeatingRequestBuilder);
+        return new MeterAction(Camera2Engine.this, point, point == null);
+    }
+
+    private final Runnable mUnlockAndResetMeteringRunnable = new Runnable() {
         @Override
         public void run() {
-            unlockMetering();
-            if (mMeter != null) {
-                mMeter.resetMetering();
-                mMeter = null;
-            }
+            unlockAndResetMetering();
         }
     };
 
-    /**
-     * Called by {@link Meter} when the metering process has started.
-     * We are currently exposing an auto focus API so that's what we dispatch.
-     * @param point point
-     */
-    @Override
-    public void onMeteringStarted(@Nullable PointF point) {
-        LOG.w("onMeteringStarted - point:", point, "gesture:", mMeteringGesture);
-        if (point != null) {
-            mCallback.dispatchOnFocusStart(mMeteringGesture, point);
-        }
-    }
-
-    /**
-     * Called by {@link Meter} when the metering process has ended.
-     * We are currently exposing an auto focus API so that's what we dispatch.
-     * @param point point
-     * @param success success
-     */
-    @Override
-    public void onMeteringEnd(@Nullable PointF point, boolean success) {
-        LOG.w("onMeteringEnd - point:", point,
-                "gesture:", mMeteringGesture,
-                "success:", success);
-        if (point != null) {
-            mCallback.dispatchOnFocusEnd(mMeteringGesture, success, point);
-            mHandler.remove(mMeteringResetRunnable);
-            if (shouldResetAutoFocus()) {
-                mHandler.post(getAutoFocusResetDelay(), mMeteringResetRunnable);
-            }
-        } else {
-            LOG.w("onMeteringEnd - restoring the picture capturing. isSnapshot:", mDelayedPictureStub.isSnapshot);
-            if (mDelayedPictureStub.isSnapshot) {
-                onTakePictureSnapshot(mDelayedPictureStub, mDelayedPictureRatio, false);
-            } else {
-                onTakePicture(mDelayedPictureStub, false);
-            }
-            mDelayedPictureStub = null;
-            mDelayedPictureRatio = null;
-        }
-    }
-
-    /**
-     * Called by {@link Meter} after resetting the metering parameters.
-     * We should apply them, and also go back to default focus.
-     * @param point point
-     *
-     */
-    @Override
-    public void onMeteringReset(@Nullable PointF point) {
-        if (getEngineState() == STATE_STARTED) {
-            // TODO applyDefaultFocus(mRepeatingRequestBuilder);
-            // TODO applyRepeatingRequestBuilder(); // only if preview started already
-        }
-    }
-
-    @NonNull
-    @Override
-    public CaptureRequest.Builder getMeteringBuilder() {
-        return mRepeatingRequestBuilder;
-    }
-
-    @Override
-    public void onMeteringChange(boolean single) {
-        LOG.i("onMeteringChange:", "applying the builder.");
-        if (single) {
-            applyRepeatingRequestBuilderAsSingle();
-        } else {
-            applyRepeatingRequestBuilder();
-        }
-    }
-
-    //endregion
-
-    //region 3A Locking
-
-    // TODO this might become public API
-    // TODO add lockMetering
-    private void unlockMetering() {
+    private void unlockAndResetMetering() {
         if (getEngineState() == STATE_STARTED) {
             applyDefaultFocus(mRepeatingRequestBuilder);
-            new UnlockAction().start(this);
+            Actions.sequence(
+                    new UnlockAction(),
+                    new MeterResetAction(true)
+            ).start(Camera2Engine.this);
         }
     }
 
