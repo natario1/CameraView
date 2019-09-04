@@ -6,6 +6,7 @@ import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.os.Build;
 
+import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
@@ -37,7 +38,6 @@ public abstract class BaseAction implements Action {
 
     @Override
     public final void start(@NonNull ActionHolder holder) {
-        this.holder = holder;
         holder.addAction(this);
         onStart(holder);
     }
@@ -47,7 +47,9 @@ public abstract class BaseAction implements Action {
      * holder stream.
      * @param holder holder
      */
+    @CallSuper
     protected void onStart(@NonNull ActionHolder holder) {
+        this.holder = holder; // must be here
         // Overrideable
     }
 

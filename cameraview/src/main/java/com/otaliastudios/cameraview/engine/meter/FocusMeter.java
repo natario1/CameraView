@@ -50,6 +50,7 @@ public class FocusMeter extends BaseMeter {
 
     @Override
     protected void onStarted(@NonNull ActionHolder holder, @NonNull List<MeteringRectangle> areas) {
+        LOG.i("onStarted:", "with areas:", areas);
         holder.getBuilder(this).set(CaptureRequest.CONTROL_AF_TRIGGER,
                 CaptureRequest.CONTROL_AF_TRIGGER_START);
         int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);

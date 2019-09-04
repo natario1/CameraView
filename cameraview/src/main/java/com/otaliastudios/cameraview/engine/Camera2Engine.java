@@ -69,6 +69,7 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -270,7 +271,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                                        @NonNull TotalCaptureResult result) {
             mLastRepeatingResult = result;
             for (Action action : mActions) {
-                action.onCaptureProgressed(Camera2Engine.this, request, result);
+                action.onCaptureCompleted(Camera2Engine.this, request, result);
             }
         }
     };
@@ -1287,15 +1288,29 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     //region Actions
 
     @Override
-    public void addAction(@NonNull Action action) {
-        if (!mActions.contains(action)) {
-            mActions.add(action);
-        }
+    public void addAction(final @NonNull Action action) {
+        // This is likely to be called during a Capture callback while we iterate
+        // on the actions list, or worse, from other threads. We must use mHandler.post.
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (!mActions.contains(action)) {
+                    mActions.add(action);
+                }
+            }
+        });
     }
 
     @Override
-    public void removeAction(@NonNull Action action) {
-        mActions.remove(action);
+    public void removeAction(final @NonNull Action action) {
+        // This is likely to be called during a Capture callback while we iterate
+        // on the actions list, or worse, from other threads. We must use mHandler.post.
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mActions.remove(action);
+            }
+        });
     }
 
     @NonNull

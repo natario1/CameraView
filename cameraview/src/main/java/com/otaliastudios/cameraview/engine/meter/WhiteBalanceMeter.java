@@ -45,6 +45,7 @@ public class WhiteBalanceMeter extends BaseMeter {
 
     @Override
     protected void onStarted(@NonNull ActionHolder holder, @NonNull List<MeteringRectangle> areas) {
+        LOG.i("onStarted:", "with areas:", areas);
         int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
         if (!areas.isEmpty() && maxRegions > 0) {
             int max = Math.min(maxRegions, areas.size());

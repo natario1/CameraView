@@ -4,6 +4,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.os.Build;
 
@@ -11,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.ActionWrapper;
@@ -27,6 +29,9 @@ import java.util.List;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class MeterAction extends ActionWrapper {
+
+    private final static String TAG = MeterAction.class.getSimpleName();
+    private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     private List<BaseMeter> meters;
     private BaseAction action;
@@ -56,15 +61,19 @@ public class MeterAction extends ActionWrapper {
     public boolean isSuccessful() {
         for (BaseMeter meter : meters) {
             if (!meter.isSuccessful()) {
+                LOG.i("isSuccessful:", "returning false.");
                 return false;
             }
         }
+        LOG.i("isSuccessful:", "returning true.");
         return true;
     }
 
     @Override
     protected void onStart(@NonNull ActionHolder holder) {
+        LOG.w("onStart:", "initializing.");
         initialize(holder);
+        LOG.w("onStart:", "initialized.");
         super.onStart(holder);
     }
 
@@ -208,8 +217,10 @@ public class MeterAction extends ActionWrapper {
         referencePoint.x += cropRect == null ? 0 : cropRect.left;
         referencePoint.y += cropRect == null ? 0 : cropRect.top;
         // Finally, get the active rect width and height from characteristics.
-        Rect activeRect = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
-                new Rect(0, 0, referenceSize.getWidth(), referenceSize.getHeight()));
+        Rect activeRect = holder.getCharacteristics(this).get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        if (activeRect == null) { // Should never happen
+            activeRect = new Rect(0, 0, referenceSize.getWidth(), referenceSize.getHeight());
+        }
         return new Size(activeRect.width(), activeRect.height());
     }
 

@@ -57,6 +57,8 @@ public class ExposureMeter extends BaseMeter {
 
     @Override
     protected void onStarted(@NonNull ActionHolder holder, @NonNull List<MeteringRectangle> areas) {
+        LOG.i("onStarted:", "with areas:", areas);
+
         // Launch the precapture trigger.
         holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                 CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);

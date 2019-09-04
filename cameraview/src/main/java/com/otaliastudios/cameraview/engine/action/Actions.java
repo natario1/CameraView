@@ -8,6 +8,7 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -44,18 +45,20 @@ public class Actions {
     private static class TogetherAction extends BaseAction {
         // Need to be BaseAction so we can call onStart() instead of start()
         private final List<BaseAction> actions;
+        private final List<BaseAction> runningActions;
 
         private TogetherAction(@NonNull final List<BaseAction> actions) {
-            this.actions = actions;
+            this.actions = new ArrayList<>(actions);
+            this.runningActions = new ArrayList<>(actions);
             for (BaseAction action : actions) {
                 action.addCallback(new ActionCallback() {
                     @Override
                     public void onActionStateChanged(@NonNull Action action, int state) {
                         if (state == STATE_COMPLETED) {
                             //noinspection SuspiciousMethodCalls
-                            actions.remove(action);
+                            runningActions.remove(action);
                         }
-                        if (actions.isEmpty()) {
+                        if (runningActions.isEmpty()) {
                             setState(STATE_COMPLETED);
                         }
                     }
@@ -67,7 +70,7 @@ public class Actions {
         protected void onStart(@NonNull ActionHolder holder) {
             super.onStart(holder);
             for (BaseAction action : actions) {
-                action.onStart(holder);
+                if (!action.isCompleted()) action.onStart(holder);
             }
         }
 
@@ -75,7 +78,7 @@ public class Actions {
         public void onCaptureStarted(@NonNull ActionHolder holder, @NonNull CaptureRequest request) {
             super.onCaptureStarted(holder, request);
             for (BaseAction action : actions) {
-                action.onCaptureStarted(holder, request);
+                if (!action.isCompleted()) action.onCaptureStarted(holder, request);
             }
         }
 
@@ -84,7 +87,7 @@ public class Actions {
                                         @NonNull CaptureResult result) {
             super.onCaptureProgressed(holder, request, result);
             for (BaseAction action : actions) {
-                action.onCaptureProgressed(holder, request, result);
+                if (!action.isCompleted()) action.onCaptureProgressed(holder, request, result);
             }
         }
 
@@ -93,7 +96,7 @@ public class Actions {
                                        @NonNull TotalCaptureResult result) {
             super.onCaptureCompleted(holder, request, result);
             for (BaseAction action : actions) {
-                action.onCaptureCompleted(holder, request, result);
+                if (!action.isCompleted()) action.onCaptureCompleted(holder, request, result);
             }
         }
     }
