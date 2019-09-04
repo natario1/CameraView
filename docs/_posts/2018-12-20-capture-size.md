@@ -4,7 +4,7 @@ title: "Capture Size"
 subtitle: "Set size of output media"
 description: "Set size of output media"
 category: docs
-order: 8
+order: 9
 date: 2018-12-20 22:07:22
 disqus: 1
 ---
