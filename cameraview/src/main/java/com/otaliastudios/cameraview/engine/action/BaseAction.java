@@ -42,6 +42,15 @@ public abstract class BaseAction implements Action {
         onStart(holder);
     }
 
+    @Override
+    public final void abort(@NonNull ActionHolder holder) {
+        holder.removeAction(this);
+        if (!isCompleted()) {
+            onAbort(holder);
+            setState(STATE_COMPLETED);
+        }
+    }
+
     /**
      * Action was started and will soon receive events from the
      * holder stream.
@@ -50,6 +59,16 @@ public abstract class BaseAction implements Action {
     @CallSuper
     protected void onStart(@NonNull ActionHolder holder) {
         this.holder = holder; // must be here
+        // Overrideable
+    }
+
+    /**
+     * Action was aborted and will not receive events from the
+     * holder stream anymore. It will soon be marked as completed.
+     * @param holder holder
+     */
+    @SuppressWarnings({"WeakerAccess", "unused"})
+    protected void onAbort(@NonNull ActionHolder holder) {
         // Overrideable
     }
 

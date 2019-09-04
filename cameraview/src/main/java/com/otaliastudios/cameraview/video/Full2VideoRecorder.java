@@ -34,12 +34,10 @@ public class Full2VideoRecorder extends FullVideoRecorder {
     private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private ActionHolder mHolder;
-    private boolean mGotFirstFrame;
     private final String mCameraId;
     private Surface mInputSurface;
 
-    public Full2VideoRecorder(@NonNull Camera2Engine engine,
-                              @NonNull String cameraId) {
+    public Full2VideoRecorder(@NonNull Camera2Engine engine, @NonNull String cameraId) {
         super(engine);
         mHolder = engine;
         mCameraId = cameraId;

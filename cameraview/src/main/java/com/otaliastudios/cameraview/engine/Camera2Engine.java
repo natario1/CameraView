@@ -46,7 +46,6 @@ import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.Actions;
 import com.otaliastudios.cameraview.engine.action.CompletionCallback;
-import com.otaliastudios.cameraview.engine.action.TimeoutAction;
 import com.otaliastudios.cameraview.engine.lock.UnlockAction;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.engine.meter.MeterAction;
@@ -637,7 +636,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     protected void onTakePictureSnapshot(@NonNull final PictureResult.Stub stub, @NonNull final AspectRatio outputRatio, boolean doMetering) {
         if (doMetering) {
             LOG.i("onTakePictureSnapshot:", "doMetering is true. Delaying.");
-            Action action = new TimeoutAction(METER_TIMEOUT, createMeterAction(null));
+            Action action = Actions.timeout(METER_TIMEOUT, createMeterAction(null));
             action.addCallback(new CompletionCallback() {
                 @Override
                 protected void onActionCompleted(@NonNull Action action) {
@@ -665,7 +664,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     protected void onTakePicture(@NonNull final PictureResult.Stub stub, boolean doMetering) {
         if (doMetering) {
             LOG.i("onTakePicture:", "doMetering is true. Delaying.");
-            Action action = new TimeoutAction(METER_TIMEOUT, createMeterAction(null));
+            Action action = Actions.timeout(METER_TIMEOUT, createMeterAction(null));
             action.addCallback(new CompletionCallback() {
                 @Override
                 protected void onActionCompleted(@NonNull Action action) {
@@ -1238,7 +1237,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // Create the meter and start.
                 mCallback.dispatchOnFocusStart(gesture, point);
                 final MeterAction action = createMeterAction(point);
-                final TimeoutAction wrapper = new TimeoutAction(METER_TIMEOUT, action);
+                Action wrapper = Actions.timeout(METER_TIMEOUT, action);
                 wrapper.start(Camera2Engine.this);
                 wrapper.addCallback(new CompletionCallback() {
                     @Override

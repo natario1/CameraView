@@ -42,6 +42,12 @@ public interface Action {
     void start(@NonNull ActionHolder holder);
 
     /**
+     * Aborts this action.
+     * @param holder the holder
+     */
+    void abort(@NonNull ActionHolder holder);
+
+    /**
      * Adds an {@link ActionCallback} to receive state
      * change events.
      * @param callback a callback

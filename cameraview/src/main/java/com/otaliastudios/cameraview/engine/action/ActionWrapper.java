@@ -38,6 +38,12 @@ public abstract class ActionWrapper extends BaseAction {
     }
 
     @Override
+    protected void onAbort(@NonNull ActionHolder holder) {
+        super.onAbort(holder);
+        getAction().onAbort(holder);
+    }
+
+    @Override
     public void onCaptureStarted(@NonNull ActionHolder holder, @NonNull CaptureRequest request) {
         super.onCaptureStarted(holder, request);
         getAction().onCaptureStarted(holder, request);

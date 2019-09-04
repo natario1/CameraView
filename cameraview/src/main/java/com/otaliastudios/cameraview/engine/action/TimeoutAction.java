@@ -12,13 +12,13 @@ import androidx.annotation.RequiresApi;
  * after the given timeout in milliseconds is reached.
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class TimeoutAction extends ActionWrapper {
+class TimeoutAction extends ActionWrapper {
 
     private long startMillis;
     private long timeoutMillis;
     private BaseAction action;
 
-    public TimeoutAction(long timeoutMillis, @NonNull BaseAction action) {
+    TimeoutAction(long timeoutMillis, @NonNull BaseAction action) {
         this.timeoutMillis = timeoutMillis;
         this.action = action;
     }
@@ -42,7 +42,8 @@ public class TimeoutAction extends ActionWrapper {
         super.onCaptureCompleted(holder, request, result);
         if (!isCompleted()) {
             if (System.currentTimeMillis() > startMillis + timeoutMillis) {
-                setState(STATE_COMPLETED);
+                // This will set our state to COMPLETED and stop requests.
+                getAction().abort(holder);
             }
         }
     }

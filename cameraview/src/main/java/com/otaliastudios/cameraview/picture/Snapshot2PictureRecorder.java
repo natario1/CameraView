@@ -18,7 +18,6 @@ import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.Actions;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 import com.otaliastudios.cameraview.engine.action.CompletionCallback;
-import com.otaliastudios.cameraview.engine.action.TimeoutAction;
 import com.otaliastudios.cameraview.engine.lock.LockAction;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
@@ -91,7 +90,7 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
         mHolder = engine;
 
         mAction = Actions.sequence(
-                new TimeoutAction(LOCK_TIMEOUT, new LockAction()),
+                Actions.timeout(LOCK_TIMEOUT, new LockAction()),
                 new FlashAction());
         mAction.addCallback(new CompletionCallback() {
             @Override
