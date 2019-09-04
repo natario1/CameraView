@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.engine.action;
 
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
@@ -98,6 +99,22 @@ public abstract class BaseAction implements Action {
     @NonNull
     protected ActionHolder getHolder() {
         return holder;
+    }
+
+
+    /**
+     * Reads a characteristic with a fallback.
+     * @param key key
+     * @param fallback fallback
+     * @param <T> key type
+     * @return value or fallback
+     */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    protected <T> T readCharacteristic(@NonNull CameraCharacteristics.Key<T> key,
+                                       @NonNull T fallback) {
+        T value = holder.getCharacteristics(this).get(key);
+        return value == null ? fallback : value;
     }
 
     @Override

@@ -12,14 +12,6 @@ import com.otaliastudios.cameraview.engine.action.BaseAction;
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public abstract class BaseLock extends BaseAction {
 
-    @SuppressWarnings("WeakerAccess")
-    @NonNull
-    protected <T> T readCharacteristic(@NonNull CameraCharacteristics.Key<T> key,
-                                       @NonNull T fallback) {
-        T value = getHolder().getCharacteristics(this).get(key);
-        return value == null ? fallback : value;
-    }
-
     @Override
     protected final void onStart(@NonNull ActionHolder holder) {
         super.onStart(holder);

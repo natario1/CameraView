@@ -80,10 +80,6 @@ public class AutoExposure extends Parameter {
 
         if (changed) {
             notifyBuilderChanged(false);
-            // Remove any problematic control for future requests
-            // NOTE: activating this invalidates the logic for early exit in processCapture
-            /* builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE); */
         }
     }
 

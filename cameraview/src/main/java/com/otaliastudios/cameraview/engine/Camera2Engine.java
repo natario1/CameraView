@@ -565,7 +565,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     protected Task<Void> onStopPreview() {
         LOG.i("onStopPreview:", "About to clean up.");
-        // TODO clear actions?
         if (mVideoRecorder != null) {
             // This should synchronously call onVideoResult that will reset the repeating builder
             // to the PREVIEW template. This is very important.

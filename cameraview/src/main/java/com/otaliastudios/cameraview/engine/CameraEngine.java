@@ -227,6 +227,11 @@ public abstract class CameraEngine implements
         mPreview.setSurfaceCallback(this);
     }
 
+    @NonNull
+    public CameraPreview getPreview() {
+        return mPreview;
+    }
+
     //region Error handling
 
     /**

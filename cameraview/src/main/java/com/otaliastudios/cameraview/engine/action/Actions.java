@@ -109,7 +109,9 @@ public class Actions {
         }
 
         private void increaseRunningAction() {
-            if (runningAction == actions.size() - 1) {
+            boolean first = runningAction == -1;
+            boolean last = runningAction == actions.size() - 1;
+            if (last) {
                 // This was the last action. We're done.
                 setState(STATE_COMPLETED);
             } else {
@@ -123,6 +125,9 @@ public class Actions {
                         }
                     }
                 });
+                if (!first) {
+                    actions.get(runningAction).onStart(getHolder());
+                }
             }
         }
 

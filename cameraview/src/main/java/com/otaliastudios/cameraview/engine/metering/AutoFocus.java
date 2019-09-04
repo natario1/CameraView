@@ -71,9 +71,6 @@ public class AutoFocus extends Parameter {
 
         if (changed) {
             notifyBuilderChanged(false);
-            // Remove any problematic control for future requests
-            /* builder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                    CaptureRequest.CONTROL_AF_TRIGGER_IDLE); */
         }
     }
 
