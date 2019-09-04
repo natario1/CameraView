@@ -209,17 +209,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    private void applyRepeatingRequestBuilderAsSingle() {
-        if (getPreviewState() == STATE_STARTED) {
-            try {
-                mSession.capture(mRepeatingRequestBuilder.build(),
-                        mRepeatingRequestCallback, null);
-            } catch (CameraAccessException e) {
-                throw createCameraException(e);
-            }
-        }
-    }
-
     /**
      * Applies the repeating request builder to the preview, assuming we actually have a preview
      * running. Can be called after changing parameters to the builder.
@@ -611,7 +600,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @NonNull
     @Override
     protected Task<Void> onStopEngine() {
-        LOG.i("onStopEngine:", "About to clean up.");
         try {
             LOG.i("onStopEngine:", "Clean up.", "Releasing camera.");
             mCamera.close();
@@ -620,6 +608,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             LOG.w("onStopEngine:", "Clean up.", "Exception while releasing camera.", e);
         }
         mCamera = null;
+
+        // After engine is stopping, the repeating request builder will be null,
+        // so the ActionHolder.getBuilder() contract would be broken. Same for characteristics.
+        // This can cause crashes if some ongoing Action queries the holder. So we abort them.
+        LOG.i("onStopEngine:", "Aborting actions.");
+        for (Action action : mActions) {
+            action.abort(this);
+        }
+
+        mCameraCharacteristics = null;
         mCameraOptions = null;
         mVideoRecorder = null;
         mRepeatingRequestBuilder = null;

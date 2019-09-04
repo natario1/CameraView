@@ -92,7 +92,7 @@ public abstract class BaseAction implements Action {
      * this removes this action from the holder.
      * @param newState new state
      */
-    protected void setState(int newState) {
+    protected final void setState(int newState) {
         if (newState != state) {
             state = newState;
             for (ActionCallback callback : callbacks) {

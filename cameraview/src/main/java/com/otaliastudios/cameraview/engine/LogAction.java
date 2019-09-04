@@ -34,29 +34,14 @@ class LogAction extends BaseAction {
                 " afState: " + afState + " afTriggerState: " + afTriggerState;
         if (!log.equals(lastLog)) {
             lastLog = log;
-            LOG.w(log);
+            LOG.i(log);
         }
+    }
 
-        // START
-        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 2 afTriggerState: 0
-        //
-        // DURING metering (focus skips)
-        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 0 afState: 0 afTriggerState: 0
-        // aeMode: 3 aeLock: false aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
-        //
-        // DURING locking (focus skips)
-        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 1 afState: 0 afTriggerState: 0
-        // aeMode: 3 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
-        //
-        // AFTER locked
-        // aeMode: 3 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
-        //
-        // AFTER super.take() called
-        // aeMode: 1 aeLock: true aeState: 5 aeTriggerState: 1 afState: 0 afTriggerState: 0
-        // aeMode: 1 aeLock: true aeState: 3 aeTriggerState: 1 afState: 0 afTriggerState: 0
-        //
-        // Reverting flash changes + reset lock + reset metering
-        // aeMode: 3 aeLock: false aeState: 4 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
-        // aeMode: 3 aeLock: false aeState: 1 aeTriggerState: 2(1 now) afState: 2 afTriggerState: 0
+    @Override
+    protected void onCompleted(@NonNull ActionHolder holder) {
+        super.onCompleted(holder);
+        setState(0); // set another state.
+        start(holder); // restart.
     }
 }
