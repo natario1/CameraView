@@ -658,8 +658,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
         doEndOp(focus, 1).when(listener).onAutoFocusEnd(anyBoolean(), any(PointF.class));
 
         camera.startAutoFocus(1, 1);
-        // Stop is not guaranteed to be called, we use a delay. So wait at least the delay time.
-        PointF point = focus.await(1000 + Camera1Engine.AUTOFOCUS_END_DELAY_MILLIS);
+        // Stop routine can fail, so engines use a timeout. So wait at least the timeout time.
+        PointF point = focus.await(1000 + getMeteringTimeoutMillis());
         if (o.isAutoFocusSupported()) {
             assertNotNull(point);
             assertEquals(point, new PointF(1, 1));
@@ -667,6 +667,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
             assertNull(point);
         }
     }
+
+    protected abstract long getMeteringTimeoutMillis();
 
     //endregion
 
@@ -717,6 +719,24 @@ public abstract class CameraIntegrationTest extends BaseTest {
         openSync(true);
         camera.takePicture();
         waitForUiException();
+        camera.takePicture();
+
+    }
+
+    @Test
+    public void testCapturePicture_withMetering() {
+        openSync(true);
+        camera.setPictureMetering(true);
+        camera.takePicture();
+        waitForPictureResult(true);
+    }
+
+    @Test
+    public void testCapturePicture_withoutMetering() {
+        openSync(true);
+        camera.setPictureMetering(false);
+        camera.takePicture();
+        waitForPictureResult(true);
     }
 
     @Test
@@ -757,6 +777,22 @@ public abstract class CameraIntegrationTest extends BaseTest {
         assertNotNull(result.getData());
         assertNull(result.getLocation());
         assertTrue(result.isSnapshot());
+    }
+
+    @Test
+    public void testCaptureSnapshot_withMetering() {
+        openSync(true);
+        camera.setPictureSnapshotMetering(true);
+        camera.takePictureSnapshot();
+        waitForPictureResult(true);
+    }
+
+    @Test
+    public void testCaptureSnapshot_withoutMetering() {
+        openSync(true);
+        camera.setPictureSnapshotMetering(false);
+        camera.takePictureSnapshot();
+        waitForPictureResult(true);
     }
 
     //endregion

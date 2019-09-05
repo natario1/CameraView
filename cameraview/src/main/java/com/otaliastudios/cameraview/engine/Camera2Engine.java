@@ -27,6 +27,7 @@ import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import com.google.android.gms.tasks.Task;
@@ -81,7 +82,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
-    private static final long METER_TIMEOUT = 2500;
+    @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
     private String mCameraId;

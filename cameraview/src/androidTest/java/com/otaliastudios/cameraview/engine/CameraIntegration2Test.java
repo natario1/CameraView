@@ -55,4 +55,9 @@ public class CameraIntegration2Test extends CameraIntegrationTest {
         }.start(engine);
         try { latch.await(); } catch (InterruptedException ignore) {}
     }
+
+    @Override
+    protected long getMeteringTimeoutMillis() {
+        return Camera2Engine.METER_TIMEOUT;
+    }
 }
