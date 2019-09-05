@@ -1215,10 +1215,13 @@ public abstract class CameraEngine implements
         });
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected void onStopVideo() {
         if (mVideoRecorder != null) {
             mVideoRecorder.stop(false);
-            mVideoRecorder = null;
+            // Do not null this, so we respond correctly to isTakingVideo(),
+            // which checks for recorder presence and recorder.isRecording().
+            // It will be nulled in onVideoResult.
         }
     }
 
