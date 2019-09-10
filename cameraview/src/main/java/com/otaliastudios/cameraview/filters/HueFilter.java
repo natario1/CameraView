@@ -15,7 +15,7 @@ public class HueFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "uniform samplerExternalOES sTexture;\n"
             + "uniform float hue;\n"
             + "void main() {\n"
@@ -25,7 +25,7 @@ public class HueFilter extends BaseFilter implements OneParameterFilter {
             + "  vec4 kYIQToR = vec4 (1.0, 0.9563, 0.6210, 0.0);\n"
             + "  vec4 kYIQToG = vec4 (1.0, -0.2721, -0.6474, 0.0);\n"
             + "  vec4 kYIQToB = vec4 (1.0, -1.1070, 1.7046, 0.0);\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  float YPrime = dot(color, kRGBToYPrime);\n"
             + "  float I = dot(color, kRGBToI);\n"
             + "  float Q = dot(color, kRGBToQ);\n"

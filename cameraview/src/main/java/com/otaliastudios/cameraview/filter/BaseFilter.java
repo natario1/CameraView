@@ -44,11 +44,18 @@ public abstract class BaseFilter implements Filter {
     private final static String TAG = BaseFilter.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
-    private final static String DEFAULT_VERTEX_POSITION_NAME = "aPosition";
-    private final static String DEFAULT_VERTEX_TEXTURE_COORDINATE_NAME = "aTextureCoord";
-    private final static String DEFAULT_VERTEX_MVP_MATRIX_NAME = "uMVPMatrix";
-    private final static String DEFAULT_VERTEX_TRANSFORM_MATRIX_NAME = "uTexMatrix";
-    private final static String DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME = "vTextureCoord";
+    @SuppressWarnings("WeakerAccess")
+    protected final static String DEFAULT_VERTEX_POSITION_NAME = "aPosition";
+
+    @SuppressWarnings("WeakerAccess")
+    protected final static String DEFAULT_VERTEX_TEXTURE_COORDINATE_NAME = "aTextureCoord";
+
+    @SuppressWarnings("WeakerAccess")
+    protected final static String DEFAULT_VERTEX_MVP_MATRIX_NAME = "uMVPMatrix";
+
+    @SuppressWarnings("WeakerAccess")
+    protected final static String DEFAULT_VERTEX_TRANSFORM_MATRIX_NAME = "uTexMatrix";
+    protected final static String DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME = "vTextureCoord";
 
     @NonNull
     private static String createDefaultVertexShader(@NonNull String vertexPositionName,
@@ -63,7 +70,7 @@ public abstract class BaseFilter implements Filter {
                 "varying vec2 "+fragmentTextureCoordinateName+";\n" +
                 "void main() {\n" +
                 "    gl_Position = "+vertexModelViewProjectionMatrixName+" * "+vertexPositionName+";\n" +
-                "    vTextureCoord = ("+vertexTransformMatrixName+" * "+vertexTextureCoordinateName+").xy;\n" +
+                "    "+fragmentTextureCoordinateName+" = ("+vertexTransformMatrixName+" * "+vertexTextureCoordinateName+").xy;\n" +
                 "}\n";
     }
 
