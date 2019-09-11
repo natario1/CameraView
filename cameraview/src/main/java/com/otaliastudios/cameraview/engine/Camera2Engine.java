@@ -103,7 +103,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private Surface mPreviewStreamSurface;
 
     // Video recording
-    private VideoResult.Stub mFullVideoPendingStub; // When takeVideo is called, we have to reset the session.
+    private VideoResult.Stub mFullVideoPendingStub; // When takeVideo is called, we restart the session.
 
     // Picture capturing
     private ImageReader mPictureReader;
@@ -174,7 +174,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      */
     @SuppressWarnings("UnusedReturnValue")
     @NonNull
-    private CaptureRequest.Builder createRepeatingRequestBuilder(int template) throws CameraAccessException {
+    private CaptureRequest.Builder createRepeatingRequestBuilder(int template)
+            throws CameraAccessException {
         CaptureRequest.Builder oldBuilder = mRepeatingRequestBuilder;
         mRepeatingRequestBuilder = mCamera.createCaptureRequest(template);
         mRepeatingRequestBuilder.setTag(template);
@@ -200,8 +201,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     /**
-     * Sets up the repeating request builder with default surfaces and extra ones
-     * if needed (like a video recording surface).
+     * Removes default surfaces from the repeating request builder.
      */
     private void removeRepeatingRequestBuilderSurfaces() {
         mRepeatingRequestBuilder.removeTarget(mPreviewStreamSurface);
@@ -218,7 +218,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * it should be set before calling this method, for example by calling
      * {@link #createRepeatingRequestBuilder(int)}.
      */
-    private void applyRepeatingRequestBuilder() {
+    @SuppressWarnings("WeakerAccess")
+    protected void applyRepeatingRequestBuilder() {
         applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED);
     }
 
@@ -274,7 +275,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     protected List<Size> getPreviewStreamAvailableSizes() {
         try {
             CameraCharacteristics characteristics = mManager.getCameraCharacteristics(mCameraId);
-            StreamConfigurationMap streamMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            StreamConfigurationMap streamMap =
+                    characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (streamMap == null) {
                 throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
             }
@@ -299,7 +301,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    protected boolean collectCameraInfo(@NonNull Facing facing) {
+    protected final boolean collectCameraInfo(@NonNull Facing facing) {
         int internalFacing = mMapper.mapFacing(facing);
         String[] cameraIds = null;
         try {
@@ -315,7 +317,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         for (String cameraId : cameraIds) {
             try {
                 CameraCharacteristics characteristics = mManager.getCameraCharacteristics(cameraId);
-                if (internalFacing == readCharacteristic(characteristics, CameraCharacteristics.LENS_FACING, -99)) {
+                if (internalFacing == readCharacteristic(characteristics,
+                        CameraCharacteristics.LENS_FACING, -99)) {
                     mCameraId = cameraId;
                     int sensorOffset = readCharacteristic(characteristics,
                             CameraCharacteristics.SENSOR_ORIENTATION, 0);
@@ -453,8 +456,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         // 4. FRAME PROCESSING
         if (hasFrameProcessors()) {
             // Choose the size.
-            StreamConfigurationMap streamMap = mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            if (streamMap == null) throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
+            StreamConfigurationMap streamMap = mCameraCharacteristics
+                    .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (streamMap == null) {
+                throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
+            }
             android.util.Size[] aSizes = streamMap.getOutputSizes(FRAME_PROCESSING_INPUT_FORMAT);
             List<Size> sizes = new ArrayList<>();
             for (android.util.Size aSize : aSizes) {
@@ -469,7 +475,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     mFrameProcessingSize.getHeight(),
                     FRAME_PROCESSING_INPUT_FORMAT,
                     2);
-            mFrameProcessingReader.setOnImageAvailableListener(this, mFrameConversionHandler.getHandler());
+            mFrameProcessingReader.setOnImageAvailableListener(this,
+                    mFrameConversionHandler.getHandler());
             mFrameProcessingSurface = mFrameProcessingReader.getSurface();
             outputSurfaces.add(mFrameProcessingSurface);
         } else {
@@ -632,7 +639,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @WorkerThread
     @Override
-    protected void onTakePictureSnapshot(@NonNull final PictureResult.Stub stub, @NonNull final AspectRatio outputRatio, boolean doMetering) {
+    protected void onTakePictureSnapshot(@NonNull final PictureResult.Stub stub,
+                                         @NonNull final AspectRatio outputRatio,
+                                         boolean doMetering) {
         if (doMetering) {
             LOG.i("onTakePictureSnapshot:", "doMetering is true. Delaying.");
             Action action = Actions.timeout(METER_TIMEOUT, createMeterAction(null));
@@ -652,7 +661,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             // stub.size is not the real size: it will be cropped to the given ratio
             // stub.rotation will be set to 0 - we rotate the texture instead.
             stub.size = getUncroppedSnapshotSize(Reference.OUTPUT);
-            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
+                    Axis.RELATIVE_TO_SENSOR);
             mPictureRecorder = new Snapshot2PictureRecorder(stub, this,
                     (GlCameraPreview) mPreview, outputRatio);
             mPictureRecorder.take();
@@ -673,7 +683,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             action.start(this);
         } else {
             LOG.i("onTakePicture:", "doMetering is false. Performing.");
-            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
+                    Axis.RELATIVE_TO_SENSOR);
             stub.size = getPictureSize(Reference.OUTPUT);
             try {
                 if (mPictureCaptureStopsPreview) {
@@ -685,7 +696,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     mSession.stopRepeating();
                     mSession.abortCaptures();
                 }
-                CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                CaptureRequest.Builder builder
+                        = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 applyAllParameters(builder, mRepeatingRequestBuilder);
                 mPictureRecorder = new Full2PictureRecorder(stub, this, builder, mPictureReader);
                 mPictureRecorder.take();
@@ -721,7 +733,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
         LOG.i("onTakeVideo", "called.");
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
-        stub.size = getAngles().flip(Reference.SENSOR, Reference.OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
+        stub.size = getAngles().flip(Reference.SENSOR, Reference.OUTPUT) ?
+                mCaptureSize.flip() : mCaptureSize;
         // We must restart the session at each time.
         // Save the pending data and restart the session.
         LOG.w("onTakeVideo", "calling restartBind.");
@@ -751,7 +764,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @WorkerThread
     @Override
-    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio outputRatio) {
+    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub,
+                                       @NonNull AspectRatio outputRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
         }
@@ -853,18 +867,21 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    private void applyDefaultFocus(@NonNull CaptureRequest.Builder builder) {
+    @SuppressWarnings("WeakerAccess")
+    protected void applyDefaultFocus(@NonNull CaptureRequest.Builder builder) {
         int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
         List<Integer> modes = new ArrayList<>();
         for (int mode : modesArray) { modes.add(mode); }
         if (getMode() == Mode.VIDEO &&
                 modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+            builder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
             return;
         }
 
         if (modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) {
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            builder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             return;
         }
 
@@ -881,7 +898,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    private void applyFocusForMetering(@NonNull CaptureRequest.Builder builder) {
+    @SuppressWarnings("WeakerAccess")
+    protected void applyFocusForMetering(@NonNull CaptureRequest.Builder builder) {
         // All focus modes support the AF trigger, except OFF and EDOF.
         // However, unlike the preview, we'd prefer AUTO to any CONTINUOUS value.
         int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
@@ -893,12 +911,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
         if (getMode() == Mode.VIDEO &&
                 modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+            builder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
             return;
         }
 
         if (modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) {
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            builder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             //noinspection UnnecessaryReturnStatement
             return;
         }
@@ -955,8 +975,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * becomes effective, and that's where we can actually distinguish between a turned off flash
      * and a torch flash.
      */
-    private boolean applyFlash(@NonNull CaptureRequest.Builder builder,
-                               @NonNull Flash oldFlash) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyFlash(@NonNull CaptureRequest.Builder builder,
+                                 @NonNull Flash oldFlash) {
         if (mCameraOptions.supports(mFlash)) {
             int[] availableAeModesArray = readCharacteristic(
                     CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES, new int[]{});
@@ -995,8 +1016,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-    private boolean applyLocation(@NonNull CaptureRequest.Builder builder,
-                                  @SuppressWarnings("unused") @Nullable Location oldLocation) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyLocation(@NonNull CaptureRequest.Builder builder,
+                                    @SuppressWarnings("unused") @Nullable Location oldLocation) {
         if (mLocation != null) {
             builder.set(CaptureRequest.JPEG_GPS_LOCATION, mLocation);
         }
@@ -1020,8 +1042,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-    private boolean applyWhiteBalance(@NonNull CaptureRequest.Builder builder,
-                                      @NonNull WhiteBalance oldWhiteBalance) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyWhiteBalance(@NonNull CaptureRequest.Builder builder,
+                                        @NonNull WhiteBalance oldWhiteBalance) {
         if (mCameraOptions.supports(mWhiteBalance)) {
             int whiteBalance = mMapper.mapWhiteBalance(mWhiteBalance);
             builder.set(CaptureRequest.CONTROL_AWB_MODE, whiteBalance);
@@ -1048,8 +1071,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-
-    private boolean applyHdr(@NonNull CaptureRequest.Builder builder, @NonNull Hdr oldHdr) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyHdr(@NonNull CaptureRequest.Builder builder, @NonNull Hdr oldHdr) {
         if (mCameraOptions.supports(mHdr)) {
             int hdr = mMapper.mapHdr(mHdr);
             builder.set(CaptureRequest.CONTROL_SCENE_MODE, hdr);
@@ -1079,7 +1102,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-    private boolean applyZoom(@NonNull CaptureRequest.Builder builder, float oldZoom) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyZoom(@NonNull CaptureRequest.Builder builder, float oldZoom) {
         if (mCameraOptions.isZoomSupported()) {
             float maxZoom = readCharacteristic(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM, 1F);
             // converting 0.0f-1.0f zoom scale to the actual camera digital zoom scale
@@ -1129,7 +1153,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-    private boolean applyExposureCorrection(@NonNull CaptureRequest.Builder builder, float oldEVvalue) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyExposureCorrection(@NonNull CaptureRequest.Builder builder, float oldEVvalue) {
         if (mCameraOptions.isExposureCorrectionSupported()) {
             Rational exposureCorrectionStep = readCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP,
                     new Rational(1, 1));
