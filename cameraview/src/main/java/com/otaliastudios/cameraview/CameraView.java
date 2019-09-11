@@ -2207,12 +2207,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void setFilter(@NonNull Filter filter) {
         if (mCameraPreview == null) {
             mPendingFilter = filter;
-        } else if (!(filter instanceof NoFilter) && !mExperimental) {
-            throw new RuntimeException("Filters are an experimental features and need the experimental flag set.");
-        } else if (mCameraPreview instanceof FilterCameraPreview) {
-            ((FilterCameraPreview) mCameraPreview).setFilter(filter);
         } else {
-            throw new RuntimeException("Filters are only supported by the GL_SURFACE preview. Current:" + mPreview);
+            boolean isNoFilter = filter instanceof NoFilter;
+            boolean isFilterPreview = mCameraPreview instanceof FilterCameraPreview;
+            // If not experimental, we only allow NoFilter (called on creation).
+            if (!isNoFilter && !mExperimental) {
+                throw new RuntimeException("Filters are an experimental features and" +
+                        " need the experimental flag set.");
+            }
+            // If not a filter preview, we only allow NoFilter (called on creation).
+            if (!isNoFilter && !isFilterPreview) {
+                throw new RuntimeException("Filters are only supported by the GL_SURFACE preview. " +
+                        "Current preview:" + mPreview);
+            }
+            // If we have a filter preview, apply.
+            if (isFilterPreview) {
+                ((FilterCameraPreview) mCameraPreview).setFilter(filter);
+            }
+            // No-op: !isFilterPreview && isNoPreview
         }
     }
 
