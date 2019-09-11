@@ -216,7 +216,8 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
                 Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
                 Matrix.scaleM(mTransformMatrix, 0, mCropScaleX, mCropScaleY, 1);
             }
-            mOutputViewport.drawFrame(mOutputTextureId, mTransformMatrix);
+            mOutputViewport.drawFrame(mInputSurfaceTexture.getTimestamp() / 1000L,
+                    mOutputTextureId, mTransformMatrix);
             synchronized (mRendererFrameCallbacks) {
                 // Need to synchronize when iterating the Collections.synchronizedSet
                 for (RendererFrameCallback callback : mRendererFrameCallbacks) {

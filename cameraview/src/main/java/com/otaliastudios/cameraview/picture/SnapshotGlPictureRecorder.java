@@ -223,9 +223,10 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
         }
 
         // 5. Draw and save
-        LOG.i("takeFrame:", "timestamp:", surfaceTexture.getTimestamp());
-        mViewport.drawFrame(mTextureId, mTransform);
-        if (mHasOverlay) mOverlayDrawer.render();
+        long timestampUs = surfaceTexture.getTimestamp() / 1000L;
+        LOG.i("takeFrame:", "timestampUs:", timestampUs);
+        mViewport.drawFrame(timestampUs, mTextureId, mTransform);
+        if (mHasOverlay) mOverlayDrawer.render(timestampUs);
         mResult.format = PictureResult.FORMAT_JPEG;
         mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
 

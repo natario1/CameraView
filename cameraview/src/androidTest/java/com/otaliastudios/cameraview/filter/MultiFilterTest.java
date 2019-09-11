@@ -3,7 +3,6 @@ package com.otaliastudios.cameraview.filter;
 
 import android.opengl.GLES20;
 
-import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
@@ -30,13 +29,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 
 @RunWith(AndroidJUnit4.class)
@@ -146,7 +145,7 @@ public class MultiFilterTest extends BaseEglTest {
         EglViewport viewport = new EglViewport(multiFilter);
         int texture = viewport.createTexture();
         float[] matrix = new float[16];
-        viewport.drawFrame(texture, matrix);
+        viewport.drawFrame(0L, texture, matrix);
         viewport.release();
 
         // The child should have experienced the whole lifecycle.
@@ -154,7 +153,7 @@ public class MultiFilterTest extends BaseEglTest {
         verify(filter, atLeastOnce()).getFragmentShader();
         verify(filter, atLeastOnce()).setSize(anyInt(), anyInt());
         verify(filter, times(1)).onCreate(anyInt());
-        verify(filter, times(1)).draw(matrix);
+        verify(filter, times(1)).draw(0L, matrix);
         verify(filter, times(1)).onDestroy();
     }
 
@@ -181,7 +180,7 @@ public class MultiFilterTest extends BaseEglTest {
                 assertTrue(result[0] != 0);
                 return null;
             }
-        }).when(filter1).draw(matrix);
+        }).when(filter1).draw(0L, matrix);
 
         // Note: second filter is drawn with the identity matrix!
         doAnswer(new Answer() {
@@ -198,16 +197,16 @@ public class MultiFilterTest extends BaseEglTest {
                 return null;
 
             }
-        }).when(filter2).draw(any(float[].class));
+        }).when(filter2).draw(eq(0L), any(float[].class));
 
         EglViewport viewport = new EglViewport(multiFilter);
         int texture = viewport.createTexture();
-        viewport.drawFrame(texture, matrix);
+        viewport.drawFrame(0L, texture, matrix);
         viewport.release();
 
         // Verify that both are drawn.
-        verify(filter1, times(1)).draw(matrix);
-        verify(filter2, times(1)).draw(any(float[].class));
+        verify(filter1, times(1)).draw(0L, matrix);
+        verify(filter2, times(1)).draw(eq(0L), any(float[].class));
     }
 
 }

@@ -8,21 +8,16 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseEglTest;
-import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.internal.GlUtils;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.HashSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -108,7 +103,7 @@ public class BaseFilterTest extends BaseEglTest {
     public void testDraw_whenInvalid() {
         filter = spy(new TestFilter());
         float[] matrix = new float[16];
-        filter.draw(matrix);
+        filter.draw(0L, matrix);
         verify(filter, never()).onPreDraw(matrix);
         verify(filter, never()).onDraw();
         verify(filter, never()).onPostDraw();
@@ -122,7 +117,7 @@ public class BaseFilterTest extends BaseEglTest {
         int texture = viewport.createTexture();
 
         float[] matrix = new float[16];
-        viewport.drawFrame(texture, matrix);
+        viewport.drawFrame(0L, texture, matrix);
         verify(filter, times(1)).onPreDraw(matrix);
         verify(filter, times(1)).onDraw();
         verify(filter, times(1)).onPostDraw();

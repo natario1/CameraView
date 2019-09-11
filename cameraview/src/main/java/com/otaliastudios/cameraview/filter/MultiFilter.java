@@ -230,7 +230,7 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
     }
 
     @Override
-    public void draw(float[] transformMatrix) {
+    public void draw(long timestampUs, float[] transformMatrix) {
         synchronized (lock) {
             for (int i = 0; i < filters.size(); i++) {
                 boolean isFirst = i == 0;
@@ -258,9 +258,9 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
                 // The first filter should apply all the transformations. Then,
                 // since they are applied, we should use a no-op matrix.
                 if (isFirst) {
-                    filter.draw(transformMatrix);
+                    filter.draw(timestampUs, transformMatrix);
                 } else {
-                    filter.draw(GlUtils.IDENTITY_MATRIX);
+                    filter.draw(timestampUs, GlUtils.IDENTITY_MATRIX);
                 }
 
                 // Set the input for the next cycle:

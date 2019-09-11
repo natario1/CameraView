@@ -81,8 +81,9 @@ public class OverlayDrawerTest extends BaseEglTest {
         OverlayDrawer drawer = new OverlayDrawer(mock(Overlay.class), new Size(WIDTH, HEIGHT));
         drawer.mViewport = spy(drawer.mViewport);
         drawer.draw(Overlay.Target.PICTURE_SNAPSHOT);
-        drawer.render();
+        drawer.render(0L);
         verify(drawer.mViewport, times(1)).drawFrame(
+                0L,
                 drawer.mTextureId,
                 drawer.getTransform()
         );

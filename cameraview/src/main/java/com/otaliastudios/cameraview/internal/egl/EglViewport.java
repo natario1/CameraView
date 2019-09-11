@@ -72,7 +72,7 @@ public class EglViewport {
         mPendingFilter = filter;
     }
 
-    public void drawFrame(int textureId, float[] textureMatrix) {
+    public void drawFrame(long timestampUs, int textureId, float[] textureMatrix) {
         if (mPendingFilter != null) {
             release();
             mFilter = mPendingFilter;
@@ -89,7 +89,7 @@ public class EglViewport {
         GLES20.glBindTexture(mTextureTarget, textureId);
 
         // Draw.
-        mFilter.draw(textureMatrix);
+        mFilter.draw(timestampUs, textureMatrix);
 
         // Release.
         GLES20.glBindTexture(mTextureTarget, 0);
