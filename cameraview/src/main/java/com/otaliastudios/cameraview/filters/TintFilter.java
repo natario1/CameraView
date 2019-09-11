@@ -91,8 +91,8 @@ public class TintFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         float[] channels = new float[]{
                 Color.red(tint) / 255f,
                 Color.green(tint) / 255f,

@@ -95,8 +95,8 @@ public class FillLightFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         float amount = 1.0f - strength;
         float multiplier = 1.0f / (amount * 0.7f + 0.3f);
         GLES20.glUniform1f(multiplierLocation, multiplier);

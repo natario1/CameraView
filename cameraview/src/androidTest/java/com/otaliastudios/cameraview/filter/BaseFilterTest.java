@@ -104,9 +104,9 @@ public class BaseFilterTest extends BaseEglTest {
         filter = spy(new TestFilter());
         float[] matrix = new float[16];
         filter.draw(0L, matrix);
-        verify(filter, never()).onPreDraw(matrix);
-        verify(filter, never()).onDraw();
-        verify(filter, never()).onPostDraw();
+        verify(filter, never()).onPreDraw(0L, matrix);
+        verify(filter, never()).onDraw(0L);
+        verify(filter, never()).onPostDraw(0L);
     }
 
     @Test
@@ -118,9 +118,9 @@ public class BaseFilterTest extends BaseEglTest {
 
         float[] matrix = new float[16];
         viewport.drawFrame(0L, texture, matrix);
-        verify(filter, times(1)).onPreDraw(matrix);
-        verify(filter, times(1)).onDraw();
-        verify(filter, times(1)).onPostDraw();
+        verify(filter, times(1)).onPreDraw(0L, matrix);
+        verify(filter, times(1)).onDraw(0L);
+        verify(filter, times(1)).onPostDraw(0L);
 
         viewport.release();
     }

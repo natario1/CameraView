@@ -7,7 +7,6 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.filter.BaseFilter;
 import com.otaliastudios.cameraview.internal.GlUtils;
 
-import java.util.Date;
 import java.util.Random;
 
 /**
@@ -142,8 +141,8 @@ public class LomoishFilter extends BaseFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         float[] scale = new float[2];
         if (width > height) {
             scale[0] = 1f;

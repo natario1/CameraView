@@ -101,7 +101,7 @@ public abstract class BaseFilter implements Filter {
     });
 
     private int vertexModelViewProjectionMatrixLocation = -1;
-    private int vertexTranformMatrixLocation = -1;
+    private int vertexTransformMatrixLocation = -1;
     private int vertexPositionLocation = -1;
     private int vertexTextureCoordinateLocation = -1;
     @VisibleForTesting int programHandle = -1;
@@ -143,8 +143,8 @@ public abstract class BaseFilter implements Filter {
         GlUtils.checkLocation(vertexTextureCoordinateLocation, vertexTextureCoordinateName);
         vertexModelViewProjectionMatrixLocation = GLES20.glGetUniformLocation(programHandle, vertexModelViewProjectionMatrixName);
         GlUtils.checkLocation(vertexModelViewProjectionMatrixLocation, vertexModelViewProjectionMatrixName);
-        vertexTranformMatrixLocation = GLES20.glGetUniformLocation(programHandle, vertexTransformMatrixName);
-        GlUtils.checkLocation(vertexTranformMatrixLocation, vertexTransformMatrixName);
+        vertexTransformMatrixLocation = GLES20.glGetUniformLocation(programHandle, vertexTransformMatrixName);
+        GlUtils.checkLocation(vertexTransformMatrixLocation, vertexTransformMatrixName);
     }
 
     @Override
@@ -153,7 +153,7 @@ public abstract class BaseFilter implements Filter {
         vertexPositionLocation = -1;
         vertexTextureCoordinateLocation = -1;
         vertexModelViewProjectionMatrixLocation = -1;
-        vertexTranformMatrixLocation = -1;
+        vertexTransformMatrixLocation = -1;
     }
 
     @NonNull
@@ -173,21 +173,21 @@ public abstract class BaseFilter implements Filter {
             LOG.w("Filter.draw() called after destroying the filter. " +
                     "This can happen rarely because of threading.");
         } else {
-            onPreDraw(transformMatrix);
-            onDraw();
-            onPostDraw();
+            onPreDraw(timestampUs, transformMatrix);
+            onDraw(timestampUs);
+            onPostDraw(timestampUs);
         }
     }
 
-    protected void onPreDraw(float[] transformMatrix) {
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
         // Copy the model / view / projection matrix over.
         GLES20.glUniformMatrix4fv(vertexModelViewProjectionMatrixLocation, 1,
                 false, GlUtils.IDENTITY_MATRIX, 0);
         GlUtils.checkError("glUniformMatrix4fv");
 
         // Copy the texture transformation matrix over.
-        GLES20.glUniformMatrix4fv(vertexTranformMatrixLocation, 1, false,
-                transformMatrix, 0);
+        GLES20.glUniformMatrix4fv(vertexTransformMatrixLocation, 1,
+                false, transformMatrix, 0);
         GlUtils.checkError("glUniformMatrix4fv");
 
         // Enable the "aPosition" vertex attribute.
@@ -208,13 +208,13 @@ public abstract class BaseFilter implements Filter {
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected void onDraw() {
+    protected void onDraw(long timestampUs) {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         GlUtils.checkError("glDrawArrays");
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected void onPostDraw() {
+    protected void onPostDraw(long timestampUs) {
         GLES20.glDisableVertexAttribArray(vertexPositionLocation);
         GLES20.glDisableVertexAttribArray(vertexTextureCoordinateLocation);
     }

@@ -86,8 +86,8 @@ public class BrightnessFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         GLES20.glUniform1f(brightnessLocation, brightness);
         GlUtils.checkError("glUniform1f");
     }
