@@ -97,6 +97,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private Size mFrameProcessingSize;
     private ImageReader mFrameProcessingReader; // need this or the reader surface is collected
     private final WorkerHandler mFrameConversionHandler;
+    private final Object mFrameProcessingImageLock = new Object();
     private Surface mFrameProcessingSurface;
 
     // Preview
@@ -591,7 +592,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         mCaptureSize = null;
         mFrameProcessingSize = null;
         if (mFrameProcessingReader != null) {
-            mFrameProcessingReader.close();
+            synchronized (mFrameProcessingImageLock) {
+                // This call synchronously releases all Images and their underlying properties.
+                // This can cause a segmentation fault while converting the Image to NV21.
+                // So we use this lock for the two operations.
+                mFrameProcessingReader.close();
+            }
             mFrameProcessingReader = null;
         }
         if (mPictureReader != null) {
@@ -796,14 +802,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         mVideoRecorder.start(stub);
     }
 
+    /**
+     * When video ends we must stop the recorder and remove the recorder surface from camera outputs.
+     * This is done in onVideoResult. However, on some devices, order matters. If we stop the recorder
+     * and AFTER send camera frames to it, the camera will try to fill the recorder "abandoned"
+     * Surface and on some devices with a poor internal implementation (HW_LEVEL_LEGACY) this crashes.
+     * So if the conditions are met, we restore here. Issue #549.
+     */
     @Override
     public void onVideoRecordingEnd() {
         super.onVideoRecordingEnd();
-        // When video ends we must stop the recorder and remove the recorder surface from camera outputs.
-        // This is done in onVideoResult. However, on some devices, order matters. If we stop the recorder
-        // and AFTER send camera frames to it, the camera will try to fill the recorder "abandoned"
-        // Surface and on some devices with a poor internal implementation (HW_LEVEL_LEGACY) this crashes.
-        // So if the conditions are met, we restore here. Issue #549.
         boolean needsIssue549Workaround = (mVideoRecorder instanceof Full2VideoRecorder) ||
                 (readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
                         == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
@@ -898,10 +906,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
+    /**
+     * All focus modes support the AF trigger, except OFF and EDOF.
+     * However, unlike the preview, we'd prefer AUTO to any CONTINUOUS value.
+     * An AUTO value means that focus is locked unless we run the focus trigger,
+     * which is what metering does.
+     *
+     * @param builder builder
+     */
     @SuppressWarnings("WeakerAccess")
     protected void applyFocusForMetering(@NonNull CaptureRequest.Builder builder) {
-        // All focus modes support the AF trigger, except OFF and EDOF.
-        // However, unlike the preview, we'd prefer AUTO to any CONTINUOUS value.
         int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
         List<Integer> modes = new ArrayList<>();
         for (int mode : modesArray) { modes.add(mode); }
@@ -1189,6 +1203,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             LOG.w("onImageAvailable", "no byte buffer!");
             return;
         }
+        LOG.v("onImageAvailable", "trying to acquire Image.");
         Image image = null;
         try {
             image = reader.acquireLatestImage();
@@ -1198,9 +1213,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             getFrameManager().onBufferUnused(data);
             return;
         }
-        LOG.i("onImageAvailable", "we have both a byte buffer and an Image.");
+        LOG.v("onImageAvailable", "we have both a byte buffer and an Image.");
         try {
-            ImageHelper.convertToNV21(image, data);
+            synchronized (mFrameProcessingImageLock) {
+                ImageHelper.convertToNV21(image, data);
+            }
         } catch (Exception e) {
             LOG.w("onImageAvailable", "error while converting.");
             getFrameManager().onBufferUnused(data);
@@ -1221,18 +1238,34 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void setHasFrameProcessors(final boolean hasFrameProcessors) {
-        super.setHasFrameProcessors(hasFrameProcessors);
-        LOG.i("setHasFrameProcessors", "changed to", hasFrameProcessors, "posting.");
+        LOG.i("setHasFrameProcessors", "changing to", hasFrameProcessors, "posting.");
+        Camera2Engine.super.setHasFrameProcessors(hasFrameProcessors);
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("setHasFrameProcessors", "changed to", hasFrameProcessors, "executing. BindState:", getBindState());
-                if (getBindState() == STATE_STARTED) {
-                    LOG.i("setHasFrameProcessors", "triggering a restart.");
-                    // TODO if taking video, this stops it.
+                LOG.i("setHasFrameProcessors", "changing to", hasFrameProcessors, "executing.",
+                        "BindState:", getBindState(),
+                        "PreviewState:", getPreviewState());
+
+                // Frame processing is set up partially when binding and partially when starting
+                // the preview. We don't want to only check bind state or startPreview can fail.
+                if (getBindState() == STATE_STOPPED) {
+                    LOG.i("setHasFrameProcessors", "not bound so won't restart.");
+                } else if (true || getPreviewState() == STATE_STARTED) {
+                    // This needs a restartBind(). NOTE: if taking video, this stops it.
+                    LOG.i("setHasFrameProcessors", "bound with preview. Calling restartBind().");
                     restartBind();
                 } else {
-                    LOG.i("setHasFrameProcessors", "not bound so won't restart.");
+                    // Bind+Preview is not completely started yet not completely stopped.
+                    // This can happen if the user adds a frame processor in onCameraOpened().
+                    // Supporting this would add lot of complexity to this class, and
+                    // this should be discouraged anyway since changing the frame processor number
+                    // at this time requires restarting the camera when it was just opened.
+                    // For these reasons, let's throw.
+                    throw new IllegalStateException("Added or removed a FrameProcessor at an illegal " +
+                            "time. These operations should be done before opening the camera, or " +
+                            "before closing it - NOT when it just opened, for example during the " +
+                            "onCameraOpened() callback.");
                 }
             }
         });
