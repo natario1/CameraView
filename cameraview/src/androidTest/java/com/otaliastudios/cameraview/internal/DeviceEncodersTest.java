@@ -13,7 +13,6 @@ import com.otaliastudios.cameraview.size.Size;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -50,10 +49,11 @@ public class DeviceEncodersTest extends BaseTest {
 
     @NonNull
     private DeviceEncoders create() {
-        return new DeviceEncoders(
+        return new DeviceEncoders(DeviceEncoders.MODE_RESPECT_ORDER,
                 "video/avc",
                 "audio/mp4a-latm",
-                DeviceEncoders.MODE_TAKE_FIRST);
+                0,
+                0);
     }
 
     @Test
@@ -82,7 +82,7 @@ public class DeviceEncodersTest extends BaseTest {
         if (DeviceEncoders.ENABLED) {
             List<MediaCodecInfo> allEncoders = deviceEncoders.getDeviceEncoders();
             MediaCodecInfo encoder = deviceEncoders.findDeviceEncoder(allEncoders,
-                    "video/avc", DeviceEncoders.MODE_TAKE_FIRST, 0);
+                    "video/avc", DeviceEncoders.MODE_RESPECT_ORDER, 0);
             assertNotNull(encoder);
             List<String> encoderTypes = Arrays.asList(encoder.getSupportedTypes());
             assertTrue(encoderTypes.contains("video/avc"));

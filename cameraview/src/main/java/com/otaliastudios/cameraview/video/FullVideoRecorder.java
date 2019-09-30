@@ -111,8 +111,8 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         int audioEncoderOffset = 0;
         boolean encodersFound = false;
         while (!encodersFound) {
-            DeviceEncoders encoders = new DeviceEncoders(videoType, audioType,
-                    DeviceEncoders.MODE_TAKE_FIRST, videoEncoderOffset, audioEncoderOffset);
+            DeviceEncoders encoders = new DeviceEncoders(DeviceEncoders.MODE_RESPECT_ORDER,
+                    videoType, audioType, videoEncoderOffset, audioEncoderOffset);
             try {
                 newVideoSize = encoders.getSupportedVideoSize(stub.size);
                 newVideoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);

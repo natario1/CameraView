@@ -145,9 +145,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             boolean encodersFound = false;
             DeviceEncoders deviceEncoders = null;
             while (!encodersFound) {
-                deviceEncoders = new DeviceEncoders(videoType, audioType,
-                        DeviceEncoders.MODE_PREFER_HARDWARE, videoEncoderOffset,
-                        audioEncoderOffset);
+                deviceEncoders = new DeviceEncoders(DeviceEncoders.MODE_PREFER_HARDWARE,
+                        videoType, audioType, videoEncoderOffset, audioEncoderOffset);
                 try {
                     newVideoSize = deviceEncoders.getSupportedVideoSize(mResult.size);
                     newVideoBitRate = deviceEncoders.getSupportedVideoBitRate(mResult.videoBitRate);

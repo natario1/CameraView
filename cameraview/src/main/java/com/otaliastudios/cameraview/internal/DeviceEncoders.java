@@ -20,9 +20,18 @@ import java.util.List;
 /**
  * Checks the capabilities of device encoders and adjust parameters to ensure
  * that they'll be supported by the final encoder.
- * This can choose the encoder in two ways, based on the mode flag:
  *
- * 1. {@link #MODE_TAKE_FIRST}
+ * Methods in this class might throw either a {@link VideoException} or a {@link AudioException}.
+ * Throwing this exception means that the given parameters will not be supported by the encoder
+ * for that type, and cannot be tweaked to be.
+ *
+ * When this happens, users should retry with a new {@link DeviceEncoders} instance, but with
+ * the audio or video encoder offset incremented. This offset is the position in the encoder list
+ * from which we'll choose the potential encoder.
+ *
+ * This class will inspect the encoders list in two ways, based on the mode flag:
+ *
+ * 1. {@link #MODE_RESPECT_ORDER}
  *
  * Chooses the encoder as the first one that matches the given mime type.
  * This is what {@link android.media.MediaCodec#createEncoderByType(String)} does,
@@ -40,11 +49,12 @@ import java.util.List;
  * - MediaCodecList (https://android.googlesource.com/platform/frameworks/av/+/master/media/libstagefright/MediaCodecList.cpp#322)
  *
  * To be fair, what {@link android.media.MediaRecorder} does is actually choose the first one
- * that configures itself without errors. We currently do not offer this option here. TODO
+ * that configures itself without errors. We currently do not offer this option here.
+ * TODO add a tryConfigure() step, that throws AudioException/VideoException ?
  *
  * 2. {@link #MODE_PREFER_HARDWARE}
  *
- * This takes the list - as ordered by the vendor - and just sorts it such that hardware encoders
+ * This takes the list - as ordered by the vendor - and just sorts it so that hardware encoders
  * are preferred over software ones. It's questionable whether this is good or not. Some vendors
  * might forget to put hardware encoders first in the list, some others might put poor hardware
  * encoders on the bottom of the list on purpose.
@@ -56,7 +66,7 @@ public class DeviceEncoders {
 
     @VisibleForTesting static boolean ENABLED = Build.VERSION.SDK_INT >= 21;
 
-    public final static int MODE_TAKE_FIRST = 0;
+    public final static int MODE_RESPECT_ORDER = 0;
     public final static int MODE_PREFER_HARDWARE = 1;
 
     /**
@@ -87,14 +97,9 @@ public class DeviceEncoders {
     private final MediaCodecInfo.AudioCapabilities mAudioCapabilities;
 
     @SuppressLint("NewApi")
-    public DeviceEncoders(@NonNull String videoType, @NonNull String audioType, int mode) {
-        this(videoType, audioType, mode, 0, 0);
-    }
-
-    @SuppressLint("NewApi")
-    public DeviceEncoders(@NonNull String videoType,
+    public DeviceEncoders(int mode,
+                          @NonNull String videoType,
                           @NonNull String audioType,
-                          int mode,
                           int videoOffset,
                           int audioOffset) {
         // We could still get a list of MediaCodecInfo for API >= 16, but it seems that the APIs
@@ -154,7 +159,7 @@ public class DeviceEncoders {
 
     /**
      * Finds the encoder we'll be using, depending on the given mode flag:
-     * - {@link #MODE_TAKE_FIRST} will just take the first of the list
+     * - {@link #MODE_RESPECT_ORDER} will just take the first of the list
      * - {@link #MODE_PREFER_HARDWARE} will prefer hardware encoders
      * Throws if we find no encoder for this type.
      *
