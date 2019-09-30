@@ -1251,7 +1251,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 // the preview. We don't want to only check bind state or startPreview can fail.
                 if (getBindState() == STATE_STOPPED) {
                     LOG.i("setHasFrameProcessors", "not bound so won't restart.");
-                } else if (true || getPreviewState() == STATE_STARTED) {
+                } else if (getPreviewState() == STATE_STARTED) {
                     // This needs a restartBind(). NOTE: if taking video, this stops it.
                     LOG.i("setHasFrameProcessors", "bound with preview. Calling restartBind().");
                     restartBind();
