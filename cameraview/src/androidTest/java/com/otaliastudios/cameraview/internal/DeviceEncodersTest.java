@@ -6,11 +6,8 @@ import android.media.MediaCodecInfo;
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
-import androidx.test.rule.ActivityTestRule;
 
 import com.otaliastudios.cameraview.BaseTest;
-import com.otaliastudios.cameraview.TestActivity;
-import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -30,8 +27,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @RunWith(AndroidJUnit4.class)
 @MediumTest
@@ -87,7 +82,7 @@ public class DeviceEncodersTest extends BaseTest {
         if (DeviceEncoders.ENABLED) {
             List<MediaCodecInfo> allEncoders = deviceEncoders.getDeviceEncoders();
             MediaCodecInfo encoder = deviceEncoders.findDeviceEncoder(allEncoders,
-                    "video/avc", DeviceEncoders.MODE_TAKE_FIRST);
+                    "video/avc", DeviceEncoders.MODE_TAKE_FIRST, 0);
             assertNotNull(encoder);
             List<String> encoderTypes = Arrays.asList(encoder.getSupportedTypes());
             assertTrue(encoderTypes.contains("video/avc"));

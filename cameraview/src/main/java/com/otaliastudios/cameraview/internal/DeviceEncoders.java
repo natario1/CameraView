@@ -59,6 +59,26 @@ public class DeviceEncoders {
     public final static int MODE_TAKE_FIRST = 0;
     public final static int MODE_PREFER_HARDWARE = 1;
 
+    /**
+     * Exception thrown when trying to find appropriate values
+     * for a video encoder.
+     */
+    public class VideoException extends RuntimeException {
+        private VideoException(@NonNull String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Exception thrown when trying to find appropriate values
+     * for an audio encoder. Currently never thrown.
+     */
+    public class AudioException extends RuntimeException {
+        private AudioException(@NonNull String message) {
+            super(message);
+        }
+    }
+
     @SuppressWarnings("FieldCanBeLocal")
     private final MediaCodecInfo mVideoEncoder;
     @SuppressWarnings("FieldCanBeLocal")
@@ -68,13 +88,22 @@ public class DeviceEncoders {
 
     @SuppressLint("NewApi")
     public DeviceEncoders(@NonNull String videoType, @NonNull String audioType, int mode) {
+        this(videoType, audioType, mode, 0, 0);
+    }
+
+    @SuppressLint("NewApi")
+    public DeviceEncoders(@NonNull String videoType,
+                          @NonNull String audioType,
+                          int mode,
+                          int videoOffset,
+                          int audioOffset) {
         // We could still get a list of MediaCodecInfo for API >= 16, but it seems that the APIs
         // for querying the availability of a specified MediaFormat were only added in 21 anyway.
         if (ENABLED) {
             List<MediaCodecInfo> encoders = getDeviceEncoders();
-            mVideoEncoder = findDeviceEncoder(encoders, videoType, mode);
+            mVideoEncoder = findDeviceEncoder(encoders, videoType, mode, videoOffset);
             LOG.i("Enabled. Found video encoder:", mVideoEncoder.getName());
-            mAudioEncoder = findDeviceEncoder(encoders, audioType, mode);
+            mAudioEncoder = findDeviceEncoder(encoders, audioType, mode, audioOffset);
             LOG.i("Enabled. Found audio encoder:", mAudioEncoder.getName());
             mVideoCapabilities = mVideoEncoder.getCapabilitiesForType(videoType)
                     .getVideoCapabilities();
@@ -139,7 +168,8 @@ public class DeviceEncoders {
     @VisibleForTesting
     MediaCodecInfo findDeviceEncoder(@NonNull List<MediaCodecInfo> encoders,
                                      @NonNull String mimeType,
-                                     int mode) {
+                                     int mode,
+                                     int offset) {
         ArrayList<MediaCodecInfo> results = new ArrayList<>();
         for (MediaCodecInfo encoder : encoders) {
             String[] types = encoder.getSupportedTypes();
@@ -164,10 +194,12 @@ public class DeviceEncoders {
                 }
             });
         }
-        if (results.isEmpty()) {
+        if (results.size() < offset + 1) {
+            // This should not be a VideoException or AudioException - we want the process
+            // to crash here.
             throw new RuntimeException("No encoders for type:" + mimeType);
         }
-        return results.get(0);
+        return results.get(offset);
     }
 
     /**
@@ -203,19 +235,19 @@ public class DeviceEncoders {
 
         // It's still possible that we're BELOW the lower.
         if (!mVideoCapabilities.getSupportedWidths().contains(width)) {
-            throw new RuntimeException("Width not supported after adjustment." +
+            throw new VideoException("Width not supported after adjustment." +
                     " Desired:" + width +
                     " Range:" + mVideoCapabilities.getSupportedWidths());
         }
         if (!mVideoCapabilities.getSupportedHeights().contains(height)) {
-            throw new RuntimeException("Height not supported after adjustment." +
+            throw new VideoException("Height not supported after adjustment." +
                     " Desired:" + height +
                     " Range:" + mVideoCapabilities.getSupportedHeights());
         }
 
         // It's still possible that we're unsupported for other reasons.
         if (!mVideoCapabilities.isSizeSupported(width, height)) {
-            throw new RuntimeException("Size not supported for unknown reason." +
+            throw new VideoException("Size not supported for unknown reason." +
                     " Might be an aspect ratio issue." +
                     " Desired size:" + new Size(width, height));
         }

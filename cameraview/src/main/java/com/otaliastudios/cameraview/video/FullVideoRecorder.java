@@ -101,14 +101,35 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         }
 
         // Check DeviceEncoders support
-        DeviceEncoders encoders = new DeviceEncoders(videoType, audioType,
-                DeviceEncoders.MODE_TAKE_FIRST);
         boolean flip = stub.rotation % 180 != 0;
         if (flip) stub.size = stub.size.flip();
-        stub.size = encoders.getSupportedVideoSize(stub.size);
-        stub.videoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);
-        stub.audioBitRate = encoders.getSupportedAudioBitRate(stub.audioBitRate);
-        stub.videoFrameRate = encoders.getSupportedVideoFrameRate(stub.size, stub.videoFrameRate);
+        Size newVideoSize = null;
+        int newVideoBitRate = 0;
+        int newAudioBitRate = 0;
+        int newVideoFrameRate = 0;
+        int videoEncoderOffset = 0;
+        int audioEncoderOffset = 0;
+        boolean encodersFound = false;
+        while (!encodersFound) {
+            DeviceEncoders encoders = new DeviceEncoders(videoType, audioType,
+                    DeviceEncoders.MODE_TAKE_FIRST, videoEncoderOffset, audioEncoderOffset);
+            try {
+                newVideoSize = encoders.getSupportedVideoSize(stub.size);
+                newVideoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);
+                newAudioBitRate = encoders.getSupportedAudioBitRate(stub.audioBitRate);
+                newVideoFrameRate = encoders.getSupportedVideoFrameRate(newVideoSize,
+                        stub.videoFrameRate);
+                encodersFound = true;
+            } catch (DeviceEncoders.VideoException videoException) {
+                videoEncoderOffset++;
+            } catch (DeviceEncoders.AudioException audioException) {
+                audioEncoderOffset++;
+            }
+        }
+        stub.size = newVideoSize;
+        stub.videoBitRate = newVideoBitRate;
+        stub.audioBitRate = newAudioBitRate;
+        stub.videoFrameRate = newVideoFrameRate;
         if (flip) stub.size = stub.size.flip();
 
         // Set video params

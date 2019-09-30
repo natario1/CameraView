@@ -136,13 +136,35 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             String audioType = "audio/mp4a-latm";
 
             // Check the availability of values
-            DeviceEncoders deviceEncoders = new DeviceEncoders(videoType, audioType,
-                    DeviceEncoders.MODE_PREFER_HARDWARE);
-            mResult.size = deviceEncoders.getSupportedVideoSize(mResult.size);
-            mResult.videoBitRate = deviceEncoders.getSupportedVideoBitRate(mResult.videoBitRate);
-            mResult.audioBitRate = deviceEncoders.getSupportedAudioBitRate(mResult.audioBitRate);
-            mResult.videoFrameRate = deviceEncoders.getSupportedVideoFrameRate(mResult.size,
-                    mResult.videoFrameRate);
+            Size newVideoSize = null;
+            int newVideoBitRate = 0;
+            int newAudioBitRate = 0;
+            int newVideoFrameRate = 0;
+            int videoEncoderOffset = 0;
+            int audioEncoderOffset = 0;
+            boolean encodersFound = false;
+            DeviceEncoders deviceEncoders = null;
+            while (!encodersFound) {
+                deviceEncoders = new DeviceEncoders(videoType, audioType,
+                        DeviceEncoders.MODE_PREFER_HARDWARE, videoEncoderOffset,
+                        audioEncoderOffset);
+                try {
+                    newVideoSize = deviceEncoders.getSupportedVideoSize(mResult.size);
+                    newVideoBitRate = deviceEncoders.getSupportedVideoBitRate(mResult.videoBitRate);
+                    newAudioBitRate = deviceEncoders.getSupportedAudioBitRate(mResult.audioBitRate);
+                    newVideoFrameRate = deviceEncoders.getSupportedVideoFrameRate(newVideoSize,
+                            mResult.videoFrameRate);
+                    encodersFound = true;
+                } catch (DeviceEncoders.VideoException videoException) {
+                    videoEncoderOffset++;
+                } catch (DeviceEncoders.AudioException audioException) {
+                    audioEncoderOffset++;
+                }
+            }
+            mResult.size = newVideoSize;
+            mResult.videoBitRate = newVideoBitRate;
+            mResult.audioBitRate = newAudioBitRate;
+            mResult.videoFrameRate = newVideoFrameRate;
 
             // Video
             TextureConfig videoConfig = new TextureConfig();
