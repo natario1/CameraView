@@ -44,7 +44,8 @@ public abstract class PictureRecorder {
      * @param listener a listener
      */
     @SuppressWarnings("WeakerAccess")
-    public PictureRecorder(@NonNull PictureResult.Stub stub, @Nullable PictureResultListener listener) {
+    public PictureRecorder(@NonNull PictureResult.Stub stub,
+                           @Nullable PictureResultListener listener) {
         mResult = stub;
         mListener = listener;
     }

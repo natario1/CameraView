@@ -75,7 +75,8 @@ class SequenceAction extends BaseAction {
     }
 
     @Override
-    public void onCaptureProgressed(@NonNull ActionHolder holder, @NonNull CaptureRequest request,
+    public void onCaptureProgressed(@NonNull ActionHolder holder,
+                                    @NonNull CaptureRequest request,
                                     @NonNull CaptureResult result) {
         super.onCaptureProgressed(holder, request, result);
         if (runningAction >= 0) {
@@ -84,7 +85,8 @@ class SequenceAction extends BaseAction {
     }
 
     @Override
-    public void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request,
+    public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                   @NonNull CaptureRequest request,
                                    @NonNull TotalCaptureResult result) {
         super.onCaptureCompleted(holder, request, result);
         if (runningAction >= 0) {

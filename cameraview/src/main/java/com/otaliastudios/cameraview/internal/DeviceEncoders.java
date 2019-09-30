@@ -76,8 +76,10 @@ public class DeviceEncoders {
             LOG.i("Enabled. Found video encoder:", mVideoEncoder.getName());
             mAudioEncoder = findDeviceEncoder(encoders, audioType, mode);
             LOG.i("Enabled. Found audio encoder:", mAudioEncoder.getName());
-            mVideoCapabilities = mVideoEncoder.getCapabilitiesForType(videoType).getVideoCapabilities();
-            mAudioCapabilities = mAudioEncoder.getCapabilitiesForType(audioType).getAudioCapabilities();
+            mVideoCapabilities = mVideoEncoder.getCapabilitiesForType(videoType)
+                    .getVideoCapabilities();
+            mAudioCapabilities = mAudioEncoder.getCapabilitiesForType(audioType)
+                    .getAudioCapabilities();
         } else {
             mVideoEncoder = null;
             mAudioEncoder = null;
@@ -135,7 +137,9 @@ public class DeviceEncoders {
     @SuppressLint("NewApi")
     @NonNull
     @VisibleForTesting
-    MediaCodecInfo findDeviceEncoder(@NonNull List<MediaCodecInfo> encoders, @NonNull String mimeType, int mode) {
+    MediaCodecInfo findDeviceEncoder(@NonNull List<MediaCodecInfo> encoders,
+                                     @NonNull String mimeType,
+                                     int mode) {
         ArrayList<MediaCodecInfo> results = new ArrayList<>();
         for (MediaCodecInfo encoder : encoders) {
             String[] types = encoder.getSupportedTypes();
@@ -231,7 +235,9 @@ public class DeviceEncoders {
     public int getSupportedVideoBitRate(int bitRate) {
         if (!ENABLED) return bitRate;
         int newBitRate = mVideoCapabilities.getBitrateRange().clamp(bitRate);
-        LOG.i("getSupportedVideoBitRate -", "inputRate:", bitRate, "adjustedRate:", newBitRate);
+        LOG.i("getSupportedVideoBitRate -",
+                "inputRate:", bitRate,
+                "adjustedRate:", newBitRate);
         return newBitRate;
     }
 
@@ -248,7 +254,9 @@ public class DeviceEncoders {
         int newFrameRate = (int) (double) mVideoCapabilities
                 .getSupportedFrameRatesFor(size.getWidth(), size.getHeight())
                 .clamp((double) frameRate);
-        LOG.i("getSupportedVideoFrameRate -", "inputRate:", frameRate, "adjustedRate:", newFrameRate);
+        LOG.i("getSupportedVideoFrameRate -",
+                "inputRate:", frameRate,
+                "adjustedRate:", newFrameRate);
         return newFrameRate;
     }
 
@@ -263,7 +271,9 @@ public class DeviceEncoders {
     public int getSupportedAudioBitRate(int bitRate) {
         if (!ENABLED) return bitRate;
         int newBitRate = mAudioCapabilities.getBitrateRange().clamp(bitRate);
-        LOG.i("getSupportedAudioBitRate -", "inputRate:", bitRate, "adjustedRate:", newBitRate);
+        LOG.i("getSupportedAudioBitRate -",
+                "inputRate:", bitRate,
+                "adjustedRate:", newBitRate);
         return newBitRate;
     }
 

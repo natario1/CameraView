@@ -105,17 +105,21 @@ class Step {
         return doStart(swallowExceptions, op, null);
     }
 
-    Task<Void> doStart(final boolean swallowExceptions, final @NonNull Callable<Task<Void>> op, final @Nullable Runnable onStarted) {
+    Task<Void> doStart(final boolean swallowExceptions,
+                       final @NonNull Callable<Task<Void>> op,
+                       final @Nullable Runnable onStarted) {
         LOG.i(name, "doStart", "Called. Enqueuing.");
         task = task.continueWithTask(callback.getExecutor(), new Continuation<Void, Task<Void>>() {
             @Override
             public Task<Void> then(@NonNull Task<Void> task) throws Exception {
                 LOG.i(name, "doStart", "About to start. Setting state to STARTING");
                 setState(STATE_STARTING);
-                return op.call().addOnFailureListener(callback.getExecutor(), new OnFailureListener() {
+                return op.call().addOnFailureListener(callback.getExecutor(),
+                        new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        LOG.w(name, "doStart", "Failed with error", e, "Setting state to STOPPED");
+                        LOG.w(name, "doStart", "Failed with error", e,
+                                "Setting state to STOPPED");
                         setState(STATE_STOPPED);
                         if (!swallowExceptions) callback.handleException(e);
                     }
@@ -139,17 +143,21 @@ class Step {
         return doStop(swallowExceptions, op, null);
     }
 
-    Task<Void> doStop(final boolean swallowExceptions, final @NonNull Callable<Task<Void>> op, final @Nullable Runnable onStopped) {
+    Task<Void> doStop(final boolean swallowExceptions,
+                      final @NonNull Callable<Task<Void>> op,
+                      final @Nullable Runnable onStopped) {
         LOG.i(name, "doStop", "Called. Enqueuing.");
         task = task.continueWithTask(callback.getExecutor(), new Continuation<Void, Task<Void>>() {
             @Override
             public Task<Void> then(@NonNull Task<Void> task) throws Exception {
                 LOG.i(name, "doStop", "About to stop. Setting state to STOPPING");
                 state = STATE_STOPPING;
-                return op.call().addOnFailureListener(callback.getExecutor(), new OnFailureListener() {
+                return op.call().addOnFailureListener(callback.getExecutor(),
+                        new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        LOG.w(name, "doStop", "Failed with error", e, "Setting state to STOPPED");
+                        LOG.w(name, "doStop", "Failed with error", e,
+                                "Setting state to STOPPED");
                         state = STATE_STOPPED;
                         if (!swallowExceptions) callback.handleException(e);
                     }

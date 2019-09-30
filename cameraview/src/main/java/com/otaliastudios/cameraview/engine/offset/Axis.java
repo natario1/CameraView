@@ -21,7 +21,7 @@ public enum Axis {
      * This rotation axis takes into account the current
      * {@link com.otaliastudios.cameraview.controls.Facing} value.
      *
-     * - for {@link com.otaliastudios.cameraview.controls.Facing#BACK}, this equals {@link #ABSOLUTE}
+     * - for {@link com.otaliastudios.cameraview.controls.Facing#BACK}, this is {@link #ABSOLUTE}
      * - for {@link com.otaliastudios.cameraview.controls.Facing#FRONT}, this is inverted
      */
     RELATIVE_TO_SENSOR

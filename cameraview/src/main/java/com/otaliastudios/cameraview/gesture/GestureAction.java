@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.gesture;
 
 
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.markers.AutoFocusMarker;
 
 import androidx.annotation.NonNull;
@@ -63,7 +64,7 @@ public enum GestureAction {
     EXPOSURE_CORRECTION(4, GestureType.CONTINUOUS),
 
     /**
-     * Controls the first parameter of a real-time {@link com.otaliastudios.cameraview.filter.Filter},
+     * Controls the first parameter of a real-time {@link Filter},
      * if it accepts one. This action can be mapped to continuous gestures:
      *
      * - {@link Gesture#PINCH}
@@ -73,7 +74,7 @@ public enum GestureAction {
     FILTER_CONTROL_1(5, GestureType.CONTINUOUS),
 
     /**
-     * Controls the second parameter of a real-time {@link com.otaliastudios.cameraview.filter.Filter},
+     * Controls the second parameter of a real-time {@link Filter},
      * if it accepts one. This action can be mapped to continuous gestures:
      *
      * - {@link Gesture#PINCH}

@@ -107,7 +107,8 @@ public class CameraOptions {
         zoomSupported = params.isZoomSupported();
 
         // autofocus
-        autoFocusSupported = params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO);
+        autoFocusSupported = params.getSupportedFocusModes()
+                .contains(Camera.Parameters.FOCUS_MODE_AUTO);
 
         // Exposure correction
         float step = params.getExposureCompensationStep();
@@ -135,7 +136,8 @@ public class CameraOptions {
                 supportedVideoAspectRatio.add(AspectRatio.of(width, height));
             }
         } else {
-            // StackOverflow threads seems to agree that if getSupportedVideoSizes is null, previews can be used.
+            // StackOverflow threads seems to agree that if getSupportedVideoSizes is null,
+            // previews can be used.
             List<Camera.Size> fallback = params.getSupportedPreviewSizes();
             for (Camera.Size size : fallback) {
                 int width = flipSizes ? size.height : size.width;
@@ -148,13 +150,16 @@ public class CameraOptions {
 
     // Camera2Engine constructor.
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    public CameraOptions(@NonNull CameraManager manager, @NonNull String  cameraId, boolean flipSizes) throws CameraAccessException {
+    public CameraOptions(@NonNull CameraManager manager,
+                         @NonNull String cameraId,
+                         boolean flipSizes) throws CameraAccessException {
         Camera2Mapper mapper = Camera2Mapper.get();
         CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(cameraId);
 
         // Facing
         for (String cameraId1 : manager.getCameraIdList()) {
-            CameraCharacteristics cameraCharacteristics1 = manager.getCameraCharacteristics(cameraId1);
+            CameraCharacteristics cameraCharacteristics1 = manager
+                    .getCameraCharacteristics(cameraId1);
             Integer cameraFacing = cameraCharacteristics1.get(CameraCharacteristics.LENS_FACING);
             if (cameraFacing != null) {
                 Facing value = mapper.unmapFacing(cameraFacing);
@@ -163,7 +168,8 @@ public class CameraOptions {
         }
 
         // WB
-        int[] awbModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES);
+        int[] awbModes = cameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES);
         //noinspection ConstantConditions
         for (int awbMode : awbModes) {
             WhiteBalance value = mapper.unmapWhiteBalance(awbMode);
@@ -174,7 +180,8 @@ public class CameraOptions {
         supportedFlash.add(Flash.OFF);
         Boolean hasFlash = cameraCharacteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
         if (hasFlash != null && hasFlash) {
-            int[] aeModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
+            int[] aeModes = cameraCharacteristics.get(
+                    CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
             //noinspection ConstantConditions
             for (int aeMode : aeModes) {
                 Set<Flash> flashes = mapper.unmapFlash(aeMode);
@@ -184,7 +191,8 @@ public class CameraOptions {
 
         // HDR
         supportedHdr.add(Hdr.OFF);
-        int[] sceneModes = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES);
+        int[] sceneModes = cameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES);
         //noinspection ConstantConditions
         for (int sceneMode : sceneModes) {
             Hdr value = mapper.unmapHdr(sceneMode);
@@ -192,7 +200,8 @@ public class CameraOptions {
         }
 
         // Zoom
-        Float maxZoom = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+        Float maxZoom = cameraCharacteristics.get(
+                CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
         if(maxZoom != null) {
             zoomSupported = maxZoom > 1;
         }
@@ -205,24 +214,31 @@ public class CameraOptions {
         // What really matters in my opinion is the availability of regions.
         Integer afRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
         Integer aeRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE);
-        Integer awbRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB);
+        Integer awbRegions = cameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_MAX_REGIONS_AWB);
         autoFocusSupported = (afRegions != null && afRegions > 0)
                 || (aeRegions != null && aeRegions > 0)
                 || (awbRegions != null && awbRegions > 0);
 
         // Exposure correction
-        Range<Integer> exposureRange = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
-        Rational exposureStep = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP);
+        Range<Integer> exposureRange = cameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
+        Rational exposureStep = cameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP);
         if (exposureRange != null && exposureStep != null && exposureStep.floatValue() != 0) {
             exposureCorrectionMinValue = exposureRange.getLower() / exposureStep.floatValue();
             exposureCorrectionMaxValue = exposureRange.getUpper() / exposureStep.floatValue();
         }
-        exposureCorrectionSupported = exposureCorrectionMinValue != 0 && exposureCorrectionMaxValue != 0;
+        exposureCorrectionSupported = exposureCorrectionMinValue != 0
+                && exposureCorrectionMaxValue != 0;
 
 
         // Picture Sizes
-        StreamConfigurationMap streamMap = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-        if (streamMap == null) throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
+        StreamConfigurationMap streamMap = cameraCharacteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        if (streamMap == null) {
+            throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
+        }
         android.util.Size[] psizes = streamMap.getOutputSizes(ImageFormat.JPEG);
         for (android.util.Size size : psizes) {
             int width = flipSizes ? size.getHeight() : size.getWidth();
@@ -238,7 +254,8 @@ public class CameraOptions {
         Size videoMaxSize = new Size(profile.videoFrameWidth, profile.videoFrameHeight);
         android.util.Size[] vsizes = streamMap.getOutputSizes(MediaRecorder.class);
         for (android.util.Size size : vsizes) {
-            if (size.getWidth() <= videoMaxSize.getWidth() && size.getHeight() <= videoMaxSize.getHeight()) {
+            if (size.getWidth() <= videoMaxSize.getWidth()
+                    && size.getHeight() <= videoMaxSize.getHeight()) {
                 int width = flipSizes ? size.getHeight() : size.getWidth();
                 int height = flipSizes ? size.getWidth() : size.getHeight();
                 supportedVideoSizes.add(new Size(width, height));

@@ -27,7 +27,8 @@ public class DefaultAutoFocusMarker implements AutoFocusMarker {
     @Nullable
     @Override
     public View onAttach(@NonNull Context context, @NonNull ViewGroup container) {
-        View view = LayoutInflater.from(context).inflate(R.layout.cameraview_layout_focus_marker, container, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.cameraview_layout_focus_marker,
+                container, false);
         mContainer = view.findViewById(R.id.focusMarkerContainer);
         mFill = view.findViewById(R.id.focusMarkerFill);
         return view;
@@ -49,18 +50,22 @@ public class DefaultAutoFocusMarker implements AutoFocusMarker {
     }
 
     @Override
-    public void onAutoFocusEnd(@NonNull AutoFocusTrigger trigger, boolean successful, @NonNull PointF point) {
+    public void onAutoFocusEnd(@NonNull AutoFocusTrigger trigger,
+                               boolean successful,
+                               @NonNull PointF point) {
         if (trigger == AutoFocusTrigger.METHOD) return;
         if (successful) {
             animate(mContainer, 1, 0, 500, 0, null);
             animate(mFill, 1, 0, 500, 0, null);
         } else {
             animate(mFill, 0, 0, 500, 0, null);
-            animate(mContainer, 1.36f, 1, 500, 0, new AnimatorListenerAdapter() {
+            animate(mContainer, 1.36f, 1, 500, 0,
+                    new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
-                    animate(mContainer, 1.36f, 0, 200, 1000, null);
+                    animate(mContainer, 1.36f, 0, 200, 1000,
+                            null);
                 }
             });
         }

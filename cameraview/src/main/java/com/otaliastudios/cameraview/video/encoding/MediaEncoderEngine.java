@@ -134,7 +134,8 @@ public class MediaEncoderEngine {
             mEncoders.add(audioEncoder);
         }
         try {
-            mMediaMuxer = new MediaMuxer(file.toString(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            mMediaMuxer = new MediaMuxer(file.toString(),
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -151,7 +152,8 @@ public class MediaEncoderEngine {
         long maxDurationUs = maxDuration * 1000L;
         long finalMaxDurationUs = Long.MAX_VALUE;
         if (maxSize > 0 && maxDuration > 0) {
-            mPossibleEndReason = sizeMaxDurationUs < maxDurationUs ? END_BY_MAX_SIZE : END_BY_MAX_DURATION;
+            mPossibleEndReason = sizeMaxDurationUs < maxDurationUs ? END_BY_MAX_SIZE
+                    : END_BY_MAX_DURATION;
             finalMaxDurationUs = Math.min(sizeMaxDurationUs, maxDurationUs);
         } else if (maxSize > 0) {
             mPossibleEndReason = END_BY_MAX_SIZE;
@@ -207,8 +209,9 @@ public class MediaEncoderEngine {
     }
 
     /**
-     * Called after all encoders have requested a release using {@link Controller#notifyStopped(int)}.
-     * At this point we will do cleanup and notify the listener.
+     * Called after all encoders have requested a release using
+     * {@link Controller#notifyStopped(int)}. At this point we will do cleanup and notify
+     * the listener.
      */
     private void end() {
         LOG.i("end:", "Releasing muxer after all encoders have been released.");
@@ -284,9 +287,11 @@ public class MediaEncoderEngine {
                     throw new IllegalStateException("Trying to start but muxer started already");
                 }
                 int track = mMediaMuxer.addTrack(format);
-                LOG.w("notifyStarted:", "Assigned track", track, "to format", format.getString(MediaFormat.KEY_MIME));
+                LOG.w("notifyStarted:", "Assigned track", track, "to format",
+                        format.getString(MediaFormat.KEY_MIME));
                 if (++mStartedEncodersCount == mEncoders.size()) {
-                    LOG.w("notifyStarted:", "All encoders have started. Starting muxer and dispatching onEncodingStart().");
+                    LOG.w("notifyStarted:", "All encoders have started.",
+                            "Starting muxer and dispatching onEncodingStart().");
                     // Go out of this thread since it might be very important for the
                     // encoders and we don't want to perform expensive operations here.
                     mControllerThread.run(new Runnable() {
@@ -347,7 +352,8 @@ public class MediaEncoderEngine {
                 LOG.v("write:", "Writing into muxer -",
                                 "track:", buffer.trackIndex,
                         "presentation:", buffer.info.presentationTimeUs,
-                        "readable:", calendar.get(Calendar.SECOND) + ":" + calendar.get(Calendar.MILLISECOND),
+                        "readable:", calendar.get(Calendar.SECOND) + ":"
+                                + calendar.get(Calendar.MILLISECOND),
                         "count:", count);
             } else {
                 LOG.v("write:", "Writing into muxer -",
@@ -360,9 +366,9 @@ public class MediaEncoderEngine {
 
         /**
          * Requests that the engine stops. This is not executed until all encoders call
-         * this method, so it is a kind of soft request, just like {@link #notifyStarted(MediaFormat)}.
-         * To be used when maxLength / maxSize constraints are reached, for example.
-         *
+         * this method, so it is a kind of soft request, just like
+         * {@link #notifyStarted(MediaFormat)}. To be used when maxLength / maxSize constraints
+         * are reached, for example.
          * When this succeeds, {@link MediaEncoder#stop()} is called.
          *
          * @param track track
@@ -371,7 +377,8 @@ public class MediaEncoderEngine {
             synchronized (mControllerLock) {
                 LOG.w("requestStop:", "Called for track", track);
                 if (--mStartedEncodersCount == 0) {
-                    LOG.w("requestStop:", "All encoders have requested a stop. Stopping them.");
+                    LOG.w("requestStop:", "All encoders have requested a stop.",
+                            "Stopping them.");
                     mEndReason = mPossibleEndReason;
                     // Go out of this thread since it might be very important for the
                     // encoders and we don't want to perform expensive operations here.
@@ -395,7 +402,8 @@ public class MediaEncoderEngine {
             synchronized (mControllerLock) {
                 LOG.w("notifyStopped:", "Called for track", track);
                 if (++mStoppedEncodersCount == mEncoders.size()) {
-                    LOG.w("requestStop:", "All encoders have been stopped. Stopping the muxer.");
+                    LOG.w("requestStop:", "All encoders have been stopped.",
+                            "Stopping the muxer.");
                     // Go out of this thread since it might be very important for the
                     // encoders and we don't want to perform expensive operations here.
                     mControllerThread.run(new Runnable() {

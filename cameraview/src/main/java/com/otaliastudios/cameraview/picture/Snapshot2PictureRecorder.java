@@ -26,18 +26,20 @@ import com.otaliastudios.cameraview.size.AspectRatio;
  * Wraps {@link SnapshotGlPictureRecorder} for Camera2.
  *
  * Camera2 engine supports metering for snapshots and we expect for them to correctly fire flash as well.
- * The first idea, and in theory, the most correct one, was to set {@link CaptureRequest#CONTROL_CAPTURE_INTENT}
- * to {@link CaptureRequest#CONTROL_CAPTURE_INTENT_STILL_CAPTURE}.
+ * The first idea, and in theory, the most correct one, was to set
+ * {@link CaptureRequest#CONTROL_CAPTURE_INTENT} to
+ * {@link CaptureRequest#CONTROL_CAPTURE_INTENT_STILL_CAPTURE}.
  *
  * According to documentation, this will automatically trigger the flash if parameters says so.
  * In fact this is what happens, but it is a very fast flash that only lasts for 1 or 2 frames.
  * It's not easy to call super.take() at the exact time so that we capture the frame that was lit.
- * I have tried by comparing {@link SurfaceTexture#getTimestamp()} and {@link CaptureResult#SENSOR_TIMESTAMP}
- * to identify the correct frame. These timestamps match, but the frame is not the correct one.
+ * I have tried by comparing {@link SurfaceTexture#getTimestamp()} and
+ * {@link CaptureResult#SENSOR_TIMESTAMP} to identify the correct frame. These timestamps match,
+ * but the frame is not the correct one.
  *
- * So what we do here is ignore the {@link CaptureRequest#CONTROL_CAPTURE_INTENT} and instead open the
- * torch, if requested to do so. Then wait for exposure to settle again and finally take a snapshot.
- * I'd still love to use the capture intent instead of this, but was not able yet.
+ * So what we do here is ignore the {@link CaptureRequest#CONTROL_CAPTURE_INTENT} and instead
+ * open the torch, if requested to do so. Then wait for exposure to settle again and finally
+ * take a snapshot. I'd still love to use the capture intent instead of this, but was not able yet.
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
@@ -52,8 +54,10 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
         protected void onStart(@NonNull ActionHolder holder) {
             super.onStart(holder);
             LOG.i("FlashAction:", "Parameters locked, opening torch.");
-            holder.getBuilder(this).set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-            holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            holder.getBuilder(this).set(CaptureRequest.FLASH_MODE,
+                    CaptureRequest.FLASH_MODE_TORCH);
+            holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON);
             holder.applyBuilder(this);
         }
 
@@ -64,10 +68,12 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
             super.onCaptureCompleted(holder, request, result);
             Integer flashState = result.get(CaptureResult.FLASH_STATE);
             if (flashState == null) {
-                LOG.w("FlashAction:", "Waiting flash, but flashState is null! Taking snapshot.");
+                LOG.w("FlashAction:", "Waiting flash, but flashState is null!",
+                        "Taking snapshot.");
                 setState(STATE_COMPLETED);
             } else if (flashState == CaptureResult.FLASH_STATE_FIRED) {
-                LOG.i("FlashAction:", "Waiting flash and we have FIRED state! Taking snapshot.");
+                LOG.i("FlashAction:", "Waiting flash and we have FIRED state!",
+                        "Taking snapshot.");
                 setState(STATE_COMPLETED);
             } else {
                 LOG.i("FlashAction:", "Waiting flash but flashState is",
@@ -111,7 +117,8 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
     @Override
     public void take() {
         if (!mActionNeeded) {
-            LOG.i("take:", "Engine does no metering or needs no flash, taking fast snapshot.");
+            LOG.i("take:", "Engine does no metering or needs no flash.",
+                    "Taking fast snapshot.");
             super.take();
         } else {
             LOG.i("take:", "Engine needs flash. Starting action");

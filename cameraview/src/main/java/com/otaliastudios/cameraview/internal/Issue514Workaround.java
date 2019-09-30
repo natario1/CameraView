@@ -36,8 +36,9 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  *    9B. Publish overlays to GL texture using overlaySurfaceTexture.updateTexImage()
  *    9C. GLES - draw textureId
  *    9D. GLES - draw overlayTextureId
- * Both textures are drawn on the same EGLWindow and we manage to overlay them with {@link GLES20#GL_BLEND}.
- * This is the whole procedure and it works for the majority of devices and situations.
+ * Both textures are drawn on the same EGLWindow and we manage to overlay them with
+ * {@link GLES20#GL_BLEND}. This is the whole procedure and it works for the majority of
+ * devices and situations.
  *
  * ISSUE DESCRIPTION
  * The #514 issue can be described as follows:
@@ -66,7 +67,8 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  *
  * So a pixel format conversion takes place, when it shouldn't happen. We can't solve this:
  * - It is done at a lower level, there's no real way for us to specify the surface format, but
- *   it seems that these devices will prefer a YUV format and misunderstand our {@link Canvas} pixels.
+ *   it seems that these devices will prefer a YUV format and misunderstand our {@link Canvas}
+ *   pixels.
  * - There is also no way to identify which devices will present this issue, it's a bug somewhere
  *   and it is implementation specific.
  *
@@ -74,16 +76,18 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  * Hard to say why, but using this class fixes the described issue.
  * It seems that when the {@link SurfaceTexture#updateTexImage()} method for the overlay surface
  * is called - the one that updates the overlayTextureId - we must ensure that the CURRENTLY
- * BOUND TEXTURE ID IS NOT 0. The id we choose to apply might be cameraTextureId, or overlayTextureId,
- * or probably whatever other valid id, and should be passed to {@link #Issue514Workaround(int)}.
+ * BOUND TEXTURE ID IS NOT 0. The id we choose to apply might be cameraTextureId, or
+ * overlayTextureId, or probably whatever other valid id, and should be passed to
+ * {@link #Issue514Workaround(int)}.
  * [Tested with cameraTextureId and overlayTextureId: both do work.]
  * [Tested with invalid id like 9999. This won't work.]
  *
- * This makes no sense, since overlaySurfaceTexture.updateTexImage() is setting it to overlayTextureId
- * anyway, but it fixes the issue. Specifically, after any draw operation with {@link EglViewport},
- * the bound texture is reset to 0 so this must be undone here. We offer:
+ * This makes no sense, since overlaySurfaceTexture.updateTexImage() is setting it to
+ * overlayTextureId anyway, but it fixes the issue. Specifically, after any draw operation with
+ * {@link EglViewport}, the bound texture is reset to 0 so this must be undone here. We offer:
  *
- * - {@link #beforeOverlayUpdateTexImage()} to be called before the {@link SurfaceTexture#updateTexImage()} call
+ * - {@link #beforeOverlayUpdateTexImage()} to be called before the
+ *   {@link SurfaceTexture#updateTexImage()} call
  * - {@link #end()} to release and bring things back to normal state
  *
  * Since updating and rendering can happen on different threads with a shared EGL context,
@@ -93,9 +97,9 @@ import com.otaliastudios.cameraview.preview.RendererThread;
  * REFERENCES
  * https://github.com/natario1/CameraView/issues/514
  * https://android.googlesource.com/platform/frameworks/native/+/5c1139f/libs/gui/SurfaceTexture.cpp
- * I can see here that SurfaceTexture does indeed call glBindTexture with the same parameters whenever
- * updateTexImage is called, but it also does other gl stuff first. This other gl stuff might be
- * breaking when we don't have a bound texture on some specific hardware implementation.
+ * I can see here that SurfaceTexture does indeed call glBindTexture with the same parameters
+ * whenever updateTexImage is called, but it also does other gl stuff first. This other gl stuff
+ * might be breaking when we don't have a bound texture on some specific hardware implementation.
  */
 public class Issue514Workaround {
 

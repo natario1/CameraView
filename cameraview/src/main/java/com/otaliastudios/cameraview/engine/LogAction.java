@@ -15,12 +15,14 @@ import com.otaliastudios.cameraview.engine.action.BaseAction;
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class LogAction extends BaseAction {
 
-    private final static CameraLogger LOG = CameraLogger.create(Camera2Engine.class.getSimpleName());
+    private final static CameraLogger LOG
+            = CameraLogger.create(Camera2Engine.class.getSimpleName());
 
     private String lastLog;
 
     @Override
-    public void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request,
+    public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                   @NonNull CaptureRequest request,
                                    @NonNull TotalCaptureResult result) {
         super.onCaptureCompleted(holder, request, result);
         Integer aeMode = result.get(CaptureResult.CONTROL_AE_MODE);

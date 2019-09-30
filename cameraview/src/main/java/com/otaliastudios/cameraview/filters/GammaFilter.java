@@ -19,7 +19,8 @@ public class GammaFilter extends BaseFilter implements OneParameterFilter {
             + "uniform samplerExternalOES sTexture;\n"
             + "uniform float gamma;\n"
             + "void main() {\n"
-            + "  vec4 textureColor = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
+            + "  vec4 textureColor = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + ");\n"
             + "  gl_FragColor = vec4(pow(textureColor.rgb, vec3(gamma)), textureColor.w);\n"
             + "}\n";
 

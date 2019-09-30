@@ -80,7 +80,8 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     @NonNull
     public Frame acquireFrame() {
         if (mFramePool.isEmpty()) {
-            throw new RuntimeException("Need more frames than this! Please increase the pool size.");
+            throw new RuntimeException("Need more frames than this! " +
+                    "Please increase the pool size.");
         } else {
             //noinspection ConstantConditions
             return mFramePool.get();
@@ -123,7 +124,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
             // Always render the first few frames, or muxer fails.
             return true;
         } else if (getPendingEvents(FRAME_EVENT) > 2) {
-            LOG.w("shouldRenderFrame - Dropping frame because we already have too many pending events:",
+            LOG.w("shouldRenderFrame - Dropping, we already have too many pending events:",
                     getPendingEvents(FRAME_EVENT));
             return false;
         } else {
@@ -188,8 +189,9 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
                 "timestampUs:", frame.timestampUs(),
                 "- rendering.");
 
-        // 1. We must scale this matrix like GlCameraPreview does, because it might have some cropping.
-        // Scaling takes place with respect to the (0, 0, 0) point, so we must apply a Translation to compensate.
+        // 1. We must scale this matrix like GlCameraPreview does, because it might have some
+        // cropping. Scaling takes place with respect to the (0, 0, 0) point, so we must apply
+        // a Translation to compensate.
         float[] transform = frame.transform;
         float scaleX = mConfig.scaleX;
         float scaleY = mConfig.scaleY;
@@ -198,10 +200,10 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
         Matrix.scaleM(transform, 0, scaleX, scaleY, 1);
 
-        // 2. We also must rotate this matrix. In GlCameraPreview it is not needed because it is a live
-        // stream, but the output video, must be correctly rotated based on the device rotation at the moment.
-        // Rotation also takes place with respect to the origin (the Z axis), so we must
-        // translate to origin, rotate, then back to where we were.
+        // 2. We also must rotate this matrix. In GlCameraPreview it is not needed because it is
+        // a live stream, but the output video, must be correctly rotated based on the device
+        // rotation at the moment. Rotation also takes place with respect to the origin
+        // (the Z axis), so we must translate to origin, rotate, then back to where we were.
         Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
         Matrix.rotateM(transform, 0, mTransformRotation, 0, 0, 1);
         Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
@@ -209,9 +211,12 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         // 3. Do the same for overlays with their own rotation.
         if (mConfig.hasOverlay()) {
             mConfig.overlayDrawer.draw(mConfig.overlayTarget);
-            Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, 0.5F, 0.5F, 0);
-            Matrix.rotateM(mConfig.overlayDrawer.getTransform(), 0, mConfig.overlayRotation, 0, 0, 1);
-            Matrix.translateM(mConfig.overlayDrawer.getTransform(), 0, -0.5F, -0.5F, 0);
+            Matrix.translateM(mConfig.overlayDrawer.getTransform(),
+                    0, 0.5F, 0.5F, 0);
+            Matrix.rotateM(mConfig.overlayDrawer.getTransform(), 0, mConfig.overlayRotation,
+                    0, 0, 1);
+            Matrix.translateM(mConfig.overlayDrawer.getTransform(),
+                    0, -0.5F, -0.5F, 0);
         }
         mViewport.drawFrame(frame.timestampUs(), mConfig.textureId, transform);
         if (mConfig.hasOverlay()) {

@@ -26,7 +26,8 @@ public class VignetteFilter extends BaseFilter implements TwoParameterFilter {
             + "  const float slope = 20.0;\n"
             + "  vec2 coord = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+" - vec2(0.5, 0.5);\n"
             + "  float dist = length(coord * scale);\n"
-            + "  float lumen = shade / (1.0 + exp((dist * inv_max_dist - range) * slope)) + (1.0 - shade);\n"
+            + "  float lumen = shade / (1.0 + exp((dist * inv_max_dist - range) * slope)) "
+            + "+ (1.0 - shade);\n"
             + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  gl_FragColor = vec4(color.rgb * lumen, color.a);\n"
             + "}\n";

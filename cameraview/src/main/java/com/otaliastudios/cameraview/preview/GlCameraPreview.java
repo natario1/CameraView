@@ -32,9 +32,10 @@ import javax.microedition.khronos.opengles.GL10;
  *
  * - in the SurfaceTexture constructor we pass the GL texture handle that we have created.
  *
- * - The SurfaceTexture is linked to the Camera1Engine object. The camera will pass down buffers of data with
- *   a specified size (that is, the Camera1Engine preview size). For this reason we don't have to specify
- *   surfaceTexture.setDefaultBufferSize() (like we do, for example, in Snapshot1PictureRecorder).
+ * - The SurfaceTexture is linked to the Camera1Engine object. The camera will pass down
+ *   buffers of data with a specified size (that is, the Camera1Engine preview size).
+ *   For this reason we don't have to specify surfaceTexture.setDefaultBufferSize()
+ *   (like we do, for example, in Snapshot1PictureRecorder).
  *
  * - When SurfaceTexture.updateTexImage() is called, it will fetch the latest texture image from the
  *   camera stream and assign it to the GL texture that was passed.
@@ -42,12 +43,13 @@ import javax.microedition.khronos.opengles.GL10;
  *   the transformation matrix to be applied.
  *
  * - The easy way to render an OpenGL texture is using the {@link GLSurfaceView} class.
- *   It manages the GL context, hosts a surface and runs a separated rendering thread that will perform
- *   the rendering.
+ *   It manages the GL context, hosts a surface and runs a separated rendering thread that will
+ *   perform the rendering.
  *
  * - As per docs, we ask the GLSurfaceView to delegate rendering to us, using
- *   {@link GLSurfaceView#setRenderer(GLSurfaceView.Renderer)}. We request a render on the SurfaceView
- *   anytime the SurfaceTexture notifies that it has new data available (see OnFrameAvailableListener below).
+ *   {@link GLSurfaceView#setRenderer(GLSurfaceView.Renderer)}. We request a render on the
+ *   SurfaceView anytime the SurfaceTexture notifies that it has new data available
+ *   (see OnFrameAvailableListener below).
  *
  * - So in short:
  *   - The SurfaceTexture has buffers of data of mInputStreamSize
@@ -55,9 +57,10 @@ import javax.microedition.khronos.opengles.GL10;
  *     These are determined by the CameraView.onMeasure method.
  *   - We have a GL rich texture to be drawn (in the given method and thread).
  *
- * This class will provide rendering callbacks to anyone who registers a {@link RendererFrameCallback}.
- * Callbacks are guaranteed to be called on the renderer thread, which means that we can fetch
- * the GL context that was created and is managed by the {@link GLSurfaceView}.
+ * This class will provide rendering callbacks to anyone who registers a
+ * {@link RendererFrameCallback}. Callbacks are guaranteed to be called on the renderer thread,
+ * which means that we can fetch the GL context that was created and is managed
+ * by the {@link GLSurfaceView}.
  */
 public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceTexture> {
 
@@ -66,7 +69,8 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
     private int mOutputTextureId = 0;
     private SurfaceTexture mInputSurfaceTexture;
     private EglViewport mOutputViewport;
-    private final Set<RendererFrameCallback> mRendererFrameCallbacks = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
+    private final Set<RendererFrameCallback> mRendererFrameCallbacks
+            = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
     @VisibleForTesting float mCropScaleX = 1F;
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
@@ -79,7 +83,8 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
     @NonNull
     @Override
     protected GLSurfaceView onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
-        ViewGroup root = (ViewGroup) LayoutInflater.from(context).inflate(R.layout.cameraview_gl_view, parent, false);
+        ViewGroup root = (ViewGroup) LayoutInflater.from(context)
+                .inflate(R.layout.cameraview_gl_view, parent, false);
         GLSurfaceView glView = root.findViewById(R.id.gl_surface_view);
         glView.setEGLContextClientVersion(2);
         glView.setRenderer(instantiateRenderer());
@@ -160,8 +165,8 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
                 }
             });
 
-            // Since we are using GLSurfaceView.RENDERMODE_WHEN_DIRTY, we must notify the SurfaceView
-            // of dirtyness, so that it draws again. This is how it's done.
+            // Since we are using GLSurfaceView.RENDERMODE_WHEN_DIRTY, we must notify
+            // the SurfaceView of dirtyness, so that it draws again. This is how it's done.
             mInputSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
                 @Override
                 public void onFrameAvailable(SurfaceTexture surfaceTexture) {
@@ -209,8 +214,10 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
 
             if (isCropping()) {
                 // Scaling is easy, but we must also translate before:
-                // If the view is 10x1000 (very tall), it will show only the left strip of the preview (not the center one).
-                // If the view is 1000x10 (very large), it will show only the bottom strip of the preview (not the center one).
+                // If the view is 10x1000 (very tall), it will show only the left strip
+                // of the preview (not the center one).
+                // If the view is 1000x10 (very large), it will show only the bottom strip
+                // of the preview (not the center one).
                 float translX = (1F - mCropScaleX) / 2F;
                 float translY = (1F - mCropScaleY) / 2F;
                 Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
@@ -245,21 +252,23 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
     }
 
     /**
-     * To crop in GL, we could actually use view.setScaleX and setScaleY, but only from Android N onward.
-     * See documentation: https://developer.android.com/reference/android/view/SurfaceView
+     * To crop in GL, we could actually use view.setScaleX and setScaleY, but only from Android N
+     * onward. See documentation: https://developer.android.com/reference/android/view/SurfaceView
      *
-     *   Note: Starting in platform version Build.VERSION_CODES.N, SurfaceView's window position is updated
-     *   synchronously with other View rendering. This means that translating and scaling a SurfaceView on
-     *   screen will not cause rendering artifacts. Such artifacts may occur on previous versions of the
-     *   platform when its window is positioned asynchronously.
+     *   Note: Starting in platform version Build.VERSION_CODES.N, SurfaceView's window position
+     *   is updated synchronously with other View rendering. This means that translating and scaling
+     *   a SurfaceView on screen will not cause rendering artifacts. Such artifacts may occur on
+     *   previous versions of the platform when its window is positioned asynchronously.
      *
-     * But to support older platforms, this seem to work - computing scale values and requesting a new frame,
-     * then drawing it with a scaled transformation matrix. See {@link Renderer#onDrawFrame(GL10)}.
+     * But to support older platforms, this seem to work - computing scale values and requesting
+     * a new frame, then drawing it with a scaled transformation matrix.
+     * See {@link Renderer#onDrawFrame(GL10)}.
      */
     @Override
     protected void crop(@NonNull Op<Void> op) {
         op.start();
-        if (mInputStreamWidth > 0 && mInputStreamHeight > 0 && mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0) {
+        if (mInputStreamWidth > 0 && mInputStreamHeight > 0 && mOutputSurfaceWidth > 0
+                && mOutputSurfaceHeight > 0) {
             float scaleX = 1f, scaleY = 1f;
             AspectRatio current = AspectRatio.of(mOutputSurfaceWidth, mOutputSurfaceHeight);
             AspectRatio target = AspectRatio.of(mInputStreamWidth, mInputStreamHeight);

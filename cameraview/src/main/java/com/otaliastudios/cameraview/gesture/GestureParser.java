@@ -18,11 +18,17 @@ public class GestureParser {
     private int verticalScrollAction;
 
     public GestureParser(@NonNull TypedArray array) {
-        this.tapAction = array.getInteger(R.styleable.CameraView_cameraGestureTap, GestureAction.DEFAULT_TAP.value());
-        this.longTapAction = array.getInteger(R.styleable.CameraView_cameraGestureLongTap, GestureAction.DEFAULT_LONG_TAP.value());
-        this.pinchAction = array.getInteger(R.styleable.CameraView_cameraGesturePinch, GestureAction.DEFAULT_PINCH.value());
-        this.horizontalScrollAction = array.getInteger(R.styleable.CameraView_cameraGestureScrollHorizontal, GestureAction.DEFAULT_SCROLL_HORIZONTAL.value());
-        this.verticalScrollAction = array.getInteger(R.styleable.CameraView_cameraGestureScrollVertical, GestureAction.DEFAULT_SCROLL_VERTICAL.value());
+        tapAction = array.getInteger(R.styleable.CameraView_cameraGestureTap,
+                GestureAction.DEFAULT_TAP.value());
+        longTapAction = array.getInteger(R.styleable.CameraView_cameraGestureLongTap,
+                GestureAction.DEFAULT_LONG_TAP.value());
+        pinchAction = array.getInteger(R.styleable.CameraView_cameraGesturePinch,
+                GestureAction.DEFAULT_PINCH.value());
+        horizontalScrollAction = array.getInteger(
+                R.styleable.CameraView_cameraGestureScrollHorizontal,
+                GestureAction.DEFAULT_SCROLL_HORIZONTAL.value());
+        verticalScrollAction = array.getInteger(R.styleable.CameraView_cameraGestureScrollVertical,
+                GestureAction.DEFAULT_SCROLL_VERTICAL.value());
     }
 
     private GestureAction get(int which) {

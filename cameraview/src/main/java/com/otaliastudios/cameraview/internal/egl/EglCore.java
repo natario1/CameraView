@@ -172,8 +172,8 @@ public final class EglCore {
         }
         EGLConfig[] configs = new EGLConfig[1];
         int[] numConfigs = new int[1];
-        if (!EGL14.eglChooseConfig(mEGLDisplay, attribList, 0, configs, 0, configs.length,
-                numConfigs, 0)) {
+        if (!EGL14.eglChooseConfig(mEGLDisplay, attribList, 0, configs, 0,
+                configs.length, numConfigs, 0)) {
             Log.w(TAG, "unable to find RGB8888 / " + version + " EGLConfig");
             return null;
         }
@@ -210,7 +210,8 @@ public final class EglCore {
                 // the EGL state, so if a surface or context is still current on another
                 // thread we can't fully release it here.  Exceptions thrown from here
                 // are quietly discarded.  Complain in the log file.
-                Log.w(TAG, "WARNING: EglCore was not explicitly released -- state may be leaked");
+                Log.w(TAG, "WARNING: EglCore was not explicitly released! " +
+                        "State may be leaked");
                 release();
             }
         } finally {

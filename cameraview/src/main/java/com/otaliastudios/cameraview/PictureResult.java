@@ -137,7 +137,8 @@ public class PictureResult {
      * @param callback a callback to be notified of image decoding
      */
     public void toBitmap(int maxWidth, int maxHeight, @NonNull BitmapCallback callback) {
-        CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, new BitmapFactory.Options(), rotation, callback);
+        CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, new BitmapFactory.Options(),
+                rotation, callback);
     }
 
     /**

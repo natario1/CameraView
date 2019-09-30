@@ -19,7 +19,8 @@ public class PinchGestureFinder extends GestureFinder {
     public PinchGestureFinder(@NonNull Controller controller) {
         super(controller, 2);
         setGesture(Gesture.PINCH);
-        mDetector = new ScaleGestureDetector(controller.getContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        mDetector = new ScaleGestureDetector(controller.getContext(),
+                new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
                 mNotify = true;

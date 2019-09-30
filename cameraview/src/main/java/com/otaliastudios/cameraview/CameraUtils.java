@@ -108,7 +108,9 @@ public class CameraUtils {
      * @param callback a callback
      */
     @SuppressWarnings("WeakerAccess")
-    public static void writeToFile(@NonNull final byte[] data, @NonNull final File file, @NonNull final FileCallback callback) {
+    public static void writeToFile(@NonNull final byte[] data,
+                                   @NonNull final File file,
+                                   @NonNull final FileCallback callback) {
         final Handler ui = new Handler();
         WorkerHandler.execute(new Runnable() {
             @Override
@@ -149,7 +151,8 @@ public class CameraUtils {
      * @param callback a callback to be notified
      */
     @SuppressWarnings("WeakerAccess")
-    public static void decodeBitmap(@NonNull final byte[] source, @NonNull final BitmapCallback callback) {
+    public static void decodeBitmap(@NonNull final byte[] source,
+                                    @NonNull final BitmapCallback callback) {
         decodeBitmap(source, Integer.MAX_VALUE, Integer.MAX_VALUE, callback);
     }
     
@@ -167,7 +170,10 @@ public class CameraUtils {
      * @param callback a callback to be notified
      */
     @SuppressWarnings("WeakerAccess")
-    public static void decodeBitmap(@NonNull final byte[] source, final int maxWidth, final int maxHeight, @NonNull final BitmapCallback callback) {
+    public static void decodeBitmap(@NonNull final byte[] source,
+                                    final int maxWidth,
+                                    final int maxHeight,
+                                    @NonNull final BitmapCallback callback) {
         decodeBitmap(source, maxWidth, maxHeight, new BitmapFactory.Options(), callback);
     }
 
@@ -186,12 +192,20 @@ public class CameraUtils {
      * @param callback a callback to be notified
      */
     @SuppressWarnings("WeakerAccess")
-    public static void decodeBitmap(@NonNull final byte[] source, final int maxWidth, final int maxHeight, @NonNull final BitmapFactory.Options options, @NonNull final BitmapCallback callback) {
+    public static void decodeBitmap(@NonNull final byte[] source,
+                                    final int maxWidth,
+                                    final int maxHeight,
+                                    @NonNull final BitmapFactory.Options options,
+                                    @NonNull final BitmapCallback callback) {
         decodeBitmap(source, maxWidth, maxHeight, options, -1, callback);
     }
 
-    @SuppressWarnings("WeakerAccess")
-    static void decodeBitmap(@NonNull final byte[] source, final int maxWidth, final int maxHeight, @NonNull final BitmapFactory.Options options, final int rotation, @NonNull final BitmapCallback callback) {
+    static void decodeBitmap(@NonNull final byte[] source,
+                             final int maxWidth,
+                             final int maxHeight,
+                             @NonNull final BitmapFactory.Options options,
+                             final int rotation,
+                             @NonNull final BitmapCallback callback) {
         final Handler ui = new Handler();
         WorkerHandler.execute(new Runnable() {
             @Override
@@ -239,10 +253,13 @@ public class CameraUtils {
      * @param options the options to be passed to decodeByteArray
      * @return decoded bitmap or null if error is encountered
      */
-    @SuppressWarnings({"SuspiciousNameCombination", "WeakerAccess"})
+    @SuppressWarnings("WeakerAccess")
     @Nullable
     @WorkerThread
-    public static Bitmap decodeBitmap(@NonNull byte[] source, int maxWidth, int maxHeight, @NonNull BitmapFactory.Options options) {
+    public static Bitmap decodeBitmap(@NonNull byte[] source,
+                                      int maxWidth,
+                                      int maxHeight,
+                                      @NonNull BitmapFactory.Options options) {
         return decodeBitmap(source, maxWidth, maxHeight, options, -1);
     }
 
@@ -250,7 +267,11 @@ public class CameraUtils {
     // Ignores flipping, but it should be super rare.
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
     @Nullable
-    private static Bitmap decodeBitmap(@NonNull byte[] source, int maxWidth, int maxHeight, @NonNull BitmapFactory.Options options, int rotation) {
+    private static Bitmap decodeBitmap(@NonNull byte[] source,
+                                       int maxWidth,
+                                       int maxHeight,
+                                       @NonNull BitmapFactory.Options options,
+                                       int rotation) {
         if (maxWidth <= 0) maxWidth = Integer.MAX_VALUE;
         if (maxHeight <= 0) maxHeight = Integer.MAX_VALUE;
         int orientation;
@@ -261,7 +282,8 @@ public class CameraUtils {
                 // http://sylvana.net/jpegcrop/exif_orientation.html
                 stream = new ByteArrayInputStream(source);
                 ExifInterface exif = new ExifInterface(stream);
-                int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                        ExifInterface.ORIENTATION_NORMAL);
                 orientation = ExifHelper.readExifOrientation(exifOrientation);
                 flip = exifOrientation == ExifInterface.ORIENTATION_FLIP_HORIZONTAL ||
                         exifOrientation == ExifInterface.ORIENTATION_FLIP_VERTICAL ||
@@ -310,7 +332,8 @@ public class CameraUtils {
                 Matrix matrix = new Matrix();
                 matrix.setRotate(orientation);
                 Bitmap temp = bitmap;
-                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
+                        bitmap.getHeight(), matrix, true);
                 temp.recycle();
             }
         } catch (OutOfMemoryError e) {

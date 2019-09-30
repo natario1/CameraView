@@ -32,7 +32,8 @@ public class AutoFixFilter extends BaseFilter implements OneParameterFilter {
             + "  density_offset = " + (0.5f / 1024f) + ";\n"
             + "  density_scale = " + (1023f / 1024f) + ";\n"
             + "  const vec3 weights = vec3(0.33333, 0.33333, 0.33333);\n"
-            + "  vec4 color = texture2D(tex_sampler_0, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
+            + "  vec4 color = texture2D(tex_sampler_0, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + ");\n"
             + "  float energy = dot(color.rgb, weights);\n"
             + "  float mask_value = energy - 0.5;\n"
             + "  float alpha;\n"

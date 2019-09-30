@@ -67,7 +67,8 @@ public class ImageHelper {
         }
 
         if (pixelStride == 2 && rowStride == width && uBuffer.get(0) == vBuffer.get(1)) {
-            // maybe V an U planes overlap as per NV21, which means vBuffer[1] is alias of uBuffer[0]
+            // maybe V an U planes overlap as per NV21, which means vBuffer[1]
+            // is alias of uBuffer[0]
             byte savePixel = vBuffer.get(1);
             vBuffer.put(1, (byte)0);
             if (uBuffer.get(0) == 0) {

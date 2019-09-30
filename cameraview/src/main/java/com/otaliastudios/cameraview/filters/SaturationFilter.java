@@ -26,15 +26,18 @@ public class SaturationFilter extends BaseFilter implements OneParameterFilter {
             + "  weights[1] = " + 5f / 8f + ";\n"
             + "  weights[2] = " + 1f / 8f + ";\n"
             + "  shift = " + 1.0f / 255.0f + ";\n"
-            + "  vec4 oldcolor = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
+            + "  vec4 oldcolor = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + ");\n"
             + "  float kv = dot(oldcolor.rgb, weights) + shift;\n"
             + "  vec3 new_color = scale * oldcolor.rgb + (1.0 - scale) * kv;\n"
             + "  gl_FragColor = vec4(new_color, oldcolor.a);\n"
-            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + ");\n"
             + "  float de = dot(color.rgb, weights);\n"
             + "  float inv_de = 1.0 / de;\n"
             + "  vec3 verynew_color = de * pow(color.rgb * inv_de, exponents);\n"
-            + "  float max_color = max(max(max(verynew_color.r, verynew_color.g), verynew_color.b), 1.0);\n"
+            + "  float max_color = max(max(max(verynew_color.r, verynew_color.g), "
+            + "verynew_color.b), 1.0);\n"
             + "  gl_FragColor = gl_FragColor+vec4(verynew_color / max_color, color.a);\n"
             + "}\n";
 

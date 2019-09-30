@@ -53,7 +53,8 @@ public class FocusMeter extends BaseMeter {
         LOG.i("onStarted:", "with areas:", areas);
         holder.getBuilder(this).set(CaptureRequest.CONTROL_AF_TRIGGER,
                 CaptureRequest.CONTROL_AF_TRIGGER_START);
-        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
+        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF,
+                0);
         if (!areas.isEmpty() && maxRegions > 0) {
             int max = Math.min(maxRegions, areas.size());
             holder.getBuilder(this).set(CaptureRequest.CONTROL_AF_REGIONS,

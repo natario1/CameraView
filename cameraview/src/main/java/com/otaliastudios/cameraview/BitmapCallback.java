@@ -10,7 +10,7 @@ import androidx.annotation.UiThread;
 public interface BitmapCallback {
 
     /**
-     * Notifies that the bitmap was succesfully decoded.
+     * Notifies that the bitmap was successfully decoded.
      * This is run on the UI thread.
      * Returns a null object if a {@link OutOfMemoryError} was encountered.
      *

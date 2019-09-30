@@ -36,7 +36,8 @@ import java.nio.FloatBuffer;
  * NOTE - the {@link android.graphics.SurfaceTexture} restrictions apply:
  * We only support the {@link android.opengl.GLES11Ext#GL_TEXTURE_EXTERNAL_OES} texture target
  * and it must be specified in the fragment shader as a samplerExternalOES texture.
- * You also have to explicitly require the extension: see {@link #createDefaultFragmentShader(String)}.
+ * You also have to explicitly require the extension: see
+ * {@link #createDefaultFragmentShader(String)}.
  *
  */
 public abstract class BaseFilter implements Filter {
@@ -58,24 +59,28 @@ public abstract class BaseFilter implements Filter {
     protected final static String DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME = "vTextureCoord";
 
     @NonNull
-    private static String createDefaultVertexShader(@NonNull String vertexPositionName,
-                                                    @NonNull String vertexTextureCoordinateName,
-                                                    @NonNull String vertexModelViewProjectionMatrixName,
-                                                    @NonNull String vertexTransformMatrixName,
-                                                    @NonNull String fragmentTextureCoordinateName) {
-        return "uniform mat4 "+vertexModelViewProjectionMatrixName+";\n" +
-                "uniform mat4 "+vertexTransformMatrixName+";\n" +
-                "attribute vec4 "+vertexPositionName+";\n" +
-                "attribute vec4 "+vertexTextureCoordinateName+";\n" +
-                "varying vec2 "+fragmentTextureCoordinateName+";\n" +
-                "void main() {\n" +
-                "    gl_Position = "+vertexModelViewProjectionMatrixName+" * "+vertexPositionName+";\n" +
-                "    "+fragmentTextureCoordinateName+" = ("+vertexTransformMatrixName+" * "+vertexTextureCoordinateName+").xy;\n" +
-                "}\n";
+    private static String createDefaultVertexShader(
+            @NonNull String vertexPositionName,
+            @NonNull String vertexTextureCoordinateName,
+            @NonNull String vertexModelViewProjectionMatrixName,
+            @NonNull String vertexTransformMatrixName,
+            @NonNull String fragmentTextureCoordinateName) {
+        return "uniform mat4 "+vertexModelViewProjectionMatrixName+";\n"
+                + "uniform mat4 "+vertexTransformMatrixName+";\n"
+                + "attribute vec4 "+vertexPositionName+";\n"
+                + "attribute vec4 "+vertexTextureCoordinateName+";\n"
+                + "varying vec2 "+fragmentTextureCoordinateName+";\n"
+                + "void main() {\n"
+                + "    gl_Position = " +vertexModelViewProjectionMatrixName+" * "
+                + vertexPositionName+";\n"
+                + "    "+fragmentTextureCoordinateName+" = ("+vertexTransformMatrixName+" * "
+                + vertexTextureCoordinateName+").xy;\n"
+                + "}\n";
     }
 
     @NonNull
-    private static String createDefaultFragmentShader(@NonNull String fragmentTextureCoordinateName) {
+    private static String createDefaultFragmentShader(
+            @NonNull String fragmentTextureCoordinateName) {
         return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "varying vec2 "+fragmentTextureCoordinateName+";\n"
@@ -139,11 +144,15 @@ public abstract class BaseFilter implements Filter {
         this.programHandle = programHandle;
         vertexPositionLocation = GLES20.glGetAttribLocation(programHandle, vertexPositionName);
         GlUtils.checkLocation(vertexPositionLocation, vertexPositionName);
-        vertexTextureCoordinateLocation = GLES20.glGetAttribLocation(programHandle, vertexTextureCoordinateName);
+        vertexTextureCoordinateLocation = GLES20.glGetAttribLocation(programHandle,
+                vertexTextureCoordinateName);
         GlUtils.checkLocation(vertexTextureCoordinateLocation, vertexTextureCoordinateName);
-        vertexModelViewProjectionMatrixLocation = GLES20.glGetUniformLocation(programHandle, vertexModelViewProjectionMatrixName);
-        GlUtils.checkLocation(vertexModelViewProjectionMatrixLocation, vertexModelViewProjectionMatrixName);
-        vertexTransformMatrixLocation = GLES20.glGetUniformLocation(programHandle, vertexTransformMatrixName);
+        vertexModelViewProjectionMatrixLocation = GLES20.glGetUniformLocation(programHandle,
+                vertexModelViewProjectionMatrixName);
+        GlUtils.checkLocation(vertexModelViewProjectionMatrixLocation,
+                vertexModelViewProjectionMatrixName);
+        vertexTransformMatrixLocation = GLES20.glGetUniformLocation(programHandle,
+                vertexTransformMatrixName);
         GlUtils.checkLocation(vertexTransformMatrixLocation, vertexTransformMatrixName);
     }
 

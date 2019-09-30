@@ -29,7 +29,8 @@ public abstract class BaseReset extends BaseAction {
         super.onStart(holder);
         MeteringRectangle area = null;
         if (resetArea) {
-            Rect rect = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE, new Rect());
+            Rect rect = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+                    new Rect());
             area = new MeteringRectangle(rect, MeteringRectangle.METERING_WEIGHT_DONT_CARE);
         }
         onStarted(holder, area);

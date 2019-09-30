@@ -37,7 +37,8 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
     @NonNull
     @Override
     protected TextureView onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
-        View root = LayoutInflater.from(context).inflate(R.layout.cameraview_texture_view, parent, false);
+        View root = LayoutInflater.from(context).inflate(R.layout.cameraview_texture_view, parent,
+                false);
         parent.addView(root, 0);
         TextureView texture = root.findViewById(R.id.texture_view);
         texture.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
@@ -145,6 +146,8 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
                 task.setResult(null);
             }
         });
-        try { Tasks.await(task.getTask()); } catch (InterruptedException | ExecutionException ignore) { }
+        try {
+            Tasks.await(task.getTask());
+        } catch (InterruptedException | ExecutionException ignore) { }
     }
 }

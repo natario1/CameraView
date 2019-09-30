@@ -67,7 +67,8 @@ public class AudioMediaEncoder extends MediaEncoder {
                 mConfig.mimeType,
                 mConfig.samplingFrequency,
                 mConfig.channels);
-        audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
+        audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE,
+                MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, mConfig.audioFormatChannels());
         audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         try {
@@ -79,7 +80,8 @@ public class AudioMediaEncoder extends MediaEncoder {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        mMediaCodec.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        mMediaCodec.configure(audioFormat, null, null,
+                MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
         mByteBufferPool = new ByteBufferPool(mConfig.frameSize(), mConfig.bufferPoolMaxSize());
         mAudioNoise = new AudioNoise(mConfig);
@@ -199,15 +201,16 @@ public class AudioMediaEncoder extends MediaEncoder {
             mCurrentBuffer = mByteBufferPool.get();
             if (mCurrentBuffer == null) {
                 // This can happen and it means that encoding is slow with respect to recording.
-                // One might be tempted to fix precisely the next frame presentation time when this happens,
-                // but this is not needed because the current increaseTime() algorithm will consider delays
-                // when they get large.
+                // One might be tempted to fix precisely the next frame presentation time when
+                // this happens, but this is not needed because the current increaseTime()
+                // algorithm will consider delays when they get large.
                 // Sleeping before returning is a good way of balancing the two operations.
                 // However, if endOfStream, we CAN'T lose this frame!
                 if (endOfStream) {
                     LOG.v("read thread - eos: true - No buffer, retrying.");
                 } else {
-                    LOG.w("read thread - eos: false - Skipping audio frame, encoding is too slow.");
+                    LOG.w("read thread - eos: false - Skipping audio frame,",
+                            "encoding is too slow.");
                     skipFrames(6); // sleep a bit
                 }
                 return false;
@@ -220,23 +223,27 @@ public class AudioMediaEncoder extends MediaEncoder {
                     mCurrentReadBytes = mAudioRecord.read(mCurrentBuffer, mConfig.frameSize());
                     long after = System.nanoTime();
                     float delayMillis = (after - before) / 1000000F;
-                    float durationMillis = AudioTimestamp.bytesToMillis(mCurrentReadBytes, mConfig.byteRate());
+                    float durationMillis = AudioTimestamp.bytesToMillis(mCurrentReadBytes,
+                            mConfig.byteRate());
                     LOG.v("read thread - reading took:", delayMillis,
                             "should be:", durationMillis,
                             "delay:", delayMillis - durationMillis);
                 } else {
                     mCurrentReadBytes = mAudioRecord.read(mCurrentBuffer, mConfig.frameSize());
                 }
-                LOG.i("read thread - eos:", endOfStream, "- Read new audio frame. Bytes:", mCurrentReadBytes);
+                LOG.i("read thread - eos:", endOfStream, "- Read new audio frame. Bytes:",
+                        mCurrentReadBytes);
                 if (mCurrentReadBytes > 0) { // Good read: increase PTS.
                     increaseTime(mCurrentReadBytes, endOfStream);
                     LOG.i("read thread - eos:", endOfStream, "- mLastTimeUs:", mLastTimeUs);
                     mCurrentBuffer.limit(mCurrentReadBytes);
                     enqueue(mCurrentBuffer, mLastTimeUs, endOfStream);
                 } else if (mCurrentReadBytes == AudioRecord.ERROR_INVALID_OPERATION) {
-                    LOG.e("read thread - eos:", endOfStream, "- Got AudioRecord.ERROR_INVALID_OPERATION");
+                    LOG.e("read thread - eos:", endOfStream,
+                            "- Got AudioRecord.ERROR_INVALID_OPERATION");
                 } else if (mCurrentReadBytes == AudioRecord.ERROR_BAD_VALUE) {
-                    LOG.e("read thread - eos:", endOfStream, "- Got AudioRecord.ERROR_BAD_VALUE");
+                    LOG.e("read thread - eos:", endOfStream,
+                            "- Got AudioRecord.ERROR_BAD_VALUE");
                 }
                 return true;
             }
@@ -264,7 +271,8 @@ public class AudioMediaEncoder extends MediaEncoder {
             if (!hasReachedMaxLength()) {
                 boolean didReachMaxLength = (mLastTimeUs - mFirstTimeUs) > getMaxLengthUs();
                 if (didReachMaxLength && !endOfStream) {
-                    LOG.w("read thread - this frame reached the maxLength! deltaUs:", mLastTimeUs - mFirstTimeUs);
+                    LOG.w("read thread - this frame reached the maxLength! deltaUs:",
+                            mLastTimeUs - mFirstTimeUs);
                     notifyMaxLengthReached();
                 }
             }
@@ -273,7 +281,9 @@ public class AudioMediaEncoder extends MediaEncoder {
             maybeAddNoise();
         }
 
-        private void enqueue(@NonNull ByteBuffer byteBuffer, long timestamp, boolean isEndOfStream) {
+        private void enqueue(@NonNull ByteBuffer byteBuffer,
+                             long timestamp,
+                             boolean isEndOfStream) {
             if (PERFORMANCE_DEBUG) {
                 mDebugSendStartMap.put(timestamp, System.nanoTime() / 1000000);
             }
@@ -312,7 +322,8 @@ public class AudioMediaEncoder extends MediaEncoder {
 
             long gapStart = mTimestamp.getGapStartUs(mLastTimeUs);
             long frameUs = AudioTimestamp.bytesToUs(mConfig.frameSize(), mConfig.byteRate());
-            LOG.w("read thread - GAPS: trying to add", gaps, "noise buffers. PERFORMANCE_MAX_GAPS:", PERFORMANCE_MAX_GAPS);
+            LOG.w("read thread - GAPS: trying to add", gaps,
+                    "noise buffers. PERFORMANCE_MAX_GAPS:", PERFORMANCE_MAX_GAPS);
             for (int i = 0; i < Math.min(gaps, PERFORMANCE_MAX_GAPS); i++) {
                 ByteBuffer noiseBuffer = mByteBufferPool.get();
                 if (noiseBuffer == null) {
@@ -347,7 +358,8 @@ public class AudioMediaEncoder extends MediaEncoder {
                 if (mInputBufferQueue.isEmpty()) {
                     skipFrames(2);
                 } else {
-                    LOG.i("encoding thread - performing", mInputBufferQueue.size(), "pending operations.");
+                    LOG.i("encoding thread - performing", mInputBufferQueue.size(),
+                            "pending operations.");
                     InputBuffer inputBuffer;
                     while ((inputBuffer = mInputBufferQueue.peek()) != null) {
 
@@ -357,10 +369,13 @@ public class AudioMediaEncoder extends MediaEncoder {
                             Long sendStart = mDebugSendStartMap.remove(inputBuffer.timestamp);
                             //noinspection StatementWithEmptyBody
                             if (sendStart != null) {
-                                mDebugSendAvgDelay = ((mDebugSendAvgDelay * mDebugSendCount) + (sendEnd - sendStart)) / (++mDebugSendCount);
-                                LOG.v("send delay millis:", sendEnd - sendStart, "average:", mDebugSendAvgDelay);
+                                mDebugSendAvgDelay = ((mDebugSendAvgDelay * mDebugSendCount)
+                                        + (sendEnd - sendStart)) / (++mDebugSendCount);
+                                LOG.v("send delay millis:", sendEnd - sendStart,
+                                        "average:", mDebugSendAvgDelay);
                             } else {
-                                // This input buffer was already processed (but tryAcquire failed for now).
+                                // This input buffer was already processed
+                                // (but tryAcquire failed for now).
                             }
                         }
 
@@ -381,23 +396,29 @@ public class AudioMediaEncoder extends MediaEncoder {
             mInputBufferPool.clear();
             if (PERFORMANCE_DEBUG) {
                 // After latest changes, the count here is not so different between MONO and STEREO.
-                // We get about 400 frames in both cases (430 for MONO, but doesn't seem like a big issue).
-                LOG.e("EXECUTE DELAY MILLIS:", mDebugExecuteAvgDelay, "COUNT:", mDebugExecuteCount);
-                LOG.e("SEND DELAY MILLIS:", mDebugSendAvgDelay, "COUNT:", mDebugSendCount);
+                // We get about 400 frames in both cases (430 for MONO, but doesn't seem like
+                // a big issue).
+                LOG.e("EXECUTE DELAY MILLIS:", mDebugExecuteAvgDelay,
+                        "COUNT:", mDebugExecuteCount);
+                LOG.e("SEND DELAY MILLIS:", mDebugSendAvgDelay,
+                        "COUNT:", mDebugSendCount);
             }
         }
 
         private void encode(@NonNull InputBuffer buffer) {
             long executeStart = System.nanoTime() / 1000000;
 
-            LOG.i("encoding thread - performing pending operation for timestamp:", buffer.timestamp, "- encoding.");
-            buffer.data.put(buffer.source); // NOTE: this copy is prob. the worst part here for performance
+            LOG.i("encoding thread - performing pending operation for timestamp:",
+                    buffer.timestamp, "- encoding.");
+            // NOTE: this copy is prob. the worst part here for performance
+            buffer.data.put(buffer.source);
             mByteBufferPool.recycle(buffer.source);
             mInputBufferQueue.remove(buffer);
             encodeInputBuffer(buffer);
             boolean eos = buffer.isEndOfStream;
             mInputBufferPool.recycle(buffer);
-            LOG.i("encoding thread - performing pending operation for timestamp:", buffer.timestamp, "- draining.");
+            LOG.i("encoding thread - performing pending operation for timestamp:",
+                    buffer.timestamp, "- draining.");
             // NOTE: can consider calling this drainOutput on yet another thread, which would let us
             // use an even smaller BUFFER_POOL_MAX_SIZE without losing audio frames. But this way
             // we can accumulate delay on this new thread without noticing (no pool getting empty).
@@ -405,8 +426,10 @@ public class AudioMediaEncoder extends MediaEncoder {
 
             if (PERFORMANCE_DEBUG) {
                 long executeEnd = System.nanoTime() / 1000000;
-                mDebugExecuteAvgDelay = ((mDebugExecuteAvgDelay * mDebugExecuteCount) + (executeEnd - executeStart)) / (++mDebugExecuteCount);
-                LOG.v("execute delay millis:", executeEnd - executeStart, "average:", mDebugExecuteAvgDelay);
+                mDebugExecuteAvgDelay = ((mDebugExecuteAvgDelay * mDebugExecuteCount)
+                        + (executeEnd - executeStart)) / (++mDebugExecuteCount);
+                LOG.v("execute delay millis:", executeEnd - executeStart,
+                        "average:", mDebugExecuteAvgDelay);
             }
         }
     }
