@@ -180,13 +180,22 @@ public class AudioMediaEncoder extends MediaEncoder {
             LOG.w("Stop was requested. We're out of the loop. Will post an endOfStream.");
             // Last input with 0 length. This will signal the endOfStream.
             // Can't use drain(true); it is only available when writing to the codec InputSurface.
-            read(true);
+            boolean didReadEos = false;
+            while (!didReadEos) {
+                didReadEos = read(true);
+            }
             mAudioRecord.stop();
             mAudioRecord.release();
             mAudioRecord = null;
         }
 
-        private void read(boolean endOfStream) {
+        /**
+         * Returns true if we found a buffer and could proceed, false if we found no buffer
+         * so the operation should be performed again by the caller.
+         * @param endOfStream true if last read
+         * @return true if proceeded
+         */
+        private boolean read(boolean endOfStream) {
             mCurrentBuffer = mByteBufferPool.get();
             if (mCurrentBuffer == null) {
                 // This can happen and it means that encoding is slow with respect to recording.
@@ -197,11 +206,11 @@ public class AudioMediaEncoder extends MediaEncoder {
                 // However, if endOfStream, we CAN'T lose this frame!
                 if (endOfStream) {
                     LOG.v("read thread - eos: true - No buffer, retrying.");
-                    read(true); // try again
                 } else {
                     LOG.w("read thread - eos: false - Skipping audio frame, encoding is too slow.");
                     skipFrames(6); // sleep a bit
                 }
+                return false;
             } else {
                 mCurrentBuffer.clear();
                 // When stereo, we read twice the data here and AudioRecord will fill the buffer
@@ -229,6 +238,7 @@ public class AudioMediaEncoder extends MediaEncoder {
                 } else if (mCurrentReadBytes == AudioRecord.ERROR_BAD_VALUE) {
                     LOG.e("read thread - eos:", endOfStream, "- Got AudioRecord.ERROR_BAD_VALUE");
                 }
+                return true;
             }
         }
 
