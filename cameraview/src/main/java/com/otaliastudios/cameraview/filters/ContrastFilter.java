@@ -17,9 +17,9 @@ public class ContrastFilter extends BaseFilter implements OneParameterFilter {
             + "precision mediump float;\n"
             + "uniform samplerExternalOES sTexture;\n"
             + "uniform float contrast;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  color -= 0.5;\n"
             + "  color *= contrast;\n"
             + "  color += 0.5;\n"
@@ -88,8 +88,8 @@ public class ContrastFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         GLES20.glUniform1f(contrastLocation, contrast);
         GlUtils.checkError("glUniform1f");
     }

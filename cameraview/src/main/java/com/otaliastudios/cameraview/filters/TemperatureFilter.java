@@ -17,9 +17,9 @@ public class TemperatureFilter extends BaseFilter implements OneParameterFilter 
             + "precision mediump float;\n"
             + "uniform samplerExternalOES sTexture;\n"
             + "uniform float scale;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  vec3 new_color = color.rgb;\n"
             + "  new_color.r = color.r + color.r * ( 1.0 - color.r) * scale;\n"
             + "  new_color.b = color.b - color.b * ( 1.0 - color.b) * scale;\n"
@@ -94,8 +94,8 @@ public class TemperatureFilter extends BaseFilter implements OneParameterFilter 
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         GLES20.glUniform1f(scaleLocation, scale);
         GlUtils.checkError("glUniform1f");
     }

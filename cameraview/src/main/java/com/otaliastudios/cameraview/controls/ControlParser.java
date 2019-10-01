@@ -25,16 +25,19 @@ public class ControlParser {
     private int engine;
 
     public ControlParser(@NonNull Context context, @NonNull TypedArray array) {
-        this.preview = array.getInteger(R.styleable.CameraView_cameraPreview, Preview.DEFAULT.value());
-        this.facing = array.getInteger(R.styleable.CameraView_cameraFacing, Facing.DEFAULT(context).value());
-        this.flash = array.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value());
-        this.grid = array.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value());
-        this.whiteBalance = array.getInteger(R.styleable.CameraView_cameraWhiteBalance, WhiteBalance.DEFAULT.value());
-        this.mode = array.getInteger(R.styleable.CameraView_cameraMode, Mode.DEFAULT.value());
-        this.hdr = array.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value());
-        this.audio = array.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value());
-        this.videoCodec = array.getInteger(R.styleable.CameraView_cameraVideoCodec, VideoCodec.DEFAULT.value());
-        this.engine = array.getInteger(R.styleable.CameraView_cameraEngine, Engine.DEFAULT.value());
+        preview = array.getInteger(R.styleable.CameraView_cameraPreview, Preview.DEFAULT.value());
+        facing = array.getInteger(R.styleable.CameraView_cameraFacing,
+                Facing.DEFAULT(context).value());
+        flash = array.getInteger(R.styleable.CameraView_cameraFlash, Flash.DEFAULT.value());
+        grid = array.getInteger(R.styleable.CameraView_cameraGrid, Grid.DEFAULT.value());
+        whiteBalance = array.getInteger(R.styleable.CameraView_cameraWhiteBalance,
+                WhiteBalance.DEFAULT.value());
+        mode = array.getInteger(R.styleable.CameraView_cameraMode, Mode.DEFAULT.value());
+        hdr = array.getInteger(R.styleable.CameraView_cameraHdr, Hdr.DEFAULT.value());
+        audio = array.getInteger(R.styleable.CameraView_cameraAudio, Audio.DEFAULT.value());
+        videoCodec = array.getInteger(R.styleable.CameraView_cameraVideoCodec,
+                VideoCodec.DEFAULT.value());
+        engine = array.getInteger(R.styleable.CameraView_cameraEngine, Engine.DEFAULT.value());
     }
 
     @NonNull

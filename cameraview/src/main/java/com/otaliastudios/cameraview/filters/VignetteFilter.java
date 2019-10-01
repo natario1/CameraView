@@ -21,13 +21,14 @@ public class VignetteFilter extends BaseFilter implements TwoParameterFilter {
             + "uniform float inv_max_dist;\n"
             + "uniform float shade;\n"
             + "uniform vec2 scale;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
             + "  const float slope = 20.0;\n"
-            + "  vec2 coord = vTextureCoord - vec2(0.5, 0.5);\n"
+            + "  vec2 coord = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+" - vec2(0.5, 0.5);\n"
             + "  float dist = length(coord * scale);\n"
-            + "  float lumen = shade / (1.0 + exp((dist * inv_max_dist - range) * slope)) + (1.0 - shade);\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  float lumen = shade / (1.0 + exp((dist * inv_max_dist - range) * slope)) "
+            + "+ (1.0 - shade);\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  gl_FragColor = vec4(color.rgb * lumen, color.a);\n"
             + "}\n";
 
@@ -144,8 +145,8 @@ public class VignetteFilter extends BaseFilter implements TwoParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         float[] scale = new float[2];
         if (mWidth > mHeight) {
             scale[0] = 1f;

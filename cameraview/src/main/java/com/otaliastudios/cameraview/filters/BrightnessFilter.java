@@ -17,9 +17,9 @@ public class BrightnessFilter extends BaseFilter implements OneParameterFilter {
             + "precision mediump float;\n"
             + "uniform samplerExternalOES sTexture;\n"
             + "uniform float brightness;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  gl_FragColor = brightness * color;\n"
             + "}\n";
 
@@ -86,8 +86,8 @@ public class BrightnessFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         GLES20.glUniform1f(brightnessLocation, brightness);
         GlUtils.checkError("glUniform1f");
     }

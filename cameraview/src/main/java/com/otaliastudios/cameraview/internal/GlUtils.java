@@ -26,7 +26,8 @@ public class GlUtils {
     public static void checkError(@NonNull String opName) {
         int error = GLES20.glGetError();
         if (error != GLES20.GL_NO_ERROR) {
-            String message = LOG.e("Error during", opName, "glError 0x", Integer.toHexString(error));
+            String message = LOG.e("Error during", opName, "glError 0x",
+                    Integer.toHexString(error));
             throw new RuntimeException(message);
         }
     }
@@ -47,7 +48,8 @@ public class GlUtils {
         int[] compiled = new int[1];
         GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
         if (compiled[0] == 0) {
-            LOG.e("Could not compile shader", shaderType, ":", GLES20.glGetShaderInfoLog(shader));
+            LOG.e("Could not compile shader", shaderType, ":",
+                    GLES20.glGetShaderInfoLog(shader));
             GLES20.glDeleteShader(shader);
             shader = 0;
         }

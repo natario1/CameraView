@@ -78,12 +78,16 @@ public abstract class BaseAction implements Action {
     }
 
     @Override
-    public void onCaptureProgressed(@NonNull ActionHolder holder, @NonNull CaptureRequest request, @NonNull CaptureResult result) {
+    public void onCaptureProgressed(@NonNull ActionHolder holder,
+                                    @NonNull CaptureRequest request,
+                                    @NonNull CaptureResult result) {
         // Overrideable
     }
 
     @Override
-    public void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+    public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                   @NonNull CaptureRequest request,
+                                   @NonNull TotalCaptureResult result) {
         // Overrideable
     }
 
@@ -92,7 +96,7 @@ public abstract class BaseAction implements Action {
      * this removes this action from the holder.
      * @param newState new state
      */
-    protected void setState(int newState) {
+    protected final void setState(int newState) {
         if (newState != state) {
             state = newState;
             for (ActionCallback callback : callbacks) {

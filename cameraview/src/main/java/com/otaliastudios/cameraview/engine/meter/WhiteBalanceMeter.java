@@ -27,10 +27,13 @@ public class WhiteBalanceMeter extends BaseMeter {
 
     @Override
     protected boolean checkIsSupported(@NonNull ActionHolder holder) {
-        boolean isNotLegacy = readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
+        boolean isNotLegacy = readCharacteristic(
+                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
                 != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
         Integer awbMode = holder.getBuilder(this).get(CaptureRequest.CONTROL_AWB_MODE);
-        boolean result = isNotLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
+        boolean result = isNotLegacy
+                && awbMode != null
+                && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
         LOG.i("checkIsSupported:", result);
         return result;
     }
@@ -46,7 +49,8 @@ public class WhiteBalanceMeter extends BaseMeter {
     @Override
     protected void onStarted(@NonNull ActionHolder holder, @NonNull List<MeteringRectangle> areas) {
         LOG.i("onStarted:", "with areas:", areas);
-        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
+        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB,
+                0);
         if (!areas.isEmpty() && maxRegions > 0) {
             int max = Math.min(maxRegions, areas.size());
             holder.getBuilder(this).set(CaptureRequest.CONTROL_AWB_REGIONS,
@@ -56,7 +60,8 @@ public class WhiteBalanceMeter extends BaseMeter {
     }
 
     @Override
-    public void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request,
+    public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                   @NonNull CaptureRequest request,
                                    @NonNull TotalCaptureResult result) {
         super.onCaptureCompleted(holder, request, result);
         Integer awbState = result.get(CaptureResult.CONTROL_AWB_STATE);

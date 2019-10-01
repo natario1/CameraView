@@ -13,7 +13,7 @@ public class SepiaFilter extends BaseFilter {
             + "precision mediump float;\n"
             + "uniform samplerExternalOES sTexture;\n"
             + "mat3 matrix;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
             + "  matrix[0][0]=" + 805.0f / 2048.0f + ";\n"
             + "  matrix[0][1]=" + 715.0f / 2048.0f + ";\n"
@@ -24,7 +24,7 @@ public class SepiaFilter extends BaseFilter {
             + "  matrix[2][0]=" + 387.0f / 2048.0f + ";\n"
             + "  matrix[2][1]=" + 344.0f / 2048.0f + ";\n"
             + "  matrix[2][2]=" + 268.0f / 2048.0f + ";\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  vec3 new_color = min(matrix * color.rgb, 1.0);\n"
             + "  gl_FragColor = vec4(new_color.rgb, color.a);\n"
             + "}\n";

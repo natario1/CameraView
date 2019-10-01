@@ -27,7 +27,8 @@ public class FocusReset extends BaseReset {
     @Override
     protected void onStarted(@NonNull ActionHolder holder, @Nullable MeteringRectangle area) {
         boolean changed = false;
-        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF, 0);
+        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF,
+                0);
         if (area != null && maxRegions > 0) {
             holder.getBuilder(this).set(CaptureRequest.CONTROL_AF_REGIONS,
                     new MeteringRectangle[]{area});

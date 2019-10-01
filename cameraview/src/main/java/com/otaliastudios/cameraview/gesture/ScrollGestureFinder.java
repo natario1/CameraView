@@ -21,10 +21,14 @@ public class ScrollGestureFinder extends GestureFinder {
 
     public ScrollGestureFinder(final @NonNull Controller controller) {
         super(controller, 2);
-        mDetector = new GestureDetector(controller.getContext(), new GestureDetector.SimpleOnGestureListener() {
+        mDetector = new GestureDetector(controller.getContext(),
+                new GestureDetector.SimpleOnGestureListener() {
 
             @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            public boolean onScroll(MotionEvent e1,
+                                    MotionEvent e2,
+                                    float distanceX,
+                                    float distanceY) {
                 boolean horizontal;
                 LOG.i("onScroll:", "distanceX="+distanceX, "distanceY="+distanceY);
                 if (e1 == null || e2 == null) return false; // Got some crashes about this.
@@ -39,7 +43,8 @@ public class ScrollGestureFinder extends GestureFinder {
                     horizontal = getGesture() == Gesture.SCROLL_HORIZONTAL;
                 }
                 getPoint(1).set(e2.getX(), e2.getY());
-                mFactor = horizontal ? (distanceX / controller.getWidth()) : (distanceY / controller.getHeight());
+                mFactor = horizontal ? (distanceX / controller.getWidth())
+                        : (distanceY / controller.getHeight());
                 mFactor = horizontal ? -mFactor : mFactor; // When vertical, up = positive
                 mNotify = true;
                 return true;

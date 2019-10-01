@@ -19,22 +19,22 @@ public class SharpnessFilter extends BaseFilter implements OneParameterFilter {
             + "uniform float scale;\n"
             + "uniform float stepsizeX;\n"
             + "uniform float stepsizeY;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
             + "  vec3 nbr_color = vec3(0.0, 0.0, 0.0);\n"
             + "  vec2 coord;\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
-            + "  coord.x = vTextureCoord.x - 0.5 * stepsizeX;\n"
-            + "  coord.y = vTextureCoord.y - stepsizeY;\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
+            + "  coord.x = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+".x - 0.5 * stepsizeX;\n"
+            + "  coord.y = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+".y - stepsizeY;\n"
             + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
-            + "  coord.x = vTextureCoord.x - stepsizeX;\n"
-            + "  coord.y = vTextureCoord.y + 0.5 * stepsizeY;\n"
+            + "  coord.x = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+".x - stepsizeX;\n"
+            + "  coord.y = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+".y + 0.5 * stepsizeY;\n"
             + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
-            + "  coord.x = vTextureCoord.x + stepsizeX;\n"
-            + "  coord.y = vTextureCoord.y - 0.5 * stepsizeY;\n"
+            + "  coord.x = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+".x + stepsizeX;\n"
+            + "  coord.y = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+".y - 0.5 * stepsizeY;\n"
             + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
-            + "  coord.x = vTextureCoord.x + stepsizeX;\n"
-            + "  coord.y = vTextureCoord.y + 0.5 * stepsizeY;\n"
+            + "  coord.x = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+".x + stepsizeX;\n"
+            + "  coord.y = "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+".y + 0.5 * stepsizeY;\n"
             + "  nbr_color += texture2D(sTexture, coord).rgb - color.rgb;\n"
             + "  gl_FragColor = vec4(color.rgb - 2.0 * scale * nbr_color, color.a);\n"
             + "}\n";
@@ -116,8 +116,8 @@ public class SharpnessFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         GLES20.glUniform1f(scaleLocation, scale);
         GlUtils.checkError("glUniform1f");
         GLES20.glUniform1f(stepSizeXLocation, 1.0F / width);

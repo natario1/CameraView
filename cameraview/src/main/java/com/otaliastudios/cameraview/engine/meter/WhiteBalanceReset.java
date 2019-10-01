@@ -30,9 +30,11 @@ public class WhiteBalanceReset extends BaseReset {
     @Override
     protected void onStarted(@NonNull ActionHolder holder, @Nullable MeteringRectangle area) {
         LOG.w("onStarted:", "with area:", area);
-        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB, 0);
+        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB,
+                0);
         if (area != null && maxRegions > 0) {
-            holder.getBuilder(this).set(CaptureRequest.CONTROL_AWB_REGIONS, new MeteringRectangle[]{area});
+            holder.getBuilder(this).set(CaptureRequest.CONTROL_AWB_REGIONS,
+                    new MeteringRectangle[]{area});
             holder.applyBuilder(this);
         }
         setState(STATE_COMPLETED);

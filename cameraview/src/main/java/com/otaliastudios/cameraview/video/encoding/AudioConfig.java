@@ -21,7 +21,8 @@ public class AudioConfig {
     final int encoding = AudioFormat.ENCODING_PCM_16BIT; // Determines the sampleSizePerChannel
     // The 44.1KHz frequency is the only setting guaranteed to be available on all devices.
     final int samplingFrequency = 44100; // samples/sec
-    final int sampleSizePerChannel = 2; // byte/sample/channel [16bit]. If this changes, review noise introduction
+    // If sampleSizePerChannel changes, review noise introduction
+    final int sampleSizePerChannel = 2; // byte/sample/channel [16bit].
     final int byteRatePerChannel = samplingFrequency * sampleSizePerChannel; // byte/sec/channel
 
     @NonNull
@@ -84,10 +85,10 @@ public class AudioConfig {
     /**
      * We allocate buffers of {@link #frameSize()} each, which is not much.
      *
-     * This value indicates the maximum number of these buffers that we can allocate at a given instant.
-     * This value is the number of runnables that the encoder thread is allowed to be 'behind'
-     * the recorder thread. It's not safe to have it very large or we can end encoding A LOT AFTER
-     * the actual recording. It's better to reduce this and skip recording at all.
+     * This value indicates the maximum number of these buffers that we can allocate at a given
+     * instant. This value is the number of runnables that the encoder thread is allowed to be
+     * 'behind' the recorder thread. It's not safe to have it very large or we can end encoding
+     * A LOT AFTER the actual recording. It's better to reduce this and skip recording at all.
      *
      * Should be coordinated with {@link #frameSize()}.
      *

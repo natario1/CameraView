@@ -54,7 +54,9 @@ public class Full1PictureRecorder extends PictureRecorder {
                         int exifRotation;
                         try {
                             ExifInterface exif = new ExifInterface(new ByteArrayInputStream(data));
-                            int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                            int exifOrientation = exif.getAttributeInt(
+                                    ExifInterface.TAG_ORIENTATION,
+                                    ExifInterface.ORIENTATION_NORMAL);
                             exifRotation = ExifHelper.readExifOrientation(exifOrientation);
                         } catch (IOException e) {
                             exifRotation = 0;

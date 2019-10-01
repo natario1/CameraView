@@ -20,9 +20,9 @@ public class DuotoneFilter extends BaseFilter implements TwoParameterFilter {
             + "uniform samplerExternalOES sTexture;\n"
             + "uniform vec3 first;\n"
             + "uniform vec3 second;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  float energy = (color.r + color.g + color.b) * 0.3333;\n"
             + "  vec3 new_color = (1.0 - energy) * first + energy * second;\n"
             + "  gl_FragColor = vec4(new_color.rgb, color.a);\n"
@@ -137,8 +137,8 @@ public class DuotoneFilter extends BaseFilter implements TwoParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         float[] first = new float[]{
                 Color.red(mFirstColor) / 255f,
                 Color.green(mFirstColor) / 255f,

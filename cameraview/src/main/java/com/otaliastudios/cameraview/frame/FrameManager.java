@@ -28,18 +28,20 @@ import java.util.concurrent.LinkedBlockingQueue;
  * For both byte buffers and frames to get back to the FrameManager pool, all you have to do
  * is call {@link Frame#release()} when done.
  *
- * Other than this, the FrameManager can work in two modes, depending on whether a {@link BufferCallback}
- * is passed to the constructor. The modes changes the buffer behavior.
+ * Other than this, the FrameManager can work in two modes, depending on whether a
+ * {@link BufferCallback} is passed to the constructor. The modes changes the buffer behavior.
  *
  * 1. {@link #BUFFER_MODE_DISPATCH}: in this mode, as soon as we have a buffer, it is dispatched to
  *    the {@link BufferCallback}. The callback should then fill the buffer, and finally call
  *    {@link #getFrame(byte[], long, int)} to receive a frame.
  *    This is used for Camera1.
  *
- * 2. {@link #BUFFER_MODE_ENQUEUE}: in this mode, the manager internally keeps a queue of byte buffers,
- *    instead of handing them to the callback. The users can ask for buffers through {@link #getBuffer()}.
- *    This buffer can be filled with data and used to get a frame {@link #getFrame(byte[], long, int)},
- *    or, in case it was not filled, returned to the queue using {@link #onBufferUnused(byte[])}.
+ * 2. {@link #BUFFER_MODE_ENQUEUE}: in this mode, the manager internally keeps a queue of byte
+ *    buffers, instead of handing them to the callback. The users can ask for buffers through
+ *    {@link #getBuffer()}.
+ *    This buffer can be filled with data and used to get a frame
+ *    {@link #getFrame(byte[], long, int)}, or, in case it was not filled, returned to the queue
+ *    using {@link #onBufferUnused(byte[])}.
  *    This is used for Camera2.
  */
 public class FrameManager {
@@ -149,7 +151,8 @@ public class FrameManager {
     @Nullable
     public byte[] getBuffer() {
         if (mBufferMode != BUFFER_MODE_ENQUEUE) {
-            throw new IllegalStateException("Can't call getBuffer() when not in BUFFER_MODE_ENQUEUE.");
+            throw new IllegalStateException("Can't call getBuffer() " +
+                    "when not in BUFFER_MODE_ENQUEUE.");
         }
         return mBufferQueue.poll();
     }
@@ -161,7 +164,8 @@ public class FrameManager {
      */
     public void onBufferUnused(@NonNull byte[] buffer) {
         if (mBufferMode != BUFFER_MODE_ENQUEUE) {
-            throw new IllegalStateException("Can't call onBufferUnused() when not in BUFFER_MODE_ENQUEUE.");
+            throw new IllegalStateException("Can't call onBufferUnused() " +
+                    "when not in BUFFER_MODE_ENQUEUE.");
         }
 
         if (isSetUp()) {
@@ -188,7 +192,8 @@ public class FrameManager {
     @NonNull
     public Frame getFrame(@NonNull byte[] data, long time, int rotation) {
         if (!isSetUp()) {
-            throw new IllegalStateException("Can't call getFrame() after releasing or before setUp.");
+            throw new IllegalStateException("Can't call getFrame() after releasing " +
+                    "or before setUp.");
         }
 
         Frame frame = mFrameQueue.poll();

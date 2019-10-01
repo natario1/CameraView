@@ -11,7 +11,8 @@ import java.util.HashMap;
  */
 public class AspectRatio implements Comparable<AspectRatio> {
 
-    @VisibleForTesting final static HashMap<String, AspectRatio> sCache = new HashMap<>(16);
+    @VisibleForTesting final static HashMap<String, AspectRatio> sCache
+            = new HashMap<>(16);
 
     /**
      * Creates an aspect ratio for the given size.

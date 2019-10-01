@@ -16,7 +16,8 @@ import androidx.annotation.Nullable;
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaRecorder} APIs.
  *
- * When started, the media recorder will be prepared in {@link #onPrepareMediaRecorder(VideoResult.Stub, MediaRecorder)}.
+ * When started, the media recorder will be prepared in
+ * {@link #onPrepareMediaRecorder(VideoResult.Stub, MediaRecorder)}.
  * Subclasses should override this method and, before calling super(), do two things:
  * - set the media recorder VideoSource
  * - define {@link #mProfile}
@@ -45,7 +46,8 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         return onPrepareMediaRecorder(stub, new MediaRecorder());
     }
 
-    protected boolean onPrepareMediaRecorder(@NonNull VideoResult.Stub stub, @NonNull MediaRecorder mediaRecorder) {
+    protected boolean onPrepareMediaRecorder(@NonNull VideoResult.Stub stub,
+                                             @NonNull MediaRecorder mediaRecorder) {
         mMediaRecorder = mediaRecorder;
         boolean hasAudio = stub.audio == Audio.ON
                 || stub.audio == Audio.MONO
@@ -74,8 +76,12 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         // https://android.googlesource.com/platform/frameworks/av/+/master/media/libmediaplayerservice/StagefrightRecorder.cpp#1650
         // https://github.com/MrAlex94/Waterfox-Old/blob/master/media/libstagefright/frameworks/av/media/libstagefright/MediaDefs.cpp
         String videoType;
-        if (stub.videoCodec == VideoCodec.H_264) mProfile.videoCodec = MediaRecorder.VideoEncoder.H264;
-        if (stub.videoCodec == VideoCodec.H_263) mProfile.videoCodec = MediaRecorder.VideoEncoder.H263;
+        if (stub.videoCodec == VideoCodec.H_264) {
+            mProfile.videoCodec = MediaRecorder.VideoEncoder.H264;
+        }
+        if (stub.videoCodec == VideoCodec.H_263) {
+            mProfile.videoCodec = MediaRecorder.VideoEncoder.H263;
+        }
         switch (mProfile.videoCodec) {
             case MediaRecorder.VideoEncoder.H263: videoType = "video/3gpp"; break;
             case MediaRecorder.VideoEncoder.H264: videoType = "video/avc"; break;
@@ -87,20 +93,43 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         }
 
         // Merge stub and profile
-        stub.videoFrameRate = stub.videoFrameRate > 0 ? stub.videoFrameRate : mProfile.videoFrameRate;
+        stub.videoFrameRate = stub.videoFrameRate > 0 ? stub.videoFrameRate
+                : mProfile.videoFrameRate;
         stub.videoBitRate = stub.videoBitRate > 0 ? stub.videoBitRate : mProfile.videoBitRate;
         if (hasAudio) {
             stub.audioBitRate = stub.audioBitRate > 0 ? stub.audioBitRate : mProfile.audioBitRate;
         }
 
         // Check DeviceEncoders support
-        DeviceEncoders encoders = new DeviceEncoders(videoType, audioType, DeviceEncoders.MODE_TAKE_FIRST);
         boolean flip = stub.rotation % 180 != 0;
         if (flip) stub.size = stub.size.flip();
-        stub.size = encoders.getSupportedVideoSize(stub.size);
-        stub.videoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);
-        stub.audioBitRate = encoders.getSupportedAudioBitRate(stub.audioBitRate);
-        stub.videoFrameRate = encoders.getSupportedVideoFrameRate(stub.size, stub.videoFrameRate);
+        Size newVideoSize = null;
+        int newVideoBitRate = 0;
+        int newAudioBitRate = 0;
+        int newVideoFrameRate = 0;
+        int videoEncoderOffset = 0;
+        int audioEncoderOffset = 0;
+        boolean encodersFound = false;
+        while (!encodersFound) {
+            DeviceEncoders encoders = new DeviceEncoders(DeviceEncoders.MODE_RESPECT_ORDER,
+                    videoType, audioType, videoEncoderOffset, audioEncoderOffset);
+            try {
+                newVideoSize = encoders.getSupportedVideoSize(stub.size);
+                newVideoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);
+                newAudioBitRate = encoders.getSupportedAudioBitRate(stub.audioBitRate);
+                newVideoFrameRate = encoders.getSupportedVideoFrameRate(newVideoSize,
+                        stub.videoFrameRate);
+                encodersFound = true;
+            } catch (DeviceEncoders.VideoException videoException) {
+                videoEncoderOffset++;
+            } catch (DeviceEncoders.AudioException audioException) {
+                audioEncoderOffset++;
+            }
+        }
+        stub.size = newVideoSize;
+        stub.videoBitRate = newVideoBitRate;
+        stub.audioBitRate = newAudioBitRate;
+        stub.videoFrameRate = newVideoFrameRate;
         if (flip) stub.size = stub.size.flip();
 
         // Set video params
@@ -192,8 +221,9 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 mMediaRecorder.stop();
             } catch (Exception e) {
                 LOG.w("stop:", "Error while closing media recorder.", e);
-                // This can happen if stopVideo() is called right after takeVideo() (in which case we don't care)
-                // Or when prepare()/start() have failed for some reason and we are not allowed to call stop.
+                // This can happen if stopVideo() is called right after takeVideo()
+                // (in which case we don't care). Or when prepare()/start() have failed for
+                // some reason and we are not allowed to call stop.
                 // Make sure we don't override the error if one exists already.
                 mResult = null;
                 if (mError == null) mError = e;

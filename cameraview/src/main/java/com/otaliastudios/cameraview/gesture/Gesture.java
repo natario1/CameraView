@@ -8,7 +8,8 @@ import androidx.annotation.NonNull;
 
 /**
  * Gestures listen to finger gestures over the {@link CameraView} bounds and can be mapped
- * to one or more camera controls using XML attributes or {@link CameraView#mapGesture(Gesture, GestureAction)}.
+ * to one or more camera controls using XML attributes or {@link CameraView#mapGesture(Gesture,
+ * GestureAction)}.
  *
  * Not every gesture can control a certain action. For example, pinch gestures can only control
  * continuous values, such as zoom or AE correction. Single point gestures, on the other hand,

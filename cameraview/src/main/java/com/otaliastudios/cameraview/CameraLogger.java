@@ -49,7 +49,10 @@ public final class CameraLogger {
          * @param message the log message
          * @param throwable an optional throwable
          */
-        void log(@LogLevel int level, @NonNull String tag, @NonNull String message, @Nullable Throwable throwable);
+        void log(@LogLevel int level,
+                 @NonNull String tag,
+                 @NonNull String message,
+                 @Nullable Throwable throwable);
     }
 
     @VisibleForTesting static String lastMessage;
@@ -60,7 +63,10 @@ public final class CameraLogger {
 
     @VisibleForTesting static Logger sAndroidLogger = new Logger() {
         @Override
-        public void log(int level, @NonNull String tag, @NonNull String message, @Nullable Throwable throwable) {
+        public void log(int level,
+                        @NonNull String tag,
+                        @NonNull String message,
+                        @Nullable Throwable throwable) {
             switch (level) {
                 case LEVEL_VERBOSE: Log.v(tag, message, throwable); break;
                 case LEVEL_INFO: Log.i(tag, message, throwable); break;

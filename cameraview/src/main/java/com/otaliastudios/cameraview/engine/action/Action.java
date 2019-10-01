@@ -13,8 +13,8 @@ import androidx.annotation.RequiresApi;
 /**
  * The Action class encapsulates logic for completing an action in a Camera2 environment.
  * In this case, we are often interested in constantly receiving the {@link CaptureResult}
- * and {@link CaptureRequest} callbacks, as well as applying changes to a {@link CaptureRequest.Builder}
- * and having them applied to the sensor.
+ * and {@link CaptureRequest} callbacks, as well as applying changes to a
+ * {@link CaptureRequest.Builder} and having them applied to the sensor.
  *
  * The Action class receives the given callbacks and can operate over the engine
  * through the {@link ActionHolder} object.
@@ -61,25 +61,32 @@ public interface Action {
     void removeCallback(@NonNull ActionCallback callback);
 
     /**
-     * Called from {@link CaptureCallback#onCaptureStarted(CameraCaptureSession, CaptureRequest, long, long)}.
+     * Called from {@link CaptureCallback#onCaptureStarted(CameraCaptureSession, CaptureRequest,
+     * long, long)}.
      * @param holder the holder
      * @param request the request
      */
     void onCaptureStarted(@NonNull ActionHolder holder, @NonNull CaptureRequest request);
 
     /**
-     * Called from {@link CaptureCallback#onCaptureProgressed(CameraCaptureSession, CaptureRequest, CaptureResult)}.
+     * Called from {@link CaptureCallback#onCaptureProgressed(CameraCaptureSession, CaptureRequest,
+     * CaptureResult)}.
      * @param holder the holder
      * @param request the request
      * @param result the result
      */
-    void onCaptureProgressed(@NonNull ActionHolder holder, @NonNull CaptureRequest request, @NonNull CaptureResult result);
+    void onCaptureProgressed(@NonNull ActionHolder holder,
+                             @NonNull CaptureRequest request,
+                             @NonNull CaptureResult result);
 
     /**
-     * Called from {@link CaptureCallback#onCaptureCompleted(CameraCaptureSession, CaptureRequest, TotalCaptureResult)}.
+     * Called from {@link CaptureCallback#onCaptureCompleted(CameraCaptureSession, CaptureRequest,
+     * TotalCaptureResult)}.
      * @param holder the holder
      * @param request the request
      * @param result the result
      */
-    void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result);
+    void onCaptureCompleted(@NonNull ActionHolder holder,
+                            @NonNull CaptureRequest request,
+                            @NonNull TotalCaptureResult result);
 }

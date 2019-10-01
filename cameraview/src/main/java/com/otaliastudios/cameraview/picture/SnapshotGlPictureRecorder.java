@@ -46,11 +46,13 @@ import android.view.Surface;
  * - We move to another thread, and create a new EGL surface for that EGL context.
  * - We make this new surface current, and re-draw the textureId on it
  * - [Optional: fill the overlayTextureId and draw it on the same surface]
- * - We use glReadPixels (through {@link EglBaseSurface#saveFrameTo(Bitmap.CompressFormat)}) and save to file.
+ * - We use glReadPixels (through {@link EglBaseSurface#saveFrameTo(Bitmap.CompressFormat)})
+ *   and save to file.
  *
  * We create a new EGL surface and redraw the frame because:
  * 1. We want to go off the renderer thread as soon as possible
- * 2. We have overlays to be drawn - we don't want to draw them on the preview surface, not even for a frame.
+ * 2. We have overlays to be drawn - we don't want to draw them on the preview surface,
+ *    not even for a frame.
  */
 public class SnapshotGlPictureRecorder extends PictureRecorder {
 
@@ -102,7 +104,9 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
 
             @RendererThread
             @Override
-            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, final float scaleX, final float scaleY) {
+            public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture,
+                                        final float scaleX,
+                                        final float scaleY) {
                 mPreview.removeRendererFrameCallback(this);
                 SnapshotGlPictureRecorder.this.onRendererFrame(surfaceTexture, scaleX, scaleY);
             }
@@ -110,6 +114,7 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
         });
     }
 
+    @SuppressWarnings("WeakerAccess")
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
     protected void onRendererTextureCreated(int textureId) {
@@ -126,12 +131,14 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
     protected void onRendererFilterChanged(@NonNull Filter filter) {
         mViewport.setFilter(filter.copy());
     }
 
+    @SuppressWarnings("WeakerAccess")
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
     protected void onRendererFrame(@SuppressWarnings("unused") @NonNull final SurfaceTexture surfaceTexture,
@@ -175,9 +182,13 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
      * @param scaleX frame scale x in {@link Reference#VIEW}
      * @param scaleY frame scale y in {@link Reference#VIEW}
      */
+    @SuppressWarnings("WeakerAccess")
     @WorkerThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    protected void takeFrame(@NonNull SurfaceTexture surfaceTexture, float scaleX, float scaleY, @NonNull EGLContext eglContext) {
+    protected void takeFrame(@NonNull SurfaceTexture surfaceTexture,
+                             float scaleX,
+                             float scaleY,
+                             @NonNull EGLContext eglContext) {
 
         // 0. EGL window will need an output.
         // We create a fake one as explained in javadocs.
@@ -223,9 +234,10 @@ public class SnapshotGlPictureRecorder extends PictureRecorder {
         }
 
         // 5. Draw and save
-        LOG.i("takeFrame:", "timestamp:", surfaceTexture.getTimestamp());
-        mViewport.drawFrame(mTextureId, mTransform);
-        if (mHasOverlay) mOverlayDrawer.render();
+        long timestampUs = surfaceTexture.getTimestamp() / 1000L;
+        LOG.i("takeFrame:", "timestampUs:", timestampUs);
+        mViewport.drawFrame(timestampUs, mTextureId, mTransform);
+        if (mHasOverlay) mOverlayDrawer.render(timestampUs);
         mResult.format = PictureResult.FORMAT_JPEG;
         mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
 

@@ -34,7 +34,8 @@ public class Full1VideoRecorder extends FullVideoRecorder {
     }
 
     @Override
-    protected boolean onPrepareMediaRecorder(@NonNull VideoResult.Stub stub, @NonNull MediaRecorder mediaRecorder) {
+    protected boolean onPrepareMediaRecorder(@NonNull VideoResult.Stub stub,
+                                             @NonNull MediaRecorder mediaRecorder) {
         mediaRecorder.setCamera(mCamera);
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
@@ -45,9 +46,9 @@ public class Full1VideoRecorder extends FullVideoRecorder {
     }
 
     @Override
-    protected void dispatchResult() {
+    protected void onDispatchResult() {
         // Restore frame processing.
         mCamera.setPreviewCallbackWithBuffer(mEngine);
-        super.dispatchResult();
+        super.onDispatchResult();
     }
 }

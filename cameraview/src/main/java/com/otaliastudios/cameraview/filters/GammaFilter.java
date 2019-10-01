@@ -15,11 +15,12 @@ public class GammaFilter extends BaseFilter implements OneParameterFilter {
 
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "uniform samplerExternalOES sTexture;\n"
             + "uniform float gamma;\n"
             + "void main() {\n"
-            + "  vec4 textureColor = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec4 textureColor = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + ");\n"
             + "  gl_FragColor = vec4(pow(textureColor.rgb, vec3(gamma)), textureColor.w);\n"
             + "}\n";
 
@@ -82,8 +83,8 @@ public class GammaFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         GLES20.glUniform1f(gammaLocation, gamma);
         GlUtils.checkError("glUniform1f");
     }

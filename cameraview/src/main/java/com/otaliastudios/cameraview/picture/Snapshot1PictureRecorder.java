@@ -60,7 +60,8 @@ public class Snapshot1PictureRecorder extends PictureRecorder {
                 final Size outputSize = mResult.size;
                 final Size previewStreamSize = mEngine1.getPreviewStreamSize(Reference.SENSOR);
                 if (previewStreamSize == null) {
-                    throw new IllegalStateException("Preview stream size should never be null here.");
+                    throw new IllegalStateException("Preview stream size " +
+                            "should never be null here.");
                 }
                 WorkerHandler.execute(new Runnable() {
                     @Override
@@ -69,7 +70,8 @@ public class Snapshot1PictureRecorder extends PictureRecorder {
                         // then crop if needed. In both cases, transform yuv to jpeg.
                         //noinspection deprecation
                         byte[] data = RotationHelper.rotate(yuv, previewStreamSize, sensorToOutput);
-                        YuvImage yuv = new YuvImage(data, mFormat, outputSize.getWidth(), outputSize.getHeight(), null);
+                        YuvImage yuv = new YuvImage(data, mFormat, outputSize.getWidth(),
+                                outputSize.getHeight(), null);
 
                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
                         Rect outputRect = CropHelper.computeCrop(outputSize, mOutputRatio);

@@ -20,7 +20,8 @@ public class ExposureLock extends BaseLock {
 
     @Override
     protected boolean checkIsSupported(@NonNull ActionHolder holder) {
-        boolean isNotLegacy = readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
+        boolean isNotLegacy = readCharacteristic(
+                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
                 != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
         // Not sure we should check aeMode as well, probably all aeModes support locking,
         // but this should not be a big issue since we're not even using different AE modes.
@@ -30,7 +31,8 @@ public class ExposureLock extends BaseLock {
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_ALWAYS_FLASH
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
-                        || aeMode == 5 /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */);
+                        || aeMode == 5
+                        /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */);
         boolean result = isNotLegacy && isAEOn;
         LOG.i("checkIsSupported:", result);
         return result;
@@ -49,13 +51,16 @@ public class ExposureLock extends BaseLock {
         int cancelTrigger = Build.VERSION.SDK_INT >= 23
                 ? CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL
                 : CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE;
-        holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, cancelTrigger);
+        holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                cancelTrigger);
         holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_LOCK, true);
         holder.applyBuilder(this);
     }
 
     @Override
-    public void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+    public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                   @NonNull CaptureRequest request,
+                                   @NonNull TotalCaptureResult result) {
         super.onCaptureCompleted(holder, request, result);
         Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
         LOG.i("processCapture:", "aeState:", aeState);

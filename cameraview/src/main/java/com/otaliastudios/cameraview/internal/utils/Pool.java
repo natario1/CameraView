@@ -92,14 +92,16 @@ public class Pool<T> {
         synchronized (lock) {
             LOG.v("RECYCLE - Recycling item.", this);
             if (--activeCount < 0) {
-                throw new IllegalStateException("Trying to recycle an item which makes activeCount < 0." +
-                        "This means that this or some previous items being recycled were not coming from " +
-                        "this pool, or some item was recycled more than once. " + this);
+                throw new IllegalStateException("Trying to recycle an item which makes " +
+                        "activeCount < 0. This means that this or some previous items being " +
+                        "recycled were not coming from this pool, or some item was recycled " +
+                        "more than once. " + this);
             }
             if (!queue.offer(item)) {
-                throw new IllegalStateException("Trying to recycle an item while the queue is full. " +
-                        "This means that this or some previous items being recycled were not coming from " +
-                        "this pool, or some item was recycled more than once. " + this);
+                throw new IllegalStateException("Trying to recycle an item while the queue " +
+                        "is full. This means that this or some previous items being recycled " +
+                        "were not coming from this pool, or some item was recycled " +
+                        "more than once. " + this);
             }
         }
     }
@@ -121,7 +123,6 @@ public class Pool<T> {
      *
      * @return count
      */
-    @SuppressWarnings("WeakerAccess")
     public final int count() {
         synchronized (lock) {
             return activeCount() + recycledCount();

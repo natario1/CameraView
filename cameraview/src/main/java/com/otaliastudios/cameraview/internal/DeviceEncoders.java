@@ -20,9 +20,18 @@ import java.util.List;
 /**
  * Checks the capabilities of device encoders and adjust parameters to ensure
  * that they'll be supported by the final encoder.
- * This can choose the encoder in two ways, based on the mode flag:
  *
- * 1. {@link #MODE_TAKE_FIRST}
+ * Methods in this class might throw either a {@link VideoException} or a {@link AudioException}.
+ * Throwing this exception means that the given parameters will not be supported by the encoder
+ * for that type, and cannot be tweaked to be.
+ *
+ * When this happens, users should retry with a new {@link DeviceEncoders} instance, but with
+ * the audio or video encoder offset incremented. This offset is the position in the encoder list
+ * from which we'll choose the potential encoder.
+ *
+ * This class will inspect the encoders list in two ways, based on the mode flag:
+ *
+ * 1. {@link #MODE_RESPECT_ORDER}
  *
  * Chooses the encoder as the first one that matches the given mime type.
  * This is what {@link android.media.MediaCodec#createEncoderByType(String)} does,
@@ -40,11 +49,12 @@ import java.util.List;
  * - MediaCodecList (https://android.googlesource.com/platform/frameworks/av/+/master/media/libstagefright/MediaCodecList.cpp#322)
  *
  * To be fair, what {@link android.media.MediaRecorder} does is actually choose the first one
- * that configures itself without errors. We currently do not offer this option here. TODO
+ * that configures itself without errors. We currently do not offer this option here.
+ * TODO add a tryConfigure() step, that throws AudioException/VideoException ?
  *
  * 2. {@link #MODE_PREFER_HARDWARE}
  *
- * This takes the list - as ordered by the vendor - and just sorts it such that hardware encoders
+ * This takes the list - as ordered by the vendor - and just sorts it so that hardware encoders
  * are preferred over software ones. It's questionable whether this is good or not. Some vendors
  * might forget to put hardware encoders first in the list, some others might put poor hardware
  * encoders on the bottom of the list on purpose.
@@ -56,8 +66,28 @@ public class DeviceEncoders {
 
     @VisibleForTesting static boolean ENABLED = Build.VERSION.SDK_INT >= 21;
 
-    public final static int MODE_TAKE_FIRST = 0;
+    public final static int MODE_RESPECT_ORDER = 0;
     public final static int MODE_PREFER_HARDWARE = 1;
+
+    /**
+     * Exception thrown when trying to find appropriate values
+     * for a video encoder.
+     */
+    public class VideoException extends RuntimeException {
+        private VideoException(@NonNull String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Exception thrown when trying to find appropriate values
+     * for an audio encoder. Currently never thrown.
+     */
+    public class AudioException extends RuntimeException {
+        private AudioException(@NonNull String message) {
+            super(message);
+        }
+    }
 
     @SuppressWarnings("FieldCanBeLocal")
     private final MediaCodecInfo mVideoEncoder;
@@ -67,17 +97,23 @@ public class DeviceEncoders {
     private final MediaCodecInfo.AudioCapabilities mAudioCapabilities;
 
     @SuppressLint("NewApi")
-    public DeviceEncoders(@NonNull String videoType, @NonNull String audioType, int mode) {
+    public DeviceEncoders(int mode,
+                          @NonNull String videoType,
+                          @NonNull String audioType,
+                          int videoOffset,
+                          int audioOffset) {
         // We could still get a list of MediaCodecInfo for API >= 16, but it seems that the APIs
         // for querying the availability of a specified MediaFormat were only added in 21 anyway.
         if (ENABLED) {
             List<MediaCodecInfo> encoders = getDeviceEncoders();
-            mVideoEncoder = findDeviceEncoder(encoders, videoType, mode);
+            mVideoEncoder = findDeviceEncoder(encoders, videoType, mode, videoOffset);
             LOG.i("Enabled. Found video encoder:", mVideoEncoder.getName());
-            mAudioEncoder = findDeviceEncoder(encoders, audioType, mode);
+            mAudioEncoder = findDeviceEncoder(encoders, audioType, mode, audioOffset);
             LOG.i("Enabled. Found audio encoder:", mAudioEncoder.getName());
-            mVideoCapabilities = mVideoEncoder.getCapabilitiesForType(videoType).getVideoCapabilities();
-            mAudioCapabilities = mAudioEncoder.getCapabilitiesForType(audioType).getAudioCapabilities();
+            mVideoCapabilities = mVideoEncoder.getCapabilitiesForType(videoType)
+                    .getVideoCapabilities();
+            mAudioCapabilities = mAudioEncoder.getCapabilitiesForType(audioType)
+                    .getAudioCapabilities();
         } else {
             mVideoEncoder = null;
             mAudioEncoder = null;
@@ -123,7 +159,7 @@ public class DeviceEncoders {
 
     /**
      * Finds the encoder we'll be using, depending on the given mode flag:
-     * - {@link #MODE_TAKE_FIRST} will just take the first of the list
+     * - {@link #MODE_RESPECT_ORDER} will just take the first of the list
      * - {@link #MODE_PREFER_HARDWARE} will prefer hardware encoders
      * Throws if we find no encoder for this type.
      *
@@ -135,7 +171,10 @@ public class DeviceEncoders {
     @SuppressLint("NewApi")
     @NonNull
     @VisibleForTesting
-    MediaCodecInfo findDeviceEncoder(@NonNull List<MediaCodecInfo> encoders, @NonNull String mimeType, int mode) {
+    MediaCodecInfo findDeviceEncoder(@NonNull List<MediaCodecInfo> encoders,
+                                     @NonNull String mimeType,
+                                     int mode,
+                                     int offset) {
         ArrayList<MediaCodecInfo> results = new ArrayList<>();
         for (MediaCodecInfo encoder : encoders) {
             String[] types = encoder.getSupportedTypes();
@@ -160,10 +199,12 @@ public class DeviceEncoders {
                 }
             });
         }
-        if (results.isEmpty()) {
+        if (results.size() < offset + 1) {
+            // This should not be a VideoException or AudioException - we want the process
+            // to crash here.
             throw new RuntimeException("No encoders for type:" + mimeType);
         }
-        return results.get(0);
+        return results.get(offset);
     }
 
     /**
@@ -199,19 +240,19 @@ public class DeviceEncoders {
 
         // It's still possible that we're BELOW the lower.
         if (!mVideoCapabilities.getSupportedWidths().contains(width)) {
-            throw new RuntimeException("Width not supported after adjustment." +
+            throw new VideoException("Width not supported after adjustment." +
                     " Desired:" + width +
                     " Range:" + mVideoCapabilities.getSupportedWidths());
         }
         if (!mVideoCapabilities.getSupportedHeights().contains(height)) {
-            throw new RuntimeException("Height not supported after adjustment." +
+            throw new VideoException("Height not supported after adjustment." +
                     " Desired:" + height +
                     " Range:" + mVideoCapabilities.getSupportedHeights());
         }
 
         // It's still possible that we're unsupported for other reasons.
         if (!mVideoCapabilities.isSizeSupported(width, height)) {
-            throw new RuntimeException("Size not supported for unknown reason." +
+            throw new VideoException("Size not supported for unknown reason." +
                     " Might be an aspect ratio issue." +
                     " Desired size:" + new Size(width, height));
         }
@@ -231,7 +272,9 @@ public class DeviceEncoders {
     public int getSupportedVideoBitRate(int bitRate) {
         if (!ENABLED) return bitRate;
         int newBitRate = mVideoCapabilities.getBitrateRange().clamp(bitRate);
-        LOG.i("getSupportedVideoBitRate -", "inputRate:", bitRate, "adjustedRate:", newBitRate);
+        LOG.i("getSupportedVideoBitRate -",
+                "inputRate:", bitRate,
+                "adjustedRate:", newBitRate);
         return newBitRate;
     }
 
@@ -248,7 +291,9 @@ public class DeviceEncoders {
         int newFrameRate = (int) (double) mVideoCapabilities
                 .getSupportedFrameRatesFor(size.getWidth(), size.getHeight())
                 .clamp((double) frameRate);
-        LOG.i("getSupportedVideoFrameRate -", "inputRate:", frameRate, "adjustedRate:", newFrameRate);
+        LOG.i("getSupportedVideoFrameRate -",
+                "inputRate:", frameRate,
+                "adjustedRate:", newFrameRate);
         return newFrameRate;
     }
 
@@ -263,7 +308,9 @@ public class DeviceEncoders {
     public int getSupportedAudioBitRate(int bitRate) {
         if (!ENABLED) return bitRate;
         int newBitRate = mAudioCapabilities.getBitrateRange().clamp(bitRate);
-        LOG.i("getSupportedAudioBitRate -", "inputRate:", bitRate, "adjustedRate:", newBitRate);
+        LOG.i("getSupportedAudioBitRate -",
+                "inputRate:", bitRate,
+                "adjustedRate:", newBitRate);
         return newBitRate;
     }
 

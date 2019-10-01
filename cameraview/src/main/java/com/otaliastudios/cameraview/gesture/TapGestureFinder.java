@@ -16,7 +16,8 @@ public class TapGestureFinder extends GestureFinder {
 
     public TapGestureFinder(@NonNull Controller controller) {
         super(controller, 1);
-        mDetector = new GestureDetector(controller.getContext(), new GestureDetector.SimpleOnGestureListener() {
+        mDetector = new GestureDetector(controller.getContext(),
+                new GestureDetector.SimpleOnGestureListener() {
 
             @Override
             public boolean onSingleTapUp(MotionEvent e) {

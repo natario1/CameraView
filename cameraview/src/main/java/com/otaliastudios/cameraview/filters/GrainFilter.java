@@ -19,7 +19,7 @@ public class GrainFilter extends BaseFilter implements OneParameterFilter {
     private final static String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
             + "vec2 seed;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "uniform samplerExternalOES tex_sampler_0;\n"
             + "uniform samplerExternalOES tex_sampler_1;\n"
             + "uniform float scale;\n"
@@ -40,18 +40,25 @@ public class GrainFilter extends BaseFilter implements OneParameterFilter {
             + "void main() {\n"
             + "  seed[0] = " + RANDOM.nextFloat() + ";\n"
             + "  seed[1] = " + RANDOM.nextFloat() + ";\n"
-            + "  float noise = texture2D(tex_sampler_1, vTextureCoord + vec2(-stepX, -stepY)).r * 0.224;\n"
-            + "  noise += texture2D(tex_sampler_1, vTextureCoord + vec2(-stepX, stepY)).r * 0.224;\n"
-            + "  noise += texture2D(tex_sampler_1, vTextureCoord + vec2(stepX, -stepY)).r * 0.224;\n"
-            + "  noise += texture2D(tex_sampler_1, vTextureCoord + vec2(stepX, stepY)).r * 0.224;\n"
+            + "  float noise = texture2D(tex_sampler_1, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + " + vec2(-stepX, -stepY)).r * 0.224;\n"
+            + "  noise += texture2D(tex_sampler_1, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + " + vec2(-stepX, stepY)).r * 0.224;\n"
+            + "  noise += texture2D(tex_sampler_1, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + " + vec2(stepX, -stepY)).r * 0.224;\n"
+            + "  noise += texture2D(tex_sampler_1, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + " + vec2(stepX, stepY)).r * 0.224;\n"
             + "  noise += 0.4448;\n"
             + "  noise *= scale;\n"
-            + "  vec4 color = texture2D(tex_sampler_0, vTextureCoord);\n"
+            + "  vec4 color = texture2D(tex_sampler_0, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + ");\n"
             + "  float energy = 0.33333 * color.r + 0.33333 * color.g + 0.33333 * color.b;\n"
             + "  float mask = (1.0 - sqrt(energy));\n"
             + "  float weight = 1.0 - 1.333 * mask * noise;\n"
             + "  gl_FragColor = vec4(color.rgb * weight, color.a);\n"
-            + "  gl_FragColor = gl_FragColor+vec4(rand(vTextureCoord + seed), rand(vTextureCoord + seed),rand(vTextureCoord + seed),1);\n"
+            + "  gl_FragColor = gl_FragColor+vec4(rand("+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + " + seed), rand("+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+" + seed),rand("
+            + DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+" + seed),1);\n"
             + "}\n";
 
     private float strength = 0.5f;
@@ -61,7 +68,6 @@ public class GrainFilter extends BaseFilter implements OneParameterFilter {
     private int stepXLocation = -1;
     private int stepYLocation = -1;
 
-    @SuppressWarnings("WeakerAccess")
     public GrainFilter() { }
 
     @Override
@@ -132,8 +138,8 @@ public class GrainFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         GLES20.glUniform1f(strengthLocation, strength);
         GlUtils.checkError("glUniform1f");
         GLES20.glUniform1f(stepXLocation, 0.5f / width);

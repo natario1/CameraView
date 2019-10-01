@@ -14,14 +14,15 @@ import com.otaliastudios.cameraview.R;
 
 /**
  * This is the fallback preview when hardware acceleration is off, and is the last resort.
- * Currently does not support cropping, which means that {@link com.otaliastudios.cameraview.CameraView}
- * is forced to be wrap_content.
+ * Currently does not support cropping, which means that
+ * {@link com.otaliastudios.cameraview.CameraView} is forced to be wrap_content.
  *
  * Do not use.
  */
 public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHolder> {
 
-    private final static CameraLogger LOG = CameraLogger.create(SurfaceCameraPreview.class.getSimpleName());
+    private final static CameraLogger LOG
+            = CameraLogger.create(SurfaceCameraPreview.class.getSimpleName());
 
     private boolean mDispatched;
     private View mRootView;
@@ -33,7 +34,8 @@ public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHold
     @NonNull
     @Override
     protected SurfaceView onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
-        View root = LayoutInflater.from(context).inflate(R.layout.cameraview_surface_view, parent, false);
+        View root = LayoutInflater.from(context).inflate(R.layout.cameraview_surface_view, parent,
+                false);
         parent.addView(root, 0);
         SurfaceView surfaceView = root.findViewById(R.id.surface_view);
         final SurfaceHolder holder = surfaceView.getHolder();
@@ -48,7 +50,10 @@ public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHold
 
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                LOG.i("callback:", "surfaceChanged", "w:", width, "h:", height, "dispatched:", mDispatched);
+                LOG.i("callback:", "surfaceChanged",
+                        "w:", width,
+                        "h:", height,
+                        "dispatched:", mDispatched);
                 if (!mDispatched) {
                     dispatchOnSurfaceAvailable(width, height);
                     mDispatched = true;

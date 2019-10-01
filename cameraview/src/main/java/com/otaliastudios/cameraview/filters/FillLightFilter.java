@@ -18,10 +18,10 @@ public class FillLightFilter extends BaseFilter implements OneParameterFilter {
             + "uniform samplerExternalOES sTexture;\n"
             + "uniform float mult;\n"
             + "uniform float igamma;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
             + "  const vec3 color_weights = vec3(0.25, 0.5, 0.25);\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  float lightmask = dot(color.rgb, color_weights);\n"
             + "  float backmask = (1.0 - lightmask);\n"
             + "  vec3 ones = vec3(1.0, 1.0, 1.0);\n"
@@ -95,8 +95,8 @@ public class FillLightFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         float amount = 1.0f - strength;
         float multiplier = 1.0f / (amount * 0.7f + 0.3f);
         GLES20.glUniform1f(multiplierLocation, multiplier);

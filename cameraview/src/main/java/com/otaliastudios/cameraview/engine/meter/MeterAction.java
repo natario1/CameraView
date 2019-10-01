@@ -82,8 +82,8 @@ public class MeterAction extends ActionWrapper {
         List<MeteringRectangle> areas = new ArrayList<>();
         if (point != null) {
             // This is a good Q/A. https://stackoverflow.com/a/33181620/4288782
-            // At first, the point is relative to the View system and does not account our own cropping.
-            // Will keep updating these two below.
+            // At first, the point is relative to the View system and does not account
+            // our own cropping. Will keep updating these two below.
             final PointF referencePoint = new PointF(point.x, point.y);
             Size referenceSize = engine.getPreview().getSurfaceSize();
 
@@ -132,7 +132,7 @@ public class MeterAction extends ActionWrapper {
         Size previewStreamSize = engine.getPreviewStreamSize(Reference.VIEW);
         Size previewSurfaceSize = referenceSize;
         if (previewStreamSize == null) {
-            throw new IllegalStateException("getPreviewStreamSize should not be null at this point.");
+            throw new IllegalStateException("getPreviewStreamSize should not be null here.");
         }
         int referenceWidth = previewSurfaceSize.getWidth();
         int referenceHeight = previewSurfaceSize.getHeight();
@@ -142,13 +142,15 @@ public class MeterAction extends ActionWrapper {
             if (previewStreamAspectRatio.toFloat() > previewSurfaceAspectRatio.toFloat()) {
                 // Stream is larger. The x coordinate must be increased: a touch on the left side
                 // of the surface is not on the left size of stream (it's more to the right).
-                float scale = previewStreamAspectRatio.toFloat() / previewSurfaceAspectRatio.toFloat();
+                float scale = previewStreamAspectRatio.toFloat()
+                        / previewSurfaceAspectRatio.toFloat();
                 referencePoint.x += previewSurfaceSize.getWidth() * (scale - 1F) / 2F;
                 referenceWidth = Math.round(previewSurfaceSize.getWidth() * scale);
             } else {
                 // Stream is taller. The y coordinate must be increased: a touch on the top side
                 // of the surface is not on the top size of stream (it's a bit lower).
-                float scale = previewSurfaceAspectRatio.toFloat() / previewStreamAspectRatio.toFloat();
+                float scale = previewSurfaceAspectRatio.toFloat()
+                        / previewStreamAspectRatio.toFloat();
                 referencePoint.y += previewSurfaceSize.getHeight() * (scale - 1F) / 2F;
                 referenceHeight = Math.round(previewSurfaceSize.getHeight() * scale);
             }
@@ -169,7 +171,8 @@ public class MeterAction extends ActionWrapper {
 
     @SuppressWarnings("SuspiciousNameCombination")
     @NonNull
-    private Size applyPreviewToSensorRotation(@NonNull Size referenceSize, @NonNull PointF referencePoint) {
+    private Size applyPreviewToSensorRotation(@NonNull Size referenceSize,
+                                              @NonNull PointF referencePoint) {
         // Not elegant, but the sin/cos way was failing for some reason.
         int angle = engine.getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE);
         boolean flip = angle % 180 != 0;
@@ -194,12 +197,13 @@ public class MeterAction extends ActionWrapper {
     }
 
     @NonNull
-    private Size applyCropRegionCoordinates(@NonNull Size referenceSize, @NonNull PointF referencePoint) {
+    private Size applyCropRegionCoordinates(@NonNull Size referenceSize,
+                                            @NonNull PointF referencePoint) {
         // The input point and size refer to the stream rect.
         // The stream rect is part of the 'crop region', as described below.
         // https://source.android.com/devices/camera/camera3_crop_reprocess.html
         Rect cropRect = holder.getBuilder(this).get(CaptureRequest.SCALER_CROP_REGION);
-        // For now, we don't care about x and y position. Rect should be non-null, but let's be safe.
+        // For now we don't care about x and y position. Rect should not be null, but let's be safe.
         int cropRectWidth = cropRect == null ? referenceSize.getWidth() : cropRect.width();
         int cropRectHeight = cropRect == null ? referenceSize.getHeight() : cropRect.height();
         // The stream is always centered inside the crop region, and one of the dimensions
@@ -210,16 +214,19 @@ public class MeterAction extends ActionWrapper {
     }
 
     @NonNull
-    private Size applyActiveArrayCoordinates(@NonNull Size referenceSize, @NonNull PointF referencePoint) {
+    private Size applyActiveArrayCoordinates(@NonNull Size referenceSize,
+                                             @NonNull PointF referencePoint) {
         // The input point and size refer to the scaler crop region.
         // We can query for the crop region position inside the active array, so this is easy.
         Rect cropRect = holder.getBuilder(this).get(CaptureRequest.SCALER_CROP_REGION);
         referencePoint.x += cropRect == null ? 0 : cropRect.left;
         referencePoint.y += cropRect == null ? 0 : cropRect.top;
         // Finally, get the active rect width and height from characteristics.
-        Rect activeRect = holder.getCharacteristics(this).get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        Rect activeRect = holder.getCharacteristics(this)
+                .get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
         if (activeRect == null) { // Should never happen
-            activeRect = new Rect(0, 0, referenceSize.getWidth(), referenceSize.getHeight());
+            activeRect = new Rect(0, 0, referenceSize.getWidth(),
+                    referenceSize.getHeight());
         }
         return new Size(activeRect.width(), activeRect.height());
     }

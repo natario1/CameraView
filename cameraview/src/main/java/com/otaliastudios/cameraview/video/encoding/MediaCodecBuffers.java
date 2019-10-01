@@ -8,8 +8,8 @@ import java.nio.ByteBuffer;
 import androidx.annotation.RequiresApi;
 
 /**
- * A Wrapper to MediaCodec that facilitates the use of API-dependent get{Input/Output}Buffer methods,
- * in order to prevent: http://stackoverflow.com/q/30646885
+ * A Wrapper to MediaCodec that facilitates the use of API-dependent get{Input/Output}Buffer
+ * methods, in order to prevent: http://stackoverflow.com/q/30646885
  */
 @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MediaCodecBuffers {

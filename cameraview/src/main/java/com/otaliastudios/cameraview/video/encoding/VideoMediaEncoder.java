@@ -54,13 +54,17 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
     @EncoderThread
     @Override
     protected void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthUs) {
-        MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width, mConfig.height);
+        MediaFormat format = MediaFormat.createVideoFormat(mConfig.mimeType, mConfig.width,
+                mConfig.height);
 
-        // Failing to specify some of these can cause the MediaCodec configure() call to throw an unhelpful exception.
-        // About COLOR_FormatSurface, see https://stackoverflow.com/q/28027858/4288782
-        // This just means it is an opaque, implementation-specific format that the device GPU prefers.
-        // So as long as we use the GPU to draw, the format will match what the encoder expects.
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        // Failing to specify some of these can cause the MediaCodec configure() call to throw an
+        // unhelpful exception. About COLOR_FormatSurface, see
+        // https://stackoverflow.com/q/28027858/4288782
+        // This just means it is an opaque, implementation-specific format that the device
+        // GPU prefers. So as long as we use the GPU to draw, the format will match what
+        // the encoder expects.
+        format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_BIT_RATE, mConfig.bitRate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, mConfig.frameRate);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1); // seconds between key frames!

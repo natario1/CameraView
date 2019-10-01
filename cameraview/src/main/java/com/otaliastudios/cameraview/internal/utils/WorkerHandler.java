@@ -23,8 +23,10 @@ import java.util.concurrent.Executor;
  */
 public class WorkerHandler {
 
-    private final static CameraLogger LOG = CameraLogger.create(WorkerHandler.class.getSimpleName());
-    private final static ConcurrentHashMap<String, WeakReference<WorkerHandler>> sCache = new ConcurrentHashMap<>(4);
+    private final static CameraLogger LOG
+            = CameraLogger.create(WorkerHandler.class.getSimpleName());
+    private final static ConcurrentHashMap<String, WeakReference<WorkerHandler>> sCache
+            = new ConcurrentHashMap<>(4);
 
     private final static String FALLBACK_NAME = "FallbackCameraThread";
 
@@ -50,7 +52,8 @@ public class WorkerHandler {
                 } else {
                     // Cleanup the old thread before creating a new one
                     cached.destroy();
-                    LOG.w("get:", "Thread reference found, but not alive or interrupted. Removing.", name);
+                    LOG.w("get:", "Thread reference found, but not alive or interrupted.",
+                            "Removing.", name);
                     sCache.remove(name);
                 }
             } else {

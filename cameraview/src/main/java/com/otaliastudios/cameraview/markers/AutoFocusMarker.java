@@ -32,7 +32,9 @@ public interface AutoFocusMarker extends Marker {
      * @param successful whether the operation succeeded
      * @param point coordinates
      */
-    void onAutoFocusEnd(@NonNull AutoFocusTrigger trigger, boolean successful, @NonNull PointF point);
+    void onAutoFocusEnd(@NonNull AutoFocusTrigger trigger,
+                        boolean successful,
+                        @NonNull PointF point);
 
 
 }

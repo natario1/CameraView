@@ -44,16 +44,30 @@ overlay with `findViewById` and:
 - Change its position or appearance
 - Do so while video is being recorded
 
- Any changes in the overlay appearance will be recorded in real-time in the picture snapshot
- or video snapshot that you are capturing.
+Any changes in the overlay appearance will be recorded in real-time in the picture snapshot
+or video snapshot that you are capturing.
  
- As you can see in the example, you can also selectively choose, for each overlay, whether it
- will draw on the preview (`layout_drawOnPreview`), on picture snapshots (`layout_drawOnPreview`), 
- on video snapshots (`layout_drawOnPreview`).
-
+As you can see in the example, you can also selectively choose, for each overlay, whether it
+will draw on the preview (`layout_drawOnPreview`), on picture snapshots (`layout_drawOnPreview`), 
+on video snapshots (`layout_drawOnPreview`).
+ 
 ### Advanced Usage
 
-If you need to change these flags at runtime, you should cast the overlay `LayoutParams` as follows:
+To add an overlay at runtime, simply use `addView()`, but make sure you pass in an instance of
+`OverlayLayout.LayoutParams`:
+
+```java
+OverlayLayout.LayoutParams() params = new OverlayLayout.LayoutParams();
+cameraView.addView(overlay, params);
+```
+
+To remove an overlay at runtime, simply use `removeView()`:
+
+```java
+cameraView.removeView(overlay);
+```
+
+To change the `layout_` flags at runtime, you should cast the overlay `LayoutParams` as follows:
 
 ```java
 // Cast to OverlayLayout.LayoutParams

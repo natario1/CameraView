@@ -29,29 +29,32 @@ public class ExposureReset extends BaseReset {
 
     @Override
     protected void onStarted(@NonNull ActionHolder holder, @Nullable MeteringRectangle area) {
-        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
+        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE,
+                0);
         if (area != null && maxRegions > 0) {
             holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_REGIONS,
                     new MeteringRectangle[]{area});
         }
 
         // NOTE: precapture might not be supported, in which case I think it will be ignored.
-        Integer trigger = holder.getLastResult(this).get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
+        Integer trigger = holder.getLastResult(this)
+                .get(CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
         LOG.i("onStarted:", "last precapture trigger is", trigger);
         if (trigger != null && trigger == CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START) {
             LOG.i("onStarted:", "canceling precapture.");
             int newTrigger = Build.VERSION.SDK_INT >= 23
                     ? CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL
                     : CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE;
-            holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, newTrigger);
+            holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                    newTrigger);
         }
 
         // Documentation about CONTROL_AE_PRECAPTURE_TRIGGER says that, if it was started but not
         // followed by a CAPTURE_INTENT_STILL_PICTURE request, the internal AE routine might remain
         // locked unless we unlock manually.
-        // This is often the case for us, since the snapshot picture recorder does not use the intent
-        // and anyway we use the precapture sequence for touch metering as well.
-        // To reset, docs suggest the use of CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL, which we do above,
+        // This is often the case for us, since the snapshot picture recorder does not use the
+        // intent and anyway we use the precapture sequence for touch metering as well.
+        // To reset docs suggest the use of CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL, which we do above,
         // or the technique used below: locking then unlocking. This proved to be the ONLY method
         // to unlock reliably, unlike the cancel trigger (which we'll run anyway).
         holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_LOCK, true);

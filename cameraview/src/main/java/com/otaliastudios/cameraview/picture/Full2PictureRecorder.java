@@ -28,7 +28,8 @@ import androidx.exifinterface.media.ExifInterface;
  * A {@link PictureResult} that uses standard APIs.
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class Full2PictureRecorder extends PictureRecorder implements ImageReader.OnImageAvailableListener {
+public class Full2PictureRecorder extends PictureRecorder
+        implements ImageReader.OnImageAvailableListener {
 
     private static final String TAG = Full2PictureRecorder.class.getSimpleName();
     private static final CameraLogger LOG = CameraLogger.create(TAG);
@@ -65,7 +66,8 @@ public class Full2PictureRecorder extends PictureRecorder implements ImageReader
             }
 
             @Override
-            public void onCaptureStarted(@NonNull ActionHolder holder, @NonNull CaptureRequest request) {
+            public void onCaptureStarted(@NonNull ActionHolder holder,
+                                         @NonNull CaptureRequest request) {
                 super.onCaptureStarted(holder, request);
                 if (request.getTag() == (Integer) CameraDevice.TEMPLATE_STILL_CAPTURE) {
                     LOG.i("onCaptureStarted:", "Dispatching picture shutter.");

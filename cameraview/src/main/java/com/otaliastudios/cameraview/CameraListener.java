@@ -48,8 +48,9 @@ public abstract class CameraListener {
      * Notifies that a picture previously captured with {@link CameraView#takePicture()}
      * or {@link CameraView#takePictureSnapshot()} is ready to be shown or saved to file.
      *
-     * If planning to show a bitmap, you can use {@link PictureResult#toBitmap(int, int, BitmapCallback)}
-     * to decode the byte array taking care about orientation and threading.
+     * If planning to show a bitmap, you can use
+     * {@link PictureResult#toBitmap(int, int, BitmapCallback)} to decode the byte array
+     * taking care about orientation and threading.
      *
      * @param result captured picture
      */
@@ -114,7 +115,9 @@ public abstract class CameraListener {
      * @param fingers finger positions that caused the event, null if not caused by touch
      */
     @UiThread
-    public void onZoomChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) { }
+    public void onZoomChanged(float newValue,
+                              @NonNull float[] bounds,
+                              @Nullable PointF[] fingers) { }
 
 
     /**
@@ -126,7 +129,9 @@ public abstract class CameraListener {
      * @param fingers finger positions that caused the event, null if not caused by touch
      */
     @UiThread
-    public void onExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) { }
+    public void onExposureCorrectionChanged(float newValue,
+                                            @NonNull float[] bounds,
+                                            @Nullable PointF[] fingers) { }
 
 
     /**

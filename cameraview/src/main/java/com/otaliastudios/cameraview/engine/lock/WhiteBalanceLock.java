@@ -20,10 +20,13 @@ public class WhiteBalanceLock extends BaseLock {
 
     @Override
     protected boolean checkIsSupported(@NonNull ActionHolder holder) {
-        boolean isNotLegacy = readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
+        boolean isNotLegacy = readCharacteristic(
+                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
                 != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
         Integer awbMode = holder.getBuilder(this).get(CaptureRequest.CONTROL_AWB_MODE);
-        boolean result = isNotLegacy && awbMode != null && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
+        boolean result = isNotLegacy
+                && awbMode != null
+                && awbMode == CaptureRequest.CONTROL_AWB_MODE_AUTO;
         LOG.i("checkIsSupported:", result);
         return result;
     }
@@ -43,7 +46,9 @@ public class WhiteBalanceLock extends BaseLock {
     }
 
     @Override
-    public void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+    public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                   @NonNull CaptureRequest request,
+                                   @NonNull TotalCaptureResult result) {
         super.onCaptureCompleted(holder, request, result);
         Integer awbState = result.get(CaptureResult.CONTROL_AWB_STATE);
         LOG.i("processCapture:", "awbState:", awbState);

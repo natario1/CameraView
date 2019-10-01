@@ -27,4 +27,9 @@ public class CameraIntegration1Test extends CameraIntegrationTest {
     protected Engine getEngine() {
         return Engine.CAMERA1;
     }
+
+    @Override
+    protected long getMeteringTimeoutMillis() {
+        return Camera1Engine.AUTOFOCUS_END_DELAY_MILLIS;
+    }
 }

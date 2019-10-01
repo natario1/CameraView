@@ -43,7 +43,8 @@ public class GridLinesLayout extends View {
         super(context, attrs);
         horiz = new ColorDrawable(gridColor);
         vert = new ColorDrawable(gridColor);
-        width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0.9f, context.getResources().getDisplayMetrics());
+        width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0.9f,
+                context.getResources().getDisplayMetrics());
     }
 
     @Override

@@ -24,7 +24,7 @@ public class AutoFixFilter extends BaseFilter implements OneParameterFilter {
             + "float hist_scale;\n"
             + "float density_offset;\n"
             + "float density_scale;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
             + "  shift_scale = " + (1.0f / 256f) + ";\n"
             + "  hist_offset = " + (0.5f / 766f) + ";\n"
@@ -32,7 +32,8 @@ public class AutoFixFilter extends BaseFilter implements OneParameterFilter {
             + "  density_offset = " + (0.5f / 1024f) + ";\n"
             + "  density_scale = " + (1023f / 1024f) + ";\n"
             + "  const vec3 weights = vec3(0.33333, 0.33333, 0.33333);\n"
-            + "  vec4 color = texture2D(tex_sampler_0, vTextureCoord);\n"
+            + "  vec4 color = texture2D(tex_sampler_0, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME
+            + ");\n"
             + "  float energy = dot(color.rgb, weights);\n"
             + "  float mask_value = energy - 0.5;\n"
             + "  float alpha;\n"
@@ -116,8 +117,8 @@ public class AutoFixFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         GLES20.glUniform1f(scaleLocation, scale);
         GlUtils.checkError("glUniform1f");
     }

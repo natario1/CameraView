@@ -76,15 +76,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * milliseconds of the first frame in the {@link System#currentTimeMillis()} reference, so
  * something that we can coordinate on.
  */
-// https://github.com/saki4510t/AudioVideoRecordingSample/blob/master/app/src/main/java/com/serenegiant/encoder/MediaEncoder.java
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public abstract class MediaEncoder {
 
     private final static String TAG = MediaEncoder.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
-    // Did some test to see which value would maximize our performance in the current setup (infinite audio pool).
-    // Measured the time it would take to write a 30 seconds video. Based on this, we'll go with TIMEOUT=0 for now.
+    // Did some test to see which value would maximize our performance in the current setup
+    // (infinite audio pool). Measured the time it would take to write a 30 seconds video.
+    // Based on this, we'll go with TIMEOUT=0 for now.
     // INPUT_TIMEOUT_US 10000: 46 seconds
     // INPUT_TIMEOUT_US 1000: 37 seconds
     // INPUT_TIMEOUT_US 100: 33 seconds
@@ -171,7 +171,8 @@ public abstract class MediaEncoder {
      * works, we might have {@link #onStop()} or {@link #onStopped()} to be executed before
      * the previous step has completed.
      */
-    final void prepare(@NonNull final MediaEncoderEngine.Controller controller, final long maxLengthUs) {
+    final void prepare(@NonNull final MediaEncoderEngine.Controller controller,
+                       final long maxLengthUs) {
         if (mState >= STATE_PREPARING) {
             LOG.e(mName, "Wrong state while preparing. Aborting.", mState);
             return;
@@ -230,14 +231,16 @@ public abstract class MediaEncoder {
      */
     @SuppressWarnings("ConstantConditions")
     final void notify(final @NonNull String event, final @Nullable Object data) {
-        if (!mPendingEvents.containsKey(event)) mPendingEvents.put(event, new AtomicInteger(0));
+        if (!mPendingEvents.containsKey(event)) mPendingEvents.put(event,
+                 new AtomicInteger(0));
         final AtomicInteger pendingEvents = mPendingEvents.get(event);
         pendingEvents.incrementAndGet();
         LOG.v(mName, "Notify was called. Posting. pendingEvents:", pendingEvents.intValue());
         mWorker.post(new Runnable() {
             @Override
             public void run() {
-                LOG.v(mName, "Notify was called. Executing. pendingEvents:", pendingEvents.intValue());
+                LOG.v(mName, "Notify was called. Executing. pendingEvents:",
+                        pendingEvents.intValue());
                 onEvent(event, data);
                 pendingEvents.decrementAndGet();
             }
@@ -280,7 +283,8 @@ public abstract class MediaEncoder {
      * @param maxLengthUs the maxLength in microseconds
      */
     @EncoderThread
-    protected abstract void onPrepare(@NonNull MediaEncoderEngine.Controller controller, long maxLengthUs);
+    protected abstract void onPrepare(@NonNull MediaEncoderEngine.Controller controller,
+                                      long maxLengthUs);
 
     /**
      * Start recording. This might be a lightweight operation
@@ -329,8 +333,8 @@ public abstract class MediaEncoder {
     }
 
     /**
-     * Returns a new input buffer and index, waiting at most {@link #INPUT_TIMEOUT_US} if none is available.
-     * Callers should check the boolean result - true if the buffer was filled.
+     * Returns a new input buffer and index, waiting at most {@link #INPUT_TIMEOUT_US} if none
+     * is available. Callers should check the boolean result - true if the buffer was filled.
      *
      * @param holder the input buffer holder
      * @return true if acquired
@@ -413,7 +417,9 @@ public abstract class MediaEncoder {
 
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 // should happen before receiving buffers, and should only happen once
-                if (mController.isStarted()) throw new RuntimeException("MediaFormat changed twice.");
+                if (mController.isStarted()) {
+                    throw new RuntimeException("MediaFormat changed twice.");
+                }
                 MediaFormat newFormat = mMediaCodec.getOutputFormat();
                 mTrackIndex = mController.notifyStarted(newFormat);
                 setState(STATE_STARTED);
@@ -424,9 +430,10 @@ public abstract class MediaEncoder {
             } else {
                 ByteBuffer encodedData = mBuffers.getOutputBuffer(encoderStatus);
 
-                // Codec config means that config data was pulled out and fed to the muxer when we got
-                // the INFO_OUTPUT_FORMAT_CHANGED status. Ignore it.
-                boolean isCodecConfig = (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0;
+                // Codec config means that config data was pulled out and fed to the muxer
+                // when we got the INFO_OUTPUT_FORMAT_CHANGED status. Ignore it.
+                boolean isCodecConfig = (mBufferInfo.flags
+                        & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0;
                 if (!isCodecConfig && mController.isStarted() && mBufferInfo.size != 0) {
 
                     // adjust the ByteBuffer values to match BufferInfo (not needed?)
@@ -437,7 +444,8 @@ public abstract class MediaEncoder {
                     // reached and stop recording when needed.
                     if (mFirstTimeUs == Long.MIN_VALUE) {
                         mFirstTimeUs = mBufferInfo.presentationTimeUs;
-                        LOG.w(mName, "DRAINING - Got the first presentation time:", mFirstTimeUs);
+                        LOG.w(mName, "DRAINING - Got the first presentation time:",
+                                mFirstTimeUs);
                     }
                     mLastTimeUs = mBufferInfo.presentationTimeUs;
 
@@ -447,10 +455,12 @@ public abstract class MediaEncoder {
                     // To address this, encoders are required to call notifyFirstFrameMillis
                     // so we can adjust here - moving to 1970 reference.
                     // Extra benefit: we never pass a pts equal to 0, which some encoders refuse.
-                    mBufferInfo.presentationTimeUs = (mStartTimeMillis * 1000) + mLastTimeUs - mFirstTimeUs;
+                    mBufferInfo.presentationTimeUs = (mStartTimeMillis * 1000)
+                            + mLastTimeUs - mFirstTimeUs;
 
                     // Write.
-                    LOG.i(mName, "DRAINING - About to write(). Adjusted presentation:", mBufferInfo.presentationTimeUs);
+                    LOG.i(mName, "DRAINING - About to write(). Adjusted presentation:",
+                            mBufferInfo.presentationTimeUs);
                     OutputBuffer buffer = mOutputBufferPool.get();
                     //noinspection ConstantConditions
                     buffer.info = mBufferInfo;

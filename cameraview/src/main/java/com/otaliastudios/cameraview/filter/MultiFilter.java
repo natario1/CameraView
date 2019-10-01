@@ -26,8 +26,9 @@ import java.util.Map;
  * New filters can be added at any time through {@link #addFilter(Filter)}, but currently they
  * can not be removed because we can not easily ensure that they would be correctly released.
  *
- * The {@link MultiFilter} does also implement {@link OneParameterFilter} and {@link TwoParameterFilter},
- * dispatching all the parameter calls to child filters, assuming they support it.
+ * The {@link MultiFilter} does also implement {@link OneParameterFilter} and
+ * {@link TwoParameterFilter}, dispatching all the parameter calls to child filters,
+ * assuming they support it.
  *
  * There are some important technical caveats when using {@link MultiFilter}:
  * - each child filter requires the allocation of a GL framebuffer. Using a large number of filters
@@ -146,11 +147,17 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
             state.textureId = textureArray[0];
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, state.textureId);
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, state.size.getWidth(), state.size.getHeight(), 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
+                    state.size.getWidth(), state.size.getHeight(), 0, GLES20.GL_RGBA,
+                    GLES20.GL_UNSIGNED_BYTE, null);
+            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
+                    GLES20.GL_LINEAR);
+            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
+                    GLES20.GL_LINEAR);
+            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,
+                    GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,
+                    GLES20.GL_CLAMP_TO_EDGE);
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, state.framebufferId);
             GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
                     GLES20.GL_COLOR_ATTACHMENT0,
@@ -230,7 +237,7 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
     }
 
     @Override
-    public void draw(float[] transformMatrix) {
+    public void draw(long timestampUs, float[] transformMatrix) {
         synchronized (lock) {
             for (int i = 0; i < filters.size(); i++) {
                 boolean isFirst = i == 0;
@@ -258,9 +265,9 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
                 // The first filter should apply all the transformations. Then,
                 // since they are applied, we should use a no-op matrix.
                 if (isFirst) {
-                    filter.draw(transformMatrix);
+                    filter.draw(timestampUs, transformMatrix);
                 } else {
-                    filter.draw(GlUtils.IDENTITY_MATRIX);
+                    filter.draw(timestampUs, GlUtils.IDENTITY_MATRIX);
                 }
 
                 // Set the input for the next cycle:

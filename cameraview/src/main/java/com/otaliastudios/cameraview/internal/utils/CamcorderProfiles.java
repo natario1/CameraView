@@ -31,14 +31,16 @@ public class CamcorderProfiles {
         sizeToProfileMap.put(new Size(1280, 720), CamcorderProfile.QUALITY_720P);
         sizeToProfileMap.put(new Size(1920, 1080), CamcorderProfile.QUALITY_1080P);
         if (Build.VERSION.SDK_INT >= 21) {
-            sizeToProfileMap.put(new Size(3840, 2160), CamcorderProfile.QUALITY_2160P);
+            sizeToProfileMap.put(new Size(3840, 2160),
+                    CamcorderProfile.QUALITY_2160P);
         }
     }
 
 
     /**
      * Returns a CamcorderProfile that's somewhat coherent with the target size,
-     * to ensure we get acceptable video/audio parameters for MediaRecorders (most notably the bitrate).
+     * to ensure we get acceptable video/audio parameters for MediaRecorders
+     * (most notably the bitrate).
      *
      * @param cameraId the camera2 id
      * @param targetSize the target video size
@@ -57,7 +59,8 @@ public class CamcorderProfiles {
 
     /**
      * Returns a CamcorderProfile that's somewhat coherent with the target size,
-     * to ensure we get acceptable video/audio parameters for MediaRecorders (most notably the bitrate).
+     * to ensure we get acceptable video/audio parameters for MediaRecorders
+     * (most notably the bitrate).
      *
      * @param cameraId the camera id
      * @param targetSize the target video size

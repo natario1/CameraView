@@ -21,12 +21,12 @@ public class TintFilter extends BaseFilter implements OneParameterFilter {
             + "uniform samplerExternalOES sTexture;\n"
             + "uniform vec3 tint;\n"
             + "vec3 color_ratio;\n"
-            + "varying vec2 vTextureCoord;\n"
+            + "varying vec2 "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+";\n"
             + "void main() {\n"
             + "  color_ratio[0] = " + 0.21f + ";\n"
             + "  color_ratio[1] = " + 0.71f + ";\n"
             + "  color_ratio[2] = " + 0.07f + ";\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec4 color = texture2D(sTexture, "+DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME+");\n"
             + "  float avg_color = dot(color_ratio, color.rgb);\n"
             + "  vec3 new_color = min(0.8 * avg_color + 0.2 * tint, 1.0);\n"
             + "  gl_FragColor = vec4(new_color.rgb, color.a);\n" + "}\n";
@@ -91,8 +91,8 @@ public class TintFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(float[] transformMatrix) {
-        super.onPreDraw(transformMatrix);
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+        super.onPreDraw(timestampUs, transformMatrix);
         float[] channels = new float[]{
                 Color.red(tint) / 255f,
                 Color.green(tint) / 255f,

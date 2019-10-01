@@ -24,7 +24,7 @@ import java.nio.Buffer;
  *
  * - Provides a {@link Canvas} to be passed to the Overlay
  * - Lets the overlay draw there: {@link #draw(Overlay.Target)}
- * - Renders this into the current EGL window: {@link #render()}
+ * - Renders this into the current EGL window: {@link #render(long)}
  * - Applies the {@link Issue514Workaround} the correct way
  *
  * In the future we might want to use a different approach than {@link EglViewport},
@@ -93,8 +93,10 @@ public class OverlayDrawer {
      * Renders the drawn content in the current EGL surface, assuming there is one.
      * Should be called after {@link #draw(Overlay.Target)} and any {@link #getTransform()}
      * modification.
+     *
+     * @param timestampUs frame timestamp
      */
-    public void render() {
+    public void render(long timestampUs) {
         // Enable blending
         // Reference http://www.learnopengles.com/android-lesson-five-an-introduction-to-blending/
         GLES20.glDisable(GLES20.GL_CULL_FACE);
@@ -103,7 +105,7 @@ public class OverlayDrawer {
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         synchronized (mIssue514WorkaroundLock) {
-            mViewport.drawFrame(mTextureId, mTransform);
+            mViewport.drawFrame(timestampUs, mTextureId, mTransform);
         }
     }
 

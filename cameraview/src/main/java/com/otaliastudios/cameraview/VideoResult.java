@@ -185,7 +185,8 @@ public class VideoResult {
 
     /**
      * Returns the reason why the recording was stopped.
-     * @return one of {@link #REASON_USER}, {@link #REASON_MAX_DURATION_REACHED} or {@link #REASON_MAX_SIZE_REACHED}.
+     * @return one of {@link #REASON_USER}, {@link #REASON_MAX_DURATION_REACHED}
+     *         or {@link #REASON_MAX_SIZE_REACHED}.
      */
     public int getTerminationReason() {
         return endReason;

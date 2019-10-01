@@ -77,5 +77,6 @@ public interface ActionHolder {
      * @param builder builder
      * @throws CameraAccessException camera exception
      */
-    void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder) throws CameraAccessException;
+    void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder)
+            throws CameraAccessException;
 }

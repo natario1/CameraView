@@ -69,8 +69,8 @@ class AudioTimestamp {
             //noinspection StatementWithEmptyBody
             if (correctionUs < 0) {
                 // This means that this method is being called too often, so that the expected start
-                // time for this buffer is BEFORE the last buffer end. So, respect the last buffer end
-                // instead.
+                // time for this buffer is BEFORE the last buffer end. So, respect the last buffer
+                // end instead.
             }
             mGapUs = 0;
             mBytesSinceBaseTime += readBytes;

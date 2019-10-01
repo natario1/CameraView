@@ -27,6 +27,7 @@ import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import com.google.android.gms.tasks.Task;
@@ -81,7 +82,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
-    private static final long METER_TIMEOUT = 2500;
+    @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
     private String mCameraId;
@@ -96,17 +97,19 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private Size mFrameProcessingSize;
     private ImageReader mFrameProcessingReader; // need this or the reader surface is collected
     private final WorkerHandler mFrameConversionHandler;
+    private final Object mFrameProcessingImageLock = new Object();
     private Surface mFrameProcessingSurface;
 
     // Preview
     private Surface mPreviewStreamSurface;
 
     // Video recording
-    private VideoResult.Stub mFullVideoPendingStub; // When takeVideo is called, we have to reset the session.
+    // When takeVideo is called, we restart the session.
+    private VideoResult.Stub mFullVideoPendingStub;
 
     // Picture capturing
     private ImageReader mPictureReader;
-    private final boolean mPictureCaptureStopsPreview = false; // can make configurable at some point
+    private final boolean mPictureCaptureStopsPreview = false; // can be configurable at some point
 
     // Actions
     private final List<Action> mActions = new ArrayList<>();
@@ -135,32 +138,46 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return value == null ? fallback : value;
     }
 
-    @SuppressWarnings("DuplicateBranchesInSwitch")
     @NonNull
     private CameraException createCameraException(@NonNull CameraAccessException exception) {
         int reason;
         switch (exception.getReason()) {
-            case CameraAccessException.CAMERA_DISABLED: reason = CameraException.REASON_FAILED_TO_CONNECT; break;
-            case CameraAccessException.CAMERA_ERROR: reason = CameraException.REASON_DISCONNECTED; break;
-            case CameraAccessException.CAMERA_DISCONNECTED: reason = CameraException.REASON_DISCONNECTED; break;
-            case CameraAccessException.CAMERA_IN_USE: reason = CameraException.REASON_FAILED_TO_CONNECT; break;
-            case CameraAccessException.MAX_CAMERAS_IN_USE: reason = CameraException.REASON_FAILED_TO_CONNECT; break;
-            default: reason = CameraException.REASON_UNKNOWN; break;
+            case CameraAccessException.CAMERA_DISABLED:
+            case CameraAccessException.CAMERA_IN_USE:
+            case CameraAccessException.MAX_CAMERAS_IN_USE: {
+                reason = CameraException.REASON_FAILED_TO_CONNECT;
+                break;
+            }
+            case CameraAccessException.CAMERA_ERROR:
+            case CameraAccessException.CAMERA_DISCONNECTED: {
+                reason = CameraException.REASON_DISCONNECTED;
+                break;
+            }
+            default: {
+                reason = CameraException.REASON_UNKNOWN;
+                break;
+            }
         }
         return new CameraException(exception, reason);
     }
 
-    @SuppressWarnings("DuplicateBranchesInSwitch")
     @NonNull
     private CameraException createCameraException(int stateCallbackError) {
         int reason;
         switch (stateCallbackError) {
-            case CameraDevice.StateCallback.ERROR_CAMERA_DISABLED: reason = CameraException.REASON_FAILED_TO_CONNECT; break; // Device policy
-            case CameraDevice.StateCallback.ERROR_CAMERA_DEVICE: reason = CameraException.REASON_FAILED_TO_CONNECT; break; // Fatal error
-            case CameraDevice.StateCallback.ERROR_CAMERA_SERVICE: reason = CameraException.REASON_FAILED_TO_CONNECT; break; // Fatal error, device might have to be restarted
-            case CameraDevice.StateCallback.ERROR_CAMERA_IN_USE: reason = CameraException.REASON_FAILED_TO_CONNECT; break;
-            case CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE: reason = CameraException.REASON_FAILED_TO_CONNECT; break;
-            default: reason = CameraException.REASON_UNKNOWN; break;
+            case CameraDevice.StateCallback.ERROR_CAMERA_DISABLED: // Device policy
+            case CameraDevice.StateCallback.ERROR_CAMERA_DEVICE: // Fatal error
+            case CameraDevice.StateCallback.ERROR_CAMERA_SERVICE: // Fatal error, might have to
+                // restart the device
+            case CameraDevice.StateCallback.ERROR_CAMERA_IN_USE:
+            case CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE: {
+                reason = CameraException.REASON_FAILED_TO_CONNECT;
+                break;
+            }
+            default: {
+                reason = CameraException.REASON_UNKNOWN;
+                break;
+            }
         }
         return new CameraException(reason);
     }
@@ -173,7 +190,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      */
     @SuppressWarnings("UnusedReturnValue")
     @NonNull
-    private CaptureRequest.Builder createRepeatingRequestBuilder(int template) throws CameraAccessException {
+    private CaptureRequest.Builder createRepeatingRequestBuilder(int template)
+            throws CameraAccessException {
         CaptureRequest.Builder oldBuilder = mRepeatingRequestBuilder;
         mRepeatingRequestBuilder = mCamera.createCaptureRequest(template);
         mRepeatingRequestBuilder.setTag(template);
@@ -199,24 +217,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     /**
-     * Sets up the repeating request builder with default surfaces and extra ones
-     * if needed (like a video recording surface).
+     * Removes default surfaces from the repeating request builder.
      */
     private void removeRepeatingRequestBuilderSurfaces() {
         mRepeatingRequestBuilder.removeTarget(mPreviewStreamSurface);
         if (mFrameProcessingSurface != null) {
             mRepeatingRequestBuilder.removeTarget(mFrameProcessingSurface);
-        }
-    }
-
-    private void applyRepeatingRequestBuilderAsSingle() {
-        if (getPreviewState() == STATE_STARTED) {
-            try {
-                mSession.capture(mRepeatingRequestBuilder.build(),
-                        mRepeatingRequestCallback, null);
-            } catch (CameraAccessException e) {
-                throw createCameraException(e);
-            }
         }
     }
 
@@ -228,7 +234,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * it should be set before calling this method, for example by calling
      * {@link #createRepeatingRequestBuilder(int)}.
      */
-    private void applyRepeatingRequestBuilder() {
+    @SuppressWarnings("WeakerAccess")
+    protected void applyRepeatingRequestBuilder() {
         applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED);
     }
 
@@ -284,7 +291,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     protected List<Size> getPreviewStreamAvailableSizes() {
         try {
             CameraCharacteristics characteristics = mManager.getCameraCharacteristics(mCameraId);
-            StreamConfigurationMap streamMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            StreamConfigurationMap streamMap =
+                    characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (streamMap == null) {
                 throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
             }
@@ -309,7 +317,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    protected boolean collectCameraInfo(@NonNull Facing facing) {
+    protected final boolean collectCameraInfo(@NonNull Facing facing) {
         int internalFacing = mMapper.mapFacing(facing);
         String[] cameraIds = null;
         try {
@@ -325,7 +333,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         for (String cameraId : cameraIds) {
             try {
                 CameraCharacteristics characteristics = mManager.getCameraCharacteristics(cameraId);
-                if (internalFacing == readCharacteristic(characteristics, CameraCharacteristics.LENS_FACING, -99)) {
+                if (internalFacing == readCharacteristic(characteristics,
+                        CameraCharacteristics.LENS_FACING, -99)) {
                     mCameraId = cameraId;
                     int sensorOffset = readCharacteristic(characteristics,
                             CameraCharacteristics.SENSOR_ORIENTATION, 0);
@@ -372,12 +381,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
                 @Override
                 public void onDisconnected(@NonNull CameraDevice camera) {
-                    // Not sure if this is called INSTEAD of onOpened() or can be called after as well.
-                    // However, using trySetException should address this problem - it will only trigger
-                    // if the task has no result.
+                    // Not sure if this is called INSTEAD of onOpened() or can be called after
+                    // as well. However, using trySetException should address this problem -
+                    // it will only trigger if the task has no result.
                     //
-                    // Docs say to release this camera instance, however, since we throw an unrecoverable
-                    // CameraException, this will trigger a stop() through the exception handler.
+                    // Docs say to release this camera instance, however, since we throw an
+                    // unrecoverable CameraException, this will trigger a stop() through the
+                    // exception handler.
                     task.trySetException(new CameraException(CameraException.REASON_DISCONNECTED));
                 }
 
@@ -463,8 +473,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         // 4. FRAME PROCESSING
         if (hasFrameProcessors()) {
             // Choose the size.
-            StreamConfigurationMap streamMap = mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            if (streamMap == null) throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
+            StreamConfigurationMap streamMap = mCameraCharacteristics
+                    .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (streamMap == null) {
+                throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
+            }
             android.util.Size[] aSizes = streamMap.getOutputSizes(FRAME_PROCESSING_INPUT_FORMAT);
             List<Size> sizes = new ArrayList<>();
             for (android.util.Size aSize : aSizes) {
@@ -479,7 +492,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     mFrameProcessingSize.getHeight(),
                     FRAME_PROCESSING_INPUT_FORMAT,
                     2);
-            mFrameProcessingReader.setOnImageAvailableListener(this, mFrameConversionHandler.getHandler());
+            mFrameProcessingReader.setOnImageAvailableListener(this,
+                    mFrameConversionHandler.getHandler());
             mFrameProcessingSurface = mFrameProcessingReader.getSurface();
             outputSurfaces.add(mFrameProcessingSurface);
         } else {
@@ -500,7 +514,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession session) {
-                    // I would say this should be a library error and as such we throw a Runtime Exception.
+                    // This SHOULD be a library error so we throw a RuntimeException.
                     String message = LOG.e("onConfigureFailed! Session", session);
                     throw new RuntimeException(message);
                 }
@@ -529,13 +543,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
         LOG.i("onStartPreview", "Starting preview.");
         addRepeatingRequestBuilderSurfaces();
-        applyRepeatingRequestBuilder(false, CameraException.REASON_FAILED_TO_START_PREVIEW);
+        applyRepeatingRequestBuilder(false,
+                CameraException.REASON_FAILED_TO_START_PREVIEW);
         LOG.i("onStartPreview", "Started preview.");
 
         // Start delayed video if needed.
         if (mFullVideoPendingStub != null) {
-            // Do not call takeVideo/onTakeVideo. It will reset some stub parameters that the recorder sets.
-            // Also we are posting this so that doTakeVideo sees a started preview.
+            // Do not call takeVideo/onTakeVideo. It will reset some stub parameters that
+            // the recorder sets. Also we are posting so that doTakeVideo sees a started preview.
             LOG.i("onStartPreview", "Posting doTakeVideo call.");
             final VideoResult.Stub stub = mFullVideoPendingStub;
             mFullVideoPendingStub = null;
@@ -594,7 +609,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         mCaptureSize = null;
         mFrameProcessingSize = null;
         if (mFrameProcessingReader != null) {
-            mFrameProcessingReader.close();
+            synchronized (mFrameProcessingImageLock) {
+                // This call synchronously releases all Images and their underlying properties.
+                // This can cause a segmentation fault while converting the Image to NV21.
+                // So we use this lock for the two operations.
+                mFrameProcessingReader.close();
+            }
             mFrameProcessingReader = null;
         }
         if (mPictureReader != null) {
@@ -611,7 +631,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @NonNull
     @Override
     protected Task<Void> onStopEngine() {
-        LOG.i("onStopEngine:", "About to clean up.");
         try {
             LOG.i("onStopEngine:", "Clean up.", "Releasing camera.");
             mCamera.close();
@@ -620,6 +639,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             LOG.w("onStopEngine:", "Clean up.", "Exception while releasing camera.", e);
         }
         mCamera = null;
+
+        // After engine is stopping, the repeating request builder will be null,
+        // so the ActionHolder.getBuilder() contract would be broken. Same for characteristics.
+        // This can cause crashes if some ongoing Action queries the holder. So we abort them.
+        LOG.i("onStopEngine:", "Aborting actions.");
+        for (Action action : mActions) {
+            action.abort(this);
+        }
+
+        mCameraCharacteristics = null;
         mCameraOptions = null;
         mVideoRecorder = null;
         mRepeatingRequestBuilder = null;
@@ -633,7 +662,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @WorkerThread
     @Override
-    protected void onTakePictureSnapshot(@NonNull final PictureResult.Stub stub, @NonNull final AspectRatio outputRatio, boolean doMetering) {
+    protected void onTakePictureSnapshot(@NonNull final PictureResult.Stub stub,
+                                         @NonNull final AspectRatio outputRatio,
+                                         boolean doMetering) {
         if (doMetering) {
             LOG.i("onTakePictureSnapshot:", "doMetering is true. Delaying.");
             Action action = Actions.timeout(METER_TIMEOUT, createMeterAction(null));
@@ -653,7 +684,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             // stub.size is not the real size: it will be cropped to the given ratio
             // stub.rotation will be set to 0 - we rotate the texture instead.
             stub.size = getUncroppedSnapshotSize(Reference.OUTPUT);
-            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
+                    Axis.RELATIVE_TO_SENSOR);
             mPictureRecorder = new Snapshot2PictureRecorder(stub, this,
                     (GlCameraPreview) mPreview, outputRatio);
             mPictureRecorder.take();
@@ -674,21 +706,24 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             action.start(this);
         } else {
             LOG.i("onTakePicture:", "doMetering is false. Performing.");
-            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
+            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
+                    Axis.RELATIVE_TO_SENSOR);
             stub.size = getPictureSize(Reference.OUTPUT);
             try {
                 if (mPictureCaptureStopsPreview) {
-                    // These two are present in official samples and are probably meant to speed things up?
-                    // But from my tests, they actually make everything slower. So this is disabled by default
-                    // with a boolean flag. Maybe in the future we can make this configurable as some
-                    // people might want to stop the preview while picture is being taken even if it
-                    // increases the latency.
+                    // These two are present in official samples and are probably meant to
+                    // speed things up? But from my tests, they actually make everything slower.
+                    // So this is disabled by default with a boolean flag. Maybe in the future
+                    // we can make this configurable as some people might want to stop the preview
+                    // while picture is being taken even if it increases the latency.
                     mSession.stopRepeating();
                     mSession.abortCaptures();
                 }
-                CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                CaptureRequest.Builder builder
+                        = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 applyAllParameters(builder, mRepeatingRequestBuilder);
-                mPictureRecorder = new Full2PictureRecorder(stub, this, builder, mPictureReader);
+                mPictureRecorder = new Full2PictureRecorder(stub, this, builder,
+                        mPictureReader);
                 mPictureRecorder.take();
             } catch (CameraAccessException e) {
                 throw createCameraException(e);
@@ -721,8 +756,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
         LOG.i("onTakeVideo", "called.");
-        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
-        stub.size = getAngles().flip(Reference.SENSOR, Reference.OUTPUT) ? mCaptureSize.flip() : mCaptureSize;
+        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
+                Axis.RELATIVE_TO_SENSOR);
+        stub.size = getAngles().flip(Reference.SENSOR, Reference.OUTPUT) ?
+                mCaptureSize.flip() : mCaptureSize;
         // We must restart the session at each time.
         // Save the pending data and restart the session.
         LOG.w("onTakeVideo", "calling restartBind.");
@@ -752,9 +789,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @WorkerThread
     @Override
-    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull AspectRatio outputRatio) {
+    protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub,
+                                       @NonNull AspectRatio outputRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
-            throw new IllegalStateException("Video snapshots are only supported with GlCameraPreview.");
+            throw new IllegalStateException("Video snapshots are only supported with GL_SURFACE.");
         }
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
@@ -779,18 +817,21 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         // Start.
         // The overlay rotation should alway be VIEW-OUTPUT, just liek Camera1Engine.
         int overlayRotation = getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
-        mVideoRecorder = new SnapshotVideoRecorder(this, glPreview, getOverlay(), overlayRotation);
+        mVideoRecorder = new SnapshotVideoRecorder(this, glPreview, getOverlay(),
+                overlayRotation);
         mVideoRecorder.start(stub);
     }
 
+    /**
+     * When video ends we must stop the recorder and remove the recorder surface from
+     * camera outputs. This is done in onVideoResult. However, on some devices, order matters.
+     * If we stop the recorder and AFTER send camera frames to it, the camera will try to fill
+     * the recorder "abandoned" Surface and on some devices with a poor internal implementation
+     * (HW_LEVEL_LEGACY) this crashes. So if the conditions are met, we restore here. Issue #549.
+     */
     @Override
     public void onVideoRecordingEnd() {
         super.onVideoRecordingEnd();
-        // When video ends we must stop the recorder and remove the recorder surface from camera outputs.
-        // This is done in onVideoResult. However, on some devices, order matters. If we stop the recorder
-        // and AFTER send camera frames to it, the camera will try to fill the recorder "abandoned"
-        // Surface and on some devices with a poor internal implementation (HW_LEVEL_LEGACY) this crashes.
-        // So if the conditions are met, we restore here. Issue #549.
         boolean needsIssue549Workaround = (mVideoRecorder instanceof Full2VideoRecorder) ||
                 (readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
                         == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
@@ -806,7 +847,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     /**
-     * Some video recorders might change the camera template to {@link CameraDevice#TEMPLATE_RECORD}.
+     * Video recorders might change the camera template to {@link CameraDevice#TEMPLATE_RECORD}.
      * After the video is taken, we should restore the template preview, which also means that
      * we'll remove any extra surface target that was added by the video recorder.
      *
@@ -846,26 +887,34 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             // We might be in a metering operation, or the old builder might have some special
             // metering parameters. Copy these special keys over to the new builder.
             // These are the keys changed by metering.Parameters, or by us in applyFocusForMetering.
-            builder.set(CaptureRequest.CONTROL_AF_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AF_REGIONS));
-            builder.set(CaptureRequest.CONTROL_AE_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AE_REGIONS));
-            builder.set(CaptureRequest.CONTROL_AWB_REGIONS, oldBuilder.get(CaptureRequest.CONTROL_AWB_REGIONS));
-            builder.set(CaptureRequest.CONTROL_AF_MODE, oldBuilder.get(CaptureRequest.CONTROL_AF_MODE));
+            builder.set(CaptureRequest.CONTROL_AF_REGIONS,
+                    oldBuilder.get(CaptureRequest.CONTROL_AF_REGIONS));
+            builder.set(CaptureRequest.CONTROL_AE_REGIONS,
+                    oldBuilder.get(CaptureRequest.CONTROL_AE_REGIONS));
+            builder.set(CaptureRequest.CONTROL_AWB_REGIONS,
+                    oldBuilder.get(CaptureRequest.CONTROL_AWB_REGIONS));
+            builder.set(CaptureRequest.CONTROL_AF_MODE,
+                    oldBuilder.get(CaptureRequest.CONTROL_AF_MODE));
             // Do NOT copy exposure or focus triggers!
         }
     }
 
-    private void applyDefaultFocus(@NonNull CaptureRequest.Builder builder) {
-        int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
+    @SuppressWarnings("WeakerAccess")
+    protected void applyDefaultFocus(@NonNull CaptureRequest.Builder builder) {
+        int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES,
+                new int[]{});
         List<Integer> modes = new ArrayList<>();
         for (int mode : modesArray) { modes.add(mode); }
         if (getMode() == Mode.VIDEO &&
                 modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+            builder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
             return;
         }
 
         if (modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) {
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            builder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             return;
         }
 
@@ -882,10 +931,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    private void applyFocusForMetering(@NonNull CaptureRequest.Builder builder) {
-        // All focus modes support the AF trigger, except OFF and EDOF.
-        // However, unlike the preview, we'd prefer AUTO to any CONTINUOUS value.
-        int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES, new int[]{});
+    /**
+     * All focus modes support the AF trigger, except OFF and EDOF.
+     * However, unlike the preview, we'd prefer AUTO to any CONTINUOUS value.
+     * An AUTO value means that focus is locked unless we run the focus trigger,
+     * which is what metering does.
+     *
+     * @param builder builder
+     */
+    @SuppressWarnings("WeakerAccess")
+    protected void applyFocusForMetering(@NonNull CaptureRequest.Builder builder) {
+        int[] modesArray = readCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES,
+                new int[]{});
         List<Integer> modes = new ArrayList<>();
         for (int mode : modesArray) { modes.add(mode); }
         if (modes.contains(CaptureRequest.CONTROL_AF_MODE_AUTO)) {
@@ -894,12 +951,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
         if (getMode() == Mode.VIDEO &&
                 modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+            builder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
             return;
         }
 
         if (modes.contains(CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) {
-            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            builder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             //noinspection UnnecessaryReturnStatement
             return;
         }
@@ -916,13 +975,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     boolean shouldApply = applyFlash(mRepeatingRequestBuilder, old);
                     boolean needsWorkaround = getPreviewState() == STATE_STARTED;
                     if (needsWorkaround) {
-                        // Runtime changes to the flash value are not correctly handled by the driver.
-                        // See https://stackoverflow.com/q/53003383/4288782 for example.
+                        // Runtime changes to the flash value are not correctly handled by the
+                        // driver. See https://stackoverflow.com/q/53003383/4288782 for example.
                         // For this reason, we go back to OFF, capture once, then go to the new one.
                         mFlash = Flash.OFF;
                         applyFlash(mRepeatingRequestBuilder, old);
                         try {
-                            mSession.capture(mRepeatingRequestBuilder.build(), null, null);
+                            mSession.capture(mRepeatingRequestBuilder.build(), null,
+                                    null);
                         } catch (CameraAccessException e) {
                             throw createCameraException(e);
                         }
@@ -946,18 +1006,19 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * - {@link CaptureRequest#CONTROL_AE_MODE_ON_ALWAYS_FLASH}
      *
      * The API offers a high level control through {@link CaptureRequest#CONTROL_AE_MODE},
-     * which is what the mapper looks at. It will trigger (if specified) flash only for still captures
-     * which is exactly what we want.
+     * which is what the mapper looks at. It will trigger (if specified) flash only for
+     * still captures which is exactly what we want.
      *
      * However, we set CONTROL_AE_MODE to ON/OFF (depending
      * on which is available) with both {@link Flash#OFF} and {@link Flash#TORCH}.
      *
-     * When CONTROL_AE_MODE is ON or OFF, the low level control, called {@link CaptureRequest#FLASH_MODE},
-     * becomes effective, and that's where we can actually distinguish between a turned off flash
-     * and a torch flash.
+     * When CONTROL_AE_MODE is ON or OFF, the low level control, called
+     * {@link CaptureRequest#FLASH_MODE}, becomes effective, and that's where we can actually
+     * distinguish between a turned off flash and a torch flash.
      */
-    private boolean applyFlash(@NonNull CaptureRequest.Builder builder,
-                               @NonNull Flash oldFlash) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyFlash(@NonNull CaptureRequest.Builder builder,
+                                 @NonNull Flash oldFlash) {
         if (mCameraOptions.supports(mFlash)) {
             int[] availableAeModesArray = readCharacteristic(
                     CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES, new int[]{});
@@ -996,8 +1057,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-    private boolean applyLocation(@NonNull CaptureRequest.Builder builder,
-                                  @SuppressWarnings("unused") @Nullable Location oldLocation) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyLocation(@NonNull CaptureRequest.Builder builder,
+                                    @SuppressWarnings("unused") @Nullable Location oldLocation) {
         if (mLocation != null) {
             builder.set(CaptureRequest.JPEG_GPS_LOCATION, mLocation);
         }
@@ -1021,8 +1083,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-    private boolean applyWhiteBalance(@NonNull CaptureRequest.Builder builder,
-                                      @NonNull WhiteBalance oldWhiteBalance) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyWhiteBalance(@NonNull CaptureRequest.Builder builder,
+                                        @NonNull WhiteBalance oldWhiteBalance) {
         if (mCameraOptions.supports(mWhiteBalance)) {
             int whiteBalance = mMapper.mapWhiteBalance(mWhiteBalance);
             builder.set(CaptureRequest.CONTROL_AWB_MODE, whiteBalance);
@@ -1049,8 +1112,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-
-    private boolean applyHdr(@NonNull CaptureRequest.Builder builder, @NonNull Hdr oldHdr) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyHdr(@NonNull CaptureRequest.Builder builder, @NonNull Hdr oldHdr) {
         if (mCameraOptions.supports(mHdr)) {
             int hdr = mMapper.mapHdr(mHdr);
             builder.set(CaptureRequest.CONTROL_SCENE_MODE, hdr);
@@ -1080,9 +1143,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-    private boolean applyZoom(@NonNull CaptureRequest.Builder builder, float oldZoom) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyZoom(@NonNull CaptureRequest.Builder builder, float oldZoom) {
         if (mCameraOptions.isZoomSupported()) {
-            float maxZoom = readCharacteristic(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM, 1F);
+            float maxZoom = readCharacteristic(
+                    CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM, 1F);
             // converting 0.0f-1.0f zoom scale to the actual camera digital zoom scale
             // (which will be for example, 1.0-10.0)
             float calculatedZoom = (mZoomValue * (maxZoom - 1.0f)) + 1.0f;
@@ -1096,8 +1161,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @NonNull
     private Rect getZoomRect(float zoomLevel, float maxDigitalZoom) {
-        Rect activeRect = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE, new Rect());
-
+        Rect activeRect = readCharacteristic(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+                new Rect());
         int minW = (int) (activeRect.width() / maxDigitalZoom);
         int minH = (int) (activeRect.height() / maxDigitalZoom);
         int difW = activeRect.width() - minW;
@@ -1107,11 +1172,15 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         // When zoom is maxZoom, we want to return a centered rect with minW and minH
         int cropW = (int) (difW * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2F);
         int cropH = (int) (difH * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2F);
-        return new Rect(cropW, cropH, activeRect.width() - cropW, activeRect.height() - cropH);
+        return new Rect(cropW, cropH, activeRect.width() - cropW,
+                activeRect.height() - cropH);
     }
 
     @Override
-    public void setExposureCorrection(final float EVvalue, @NonNull final float[] bounds, @Nullable final PointF[] points, final boolean notify) {
+    public void setExposureCorrection(final float EVvalue,
+                                      @NonNull final float[] bounds,
+                                      @Nullable final PointF[] points,
+                                      final boolean notify) {
         final float old = mExposureCorrectionValue;
         mExposureCorrectionValue = EVvalue;
         mHandler.run(new Runnable() {
@@ -1130,11 +1199,15 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         });
     }
 
-    private boolean applyExposureCorrection(@NonNull CaptureRequest.Builder builder, float oldEVvalue) {
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyExposureCorrection(@NonNull CaptureRequest.Builder builder,
+                                              float oldEVvalue) {
         if (mCameraOptions.isExposureCorrectionSupported()) {
-            Rational exposureCorrectionStep = readCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP,
+            Rational exposureCorrectionStep = readCharacteristic(
+                    CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP,
                     new Rational(1, 1));
-            int exposureCorrectionSteps = Math.round(mExposureCorrectionValue * exposureCorrectionStep.floatValue());
+            int exposureCorrectionSteps = Math.round(mExposureCorrectionValue
+                    * exposureCorrectionStep.floatValue());
             builder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, exposureCorrectionSteps);
             return true;
         }
@@ -1165,6 +1238,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             LOG.w("onImageAvailable", "no byte buffer!");
             return;
         }
+        LOG.v("onImageAvailable", "trying to acquire Image.");
         Image image = null;
         try {
             image = reader.acquireLatestImage();
@@ -1174,9 +1248,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             getFrameManager().onBufferUnused(data);
             return;
         }
-        LOG.i("onImageAvailable", "we have both a byte buffer and an Image.");
+        LOG.v("onImageAvailable", "we have both a byte buffer and an Image.");
         try {
-            ImageHelper.convertToNV21(image, data);
+            synchronized (mFrameProcessingImageLock) {
+                ImageHelper.convertToNV21(image, data);
+            }
         } catch (Exception e) {
             LOG.w("onImageAvailable", "error while converting.");
             getFrameManager().onBufferUnused(data);
@@ -1188,7 +1264,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             // After preview, the frame manager is correctly set up
             Frame frame = getFrameManager().getFrame(data,
                     System.currentTimeMillis(),
-                    getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR));
+                    getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
+                            Axis.RELATIVE_TO_SENSOR));
             mCallback.dispatchFrame(frame);
         } else {
             getFrameManager().onBufferUnused(data);
@@ -1197,18 +1274,35 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void setHasFrameProcessors(final boolean hasFrameProcessors) {
-        super.setHasFrameProcessors(hasFrameProcessors);
-        LOG.i("setHasFrameProcessors", "changed to", hasFrameProcessors, "posting.");
+        LOG.i("setHasFrameProcessors", "changing to", hasFrameProcessors, "posting.");
+        Camera2Engine.super.setHasFrameProcessors(hasFrameProcessors);
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.i("setHasFrameProcessors", "changed to", hasFrameProcessors, "executing. BindState:", getBindState());
-                if (getBindState() == STATE_STARTED) {
-                    LOG.i("setHasFrameProcessors", "triggering a restart.");
-                    // TODO if taking video, this stops it.
+                LOG.i("setHasFrameProcessors", "changing to", hasFrameProcessors,
+                        "executing. BindState:", getBindState(),
+                        "PreviewState:", getPreviewState());
+
+                // Frame processing is set up partially when binding and partially when starting
+                // the preview. We don't want to only check bind state or startPreview can fail.
+                if (getBindState() == STATE_STOPPED) {
+                    LOG.i("setHasFrameProcessors", "not bound so won't restart.");
+                } else if (getPreviewState() == STATE_STARTED) {
+                    // This needs a restartBind(). NOTE: if taking video, this stops it.
+                    LOG.i("setHasFrameProcessors", "bound with preview.",
+                            "Calling restartBind().");
                     restartBind();
                 } else {
-                    LOG.i("setHasFrameProcessors", "not bound so won't restart.");
+                    // Bind+Preview is not completely started yet not completely stopped.
+                    // This can happen if the user adds a frame processor in onCameraOpened().
+                    // Supporting this would add lot of complexity to this class, and
+                    // this should be discouraged anyway since changing the frame processor number
+                    // at this time requires restarting the camera when it was just opened.
+                    // For these reasons, let's throw.
+                    throw new IllegalStateException("Added/removed a FrameProcessor at illegal " +
+                            "time. These operations should be done before opening the camera, or " +
+                            "before closing it - NOT when it just opened, for example during the " +
+                            "onCameraOpened() callback.");
                 }
             }
         });
@@ -1225,8 +1319,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             @Override
             public void run() {
                 LOG.i("startAutoFocus", "executing. Preview state:", getPreviewState());
-                // This will only work when we have a preview, since it launches the preview in the end.
-                // Even without this it would need the bind state at least, since we need the preview size.
+                // This will only work when we have a preview, since it launches the preview
+                // in the end. Even without this it would need the bind state at least,
+                // since we need the preview size.
                 if (getPreviewState() < STATE_STARTED) return;
 
                 // The camera options API still has the auto focus API but it really
@@ -1244,7 +1339,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         mCallback.dispatchOnFocusEnd(gesture, action.isSuccessful(), point);
                         mHandler.remove(mUnlockAndResetMeteringRunnable);
                         if (shouldResetAutoFocus()) {
-                            mHandler.post(getAutoFocusResetDelay(), mUnlockAndResetMeteringRunnable);
+                            mHandler.post(getAutoFocusResetDelay(),
+                                    mUnlockAndResetMeteringRunnable);
                         }
                     }
                 });
@@ -1263,7 +1359,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         // The last one is under our control because the library has no focus API.
         // So let's set a good af mode here. This operation is reverted during onMeteringReset().
         applyFocusForMetering(mRepeatingRequestBuilder);
-        mMeterAction = new MeterAction(Camera2Engine.this, point, point == null);
+        mMeterAction = new MeterAction(Camera2Engine.this, point,
+                point == null);
         return mMeterAction;
     }
 
@@ -1282,8 +1379,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         protected void onStart(@NonNull ActionHolder holder) {
                             super.onStart(holder);
                             applyDefaultFocus(holder.getBuilder(this));
-                            holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_LOCK, false);
-                            holder.getBuilder(this).set(CaptureRequest.CONTROL_AWB_LOCK, false);
+                            holder.getBuilder(this)
+                                    .set(CaptureRequest.CONTROL_AE_LOCK, false);
+                            holder.getBuilder(this)
+                                    .set(CaptureRequest.CONTROL_AWB_LOCK, false);
                             holder.applyBuilder(this);
                             setState(STATE_COMPLETED);
                             // TODO should wait results?
@@ -1348,7 +1447,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override
-    public void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder) throws CameraAccessException {
+    public void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder)
+            throws CameraAccessException {
         mSession.capture(builder.build(), mRepeatingRequestCallback, null);
     }
 

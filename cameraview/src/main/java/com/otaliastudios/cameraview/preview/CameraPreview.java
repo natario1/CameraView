@@ -26,11 +26,13 @@ import com.otaliastudios.cameraview.size.Size;
  * into an output surface that belongs to the view hierarchy.
  *
  * @param <T> the type of view which hosts the content surface
- * @param <Output> the type of output, either {@link android.view.SurfaceHolder} or {@link android.graphics.SurfaceTexture}
+ * @param <Output> the type of output, either {@link android.view.SurfaceHolder}
+ *                 or {@link android.graphics.SurfaceTexture}
  */
 public abstract class CameraPreview<T extends View, Output> {
 
-    protected final static CameraLogger LOG = CameraLogger.create(CameraPreview.class.getSimpleName());
+    protected final static CameraLogger LOG
+            = CameraLogger.create(CameraPreview.class.getSimpleName());
 
     /**
      * This is used to notify CameraEngine to recompute its camera Preview size.
@@ -267,8 +269,9 @@ public abstract class CameraPreview<T extends View, Output> {
     }
 
     /**
-     * At this point we undo the work that was done during {@link #onCreateView(Context, ViewGroup)},
-     * which basically means removing the root view from the hierarchy.
+     * At this point we undo the work that was done during
+     * {@link #onCreateView(Context, ViewGroup)}, which basically means removing the root view
+     * from the hierarchy.
      */
     @SuppressWarnings("WeakerAccess")
     @UiThread

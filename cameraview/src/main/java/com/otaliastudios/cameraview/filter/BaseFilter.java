@@ -36,7 +36,8 @@ import java.nio.FloatBuffer;
  * NOTE - the {@link android.graphics.SurfaceTexture} restrictions apply:
  * We only support the {@link android.opengl.GLES11Ext#GL_TEXTURE_EXTERNAL_OES} texture target
  * and it must be specified in the fragment shader as a samplerExternalOES texture.
- * You also have to explicitly require the extension: see {@link #createDefaultFragmentShader(String)}.
+ * You also have to explicitly require the extension: see
+ * {@link #createDefaultFragmentShader(String)}.
  *
  */
 public abstract class BaseFilter implements Filter {
@@ -44,31 +45,42 @@ public abstract class BaseFilter implements Filter {
     private final static String TAG = BaseFilter.class.getSimpleName();
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
-    private final static String DEFAULT_VERTEX_POSITION_NAME = "aPosition";
-    private final static String DEFAULT_VERTEX_TEXTURE_COORDINATE_NAME = "aTextureCoord";
-    private final static String DEFAULT_VERTEX_MVP_MATRIX_NAME = "uMVPMatrix";
-    private final static String DEFAULT_VERTEX_TRANSFORM_MATRIX_NAME = "uTexMatrix";
-    private final static String DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME = "vTextureCoord";
+    @SuppressWarnings("WeakerAccess")
+    protected final static String DEFAULT_VERTEX_POSITION_NAME = "aPosition";
+
+    @SuppressWarnings("WeakerAccess")
+    protected final static String DEFAULT_VERTEX_TEXTURE_COORDINATE_NAME = "aTextureCoord";
+
+    @SuppressWarnings("WeakerAccess")
+    protected final static String DEFAULT_VERTEX_MVP_MATRIX_NAME = "uMVPMatrix";
+
+    @SuppressWarnings("WeakerAccess")
+    protected final static String DEFAULT_VERTEX_TRANSFORM_MATRIX_NAME = "uTexMatrix";
+    protected final static String DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME = "vTextureCoord";
 
     @NonNull
-    private static String createDefaultVertexShader(@NonNull String vertexPositionName,
-                                                    @NonNull String vertexTextureCoordinateName,
-                                                    @NonNull String vertexModelViewProjectionMatrixName,
-                                                    @NonNull String vertexTransformMatrixName,
-                                                    @NonNull String fragmentTextureCoordinateName) {
-        return "uniform mat4 "+vertexModelViewProjectionMatrixName+";\n" +
-                "uniform mat4 "+vertexTransformMatrixName+";\n" +
-                "attribute vec4 "+vertexPositionName+";\n" +
-                "attribute vec4 "+vertexTextureCoordinateName+";\n" +
-                "varying vec2 "+fragmentTextureCoordinateName+";\n" +
-                "void main() {\n" +
-                "    gl_Position = "+vertexModelViewProjectionMatrixName+" * "+vertexPositionName+";\n" +
-                "    vTextureCoord = ("+vertexTransformMatrixName+" * "+vertexTextureCoordinateName+").xy;\n" +
-                "}\n";
+    private static String createDefaultVertexShader(
+            @NonNull String vertexPositionName,
+            @NonNull String vertexTextureCoordinateName,
+            @NonNull String vertexModelViewProjectionMatrixName,
+            @NonNull String vertexTransformMatrixName,
+            @NonNull String fragmentTextureCoordinateName) {
+        return "uniform mat4 "+vertexModelViewProjectionMatrixName+";\n"
+                + "uniform mat4 "+vertexTransformMatrixName+";\n"
+                + "attribute vec4 "+vertexPositionName+";\n"
+                + "attribute vec4 "+vertexTextureCoordinateName+";\n"
+                + "varying vec2 "+fragmentTextureCoordinateName+";\n"
+                + "void main() {\n"
+                + "    gl_Position = " +vertexModelViewProjectionMatrixName+" * "
+                + vertexPositionName+";\n"
+                + "    "+fragmentTextureCoordinateName+" = ("+vertexTransformMatrixName+" * "
+                + vertexTextureCoordinateName+").xy;\n"
+                + "}\n";
     }
 
     @NonNull
-    private static String createDefaultFragmentShader(@NonNull String fragmentTextureCoordinateName) {
+    private static String createDefaultFragmentShader(
+            @NonNull String fragmentTextureCoordinateName) {
         return "#extension GL_OES_EGL_image_external : require\n"
                 + "precision mediump float;\n"
                 + "varying vec2 "+fragmentTextureCoordinateName+";\n"
@@ -94,7 +106,7 @@ public abstract class BaseFilter implements Filter {
     });
 
     private int vertexModelViewProjectionMatrixLocation = -1;
-    private int vertexTranformMatrixLocation = -1;
+    private int vertexTransformMatrixLocation = -1;
     private int vertexPositionLocation = -1;
     private int vertexTextureCoordinateLocation = -1;
     @VisibleForTesting int programHandle = -1;
@@ -121,6 +133,7 @@ public abstract class BaseFilter implements Filter {
                 fragmentTextureCoordinateName);
     }
 
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     protected String createDefaultFragmentShader() {
         return createDefaultFragmentShader(fragmentTextureCoordinateName);
@@ -131,12 +144,16 @@ public abstract class BaseFilter implements Filter {
         this.programHandle = programHandle;
         vertexPositionLocation = GLES20.glGetAttribLocation(programHandle, vertexPositionName);
         GlUtils.checkLocation(vertexPositionLocation, vertexPositionName);
-        vertexTextureCoordinateLocation = GLES20.glGetAttribLocation(programHandle, vertexTextureCoordinateName);
+        vertexTextureCoordinateLocation = GLES20.glGetAttribLocation(programHandle,
+                vertexTextureCoordinateName);
         GlUtils.checkLocation(vertexTextureCoordinateLocation, vertexTextureCoordinateName);
-        vertexModelViewProjectionMatrixLocation = GLES20.glGetUniformLocation(programHandle, vertexModelViewProjectionMatrixName);
-        GlUtils.checkLocation(vertexModelViewProjectionMatrixLocation, vertexModelViewProjectionMatrixName);
-        vertexTranformMatrixLocation = GLES20.glGetUniformLocation(programHandle, vertexTransformMatrixName);
-        GlUtils.checkLocation(vertexTranformMatrixLocation, vertexTransformMatrixName);
+        vertexModelViewProjectionMatrixLocation = GLES20.glGetUniformLocation(programHandle,
+                vertexModelViewProjectionMatrixName);
+        GlUtils.checkLocation(vertexModelViewProjectionMatrixLocation,
+                vertexModelViewProjectionMatrixName);
+        vertexTransformMatrixLocation = GLES20.glGetUniformLocation(programHandle,
+                vertexTransformMatrixName);
+        GlUtils.checkLocation(vertexTransformMatrixLocation, vertexTransformMatrixName);
     }
 
     @Override
@@ -145,7 +162,7 @@ public abstract class BaseFilter implements Filter {
         vertexPositionLocation = -1;
         vertexTextureCoordinateLocation = -1;
         vertexModelViewProjectionMatrixLocation = -1;
-        vertexTranformMatrixLocation = -1;
+        vertexTransformMatrixLocation = -1;
     }
 
     @NonNull
@@ -160,48 +177,53 @@ public abstract class BaseFilter implements Filter {
     }
 
     @Override
-    public void draw(float[] transformMatrix) {
+    public void draw(long timestampUs, float[] transformMatrix) {
         if (programHandle == -1) {
-            LOG.w("Filter.draw() called after destroying the filter. This can happen rarely because of threading.");
+            LOG.w("Filter.draw() called after destroying the filter. " +
+                    "This can happen rarely because of threading.");
         } else {
-            onPreDraw(transformMatrix);
-            onDraw();
-            onPostDraw();
+            onPreDraw(timestampUs, transformMatrix);
+            onDraw(timestampUs);
+            onPostDraw(timestampUs);
         }
     }
 
-    protected void onPreDraw(float[] transformMatrix) {
+    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
         // Copy the model / view / projection matrix over.
-        GLES20.glUniformMatrix4fv(vertexModelViewProjectionMatrixLocation, 1, false, GlUtils.IDENTITY_MATRIX, 0);
+        GLES20.glUniformMatrix4fv(vertexModelViewProjectionMatrixLocation, 1,
+                false, GlUtils.IDENTITY_MATRIX, 0);
         GlUtils.checkError("glUniformMatrix4fv");
 
         // Copy the texture transformation matrix over.
-        GLES20.glUniformMatrix4fv(vertexTranformMatrixLocation, 1, false, transformMatrix, 0);
+        GLES20.glUniformMatrix4fv(vertexTransformMatrixLocation, 1,
+                false, transformMatrix, 0);
         GlUtils.checkError("glUniformMatrix4fv");
 
         // Enable the "aPosition" vertex attribute.
         // Connect vertexBuffer to "aPosition".
         GLES20.glEnableVertexAttribArray(vertexPositionLocation);
         GlUtils.checkError("glEnableVertexAttribArray: " + vertexPositionLocation);
-        GLES20.glVertexAttribPointer(vertexPositionLocation, 2, GLES20.GL_FLOAT, false, 8, vertexPosition);
+        GLES20.glVertexAttribPointer(vertexPositionLocation, 2, GLES20.GL_FLOAT,
+                false, 8, vertexPosition);
         GlUtils.checkError("glVertexAttribPointer");
 
         // Enable the "aTextureCoord" vertex attribute.
         // Connect texBuffer to "aTextureCoord".
         GLES20.glEnableVertexAttribArray(vertexTextureCoordinateLocation);
         GlUtils.checkError("glEnableVertexAttribArray");
-        GLES20.glVertexAttribPointer(vertexTextureCoordinateLocation, 2, GLES20.GL_FLOAT, false, 8, textureCoordinates);
+        GLES20.glVertexAttribPointer(vertexTextureCoordinateLocation, 2, GLES20.GL_FLOAT,
+                false, 8, textureCoordinates);
         GlUtils.checkError("glVertexAttribPointer");
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected void onDraw() {
+    protected void onDraw(long timestampUs) {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         GlUtils.checkError("glDrawArrays");
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected void onPostDraw() {
+    protected void onPostDraw(long timestampUs) {
         GLES20.glDisableVertexAttribArray(vertexPositionLocation);
         GLES20.glDisableVertexAttribArray(vertexTextureCoordinateLocation);
     }

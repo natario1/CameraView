@@ -35,7 +35,8 @@ public class EglViewport {
     }
 
     private void createProgram() {
-        mProgramHandle = GlUtils.createProgram(mFilter.getVertexShader(), mFilter.getFragmentShader());
+        mProgramHandle = GlUtils.createProgram(mFilter.getVertexShader(),
+                mFilter.getFragmentShader());
         mFilter.onCreate(mProgramHandle);
     }
 
@@ -57,10 +58,14 @@ public class EglViewport {
         GLES20.glBindTexture(mTextureTarget, texId);
         GlUtils.checkError("glBindTexture " + texId);
 
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER,
+                GLES20.GL_NEAREST);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,
+                GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S,
+                GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T,
+                GLES20.GL_CLAMP_TO_EDGE);
         GlUtils.checkError("glTexParameter");
 
         return texId;
@@ -72,7 +77,7 @@ public class EglViewport {
         mPendingFilter = filter;
     }
 
-    public void drawFrame(int textureId, float[] textureMatrix) {
+    public void drawFrame(long timestampUs, int textureId, float[] textureMatrix) {
         if (mPendingFilter != null) {
             release();
             mFilter = mPendingFilter;
@@ -89,7 +94,7 @@ public class EglViewport {
         GLES20.glBindTexture(mTextureTarget, textureId);
 
         // Draw.
-        mFilter.draw(textureMatrix);
+        mFilter.draw(timestampUs, textureMatrix);
 
         // Release.
         GLES20.glBindTexture(mTextureTarget, 0);

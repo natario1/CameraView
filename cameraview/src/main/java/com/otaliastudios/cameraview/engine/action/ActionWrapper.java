@@ -50,13 +50,17 @@ public abstract class ActionWrapper extends BaseAction {
     }
 
     @Override
-    public void onCaptureProgressed(@NonNull ActionHolder holder, @NonNull CaptureRequest request, @NonNull CaptureResult result) {
+    public void onCaptureProgressed(@NonNull ActionHolder holder,
+                                    @NonNull CaptureRequest request,
+                                    @NonNull CaptureResult result) {
         super.onCaptureProgressed(holder, request, result);
         getAction().onCaptureProgressed(holder, request, result);
     }
 
     @Override
-    public void onCaptureCompleted(@NonNull ActionHolder holder, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+    public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                   @NonNull CaptureRequest request,
+                                   @NonNull TotalCaptureResult result) {
         super.onCaptureCompleted(holder, request, result);
         getAction().onCaptureCompleted(holder, request, result);
     }

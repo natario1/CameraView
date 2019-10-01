@@ -12,7 +12,8 @@ import android.view.WindowManager;
 
 /**
  * Helps with keeping track of both device orientation (which changes when device is rotated)
- * and the display offset (which depends on the activity orientation wrt the device default orientation).
+ * and the display offset (which depends on the activity orientation
+ * wrt the device default orientation).
  */
 public class OrientationHelper {
 
@@ -35,7 +36,8 @@ public class OrientationHelper {
      */
     public OrientationHelper(@NonNull Context context, @NonNull Callback callback) {
         mCallback = callback;
-        mListener = new OrientationEventListener(context.getApplicationContext(), SensorManager.SENSOR_DELAY_NORMAL) {
+        mListener = new OrientationEventListener(context.getApplicationContext(),
+                SensorManager.SENSOR_DELAY_NORMAL) {
 
             @SuppressWarnings("ConstantConditions")
             @Override
@@ -66,7 +68,9 @@ public class OrientationHelper {
      * @param context a context
      */
     public void enable(@NonNull Context context) {
-        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        Display display = ((WindowManager) context
+                .getSystemService(Context.WINDOW_SERVICE))
+                .getDefaultDisplay();
         switch (display.getRotation()) {
             case Surface.ROTATION_0: mDisplayOffset = 0; break;
             case Surface.ROTATION_90: mDisplayOffset = 90; break;
