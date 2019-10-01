@@ -8,7 +8,7 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
-## v2.3.0 (to be released)
+## v2.3.0
 
 - [Camera2, Metering] New: `startAutoFocus` is much more powerful and does 3A metering (AF, AE, AWB) ([#574][574])
 - [Camera2, Metering] New: `setPictureMetering(boolean)` decides whether to do metering before `takePicture()`. Defaults to true to improve quality. ([#580][580])

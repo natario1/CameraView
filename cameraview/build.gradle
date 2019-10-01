@@ -3,7 +3,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 // Required by bintray
-version = '2.2.0'
+version = '2.3.0'
 group = 'com.otaliastudios'
 
 //region android dependencies
