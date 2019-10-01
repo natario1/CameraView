@@ -2202,13 +2202,22 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return super.generateLayoutParams(attributeSet);
     }
 
-    // We don't support removeView on overlays for now.
     @Override
     public void addView(View child, int index, ViewGroup.LayoutParams params) {
         if (!mInEditor && mOverlayLayout.isOverlay(params)) {
             mOverlayLayout.addView(child, params);
         } else {
             super.addView(child, index, params);
+        }
+    }
+
+    @Override
+    public void removeView(View view) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (!mInEditor && params != null && mOverlayLayout.isOverlay(params)) {
+            mOverlayLayout.removeView(view);
+        } else {
+            super.removeView(view);
         }
     }
 

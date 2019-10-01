@@ -930,6 +930,33 @@ public class CameraViewTest extends BaseTest {
         verify(cameraView.mOverlayLayout, never()).addView(overlay, params);
     }
 
+    @Test
+    public void testOverlays_removeOverlayView() {
+        // First add one.
+        cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
+        View overlay = new View(getContext());
+        OverlayLayout.LayoutParams params = new OverlayLayout.LayoutParams(10, 10);
+        cameraView.addView(overlay, 0, params);
+        reset(cameraView.mOverlayLayout);
+        // Then remove.
+        cameraView.removeView(overlay);
+        verify(cameraView.mOverlayLayout, times(1)).isOverlay(params);
+        verify(cameraView.mOverlayLayout, times(1)).removeView(overlay);
+    }
+
+    @Test
+    public void testOverlays_dontRemoveOverlayView() {
+        // First add a view.
+        cameraView.mOverlayLayout = spy(cameraView.mOverlayLayout);
+        View notOverlay = new View(getContext());
+        ViewGroup.LayoutParams notOverlayParams = new ViewGroup.LayoutParams(10, 10);
+        cameraView.addView(notOverlay, notOverlayParams);
+        reset(cameraView.mOverlayLayout);
+        // Then remove.
+        cameraView.removeView(notOverlay);
+        verify(cameraView.mOverlayLayout, never()).removeView(notOverlay);
+    }
+
     //endregion
     // TODO: test permissions
 
