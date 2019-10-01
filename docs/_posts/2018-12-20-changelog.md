@@ -8,6 +8,19 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+## v2.3.0 (to be released)
+
+- [Camera2, Metering] New: `startAutoFocus` is much more powerful and does 3A metering (AF, AE, AWB) ([#574][574])
+- [Camera2, Metering] New: `setPictureMetering(boolean)` decides whether to do metering before `takePicture()`. Defaults to true to improve quality. ([#580][580])
+- [Camera2, Metering] New: `setPictureSnapshotMetering(boolean)` decides whether to do metering before `takePictureSnapshot()`. Defaults to false to improve latency. However, you can set this to true to greatly improve the snapshot quality, for example to support `Flash`. ([#580][580])
+- [Camera2, Metering] New: metering extended to many more cameras, which can now use `startAutoFocus` or the focus gesture ([#574][574])
+- [Camera2, Metering] Improvement: `onAutoFocusEnd` is now guaranteed to be called ([#574][574])
+- [Camera2, Metering] Improvement: taking picture does not invalidate the previous focus ([#574][574])
+- [Camera2, Metering] Improvement: better metering when zoomed in ([#574][574])
+- [Real time filters] Breaking change: `Filter` interface signatures now accept timestamps for animations ([#588][588])
+- [Video] Improvement: better encoder selection ([#588][588])
+- Fix: fixed various bugs and improved stability ([#588][588])
+
 ## v2.2.0
 
 - [Real time filters] New: `SimpleFilter` class accepts a fragment shader in the constructor ([#552][552])
@@ -303,3 +316,6 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [559]: https://github.com/natario1/CameraView/pull/559
 [564]: https://github.com/natario1/CameraView/pull/564
 [572]: https://github.com/natario1/CameraView/pull/572
+[574]: https://github.com/natario1/CameraView/pull/574
+[580]: https://github.com/natario1/CameraView/pull/580
+[588]: https://github.com/natario1/CameraView/pull/588
