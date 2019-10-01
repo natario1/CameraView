@@ -17,7 +17,8 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 - [Camera2, Metering] Improvement: `onAutoFocusEnd` is now guaranteed to be called ([#574][574])
 - [Camera2, Metering] Improvement: taking picture does not invalidate the previous focus ([#574][574])
 - [Camera2, Metering] Improvement: better metering when zoomed in ([#574][574])
-- [Real time filters] Breaking change: `Filter` interface signatures now accept timestamps for animations ([#588][588])
+- [Real time filters] **Breaking change**: `Filter` interface signatures now accept timestamps for animations ([#588][588])
+- [Overlays] New: you can now use `addView()` and `removeView()` to add or remove overlays at runtime (see docs) ([#588][588])
 - [Video] Improvement: better encoder selection ([#588][588])
 - Fix: fixed various bugs and improved stability ([#588][588])
 
