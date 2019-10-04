@@ -221,22 +221,28 @@ public class DeviceEncoders {
         int width = size.getWidth();
         int height = size.getHeight();
         double aspect = (double) width / height;
+        LOG.i("getSupportedVideoSize - started. width:", width, "height:", height);
 
         // If width is too large, scale down, but keep aspect ratio.
         if (mVideoCapabilities.getSupportedWidths().getUpper() < width) {
             width = mVideoCapabilities.getSupportedWidths().getUpper();
             height = (int) Math.round(width / aspect);
+            LOG.i("getSupportedVideoSize - exceeds maxWidth! width:", width,
+                    "height:", height);
         }
 
         // If height is too large, scale down, but keep aspect ratio.
         if (mVideoCapabilities.getSupportedHeights().getUpper() < height) {
             height = mVideoCapabilities.getSupportedHeights().getUpper();
             width = (int) Math.round(aspect * height);
+            LOG.i("getSupportedVideoSize - exceeds maxHeight! width:", width,
+                    "height:", height);
         }
 
         // Adjust the alignment.
         while (width % mVideoCapabilities.getWidthAlignment() != 0) width--;
         while (height % mVideoCapabilities.getHeightAlignment() != 0) height--;
+        LOG.i("getSupportedVideoSize - aligned. width:", width, "height:", height);
 
         // It's still possible that we're BELOW the lower.
         if (!mVideoCapabilities.getSupportedWidths().contains(width)) {
@@ -256,9 +262,7 @@ public class DeviceEncoders {
                     " Might be an aspect ratio issue." +
                     " Desired size:" + new Size(width, height));
         }
-        Size adjusted = new Size(width, height);
-        LOG.i("getSupportedVideoSize -", "inputSize:", size, "adjustedSize:", adjusted);
-        return adjusted;
+        return new Size(width, height);
     }
 
     /**

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.media.CamcorderProfile;
 import android.os.Build;
 
+import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.size.Size;
 
 import java.util.ArrayList;
@@ -19,6 +20,9 @@ import androidx.annotation.NonNull;
  * Wraps the {@link android.media.CamcorderProfile} static utilities.
  */
 public class CamcorderProfiles {
+
+    private static final String TAG = CamcorderProfiles.class.getSimpleName();
+    private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     @SuppressLint("UseSparseArrays")
     private static Map<Size, Integer> sizeToProfileMap = new HashMap<>();
@@ -53,6 +57,7 @@ public class CamcorderProfiles {
             int camera1Id = Integer.parseInt(cameraId);
             return get(camera1Id, targetSize);
         } catch (NumberFormatException e) {
+            LOG.w("NumberFormatException for Camera2 id:", cameraId);
             return CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
         }
     }
