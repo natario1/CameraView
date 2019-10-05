@@ -126,11 +126,13 @@ public class CameraOptions1Test extends BaseTest {
 
     @Test
     public void testVideoSizes() {
+        // VideoSize are capped by CamcorderProfile.QUALITY_HIGH max size.
+        // This can be very small on an emulator, so use very small sizes to not hit that value.
         List<Camera.Size> sizes = Arrays.asList(
-                mockCameraSize(100, 200),
-                mockCameraSize(50, 50),
-                mockCameraSize(1600, 900),
-                mockCameraSize(1000, 2000)
+                mockCameraSize(10, 20),
+                mockCameraSize(5, 5),
+                mockCameraSize(16, 9),
+                mockCameraSize(20, 40)
         );
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedVideoSizes()).thenReturn(sizes);
@@ -147,10 +149,10 @@ public class CameraOptions1Test extends BaseTest {
     public void testVideoSizesNull() {
         // When videoSizes is null, we take the preview sizes.
         List<Camera.Size> sizes = Arrays.asList(
-                mockCameraSize(100, 200),
-                mockCameraSize(50, 50),
-                mockCameraSize(1600, 900),
-                mockCameraSize(1000, 2000)
+                mockCameraSize(10, 20),
+                mockCameraSize(5, 5),
+                mockCameraSize(16, 9),
+                mockCameraSize(20, 40)
         );
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedVideoSizes()).thenReturn(null);
@@ -167,10 +169,10 @@ public class CameraOptions1Test extends BaseTest {
     @Test
     public void testVideoSizesFlip() {
         List<Camera.Size> sizes = Arrays.asList(
-                mockCameraSize(100, 200),
-                mockCameraSize(50, 50),
-                mockCameraSize(1600, 900),
-                mockCameraSize(1000, 2000)
+                mockCameraSize(10, 20),
+                mockCameraSize(5, 5),
+                mockCameraSize(16, 9),
+                mockCameraSize(20, 40)
         );
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedVideoSizes()).thenReturn(sizes);
@@ -186,10 +188,10 @@ public class CameraOptions1Test extends BaseTest {
     @Test
     public void testVideoAspectRatio() {
         List<Camera.Size> sizes = Arrays.asList(
-                mockCameraSize(100, 200),
-                mockCameraSize(50, 50),
-                mockCameraSize(1600, 900),
-                mockCameraSize(1000, 2000)
+                mockCameraSize(10, 20),
+                mockCameraSize(5, 5),
+                mockCameraSize(16, 9),
+                mockCameraSize(20, 40)
         );
 
         Set<AspectRatio> expected = new HashSet<>();
