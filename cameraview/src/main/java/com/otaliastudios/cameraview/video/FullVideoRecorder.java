@@ -100,7 +100,13 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         }
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
 
-        // 4. Update the VideoResult stub with DeviceEncoders constraints
+        // 4. Update the VideoResult stub with information from the profile, if the
+        // stub values are absent or incomplete
+        if (stub.videoFrameRate <= 0) stub.videoFrameRate = mProfile.videoFrameRate;
+        if (stub.videoBitRate <= 0) stub.videoBitRate = mProfile.videoBitRate;
+        if (stub.audioBitRate <= 0 && hasAudio) stub.audioBitRate = mProfile.audioBitRate;
+
+        // 5. Update the VideoResult stub with DeviceEncoders constraints
         if (applyEncodersConstraints) {
             // A. Get the audio mime type
             // https://android.googlesource.com/platform/frameworks/av/+/master/media/libmediaplayerservice/StagefrightRecorder.cpp#1096
@@ -164,15 +170,6 @@ public abstract class FullVideoRecorder extends VideoRecorder {
             stub.audioBitRate = newAudioBitRate;
             stub.videoFrameRate = newVideoFrameRate;
             if (flip) stub.size = stub.size.flip();
-        }
-
-        // 5. Update the VideoResult stub with information from the profile, if the
-        // stub values are absent or incomplete
-        stub.videoFrameRate = stub.videoFrameRate > 0 ? stub.videoFrameRate
-                : mProfile.videoFrameRate;
-        stub.videoBitRate = stub.videoBitRate > 0 ? stub.videoBitRate : mProfile.videoBitRate;
-        if (hasAudio) {
-            stub.audioBitRate = stub.audioBitRate > 0 ? stub.audioBitRate : mProfile.audioBitRate;
         }
 
         // 6A. Configure MediaRecorder from stub and from profile (video)
@@ -264,13 +261,15 @@ public abstract class FullVideoRecorder extends VideoRecorder {
             try {
                 mMediaRecorder.stop();
             } catch (Exception e) {
-                LOG.w("stop:", "Error while closing media recorder.", e);
                 // This can happen if stopVideo() is called right after takeVideo()
                 // (in which case we don't care). Or when prepare()/start() have failed for
                 // some reason and we are not allowed to call stop.
                 // Make sure we don't override the error if one exists already.
                 mResult = null;
-                if (mError == null) mError = e;
+                if (mError == null) {
+                    LOG.w("stop:", "Error while closing media recorder.", e);
+                    mError = e;
+                }
             }
             mMediaRecorder.release();
         }
