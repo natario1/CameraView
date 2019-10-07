@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.view.Surface;
@@ -69,19 +70,22 @@ public class Full2VideoRecorder extends FullVideoRecorder {
         action.start(mHolder);
     }
 
-    @SuppressLint("NewApi")
     @Override
-    protected boolean onPrepareMediaRecorder(@NonNull VideoResult.Stub stub,
-                                             @NonNull MediaRecorder mediaRecorder) {
+    protected void applyVideoSource(@NonNull VideoResult.Stub stub,
+                                    @NonNull MediaRecorder mediaRecorder) {
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-        Size size = stub.rotation % 180 != 0 ? stub.size.flip() : stub.size;
-        mProfile = CamcorderProfiles.get(mCameraId, size);
+    }
+
+    @NonNull
+    @Override
+    protected CamcorderProfile getCamcorderProfile(@NonNull VideoResult.Stub stub) {
         // This was an option: get the surface from outside this class, using
         // MediaCodec.createPersistentInputSurface(). But it doesn't really help since the
         // Camera2 engine refuses a surface that has not been configured, so even with that trick
         // we would have to attach the surface to this recorder before creating the CameraSession.
         // mediaRecorder.setInputSurface(mInputSurface);
-        return super.onPrepareMediaRecorder(stub, mediaRecorder);
+        Size size = stub.rotation % 180 != 0 ? stub.size.flip() : stub.size;
+        return CamcorderProfiles.get(mCameraId, size);
     }
 
     /**
