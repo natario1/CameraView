@@ -241,7 +241,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     @Override
     public void onEncodingStart() {
-        //do nothing
+        // This would be the most correct place to call dispatchVideoRecordingStart. However,
+        // after this we'll post the call on the UI thread which can take some time. To compensate
+        // this, we call dispatchVideoRecordingStart() a bit earlier in this class (onStart()).
     }
 
     @Override
