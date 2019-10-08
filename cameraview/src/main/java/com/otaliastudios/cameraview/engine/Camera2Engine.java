@@ -245,6 +245,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         mRepeatingRequestCallback, null);
             } catch (CameraAccessException e) {
                 throw new CameraException(e, errorReason);
+            } catch (IllegalStateException e) {
+                // mSession is invalid - has been closed. This is extremely worrying because
+                // it means that the session state and getPreviewState() are not synced.
+                // This probably signals an error in the setup/teardown synchronization.
+                LOG.e("applyRepeatingRequestBuilder: session is invalid!",
+                        "checkStarted:", checkStarted,
+                        "currentThread:", Thread.currentThread().getName(),
+                        "previewState:", getPreviewState(),
+                        "bindState:", getBindState(),
+                        "engineState:", getEngineState());
+                throw new CameraException(CameraException.REASON_DISCONNECTED);
             }
         }
     }
