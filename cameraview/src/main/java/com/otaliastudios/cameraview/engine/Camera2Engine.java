@@ -838,7 +838,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onVideoRecordingEnd() {
         super.onVideoRecordingEnd();
-        boolean needsIssue549Workaround = (mVideoRecorder instanceof Full2VideoRecorder) ||
+        // SnapshotRecorder will invoke this on its own thread which is risky, but if it was a
+        // snapshot, this function returns early so its safe.
+        boolean needsIssue549Workaround = (mVideoRecorder instanceof Full2VideoRecorder) &&
                 (readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
                         == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
         if (needsIssue549Workaround) {
@@ -849,7 +851,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
         super.onVideoResult(result, exception);
-        maybeRestorePreviewTemplateAfterVideo();
+        // SnapshotRecorder will invoke this on its own thread, so let's post in our own thread
+        // and check camera state before trying to restore the preview. Engine might have been
+        // torn down in the engine thread while this was still being called.
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getBindState() < STATE_STARTED) return;
+                maybeRestorePreviewTemplateAfterVideo();
+            }
+        });
     }
 
     /**
@@ -860,6 +871,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * This method avoids doing this twice by checking the request tag, as set by
      * the {@link #createRepeatingRequestBuilder(int)} method.
      */
+    @EngineThread
     private void maybeRestorePreviewTemplateAfterVideo() {
         int template = (int) mRepeatingRequestBuilder.build().getTag();
         if (template != CameraDevice.TEMPLATE_PREVIEW) {
