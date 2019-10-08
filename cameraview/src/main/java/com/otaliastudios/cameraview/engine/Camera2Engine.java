@@ -28,7 +28,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.VisibleForTesting;
-import androidx.annotation.WorkerThread;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
@@ -286,6 +285,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Protected APIs
 
+    @EngineThread
     @NonNull
     @Override
     protected List<Size> getPreviewStreamAvailableSizes() {
@@ -310,12 +310,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onPreviewStreamSizeChanged() {
         restartBind();
     }
 
+    @EngineThread
     @Override
     protected final boolean collectCameraInfo(@NonNull Facing facing) {
         int internalFacing = mMapper.mapFacing(facing);
@@ -353,6 +354,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Start
 
+    @EngineThread
     @SuppressLint("MissingPermission")
     @NonNull
     @Override
@@ -402,6 +404,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return task.getTask();
     }
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStartBind() {
@@ -525,6 +528,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return task.getTask();
     }
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStartPreview() {
@@ -569,6 +573,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Stop
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStopPreview() {
@@ -598,7 +603,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return Tasks.forResult(null);
     }
 
-
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStopBind() {
@@ -627,7 +632,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return Tasks.forResult(null);
     }
 
-
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStopEngine() {
@@ -660,7 +665,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Pictures
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onTakePictureSnapshot(@NonNull final PictureResult.Stub stub,
                                          @NonNull final AspectRatio outputRatio,
@@ -692,6 +697,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
+    @EngineThread
     @Override
     protected void onTakePicture(@NonNull final PictureResult.Stub stub, boolean doMetering) {
         if (doMetering) {
@@ -752,7 +758,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Videos
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
         LOG.i("onTakeVideo", "called.");
@@ -787,7 +793,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub,
                                        @NonNull AspectRatio outputRatio) {
