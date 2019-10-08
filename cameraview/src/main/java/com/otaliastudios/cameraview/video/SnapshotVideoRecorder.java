@@ -79,6 +79,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     protected void onStart() {
         mPreview.addRendererFrameCallback(this);
         mDesiredState = STATE_RECORDING;
+        dispatchVideoRecordingStart();
     }
 
     @Override
@@ -240,7 +241,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     @Override
     public void onEncodingStart() {
-        dispatchVideoRecordingStart();
+        //do nothing
     }
 
     @Override
