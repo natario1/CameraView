@@ -22,7 +22,7 @@ CameraView is a well documented, high-level library that makes capturing picture
 addressing most of the common issues and needs, and still leaving you with flexibility where needed.
 
 ```groovy
-api 'com.otaliastudios:cameraview:2.3.0'
+api 'com.otaliastudios:cameraview:2.3.1'
 ```
 
 - Fast & reliable

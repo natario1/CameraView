@@ -8,7 +8,7 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
-## v2.3.1
+### v2.3.1
 
 - [Video] Improvement: better timing for `onVideoRecordingStart()` thanks to [@agrawalsuneet][agrawalsuneet] ([#632][632])
 - [Video, Camera1] Fix: fixed video errors when starting on specific devices ([#617][617])
