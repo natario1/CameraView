@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    // buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
         applicationId "com.otaliastudios.cameraview.demo"
@@ -23,6 +22,6 @@ android {
 
 dependencies {
     implementation project(':cameraview')
-    implementation 'androidx.appcompat:appcompat:1.1.0-rc01'
-    implementation 'com.google.android.material:material:1.1.0-alpha09'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.google.android.material:material:1.1.0-beta01'
 }
