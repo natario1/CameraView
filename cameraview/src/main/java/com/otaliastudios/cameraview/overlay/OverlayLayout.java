@@ -127,7 +127,7 @@ public class OverlayLayout extends FrameLayout implements Overlay {
                     // to apply some scale (typically > 1).
                     float widthScale = canvas.getWidth() / (float) getWidth();
                     float heightScale = canvas.getHeight() / (float) getHeight();
-                    LOG.i("draw",
+                    LOG.v("draw",
                             "target:", target,
                             "canvas:", canvas.getWidth() + "x" + canvas.getHeight(),
                             "view:", getWidth() + "x" + getHeight(),
