@@ -10,34 +10,40 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 
 ### v2.3.1
 
-- [Video] Improvement: better timing for `onVideoRecordingStart()` thanks to [@agrawalsuneet][agrawalsuneet] ([#632][632])
-- [Video, Camera1] Fix: fixed video errors when starting on specific devices ([#617][617])
-- [Video] Fix: fixed crash when closing the app during video snapshots ([#630][630])
-- [Preview] Fix: fixed crash when using `GL_SURFACE` ([#630][630])
+- [*Video*] Improvement: better timing for `onVideoRecordingStart()` thanks to [@agrawalsuneet][agrawalsuneet] ([#632][632])
+- [*Video, Camera1*] Fix: fixed video errors when starting on specific devices ([#617][617])
+- [*Video*] Fix: fixed crash when closing the app during video snapshots ([#630][630])
+- [*Preview*] Fix: fixed crash when using `GL_SURFACE` ([#630][630])
+
+https://github.com/natario1/CameraView/compare/v2.3.0...v2.3.1
 
 ## v2.3.0
 
-- [Camera2, Metering] New: `startAutoFocus` is much more powerful and does 3A metering (AF, AE, AWB) ([#574][574])
-- [Camera2, Metering] New: `setPictureMetering(boolean)` decides whether to do metering before `takePicture()`. Defaults to true to improve quality. ([#580][580])
-- [Camera2, Metering] New: `setPictureSnapshotMetering(boolean)` decides whether to do metering before `takePictureSnapshot()`. Defaults to false to improve latency. However, you can set this to true to greatly improve the snapshot quality, for example to support `Flash`. ([#580][580])
-- [Camera2, Metering] New: metering extended to many more cameras, which can now use `startAutoFocus` or the focus gesture ([#574][574])
-- [Camera2, Metering] Improvement: `onAutoFocusEnd` is now guaranteed to be called ([#574][574])
-- [Camera2, Metering] Improvement: taking picture does not invalidate the previous focus ([#574][574])
-- [Camera2, Metering] Improvement: better metering when zoomed in ([#574][574])
-- [Real time filters] **Breaking change**: `Filter` interface signatures now accept timestamps for animations ([#588][588])
-- [Overlays] New: you can now use `addView()` and `removeView()` to add or remove overlays at runtime (see docs) ([#588][588])
-- [Video] Improvement: better encoder selection ([#588][588])
+- [*Camera2, Metering*] New: `startAutoFocus` is much more powerful and does 3A metering (AF, AE, AWB) ([#574][574])
+- [*Camera2, Metering*] New: `setPictureMetering(boolean)` decides whether to do metering before `takePicture()`. Defaults to true to improve quality. ([#580][580])
+- [*Camera2, Metering*] New: `setPictureSnapshotMetering(boolean)` decides whether to do metering before `takePictureSnapshot()`. Defaults to false to improve latency. However, you can set this to true to greatly improve the snapshot quality, for example to support `Flash`. ([#580][580])
+- [*Camera2, Metering*] New: metering extended to many more cameras, which can now use `startAutoFocus` or the focus gesture ([#574][574])
+- [*Camera2, Metering*] Improvement: `onAutoFocusEnd` is now guaranteed to be called ([#574][574])
+- [*Camera2, Metering*] Improvement: taking picture does not invalidate the previous focus ([#574][574])
+- [*Camera2, Metering*] Improvement: better metering when zoomed in ([#574][574])
+- [*Real time filters*] **Breaking change**: `Filter` interface signatures now accept timestamps for animations ([#588][588])
+- [*Overlays*] New: you can now use `addView()` and `removeView()` to add or remove overlays at runtime (see docs) ([#588][588])
+- [*Video*] Improvement: better encoder selection ([#588][588])
 - Fix: fixed various bugs and improved stability ([#588][588])
+
+https://github.com/natario1/CameraView/compare/v2.2.0...v2.3.0
 
 ## v2.2.0
 
-- [Real time filters] New: `SimpleFilter` class accepts a fragment shader in the constructor ([#552][552])
-- [Real time filters] New: `MultiFilter` to apply more than one filter at the same time ([#559][559])
-- [Video] Improvement: query device encoders before configuring them. Should fix issues on multiple devices ([#545][545])
-- [Video] Fix: `takeVideoSnapshot` not working unless you set a max duration ([#551][551])
-- [Video] Fix: `takeVideo` crashing on Camera2 LEGACY devices ([#551][551])
-- [Frame Processing] Fix: fixed dead Frames issues and improved error messages ([#572][572])
+- [*Real time filters*] New: `SimpleFilter` class accepts a fragment shader in the constructor ([#552][552])
+- [*Real time filters*] New: `MultiFilter` to apply more than one filter at the same time ([#559][559])
+- [*Video*] Improvement: query device encoders before configuring them. Should fix issues on multiple devices ([#545][545])
+- [*Video*] Fix: `takeVideoSnapshot` not working unless you set a max duration ([#551][551])
+- [*Video*] Fix: `takeVideo` crashing on Camera2 LEGACY devices ([#551][551])
+- [*Frame Processing*] Fix: fixed dead Frames issues and improved error messages ([#572][572])
 - Fix: fixed `CameraView` appearance in the layout editor ([#564][564])
+
+https://github.com/natario1/CameraView/compare/v2.1.0...v2.2.0
 
 ## v2.1.0
 
