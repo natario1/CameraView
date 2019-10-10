@@ -23,6 +23,7 @@ import com.otaliastudios.cameraview.size.AspectRatio;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -69,8 +70,9 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
     private int mOutputTextureId = 0;
     private SurfaceTexture mInputSurfaceTexture;
     private EglViewport mOutputViewport;
-    private final Set<RendererFrameCallback> mRendererFrameCallbacks
-            = Collections.synchronizedSet(new HashSet<RendererFrameCallback>());
+    // A synchronized set was not enough to avoid crashes, probably due to external classes
+    // removing the callback while this set is being iterated. CopyOnWriteArraySet solves this.
+    private final Set<RendererFrameCallback> mRendererFrameCallbacks = new CopyOnWriteArraySet<>();
     @VisibleForTesting float mCropScaleX = 1F;
     @VisibleForTesting float mCropScaleY = 1F;
     private View mRootView;
@@ -156,11 +158,8 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
             getView().queueEvent(new Runnable() {
                 @Override
                 public void run() {
-                    // Need to synchronize when iterating the Collections.synchronizedSet
-                    synchronized (mRendererFrameCallbacks) {
-                        for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                            callback.onRendererTextureCreated(mOutputTextureId);
-                        }
+                    for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                        callback.onRendererTextureCreated(mOutputTextureId);
                     }
                 }
             });
@@ -225,11 +224,8 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
             }
             mOutputViewport.drawFrame(mInputSurfaceTexture.getTimestamp() / 1000L,
                     mOutputTextureId, mTransformMatrix);
-            synchronized (mRendererFrameCallbacks) {
-                // Need to synchronize when iterating the Collections.synchronizedSet
-                for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                    callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
-                }
+            for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
             }
         }
     }
@@ -353,12 +349,8 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
                 if (mOutputViewport != null) {
                     mOutputViewport.setFilter(filter);
                 }
-
-                // Need to synchronize when iterating the Collections.synchronizedSet
-                synchronized (mRendererFrameCallbacks) {
-                    for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                        callback.onRendererFilterChanged(filter);
-                    }
+                for (RendererFrameCallback callback : mRendererFrameCallbacks) {
+                    callback.onRendererFilterChanged(filter);
                 }
             }
         });

@@ -231,11 +231,11 @@ public class AudioMediaEncoder extends MediaEncoder {
                 } else {
                     mCurrentReadBytes = mAudioRecord.read(mCurrentBuffer, mConfig.frameSize());
                 }
-                LOG.i("read thread - eos:", endOfStream, "- Read new audio frame. Bytes:",
+                LOG.v("read thread - eos:", endOfStream, "- Read new audio frame. Bytes:",
                         mCurrentReadBytes);
                 if (mCurrentReadBytes > 0) { // Good read: increase PTS.
                     increaseTime(mCurrentReadBytes, endOfStream);
-                    LOG.i("read thread - eos:", endOfStream, "- mLastTimeUs:", mLastTimeUs);
+                    LOG.v("read thread - eos:", endOfStream, "- mLastTimeUs:", mLastTimeUs);
                     mCurrentBuffer.limit(mCurrentReadBytes);
                     enqueue(mCurrentBuffer, mLastTimeUs, endOfStream);
                 } else if (mCurrentReadBytes == AudioRecord.ERROR_INVALID_OPERATION) {
@@ -358,7 +358,7 @@ public class AudioMediaEncoder extends MediaEncoder {
                 if (mInputBufferQueue.isEmpty()) {
                     skipFrames(2);
                 } else {
-                    LOG.i("encoding thread - performing", mInputBufferQueue.size(),
+                    LOG.v("encoding thread - performing", mInputBufferQueue.size(),
                             "pending operations.");
                     InputBuffer inputBuffer;
                     while ((inputBuffer = mInputBufferQueue.peek()) != null) {
@@ -408,7 +408,7 @@ public class AudioMediaEncoder extends MediaEncoder {
         private void encode(@NonNull InputBuffer buffer) {
             long executeStart = System.nanoTime() / 1000000;
 
-            LOG.i("encoding thread - performing pending operation for timestamp:",
+            LOG.v("encoding thread - performing pending operation for timestamp:",
                     buffer.timestamp, "- encoding.");
             // NOTE: this copy is prob. the worst part here for performance
             buffer.data.put(buffer.source);
@@ -417,7 +417,7 @@ public class AudioMediaEncoder extends MediaEncoder {
             encodeInputBuffer(buffer);
             boolean eos = buffer.isEndOfStream;
             mInputBufferPool.recycle(buffer);
-            LOG.i("encoding thread - performing pending operation for timestamp:",
+            LOG.v("encoding thread - performing pending operation for timestamp:",
                     buffer.timestamp, "- draining.");
             // NOTE: can consider calling this drainOutput on yet another thread, which would let us
             // use an even smaller BUFFER_POOL_MAX_SIZE without losing audio frames. But this way

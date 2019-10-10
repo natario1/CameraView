@@ -28,7 +28,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.VisibleForTesting;
-import androidx.annotation.WorkerThread;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
@@ -246,6 +245,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         mRepeatingRequestCallback, null);
             } catch (CameraAccessException e) {
                 throw new CameraException(e, errorReason);
+            } catch (IllegalStateException e) {
+                // mSession is invalid - has been closed. This is extremely worrying because
+                // it means that the session state and getPreviewState() are not synced.
+                // This probably signals an error in the setup/teardown synchronization.
+                LOG.e("applyRepeatingRequestBuilder: session is invalid!", e,
+                        "checkStarted:", checkStarted,
+                        "currentThread:", Thread.currentThread().getName(),
+                        "previewState:", getPreviewState(),
+                        "bindState:", getBindState(),
+                        "engineState:", getEngineState());
+                throw new CameraException(CameraException.REASON_DISCONNECTED);
             }
         }
     }
@@ -286,6 +296,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Protected APIs
 
+    @EngineThread
     @NonNull
     @Override
     protected List<Size> getPreviewStreamAvailableSizes() {
@@ -310,12 +321,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onPreviewStreamSizeChanged() {
         restartBind();
     }
 
+    @EngineThread
     @Override
     protected final boolean collectCameraInfo(@NonNull Facing facing) {
         int internalFacing = mMapper.mapFacing(facing);
@@ -353,6 +365,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Start
 
+    @EngineThread
     @SuppressLint("MissingPermission")
     @NonNull
     @Override
@@ -402,6 +415,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return task.getTask();
     }
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStartBind() {
@@ -525,6 +539,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return task.getTask();
     }
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStartPreview() {
@@ -569,6 +584,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Stop
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStopPreview() {
@@ -598,7 +614,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return Tasks.forResult(null);
     }
 
-
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStopBind() {
@@ -627,7 +643,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return Tasks.forResult(null);
     }
 
-
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStopEngine() {
@@ -660,7 +676,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Pictures
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onTakePictureSnapshot(@NonNull final PictureResult.Stub stub,
                                          @NonNull final AspectRatio outputRatio,
@@ -692,6 +708,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
+    @EngineThread
     @Override
     protected void onTakePicture(@NonNull final PictureResult.Stub stub, boolean doMetering) {
         if (doMetering) {
@@ -752,7 +769,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Videos
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
         LOG.i("onTakeVideo", "called.");
@@ -787,7 +804,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
     }
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub,
                                        @NonNull AspectRatio outputRatio) {
@@ -832,7 +849,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onVideoRecordingEnd() {
         super.onVideoRecordingEnd();
-        boolean needsIssue549Workaround = (mVideoRecorder instanceof Full2VideoRecorder) ||
+        // SnapshotRecorder will invoke this on its own thread which is risky, but if it was a
+        // snapshot, this function returns early so its safe.
+        boolean needsIssue549Workaround = (mVideoRecorder instanceof Full2VideoRecorder) &&
                 (readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
                         == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
         if (needsIssue549Workaround) {
@@ -843,7 +862,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
         super.onVideoResult(result, exception);
-        maybeRestorePreviewTemplateAfterVideo();
+        // SnapshotRecorder will invoke this on its own thread, so let's post in our own thread
+        // and check camera state before trying to restore the preview. Engine might have been
+        // torn down in the engine thread while this was still being called.
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getBindState() < STATE_STARTED) return;
+                maybeRestorePreviewTemplateAfterVideo();
+            }
+        });
     }
 
     /**
@@ -854,6 +882,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * This method avoids doing this twice by checking the request tag, as set by
      * the {@link #createRepeatingRequestBuilder(int)} method.
      */
+    @EngineThread
     private void maybeRestorePreviewTemplateAfterVideo() {
         int template = (int) mRepeatingRequestBuilder.build().getTag();
         if (template != CameraDevice.TEMPLATE_PREVIEW) {

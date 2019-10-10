@@ -186,7 +186,7 @@ public class MediaEncoderEngine {
      */
     @SuppressWarnings("SameParameterValue")
     public final void notify(final String event, final Object data) {
-        LOG.i("Passing event to encoders:", event);
+        LOG.v("Passing event to encoders:", event);
         for (MediaEncoder encoder : mEncoders) {
             encoder.notify(event, data);
         }

@@ -8,6 +8,13 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+### v2.3.1
+
+- [Video] Improvement: better timing for `onVideoRecordingStart()` thanks to [@agrawalsuneet][agrawalsuneet] ([#632][632])
+- [Video, Camera1] Fix: fixed video errors when starting on specific devices ([#617][617])
+- [Video] Fix: fixed crash when closing the app during video snapshots ([#630][630])
+- [Preview] Fix: fixed crash when using `GL_SURFACE` ([#630][630])
+
 ## v2.3.0
 
 - [Camera2, Metering] New: `startAutoFocus` is much more powerful and does 3A metering (AF, AE, AWB) ([#574][574])
@@ -320,3 +327,6 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [574]: https://github.com/natario1/CameraView/pull/574
 [580]: https://github.com/natario1/CameraView/pull/580
 [588]: https://github.com/natario1/CameraView/pull/588
+[617]: https://github.com/natario1/CameraView/pull/617
+[630]: https://github.com/natario1/CameraView/pull/630
+[632]: https://github.com/natario1/CameraView/pull/632

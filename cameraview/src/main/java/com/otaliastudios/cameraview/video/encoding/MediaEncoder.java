@@ -397,7 +397,7 @@ public abstract class MediaEncoder {
     @SuppressLint("LogNotTimber")
     @SuppressWarnings("WeakerAccess")
     protected final void drainOutput(boolean drainAll) {
-        LOG.i(mName, "DRAINING - EOS:", drainAll);
+        LOG.v(mName, "DRAINING - EOS:", drainAll);
         if (mMediaCodec == null) {
             LOG.e("drain() was called before prepare() or after releasing.");
             return;
@@ -459,7 +459,7 @@ public abstract class MediaEncoder {
                             + mLastTimeUs - mFirstTimeUs;
 
                     // Write.
-                    LOG.i(mName, "DRAINING - About to write(). Adjusted presentation:",
+                    LOG.v(mName, "DRAINING - About to write(). Adjusted presentation:",
                             mBufferInfo.presentationTimeUs);
                     OutputBuffer buffer = mOutputBufferPool.get();
                     //noinspection ConstantConditions

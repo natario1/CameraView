@@ -190,12 +190,6 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 OptionView view = (OptionView) group.getChildAt(i);
                 view.onCameraOpened(camera, options);
             }
-            camera.addFrameProcessor(new FrameProcessor() {
-                @Override
-                public void process(@NonNull Frame frame) {
-
-                }
-            });
         }
 
         @Override

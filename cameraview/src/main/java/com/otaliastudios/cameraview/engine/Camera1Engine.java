@@ -97,6 +97,7 @@ public class Camera1Engine extends CameraEngine implements
 
     //region Protected APIs
 
+    @EngineThread
     @NonNull
     @Override
     protected List<Size> getPreviewStreamAvailableSizes() {
@@ -110,12 +111,13 @@ public class Camera1Engine extends CameraEngine implements
         return result;
     }
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onPreviewStreamSizeChanged() {
         restartPreview();
     }
 
+    @EngineThread
     @Override
     protected boolean collectCameraInfo(@NonNull Facing facing) {
         int internalFacing = mMapper.mapFacing(facing);
@@ -140,7 +142,7 @@ public class Camera1Engine extends CameraEngine implements
     //region Start
 
     @NonNull
-    @WorkerThread
+    @EngineThread
     @Override
     protected Task<Void> onStartEngine() {
         try {
@@ -164,6 +166,7 @@ public class Camera1Engine extends CameraEngine implements
         return Tasks.forResult(null);
     }
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStartBind() {
@@ -187,6 +190,7 @@ public class Camera1Engine extends CameraEngine implements
         return Tasks.forResult(null);
     }
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStartPreview() {
@@ -238,6 +242,7 @@ public class Camera1Engine extends CameraEngine implements
 
     //region Stop
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStopPreview() {
@@ -256,6 +261,7 @@ public class Camera1Engine extends CameraEngine implements
         return Tasks.forResult(null);
     }
 
+    @EngineThread
     @NonNull
     @Override
     protected Task<Void> onStopBind() {
@@ -275,8 +281,8 @@ public class Camera1Engine extends CameraEngine implements
         return Tasks.forResult(null);
     }
 
+    @EngineThread
     @NonNull
-    @WorkerThread
     @Override
     protected Task<Void> onStopEngine() {
         LOG.i("onStopEngine:", "About to clean up.");
@@ -306,7 +312,7 @@ public class Camera1Engine extends CameraEngine implements
 
     //region Pictures
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onTakePicture(@NonNull PictureResult.Stub stub, boolean doMetering) {
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
@@ -316,7 +322,7 @@ public class Camera1Engine extends CameraEngine implements
         mPictureRecorder.take();
     }
 
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub,
                                          @NonNull AspectRatio outputRatio,
@@ -337,6 +343,7 @@ public class Camera1Engine extends CameraEngine implements
 
     //region Videos
 
+    @EngineThread
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
@@ -357,7 +364,7 @@ public class Camera1Engine extends CameraEngine implements
     }
 
     @SuppressLint("NewApi")
-    @WorkerThread
+    @EngineThread
     @Override
     protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub,
                                        @NonNull AspectRatio outputRatio) {
@@ -765,7 +772,7 @@ public class Camera1Engine extends CameraEngine implements
     }
 
     @NonNull
-    @WorkerThread
+    @EngineThread
     private static List<Camera.Area> computeMeteringAreas(double viewClickX, double viewClickY,
                                                           int viewWidth, int viewHeight,
                                                           int sensorToDisplay) {

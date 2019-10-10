@@ -47,7 +47,6 @@ import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.annotation.WorkerThread;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -303,7 +302,7 @@ public abstract class CameraEngine implements
 
         final CameraException cameraException = (CameraException) throwable;
         LOG.e("uncaughtException:", "Got CameraException:", cameraException,
-                "on engine state:", getEngineStateName());
+                "on engine state:", getEngineState());
         if (fromExceptionHandler) {
             // Got to restart the handler.
             thread.interrupt();
@@ -334,11 +333,6 @@ public abstract class CameraEngine implements
     @SuppressWarnings({"unused", "WeakerAccess"})
     public final int getPreviewState() {
         return mPreviewStep.getState();
-    }
-
-    @NonNull
-    private String getEngineStateName() {
-        return mEngineStep.getStateName();
     }
 
     private boolean canStartEngine() {
@@ -375,7 +369,7 @@ public abstract class CameraEngine implements
     //region Start & Stop the engine
 
     @NonNull
-    @WorkerThread
+    @EngineThread
     private Task<Void> startEngine() {
         if (canStartEngine()) {
             mEngineStep.doStart(false, new Callable<Task<Void>>() {
@@ -398,7 +392,7 @@ public abstract class CameraEngine implements
     }
 
     @NonNull
-    @WorkerThread
+    @EngineThread
     private Task<Void> stopEngine(boolean swallowExceptions) {
         if (needsStopEngine()) {
             mEngineStep.doStop(swallowExceptions, new Callable<Task<Void>>() {
@@ -421,7 +415,7 @@ public abstract class CameraEngine implements
      * @return a task
      */
     @NonNull
-    @WorkerThread
+    @EngineThread
     protected abstract Task<Void> onStartEngine();
 
     /**
@@ -431,7 +425,7 @@ public abstract class CameraEngine implements
      * @return a task
      */
     @NonNull
-    @WorkerThread
+    @EngineThread
     protected abstract Task<Void> onStopEngine();
 
     //endregion
@@ -439,7 +433,7 @@ public abstract class CameraEngine implements
     //region Start & Stop binding
 
     @NonNull
-    @WorkerThread
+    @EngineThread
     private Task<Void> startBind() {
         if (canStartBind()) {
             mBindStep.doStart(false, new Callable<Task<Void>>() {
@@ -453,7 +447,7 @@ public abstract class CameraEngine implements
     }
 
     @NonNull
-    @WorkerThread
+    @EngineThread
     private Task<Void> stopBind(boolean swallowExceptions) {
         if (needsStopBind()) {
             mBindStep.doStop(swallowExceptions, new Callable<Task<Void>>() {
@@ -471,7 +465,7 @@ public abstract class CameraEngine implements
      * @return a task
      */
     @NonNull
-    @WorkerThread
+    @EngineThread
     protected abstract Task<Void> onStartBind();
 
     /**
@@ -481,7 +475,7 @@ public abstract class CameraEngine implements
      * @return a task
      */
     @NonNull
-    @WorkerThread
+    @EngineThread
     protected abstract Task<Void> onStopBind();
 
     @SuppressWarnings("WeakerAccess")
@@ -522,7 +516,7 @@ public abstract class CameraEngine implements
     //region Start & Stop preview
 
     @NonNull
-    @WorkerThread
+    @EngineThread
     private Task<Void> startPreview() {
         LOG.i("startPreview", "canStartPreview:", canStartPreview());
         if (canStartPreview()) {
@@ -537,7 +531,7 @@ public abstract class CameraEngine implements
     }
 
     @NonNull
-    @WorkerThread
+    @EngineThread
     private Task<Void> stopPreview(boolean swallowExceptions) {
         LOG.i("stopPreview",
                 "needsStopPreview:", needsStopPreview(),
@@ -571,7 +565,7 @@ public abstract class CameraEngine implements
      * @return a task
      */
     @NonNull
-    @WorkerThread
+    @EngineThread
     protected abstract Task<Void> onStartPreview();
 
     /**
@@ -581,7 +575,7 @@ public abstract class CameraEngine implements
      * @return a task
      */
     @NonNull
-    @WorkerThread
+    @EngineThread
     protected abstract Task<Void> onStopPreview();
 
     //endregion
@@ -643,7 +637,7 @@ public abstract class CameraEngine implements
      *
      * It basically depends on the step at which the preview stream size is actually used.
      */
-    @WorkerThread
+    @EngineThread
     protected abstract void onPreviewStreamSizeChanged();
 
     @Override
@@ -676,7 +670,7 @@ public abstract class CameraEngine implements
      * that would cause deadlocks due to us awaiting for {@link #stop()} to return.
      */
     public void destroy() {
-        LOG.i("destroy:", "state:", getEngineStateName(), "thread:", Thread.currentThread());
+        LOG.i("destroy:", "state:", getEngineState(), "thread:", Thread.currentThread());
         // Prevent CameraEngine leaks. Don't set to null, or exceptions
         // inside the standard stop() method might crash the main thread.
         mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
@@ -710,7 +704,7 @@ public abstract class CameraEngine implements
 
     @NonNull
     public Task<Void> start() {
-        LOG.i("Start:", "posting runnable. State:", getEngineStateName());
+        LOG.i("Start:", "posting runnable. State:", getEngineState());
         final TaskCompletionSource<Void> outTask = new TaskCompletionSource<>();
         mHandler.run(new Runnable() {
             @Override
@@ -765,7 +759,7 @@ public abstract class CameraEngine implements
 
     @NonNull
     private Task<Void> stop(final boolean swallowExceptions) {
-        LOG.i("Stop:", "posting runnable. State:", getEngineStateName());
+        LOG.i("Stop:", "posting runnable. State:", getEngineState());
         final TaskCompletionSource<Void> outTask = new TaskCompletionSource<>();
         mHandler.run(new Runnable() {
             @Override
@@ -1077,6 +1071,7 @@ public abstract class CameraEngine implements
      * @param facing the facing value
      * @return true if we have one
      */
+    @EngineThread
     protected abstract boolean collectCameraInfo(@NonNull Facing facing);
 
     /**
@@ -1256,6 +1251,7 @@ public abstract class CameraEngine implements
         });
     }
 
+    @EngineThread
     @SuppressWarnings("WeakerAccess")
     protected void onStopVideo() {
         if (mVideoRecorder != null) {
@@ -1289,19 +1285,19 @@ public abstract class CameraEngine implements
         mCallback.dispatchOnVideoRecordingEnd();
     }
 
-    @WorkerThread
+    @EngineThread
     protected abstract void onTakePicture(@NonNull PictureResult.Stub stub, boolean doMetering);
 
-    @WorkerThread
+    @EngineThread
     protected abstract void onTakePictureSnapshot(@NonNull PictureResult.Stub stub,
                                                   @NonNull AspectRatio outputRatio,
                                                   boolean doMetering);
 
-    @WorkerThread
+    @EngineThread
     protected abstract void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub,
                                                 @NonNull AspectRatio outputRatio);
 
-    @WorkerThread
+    @EngineThread
     protected abstract void onTakeVideo(@NonNull VideoResult.Stub stub);
 
     //endregion
@@ -1430,9 +1426,11 @@ public abstract class CameraEngine implements
      * we can be sure that the camera is available (engineState == STARTED).
      * @return a list of available sizes for preview
      */
+    @EngineThread
     @NonNull
     protected abstract List<Size> getPreviewStreamAvailableSizes();
 
+    @EngineThread
     @NonNull
     @SuppressWarnings("WeakerAccess")
     protected final Size computePreviewStreamSize() {
