@@ -106,7 +106,13 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
             }
         });
 
-        Integer aeState = mHolder.getLastResult(mAction).get(CaptureResult.CONTROL_AE_STATE);
+        CaptureResult lastResult = mHolder.getLastResult(mAction);
+        if (lastResult == null) {
+            LOG.w("Picture snapshot requested very early, before the first preview frame.",
+                    "Metering might not work as intended.");
+        }
+        Integer aeState = lastResult == null ? null
+                : lastResult.get(CaptureResult.CONTROL_AE_STATE);
         mActionNeeded = engine.getPictureSnapshotMetering()
                 && aeState != null
                 && aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED;

@@ -40,10 +40,16 @@ public class ExposureLock extends BaseLock {
 
     @Override
     protected boolean checkShouldSkip(@NonNull ActionHolder holder) {
-        Integer aeState = holder.getLastResult(this).get(CaptureResult.CONTROL_AE_STATE);
-        boolean result = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_LOCKED;
-        LOG.i("checkShouldSkip:", result);
-        return result;
+        CaptureResult lastResult = holder.getLastResult(this);
+        if (lastResult != null) {
+            Integer aeState = lastResult.get(CaptureResult.CONTROL_AE_STATE);
+            boolean result = aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_LOCKED;
+            LOG.i("checkShouldSkip:", result);
+            return result;
+        } else {
+            LOG.i("checkShouldSkip: false - lastResult is null.");
+            return false;
+        }
     }
 
     @Override

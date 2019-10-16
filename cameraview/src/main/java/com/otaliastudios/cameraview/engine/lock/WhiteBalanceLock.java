@@ -33,10 +33,17 @@ public class WhiteBalanceLock extends BaseLock {
 
     @Override
     protected boolean checkShouldSkip(@NonNull ActionHolder holder) {
-        Integer awbState = holder.getLastResult(this).get(CaptureResult.CONTROL_AWB_STATE);
-        boolean result = awbState != null && awbState == CaptureRequest.CONTROL_AWB_STATE_LOCKED;
-        LOG.i("checkShouldSkip:", result);
-        return result;
+        CaptureResult lastResult = holder.getLastResult(this);
+        if (lastResult != null) {
+            Integer awbState = lastResult.get(CaptureResult.CONTROL_AWB_STATE);
+            boolean result = awbState != null
+                    && awbState == CaptureRequest.CONTROL_AWB_STATE_LOCKED;
+            LOG.i("checkShouldSkip:", result);
+            return result;
+        } else {
+            LOG.i("checkShouldSkip: false - lastResult is null.");
+            return false;
+        }
     }
 
     @Override

@@ -8,6 +8,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 /**
@@ -51,7 +52,7 @@ public interface ActionHolder {
      * @param action action
      * @return last result
      */
-    @NonNull
+    @Nullable
     TotalCaptureResult getLastResult(@NonNull Action action);
 
     /**

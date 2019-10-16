@@ -70,6 +70,7 @@ import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -111,7 +112,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     private final boolean mPictureCaptureStopsPreview = false; // can be configurable at some point
 
     // Actions
-    private final List<Action> mActions = new ArrayList<>();
+    // Use COW to properly synchronize the list. We'll iterate much more than mutate
+    private final List<Action> mActions = new CopyOnWriteArrayList<>();
     private MeterAction mMeterAction;
 
     public Camera2Engine(Callback callback) {
@@ -1428,28 +1430,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void addAction(final @NonNull Action action) {
-        // This is likely to be called during a Capture callback while we iterate
-        // on the actions list, or worse, from other threads. We must use mHandler.post.
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (!mActions.contains(action)) {
-                    mActions.add(action);
-                }
-            }
-        });
+        if (!mActions.contains(action)) {
+            mActions.add(action);
+        }
     }
 
     @Override
     public void removeAction(final @NonNull Action action) {
-        // This is likely to be called during a Capture callback while we iterate
-        // on the actions list, or worse, from other threads. We must use mHandler.post.
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mActions.remove(action);
-            }
-        });
+        mActions.remove(action);
     }
 
     @NonNull
@@ -1458,7 +1446,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return mCameraCharacteristics;
     }
 
-    @NonNull
+    @Nullable
     @Override
     public TotalCaptureResult getLastResult(@NonNull Action action) {
         return mLastRepeatingResult;
