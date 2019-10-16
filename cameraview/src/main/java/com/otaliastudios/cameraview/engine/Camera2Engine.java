@@ -1446,7 +1446,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return mCameraCharacteristics;
     }
 
-    @NonNull
+    @Nullable
     @Override
     public TotalCaptureResult getLastResult(@NonNull Action action) {
         return mLastRepeatingResult;
