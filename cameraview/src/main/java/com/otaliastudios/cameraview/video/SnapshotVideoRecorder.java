@@ -51,6 +51,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private static final int STATE_NOT_RECORDING = 1;
 
     private MediaEncoderEngine mEncoderEngine;
+    private final Object mEncoderEngineLock = new Object();
     private GlCameraPreview mPreview;
 
     private int mCurrentState = STATE_NOT_RECORDING;
@@ -82,14 +83,21 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         dispatchVideoRecordingStart();
     }
 
+    // Can be called different threads
     @Override
     protected void onStop(boolean isCameraShutdown) {
         if (isCameraShutdown) {
-            // The renderer callback might never be called. From my tests, it's not.
+            // The renderer callback might never be called. From my tests, it's not,
+            // so we can't wait for that callback to stop the encoder engine.
             LOG.i("Stopping the encoder engine from isCameraShutdown.");
             mDesiredState = STATE_NOT_RECORDING;
             mCurrentState = STATE_NOT_RECORDING;
-            mEncoderEngine.stop();
+            synchronized (mEncoderEngineLock) {
+                if (mEncoderEngine != null) {
+                    mEncoderEngine.stop();
+                    mEncoderEngine = null;
+                }
+            }
         } else {
             mDesiredState = STATE_NOT_RECORDING;
         }
@@ -104,12 +112,15 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         }
     }
 
+    @RendererThread
     @Override
     public void onRendererFilterChanged(@NonNull Filter filter) {
         mCurrentFilter = filter.copy();
-        if (mEncoderEngine != null) {
-            mCurrentFilter.setSize(mResult.size.getWidth(), mResult.size.getHeight());
-            mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
+        mCurrentFilter.setSize(mResult.size.getWidth(), mResult.size.getHeight());
+        synchronized (mEncoderEngineLock) {
+            if (mEncoderEngine != null) {
+                mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
+            }
         }
     }
 
@@ -206,14 +217,16 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             }
 
             // Engine
-            mEncoderEngine = new MediaEncoderEngine(mResult.file,
-                    videoEncoder,
-                    audioEncoder,
-                    mResult.maxDuration,
-                    mResult.maxSize,
-                    SnapshotVideoRecorder.this);
-            mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
-            mEncoderEngine.start();
+            synchronized (mEncoderEngineLock) {
+                mEncoderEngine = new MediaEncoderEngine(mResult.file,
+                        videoEncoder,
+                        audioEncoder,
+                        mResult.maxDuration,
+                        mResult.maxSize,
+                        SnapshotVideoRecorder.this);
+                mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
+                mEncoderEngine.start();
+            }
             mCurrentState = STATE_RECORDING;
         }
 
@@ -226,15 +239,22 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             // NOTE: this is an approximation but it seems to work:
             frame.timestampMillis = System.currentTimeMillis();
             surfaceTexture.getTransformMatrix(frame.transform);
-            if (mEncoderEngine != null) { // Can happen on teardown. At least it used to.
-                mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
+            synchronized (mEncoderEngineLock) {
+                if (mEncoderEngine != null) { // Can be null on teardown.
+                    mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
+                }
             }
         }
 
         if (mCurrentState == STATE_RECORDING && mDesiredState == STATE_NOT_RECORDING) {
             LOG.i("Stopping the encoder engine.");
             mCurrentState = STATE_NOT_RECORDING;
-            mEncoderEngine.stop();
+            synchronized (mEncoderEngineLock) {
+                if (mEncoderEngine != null) {
+                    mEncoderEngine.stop();
+                    mEncoderEngine = null;
+                }
+            }
         }
 
     }
@@ -280,7 +300,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mOverlayDrawer.release();
             mOverlayDrawer = null;
         }
-        mEncoderEngine = null;
+        synchronized (mEncoderEngineLock) {
+            mEncoderEngine = null;
+        }
         dispatchResult();
     }
 }

@@ -50,6 +50,7 @@ public abstract class VideoRecorder {
     @SuppressWarnings("WeakerAccess")
     protected Exception mError;
     private int mState;
+    private final Object mStateLock = new Object();
 
     /**
      * Creates a new video recorder.
@@ -66,12 +67,14 @@ public abstract class VideoRecorder {
      * @param stub the video stub
      */
     public final void start(@NonNull VideoResult.Stub stub) {
-        if (mState != STATE_IDLE) {
-            LOG.e("start:", "called twice, or while stopping! " +
-                    "Ignoring. state:", mState);
-            return;
+        synchronized (mStateLock) {
+            if (mState != STATE_IDLE) {
+                LOG.e("start:", "called twice, or while stopping! " +
+                        "Ignoring. state:", mState);
+                return;
+            }
+            mState = STATE_RECORDING;
         }
-        mState = STATE_RECORDING;
         mResult = stub;
         onStart();
     }
@@ -81,12 +84,15 @@ public abstract class VideoRecorder {
      * @param isCameraShutdown whether this is a full shutdown, camera is being closed
      */
     public final void stop(boolean isCameraShutdown) {
-        if (mState == STATE_IDLE) {
-            LOG.e("stop:", "called twice, or called before start! " +
-                    "Ignoring. isCameraShutdown:", isCameraShutdown);
-            return;
+        synchronized (mStateLock) {
+            if (mState == STATE_IDLE) {
+                // Do not check for STOPPING! See onStop().
+                LOG.e("stop:", "called twice, or called before start! " +
+                        "Ignoring. isCameraShutdown:", isCameraShutdown);
+                return;
+            }
+            mState = STATE_STOPPING;
         }
-        mState = STATE_STOPPING;
         onStop(isCameraShutdown);
     }
 
@@ -96,11 +102,19 @@ public abstract class VideoRecorder {
      */
     public boolean isRecording() {
         // true if not idle.
-        return mState != STATE_IDLE;
+        synchronized (mStateLock) {
+            return mState != STATE_IDLE;
+        }
     }
 
     protected abstract void onStart();
 
+    /**
+     * Should stop recording as fast as possible. This can be called twice because the
+     * shutdown boolean might be different.
+     *
+     * @param isCameraShutdown whether camera is shutting down
+     */
     protected abstract void onStop(boolean isCameraShutdown);
 
     /**
@@ -108,8 +122,10 @@ public abstract class VideoRecorder {
      * either with some error (null result) or with the actual stub, filled.
      */
     protected final void dispatchResult() {
-        if (!isRecording()) return;
-        mState = STATE_IDLE;
+        synchronized (mStateLock) {
+            if (!isRecording()) return;
+            mState = STATE_IDLE;
+        }
         onDispatchResult();
         if (mListener != null) {
             mListener.onVideoResult(mResult, mError);
