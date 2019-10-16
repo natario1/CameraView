@@ -356,7 +356,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // attached. That's why we instantiate the preview here.
             doInstantiatePreview();
         }
-        mOrientationHelper.enable(getContext());
+        mOrientationHelper.enable();
     }
 
     @Override
@@ -722,8 +722,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (mCameraPreview != null) mCameraPreview.onResume();
         if (checkPermissions(getAudio())) {
             // Update display orientation for current CameraEngine
-            mOrientationHelper.enable(getContext());
-            mCameraEngine.getAngles().setDisplayOffset(mOrientationHelper.getDisplayOffset());
+            mOrientationHelper.enable();
+            mCameraEngine.getAngles().setDisplayOffset(mOrientationHelper.getLastDisplayOffset());
             mCameraEngine.start();
         }
     }
@@ -2073,7 +2073,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         @Override
         public void onDeviceOrientationChanged(int deviceOrientation) {
             mLogger.i("onDeviceOrientationChanged", deviceOrientation);
-            int displayOffset = mOrientationHelper.getDisplayOffset();
+            int displayOffset = mOrientationHelper.getLastDisplayOffset();
             if (!mUseDeviceOrientation) {
                 // To fool the engine to return outputs in the VIEW reference system,
                 // The device orientation should be set to -displayOffset.
@@ -2091,6 +2091,19 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     }
                 }
             });
+        }
+
+        @Override
+        public void onDisplayOffsetChanged(int displayOffset, boolean willRecreate) {
+            mLogger.i("onDisplayOffsetChanged", displayOffset, "recreate:", willRecreate);
+            if (isOpened() && !willRecreate) {
+                // Display offset changes when the device rotation lock is off and the activity
+                // is free to rotate. However, some changes will NOT recreate the activity, namely
+                // 180 degrees flips. In this case, we must restart the camera manually.
+                mLogger.w("onDisplayOffsetChanged", "restarting the camera.");
+                close();
+                open();
+            }
         }
 
         @Override

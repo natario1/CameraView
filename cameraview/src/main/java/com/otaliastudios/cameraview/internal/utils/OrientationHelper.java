@@ -5,6 +5,8 @@ import android.hardware.SensorManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
+import android.hardware.display.DisplayManager;
+import android.os.Build;
 import android.view.Display;
 import android.view.OrientationEventListener;
 import android.view.Surface;
@@ -12,21 +14,28 @@ import android.view.WindowManager;
 
 /**
  * Helps with keeping track of both device orientation (which changes when device is rotated)
- * and the display offset (which depends on the activity orientation
- * wrt the device default orientation).
+ * and the display offset (which depends on the activity orientation wrt the device default
+ * orientation).
  */
 public class OrientationHelper {
 
     /**
-     * Receives callback about the device orientation changes.
+     * Receives callback about the orientation changes.
      */
     public interface Callback {
         void onDeviceOrientationChanged(int deviceOrientation);
+        void onDisplayOffsetChanged(int displayOffset, boolean willRecreate);
     }
 
-    @VisibleForTesting final OrientationEventListener mListener;
+    private final Context mContext;
     private final Callback mCallback;
+
+    @VisibleForTesting
+    final OrientationEventListener mDeviceOrientationListener;
     private int mDeviceOrientation = -1;
+
+    @VisibleForTesting
+    final DisplayManager.DisplayListener mDisplayOffsetListener;
     private int mDisplayOffset = -1;
 
     /**
@@ -35,57 +44,78 @@ public class OrientationHelper {
      * @param callback a {@link Callback}
      */
     public OrientationHelper(@NonNull Context context, @NonNull Callback callback) {
+        mContext = context;
         mCallback = callback;
-        mListener = new OrientationEventListener(context.getApplicationContext(),
+        mDeviceOrientationListener = new OrientationEventListener(context.getApplicationContext(),
                 SensorManager.SENSOR_DELAY_NORMAL) {
 
             @SuppressWarnings("ConstantConditions")
             @Override
             public void onOrientationChanged(int orientation) {
-                int or = 0;
+                int deviceOrientation = 0;
                 if (orientation == OrientationEventListener.ORIENTATION_UNKNOWN) {
-                    or = mDeviceOrientation != -1 ? mDeviceOrientation : 0;
+                    deviceOrientation = mDeviceOrientation != -1 ? mDeviceOrientation : 0;
                 } else if (orientation >= 315 || orientation < 45) {
-                    or = 0;
+                    deviceOrientation = 0;
                 } else if (orientation >= 45 && orientation < 135) {
-                    or = 90;
+                    deviceOrientation = 90;
                 } else if (orientation >= 135 && orientation < 225) {
-                    or = 180;
+                    deviceOrientation = 180;
                 } else if (orientation >= 225 && orientation < 315) {
-                    or = 270;
+                    deviceOrientation = 270;
                 }
 
-                if (or != mDeviceOrientation) {
-                    mDeviceOrientation = or;
+                if (deviceOrientation != mDeviceOrientation) {
+                    mDeviceOrientation = deviceOrientation;
                     mCallback.onDeviceOrientationChanged(mDeviceOrientation);
                 }
             }
         };
+        if (Build.VERSION.SDK_INT >= 17) {
+            mDisplayOffsetListener = new DisplayManager.DisplayListener() {
+                public void onDisplayAdded(int displayId) { }
+                public void onDisplayRemoved(int displayId) { }
+
+                @Override
+                public void onDisplayChanged(int displayId) {
+                    int oldDisplayOffset = mDisplayOffset;
+                    int newDisplayOffset = findDisplayOffset();
+                    if (newDisplayOffset != oldDisplayOffset) {
+                        mDisplayOffset = newDisplayOffset;
+                        // With 180 degrees flips, the activity is not recreated.
+                        boolean willRecreate = Math.abs(newDisplayOffset - oldDisplayOffset) != 180;
+                        mCallback.onDisplayOffsetChanged(newDisplayOffset, willRecreate);
+                    }
+                }
+            };
+        } else {
+            mDisplayOffsetListener = null;
+        }
     }
 
     /**
      * Enables this listener.
-     * @param context a context
      */
-    public void enable(@NonNull Context context) {
-        Display display = ((WindowManager) context
-                .getSystemService(Context.WINDOW_SERVICE))
-                .getDefaultDisplay();
-        switch (display.getRotation()) {
-            case Surface.ROTATION_0: mDisplayOffset = 0; break;
-            case Surface.ROTATION_90: mDisplayOffset = 90; break;
-            case Surface.ROTATION_180: mDisplayOffset = 180; break;
-            case Surface.ROTATION_270: mDisplayOffset = 270; break;
-            default: mDisplayOffset = 0; break;
+    public void enable() {
+        mDisplayOffset = findDisplayOffset();
+        if (Build.VERSION.SDK_INT >= 17) {
+            DisplayManager manager = (DisplayManager)
+                    mContext.getSystemService(Context.DISPLAY_SERVICE);
+            manager.registerDisplayListener(mDisplayOffsetListener, null);
         }
-        mListener.enable();
+        mDeviceOrientationListener.enable();
     }
 
     /**
      * Disables this listener.
      */
     public void disable() {
-        mListener.disable();
+        mDeviceOrientationListener.disable();
+        if (Build.VERSION.SDK_INT >= 17) {
+            DisplayManager manager = (DisplayManager)
+                    mContext.getSystemService(Context.DISPLAY_SERVICE);
+            manager.unregisterDisplayListener(mDisplayOffsetListener);
+        }
         mDisplayOffset = -1;
         mDeviceOrientation = -1;
     }
@@ -94,7 +124,8 @@ public class OrientationHelper {
      * Returns the current device orientation.
      * @return device orientation
      */
-    public int getDeviceOrientation() {
+    @SuppressWarnings("WeakerAccess")
+    public int getLastDeviceOrientation() {
         return mDeviceOrientation;
     }
 
@@ -102,7 +133,20 @@ public class OrientationHelper {
      * Returns the current display offset.
      * @return display offset
      */
-    public int getDisplayOffset() {
+    public int getLastDisplayOffset() {
         return mDisplayOffset;
+    }
+
+    private int findDisplayOffset() {
+        Display display = ((WindowManager) mContext
+                .getSystemService(Context.WINDOW_SERVICE))
+                .getDefaultDisplay();
+        switch (display.getRotation()) {
+            case Surface.ROTATION_0: return 0;
+            case Surface.ROTATION_90: return 90;
+            case Surface.ROTATION_180: return 180;
+            case Surface.ROTATION_270: return 270;
+            default: return 0;
+        }
     }
 }
