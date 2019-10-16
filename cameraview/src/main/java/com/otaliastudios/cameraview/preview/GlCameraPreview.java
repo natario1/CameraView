@@ -2,7 +2,6 @@ package com.otaliastudios.cameraview.preview;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
-import android.hardware.camera2.CaptureResult;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import androidx.annotation.NonNull;
@@ -20,8 +19,6 @@ import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filter.NoFilter;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -87,9 +84,10 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
     protected GLSurfaceView onCreateView(@NonNull Context context, @NonNull ViewGroup parent) {
         ViewGroup root = (ViewGroup) LayoutInflater.from(context)
                 .inflate(R.layout.cameraview_gl_view, parent, false);
-        GLSurfaceView glView = root.findViewById(R.id.gl_surface_view);
+        final GLSurfaceView glView = root.findViewById(R.id.gl_surface_view);
+        final Renderer renderer = instantiateRenderer();
         glView.setEGLContextClientVersion(2);
-        glView.setRenderer(instantiateRenderer());
+        glView.setRenderer(renderer);
         glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         glView.getHolder().addCallback(new SurfaceHolder.Callback() {
             public void surfaceCreated(SurfaceHolder holder) {}
@@ -97,6 +95,12 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
+                glView.queueEvent(new Runnable() {
+                    @Override
+                    public void run() {
+                        renderer.onSurfaceDestroyed();
+                    }
+                });
                 dispatchOnSurfaceDestroyed();
                 mDispatched = false;
             }
@@ -129,16 +133,6 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
         super.onDestroy();
         // View is gone, so EGL context is gone: callbacks make no sense anymore.
         mRendererFrameCallbacks.clear();
-        if (mInputSurfaceTexture != null) {
-            mInputSurfaceTexture.setOnFrameAvailableListener(null);
-            mInputSurfaceTexture.release();
-            mInputSurfaceTexture = null;
-        }
-        mOutputTextureId = 0;
-        if (mOutputViewport != null) {
-            mOutputViewport.release();
-            mOutputViewport = null;
-        }
     }
 
     /**
@@ -172,6 +166,21 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
                     getView().requestRender(); // requestRender is thread-safe.
                 }
             });
+        }
+
+        @SuppressWarnings("WeakerAccess")
+        @RendererThread
+        public void onSurfaceDestroyed() {
+            if (mInputSurfaceTexture != null) {
+                mInputSurfaceTexture.setOnFrameAvailableListener(null);
+                mInputSurfaceTexture.release();
+                mInputSurfaceTexture = null;
+            }
+            mOutputTextureId = 0;
+            if (mOutputViewport != null) {
+                mOutputViewport.release();
+                mOutputViewport = null;
+            }
         }
 
         @RendererThread

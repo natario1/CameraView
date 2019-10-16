@@ -351,8 +351,10 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             mCurrentFilter = 0;
         }
         Filters filter = mAllFilters[mCurrentFilter];
-        camera.setFilter(filter.newInstance());
         message(filter.toString(), false);
+
+        // Normal behavior:
+        camera.setFilter(filter.newInstance());
 
         // To test MultiFilter:
         // DuotoneFilter duotone = new DuotoneFilter();
