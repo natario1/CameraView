@@ -20,6 +20,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 import android.util.Pair;
+import android.util.Range;
 import android.util.Rational;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -82,6 +83,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
+    private static final int HIGHER_FRAME_RATE = 60;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
@@ -115,6 +117,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     // Use COW to properly synchronize the list. We'll iterate much more than mutate
     private final List<Action> mActions = new CopyOnWriteArrayList<>();
     private MeterAction mMeterAction;
+
+    // Frame rate
+    private boolean mIsHigherFrameRateSupported = false;
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -353,6 +358,15 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     int sensorOffset = readCharacteristic(characteristics,
                             CameraCharacteristics.SENSOR_ORIENTATION, 0);
                     getAngles().setSensorOffset(facing, sensorOffset);
+                    Range<Integer>[] range = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+                    if (range != null) {
+                        for (Range<Integer> fpsRange : range) {
+                            if (fpsRange.getUpper() >= HIGHER_FRAME_RATE) {
+                                mIsHigherFrameRateSupported = true;
+                                break;
+                            }
+                        }
+                    }
                     return true;
                 }
             } catch (CameraAccessException ignore) {
@@ -775,6 +789,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
         LOG.i("onTakeVideo", "called.");
+        if (mIsHigherFrameRateSupported) {
+            stub.videoFrameRate = HIGHER_FRAME_RATE;
+        }
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
                 Axis.RELATIVE_TO_SENSOR);
         stub.size = getAngles().flip(Reference.SENSOR, Reference.OUTPUT) ?
@@ -812,6 +829,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                                        @NonNull AspectRatio outputRatio) {
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GL_SURFACE.");
+        }
+        if (mIsHigherFrameRateSupported) {
+            stub.videoFrameRate = HIGHER_FRAME_RATE;
         }
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
