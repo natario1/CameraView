@@ -221,6 +221,7 @@ public abstract class CameraEngine implements
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mHdrOp = new Op<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mLocationOp = new Op<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mPlaySoundsOp = new Op<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mPreviewFrameRateOp = new Op<>();
 
     protected CameraEngine(@NonNull Callback callback) {
         mCallback = callback;

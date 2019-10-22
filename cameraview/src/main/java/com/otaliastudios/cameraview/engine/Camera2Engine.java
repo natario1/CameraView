@@ -69,7 +69,6 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -117,9 +116,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     // Use COW to properly synchronize the list. We'll iterate much more than mutate
     private final List<Action> mActions = new CopyOnWriteArrayList<>();
     private MeterAction mMeterAction;
-
-    // Frame rate
-    private boolean mIsHigherFrameRateSupported = false;
 
     public Camera2Engine(Callback callback) {
         super(callback);
@@ -818,9 +814,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GL_SURFACE.");
         }
-        if (mIsHigherFrameRateSupported) {
-            stub.videoFrameRate = (int) mPreviewFrameRate;
-        }
+        stub.videoFrameRate = (int) mPreviewFrameRate;
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
@@ -921,7 +915,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         applyHdr(builder, Hdr.OFF);
         applyZoom(builder, 0F);
         applyExposureCorrection(builder, 0F);
-        applyPreviewFrameRate(builder);
+        applyPreviewFrameRate(builder, 0F);
 
         if (oldBuilder != null) {
             // We might be in a metering operation, or the old builder might have some special
@@ -1262,29 +1256,29 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @Override public void setPreviewFrameRate(float previewFrameRate) {
+        final float oldPreviewFrameRate = mPreviewFrameRate;
         mPreviewFrameRate = previewFrameRate;
         mHandler.run(new Runnable() {
             @Override
             public void run() {
                 if (getEngineState() == STATE_STARTED) {
-                    if (applyPreviewFrameRate(mRepeatingRequestBuilder)) {
+                    if (applyPreviewFrameRate(mRepeatingRequestBuilder, oldPreviewFrameRate)) {
                         applyRepeatingRequestBuilder();
                     }
                 }
+                mPreviewFrameRateOp.end(null);
             }
         });
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected boolean applyPreviewFrameRate(@NonNull CaptureRequest.Builder builder) {
-        Collection<Range<Integer>> fpsRange = mCameraOptions.getSupportedFpsRange();
-        for (Range<Integer> range : fpsRange) {
-            if (range.getUpper() >= mPreviewFrameRate) {
-                mIsHigherFrameRateSupported = true;
-                builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, range);
-                return true;
-            }
+    protected boolean applyPreviewFrameRate(@NonNull CaptureRequest.Builder builder, float oldPreviewFrameRate) {
+        Range<Integer> range = new Range<>((int) mCameraOptions.getFpsRangeMinValue(), (int) mCameraOptions.getFpsRangeMaxValue());
+        if (range.contains((int) mPreviewFrameRate) || mPreviewFrameRate == 0f) {
+            builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, range);
+            return true;
         }
+        mPreviewFrameRate = oldPreviewFrameRate;
         return false;
     }
 

@@ -189,7 +189,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 0);
         int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
         int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
-        float videoFrameRate = a.getFloat(R.styleable.CameraView_cameraVideoFrameRate, 30);
+        float videoFrameRate = a.getFloat(R.styleable.CameraView_cameraPreviewFrameRate, 0);
         long autoFocusResetDelay = (long) a.getInteger(
                 R.styleable.CameraView_cameraAutoFocusResetDelay,
                 (int) DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS);

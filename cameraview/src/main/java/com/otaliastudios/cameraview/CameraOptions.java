@@ -54,13 +54,14 @@ public class CameraOptions {
     private Set<Size> supportedVideoSizes = new HashSet<>(5);
     private Set<AspectRatio> supportedPictureAspectRatio = new HashSet<>(4);
     private Set<AspectRatio> supportedVideoAspectRatio = new HashSet<>(3);
-    private Set<Range<Integer>> supportedFpsRange = new HashSet<>(4);
 
     private boolean zoomSupported;
     private boolean exposureCorrectionSupported;
     private float exposureCorrectionMinValue;
     private float exposureCorrectionMaxValue;
     private boolean autoFocusSupported;
+    private float fpsRangeMinValue;
+    private float fpsRangeMaxValue;
 
 
     public CameraOptions(@NonNull Camera.Parameters params, int cameraId, boolean flipSizes) {
@@ -157,6 +158,10 @@ public class CameraOptions {
                 }
             }
         }
+
+        //fps range
+        fpsRangeMinValue = 0F;
+        fpsRangeMaxValue = 0F;
     }
 
     // Camera2Engine constructor.
@@ -275,8 +280,22 @@ public class CameraOptions {
         }
 
         //fps Range
+        fpsRangeMinValue = Float.MAX_VALUE;
+        fpsRangeMaxValue = Float.MIN_VALUE;
         Range<Integer>[] range = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
-        supportedFpsRange.addAll(Arrays.asList(range));
+        if (range != null) {
+            for (Range<Integer> fpsRange : range) {
+                if (fpsRange.getLower() <= fpsRangeMinValue) {
+                    fpsRangeMinValue = fpsRange.getLower();
+                }
+                if (fpsRange.getUpper() >= fpsRangeMaxValue) {
+                    fpsRangeMaxValue = fpsRange.getUpper();
+                }
+            }
+        } else {
+            fpsRangeMinValue = 0F;
+            fpsRangeMaxValue = 0F;
+        }
     }
 
     /**
@@ -505,11 +524,18 @@ public class CameraOptions {
     }
 
     /**
-     * Set of supported FPS Range
-     * @return a collection of fps range
+     * The minimum value for FPS
+     * @return the min value
      */
-    @NonNull
-    public Collection<Range<Integer>> getSupportedFpsRange() {
-        return Collections.unmodifiableSet(supportedFpsRange);
+    public float getFpsRangeMinValue() {
+        return fpsRangeMinValue;
+    }
+
+    /**
+     * The maximum value for FPS
+     * @return the max value
+     */
+    public float getFpsRangeMaxValue() {
+        return fpsRangeMaxValue;
     }
 }

@@ -496,6 +496,15 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     @Test
+    public void testSetPreviewFrameRate() {
+        openSync(true);
+        controller.mPreviewFrameRateOp.listen();
+        camera.setPreviewFrameRate(30);
+        controller.mPreviewFrameRateOp.await(300);
+        assertEquals(camera.getPreviewFrameRate(), 30, 0);
+    }
+
+    @Test
     public void testSetPlaySounds() {
         controller.mPlaySoundsOp.listen();
         boolean oldValue = camera.getPlaySounds();
