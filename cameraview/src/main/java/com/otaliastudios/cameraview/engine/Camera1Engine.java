@@ -666,6 +666,10 @@ public class Camera1Engine extends CameraEngine implements
         return false;
     }
 
+    @Override public void setPreviewFrameRate(float previewFrameRate) {
+        // This method does nothing
+    }
+
     //endregion
 
     //region Frame Processing

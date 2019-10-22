@@ -54,6 +54,7 @@ public class CameraOptions {
     private Set<Size> supportedVideoSizes = new HashSet<>(5);
     private Set<AspectRatio> supportedPictureAspectRatio = new HashSet<>(4);
     private Set<AspectRatio> supportedVideoAspectRatio = new HashSet<>(3);
+    private Set<Range<Integer>> supportedFpsRange = new HashSet<>(4);
 
     private boolean zoomSupported;
     private boolean exposureCorrectionSupported;
@@ -272,6 +273,10 @@ public class CameraOptions {
                 supportedVideoAspectRatio.add(AspectRatio.of(width, height));
             }
         }
+
+        //fps Range
+        Range<Integer>[] range = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        supportedFpsRange.addAll(Arrays.asList(range));
     }
 
     /**
@@ -497,5 +502,14 @@ public class CameraOptions {
      */
     public float getExposureCorrectionMaxValue() {
         return exposureCorrectionMaxValue;
+    }
+
+    /**
+     * Set of supported FPS Range
+     * @return a collection of fps range
+     */
+    @NonNull
+    public Collection<Range<Integer>> getSupportedFpsRange() {
+        return Collections.unmodifiableSet(supportedFpsRange);
     }
 }

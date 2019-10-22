@@ -69,6 +69,7 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -83,7 +84,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
-    private static final int HIGHER_FRAME_RATE = 60;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
@@ -358,15 +358,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     int sensorOffset = readCharacteristic(characteristics,
                             CameraCharacteristics.SENSOR_ORIENTATION, 0);
                     getAngles().setSensorOffset(facing, sensorOffset);
-                    Range<Integer>[] range = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
-                    if (range != null) {
-                        for (Range<Integer> fpsRange : range) {
-                            if (fpsRange.getUpper() >= HIGHER_FRAME_RATE) {
-                                mIsHigherFrameRateSupported = true;
-                                break;
-                            }
-                        }
-                    }
                     return true;
                 }
             } catch (CameraAccessException ignore) {
@@ -789,9 +780,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     protected void onTakeVideo(@NonNull VideoResult.Stub stub) {
         LOG.i("onTakeVideo", "called.");
-        if (mIsHigherFrameRateSupported) {
-            stub.videoFrameRate = HIGHER_FRAME_RATE;
-        }
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
                 Axis.RELATIVE_TO_SENSOR);
         stub.size = getAngles().flip(Reference.SENSOR, Reference.OUTPUT) ?
@@ -831,7 +819,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             throw new IllegalStateException("Video snapshots are only supported with GL_SURFACE.");
         }
         if (mIsHigherFrameRateSupported) {
-            stub.videoFrameRate = HIGHER_FRAME_RATE;
+            stub.videoFrameRate = (int) mPreviewFrameRate;
         }
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
@@ -933,6 +921,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         applyHdr(builder, Hdr.OFF);
         applyZoom(builder, 0F);
         applyExposureCorrection(builder, 0F);
+        applyPreviewFrameRate(builder);
 
         if (oldBuilder != null) {
             // We might be in a metering operation, or the old builder might have some special
@@ -1270,6 +1259,33 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void setPlaySounds(boolean playSounds) {
         mPlaySounds = playSounds;
         mPlaySoundsOp.end(null);
+    }
+
+    @Override public void setPreviewFrameRate(float previewFrameRate) {
+        mPreviewFrameRate = previewFrameRate;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    if (applyPreviewFrameRate(mRepeatingRequestBuilder)) {
+                        applyRepeatingRequestBuilder();
+                    }
+                }
+            }
+        });
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyPreviewFrameRate(@NonNull CaptureRequest.Builder builder) {
+        Collection<Range<Integer>> fpsRange = mCameraOptions.getSupportedFpsRange();
+        for (Range<Integer> range : fpsRange) {
+            if (range.getUpper() >= mPreviewFrameRate) {
+                mIsHigherFrameRateSupported = true;
+                builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, range);
+                return true;
+            }
+        }
+        return false;
     }
 
     //endregion
