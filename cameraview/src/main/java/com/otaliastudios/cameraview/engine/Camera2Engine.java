@@ -1274,17 +1274,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @SuppressWarnings("WeakerAccess")
     protected boolean applyPreviewFrameRate(@NonNull CaptureRequest.Builder builder, float oldPreviewFrameRate) {
-        Range<Integer> range = new Range<>((int) mCameraOptions.getFpsRangeMinValue(), (int) mCameraOptions.getFpsRangeMaxValue());
-        if (mPreviewFrameRate != 0f) {
-            if (range.contains((int) mPreviewFrameRate)) {
-                builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, range);
-                return true;
-            }
-        } else {
-            Range<Integer>[] fpsRanges = mCameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
-            if (fpsRanges != null) {
+        Range<Integer>[] fpsRanges = mCameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        if (fpsRanges != null) {
+            if (mPreviewFrameRate != 0f) {
                 for (Range<Integer> fpsRange : fpsRanges) {
-                    if (range.contains(DEFAULT_FRAME_RATE)) {
+                    if (fpsRange.contains((int) mPreviewFrameRate)) {
+                        builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+                        return true;
+                    }
+                }
+            } else {
+                for (Range<Integer> fpsRange : fpsRanges) {
+                    if (fpsRange.contains(DEFAULT_FRAME_RATE)) {
                         builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
                         return true;
                     }
