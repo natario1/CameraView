@@ -20,6 +20,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 import android.util.Pair;
+import android.util.Range;
 import android.util.Rational;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -82,6 +83,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
+    private static final int DEFAULT_FRAME_RATE = 30;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
@@ -813,6 +815,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GL_SURFACE.");
         }
+        stub.videoFrameRate = (int) mPreviewFrameRate;
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
@@ -913,6 +916,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         applyHdr(builder, Hdr.OFF);
         applyZoom(builder, 0F);
         applyExposureCorrection(builder, 0F);
+        applyPreviewFrameRate(builder, 0F);
 
         if (oldBuilder != null) {
             // We might be in a metering operation, or the old builder might have some special
@@ -1250,6 +1254,46 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void setPlaySounds(boolean playSounds) {
         mPlaySounds = playSounds;
         mPlaySoundsOp.end(null);
+    }
+
+    @Override public void setPreviewFrameRate(float previewFrameRate) {
+        final float oldPreviewFrameRate = mPreviewFrameRate;
+        mPreviewFrameRate = previewFrameRate;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                if (getEngineState() == STATE_STARTED) {
+                    if (applyPreviewFrameRate(mRepeatingRequestBuilder, oldPreviewFrameRate)) {
+                        applyRepeatingRequestBuilder();
+                    }
+                }
+                mPreviewFrameRateOp.end(null);
+            }
+        });
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    protected boolean applyPreviewFrameRate(@NonNull CaptureRequest.Builder builder, float oldPreviewFrameRate) {
+        Range<Integer>[] fpsRanges = mCameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        if (fpsRanges != null) {
+            if (mPreviewFrameRate != 0f) {
+                for (Range<Integer> fpsRange : fpsRanges) {
+                    if (fpsRange.contains((int) mPreviewFrameRate)) {
+                        builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+                        return true;
+                    }
+                }
+            } else {
+                for (Range<Integer> fpsRange : fpsRanges) {
+                    if (fpsRange.contains(DEFAULT_FRAME_RATE)) {
+                        builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+                        return true;
+                    }
+                }
+            }
+        }
+        mPreviewFrameRate = oldPreviewFrameRate;
+        return false;
     }
 
     //endregion

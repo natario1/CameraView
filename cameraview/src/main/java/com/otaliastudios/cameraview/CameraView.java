@@ -189,6 +189,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 0);
         int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
         int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
+        float videoFrameRate = a.getFloat(R.styleable.CameraView_cameraPreviewFrameRate, 0);
         long autoFocusResetDelay = (long) a.getInteger(
                 R.styleable.CameraView_cameraAutoFocusResetDelay,
                 (int) DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS);
@@ -251,6 +252,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoMaxDuration(videoMaxDuration);
         setVideoBitRate(videoBitRate);
         setAutoFocusResetDelay(autoFocusResetDelay);
+        setPreviewFrameRate(videoFrameRate);
 
         // Apply gestures
         mapGesture(Gesture.TAP, gestures.getTapAction());
@@ -952,6 +954,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoMaxDuration(oldEngine.getVideoMaxDuration());
         setVideoBitRate(oldEngine.getVideoBitRate());
         setAutoFocusResetDelay(oldEngine.getAutoFocusResetDelay());
+        setPreviewFrameRate(oldEngine.getPreviewFrameRate());
     }
 
     /**
@@ -1444,6 +1447,23 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @SuppressWarnings("unused")
     public int getVideoBitRate() {
         return mCameraEngine.getVideoBitRate();
+    }
+
+    /**
+     * Sets the frame rate for the video
+     * Will be used by {@link #takeVideoSnapshot(File)}.
+     * @param frameRate desired frame rate
+     */
+    public void setPreviewFrameRate(float frameRate) {
+        mCameraEngine.setPreviewFrameRate(frameRate);
+    }
+
+    /**
+     * Returns the current frame rate.
+     * @return current frame rate
+     */
+    public float getPreviewFrameRate() {
+        return mCameraEngine.getPreviewFrameRate();
     }
 
     /**

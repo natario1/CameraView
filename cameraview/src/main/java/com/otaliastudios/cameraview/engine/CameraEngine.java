@@ -174,6 +174,7 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess") protected boolean mPlaySounds;
     @SuppressWarnings("WeakerAccess") protected boolean mPictureMetering;
     @SuppressWarnings("WeakerAccess") protected boolean mPictureSnapshotMetering;
+    @SuppressWarnings("WeakerAccess") protected float mPreviewFrameRate;
 
     // Can be private
     @VisibleForTesting Handler mCrashHandler;
@@ -220,6 +221,7 @@ public abstract class CameraEngine implements
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mHdrOp = new Op<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mLocationOp = new Op<>();
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mPlaySoundsOp = new Op<>();
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) Op<Void> mPreviewFrameRateOp = new Op<>();
 
     protected CameraEngine(@NonNull Callback callback) {
         mCallback = callback;
@@ -1026,6 +1028,10 @@ public abstract class CameraEngine implements
         return mExposureCorrectionValue;
     }
 
+    public final float getPreviewFrameRate() {
+        return mPreviewFrameRate;
+    }
+
     @CallSuper
     public void setHasFrameProcessors(boolean hasFrameProcessors) {
         mHasFrameProcessors = hasFrameProcessors;
@@ -1106,6 +1112,8 @@ public abstract class CameraEngine implements
     public abstract void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point);
 
     public abstract void setPlaySounds(boolean playSounds);
+
+    public abstract void setPreviewFrameRate(float previewFrameRate);
 
     //endregion
 

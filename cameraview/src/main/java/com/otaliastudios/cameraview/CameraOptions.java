@@ -60,6 +60,8 @@ public class CameraOptions {
     private float exposureCorrectionMinValue;
     private float exposureCorrectionMaxValue;
     private boolean autoFocusSupported;
+    private float fpsRangeMinValue;
+    private float fpsRangeMaxValue;
 
 
     public CameraOptions(@NonNull Camera.Parameters params, int cameraId, boolean flipSizes) {
@@ -156,6 +158,10 @@ public class CameraOptions {
                 }
             }
         }
+
+        //fps range
+        fpsRangeMinValue = 0F;
+        fpsRangeMaxValue = 0F;
     }
 
     // Camera2Engine constructor.
@@ -271,6 +277,24 @@ public class CameraOptions {
                 supportedVideoSizes.add(new Size(width, height));
                 supportedVideoAspectRatio.add(AspectRatio.of(width, height));
             }
+        }
+
+        //fps Range
+        fpsRangeMinValue = Float.MAX_VALUE;
+        fpsRangeMaxValue = Float.MIN_VALUE;
+        Range<Integer>[] range = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        if (range != null) {
+            for (Range<Integer> fpsRange : range) {
+                if (fpsRange.getLower() <= fpsRangeMinValue) {
+                    fpsRangeMinValue = fpsRange.getLower();
+                }
+                if (fpsRange.getUpper() >= fpsRangeMaxValue) {
+                    fpsRangeMaxValue = fpsRange.getUpper();
+                }
+            }
+        } else {
+            fpsRangeMinValue = 0F;
+            fpsRangeMaxValue = 0F;
         }
     }
 
@@ -497,5 +521,21 @@ public class CameraOptions {
      */
     public float getExposureCorrectionMaxValue() {
         return exposureCorrectionMaxValue;
+    }
+
+    /**
+     * The minimum value for FPS
+     * @return the min value
+     */
+    public float getFpsRangeMinValue() {
+        return fpsRangeMinValue;
+    }
+
+    /**
+     * The maximum value for FPS
+     * @return the max value
+     */
+    public float getFpsRangeMaxValue() {
+        return fpsRangeMaxValue;
     }
 }

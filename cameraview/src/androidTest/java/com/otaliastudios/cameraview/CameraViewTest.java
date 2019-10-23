@@ -784,6 +784,12 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getVideoMaxDuration(), 5000);
     }
 
+    @Test
+    public void testPreviewFrameRate() {
+        cameraView.setPreviewFrameRate(60);
+        assertEquals(cameraView.getPreviewFrameRate(), 60, 0);
+    }
+
     //endregion
 
     //region Lists of listeners and processors
