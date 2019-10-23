@@ -8,6 +8,19 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
+Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
+Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
+
+## v2.4.0
+
+- [*Camera2*] New: support for `previewFrameRate`. Controls preview FPS, snapshot FPS, processor FPS, thanks to [@vaibhavbhandula][vaibhavbhandula] ([#653][653])
+- [*Camera1*] New: support for `previewFrameRate` for Camera1 ([#661][661])
+- [*Camera2*] Fix: fix crashes when taking snapshots very early ([#651][651])
+- [*Preview*] Fix: Fixed preview being upside-down for 180 degrees flips ([#651][651])
+- Fix: other bug fixes ([#651][651])
+
+https://github.com/natario1/CameraView/compare/v2.3.1...v2.4.0
+
 ### v2.3.1
 
 - [*Video*] Improvement: better timing for `onVideoRecordingStart()` thanks to [@agrawalsuneet][agrawalsuneet] ([#632][632])
@@ -261,6 +274,7 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [cneuwirt]: https://github.com/cneuwirt
 [agrawalsuneet]: https://github.com/agrawalsuneet
 [RAN3000]: https://github.com/RAN3000
+[vaibhavbhandula]: https://github.com/vaibhavbhandula
 
 
 [73]: https://github.com/natario1/CameraView/pull/73
@@ -336,3 +350,6 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [617]: https://github.com/natario1/CameraView/pull/617
 [630]: https://github.com/natario1/CameraView/pull/630
 [632]: https://github.com/natario1/CameraView/pull/632
+[651]: https://github.com/natario1/CameraView/pull/651
+[653]: https://github.com/natario1/CameraView/pull/653
+[661]: https://github.com/natario1/CameraView/pull/661
