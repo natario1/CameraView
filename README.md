@@ -122,6 +122,7 @@ Using CameraView is extremely simple:
     app:cameraGestureScrollVertical="none|zoom|exposureCorrection|filterControl1|filterControl2"
     app:cameraEngine="camera1|camera2"
     app:cameraPreview="glSurface|surface|texture"
+    app:cameraPreviewFrameRate="@integer/preview_frame_rate"
     app:cameraFacing="back|front"
     app:cameraHdr="on|off"
     app:cameraFlash="on|auto|torch|off"

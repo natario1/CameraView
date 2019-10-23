@@ -116,7 +116,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 new Option.Flash(), new Option.WhiteBalance(), new Option.Hdr(),
                 new Option.PictureMetering(), new Option.PictureSnapshotMetering(),
                 // Video recording
-                new Option.VideoCodec(), new Option.Audio(),
+                new Option.PreviewFrameRate(), new Option.VideoCodec(), new Option.Audio(),
                 // Gestures
                 new Option.Pinch(), new Option.HorizontalScroll(), new Option.VerticalScroll(),
                 new Option.Tap(), new Option.LongTap(),
@@ -128,12 +128,19 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 new Option.Grid(), new Option.GridColor(), new Option.UseDeviceOrientation()
         );
         List<Boolean> dividers = Arrays.asList(
+                // Layout
                 false, true,
+                // Engine and preview
                 false, false, true,
+                // Some controls
                 false, false, false, false, true,
-                false, true,
-                false, false, false, false, true,
+                // Video recording
                 false, false, true,
+                // Gestures
+                false, false, false, false, true,
+                // Watermarks
+                false, false, true,
+                // Other
                 false, false, true
         );
         for (int i = 0; i < options.size(); i++) {

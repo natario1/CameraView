@@ -60,8 +60,8 @@ public class CameraOptions {
     private float exposureCorrectionMinValue;
     private float exposureCorrectionMaxValue;
     private boolean autoFocusSupported;
-    private float fpsRangeMinValue;
-    private float fpsRangeMaxValue;
+    private float previewFrameRateMinValue;
+    private float previewFrameRateMaxValue;
 
 
     public CameraOptions(@NonNull Camera.Parameters params, int cameraId, boolean flipSizes) {
@@ -159,9 +159,16 @@ public class CameraOptions {
             }
         }
 
-        //fps range
-        fpsRangeMinValue = 0F;
-        fpsRangeMaxValue = 0F;
+        // Preview FPS
+        previewFrameRateMinValue = Float.MAX_VALUE;
+        previewFrameRateMaxValue = -Float.MAX_VALUE;
+        List<int[]> fpsRanges = params.getSupportedPreviewFpsRange();
+        for (int[] fpsRange : fpsRanges) {
+            float lower = (float) fpsRange[0] / 1000F;
+            float upper = (float) fpsRange[1] / 1000F;
+            previewFrameRateMinValue = Math.min(previewFrameRateMinValue, lower);
+            previewFrameRateMaxValue = Math.max(previewFrameRateMaxValue, upper);
+        }
     }
 
     // Camera2Engine constructor.
@@ -279,22 +286,19 @@ public class CameraOptions {
             }
         }
 
-        //fps Range
-        fpsRangeMinValue = Float.MAX_VALUE;
-        fpsRangeMaxValue = Float.MIN_VALUE;
-        Range<Integer>[] range = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        // Preview FPS
+        Range<Integer>[] range = cameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
         if (range != null) {
+            previewFrameRateMinValue = Float.MAX_VALUE;
+            previewFrameRateMaxValue = -Float.MAX_VALUE;
             for (Range<Integer> fpsRange : range) {
-                if (fpsRange.getLower() <= fpsRangeMinValue) {
-                    fpsRangeMinValue = fpsRange.getLower();
-                }
-                if (fpsRange.getUpper() >= fpsRangeMaxValue) {
-                    fpsRangeMaxValue = fpsRange.getUpper();
-                }
+                previewFrameRateMinValue = Math.min(previewFrameRateMinValue, fpsRange.getLower());
+                previewFrameRateMaxValue = Math.max(previewFrameRateMaxValue, fpsRange.getUpper());
             }
         } else {
-            fpsRangeMinValue = 0F;
-            fpsRangeMaxValue = 0F;
+            previewFrameRateMinValue = 0F;
+            previewFrameRateMaxValue = 0F;
         }
     }
 
@@ -307,7 +311,6 @@ public class CameraOptions {
     public boolean supports(@NonNull Control control) {
         return getSupportedControls(control.getClass()).contains(control);
     }
-
 
     /**
      * Shorthand for other methods in this class,
@@ -332,7 +335,6 @@ public class CameraOptions {
         }
         return false;
     }
-
 
     @SuppressWarnings("unchecked")
     @NonNull
@@ -362,7 +364,6 @@ public class CameraOptions {
         return Collections.emptyList();
     }
 
-
     /**
      * Set of supported picture sizes for the currently opened camera.
      *
@@ -372,7 +373,6 @@ public class CameraOptions {
     public Collection<Size> getSupportedPictureSizes() {
         return Collections.unmodifiableSet(supportedPictureSizes);
     }
-
 
     /**
      * Set of supported picture aspect ratios for the currently opened camera.
@@ -385,7 +385,6 @@ public class CameraOptions {
         return Collections.unmodifiableSet(supportedPictureAspectRatio);
     }
 
-
     /**
      * Set of supported video sizes for the currently opened camera.
      *
@@ -395,7 +394,6 @@ public class CameraOptions {
     public Collection<Size> getSupportedVideoSizes() {
         return Collections.unmodifiableSet(supportedVideoSizes);
     }
-
 
     /**
      * Set of supported picture aspect ratios for the currently opened camera.
@@ -408,7 +406,6 @@ public class CameraOptions {
         return Collections.unmodifiableSet(supportedVideoAspectRatio);
     }
 
-
     /**
      * Set of supported facing values.
      *
@@ -420,7 +417,6 @@ public class CameraOptions {
     public Collection<Facing> getSupportedFacing() {
         return Collections.unmodifiableSet(supportedFacing);
     }
-
 
     /**
      * Set of supported flash values.
@@ -436,7 +432,6 @@ public class CameraOptions {
         return Collections.unmodifiableSet(supportedFlash);
     }
 
-
     /**
      * Set of supported white balance values.
      *
@@ -451,7 +446,6 @@ public class CameraOptions {
     public Collection<WhiteBalance> getSupportedWhiteBalance() {
         return Collections.unmodifiableSet(supportedWhiteBalance);
     }
-
 
     /**
      * Set of supported hdr values.
@@ -488,7 +482,6 @@ public class CameraOptions {
         return autoFocusSupported;
     }
 
-
     /**
      * Whether exposure correction is supported. If this is false, calling
      * {@link CameraView#setExposureCorrection(float)} has no effect.
@@ -500,7 +493,6 @@ public class CameraOptions {
     public boolean isExposureCorrectionSupported() {
         return exposureCorrectionSupported;
     }
-
 
     /**
      * The minimum value of negative exposure correction, in EV stops.
@@ -524,18 +516,20 @@ public class CameraOptions {
     }
 
     /**
-     * The minimum value for FPS
+     * The minimum value for the preview frame rate, in frames per second (FPS).
+     *
      * @return the min value
      */
-    public float getFpsRangeMinValue() {
-        return fpsRangeMinValue;
+    public float getPreviewFrameRateMinValue() {
+        return previewFrameRateMinValue;
     }
 
     /**
-     * The maximum value for FPS
+     * The maximum value for the preview frame rate, in frames per second (FPS).
+     *
      * @return the max value
      */
-    public float getFpsRangeMaxValue() {
-        return fpsRangeMaxValue;
+    public float getPreviewFrameRateMaxValue() {
+        return previewFrameRateMaxValue;
     }
 }

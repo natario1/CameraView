@@ -1450,8 +1450,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
-     * Sets the frame rate for the video
-     * Will be used by {@link #takeVideoSnapshot(File)}.
+     * Sets the preview frame rate in frames per second.
+     * This rate will be used, for example, by the frame processor and in video
+     * snapshot taken through {@link #takeVideo(File)}.
+     *
+     * A value of 0F will restore the rate to a default value.
+     *
      * @param frameRate desired frame rate
      */
     public void setPreviewFrameRate(float frameRate) {
@@ -1459,7 +1463,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
-     * Returns the current frame rate.
+     * Returns the current preview frame rate.
+     * This can return 0F if no frame rate was set.
+     *
+     * @see #setPreviewFrameRate(float)
      * @return current frame rate
      */
     public float getPreviewFrameRate() {

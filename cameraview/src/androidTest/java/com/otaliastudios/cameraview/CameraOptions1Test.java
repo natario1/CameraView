@@ -22,6 +22,7 @@ import androidx.test.filters.SmallTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -345,4 +346,17 @@ public class CameraOptions1Test extends BaseTest {
         assertEquals(o.getExposureCorrectionMaxValue(), 10f * 0.5f, 0f);
     }
 
+    @Test
+    public void testPreviewFrameRate() {
+        Camera.Parameters params = mock(Camera.Parameters.class);
+        List<int[]> result = Arrays.asList(
+                new int[]{20000, 30000},
+                new int[]{30000, 60000},
+                new int[]{60000, 120000}
+        );
+        when(params.getSupportedPreviewFpsRange()).thenReturn(result);
+        CameraOptions o = new CameraOptions(params, 0, false);
+        assertEquals(20F, o.getPreviewFrameRateMinValue(), 0.001F);
+        assertEquals(120F, o.getPreviewFrameRateMaxValue(), 0.001F);
+    }
 }
