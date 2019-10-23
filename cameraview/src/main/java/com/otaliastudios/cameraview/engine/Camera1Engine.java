@@ -392,6 +392,7 @@ public class Camera1Engine extends CameraEngine implements
         // The correct formula seems to be deviceOrientation+displayOffset,
         // which means offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE).
         stub.rotation = getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
+        stub.videoFrameRate = Math.round(mPreviewFrameRate);
         LOG.i("onTakeVideoSnapshot", "rotation:", stub.rotation, "size:", stub.size);
 
         // Start.

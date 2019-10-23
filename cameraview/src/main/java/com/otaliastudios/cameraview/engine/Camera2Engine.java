@@ -814,7 +814,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (!(mPreview instanceof GlCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GL_SURFACE.");
         }
-        stub.videoFrameRate = (int) mPreviewFrameRate;
         GlCameraPreview glPreview = (GlCameraPreview) mPreview;
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
@@ -833,6 +832,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         // Unlike Camera1, the correct formula seems to be deviceOrientation,
         // which means offset(Reference.BASE, Reference.OUTPUT, Axis.ABSOLUTE).
         stub.rotation = getAngles().offset(Reference.BASE, Reference.OUTPUT, Axis.ABSOLUTE);
+        stub.videoFrameRate = Math.round(mPreviewFrameRate);
         LOG.i("onTakeVideoSnapshot", "rotation:", stub.rotation, "size:", stub.size);
 
         // Start.
