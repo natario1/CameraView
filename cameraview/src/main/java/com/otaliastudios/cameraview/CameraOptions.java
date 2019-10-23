@@ -159,9 +159,16 @@ public class CameraOptions {
             }
         }
 
-        //fps range
-        previewFrameRateMinValue = 0F;
-        previewFrameRateMaxValue = 0F;
+        // Preview FPS
+        previewFrameRateMinValue = Float.MAX_VALUE;
+        previewFrameRateMaxValue = -Float.MAX_VALUE;
+        List<int[]> fpsRanges = params.getSupportedPreviewFpsRange();
+        for (int[] fpsRange : fpsRanges) {
+            float lower = (float) fpsRange[0] / 1000F;
+            float upper = (float) fpsRange[1] / 1000F;
+            previewFrameRateMinValue = Math.min(previewFrameRateMinValue, lower);
+            previewFrameRateMaxValue = Math.max(previewFrameRateMaxValue, upper);
+        }
     }
 
     // Camera2Engine constructor.
@@ -279,18 +286,15 @@ public class CameraOptions {
             }
         }
 
-        //fps Range
-        previewFrameRateMinValue = Float.MAX_VALUE;
-        previewFrameRateMaxValue = Float.MIN_VALUE;
-        Range<Integer>[] range = cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        // Preview FPS
+        Range<Integer>[] range = cameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
         if (range != null) {
+            previewFrameRateMinValue = Float.MAX_VALUE;
+            previewFrameRateMaxValue = -Float.MAX_VALUE;
             for (Range<Integer> fpsRange : range) {
-                if (fpsRange.getLower() <= previewFrameRateMinValue) {
-                    previewFrameRateMinValue = fpsRange.getLower();
-                }
-                if (fpsRange.getUpper() >= previewFrameRateMaxValue) {
-                    previewFrameRateMaxValue = fpsRange.getUpper();
-                }
+                previewFrameRateMinValue = Math.min(previewFrameRateMinValue, fpsRange.getLower());
+                previewFrameRateMaxValue = Math.max(previewFrameRateMaxValue, fpsRange.getUpper());
             }
         } else {
             previewFrameRateMinValue = 0F;
