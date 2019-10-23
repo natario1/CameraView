@@ -1289,8 +1289,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             }
         } else {
             // If out of boundaries, adjust it.
-            mPreviewFrameRate = Math.min(mPreviewFrameRate, mCameraOptions.getPreviewFrameRateMaxValue());
-            mPreviewFrameRate = Math.max(mPreviewFrameRate, mCameraOptions.getPreviewFrameRateMinValue());
+            mPreviewFrameRate = Math.min(mPreviewFrameRate,
+                    mCameraOptions.getPreviewFrameRateMaxValue());
+            mPreviewFrameRate = Math.max(mPreviewFrameRate,
+                    mCameraOptions.getPreviewFrameRateMinValue());
             for (Range<Integer> fpsRange : fpsRanges) {
                 if (fpsRange.contains(Math.round(mPreviewFrameRate))) {
                     builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
