@@ -83,7 +83,6 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
-    private static final int DEFAULT_FRAME_RATE = 30;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
@@ -1273,22 +1272,29 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected boolean applyPreviewFrameRate(@NonNull CaptureRequest.Builder builder, float oldPreviewFrameRate) {
-        Range<Integer>[] fpsRanges = mCameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
-        if (fpsRanges != null) {
-            if (mPreviewFrameRate != 0f) {
-                for (Range<Integer> fpsRange : fpsRanges) {
-                    if (fpsRange.contains((int) mPreviewFrameRate)) {
-                        builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
-                        return true;
-                    }
+    protected boolean applyPreviewFrameRate(@NonNull CaptureRequest.Builder builder,
+                                            float oldPreviewFrameRate) {
+        //noinspection unchecked
+        Range<Integer>[] fallback = new Range[]{};
+        Range<Integer>[] fpsRanges = readCharacteristic(
+                CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
+                fallback);
+        if (mPreviewFrameRate == 0F) {
+            // 0F is a special value. Fallback to a reasonable default.
+            for (Range<Integer> fpsRange : fpsRanges) {
+                if (fpsRange.contains(30) || fpsRange.contains(24)) {
+                    builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+                    return true;
                 }
-            } else {
-                for (Range<Integer> fpsRange : fpsRanges) {
-                    if (fpsRange.contains(DEFAULT_FRAME_RATE)) {
-                        builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
-                        return true;
-                    }
+            }
+        } else {
+            // If out of boundaries, adjust it.
+            mPreviewFrameRate = Math.min(mPreviewFrameRate, mCameraOptions.getPreviewFrameRateMaxValue());
+            mPreviewFrameRate = Math.max(mPreviewFrameRate, mCameraOptions.getPreviewFrameRateMinValue());
+            for (Range<Integer> fpsRange : fpsRanges) {
+                if (fpsRange.contains(Math.round(mPreviewFrameRate))) {
+                    builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+                    return true;
                 }
             }
         }
