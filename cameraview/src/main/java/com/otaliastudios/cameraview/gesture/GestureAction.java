@@ -82,6 +82,8 @@ public enum GestureAction {
      * - {@link Gesture#SCROLL_VERTICAL}
      */
     FILTER_CONTROL_2(6, GestureType.CONTINUOUS);
+    
+    FILTER_CONTROL_3(7, GestureType.CONTINUOUS);
 
     final static GestureAction DEFAULT_PINCH = NONE;
     final static GestureAction DEFAULT_TAP = NONE;
