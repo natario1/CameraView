@@ -683,6 +683,18 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     }
                 }
                 break;
+                
+            case FILTER_CONTROL_3:
+                if (!mExperimental) break;
+                if (getFilter() instanceof ThreeParameterFilter) {
+                    TwoParameterFilter filter = (ThreeParameterFilter) getFilter();
+                    oldValue = filter.getParameter3();
+                    newValue = source.computeValue(oldValue, 0, 1);
+                    if (newValue != oldValue) {
+                        filter.setParameter3(newValue);
+                    }
+                }
+                break;
         }
     }
 
