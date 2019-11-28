@@ -426,6 +426,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         final TaskCompletionSource<Void> task = new TaskCompletionSource<>();
 
         // Compute sizes.
+        // TODO preview stream should never be bigger than 1920x1080 as per
+        //  CameraDevice.createCaptureSession. This should be probably be applied
+        //  before all the other external selectors, to treat it as a hard limit.
+        //  OR: pass an int into these functions to be able to take smaller dims
+        //  when session configuration fails
+        //  OR: both.
         mCaptureSize = computeCaptureSize();
         mPreviewStreamSize = computePreviewStreamSize();
 
@@ -501,8 +507,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 sizes.add(new Size(aSize.getWidth(), aSize.getHeight()));
             }
             mFrameProcessingSize = SizeSelectors.and(
-                    SizeSelectors.maxWidth(Math.min(700, mPreviewStreamSize.getWidth())),
-                    SizeSelectors.maxHeight(Math.min(700, mPreviewStreamSize.getHeight())),
+                    SizeSelectors.maxWidth(Math.min(640, mPreviewStreamSize.getWidth())),
+                    SizeSelectors.maxHeight(Math.min(640, mPreviewStreamSize.getHeight())),
                     SizeSelectors.biggest()).select(sizes).get(0);
             mFrameProcessingReader = ImageReader.newInstance(
                     mFrameProcessingSize.getWidth(),
