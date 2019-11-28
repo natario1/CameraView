@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.BitmapFactory;
 import android.location.Location;
+import android.os.Build;
 
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.PictureFormat;
@@ -136,6 +137,11 @@ public class PictureResult {
      */
     public void toBitmap(int maxWidth, int maxHeight, @NonNull BitmapCallback callback) {
         if (format == PictureFormat.JPEG) {
+            CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, new BitmapFactory.Options(),
+                    rotation, callback);
+        } else if (format == PictureFormat.DNG && Build.VERSION.SDK_INT >= 24) {
+            // Apparently: BitmapFactory added DNG support in API 24.
+            // https://github.com/aosp-mirror/platform_frameworks_base/blob/nougat-mr1-release/core/jni/android/graphics/BitmapFactory.cpp
             CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, new BitmapFactory.Options(),
                     rotation, callback);
         } else {
