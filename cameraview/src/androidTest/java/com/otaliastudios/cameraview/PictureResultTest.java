@@ -4,6 +4,7 @@ package com.otaliastudios.cameraview;
 import android.location.Location;
 
 import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -24,7 +25,7 @@ public class PictureResultTest extends BaseTest {
 
     @Test
     public void testResult() {
-        int format = PictureResult.FORMAT_JPEG;
+        PictureFormat format = PictureFormat.JPEG;
         int rotation = 90;
         Size size = new Size(20, 120);
         byte[] jpeg = new byte[]{2, 4, 1, 5, 2};

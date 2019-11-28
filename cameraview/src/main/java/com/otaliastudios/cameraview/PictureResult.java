@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 
 import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.size.Size;
 
 import java.io.File;
@@ -31,11 +32,8 @@ public class PictureResult {
         public Size size;
         public Facing facing;
         public byte[] data;
-        public int format;
+        public PictureFormat format;
     }
-
-    public final static int FORMAT_JPEG = 0;
-    // public final static int FORMAT_PNG = 1;
 
     private final boolean isSnapshot;
     private final Location location;
@@ -43,7 +41,7 @@ public class PictureResult {
     private final Size size;
     private final Facing facing;
     private final byte[] data;
-    private final int format;
+    private final PictureFormat format;
 
     PictureResult(@NonNull Stub builder) {
         isSnapshot = builder.isSnapshot;
@@ -118,12 +116,12 @@ public class PictureResult {
     }
 
     /**
-     * Returns the image format. At the moment this will always be
-     * {@link #FORMAT_JPEG}.
+     * Returns the format for {@link #getData()}.
      *
-     * @return the current format
+     * @return the format
      */
-    public int getFormat() {
+    @NonNull
+    public PictureFormat getFormat() {
         return format;
     }
 
