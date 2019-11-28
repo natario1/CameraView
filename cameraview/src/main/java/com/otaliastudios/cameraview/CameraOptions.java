@@ -18,6 +18,7 @@ import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
@@ -54,6 +55,7 @@ public abstract class CameraOptions {
     protected Set<Size> supportedVideoSizes = new HashSet<>(5);
     protected Set<AspectRatio> supportedPictureAspectRatio = new HashSet<>(4);
     protected Set<AspectRatio> supportedVideoAspectRatio = new HashSet<>(3);
+    protected Set<PictureFormat> supportedPictureFormats = new HashSet<>(2);
 
     protected boolean zoomSupported;
     protected boolean exposureCorrectionSupported;
@@ -123,6 +125,8 @@ public abstract class CameraOptions {
             return (Collection<T>) Arrays.asList(Engine.values());
         } else if (controlClass.equals(Preview.class)) {
             return (Collection<T>) Arrays.asList(Preview.values());
+        } else if (controlClass.equals(PictureFormat.class)) {
+            return (Collection<T>) getSupportedPictureFormats();
         }
         // Unrecognized control.
         return Collections.emptyList();
@@ -143,7 +147,6 @@ public abstract class CameraOptions {
      *
      * @return a collection of supported values.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public final Collection<AspectRatio> getSupportedPictureAspectRatios() {
         return Collections.unmodifiableSet(supportedPictureAspectRatio);
@@ -164,7 +167,6 @@ public abstract class CameraOptions {
      *
      * @return a set of supported values.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public final Collection<AspectRatio> getSupportedVideoAspectRatios() {
         return Collections.unmodifiableSet(supportedVideoAspectRatio);
@@ -218,10 +220,21 @@ public abstract class CameraOptions {
      * @see Hdr#ON
      * @return a collection of supported values.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public final Collection<Hdr> getSupportedHdr() {
         return Collections.unmodifiableSet(supportedHdr);
+    }
+
+    /**
+     * Set of supported picture formats.
+     *
+     * @see PictureFormat#JPEG
+     * @see PictureFormat#DNG
+     * @return a collection of supported values.
+     */
+    @NonNull
+    public final Collection<PictureFormat> getSupportedPictureFormats() {
+        return Collections.unmodifiableSet(supportedPictureFormats);
     }
 
     /**

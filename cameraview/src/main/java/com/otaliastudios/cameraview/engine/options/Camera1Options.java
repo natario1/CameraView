@@ -9,6 +9,7 @@ import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
@@ -124,5 +125,8 @@ public class Camera1Options extends CameraOptions {
             previewFrameRateMinValue = Math.min(previewFrameRateMinValue, lower);
             previewFrameRateMaxValue = Math.max(previewFrameRateMaxValue, upper);
         }
+
+        // Picture formats
+        supportedPictureFormats.add(PictureFormat.JPEG);
     }
 }

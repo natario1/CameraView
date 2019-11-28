@@ -18,6 +18,7 @@ import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
@@ -25,6 +26,8 @@ import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
 import java.util.Set;
+
+import static android.hardware.camera2.CameraCharacteristics.*;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Options extends CameraOptions {
@@ -39,7 +42,7 @@ public class Camera2Options extends CameraOptions {
         for (String cameraId1 : manager.getCameraIdList()) {
             CameraCharacteristics cameraCharacteristics1 = manager
                     .getCameraCharacteristics(cameraId1);
-            Integer cameraFacing = cameraCharacteristics1.get(CameraCharacteristics.LENS_FACING);
+            Integer cameraFacing = cameraCharacteristics1.get(LENS_FACING);
             if (cameraFacing != null) {
                 Facing value = mapper.unmapFacing(cameraFacing);
                 if (value != null) supportedFacing.add(value);
@@ -47,8 +50,7 @@ public class Camera2Options extends CameraOptions {
         }
 
         // WB
-        int[] awbModes = cameraCharacteristics.get(
-                CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES);
+        int[] awbModes = cameraCharacteristics.get(CONTROL_AWB_AVAILABLE_MODES);
         //noinspection ConstantConditions
         for (int awbMode : awbModes) {
             WhiteBalance value = mapper.unmapWhiteBalance(awbMode);
@@ -57,10 +59,9 @@ public class Camera2Options extends CameraOptions {
 
         // Flash
         supportedFlash.add(Flash.OFF);
-        Boolean hasFlash = cameraCharacteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+        Boolean hasFlash = cameraCharacteristics.get(FLASH_INFO_AVAILABLE);
         if (hasFlash != null && hasFlash) {
-            int[] aeModes = cameraCharacteristics.get(
-                    CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
+            int[] aeModes = cameraCharacteristics.get(CONTROL_AE_AVAILABLE_MODES);
             //noinspection ConstantConditions
             for (int aeMode : aeModes) {
                 Set<Flash> flashes = mapper.unmapFlash(aeMode);
@@ -70,8 +71,7 @@ public class Camera2Options extends CameraOptions {
 
         // HDR
         supportedHdr.add(Hdr.OFF);
-        int[] sceneModes = cameraCharacteristics.get(
-                CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES);
+        int[] sceneModes = cameraCharacteristics.get(CONTROL_AVAILABLE_SCENE_MODES);
         //noinspection ConstantConditions
         for (int sceneMode : sceneModes) {
             Hdr value = mapper.unmapHdr(sceneMode);
@@ -79,8 +79,7 @@ public class Camera2Options extends CameraOptions {
         }
 
         // Zoom
-        Float maxZoom = cameraCharacteristics.get(
-                CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+        Float maxZoom = cameraCharacteristics.get(SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
         if(maxZoom != null) {
             zoomSupported = maxZoom > 1;
         }
@@ -91,19 +90,16 @@ public class Camera2Options extends CameraOptions {
         // Some controls (AF, AE) have special triggers that might or might not be supported.
         // But they can also be on some continuous search mode so that the trigger is not needed.
         // What really matters in my opinion is the availability of regions.
-        Integer afRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
-        Integer aeRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE);
-        Integer awbRegions = cameraCharacteristics.get(
-                CameraCharacteristics.CONTROL_MAX_REGIONS_AWB);
+        Integer afRegions = cameraCharacteristics.get(CONTROL_MAX_REGIONS_AF);
+        Integer aeRegions = cameraCharacteristics.get(CONTROL_MAX_REGIONS_AE);
+        Integer awbRegions = cameraCharacteristics.get(CONTROL_MAX_REGIONS_AWB);
         autoFocusSupported = (afRegions != null && afRegions > 0)
                 || (aeRegions != null && aeRegions > 0)
                 || (awbRegions != null && awbRegions > 0);
 
         // Exposure correction
-        Range<Integer> exposureRange = cameraCharacteristics.get(
-                CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
-        Rational exposureStep = cameraCharacteristics.get(
-                CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP);
+        Range<Integer> exposureRange = cameraCharacteristics.get(CONTROL_AE_COMPENSATION_RANGE);
+        Rational exposureStep = cameraCharacteristics.get(CONTROL_AE_COMPENSATION_STEP);
         if (exposureRange != null && exposureStep != null && exposureStep.floatValue() != 0) {
             exposureCorrectionMinValue = exposureRange.getLower() / exposureStep.floatValue();
             exposureCorrectionMaxValue = exposureRange.getUpper() / exposureStep.floatValue();
@@ -114,7 +110,7 @@ public class Camera2Options extends CameraOptions {
 
         // Picture Sizes
         StreamConfigurationMap streamMap = cameraCharacteristics.get(
-                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                SCALER_STREAM_CONFIGURATION_MAP);
         if (streamMap == null) {
             throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
         }
@@ -143,8 +139,7 @@ public class Camera2Options extends CameraOptions {
         }
 
         // Preview FPS
-        Range<Integer>[] range = cameraCharacteristics.get(
-                CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+        Range<Integer>[] range = cameraCharacteristics.get(CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
         if (range != null) {
             previewFrameRateMinValue = Float.MAX_VALUE;
             previewFrameRateMaxValue = -Float.MAX_VALUE;
@@ -155,6 +150,17 @@ public class Camera2Options extends CameraOptions {
         } else {
             previewFrameRateMinValue = 0F;
             previewFrameRateMaxValue = 0F;
+        }
+
+        // Picture formats
+        supportedPictureFormats.add(PictureFormat.JPEG);
+        int[] caps = cameraCharacteristics.get(REQUEST_AVAILABLE_CAPABILITIES);
+        if (caps != null) {
+            for (int cap : caps) {
+                if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW) {
+                    supportedPictureFormats.add(PictureFormat.DNG);
+                }
+            }
         }
     }
 }
