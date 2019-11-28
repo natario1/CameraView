@@ -18,6 +18,7 @@ public enum PictureFormat implements Control {
 
     /**
      * The picture result data will be a JPEG file.
+     * This value is always supported.
      */
     JPEG(0),
 
