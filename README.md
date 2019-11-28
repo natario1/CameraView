@@ -141,6 +141,7 @@ Using CameraView is extremely simple:
     app:cameraFilter="@string/real_time_filter"
     app:cameraPictureMetering="true|false"
     app:cameraPictureSnapshotMetering="false|true"
+    app:cameraPictureFormat="jpeg|dng"
     app:cameraExperimental="false|true">
     
     <!-- Watermark! -->
