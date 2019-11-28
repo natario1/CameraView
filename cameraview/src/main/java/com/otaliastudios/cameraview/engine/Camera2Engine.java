@@ -690,7 +690,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             action.addCallback(new CompletionCallback() {
                 @Override
                 protected void onActionCompleted(@NonNull Action action) {
-                    onTakePictureSnapshot(stub, outputRatio, false);
+                    // This is called on any thread, so be careful.
+                    setPictureSnapshotMetering(false);
+                    takePictureSnapshot(stub);
+                    setPictureSnapshotMetering(true);
                 }
             });
             action.start(this);
@@ -720,7 +723,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             action.addCallback(new CompletionCallback() {
                 @Override
                 protected void onActionCompleted(@NonNull Action action) {
-                    onTakePicture(stub, false);
+                    // This is called on any thread, so be careful.
+                    setPictureMetering(false);
+                    takePicture(stub);
+                    setPictureMetering(true);
                 }
             });
             action.start(this);
