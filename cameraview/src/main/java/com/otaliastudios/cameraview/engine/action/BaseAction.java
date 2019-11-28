@@ -39,7 +39,6 @@ public abstract class BaseAction implements Action {
 
     @Override
     public final void start(@NonNull ActionHolder holder) {
-        this.holder = holder;
         holder.addAction(this);
         if (holder.getLastResult(this) != null) {
             onStart(holder);
@@ -63,7 +62,9 @@ public abstract class BaseAction implements Action {
      * holder stream.
      * @param holder holder
      */
+    @CallSuper
     protected void onStart(@NonNull ActionHolder holder) {
+        this.holder = holder;
         // Overrideable
     }
 

@@ -284,7 +284,7 @@ public class CameraUtils {
                 ExifInterface exif = new ExifInterface(stream);
                 int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
                         ExifInterface.ORIENTATION_NORMAL);
-                orientation = ExifHelper.readExifOrientation(exifOrientation);
+                orientation = ExifHelper.getOrientation(exifOrientation);
                 flip = exifOrientation == ExifInterface.ORIENTATION_FLIP_HORIZONTAL ||
                         exifOrientation == ExifInterface.ORIENTATION_FLIP_VERTICAL ||
                         exifOrientation == ExifInterface.ORIENTATION_TRANSPOSE ||

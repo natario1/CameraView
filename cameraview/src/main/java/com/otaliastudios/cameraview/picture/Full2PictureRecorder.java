@@ -23,7 +23,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 import androidx.annotation.NonNull;
@@ -93,7 +92,7 @@ public class Full2PictureRecorder extends PictureRecorder
                 super.onCaptureCompleted(holder, request, result);
                 if (mResult.format == PictureFormat.DNG) {
                     mDngCreator = new DngCreator(holder.getCharacteristics(this), result);
-                    mDngCreator.setOrientation(mResult.rotation);
+                    mDngCreator.setOrientation(ExifHelper.getExifOrientation(mResult.rotation));
                     if (mResult.location != null) {
                         mDngCreator.setLocation(mResult.location);
                     }
@@ -148,7 +147,7 @@ public class Full2PictureRecorder extends PictureRecorder
             ExifInterface exif = new ExifInterface(new ByteArrayInputStream(mResult.data));
             int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
                     ExifInterface.ORIENTATION_NORMAL);
-            mResult.rotation = ExifHelper.readExifOrientation(exifOrientation);
+            mResult.rotation = ExifHelper.getOrientation(exifOrientation);
         } catch (IOException ignore) { }
     }
 
