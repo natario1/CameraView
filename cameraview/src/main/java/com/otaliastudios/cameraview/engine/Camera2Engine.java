@@ -613,6 +613,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             throw createCameraException(e);
         }
         removeRepeatingRequestBuilderSurfaces();
+        mLastRepeatingResult = null;
         LOG.i("onStopPreview:", "Returning.");
         return Tasks.forResult(null);
     }
@@ -1524,7 +1525,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder)
             throws CameraAccessException {
-        mSession.capture(builder.build(), mRepeatingRequestCallback, null);
+        if (getPreviewState() == STATE_STARTED) {
+            mSession.capture(builder.build(), mRepeatingRequestCallback, null);
+        }
     }
 
     //endregion
