@@ -3,11 +3,14 @@ package com.otaliastudios.cameraview.demo;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.BitmapCallback;
@@ -42,12 +45,18 @@ public class PicturePreviewActivity extends Activity {
         captureLatency.setTitleAndMessage("Approx. latency", delay + " milliseconds");
         captureResolution.setTitleAndMessage("Resolution", result.getSize() + " (" + ratio + ")");
         exifRotation.setTitleAndMessage("EXIF rotation", result.getRotation() + "");
-        result.toBitmap(1000, 1000, new BitmapCallback() {
-            @Override
-            public void onBitmapReady(Bitmap bitmap) {
-                imageView.setImageBitmap(bitmap);
-            }
-        });
+        try {
+            result.toBitmap(1000, 1000, new BitmapCallback() {
+                @Override
+                public void onBitmapReady(Bitmap bitmap) {
+                    imageView.setImageBitmap(bitmap);
+                }
+            });
+        } catch (UnsupportedOperationException e) {
+            imageView.setImageDrawable(new ColorDrawable(Color.GREEN));
+            Toast.makeText(this, "Can't preview this format: " + picture.getFormat(),
+                    Toast.LENGTH_LONG).show();
+        }
 
         if (result.isSnapshot()) {
             // Log the real size for debugging reason.
