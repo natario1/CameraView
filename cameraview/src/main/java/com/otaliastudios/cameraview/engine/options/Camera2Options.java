@@ -33,8 +33,9 @@ import static android.hardware.camera2.CameraCharacteristics.*;
 public class Camera2Options extends CameraOptions {
 
     public Camera2Options(@NonNull CameraManager manager,
-                         @NonNull String cameraId,
-                         boolean flipSizes) throws CameraAccessException {
+                          @NonNull String cameraId,
+                          boolean flipSizes,
+                          int pictureFormat) throws CameraAccessException {
         Camera2Mapper mapper = Camera2Mapper.get();
         CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(cameraId);
 
@@ -114,7 +115,18 @@ public class Camera2Options extends CameraOptions {
         if (streamMap == null) {
             throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
         }
-        android.util.Size[] psizes = streamMap.getOutputSizes(ImageFormat.JPEG);
+        int[] pictureFormats = streamMap.getOutputFormats();
+        boolean hasPictureFormat = false;
+        for (int picFormat : pictureFormats) {
+            if (picFormat == pictureFormat) {
+                hasPictureFormat = true;
+                break;
+            }
+        }
+        if (!hasPictureFormat) {
+            throw new IllegalStateException("Picture format not supported: " + pictureFormat);
+        }
+        android.util.Size[] psizes = streamMap.getOutputSizes(pictureFormat);
         for (android.util.Size size : psizes) {
             int width = flipSizes ? size.getHeight() : size.getWidth();
             int height = flipSizes ? size.getWidth() : size.getHeight();

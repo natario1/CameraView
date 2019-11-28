@@ -387,7 +387,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         LOG.i("createCamera:", "Applying default parameters.");
                         mCameraCharacteristics = mManager.getCameraCharacteristics(mCameraId);
                         boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
-                        mCameraOptions = new Camera2Options(mManager, mCameraId, flip);
+                        int format;
+                        switch (mPictureFormat) {
+                            case JPEG: format = ImageFormat.JPEG; break;
+                            case DNG: format = ImageFormat.RAW_SENSOR; break;
+                            default: throw new IllegalArgumentException("Unknown format:"
+                                    + mPictureFormat);
+                        }
+                        mCameraOptions = new Camera2Options(mManager, mCameraId, flip, format);
                         createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
                     } catch (CameraAccessException e) {
                         task.trySetException(createCameraException(e));
@@ -484,23 +491,19 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
 
         // 3. PICTURE RECORDING
+        // Format is supported, or it would have thrown in Camera2Options constructor.
         if (getMode() == Mode.PICTURE) {
-            if (mCameraOptions.supports(mPictureFormat)) {
-                int format;
-                switch (mPictureFormat) {
-                    case JPEG: format = ImageFormat.JPEG; break;
-                    case DNG: format = ImageFormat.RAW_SENSOR; break;
-                    default: throw new IllegalArgumentException("Unknown format:" + mPictureFormat);
-                }
-                mPictureReader = ImageReader.newInstance(
-                        mCaptureSize.getWidth(),
-                        mCaptureSize.getHeight(),
-                        format, 2);
-                outputSurfaces.add(mPictureReader.getSurface());
-            } else {
-                throw new IllegalStateException("Unsupported picture format: " + mPictureFormat
-                        + ". Please check CameraOptions before applying.");
+            int format;
+            switch (mPictureFormat) {
+                case JPEG: format = ImageFormat.JPEG; break;
+                case DNG: format = ImageFormat.RAW_SENSOR; break;
+                default: throw new IllegalArgumentException("Unknown format:" + mPictureFormat);
             }
+            mPictureReader = ImageReader.newInstance(
+                    mCaptureSize.getWidth(),
+                    mCaptureSize.getHeight(),
+                    format, 2);
+            outputSurfaces.add(mPictureReader.getSurface());
         }
 
         // 4. FRAME PROCESSING

@@ -6,8 +6,6 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
 
-import java.io.File;
-
 /**
  * Format of the picture results for pictures that are taken with {@link CameraView#takePicture()}.
  * This does not apply to picture snapshots.
