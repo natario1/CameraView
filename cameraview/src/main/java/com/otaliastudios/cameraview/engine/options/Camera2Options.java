@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.engine;
+package com.otaliastudios.cameraview.engine.options;
 
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
@@ -27,9 +27,9 @@ import com.otaliastudios.cameraview.size.Size;
 import java.util.Set;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class Camera2Options extends CameraOptions {
+public class Camera2Options extends CameraOptions {
 
-    Camera2Options(@NonNull CameraManager manager,
+    public Camera2Options(@NonNull CameraManager manager,
                          @NonNull String cameraId,
                          boolean flipSizes) throws CameraAccessException {
         Camera2Mapper mapper = Camera2Mapper.get();

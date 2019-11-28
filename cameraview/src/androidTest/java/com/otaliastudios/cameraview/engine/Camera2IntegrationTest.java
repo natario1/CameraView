@@ -27,7 +27,7 @@ import java.util.concurrent.CountDownLatch;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 @DoNotRunOnTravis(because = "These do work but fail on CI emulators.")
-public class CameraIntegration2Test extends CameraIntegrationTest {
+public class Camera2IntegrationTest extends CameraIntegrationTest {
 
     @NonNull
     @Override

@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.engine;
+package com.otaliastudios.cameraview.engine.options;
 
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
@@ -17,9 +17,9 @@ import com.otaliastudios.cameraview.size.Size;
 
 import java.util.List;
 
-class Camera1Options extends CameraOptions {
+public class Camera1Options extends CameraOptions {
 
-    Camera1Options(@NonNull Camera.Parameters params, int cameraId, boolean flipSizes) {
+    public Camera1Options(@NonNull Camera.Parameters params, int cameraId, boolean flipSizes) {
         List<String> strings;
         Camera1Mapper mapper = Camera1Mapper.get();
 

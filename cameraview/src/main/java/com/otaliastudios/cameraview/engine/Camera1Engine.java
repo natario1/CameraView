@@ -13,18 +13,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import android.util.Range;
 import android.view.SurfaceHolder;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
+import com.otaliastudios.cameraview.engine.options.Camera1Options;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;

@@ -20,7 +20,7 @@ import androidx.test.filters.LargeTest;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 @DoNotRunOnTravis(because = "These do work but fail on CI emulators, due to bugs in the Camera1 emulated devices.")
-public class CameraIntegration1Test extends CameraIntegrationTest {
+public class Camera1IntegrationTest extends CameraIntegrationTest {
 
     @NonNull
     @Override
