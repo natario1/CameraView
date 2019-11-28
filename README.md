@@ -36,6 +36,7 @@ api 'com.otaliastudios:cameraview:2.4.0'
 - Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot` [[docs]](https://natario1.github.io/CameraView/docs/capturing-media.html)
 - Smart sizing: create a `CameraView` of any size [[docs]](https://natario1.github.io/CameraView/docs/preview-size.html)
 - Control HDR, flash, zoom, white balance, exposure, location, grid drawing & more [[docs]](https://natario1.github.io/CameraView/docs/controls.html)
+- RAW pictures support [[docs]](https://natario1.github.io/CameraView/docs/controls.html)
 - Lightweight
 - Works down to API level 15
 - Well tested
