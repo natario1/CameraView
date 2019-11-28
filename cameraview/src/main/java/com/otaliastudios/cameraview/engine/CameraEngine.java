@@ -18,7 +18,7 @@ import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.engine.offset.Angles;
@@ -168,6 +168,7 @@ public abstract class CameraEngine implements
     @SuppressWarnings("WeakerAccess") protected WhiteBalance mWhiteBalance;
     @SuppressWarnings("WeakerAccess") protected VideoCodec mVideoCodec;
     @SuppressWarnings("WeakerAccess") protected Hdr mHdr;
+    @SuppressWarnings("WeakerAccess") protected PictureFormat mPictureFormat;
     @SuppressWarnings("WeakerAccess") protected Location mLocation;
     @SuppressWarnings("WeakerAccess") protected float mZoomValue;
     @SuppressWarnings("WeakerAccess") protected float mExposureCorrectionValue;
@@ -1020,6 +1021,11 @@ public abstract class CameraEngine implements
         return mLocation;
     }
 
+    @NonNull
+    public final PictureFormat getPictureFormat() {
+        return mPictureFormat;
+    }
+
     public final float getZoomValue() {
         return mZoomValue;
     }
@@ -1109,6 +1115,9 @@ public abstract class CameraEngine implements
     // If closed, keep. If opened, check supported and apply.
     public abstract void setLocation(@Nullable Location location);
 
+    // If closed, keep. If opened, check supported and apply.
+    public abstract void setPictureFormat(@NonNull PictureFormat pictureFormat);
+
     public abstract void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point);
 
     public abstract void setPlaySounds(boolean playSounds);
@@ -1139,6 +1148,7 @@ public abstract class CameraEngine implements
                 stub.isSnapshot = false;
                 stub.location = mLocation;
                 stub.facing = mFacing;
+                stub.format = mPictureFormat;
                 onTakePicture(stub, mPictureMetering);
             }
         });
@@ -1161,6 +1171,7 @@ public abstract class CameraEngine implements
                 stub.location = mLocation;
                 stub.isSnapshot = true;
                 stub.facing = mFacing;
+                stub.format = PictureFormat.JPEG;
                 // Leave the other parameters to subclasses.
                 //noinspection ConstantConditions
                 AspectRatio ratio = AspectRatio.of(getPreviewSurfaceSize(Reference.OUTPUT));

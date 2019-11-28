@@ -21,6 +21,7 @@ import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
@@ -715,6 +716,14 @@ public class Camera1Engine extends CameraEngine implements
         }
         mPreviewFrameRate = oldPreviewFrameRate;
         return false;
+    }
+
+    @Override
+    public void setPictureFormat(@NonNull PictureFormat pictureFormat) {
+        if (pictureFormat != PictureFormat.JPEG) {
+            throw new UnsupportedOperationException("Unsupported picture format: " + pictureFormat);
+        }
+        mPictureFormat = pictureFormat;
     }
 
     //endregion

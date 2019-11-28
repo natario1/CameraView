@@ -23,6 +23,7 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
@@ -802,6 +803,20 @@ public abstract class CameraIntegrationTest extends BaseTest {
         camera.setPictureSnapshotMetering(false);
         camera.takePictureSnapshot();
         waitForPictureResult(true);
+    }
+
+    //endregion
+
+    //region Picture Formats
+
+    @Test
+    public void testPictureFormat_DNG() {
+        openSync(true);
+        if (camera.getCameraOptions().supports(PictureFormat.DNG)) {
+            camera.takePicture();
+            PictureResult result = waitForPictureResult(true);
+            // TODO assert that result.getData() is a DNG file
+        }
     }
 
     //endregion

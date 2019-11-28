@@ -42,6 +42,7 @@ import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
@@ -484,13 +485,22 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
         // 3. PICTURE RECORDING
         if (getMode() == Mode.PICTURE) {
-            mPictureReader = ImageReader.newInstance(
-                    mCaptureSize.getWidth(),
-                    mCaptureSize.getHeight(),
-                    ImageFormat.JPEG,
-                    2
-            );
-            outputSurfaces.add(mPictureReader.getSurface());
+            if (mCameraOptions.supports(mPictureFormat)) {
+                int format;
+                switch (mPictureFormat) {
+                    case JPEG: format = ImageFormat.JPEG; break;
+                    case DNG: format = ImageFormat.RAW_SENSOR; break;
+                    default: throw new IllegalArgumentException("Unknown format:" + mPictureFormat);
+                }
+                mPictureReader = ImageReader.newInstance(
+                        mCaptureSize.getWidth(),
+                        mCaptureSize.getHeight(),
+                        format, 2);
+                outputSurfaces.add(mPictureReader.getSurface());
+            } else {
+                throw new IllegalStateException("Unsupported picture format: " + mPictureFormat
+                        + ". Please check CameraOptions before applying.");
+            }
         }
 
         // 4. FRAME PROCESSING
@@ -1315,6 +1325,27 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
         mPreviewFrameRate = oldPreviewFrameRate;
         return false;
+    }
+
+    @Override
+    public void setPictureFormat(final @NonNull PictureFormat pictureFormat) {
+        LOG.i("setPictureFormat", "changing to", pictureFormat, "posting.");
+        if (pictureFormat == mPictureFormat) return;
+        mPictureFormat = pictureFormat;
+        mHandler.run(new Runnable() {
+            @Override
+            public void run() {
+                LOG.i("setPictureFormat", "changing to", pictureFormat,
+                        "executing. BindState:", getBindState(),
+                        "PreviewState:", getPreviewState());
+                if (getBindState() == STATE_STOPPED) {
+                    LOG.i("setPictureFormat", "not bound so won't restart.");
+                } else {
+                    LOG.i("setPictureFormat", "bound or binding. Calling restartBind()");
+                    restartBind();
+                }
+            }
+        });
     }
 
     //endregion

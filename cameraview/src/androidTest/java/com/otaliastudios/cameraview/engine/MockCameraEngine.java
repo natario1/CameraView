@@ -11,6 +11,7 @@ import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -114,6 +115,11 @@ public class MockCameraEngine extends CameraEngine {
     @Override
     public void setLocation(@Nullable Location location) {
         mLocation = location;
+    }
+
+    @Override
+    public void setPictureFormat(@NonNull PictureFormat pictureFormat) {
+        mPictureFormat = pictureFormat;
     }
 
     @Override
