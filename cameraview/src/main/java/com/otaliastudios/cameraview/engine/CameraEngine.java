@@ -1134,11 +1134,11 @@ public abstract class CameraEngine implements
 
     /* not final for tests */
     public void takePicture(final @NonNull PictureResult.Stub stub) {
-        LOG.v("takePicture", "scheduling");
+        LOG.i("takePicture", "scheduling");
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.v("takePicture", "performing. BindState:", getBindState(),
+                LOG.i("takePicture", "performing. BindState:", getBindState(),
                         "isTakingPicture:", isTakingPicture());
                 if (mMode == Mode.VIDEO) {
                     throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
@@ -1160,11 +1160,11 @@ public abstract class CameraEngine implements
      * @param stub a picture stub
      */
     public final void takePictureSnapshot(final @NonNull PictureResult.Stub stub) {
-        LOG.v("takePictureSnapshot", "scheduling");
+        LOG.i("takePictureSnapshot", "scheduling");
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.v("takePictureSnapshot", "performing. BindState:",
+                LOG.i("takePictureSnapshot", "performing. BindState:",
                         getBindState(), "isTakingPicture:", isTakingPicture());
                 if (getBindState() < STATE_STARTED) return;
                 if (isTakingPicture()) return;
@@ -1202,11 +1202,11 @@ public abstract class CameraEngine implements
     }
 
     public final void takeVideo(final @NonNull VideoResult.Stub stub, final @NonNull File file) {
-        LOG.v("takeVideo", "scheduling");
+        LOG.i("takeVideo", "scheduling");
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.v("takeVideo", "performing. BindState:", getBindState(),
+                LOG.i("takeVideo", "performing. BindState:", getBindState(),
                         "isTakingVideo:", isTakingVideo());
                 if (getBindState() < STATE_STARTED) return;
                 if (isTakingVideo()) return;
@@ -1234,11 +1234,11 @@ public abstract class CameraEngine implements
      */
     public final void takeVideoSnapshot(@NonNull final VideoResult.Stub stub,
                                         @NonNull final File file) {
-        LOG.v("takeVideoSnapshot", "scheduling");
+        LOG.i("takeVideoSnapshot", "scheduling");
         mHandler.run(new Runnable() {
             @Override
             public void run() {
-                LOG.v("takeVideoSnapshot", "performing. BindState:", getBindState(),
+                LOG.i("takeVideoSnapshot", "performing. BindState:", getBindState(),
                         "isTakingVideo:", isTakingVideo());
                 if (getBindState() < STATE_STARTED) return;
                 if (isTakingVideo()) return;

@@ -323,9 +323,9 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_exposureCorrection() {
-        CameraOptions o = mock(CameraOptions.class);
-        when(o.getExposureCorrectionMinValue()).thenReturn(-10f);
-        when(o.getExposureCorrectionMaxValue()).thenReturn(10f);
+        CameraOptions o = new CameraOptions() {};
+        o.exposureCorrectionMaxValue = 10F;
+        o.exposureCorrectionMinValue = -10F;
         mockController.setMockCameraOptions(o);
         mockController.setMockEngineState(true);
         mockController.mExposureCorrectionChanged = false;
@@ -565,9 +565,9 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testExposureCorrection() {
         // This needs a valid CameraOptions value.
-        CameraOptions o = mock(CameraOptions.class);
-        when(o.getExposureCorrectionMinValue()).thenReturn(-10f);
-        when(o.getExposureCorrectionMaxValue()).thenReturn(10f);
+        CameraOptions o = new CameraOptions() {};
+        o.exposureCorrectionMaxValue = 10F;
+        o.exposureCorrectionMinValue = -10F;
         mockController.setMockCameraOptions(o);
 
         cameraView.setExposureCorrection(5f);

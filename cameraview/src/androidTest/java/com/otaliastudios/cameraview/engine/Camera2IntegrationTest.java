@@ -8,7 +8,6 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
