@@ -61,7 +61,6 @@ public class Full1PictureRecorder extends PictureRecorder {
                         } catch (IOException e) {
                             exifRotation = 0;
                         }
-                        mResult.format = PictureResult.FORMAT_JPEG;
                         mResult.data = data;
                         mResult.rotation = exifRotation;
                         camera.startPreview(); // This is needed, read somewhere in the docs.

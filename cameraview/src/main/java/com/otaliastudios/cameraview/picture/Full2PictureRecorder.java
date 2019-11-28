@@ -106,7 +106,6 @@ public class Full2PictureRecorder extends PictureRecorder
 
         // Just like Camera1, unfortunately, the camera might rotate the image
         // and put EXIF=0 instead of respecting our EXIF and leave the image unaltered.
-        mResult.format = PictureResult.FORMAT_JPEG;
         mResult.rotation = 0;
         try {
             ExifInterface exif = new ExifInterface(new ByteArrayInputStream(mResult.data));

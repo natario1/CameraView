@@ -387,7 +387,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         LOG.i("createCamera:", "Applying default parameters.");
                         mCameraCharacteristics = mManager.getCameraCharacteristics(mCameraId);
                         boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
-                        mCameraOptions = new CameraOptions(mManager, mCameraId, flip);
+                        mCameraOptions = new Camera2Options(mManager, mCameraId, flip);
                         createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
                     } catch (CameraAccessException e) {
                         task.trySetException(createCameraException(e));
@@ -1329,23 +1329,24 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void setPictureFormat(final @NonNull PictureFormat pictureFormat) {
-        LOG.i("setPictureFormat", "changing to", pictureFormat, "posting.");
-        if (pictureFormat == mPictureFormat) return;
-        mPictureFormat = pictureFormat;
-        mHandler.run(new Runnable() {
-            @Override
-            public void run() {
-                LOG.i("setPictureFormat", "changing to", pictureFormat,
-                        "executing. BindState:", getBindState(),
-                        "PreviewState:", getPreviewState());
-                if (getBindState() == STATE_STOPPED) {
-                    LOG.i("setPictureFormat", "not bound so won't restart.");
-                } else {
-                    LOG.i("setPictureFormat", "bound or binding. Calling restartBind()");
-                    restartBind();
+        if (pictureFormat != mPictureFormat) {
+            mPictureFormat = pictureFormat;
+            LOG.i("setPictureFormat", "changing to", pictureFormat, "posting.");
+            mHandler.run(new Runnable() {
+                @Override
+                public void run() {
+                    LOG.i("setPictureFormat", "changing to", pictureFormat,
+                            "executing. EngineState:", getEngineState(),
+                            "BindState:", getBindState());
+                    if (getEngineState() == STATE_STOPPED) {
+                        LOG.i("setPictureFormat", "not started so won't restart.");
+                    } else {
+                        LOG.i("setPictureFormat", "started or starting. Calling restart()");
+                        restart();
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     //endregion
