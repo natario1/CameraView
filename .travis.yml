@@ -24,7 +24,7 @@ before_install:
   # Perform actions that are common to all APIs in the matrix
   - echo y | sdkmanager "platform-tools" >/dev/null
   - echo y | sdkmanager "tools" >/dev/null
-  - echo y | sdkmanager --channel=1 "emulator" >/dev/null
+  - echo y | sdkmanager --channel=2 "emulator" >/dev/null
   - echo y | sdkmanager "build-tools;29.0.2" >/dev/null
   - echo y | sdkmanager "platforms;android-29" >/dev/null
   - sdkmanager --list || true # Check everything is updated
