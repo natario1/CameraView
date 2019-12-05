@@ -26,7 +26,7 @@ before_install:
   - echo y | sdkmanager "platform-tools" >/dev/null
   - echo y | sdkmanager "tools" >/dev/null
   - echo y | sdkmanager "emulator" >/dev/null
-  - echo y | sdkmanager "built-tools;28.0.3" >/dev/null
+  - echo y | sdkmanager "build-tools;28.0.3" >/dev/null
   - echo y | sdkmanager "platforms;android-28" >/dev/null
   - sdkmanager --list || true # Check everything is updated
 
