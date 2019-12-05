@@ -33,9 +33,8 @@ install:
   # Install the emulator tools
   - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
   - export EMULATOR_NAME="cameraview-$EMULATOR_API"
-  - echo 'count=0' > ~/.android/repositories.cfg # avoid harmless sdkmanager warning
   - echo y | sdkmanager "platforms;android-$EMULATOR_API" >/dev/null # Install sdk for the emulator
-  - echo y | sdkmanager "$EMULATOR" >/dev/null # Install system image
+  - echo y | sdkmanager "$EMULATOR" # Install system image
   - sdkmanager --list || true # Check everything is updated
 
   # Create and start the emulator
