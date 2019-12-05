@@ -25,21 +25,22 @@ before_install:
   - echo y | sdkmanager "platform-tools" >/dev/null
   - echo y | sdkmanager "tools" >/dev/null
   - echo y | sdkmanager "emulator" >/dev/null
-  - echo y | sdkmanager "build-tools;28.0.3" >/dev/null
-  - echo y | sdkmanager "platforms;android-28" >/dev/null
+  - echo y | sdkmanager "build-tools;29.0.2" >/dev/null
+  - echo y | sdkmanager "platforms;android-29" >/dev/null
   - sdkmanager --list || true # Check everything is updated
 
 install:
   # Install the emulator tools
   - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
   - export EMULATOR_NAME="cameraview-$EMULATOR_API"
-  - echo 'count=0' > $ANDROID_HOME/repositories.cfg # avoid harmless sdkmanager warning
+  - echo 'count=0' > ~/.android/repositories.cfg # avoid harmless sdkmanager warning
   - echo y | sdkmanager "platforms;android-$EMULATOR_API" >/dev/null # Install sdk for the emulator
   - echo y | sdkmanager "$EMULATOR" >/dev/null # Install system image
   - sdkmanager --list || true # Check everything is updated
 
   # Create and start the emulator
   - echo no | avdmanager create avd --force --name $EMULATOR_NAME --package "$EMULATOR" # Create emulator virtual device
+  - ls $ANDROID_HOME/emulator/
   - emulator-headless -avd $EMULATOR_NAME -no-snapshot -no-window -no-accel -no-boot-anim -selinux permissive -camera-back emulated -camera-front emulated -memory 2048 -writable-system #& # Launch
 
   # Wait for emulator
