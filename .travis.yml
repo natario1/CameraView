@@ -24,7 +24,7 @@ before_install:
   # Perform actions that are common to all APIs in the matrix
   - echo y | sdkmanager "platform-tools" >/dev/null
   - echo y | sdkmanager "tools" >/dev/null
-  - echo y | sdkmanager "emulator" >/dev/null
+  - echo y | sdkmanager --channel=1 "emulator" >/dev/null
   - echo y | sdkmanager "build-tools;29.0.2" >/dev/null
   - echo y | sdkmanager "platforms;android-29" >/dev/null
   - sdkmanager --list || true # Check everything is updated
@@ -34,7 +34,7 @@ install:
   - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
   - export EMULATOR_NAME="cameraview-$EMULATOR_API"
   - echo y | sdkmanager "platforms;android-$EMULATOR_API" >/dev/null # Install sdk for the emulator
-  - echo y | sdkmanager "$EMULATOR" # Install system image
+  - echo y | sdkmanager "$EMULATOR" >/dev/null # Install system image
   - sdkmanager --list || true # Check everything is updated
 
   # Create and start the emulator
