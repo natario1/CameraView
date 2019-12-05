@@ -33,13 +33,14 @@ before_install:
 install:
   # Install the emulator tools
   - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
+  - export EMULATOR_NAME="cameraview-$EMULATOR_API"
   - echo y | sdkmanager "platforms;android-$EMULATOR_API" >/dev/null # Install sdk for the emulator
   - echo y | sdkmanager "$EMULATOR" >/dev/null # Install system image
   - sdkmanager --list || true # Check everything is updated
 
   # Create and start the emulator
-  - echo no | avdmanager create avd --force --name test --package "$EMULATOR" # Create emulator virtual device
-  - emulator -avd test -no-window -no-accel -no-snapshot -camera-back emulated -camera-front emulated -memory 2048 -writable-system & # Launch
+  - echo no | avdmanager create avd --force --name $EMULATOR_NAME --package "$EMULATOR" # Create emulator virtual device
+  - emulator -avd $EMULATOR_NAME -no-window -no-accel -no-snapshot -camera-back emulated -camera-front emulated -memory 2048 -writable-system & # Launch
 
   # Wait for emulator
   - adb wait-for-device # Wait for adb process
