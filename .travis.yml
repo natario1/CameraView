@@ -1,5 +1,3 @@
-# https://github.com/andstatus/andstatus/blob/master/.travis.yml
-
 language: android
 
 branches:
@@ -16,59 +14,50 @@ jdk:
 
 env:
   global:
-    - EMULATOR_API=22 # 24 has some issues, probably some overlayed window
-    - EMULATOR_ABI=x86_64 # seems to work with emulator v29.
-    - EMULATOR_TAG=default # can be google_apis
+    - EMULATOR_ABI=x86_64 # works starting from emulator v29.
+    - EMULATOR_TAG=default # can be google_apis or google_apis_playstore
     - PATH=$ANDROID_HOME:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH
+  matrix:
+    - EMULATOR_API=22
 
-android:
-  components:
-    - tools
-    - platform-tools
-    - build-tools-28.0.3
-    - android-28
-    - doc-28
-
-install:
-  # Setup
-  - echo $ANDROID_HOME # We assume this is correctly set when setting path
-  - sdkmanager --list || true # Look at the packages
-  - echo yes | sdkmanager "tools" # Ensure tools is updated
-  - echo yes | sdkmanager "emulator" # Ensure emulator is present
-
-  # Install emulator
-  # The channel=4 line looks into canary which brings in v29.
-  # The previous version v28 was broken:
-  # https://travis-ci.community/t/android-emulators-not-starting-for-the-last-few-days-late-march-2019/2871/11?u=mikehardy
-  - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
-  - echo yes | sdkmanager "platforms;android-$EMULATOR_API" # Install sdk for the emulator
-  - echo yes | sdkmanager --channel=4 "$EMULATOR" # Install system image
+before_install:
+  # Perform actions that are common to all APIs in the matrix
+  - echo $ANDROID_HOME # We assume this is correctly set due to 'language:android'
+  - echo y | sdkmanager "platform-tools" >/dev/null
+  - echo y | sdkmanager "tools" >/dev/null
+  - echo y | sdkmanager "emulator" >/dev/null
+  - echo y | sdkmanager "built-tools;28.0.3" >/dev/null
+  - echo y | sdkmanager "platforms;android-28" >/dev/null
   - sdkmanager --list || true # Check everything is updated
 
-  # Create adn start emulator
-  - echo no | avdmanager create avd -n test -k "$EMULATOR" -f # Create emulator virtual device
-  - which emulator # ensure we are using the right emulator ($ANDROID_HOME/emulator/emulator)
+install:
+  # Install the emulator tools
+  - export EMULATOR="system-images;android-$EMULATOR_API;$EMULATOR_TAG;$EMULATOR_ABI"
+  - echo y | sdkmanager "platforms;android-$EMULATOR_API" >/dev/null # Install sdk for the emulator
+  - echo y | sdkmanager "$EMULATOR" >/dev/null # Install system image
+  - sdkmanager --list || true # Check everything is updated
+
+  # Create and start the emulator
+  - echo no | avdmanager create avd --force --name test --package "$EMULATOR" # Create emulator virtual device
   - emulator -avd test -no-window -no-accel -no-snapshot -camera-back emulated -camera-front emulated -memory 2048 -writable-system & # Launch
+
+  # Wait for emulator
   - adb wait-for-device # Wait for adb process
   - adb remount # Mount as writable
-
-before_script:
-  # Wait for emulator
   - android-wait-for-emulator # Wait for emulator ready to interact
   - adb shell settings put global window_animation_scale 0 & # Disable animations
   - adb shell settings put global transition_animation_scale 0 & # Disable animations
   - adb shell settings put global animator_duration_scale 0 & # Disable animations
-
-  # Unlock and configure logs.
-  # Would be great to use -v color to adb logcat but looks not supported on travis.
-  - sleep 20 # Sleep 20 seconds just in case
+  - sleep 10 # Sleep 10 seconds just in case
   - adb shell input keyevent 82 & # Dispatch unlock event
+  - sleep 10 # Sleep 10 seconds just in case
+
+  # Configure logs
+  # Would be great to use -v color to adb logcat but looks not supported on travis.
   - adb logcat --help # See if this version supports color
   - adb logcat -c # Clear logcat
-  - adb logcat Test:V TestRunner:V CameraView:V CameraController:V Camera1:V WorkerHandler:V THREAD_STATE:S *:E &
+  - adb logcat Test:V TestRunner:V CameraView:I CameraEngine:I Camera1Engine:I Camera2Engine:I WorkerHandler:I THREAD_STATE:S *:E &
   # - export LOGCAT_PID=$! # Save PID of the logcat process. Should kill later with kill $LOGCAT_PID
-
-
 
 script:
   - ./gradlew clean demo:assembleDebug cameraview:testDebugUnitTest cameraview:connectedCheck cameraview:mergedCoverageReport cameraview:javadoc
@@ -76,10 +65,13 @@ script:
 after_success:
   - bash <(curl -s https://codecov.io/bash) -s "*/build/reports/mergedCoverageReport/"
 
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
 cache:
   directories:
-    - $HOME/.gradle
-    - $HOME/.m2/repository
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
 
 deploy:
   provider: script
