@@ -40,7 +40,7 @@ install:
 
   # Create and start the emulator
   - echo no | avdmanager create avd --force --name $EMULATOR_NAME --package "$EMULATOR" # Create emulator virtual device
-  - emulator -avd $EMULATOR_NAME -no-snapshot -no-window -no-boot-anim -selinux permissive -camera-back emulated -camera-front emulated -memory 2048 -writable-system & # Launch
+  - emulator-headless -avd $EMULATOR_NAME -no-snapshot -no-window -no-accel -no-boot-anim -selinux permissive -camera-back emulated -camera-front emulated -memory 2048 -writable-system & # Launch
 
   # Wait for emulator
   - adb wait-for-device # Wait for adb process
