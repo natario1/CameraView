@@ -145,6 +145,11 @@
         <attr name="cameraPictureMetering" format="boolean|reference"/>
         <attr name="cameraPictureSnapshotMetering" format="boolean|reference"/>
 
+        <attr name="cameraPictureFormat" format="enum">
+            <enum name="jpeg" value="0" />
+            <enum name="dng" value="1" />
+        </attr>
+
         <attr name="cameraExperimental" format="boolean" />
 
     </declare-styleable>

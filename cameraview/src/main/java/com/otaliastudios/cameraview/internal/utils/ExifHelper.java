@@ -11,7 +11,7 @@ public class ExifHelper {
      * Maps an {@link ExifInterface} orientation value
      * to the actual degrees.
      */
-    public static int readExifOrientation(int exifOrientation) {
+    public static int getOrientation(int exifOrientation) {
         int orientation;
         switch (exifOrientation) {
             case ExifInterface.ORIENTATION_NORMAL:
@@ -33,6 +33,19 @@ public class ExifHelper {
             default: orientation = 0;
         }
         return orientation;
+    }
+
+    /**
+     * Maps a degree value to {@link ExifInterface} constant.
+     */
+    public static int getExifOrientation(int orientation) {
+        switch ((orientation + 360) % 360) {
+            case 0: return ExifInterface.ORIENTATION_NORMAL;
+            case 90: return ExifInterface.ORIENTATION_ROTATE_90;
+            case 180: return ExifInterface.ORIENTATION_ROTATE_180;
+            case 270: return ExifInterface.ORIENTATION_ROTATE_270;
+            default: throw new IllegalArgumentException("Invalid orientation: " + orientation);
+        }
     }
 }
 

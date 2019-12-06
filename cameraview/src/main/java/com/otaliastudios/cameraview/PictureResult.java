@@ -2,8 +2,10 @@ package com.otaliastudios.cameraview;
 
 import android.graphics.BitmapFactory;
 import android.location.Location;
+import android.os.Build;
 
 import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.size.Size;
 
 import java.io.File;
@@ -31,11 +33,8 @@ public class PictureResult {
         public Size size;
         public Facing facing;
         public byte[] data;
-        public int format;
+        public PictureFormat format;
     }
-
-    public final static int FORMAT_JPEG = 0;
-    // public final static int FORMAT_PNG = 1;
 
     private final boolean isSnapshot;
     private final Location location;
@@ -43,7 +42,7 @@ public class PictureResult {
     private final Size size;
     private final Facing facing;
     private final byte[] data;
-    private final int format;
+    private final PictureFormat format;
 
     PictureResult(@NonNull Stub builder) {
         isSnapshot = builder.isSnapshot;
@@ -118,12 +117,12 @@ public class PictureResult {
     }
 
     /**
-     * Returns the image format. At the moment this will always be
-     * {@link #FORMAT_JPEG}.
+     * Returns the format for {@link #getData()}.
      *
-     * @return the current format
+     * @return the format
      */
-    public int getFormat() {
+    @NonNull
+    public PictureFormat getFormat() {
         return format;
     }
 
@@ -137,8 +136,18 @@ public class PictureResult {
      * @param callback a callback to be notified of image decoding
      */
     public void toBitmap(int maxWidth, int maxHeight, @NonNull BitmapCallback callback) {
-        CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, new BitmapFactory.Options(),
-                rotation, callback);
+        if (format == PictureFormat.JPEG) {
+            CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, new BitmapFactory.Options(),
+                    rotation, callback);
+        } else if (format == PictureFormat.DNG && Build.VERSION.SDK_INT >= 24) {
+            // Apparently: BitmapFactory added DNG support in API 24.
+            // https://github.com/aosp-mirror/platform_frameworks_base/blob/nougat-mr1-release/core/jni/android/graphics/BitmapFactory.cpp
+            CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, new BitmapFactory.Options(),
+                    rotation, callback);
+        } else {
+            throw new UnsupportedOperationException("PictureResult.toBitmap() does not support "
+                    + "this picture format: " + format);
+        }
     }
 
     /**

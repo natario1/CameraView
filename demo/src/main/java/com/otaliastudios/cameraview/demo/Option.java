@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.overlay.Overlay;
@@ -135,7 +136,7 @@ public abstract class Option<T> {
         }
     }
 
-    private static abstract class ControlOption<T extends com.otaliastudios.cameraview.controls.Control> extends Option<T> {
+    private static abstract class ControlOption<T extends Control> extends Option<T> {
         private final Class<T> controlClass;
 
         ControlOption(@NonNull Class<T> controlClass, String name) {
@@ -544,6 +545,12 @@ public abstract class Option<T> {
         @Override
         public void set(@NonNull CameraView view, @NonNull Integer value) {
             view.setPreviewFrameRate((float) value);
+        }
+    }
+
+    public static class PictureFormat extends ControlOption<com.otaliastudios.cameraview.controls.PictureFormat> {
+        public PictureFormat() {
+            super(com.otaliastudios.cameraview.controls.PictureFormat.class, "Picture Format");
         }
     }
 

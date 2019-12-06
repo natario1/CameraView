@@ -8,7 +8,6 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -27,7 +26,7 @@ import java.util.concurrent.CountDownLatch;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 @DoNotRunOnTravis(because = "These do work but fail on CI emulators.")
-public class CameraIntegration2Test extends CameraIntegrationTest {
+public class Camera2IntegrationTest extends CameraIntegrationTest {
 
     @NonNull
     @Override

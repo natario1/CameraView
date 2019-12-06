@@ -1,22 +1,33 @@
 package com.otaliastudios.cameraview.demo;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.MediaController;
+import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.otaliastudios.cameraview.CameraUtils;
+import com.otaliastudios.cameraview.FileCallback;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
+import java.io.File;
 
-public class VideoPreviewActivity extends Activity {
+
+public class VideoPreviewActivity extends AppCompatActivity {
 
     private VideoView videoView;
 
@@ -96,5 +107,28 @@ public class VideoPreviewActivity extends Activity {
         if (!isChangingConfigurations()) {
             setVideoResult(null);
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.share, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.share) {
+            Toast.makeText(this, "Sharing...", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("video/*");
+            Uri uri = FileProvider.getUriForFile(this,
+                    this.getPackageName() + ".provider",
+                    videoResult.getFile());
+            intent.putExtra(Intent.EXTRA_STREAM, uri);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -30,6 +30,7 @@ public abstract class BaseAction implements Action {
     private final List<ActionCallback> callbacks = new ArrayList<>();
     private int state;
     private ActionHolder holder;
+    private boolean needsOnStart;
 
     @Override
     public final int getState() {
@@ -39,7 +40,11 @@ public abstract class BaseAction implements Action {
     @Override
     public final void start(@NonNull ActionHolder holder) {
         holder.addAction(this);
-        onStart(holder);
+        if (holder.getLastResult(this) != null) {
+            onStart(holder);
+        } else {
+            needsOnStart = true;
+        }
     }
 
     @Override
@@ -49,6 +54,7 @@ public abstract class BaseAction implements Action {
             onAbort(holder);
             setState(STATE_COMPLETED);
         }
+        needsOnStart = false;
     }
 
     /**
@@ -58,7 +64,7 @@ public abstract class BaseAction implements Action {
      */
     @CallSuper
     protected void onStart(@NonNull ActionHolder holder) {
-        this.holder = holder; // must be here
+        this.holder = holder;
         // Overrideable
     }
 
@@ -72,9 +78,13 @@ public abstract class BaseAction implements Action {
         // Overrideable
     }
 
+    @CallSuper
     @Override
     public void onCaptureStarted(@NonNull ActionHolder holder, @NonNull CaptureRequest request) {
-        // Overrideable
+        if (needsOnStart) {
+            onStart(holder);
+            needsOnStart = false;
+        }
     }
 
     @Override

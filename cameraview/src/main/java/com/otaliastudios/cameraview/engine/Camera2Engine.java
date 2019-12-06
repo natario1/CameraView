@@ -35,13 +35,13 @@ import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
@@ -53,6 +53,7 @@ import com.otaliastudios.cameraview.engine.meter.MeterAction;
 import com.otaliastudios.cameraview.engine.meter.MeterResetAction;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
+import com.otaliastudios.cameraview.engine.options.Camera2Options;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -386,7 +387,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         LOG.i("createCamera:", "Applying default parameters.");
                         mCameraCharacteristics = mManager.getCameraCharacteristics(mCameraId);
                         boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
-                        mCameraOptions = new CameraOptions(mManager, mCameraId, flip);
+                        int format;
+                        switch (mPictureFormat) {
+                            case JPEG: format = ImageFormat.JPEG; break;
+                            case DNG: format = ImageFormat.RAW_SENSOR; break;
+                            default: throw new IllegalArgumentException("Unknown format:"
+                                    + mPictureFormat);
+                        }
+                        mCameraOptions = new Camera2Options(mManager, mCameraId, flip, format);
                         createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
                     } catch (CameraAccessException e) {
                         task.trySetException(createCameraException(e));
@@ -426,6 +434,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         final TaskCompletionSource<Void> task = new TaskCompletionSource<>();
 
         // Compute sizes.
+        // TODO preview stream should never be bigger than 1920x1080 as per
+        //  CameraDevice.createCaptureSession. This should be probably be applied
+        //  before all the other external selectors, to treat it as a hard limit.
+        //  OR: pass an int into these functions to be able to take smaller dims
+        //  when session configuration fails
+        //  OR: both.
         mCaptureSize = computeCaptureSize();
         mPreviewStreamSize = computePreviewStreamSize();
 
@@ -477,13 +491,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         }
 
         // 3. PICTURE RECORDING
+        // Format is supported, or it would have thrown in Camera2Options constructor.
         if (getMode() == Mode.PICTURE) {
+            int format;
+            switch (mPictureFormat) {
+                case JPEG: format = ImageFormat.JPEG; break;
+                case DNG: format = ImageFormat.RAW_SENSOR; break;
+                default: throw new IllegalArgumentException("Unknown format:" + mPictureFormat);
+            }
             mPictureReader = ImageReader.newInstance(
                     mCaptureSize.getWidth(),
                     mCaptureSize.getHeight(),
-                    ImageFormat.JPEG,
-                    2
-            );
+                    format, 2);
             outputSurfaces.add(mPictureReader.getSurface());
         }
 
@@ -501,8 +520,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 sizes.add(new Size(aSize.getWidth(), aSize.getHeight()));
             }
             mFrameProcessingSize = SizeSelectors.and(
-                    SizeSelectors.maxWidth(Math.min(700, mPreviewStreamSize.getWidth())),
-                    SizeSelectors.maxHeight(Math.min(700, mPreviewStreamSize.getHeight())),
+                    SizeSelectors.maxWidth(Math.min(640, mPreviewStreamSize.getWidth())),
+                    SizeSelectors.maxHeight(Math.min(640, mPreviewStreamSize.getHeight())),
                     SizeSelectors.biggest()).select(sizes).get(0);
             mFrameProcessingReader = ImageReader.newInstance(
                     mFrameProcessingSize.getWidth(),
@@ -613,6 +632,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             throw createCameraException(e);
         }
         removeRepeatingRequestBuilderSurfaces();
+        mLastRepeatingResult = null;
         LOG.i("onStopPreview:", "Returning.");
         return Tasks.forResult(null);
     }
@@ -690,7 +710,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             action.addCallback(new CompletionCallback() {
                 @Override
                 protected void onActionCompleted(@NonNull Action action) {
-                    onTakePictureSnapshot(stub, outputRatio, false);
+                    // This is called on any thread, so be careful.
+                    setPictureSnapshotMetering(false);
+                    takePictureSnapshot(stub);
+                    setPictureSnapshotMetering(true);
                 }
             });
             action.start(this);
@@ -720,7 +743,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             action.addCallback(new CompletionCallback() {
                 @Override
                 protected void onActionCompleted(@NonNull Action action) {
-                    onTakePicture(stub, false);
+                    // This is called on any thread, so be careful.
+                    setPictureMetering(false);
+                    takePicture(stub);
+                    setPictureMetering(true);
                 }
             });
             action.start(this);
@@ -1304,6 +1330,28 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return false;
     }
 
+    @Override
+    public void setPictureFormat(final @NonNull PictureFormat pictureFormat) {
+        if (pictureFormat != mPictureFormat) {
+            mPictureFormat = pictureFormat;
+            LOG.i("setPictureFormat", "changing to", pictureFormat, "posting.");
+            mHandler.run(new Runnable() {
+                @Override
+                public void run() {
+                    LOG.i("setPictureFormat", "changing to", pictureFormat,
+                            "executing. EngineState:", getEngineState(),
+                            "BindState:", getBindState());
+                    if (getEngineState() == STATE_STOPPED) {
+                        LOG.i("setPictureFormat", "not started so won't restart.");
+                    } else {
+                        LOG.i("setPictureFormat", "started or starting. Calling restart()");
+                        restart();
+                    }
+                }
+            });
+        }
+    }
+
     //endregion
 
     //region Frame Processing
@@ -1518,7 +1566,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder)
             throws CameraAccessException {
-        mSession.capture(builder.build(), mRepeatingRequestCallback, null);
+        if (getPreviewState() == STATE_STARTED) {
+            mSession.capture(builder.build(), mRepeatingRequestCallback, null);
+        }
     }
 
     //endregion

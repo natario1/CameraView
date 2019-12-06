@@ -23,6 +23,7 @@ addressing most of the common issues and needs, and still leaving you with flexi
 - Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot` [[docs]](docs/capturing-media.html)
 - Smart sizing: create a `CameraView` of any size [[docs]](docs/preview-size.html)
 - Control HDR, flash, zoom, white balance, exposure, location, grid drawing & more [[docs]](docs/controls.html)
+- RAW pictures support [[docs]](docs/controls.html)
 - Lightweight
 - Works down to API level 15
 - Well tested

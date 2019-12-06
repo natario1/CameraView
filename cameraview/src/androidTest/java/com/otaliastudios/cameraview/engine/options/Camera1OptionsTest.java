@@ -1,8 +1,10 @@
-package com.otaliastudios.cameraview;
+package com.otaliastudios.cameraview.engine.options;
 
 
 import android.hardware.Camera;
 
+import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
@@ -22,7 +24,6 @@ import androidx.test.filters.SmallTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,11 +39,11 @@ import static org.mockito.Mockito.when;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class CameraOptions1Test extends BaseTest {
+public class Camera1OptionsTest extends BaseTest {
 
     @Test
     public void testEmpty() {
-        CameraOptions o = new CameraOptions(mock(Camera.Parameters.class), 0, false);
+        CameraOptions o = new Camera1Options(mock(Camera.Parameters.class), 0, false);
         assertTrue(o.getSupportedPictureAspectRatios().isEmpty());
         assertTrue(o.getSupportedPictureSizes().isEmpty());
         assertTrue(o.getSupportedWhiteBalance().isEmpty());
@@ -72,7 +73,7 @@ public class CameraOptions1Test extends BaseTest {
         );
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedPictureSizes()).thenReturn(sizes);
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         Collection<Size> supportedSizes = o.getSupportedPictureSizes();
         assertEquals(supportedSizes.size(), sizes.size());
         for (Camera.Size size : sizes) {
@@ -91,7 +92,7 @@ public class CameraOptions1Test extends BaseTest {
         );
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedPictureSizes()).thenReturn(sizes);
-        CameraOptions o = new CameraOptions(params, 0, true);
+        CameraOptions o = new Camera1Options(params, 0, true);
         Collection<Size> supportedSizes = o.getSupportedPictureSizes();
         assertEquals(supportedSizes.size(), sizes.size());
         for (Camera.Size size : sizes) {
@@ -116,7 +117,7 @@ public class CameraOptions1Test extends BaseTest {
 
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedPictureSizes()).thenReturn(sizes);
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         Collection<AspectRatio> supportedRatios = o.getSupportedPictureAspectRatios();
         assertEquals(supportedRatios.size(), expected.size());
         for (AspectRatio ratio : expected) {
@@ -137,7 +138,7 @@ public class CameraOptions1Test extends BaseTest {
         );
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedVideoSizes()).thenReturn(sizes);
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         Collection<Size> supportedSizes = o.getSupportedVideoSizes();
         assertEquals(supportedSizes.size(), sizes.size());
         for (Camera.Size size : sizes) {
@@ -158,7 +159,7 @@ public class CameraOptions1Test extends BaseTest {
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedVideoSizes()).thenReturn(null);
         when(params.getSupportedPreviewSizes()).thenReturn(sizes);
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         Collection<Size> supportedSizes = o.getSupportedVideoSizes();
         assertEquals(supportedSizes.size(), sizes.size());
         for (Camera.Size size : sizes) {
@@ -177,7 +178,7 @@ public class CameraOptions1Test extends BaseTest {
         );
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedVideoSizes()).thenReturn(sizes);
-        CameraOptions o = new CameraOptions(params, 0, true);
+        CameraOptions o = new Camera1Options(params, 0, true);
         Collection<Size> supportedSizes = o.getSupportedVideoSizes();
         assertEquals(supportedSizes.size(), sizes.size());
         for (Camera.Size size : sizes) {
@@ -202,7 +203,7 @@ public class CameraOptions1Test extends BaseTest {
 
         Camera.Parameters params = mock(Camera.Parameters.class);
         when(params.getSupportedVideoSizes()).thenReturn(sizes);
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         Collection<AspectRatio> supportedRatios = o.getSupportedVideoAspectRatios();
         assertEquals(supportedRatios.size(), expected.size());
         for (AspectRatio ratio : expected) {
@@ -218,7 +219,7 @@ public class CameraOptions1Test extends BaseTest {
         when(params.getMaxExposureCompensation()).thenReturn(0);
         when(params.getMinExposureCompensation()).thenReturn(0);
 
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         assertFalse(o.supports(GestureAction.AUTO_FOCUS));
         assertTrue(o.supports(GestureAction.TAKE_PICTURE));
         assertTrue(o.supports(GestureAction.NONE));
@@ -232,7 +233,7 @@ public class CameraOptions1Test extends BaseTest {
     public void testAlwaysSupportedControls() {
         // Grid, VideoQuality, SessionType and Audio are always supported.
         Camera.Parameters params = mock(Camera.Parameters.class);
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
 
         Collection<Grid> grids = o.getSupportedControls(Grid.class);
         Collection<VideoCodec> video = o.getSupportedControls(VideoCodec.class);
@@ -253,7 +254,7 @@ public class CameraOptions1Test extends BaseTest {
             supported.add(cameraInfo.facing);
         }
 
-        CameraOptions o = new CameraOptions(mock(Camera.Parameters.class), 0, false);
+        CameraOptions o = new Camera1Options(mock(Camera.Parameters.class), 0, false);
         Camera1Mapper m = Camera1Mapper.get();
         Collection<Facing> s = o.getSupportedControls(Facing.class);
         assertEquals(s.size(), supported.size());
@@ -272,7 +273,7 @@ public class CameraOptions1Test extends BaseTest {
                 Camera.Parameters.WHITE_BALANCE_SHADE // Not supported
         ));
 
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         Collection<WhiteBalance> w = o.getSupportedControls(WhiteBalance.class);
         assertEquals(w.size(), 2);
         assertTrue(w.contains(WhiteBalance.AUTO));
@@ -291,7 +292,7 @@ public class CameraOptions1Test extends BaseTest {
                 Camera.Parameters.FLASH_MODE_RED_EYE // Not supported
         ));
 
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         Collection<Flash> f = o.getSupportedControls(Flash.class);
         assertEquals(f.size(), 3);
         assertTrue(f.contains(Flash.OFF));
@@ -312,7 +313,7 @@ public class CameraOptions1Test extends BaseTest {
                 Camera.Parameters.SCENE_MODE_FIREWORKS // Not supported
         ));
 
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         Collection<Hdr> h = o.getSupportedControls(Hdr.class);
         assertEquals(h.size(), 2);
         assertTrue(h.contains(Hdr.OFF));
@@ -329,7 +330,7 @@ public class CameraOptions1Test extends BaseTest {
         when(params.isZoomSupported()).thenReturn(true);
         //noinspection ArraysAsListWithZeroOrOneArgument
         when(params.getSupportedFocusModes()).thenReturn(Arrays.asList(Camera.Parameters.FOCUS_MODE_AUTO));
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         assertTrue(o.isZoomSupported());
         assertTrue(o.isAutoFocusSupported());
     }
@@ -340,7 +341,7 @@ public class CameraOptions1Test extends BaseTest {
         when(params.getMaxExposureCompensation()).thenReturn(10);
         when(params.getMinExposureCompensation()).thenReturn(-10);
         when(params.getExposureCompensationStep()).thenReturn(0.5f);
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         assertTrue(o.isExposureCorrectionSupported());
         assertEquals(o.getExposureCorrectionMinValue(), -10f * 0.5f, 0f);
         assertEquals(o.getExposureCorrectionMaxValue(), 10f * 0.5f, 0f);
@@ -355,7 +356,7 @@ public class CameraOptions1Test extends BaseTest {
                 new int[]{60000, 120000}
         );
         when(params.getSupportedPreviewFpsRange()).thenReturn(result);
-        CameraOptions o = new CameraOptions(params, 0, false);
+        CameraOptions o = new Camera1Options(params, 0, false);
         assertEquals(20F, o.getPreviewFrameRateMinValue(), 0.001F);
         assertEquals(120F, o.getPreviewFrameRateMaxValue(), 0.001F);
     }

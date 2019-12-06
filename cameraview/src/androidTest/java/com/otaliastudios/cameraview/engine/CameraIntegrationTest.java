@@ -23,6 +23,7 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
@@ -802,6 +803,32 @@ public abstract class CameraIntegrationTest extends BaseTest {
         camera.setPictureSnapshotMetering(false);
         camera.takePictureSnapshot();
         waitForPictureResult(true);
+    }
+
+    //endregion
+
+    //region Picture Formats
+
+    // TODO this fails because setPictureFormat triggers a restart() and takePicture can be called
+    // in the middle of the restart, failing because the engine is not properly set up. To fix this
+    // we would have to change the whole CameraEngine threading scheme.
+    // @Test
+    public void testPictureFormat_DNG() {
+        openSync(true);
+        if (camera.getCameraOptions().supports(PictureFormat.DNG)) {
+            camera.setPictureFormat(PictureFormat.DNG);
+            camera.takePicture();
+            PictureResult result = waitForPictureResult(true);
+            // assert that result.getData() is a DNG file:
+            // We can use the first 4 bytes assuming they are the same as a TIFF file
+            // https://en.wikipedia.org/wiki/List_of_file_signatures
+            byte[] b = result.getData();
+            boolean isII = b[0] == 'I' && b[1] == 'I' && b[2] == '*' && b[3] == '.';
+            boolean isMM = b[0] == 'M' && b[1] == 'M' && b[2] == '.' && b[3] == '*';
+            if (!isII && !isMM) {
+                throw new RuntimeException("Not a DNG file.");
+            }
+        }
     }
 
     //endregion

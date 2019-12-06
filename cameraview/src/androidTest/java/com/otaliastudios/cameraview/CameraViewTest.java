@@ -20,6 +20,7 @@ import com.otaliastudios.cameraview.controls.ControlParser;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.filter.Filter;
@@ -161,6 +162,7 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getHdr(), controls.getHdr());
         assertEquals(cameraView.getAudio(), controls.getAudio());
         assertEquals(cameraView.getVideoCodec(), controls.getVideoCodec());
+        assertEquals(cameraView.getPictureFormat(), controls.getPictureFormat());
         //noinspection SimplifiableJUnitAssertion
         assertEquals(cameraView.getLocation(), null);
         assertEquals(cameraView.getExposureCorrection(), 0f, 0f);
@@ -321,9 +323,9 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_exposureCorrection() {
-        CameraOptions o = mock(CameraOptions.class);
-        when(o.getExposureCorrectionMinValue()).thenReturn(-10f);
-        when(o.getExposureCorrectionMaxValue()).thenReturn(10f);
+        CameraOptions o = new CameraOptions() {};
+        o.exposureCorrectionMaxValue = 10F;
+        o.exposureCorrectionMinValue = -10F;
         mockController.setMockCameraOptions(o);
         mockController.setMockEngineState(true);
         mockController.mExposureCorrectionChanged = false;
@@ -563,9 +565,9 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testExposureCorrection() {
         // This needs a valid CameraOptions value.
-        CameraOptions o = mock(CameraOptions.class);
-        when(o.getExposureCorrectionMinValue()).thenReturn(-10f);
-        when(o.getExposureCorrectionMaxValue()).thenReturn(10f);
+        CameraOptions o = new CameraOptions() {};
+        o.exposureCorrectionMaxValue = 10F;
+        o.exposureCorrectionMinValue = -10F;
         mockController.setMockCameraOptions(o);
 
         cameraView.setExposureCorrection(5f);
@@ -743,6 +745,14 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.get(VideoCodec.class), VideoCodec.H_263);
         cameraView.set(VideoCodec.H_264);
         assertEquals(cameraView.get(VideoCodec.class), VideoCodec.H_264);
+    }
+
+    @Test
+    public void testPictureFormat() {
+        cameraView.set(PictureFormat.JPEG);
+        assertEquals(cameraView.get(PictureFormat.class), PictureFormat.JPEG);
+        cameraView.set(PictureFormat.DNG);
+        assertEquals(cameraView.get(PictureFormat.class), PictureFormat.DNG);
     }
 
     @Test

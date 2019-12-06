@@ -81,7 +81,6 @@ public class Snapshot1PictureRecorder extends PictureRecorder {
                         mResult.data = data;
                         mResult.size = new Size(outputRect.width(), outputRect.height());
                         mResult.rotation = 0;
-                        mResult.format = PictureResult.FORMAT_JPEG;
                         dispatchResult();
                     }
                 });

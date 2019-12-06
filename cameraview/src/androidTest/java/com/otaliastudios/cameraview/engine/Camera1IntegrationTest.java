@@ -3,8 +3,6 @@ package com.otaliastudios.cameraview.engine;
 import com.otaliastudios.cameraview.DoNotRunOnTravis;
 import com.otaliastudios.cameraview.controls.Engine;
 
-import org.junit.Ignore;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import androidx.annotation.NonNull;
@@ -20,7 +18,7 @@ import androidx.test.filters.LargeTest;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 @DoNotRunOnTravis(because = "These do work but fail on CI emulators, due to bugs in the Camera1 emulated devices.")
-public class CameraIntegration1Test extends CameraIntegrationTest {
+public class Camera1IntegrationTest extends CameraIntegrationTest {
 
     @NonNull
     @Override
