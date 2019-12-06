@@ -1,9 +1,13 @@
 # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
 name: Android Build
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 env:
-  - ANDROID_UNIT_TESTS_PATH: ./cameraview/build/jacoco/
-  - ANDROID_EMULATOR_TESTS_PATH: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
+  ANDROID_UNIT_TESTS_PATH: ./cameraview/build/jacoco/
+  ANDROID_EMULATOR_TESTS_PATH: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
 jobs:
   ANDROID_BASE_CHECKS:
     runs-on: ubuntu-latest
