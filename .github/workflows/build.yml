@@ -1,5 +1,5 @@
 # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
-name: Android Build
+name: Build
 on:
   push:
     branches:
