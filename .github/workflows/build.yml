@@ -79,7 +79,12 @@ jobs:
             path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
       - name: Create merged coverage report
         run: ./gradlew cameraview:mergeCoverageReports
-      - name: Upload coverage report
+      - name: Upload merged coverage report (GitHub)
+        uses: actions/upload-artifact@v1
+        with:
+          name: report
+          path: ./cameraview/build/reports/mergedCoverageReport
+      - name: Upload merged coverage report (Codecov)
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_KEY }}
