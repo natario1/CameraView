@@ -208,6 +208,8 @@ task createCoverageReports() {
 task mergeCoverageReports(type: JacocoReport) {
     // Let this be called without running the tests.
     // dependsOn "createCoverageReports"
+    // However, ensure we have the compiled .class files.
+    dependsOn "compileDebugSources"
 
     // Merge unit tests and android tests data
     executionData = fileTree(dir: "$buildDir", includes: [
