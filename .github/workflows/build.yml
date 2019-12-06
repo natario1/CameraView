@@ -9,17 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-        with: fetch-depth: 1
       - uses: actions/setup-java@v1
-        with: java-version: 1.8
+        with:
+          java-version: 1.8
       - run: ./gradlew demo:assembleDebug cameraview:javadoc
   ANDROID_UNIT_TESTS:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-        with: fetch-depth: 1
       - uses: actions/setup-java@v1
-        with: java-version: 1.8
+        with:
+          java-version: 1.8
       - run: ./gradlew cameraview:testDebugUnitTest
       - uses: actions/upload-artifact@v1
         with:
@@ -33,9 +33,9 @@ jobs:
         EMULATOR_ARCH: [x86_64]
     steps:
       - uses: actions/checkout@v1
-        with: fetch-depth: 1
       - uses: actions/setup-java@v1
-        with: java-version: 1.8
+        with:
+          java-version: 1.8
       - uses: reactivecircus/android-emulator-runner@v1
         with:
           api-level: ${{ matrix.EMULATOR_API }}
@@ -52,9 +52,9 @@ jobs:
     needs: [ANDROID_UNIT_TESTS, ANDROID_EMULATOR_TESTS]
     steps:
       - uses: actions/checkout@v1
-        with: fetch-depth: 1
       - uses: actions/setup-java@v1
-        with: java-version: 1.8
+        with:
+          java-version: 1.8
       - uses: actions/download-artifact@v1
         with:
             name: unit_tests
