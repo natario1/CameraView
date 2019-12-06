@@ -86,6 +86,6 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_KEY }}
-          file: ./cameraview/build/reports/mergedCoverageReport/
+          file: ./cameraview/build/reports/mergedCoverageReport/*
           yml: ./.github/codecov.yml
           fail_ci_if_error: true
