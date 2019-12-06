@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: unit_tests
-          path: ${{ ANDROID_UNIT_TESTS_PATH }}
+          path: ./cameraview/build/jacoco/
   ANDROID_EMULATOR_TESTS:
     name: Emulator Tests
     runs-on: macOS-latest
@@ -59,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: emulator_tests
-          path: ${{ ANDROID_EMULATOR_TESTS_PATH }}
+          path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
   CODE_COVERAGE:
     runs-on: ubuntu-latest
     needs: [ANDROID_UNIT_TESTS, ANDROID_EMULATOR_TESTS]
@@ -72,12 +72,12 @@ jobs:
         uses: actions/download-artifact@v1
         with:
             name: unit_tests
-            path: ${{ ANDROID_UNIT_TESTS_PATH }}
+            path: ./cameraview/build/jacoco/
       - name: Download emulator tests artifact
         uses: actions/download-artifact@v1
         with:
             name: emulator_tests
-            path: ${{ ANDROID_EMULATOR_TESTS_PATH }}
+            path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
       - name: Create coverage report
         run: ./gradlew cameraview:mergedCoverageReport
       - name: Upload coverage report
