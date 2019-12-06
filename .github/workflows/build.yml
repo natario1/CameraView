@@ -72,20 +72,16 @@ jobs:
         with:
             name: unit_tests
             path: ./cameraview/build/jacoco/
-      - run: ls ./cameraview/build/jacoco/
       - name: Download emulator tests artifact
         uses: actions/download-artifact@v1
         with:
             name: emulator_tests
             path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
-      - run: ls ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
       - name: Create merged coverage report
         run: ./gradlew cameraview:mergeCoverageReports
-      - run: ls ./cameraview/build/reports/mergedCoverageReport/
       - name: Upload coverage report
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_KEY }}
           file: ./cameraview/build/reports/mergedCoverageReport/*
-          yml: ./.github/codecov.yml
           fail_ci_if_error: true
