@@ -6,6 +6,7 @@ on:
       - master
   pull_request:
 env:
+  TRAVIS: true
   ANDROID_UNIT_TESTS_PATH: ./cameraview/build/jacoco/
   ANDROID_EMULATOR_TESTS_PATH: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
 jobs:
