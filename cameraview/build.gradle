@@ -200,9 +200,14 @@ jacoco {
     reportsDir = file(reportsDirectory)
 }
 
-task mergedCoverageReport(type: JacocoReport) {
+task createCoverageReports() {
     dependsOn "testDebugUnitTest"
     dependsOn "connectedCheck"
+}
+
+task mergeCoverageReports(type: JacocoReport) {
+    // Let this be called without running the tests.
+    // dependsOn "createCoverageReports"
 
     // Merge unit tests and android tests data
     executionData = fileTree(dir: "$buildDir", includes: [
