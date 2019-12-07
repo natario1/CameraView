@@ -8,12 +8,9 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
 
     <application>
-        <!-- Removing the action bar with android:Theme should fix a weird crash in automated tests
-             on API28. -->
         <activity
             android:configChanges="orientation|screenLayout|keyboardHidden"
             android:hardwareAccelerated="true"
-            android:theme="@android:style/Theme.NoTitleBar"
             android:name=".TestActivity"/>
     </application>
 

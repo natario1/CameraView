@@ -4,8 +4,9 @@ package com.otaliastudios.cameraview.gesture;
 import androidx.annotation.NonNull;
 import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
+
+import com.otaliastudios.cameraview.runner.SdkExclude;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,7 +23,7 @@ import static org.junit.Assert.assertTrue;
  * On API 26 these tests fail during Espresso's inRoot() - the window never gains focus.
  * This might be due to a system popup or something similar.
  */
-@SdkSuppress(minSdkVersion = 26, maxSdkVersion = 26)
+@SdkExclude(minSdkVersion = 26, maxSdkVersion = 26)
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class ScrollGestureFinderTest extends GestureFinderTest<ScrollGestureFinder> {

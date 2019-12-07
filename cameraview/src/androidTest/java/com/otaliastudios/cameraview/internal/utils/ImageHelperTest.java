@@ -22,6 +22,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.runner.SdkExclude;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +36,7 @@ import static org.junit.Assert.assertNotNull;
  * https://github.com/aosp-mirror/platform_frameworks_base/blob/android10-release/core/jni/android_view_Surface.cpp#L215-L217 .
  * For this reason, acquireLatestImage crashes because we requested a different format.
  */
-@SdkSuppress(minSdkVersion = 29)
+@SdkExclude(minSdkVersion = 29)
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class ImageHelperTest extends BaseTest {

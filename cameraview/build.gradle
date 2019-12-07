@@ -17,6 +17,7 @@ android {
         versionCode 1
         versionName project.version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArgument "filter", "com.otaliastudios.cameraview.runner.SdkExcludeFilter"
     }
 
     buildTypes {
