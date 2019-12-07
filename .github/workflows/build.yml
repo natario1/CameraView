@@ -46,12 +46,12 @@ jobs:
         with:
           java-version: 1.8
       - name: Execute emulator tests
-        uses: reactivecircus/android-emulator-runner@v1
+        uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.EMULATOR_API }}
           arch: ${{ matrix.EMULATOR_ARCH }}
           disable-animations: true
-          headless: true
+          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -memory 2048
           script: ./gradlew cameraview:connectedCheck
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
