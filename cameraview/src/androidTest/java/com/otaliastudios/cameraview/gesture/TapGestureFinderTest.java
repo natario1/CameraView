@@ -7,6 +7,7 @@ import androidx.test.espresso.action.GeneralLocation;
 import androidx.test.espresso.action.Press;
 import androidx.test.espresso.action.Tap;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -19,6 +20,11 @@ import org.junit.runner.RunWith;
 import static androidx.test.espresso.action.ViewActions.*;
 import static org.junit.Assert.*;
 
+/**
+ * On API 26 these tests fail during Espresso's inRoot() - the window never gains focus.
+ * This might be due to a system popup or something similar.
+ */
+@SdkSuppress(minSdkVersion = 26, maxSdkVersion = 26)
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class TapGestureFinderTest extends GestureFinderTest<TapGestureFinder> {

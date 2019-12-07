@@ -1,6 +1,5 @@
 package com.otaliastudios.cameraview.engine;
 
-import com.otaliastudios.cameraview.DoNotRunOnTravis;
 import com.otaliastudios.cameraview.controls.Engine;
 
 import org.junit.runner.RunWith;
@@ -8,6 +7,7 @@ import org.junit.runner.RunWith;
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
+import androidx.test.filters.RequiresDevice;
 
 /**
  * These tests work great on real devices, and are the only way to test actual CameraEngine
@@ -17,7 +17,7 @@ import androidx.test.filters.LargeTest;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-@DoNotRunOnTravis(because = "These do work but fail on CI emulators, due to bugs in the Camera1 emulated devices.")
+@RequiresDevice
 public class Camera1IntegrationTest extends CameraIntegrationTest {
 
     @NonNull

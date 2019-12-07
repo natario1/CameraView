@@ -8,8 +8,6 @@ group = 'com.otaliastudios'
 
 //region android dependencies
 
-def isCI = System.getenv("TRAVIS")
-
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
@@ -19,9 +17,6 @@ android {
         versionCode 1
         versionName project.version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        if (isCI) {
-            testInstrumentationRunnerArgument "notAnnotation", "com.otaliastudios.cameraview.DoNotRunOnTravis"
-        }
     }
 
     buildTypes {
@@ -109,6 +104,7 @@ install {
 
 def bintrayUser
 def bintrayKey
+def isCI = System.getenv("TRAVIS")
 if (isCI) {
     bintrayUser = System.getenv("BINTRAY_USER")
     bintrayKey = System.getenv("BINTRAY_KEY")

@@ -38,10 +38,9 @@ jobs:
     runs-on: macOS-latest
     strategy:
       matrix:
-        # Removing 26 for now because all GestureFinderTests fail in Espresso.inRoot().
-        # Probably because of a system popup.
-        # 22, 23, 24, 25,
-        EMULATOR_API: [27, 28, 29]
+        # TODO 28 fails in MarkerLayoutTest.testOnEvent() - weird FrameLayout.onMeasure crash
+        # 22, 23, 24, 25, 27
+        EMULATOR_API: [26, 28, 29]
         EMULATOR_ARCH: [x86_64]
     steps:
       - uses: actions/checkout@v1
