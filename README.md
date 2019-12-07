@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/natario1/CameraView/workflows/Build/badge.svg)](https://github.com/natario1/CameraView/actions)
+[![Build Status](https://github.com/natario1/CameraView/workflows/Build/badge.svg?event=push)](https://github.com/natario1/CameraView/actions)
 [![Code Coverage](https://codecov.io/gh/natario1/CameraView/branch/master/graph/badge.svg)](https://codecov.io/gh/natario1/CameraView)
 [![Release](https://img.shields.io/github/release/natario1/CameraView.svg)](https://github.com/natario1/CameraView/releases)
 [![Issues](https://img.shields.io/github/issues-raw/natario1/CameraView.svg)](https://github.com/natario1/CameraView/issues)
