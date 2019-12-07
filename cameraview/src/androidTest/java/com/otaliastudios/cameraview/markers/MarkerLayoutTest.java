@@ -31,6 +31,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Not clear why, but for some reason on API 28 the UiThreadTests here crash for an internal NPE
+ * in FrameLayout.onMeasure.
+ */
+@SdkExclude(minSdkVersion = 28, maxSdkVersion = 28)
 @TargetApi(17)
 public class MarkerLayoutTest extends BaseTest {
 
@@ -86,12 +91,8 @@ public class MarkerLayoutTest extends BaseTest {
                 Mockito.eq(markerLayout));
     }
 
-    /**
-     * Not clear why, but on API 28 this test crashes for an internal NPE in FrameLayout.onMeasure.
-     */
     @Test
     @UiThreadTest
-    @SdkExclude(minSdkVersion = 28, maxSdkVersion = 28)
     public void testOnEvent() {
         final View mockView = spy(new View(getContext()));
         // These fail, however it's not really needed.
