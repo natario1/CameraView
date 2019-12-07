@@ -6,6 +6,8 @@ import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import com.otaliastudios.cameraview.runner.SdkExclude;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -13,6 +15,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * On API 26 these tests fail during Espresso's inRoot() - the window never gains focus.
+ * This might be due to a system popup or something similar.
+ */
+@SdkExclude(minSdkVersion = 26, maxSdkVersion = 26)
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class PinchGestureFinderTest extends GestureFinderTest<PinchGestureFinder> {

@@ -38,7 +38,9 @@ jobs:
     runs-on: macOS-latest
     strategy:
       matrix:
-        EMULATOR_API: [22]
+        # TODO 29 fails due to Mockito issues, probably reproducible locally.
+        # 22, 23, 24, 25, 26, 27, 28 work - some of them, with SdkExclude restrictions.
+        EMULATOR_API: [22, 23, 24, 25, 26, 27, 28]
         EMULATOR_ARCH: [x86_64]
     steps:
       - uses: actions/checkout@v1
@@ -46,12 +48,12 @@ jobs:
         with:
           java-version: 1.8
       - name: Execute emulator tests
-        uses: reactivecircus/android-emulator-runner@v1
+        uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.EMULATOR_API }}
           arch: ${{ matrix.EMULATOR_ARCH }}
           disable-animations: true
-          headless: true
+          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -memory 2048
           script: ./gradlew cameraview:connectedCheck
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1

@@ -3,17 +3,16 @@ package com.otaliastudios.cameraview.engine;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
 
-import com.otaliastudios.cameraview.DoNotRunOnTravis;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
+import androidx.test.filters.RequiresDevice;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -25,7 +24,7 @@ import java.util.concurrent.CountDownLatch;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-@DoNotRunOnTravis(because = "These do work but fail on CI emulators.")
+@RequiresDevice
 public class Camera2IntegrationTest extends CameraIntegrationTest {
 
     @NonNull
