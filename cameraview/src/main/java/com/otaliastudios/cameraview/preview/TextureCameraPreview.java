@@ -17,7 +17,6 @@ import android.view.ViewGroup;
 import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.R;
-import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 import java.util.concurrent.ExecutionException;
@@ -91,14 +90,13 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
     }
 
     @Override
-    protected void crop(final @NonNull Op<Void> op) {
-        op.start();
+    protected void crop(@Nullable final CropCallback callback) {
         getView().post(new Runnable() {
             @Override
             public void run() {
                 if (mInputStreamHeight == 0 || mInputStreamWidth == 0 ||
                         mOutputSurfaceHeight == 0 || mOutputSurfaceWidth == 0) {
-                    op.end(null);
+                    if (callback != null) callback.onCrop();
                     return;
                 }
                 float scaleX = 1f, scaleY = 1f;
@@ -118,7 +116,7 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
                 mCropping = scaleX > 1.02f || scaleY > 1.02f;
                 LOG.i("crop:", "applied scaleX=", scaleX);
                 LOG.i("crop:", "applied scaleY=", scaleY);
-                op.end(null);
+                if (callback != null) callback.onCrop();
             }
         });
     }

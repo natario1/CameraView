@@ -12,6 +12,7 @@ import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.PictureFormat;
+import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -24,6 +25,7 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class MockCameraEngine extends CameraEngine {
 
@@ -80,8 +82,19 @@ public class MockCameraEngine extends CameraEngine {
         mPreviewStreamSize = size;
     }
 
-    public void setMockEngineState(boolean started) {
-        mEngineStep.setState(started ? STATE_STARTED : STATE_STOPPED);
+    public void setMockState(@NonNull CameraState state) {
+        Task<Void> change = mOrchestrator.scheduleStateChange(getState(),
+                state,
+                false,
+                new Callable<Task<Void>>() {
+            @Override
+            public Task<Void> call() {
+                return Tasks.forResult(null);
+            }
+        });
+        try {
+            Tasks.await(change);
+        } catch (Exception ignore) {}
     }
 
     @Override

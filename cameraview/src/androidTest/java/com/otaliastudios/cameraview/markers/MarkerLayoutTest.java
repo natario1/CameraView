@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
-import com.otaliastudios.cameraview.runner.SdkExclude;
+import com.otaliastudios.cameraview.tools.SdkExclude;
 
 import org.junit.Assert;
 import org.junit.Before;

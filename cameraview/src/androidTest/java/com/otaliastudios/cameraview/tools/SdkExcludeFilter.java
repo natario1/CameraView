@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.runner;
+package com.otaliastudios.cameraview.tools;
 
 
 import android.os.Build;

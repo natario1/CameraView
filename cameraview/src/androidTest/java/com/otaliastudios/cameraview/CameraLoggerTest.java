@@ -1,7 +1,7 @@
 package com.otaliastudios.cameraview;
 
 
-import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.tools.Op;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -109,7 +109,7 @@ public class CameraLoggerTest extends BaseTest {
         CameraLogger.Logger mock = mock(CameraLogger.Logger.class);
         CameraLogger.registerLogger(mock);
 
-        final Op<Throwable> op = new Op<>();
+        final Op<Throwable> op = new Op<>(false);
         doEndOp(op, 3)
                 .when(mock)
                 .log(anyInt(), anyString(), anyString(), any(Throwable.class));

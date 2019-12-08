@@ -5,6 +5,7 @@ import android.graphics.SurfaceTexture;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import android.view.LayoutInflater;
@@ -14,7 +15,6 @@ import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.R;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
-import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filter.NoFilter;
 import com.otaliastudios.cameraview.size.AspectRatio;
@@ -270,8 +270,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
      * See {@link Renderer#onDrawFrame(GL10)}.
      */
     @Override
-    protected void crop(@NonNull Op<Void> op) {
-        op.start();
+    protected void crop(@Nullable final CropCallback callback) {
         if (mInputStreamWidth > 0 && mInputStreamHeight > 0 && mOutputSurfaceWidth > 0
                 && mOutputSurfaceHeight > 0) {
             float scaleX = 1f, scaleY = 1f;
@@ -289,7 +288,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
             mCropScaleY = 1F / scaleY;
             getView().requestRender();
         }
-        op.end(null);
+        if (callback != null) callback.onCrop();
     }
 
     /**

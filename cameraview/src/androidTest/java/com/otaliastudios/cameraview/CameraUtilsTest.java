@@ -6,11 +6,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
-import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.tools.Op;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.annotation.UiThreadTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
@@ -20,7 +19,6 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -51,21 +49,21 @@ public class CameraUtilsTest extends BaseTest {
     private Op<String> writeAndReadString(@NonNull String data) {
         final File file = new File(getContext().getFilesDir(), "string.txt");
         final byte[] bytes = data.getBytes(Charset.forName("UTF-8"));
-        final Op<String> result = new Op<>(true);
+        final Op<String> result = new Op<>();
         final FileCallback callback = new FileCallback() {
             @Override
             public void onFileReady(@Nullable File file) {
                 if (file == null) {
-                    result.end(null);
+                    result.controller().end(null);
                 } else {
                     // Read back the file.
                     try {
                         FileInputStream stream = new FileInputStream(file);
                         byte[] bytes = new byte[stream.available()];
                         stream.read(bytes);
-                        result.end(new String(bytes, Charset.forName("UTF-8")));
+                        result.controller().end(new String(bytes, Charset.forName("UTF-8")));
                     } catch (IOException e) {
-                        result.end(null);
+                        result.controller().end(null);
                     }
                 }
             }
@@ -94,12 +92,12 @@ public class CameraUtilsTest extends BaseTest {
         source.compress(Bitmap.CompressFormat.PNG, 100, os);
         final byte[] data = os.toByteArray();
 
-        final Op<Bitmap> decode = new Op<>(true);
+        final Op<Bitmap> decode = new Op<>();
         if (async) {
             final BitmapCallback callback = new BitmapCallback() {
                 @Override
                 public void onBitmapReady(Bitmap bitmap) {
-                    decode.end(bitmap);
+                    decode.controller().end(bitmap);
                 }
             };
 
@@ -121,7 +119,7 @@ public class CameraUtilsTest extends BaseTest {
             } else {
                 result = CameraUtils.decodeBitmap(data);
             }
-            decode.end(result);
+            decode.controller().end(result);
         }
         return decode;
     }

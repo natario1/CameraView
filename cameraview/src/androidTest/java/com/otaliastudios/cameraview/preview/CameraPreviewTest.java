@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
-import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.tools.Op;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -42,8 +42,8 @@ public abstract class CameraPreviewTest<T extends CameraPreview> extends BaseTes
 
     @Before
     public void setUp() {
-        available = new Op<>(true);
-        destroyed = new Op<>(true);
+        available = new Op<>();
+        destroyed = new Op<>();
 
         uiSync(new Runnable() {
             @Override
@@ -55,7 +55,7 @@ public abstract class CameraPreviewTest<T extends CameraPreview> extends BaseTes
                 doAnswer(new Answer() {
                     @Override
                     public Object answer(InvocationOnMock invocation) {
-                        if (available != null) available.end(true);
+                        if (available != null) available.controller().end(true);
                         return null;
                     }
                 }).when(callback).onSurfaceAvailable();
@@ -63,7 +63,7 @@ public abstract class CameraPreviewTest<T extends CameraPreview> extends BaseTes
                 doAnswer(new Answer() {
                     @Override
                     public Object answer(InvocationOnMock invocation) {
-                        if (destroyed != null) destroyed.end(true);
+                        if (destroyed != null) destroyed.controller().end(true);
                         return null;
                     }
                 }).when(callback).onSurfaceDestroyed();
@@ -153,17 +153,23 @@ public abstract class CameraPreviewTest<T extends CameraPreview> extends BaseTes
 
         // Since desired is 'desired', let's fake a new view size that is consistent with it.
         // Ensure crop is not happening anymore.
-        preview.mCropOp.listen();
-        preview.dispatchOnSurfaceSizeChanged((int) (50f * desired), 50); // Wait...
-        preview.mCropOp.await();
+        preview.mCropCallback = mock(CameraPreview.CropCallback.class);
+        Op<Void> op = new Op<>();
+        doEndOp(op, null).when(preview.mCropCallback).onCrop();
+        preview.dispatchOnSurfaceSizeChanged((int) (50f * desired), 50);
+
+        op.await(); // Wait...
         assertEquals(desired, getViewAspectRatioWithScale(), 0.01f);
         assertFalse(preview.isCropping());
     }
 
     private void setDesiredAspectRatio(float desiredAspectRatio) {
-        preview.mCropOp.listen();
-        preview.setStreamSize((int) (10f * desiredAspectRatio), 10); // Wait...
-        preview.mCropOp.await();
+        preview.mCropCallback = mock(CameraPreview.CropCallback.class);
+        Op<Void> op = new Op<>();
+        doEndOp(op, null).when(preview.mCropCallback).onCrop();
+        preview.setStreamSize((int) (10f * desiredAspectRatio), 10);
+
+        op.await(); // Wait...
         assertEquals(desiredAspectRatio, getViewAspectRatioWithScale(), 0.01f);
 
     }

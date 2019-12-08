@@ -17,7 +17,7 @@ import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.gesture.GestureAction;
-import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.tools.Op;
 import com.otaliastudios.cameraview.engine.MockCameraEngine;
 import com.otaliastudios.cameraview.markers.AutoFocusMarker;
 import com.otaliastudios.cameraview.markers.AutoFocusTrigger;
@@ -90,7 +90,7 @@ public class CameraViewCallbacksTest extends BaseTest {
                 camera.doInstantiatePreview();
                 camera.addCameraListener(listener);
                 camera.addFrameProcessor(processor);
-                op = new Op<>(true);
+                op = new Op<>();
             }
         });
     }

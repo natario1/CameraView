@@ -6,7 +6,7 @@ import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
-import com.otaliastudios.cameraview.runner.SdkExclude;
+import com.otaliastudios.cameraview.tools.SdkExclude;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +52,7 @@ public class PinchGestureFinderTest extends GestureFinderTest<PinchGestureFinder
 
     private void testPinch(ViewAction action, boolean increasing) {
         touchOp.listen();
-        touchOp.start();
+        touchOp.controller().start();
         onLayout().perform(action);
         Gesture found = touchOp.await(10000);
         assertNotNull(found);

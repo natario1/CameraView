@@ -18,7 +18,6 @@ import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.CameraEngine;
-import com.otaliastudios.cameraview.internal.utils.Op;
 import com.otaliastudios.cameraview.size.Size;
 
 /**
@@ -56,8 +55,11 @@ public abstract class CameraPreview<T extends View, Output> {
         void onSurfaceDestroyed();
     }
 
-    @VisibleForTesting
-    Op<Void> mCropOp = new Op<>();
+    protected interface CropCallback {
+        void onCrop();
+    }
+
+    @VisibleForTesting CropCallback mCropCallback;
     private SurfaceCallback mSurfaceCallback;
     private T mView;
     boolean mCropping;
@@ -152,7 +154,7 @@ public abstract class CameraPreview<T extends View, Output> {
         mInputStreamWidth = width;
         mInputStreamHeight = height;
         if (mInputStreamWidth > 0 && mInputStreamHeight > 0) {
-            crop(mCropOp);
+            crop(mCropCallback);
         }
     }
 
@@ -194,7 +196,7 @@ public abstract class CameraPreview<T extends View, Output> {
         mOutputSurfaceWidth = width;
         mOutputSurfaceHeight = height;
         if (mOutputSurfaceWidth > 0 && mOutputSurfaceHeight > 0) {
-            crop(mCropOp);
+            crop(mCropCallback);
         }
         if (mSurfaceCallback != null) {
             mSurfaceCallback.onSurfaceAvailable();
@@ -213,7 +215,7 @@ public abstract class CameraPreview<T extends View, Output> {
             mOutputSurfaceWidth = width;
             mOutputSurfaceHeight = height;
             if (width > 0 && height > 0) {
-                crop(mCropOp);
+                crop(mCropCallback);
             }
             if (mSurfaceCallback != null) {
                 mSurfaceCallback.onSurfaceChanged();
@@ -291,12 +293,11 @@ public abstract class CameraPreview<T extends View, Output> {
      * There might still be some absolute difference (e.g. same ratio but bigger / smaller).
      * However that should be already managed by the framework.
      *
-     * @param op the op
+     * @param callback the callback
      */
-    protected void crop(@NonNull Op<Void> op) {
+    protected void crop(@Nullable CropCallback callback) {
         // The base implementation does not support cropping.
-        op.start();
-        op.end(null);
+        if (callback != null) callback.onCrop();
     }
 
     /**
