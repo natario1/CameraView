@@ -6,7 +6,7 @@ import androidx.test.espresso.ViewAction;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
-import com.otaliastudios.cameraview.runner.SdkExclude;
+import com.otaliastudios.cameraview.tools.SdkExclude;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,7 +49,7 @@ public class ScrollGestureFinderTest extends GestureFinderTest<ScrollGestureFind
     public void testScrollDisabled() {
         finder.setActive(false);
         touchOp.listen();
-        touchOp.start();
+        touchOp.controller().start();
         onLayout().perform(swipeUp());
         Gesture found = touchOp.await(WAIT);
         assertNull(found);
@@ -57,7 +57,7 @@ public class ScrollGestureFinderTest extends GestureFinderTest<ScrollGestureFind
 
     private void testScroll(ViewAction scroll, Gesture expected, boolean increasing) {
         touchOp.listen();
-        touchOp.start();
+        touchOp.controller().start();
         onLayout().perform(scroll);
         Gesture found = touchOp.await(WAIT);
         assertEquals(found, expected);

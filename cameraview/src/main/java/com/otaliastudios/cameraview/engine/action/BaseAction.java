@@ -39,6 +39,7 @@ public abstract class BaseAction implements Action {
 
     @Override
     public final void start(@NonNull ActionHolder holder) {
+        this.holder = holder;
         holder.addAction(this);
         if (holder.getLastResult(this) != null) {
             onStart(holder);
@@ -64,6 +65,8 @@ public abstract class BaseAction implements Action {
      */
     @CallSuper
     protected void onStart(@NonNull ActionHolder holder) {
+        // Repeating holder assignment here (already in start()) because we NEED it in start()
+        // but some special actions will not call start() at all for their children.
         this.holder = holder;
         // Overrideable
     }

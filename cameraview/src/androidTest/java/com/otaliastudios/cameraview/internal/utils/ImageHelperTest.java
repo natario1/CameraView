@@ -18,11 +18,11 @@ import android.view.Surface;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseTest;
-import com.otaliastudios.cameraview.runner.SdkExclude;
+import com.otaliastudios.cameraview.tools.Op;
+import com.otaliastudios.cameraview.tools.SdkExclude;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,12 +45,12 @@ public class ImageHelperTest extends BaseTest {
     private Image getImage() {
         ImageReader reader = ImageReader.newInstance(100, 100, ImageFormat.YUV_420_888, 1);
         Surface readerSurface = reader.getSurface();
-        final Op<Image> imageOp = new Op<>(true);
+        final Op<Image> imageOp = new Op<>();
         reader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
                 Image image = reader.acquireLatestImage();
-                if (image != null) imageOp.end(image);
+                if (image != null) imageOp.controller().end(image);
             }
         }, new Handler(Looper.getMainLooper()));
 

@@ -23,9 +23,9 @@ import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.Preview;
 import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filter.Filters;
-import com.otaliastudios.cameraview.filter.NoFilter;
 import com.otaliastudios.cameraview.filters.DuotoneFilter;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
@@ -41,7 +41,7 @@ import com.otaliastudios.cameraview.gesture.PinchGestureFinder;
 import com.otaliastudios.cameraview.gesture.ScrollGestureFinder;
 import com.otaliastudios.cameraview.gesture.TapGestureFinder;
 import com.otaliastudios.cameraview.engine.MockCameraEngine;
-import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.tools.Op;
 import com.otaliastudios.cameraview.markers.AutoFocusMarker;
 import com.otaliastudios.cameraview.markers.DefaultAutoFocusMarker;
 import com.otaliastudios.cameraview.markers.MarkerLayout;
@@ -128,7 +128,7 @@ public class CameraViewTest extends BaseTest {
     public void testClose() {
         cameraView.close();
         verify(mockPreview, times(1)).onPause();
-        verify(mockController, times(1)).stop();
+        verify(mockController, times(1)).stop(false);
     }
 
     @Test
@@ -239,7 +239,7 @@ public class CameraViewTest extends BaseTest {
     public void testGestureAction_capture() {
         CameraOptions o = mock(CameraOptions.class);
         mockController.setMockCameraOptions(o);
-        mockController.setMockEngineState(true);
+        mockController.setMockState(CameraState.PREVIEW);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         uiSync(new Runnable() {
             @Override
@@ -261,7 +261,7 @@ public class CameraViewTest extends BaseTest {
     public void testGestureAction_focus() {
         CameraOptions o = mock(CameraOptions.class);
         mockController.setMockCameraOptions(o);
-        mockController.setMockEngineState(true);
+        mockController.setMockState(CameraState.PREVIEW);
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         uiSync(new Runnable() {
             @Override
@@ -286,7 +286,7 @@ public class CameraViewTest extends BaseTest {
     public void testGestureAction_zoom() {
         CameraOptions o = mock(CameraOptions.class);
         mockController.setMockCameraOptions(o);
-        mockController.setMockEngineState(true);
+        mockController.setMockState(CameraState.PREVIEW);
         mockController.mZoomChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         final FactorHolder factor = new FactorHolder();
@@ -327,7 +327,7 @@ public class CameraViewTest extends BaseTest {
         o.exposureCorrectionMaxValue = 10F;
         o.exposureCorrectionMinValue = -10F;
         mockController.setMockCameraOptions(o);
-        mockController.setMockEngineState(true);
+        mockController.setMockState(CameraState.PREVIEW);
         mockController.mExposureCorrectionChanged = false;
         MotionEvent event = MotionEvent.obtain(0L, 0L, 0, 0f, 0f, 0);
         final FactorHolder factor = new FactorHolder();
@@ -363,7 +363,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_filterControl1() {
-        mockController.setMockEngineState(true);
+        mockController.setMockState(CameraState.PREVIEW);
         mockController.setMockCameraOptions(mock(CameraOptions.class));
         DuotoneFilter filter = new DuotoneFilter(); // supports two parameters
         filter.setParameter1(0F);
@@ -405,7 +405,7 @@ public class CameraViewTest extends BaseTest {
 
     @Test
     public void testGestureAction_filterControl2() {
-        mockController.setMockEngineState(true);
+        mockController.setMockState(CameraState.PREVIEW);
         mockController.setMockCameraOptions(mock(CameraOptions.class));
         DuotoneFilter filter = new DuotoneFilter(); // supports two parameters
         filter.setParameter2(0F);
@@ -891,7 +891,7 @@ public class CameraViewTest extends BaseTest {
         cameraView.mMarkerLayout = markerLayout;
         final PointF point = new PointF(0, 0);
         final PointF[] points = new PointF[]{ point };
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         doEndOp(op, true).when(markerLayout).onEvent(MarkerLayout.TYPE_AUTOFOCUS, points);
         cameraView.mCameraCallbacks.dispatchOnFocusStart(Gesture.TAP, point);
         assertNotNull(op.await(100));

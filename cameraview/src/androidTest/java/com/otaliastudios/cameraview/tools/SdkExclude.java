@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.runner;
+package com.otaliastudios.cameraview.tools;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

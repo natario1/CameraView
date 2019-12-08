@@ -4,7 +4,9 @@ package com.otaliastudios.cameraview.internal;
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
 import com.otaliastudios.cameraview.controls.Grid;
+import com.otaliastudios.cameraview.tools.Op;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
@@ -15,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 @RunWith(AndroidJUnit4.class)
 @MediumTest
@@ -25,6 +28,14 @@ public class GridLinesLayoutTest extends BaseTest {
 
     private GridLinesLayout layout;
 
+    @NonNull
+    private Op<Integer> getDrawOp() {
+        final Op<Integer> op = new Op<>();
+        layout.callback = mock(GridLinesLayout.DrawCallback.class);
+        doEndOp(op, 0).when(layout.callback).onDraw(anyInt());
+        return op;
+    }
+
     @Before
     public void setUp() {
         uiSync(new Runnable() {
@@ -33,18 +44,17 @@ public class GridLinesLayoutTest extends BaseTest {
                 TestActivity a = rule.getActivity();
                 layout = new GridLinesLayout(a);
                 layout.setGridMode(Grid.OFF);
-                layout.drawOp.listen();
+                Op<Integer> op = getDrawOp();
                 a.getContentView().addView(layout);
+                op.await(1000);
             }
         });
-        // Wait for first draw.
-        layout.drawOp.await(1000);
     }
 
     private int setGridAndWait(Grid value) {
-        layout.drawOp.listen();
         layout.setGridMode(value);
-        Integer result = layout.drawOp.await(1000);
+        Op<Integer> op = getDrawOp();
+        Integer result = op.await(1000);
         assertNotNull(result);
         return result;
     }
@@ -52,25 +62,25 @@ public class GridLinesLayoutTest extends BaseTest {
     @Test
     public void testOff() {
         int linesDrawn = setGridAndWait(Grid.OFF);
-        assertEquals(linesDrawn, 0);
+        assertEquals(0, linesDrawn);
     }
 
     @Test
     public void test3x3() {
         int linesDrawn = setGridAndWait(Grid.DRAW_3X3);
-        assertEquals(linesDrawn, 2);
+        assertEquals(2, linesDrawn);
     }
 
     @Test
     public void testPhi() {
         int linesDrawn = setGridAndWait(Grid.DRAW_PHI);
-        assertEquals(linesDrawn, 2);
+        assertEquals(2, linesDrawn);
     }
 
     @Test
     public void test4x4() {
         int linesDrawn = setGridAndWait(Grid.DRAW_4X4);
-        assertEquals(linesDrawn, 3);
+        assertEquals(3, linesDrawn);
     }
 
 }

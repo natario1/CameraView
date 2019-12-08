@@ -8,7 +8,7 @@ import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.CameraUtils;
-import com.otaliastudios.cameraview.runner.SdkExclude;
+import com.otaliastudios.cameraview.tools.SdkExclude;
 import com.otaliastudios.cameraview.size.Size;
 
 import org.junit.Test;

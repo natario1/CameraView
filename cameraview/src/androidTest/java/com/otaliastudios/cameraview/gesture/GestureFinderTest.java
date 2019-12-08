@@ -15,7 +15,7 @@ import android.widget.FrameLayout;
 
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
-import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.tools.Op;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -49,12 +49,12 @@ public abstract class GestureFinderTest<T extends GestureFinder> extends BaseTes
                 finder.setActive(true);
                 a.inflate(layout);
 
-                touchOp = new Op<>();
+                touchOp = new Op<>(false);
                 layout.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View view, MotionEvent motionEvent) {
                         boolean found = finder.onTouchEvent(motionEvent);
-                        if (found) touchOp.end(finder.getGesture());
+                        if (found) touchOp.controller().end(finder.getGesture());
                         return true;
                     }
                 });

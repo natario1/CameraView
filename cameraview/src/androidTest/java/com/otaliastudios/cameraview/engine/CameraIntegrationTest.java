@@ -25,9 +25,10 @@ import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
+import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
-import com.otaliastudios.cameraview.internal.utils.Op;
+import com.otaliastudios.cameraview.tools.Op;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.size.Size;
@@ -110,12 +111,12 @@ public abstract class CameraIntegrationTest extends BaseTest {
                 // Ensure that controller exceptions are thrown on this thread (not on the UI thread).
                 // TODO this makes debugging for wrong tests very hard, as we don't get the exception
                 // unless waitForUiException() is called.
-                uiExceptionOp = new Op<>(true);
+                uiExceptionOp = new Op<>();
                 WorkerHandler crashThread = WorkerHandler.get("CrashThread");
                 crashThread.getThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                     @Override
                     public void uncaughtException(Thread t, Throwable e) {
-                        uiExceptionOp.end(e);
+                        uiExceptionOp.controller().end(e);
                     }
                 });
                 controller.mCrashHandler = crashThread.getHandler();
@@ -139,7 +140,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     private CameraOptions openSync(boolean expectSuccess) {
         camera.open();
-        final Op<CameraOptions> open = new Op<>(true);
+        final Op<CameraOptions> open = new Op<>();
         doEndOp(open, 0).when(listener).onCameraOpened(any(CameraOptions.class));
         CameraOptions result = open.await(DELAY);
         if (expectSuccess) {
@@ -156,13 +157,12 @@ public abstract class CameraIntegrationTest extends BaseTest {
         // Extra wait for the bind and preview state, so we run tests in a fully operational
         // state. If we didn't do so, we could have null values, for example, in getPictureSize
         // or in getSnapshotSize.
-        while (controller.getBindState() != CameraEngine.STATE_STARTED) {}
-        while (controller.getPreviewState() != CameraEngine.STATE_STARTED) {}
+        while (controller.getState() != CameraState.PREVIEW) {}
     }
 
     private void closeSync(boolean expectSuccess) {
         camera.close();
-        final Op<Boolean> close = new Op<>(true);
+        final Op<Boolean> close = new Op<>();
         doEndOp(close, true).when(listener).onCameraClosed();
         Boolean result = close.await(DELAY);
         if (expectSuccess) {
@@ -180,7 +180,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         doCountDown(onVideoRecordingEnd).when(listener).onVideoRecordingEnd();
 
         // Op for onVideoTaken.
-        final Op<VideoResult> video = new Op<>(true);
+        final Op<VideoResult> video = new Op<>();
         doEndOp(video, 0).when(listener).onVideoTaken(any(VideoResult.class));
         doEndOp(video, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
             @Override
@@ -218,7 +218,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Nullable
     private PictureResult waitForPictureResult(boolean expectSuccess) {
-        final Op<PictureResult> pic = new Op<>(true);
+        final Op<PictureResult> pic = new Op<>();
         doEndOp(pic, 0).when(listener).onPictureTaken(any(PictureResult.class));
         doEndOp(pic, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
             @Override
@@ -240,7 +240,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     private void takeVideoSync(boolean expectSuccess, int duration) {
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         doEndOp(op, true).when(listener).onVideoRecordingStart();
         doEndOp(op, false).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
             @Override
@@ -269,7 +269,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     private void takeVideoSnapshotSync(boolean expectSuccess, int duration) {
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         doEndOp(op, true).when(listener).onVideoRecordingStart();
         doEndOp(op, false).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
             @Override
@@ -296,14 +296,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Test
     public void testOpenClose() {
-        // Starting and stopping are hard to get since they happen on another thread.
-        assertEquals(controller.getEngineState(), CameraEngine.STATE_STOPPED);
-
+        assertEquals(controller.getState(), CameraState.OFF);
         openSync(true);
-        assertEquals(controller.getEngineState(), CameraEngine.STATE_STARTED);
-
+        assertTrue(controller.getState().isAtLeast(CameraState.ENGINE));
         closeSync(true);
-        assertEquals(controller.getEngineState(), CameraEngine.STATE_STOPPED);
+        assertEquals(controller.getState(), CameraState.OFF);
     }
 
     @Test
@@ -389,12 +386,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @Test
     public void testSetZoom() {
         CameraOptions options = openSync(true);
-
-        controller.mZoomOp.listen();
         float oldValue = camera.getZoom();
         float newValue = 0.65f;
         camera.setZoom(newValue);
-        controller.mZoomOp.await(500);
+        Op<Void> op = new Op<>(controller.mZoomTask);
+        op.await(500);
 
         if (options.isZoomSupported()) {
             assertEquals(newValue, camera.getZoom(), 0f);
@@ -406,12 +402,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @Test
     public void testSetExposureCorrection() {
         CameraOptions options = openSync(true);
-
-        controller.mExposureCorrectionOp.listen();
         float oldValue = camera.getExposureCorrection();
         float newValue = options.getExposureCorrectionMaxValue();
         camera.setExposureCorrection(newValue);
-        controller.mExposureCorrectionOp.await(300);
+        Op<Void> op = new Op<>(controller.mExposureCorrectionTask);
+        op.await(300);
 
         if (options.isExposureCorrectionSupported()) {
             assertEquals(newValue, camera.getExposureCorrection(), 0f);
@@ -426,9 +421,10 @@ public abstract class CameraIntegrationTest extends BaseTest {
         Flash[] values = Flash.values();
         Flash oldValue = camera.getFlash();
         for (Flash value : values) {
-            controller.mFlashOp.listen();
+
             camera.setFlash(value);
-            controller.mFlashOp.await(300);
+            Op<Void> op = new Op<>(controller.mFlashTask);
+            op.await(300);
             if (options.supports(value)) {
                 assertEquals(camera.getFlash(), value);
                 oldValue = value;
@@ -444,9 +440,9 @@ public abstract class CameraIntegrationTest extends BaseTest {
         WhiteBalance[] values = WhiteBalance.values();
         WhiteBalance oldValue = camera.getWhiteBalance();
         for (WhiteBalance value : values) {
-            controller.mWhiteBalanceOp.listen();
             camera.setWhiteBalance(value);
-            controller.mWhiteBalanceOp.await(300);
+            Op<Void> op = new Op<>(controller.mWhiteBalanceTask);
+            op.await(300);
             if (options.supports(value)) {
                 assertEquals(camera.getWhiteBalance(), value);
                 oldValue = value;
@@ -462,9 +458,9 @@ public abstract class CameraIntegrationTest extends BaseTest {
         Hdr[] values = Hdr.values();
         Hdr oldValue = camera.getHdr();
         for (Hdr value : values) {
-            controller.mHdrOp.listen();
             camera.setHdr(value);
-            controller.mHdrOp.await(300);
+            Op<Void> op = new Op<>(controller.mHdrTask);
+            op.await(300);
             if (options.supports(value)) {
                 assertEquals(camera.getHdr(), value);
                 oldValue = value;
@@ -487,9 +483,9 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @Test
     public void testSetLocation() {
         openSync(true);
-        controller.mLocationOp.listen();
         camera.setLocation(10d, 2d);
-        controller.mLocationOp.await(300);
+        Op<Void> op = new Op<>(controller.mLocationTask);
+        op.await(300);
         assertNotNull(camera.getLocation());
         assertEquals(camera.getLocation().getLatitude(), 10d, 0d);
         assertEquals(camera.getLocation().getLongitude(), 2d, 0d);
@@ -499,19 +495,19 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @Test
     public void testSetPreviewFrameRate() {
         openSync(true);
-        controller.mPreviewFrameRateOp.listen();
         camera.setPreviewFrameRate(30);
-        controller.mPreviewFrameRateOp.await(300);
+        Op<Void> op = new Op<>(controller.mPreviewFrameRateTask);
+        op.await(300);
         assertEquals(camera.getPreviewFrameRate(), 30, 0);
     }
 
     @Test
     public void testSetPlaySounds() {
-        controller.mPlaySoundsOp.listen();
         boolean oldValue = camera.getPlaySounds();
         boolean newValue = !oldValue;
         camera.setPlaySounds(newValue);
-        controller.mPlaySoundsOp.await(300);
+        Op<Void> op = new Op<>(controller.mPlaySoundsTask);
+        op.await(300);
 
         if (controller instanceof Camera1Engine) {
             Camera1Engine camera1Engine = (Camera1Engine) controller;
@@ -647,7 +643,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     public void testStartAutoFocus() {
         CameraOptions o = openSync(true);
 
-        final Op<PointF> focus = new Op<>(true);
+        final Op<PointF> focus = new Op<>();
         doEndOp(focus, 0).when(listener).onAutoFocusStart(any(PointF.class));
 
         camera.startAutoFocus(1, 1);
@@ -664,7 +660,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     public void testStopAutoFocus() {
         CameraOptions o = openSync(true);
 
-        final Op<PointF> focus = new Op<>(true);
+        final Op<PointF> focus = new Op<>();
         doEndOp(focus, 1).when(listener).onAutoFocusEnd(anyBoolean(), any(PointF.class));
 
         camera.startAutoFocus(1, 1);
@@ -809,25 +805,24 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     //region Picture Formats
 
-    // TODO this fails because setPictureFormat triggers a restart() and takePicture can be called
-    // in the middle of the restart, failing because the engine is not properly set up. To fix this
-    // we would have to change the whole CameraEngine threading scheme.
-    // @Test
+    @SuppressWarnings("ConstantConditions")
+    @Test
     public void testPictureFormat_DNG() {
         openSync(true);
         if (camera.getCameraOptions().supports(PictureFormat.DNG)) {
+            Op<Boolean> op = new Op<>();
+            doEndOp(op, true).when(listener).onCameraOpened(any(CameraOptions.class));
             camera.setPictureFormat(PictureFormat.DNG);
+            assertNotNull(op.await(2000));
             camera.takePicture();
             PictureResult result = waitForPictureResult(true);
             // assert that result.getData() is a DNG file:
             // We can use the first 4 bytes assuming they are the same as a TIFF file
-            // https://en.wikipedia.org/wiki/List_of_file_signatures
+            // https://en.wikipedia.org/wiki/List_of_file_signatures 73, 73, 42, 0
             byte[] b = result.getData();
-            boolean isII = b[0] == 'I' && b[1] == 'I' && b[2] == '*' && b[3] == '.';
-            boolean isMM = b[0] == 'M' && b[1] == 'M' && b[2] == '.' && b[3] == '*';
-            if (!isII && !isMM) {
-                throw new RuntimeException("Not a DNG file.");
-            }
+            boolean isII = b[0] == 'I' && b[1] == 'I' && b[2] == '*' && b[3] == 0;
+            boolean isMM = b[0] == 'M' && b[1] == 'M' && b[2] == 0 && b[3] == '*';
+            assertTrue(isII || isMM);
         }
     }
 

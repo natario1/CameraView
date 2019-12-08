@@ -4,6 +4,7 @@ package com.otaliastudios.cameraview.internal.utils;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.tools.Op;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -13,7 +14,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
@@ -43,7 +43,7 @@ public class WorkerHandlerTest extends BaseTest {
         return new Runnable() {
             @Override
             public void run() {
-                op.end(true);
+                op.controller().end(true);
             }
         };
     }
@@ -53,7 +53,7 @@ public class WorkerHandlerTest extends BaseTest {
         return new Callable<Boolean>() {
             @Override
             public Boolean call() {
-                op.end(true);
+                op.controller().end(true);
                 return true;
             }
         };
@@ -77,7 +77,7 @@ public class WorkerHandlerTest extends BaseTest {
 
     @Test
     public void testFallbackExecute() {
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         WorkerHandler.execute(getRunnableForOp(op));
         waitOp(op);
     }
@@ -85,7 +85,7 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testPostRunnable() {
         WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         handler.post(getRunnableForOp(op));
         waitOp(op);
     }
@@ -93,7 +93,7 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testPostCallable() {
         WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         handler.post(getCallableForOp(op));
         waitOp(op);
     }
@@ -110,7 +110,7 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testRunRunnable_background() {
         WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         handler.run(getRunnableForOp(op));
         waitOp(op);
     }
@@ -118,14 +118,14 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testRunRunnable_sameThread() {
         final WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op1 = new Op<>(true);
-        final Op<Boolean> op2 = new Op<>(true);
+        final Op<Boolean> op1 = new Op<>();
+        final Op<Boolean> op2 = new Op<>();
         handler.post(new Runnable() {
             @Override
             public void run() {
                 handler.run(getRunnableForOp(op2));
                 assertTrue(op2.await(0)); // Do not wait.
-                op1.end(true);
+                op1.controller().end(true);
             }
         });
         waitOp(op1);
@@ -134,7 +134,7 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testRunCallable_background() {
         WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         handler.run(getCallableForOp(op));
         waitOp(op);
     }
@@ -142,14 +142,14 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testRunCallable_sameThread() {
         final WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op1 = new Op<>(true);
-        final Op<Boolean> op2 = new Op<>(true);
+        final Op<Boolean> op1 = new Op<>();
+        final Op<Boolean> op2 = new Op<>();
         handler.post(new Runnable() {
             @Override
             public void run() {
                 handler.run(getCallableForOp(op2));
                 assertTrue(op2.await(0)); // Do not wait.
-                op1.end(true);
+                op1.controller().end(true);
             }
         });
         waitOp(op1);
@@ -158,14 +158,14 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testRunCallable_sameThread_throws() {
         final WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         handler.post(new Runnable() {
             @Override
             public void run() {
                 Task<Void> task = handler.run(getThrowCallable());
                 assertTrue(task.isComplete()); // Already complete
                 assertFalse(task.isSuccessful());
-                op.end(true);
+                op.controller().end(true);
             }
         });
         waitOp(op);
@@ -174,7 +174,7 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testPostDelayed_tooEarly() {
         final WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         handler.post(1000, getRunnableForOp(op));
         assertNull(op.await(500));
     }
@@ -182,7 +182,7 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testPostDelayed() {
         final WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         handler.post(1000, getRunnableForOp(op));
         assertNotNull(op.await(2000));
     }
@@ -190,7 +190,7 @@ public class WorkerHandlerTest extends BaseTest {
     @Test
     public void testRemove() {
         final WorkerHandler handler = WorkerHandler.get("handler");
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         Runnable runnable = getRunnableForOp(op);
         handler.post(1000, runnable);
         handler.remove(runnable);
@@ -210,7 +210,7 @@ public class WorkerHandlerTest extends BaseTest {
     public void testExecutor() {
         final WorkerHandler handler = WorkerHandler.get("handler");
         Executor executor = handler.getExecutor();
-        final Op<Boolean> op = new Op<>(true);
+        final Op<Boolean> op = new Op<>();
         executor.execute(getRunnableForOp(op));
         waitOp(op);
     }

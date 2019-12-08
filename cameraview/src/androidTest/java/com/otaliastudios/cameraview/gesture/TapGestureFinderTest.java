@@ -11,7 +11,7 @@ import androidx.test.filters.SmallTest;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 
-import com.otaliastudios.cameraview.runner.SdkExclude;
+import com.otaliastudios.cameraview.tools.SdkExclude;
 import com.otaliastudios.cameraview.size.Size;
 
 import org.junit.Test;
@@ -45,7 +45,7 @@ public class TapGestureFinderTest extends GestureFinderTest<TapGestureFinder> {
     @Test
     public void testTap() {
         touchOp.listen();
-        touchOp.start();
+        touchOp.controller().start();
         GeneralClickAction a = new GeneralClickAction(
                 Tap.SINGLE, GeneralLocation.CENTER, Press.FINGER,
                 InputDevice.SOURCE_UNKNOWN, MotionEvent.BUTTON_PRIMARY);
@@ -62,7 +62,7 @@ public class TapGestureFinderTest extends GestureFinderTest<TapGestureFinder> {
     public void testTapWhileDisabled() {
         finder.setActive(false);
         touchOp.listen();
-        touchOp.start();
+        touchOp.controller().start();
         onLayout().perform(click());
         Gesture found = touchOp.await(500);
         assertNull(found);
@@ -71,7 +71,7 @@ public class TapGestureFinderTest extends GestureFinderTest<TapGestureFinder> {
     @Test
     public void testLongTap() {
         touchOp.listen();
-        touchOp.start();
+        touchOp.controller().start();
         GeneralClickAction a = new GeneralClickAction(
                 Tap.LONG, GeneralLocation.CENTER, Press.FINGER,
                 InputDevice.SOURCE_UNKNOWN, MotionEvent.BUTTON_PRIMARY);

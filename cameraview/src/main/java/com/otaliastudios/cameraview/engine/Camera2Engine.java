@@ -48,12 +48,14 @@ import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.Actions;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 import com.otaliastudios.cameraview.engine.action.CompletionCallback;
+import com.otaliastudios.cameraview.engine.action.LogAction;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.engine.meter.MeterAction;
 import com.otaliastudios.cameraview.engine.meter.MeterResetAction;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.engine.options.Camera2Options;
+import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -243,7 +245,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     }
 
     private void applyRepeatingRequestBuilder(boolean checkStarted, int errorReason) {
-        if (getPreviewState() == STATE_STARTED || !checkStarted) {
+        if ((getState() == CameraState.PREVIEW && !isChangingState()) || !checkStarted) {
             try {
                 mSession.setRepeatingRequest(mRepeatingRequestBuilder.build(),
                         mRepeatingRequestCallback, null);
@@ -256,9 +258,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 LOG.e("applyRepeatingRequestBuilder: session is invalid!", e,
                         "checkStarted:", checkStarted,
                         "currentThread:", Thread.currentThread().getName(),
-                        "previewState:", getPreviewState(),
-                        "bindState:", getBindState(),
-                        "engineState:", getEngineState());
+                        "state:", getState(),
+                        "targetState:", getTargetState());
                 throw new CameraException(CameraException.REASON_DISCONNECTED);
             }
         }
@@ -588,13 +589,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (mFullVideoPendingStub != null) {
             // Do not call takeVideo/onTakeVideo. It will reset some stub parameters that
             // the recorder sets. Also we are posting so that doTakeVideo sees a started preview.
-            LOG.i("onStartPreview", "Posting doTakeVideo call.");
             final VideoResult.Stub stub = mFullVideoPendingStub;
             mFullVideoPendingStub = null;
-            mHandler.post(new Runnable() {
+            mOrchestrator.scheduleStateful("do take video", CameraState.PREVIEW,
+                    new Runnable() {
                 @Override
                 public void run() {
-                    LOG.i("onStartPreview", "Executing doTakeVideo call.");
                     doTakeVideo(stub);
                 }
             });
@@ -895,10 +895,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         // SnapshotRecorder will invoke this on its own thread, so let's post in our own thread
         // and check camera state before trying to restore the preview. Engine might have been
         // torn down in the engine thread while this was still being called.
-        mHandler.run(new Runnable() {
+        mOrchestrator.scheduleStateful("restore preview template", CameraState.BIND,
+                new Runnable() {
             @Override
             public void run() {
-                if (getBindState() < STATE_STARTED) return;
                 maybeRestorePreviewTemplateAfterVideo();
             }
         });
@@ -1028,33 +1028,32 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void setFlash(@NonNull final Flash flash) {
         final Flash old = mFlash;
         mFlash = flash;
-        mHandler.run(new Runnable() {
+        mFlashTask = mOrchestrator.scheduleStateful("flash (" + flash + ")",
+                CameraState.ENGINE,
+                new Runnable() {
             @Override
             public void run() {
-                if (getEngineState() == STATE_STARTED) {
-                    boolean shouldApply = applyFlash(mRepeatingRequestBuilder, old);
-                    boolean needsWorkaround = getPreviewState() == STATE_STARTED;
-                    if (needsWorkaround) {
-                        // Runtime changes to the flash value are not correctly handled by the
-                        // driver. See https://stackoverflow.com/q/53003383/4288782 for example.
-                        // For this reason, we go back to OFF, capture once, then go to the new one.
-                        mFlash = Flash.OFF;
-                        applyFlash(mRepeatingRequestBuilder, old);
-                        try {
-                            mSession.capture(mRepeatingRequestBuilder.build(), null,
-                                    null);
-                        } catch (CameraAccessException e) {
-                            throw createCameraException(e);
-                        }
-                        mFlash = flash;
-                        applyFlash(mRepeatingRequestBuilder, old);
-                        applyRepeatingRequestBuilder();
-
-                    } else if (shouldApply) {
-                        applyRepeatingRequestBuilder();
+                boolean shouldApply = applyFlash(mRepeatingRequestBuilder, old);
+                boolean needsWorkaround = getState() == CameraState.PREVIEW;
+                if (needsWorkaround) {
+                    // Runtime changes to the flash value are not correctly handled by the
+                    // driver. See https://stackoverflow.com/q/53003383/4288782 for example.
+                    // For this reason, we go back to OFF, capture once, then go to the new one.
+                    mFlash = Flash.OFF;
+                    applyFlash(mRepeatingRequestBuilder, old);
+                    try {
+                        mSession.capture(mRepeatingRequestBuilder.build(), null,
+                                null);
+                    } catch (CameraAccessException e) {
+                        throw createCameraException(e);
                     }
+                    mFlash = flash;
+                    applyFlash(mRepeatingRequestBuilder, old);
+                    applyRepeatingRequestBuilder();
+
+                } else if (shouldApply) {
+                    applyRepeatingRequestBuilder();
                 }
-                mFlashOp.end(null);
             }
         });
     }
@@ -1104,15 +1103,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void setLocation(@Nullable Location location) {
         final Location old = mLocation;
         mLocation = location;
-        mHandler.run(new Runnable() {
+        mLocationTask = mOrchestrator.scheduleStateful("location",
+                CameraState.ENGINE,
+                new Runnable() {
             @Override
             public void run() {
-                if (getEngineState() == STATE_STARTED) {
-                    if (applyLocation(mRepeatingRequestBuilder, old)) {
-                        applyRepeatingRequestBuilder();
-                    }
+                if (applyLocation(mRepeatingRequestBuilder, old)) {
+                    applyRepeatingRequestBuilder();
                 }
-                mLocationOp.end(null);
             }
         });
     }
@@ -1130,15 +1128,15 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
         final WhiteBalance old = mWhiteBalance;
         mWhiteBalance = whiteBalance;
-        mHandler.run(new Runnable() {
+        mWhiteBalanceTask = mOrchestrator.scheduleStateful(
+                "white balance (" + whiteBalance + ")",
+                CameraState.ENGINE,
+                new Runnable() {
             @Override
             public void run() {
-                if (getEngineState() == STATE_STARTED) {
-                    if (applyWhiteBalance(mRepeatingRequestBuilder, old)) {
-                        applyRepeatingRequestBuilder();
-                    }
+                if (applyWhiteBalance(mRepeatingRequestBuilder, old)) {
+                    applyRepeatingRequestBuilder();
                 }
-                mWhiteBalanceOp.end(null);
             }
         });
     }
@@ -1159,15 +1157,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void setHdr(@NonNull Hdr hdr) {
         final Hdr old = mHdr;
         mHdr = hdr;
-        mHandler.run(new Runnable() {
+        mHdrTask = mOrchestrator.scheduleStateful("hdr (" + hdr + ")",
+                CameraState.ENGINE,
+                new Runnable() {
             @Override
             public void run() {
-                if (getEngineState() == STATE_STARTED) {
-                    if (applyHdr(mRepeatingRequestBuilder, old)) {
-                        applyRepeatingRequestBuilder();
-                    }
+                if (applyHdr(mRepeatingRequestBuilder, old)) {
+                    applyRepeatingRequestBuilder();
                 }
-                mHdrOp.end(null);
             }
         });
     }
@@ -1187,18 +1184,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void setZoom(final float zoom, final @Nullable PointF[] points, final boolean notify) {
         final float old = mZoomValue;
         mZoomValue = zoom;
-        mHandler.run(new Runnable() {
+        mZoomTask = mOrchestrator.scheduleStateful(
+                "zoom (" + zoom + ")",
+                CameraState.ENGINE,
+                new Runnable() {
             @Override
             public void run() {
-                if (getEngineState() == STATE_STARTED) {
-                    if (applyZoom(mRepeatingRequestBuilder, old)) {
-                        applyRepeatingRequestBuilder();
-                        if (notify) {
-                            mCallback.dispatchOnZoomChanged(zoom, points);
-                        }
+                if (applyZoom(mRepeatingRequestBuilder, old)) {
+                    applyRepeatingRequestBuilder();
+                    if (notify) {
+                        mCallback.dispatchOnZoomChanged(zoom, points);
                     }
                 }
-                mZoomOp.end(null);
             }
         });
     }
@@ -1243,18 +1240,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                                       final boolean notify) {
         final float old = mExposureCorrectionValue;
         mExposureCorrectionValue = EVvalue;
-        mHandler.run(new Runnable() {
+        mExposureCorrectionTask = mOrchestrator.scheduleStateful(
+                "exposure correction (" + EVvalue + ")",
+                CameraState.ENGINE,
+                new Runnable() {
             @Override
             public void run() {
-                if (getEngineState() == STATE_STARTED) {
-                    if (applyExposureCorrection(mRepeatingRequestBuilder, old)) {
-                        applyRepeatingRequestBuilder();
-                        if (notify) {
-                            mCallback.dispatchOnExposureCorrectionChanged(EVvalue, bounds, points);
-                        }
+                if (applyExposureCorrection(mRepeatingRequestBuilder, old)) {
+                    applyRepeatingRequestBuilder();
+                    if (notify) {
+                        mCallback.dispatchOnExposureCorrectionChanged(EVvalue, bounds, points);
                     }
                 }
-                mExposureCorrectionOp.end(null);
             }
         });
     }
@@ -1278,21 +1275,22 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void setPlaySounds(boolean playSounds) {
         mPlaySounds = playSounds;
-        mPlaySoundsOp.end(null);
+        mPlaySoundsTask = Tasks.forResult(null);
     }
 
-    @Override public void setPreviewFrameRate(float previewFrameRate) {
+    @Override
+    public void setPreviewFrameRate(float previewFrameRate) {
         final float oldPreviewFrameRate = mPreviewFrameRate;
         mPreviewFrameRate = previewFrameRate;
-        mHandler.run(new Runnable() {
+        mPreviewFrameRateTask = mOrchestrator.scheduleStateful(
+                "preview fps (" + previewFrameRate + ")",
+                CameraState.ENGINE,
+                new Runnable() {
             @Override
             public void run() {
-                if (getEngineState() == STATE_STARTED) {
-                    if (applyPreviewFrameRate(mRepeatingRequestBuilder, oldPreviewFrameRate)) {
-                        applyRepeatingRequestBuilder();
-                    }
+                if (applyPreviewFrameRate(mRepeatingRequestBuilder, oldPreviewFrameRate)) {
+                    applyRepeatingRequestBuilder();
                 }
-                mPreviewFrameRateOp.end(null);
             }
         });
     }
@@ -1334,19 +1332,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void setPictureFormat(final @NonNull PictureFormat pictureFormat) {
         if (pictureFormat != mPictureFormat) {
             mPictureFormat = pictureFormat;
-            LOG.i("setPictureFormat", "changing to", pictureFormat, "posting.");
-            mHandler.run(new Runnable() {
+            mOrchestrator.scheduleStateful("picture format (" + pictureFormat + ")",
+                    CameraState.ENGINE,
+                    new Runnable() {
                 @Override
                 public void run() {
-                    LOG.i("setPictureFormat", "changing to", pictureFormat,
-                            "executing. EngineState:", getEngineState(),
-                            "BindState:", getBindState());
-                    if (getEngineState() == STATE_STOPPED) {
-                        LOG.i("setPictureFormat", "not started so won't restart.");
-                    } else {
-                        LOG.i("setPictureFormat", "started or starting. Calling restart()");
-                        restart();
-                    }
+                    restart();
                 }
             });
         }
@@ -1391,7 +1382,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             return;
         }
         image.close();
-        if (getPreviewState() == STATE_STARTED) {
+        if (getState() == CameraState.PREVIEW && !isChangingState()) {
             // After preview, the frame manager is correctly set up
             Frame frame = getFrameManager().getFrame(data,
                     System.currentTimeMillis(),
@@ -1405,35 +1396,23 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void setHasFrameProcessors(final boolean hasFrameProcessors) {
-        LOG.i("setHasFrameProcessors", "changing to", hasFrameProcessors, "posting.");
-        Camera2Engine.super.setHasFrameProcessors(hasFrameProcessors);
-        mHandler.run(new Runnable() {
+        // Frame processing is set up partially when binding and partially when starting
+        // the preview. If the value is changed between the two, the preview step can crash.
+        mOrchestrator.schedule("has frame processors (" + hasFrameProcessors + ")",
+                true, new Runnable() {
             @Override
             public void run() {
-                LOG.i("setHasFrameProcessors", "changing to", hasFrameProcessors,
-                        "executing. BindState:", getBindState(),
-                        "PreviewState:", getPreviewState());
-
-                // Frame processing is set up partially when binding and partially when starting
-                // the preview. We don't want to only check bind state or startPreview can fail.
-                if (getBindState() == STATE_STOPPED) {
-                    LOG.i("setHasFrameProcessors", "not bound so won't restart.");
-                } else if (getPreviewState() == STATE_STARTED) {
-                    // This needs a restartBind(). NOTE: if taking video, this stops it.
-                    LOG.i("setHasFrameProcessors", "bound with preview.",
-                            "Calling restartBind().");
+                if (getState().isAtLeast(CameraState.BIND) && isChangingState()) {
+                    // Extremely rare case in which this was called in between startBind and
+                    // startPreview. This can cause issues. Try later.
+                    setHasFrameProcessors(hasFrameProcessors);
+                } else if (getState().isAtLeast(CameraState.BIND)) {
+                    // Apply and restart.
+                    Camera2Engine.super.setHasFrameProcessors(hasFrameProcessors);
                     restartBind();
                 } else {
-                    // Bind+Preview is not completely started yet not completely stopped.
-                    // This can happen if the user adds a frame processor in onCameraOpened().
-                    // Supporting this would add lot of complexity to this class, and
-                    // this should be discouraged anyway since changing the frame processor number
-                    // at this time requires restarting the camera when it was just opened.
-                    // For these reasons, let's throw.
-                    throw new IllegalStateException("Added/removed a FrameProcessor at illegal " +
-                            "time. These operations should be done before opening the camera, or " +
-                            "before closing it - NOT when it just opened, for example during the " +
-                            "onCameraOpened() callback.");
+                    // Just apply.
+                    Camera2Engine.super.setHasFrameProcessors(hasFrameProcessors);
                 }
             }
         });
@@ -1445,16 +1424,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
-        LOG.i("startAutoFocus", "dispatching. Gesture:", gesture);
-        mHandler.run(new Runnable() {
+        // This will only work when we have a preview, since it launches the preview
+        // in the end. Even without this it would need the bind state at least,
+        // since we need the preview size.
+        mOrchestrator.scheduleStateful("autofocus (" + gesture + ")",
+                CameraState.PREVIEW,
+                new Runnable() {
             @Override
             public void run() {
-                LOG.i("startAutoFocus", "executing. Preview state:", getPreviewState());
-                // This will only work when we have a preview, since it launches the preview
-                // in the end. Even without this it would need the bind state at least,
-                // since we need the preview size.
-                if (getPreviewState() < STATE_STARTED) return;
-
                 // The camera options API still has the auto focus API but it really
                 // refers to "3A metering to a specific point". Since we have a point, check.
                 if (!mCameraOptions.isAutoFocusSupported()) return;
@@ -1468,10 +1445,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     @Override
                     protected void onActionCompleted(@NonNull Action a) {
                         mCallback.dispatchOnFocusEnd(gesture, action.isSuccessful(), point);
-                        mHandler.remove(mUnlockAndResetMeteringRunnable);
+                        mOrchestrator.remove("reset metering");
                         if (shouldResetAutoFocus()) {
-                            mHandler.post(getAutoFocusResetDelay(),
-                                    mUnlockAndResetMeteringRunnable);
+                            mOrchestrator.scheduleDelayed("reset metering",
+                                    getAutoFocusResetDelay(),
+                                    new Runnable() {
+                                @Override
+                                public void run() {
+                                    unlockAndResetMetering();
+                                }
+                            });
                         }
                     }
                 });
@@ -1495,15 +1478,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return mMeterAction;
     }
 
-    private final Runnable mUnlockAndResetMeteringRunnable = new Runnable() {
-        @Override
-        public void run() {
-            unlockAndResetMetering();
-        }
-    };
-
     private void unlockAndResetMetering() {
-        if (getEngineState() == STATE_STARTED) {
+        if (getState() == CameraState.PREVIEW && !isChangingState()) {
             Actions.sequence(
                     new BaseAction() {
                         @Override
@@ -1566,7 +1542,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @Override
     public void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder)
             throws CameraAccessException {
-        if (getPreviewState() == STATE_STARTED) {
+        if (getState() == CameraState.PREVIEW && !isChangingState()) {
             mSession.capture(builder.build(), mRepeatingRequestCallback, null);
         }
     }
