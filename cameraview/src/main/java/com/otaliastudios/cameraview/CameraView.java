@@ -48,6 +48,7 @@ import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.engine.offset.Reference;
+import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filter.FilterParser;
 import com.otaliastudios.cameraview.filter.Filters;
@@ -693,15 +694,17 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     //region Lifecycle APIs
 
     /**
-     * Returns whether the camera has started showing its preview.
+     * Returns whether the camera engine has started.
      * @return whether the camera has started
      */
     public boolean isOpened() {
-        return mCameraEngine.getEngineState() >= CameraEngine.STATE_STARTED;
+        return mCameraEngine.getState().isAtLeast(CameraState.ENGINE)
+                && mCameraEngine.getTargetState().isAtLeast(CameraState.ENGINE);
     }
 
     private boolean isClosed() {
-        return mCameraEngine.getEngineState() == CameraEngine.STATE_STOPPED;
+        return mCameraEngine.getState() == CameraState.OFF
+                && !mCameraEngine.isChangingState();
     }
 
     /**
@@ -792,7 +795,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     public void close() {
         if (mInEditor) return;
-        mCameraEngine.stop();
+        mCameraEngine.stop(false);
         if (mCameraPreview != null) mCameraPreview.onPause();
     }
 
@@ -2006,7 +2009,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void dispatchOnCameraOpened(final CameraOptions options) {
+        public void dispatchOnCameraOpened(@NonNull final CameraOptions options) {
             mLogger.i("dispatchOnCameraOpened", options);
             mUiHandler.post(new Runnable() {
                 @Override
@@ -2054,7 +2057,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void dispatchOnPictureTaken(final PictureResult.Stub stub) {
+        public void dispatchOnPictureTaken(@NonNull final PictureResult.Stub stub) {
             mLogger.i("dispatchOnPictureTaken", stub);
             mUiHandler.post(new Runnable() {
                 @Override
@@ -2068,7 +2071,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void dispatchOnVideoTaken(final VideoResult.Stub stub) {
+        public void dispatchOnVideoTaken(@NonNull final VideoResult.Stub stub) {
             mLogger.i("dispatchOnVideoTaken", stub);
             mUiHandler.post(new Runnable() {
                 @Override

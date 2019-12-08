@@ -42,8 +42,8 @@ dependencies {
     androidTestImplementation 'org.mockito:mockito-android:2.28.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
-    api 'androidx.exifinterface:exifinterface:1.0.0'
-    api 'androidx.lifecycle:lifecycle-common:2.1.0-alpha01'
+    api 'androidx.exifinterface:exifinterface:1.1.0'
+    api 'androidx.lifecycle:lifecycle-common:2.1.0'
     api 'com.google.android.gms:play-services-tasks:17.0.0'
     implementation 'androidx.annotation:annotation:1.1.0'
 }
@@ -250,6 +250,7 @@ task mergeCoverageReports(type: JacocoReport) {
         classFilter.add('**/com/otaliastudios/cameraview/picture/**.*')
         classFilter.add('**/com/otaliastudios/cameraview/video/**.*')
         // TODO these below could be easily testable ALSO outside of the integration tests
+        classFilter.add('**/com/otaliastudios/cameraview/orchestrator/**.*')
         classFilter.add('**/com/otaliastudios/cameraview/video/encoding/**.*')
     }
     // We don't test OpenGL filters.

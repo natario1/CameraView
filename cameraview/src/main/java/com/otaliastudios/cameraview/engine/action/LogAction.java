@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.engine;
+package com.otaliastudios.cameraview.engine.action;
 
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -9,11 +9,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.engine.Camera2Engine;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class LogAction extends BaseAction {
+public class LogAction extends BaseAction {
 
     private final static CameraLogger LOG
             = CameraLogger.create(Camera2Engine.class.getSimpleName());

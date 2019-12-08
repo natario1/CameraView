@@ -128,7 +128,7 @@ public class CameraViewTest extends BaseTest {
     public void testClose() {
         cameraView.close();
         verify(mockPreview, times(1)).onPause();
-        verify(mockController, times(1)).stop();
+        verify(mockController, times(1)).stop(false);
     }
 
     @Test
