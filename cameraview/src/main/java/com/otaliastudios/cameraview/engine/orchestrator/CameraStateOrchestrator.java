@@ -61,7 +61,7 @@ public class CameraStateOrchestrator extends CameraOrchestrator {
                 if (getCurrentState() != fromState) {
                     LOG.w(changeName.toUpperCase(), "- State mismatch, aborting. current:",
                             getCurrentState(), "from:", fromState, "to:", toState);
-                    return Tasks.forResult(null);
+                    return Tasks.forCanceled();
                 } else {
                     Executor executor = mCallback.getJobWorker(changeName).getExecutor();
                     return stateChange.call().continueWithTask(executor,

@@ -14,6 +14,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 
 /**
  * Schedules {@link com.otaliastudios.cameraview.engine.CameraEngine} actions,
@@ -104,6 +105,8 @@ public class CameraOrchestrator {
                                         mCallback.handleJobException(name, e);
                                     }
                                     source.trySetException(e);
+                                } else if (task.isCanceled()) {
+                                    source.trySetException(new CancellationException());
                                 } else {
                                     source.trySetResult(null);
                                 }

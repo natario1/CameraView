@@ -810,18 +810,19 @@ public abstract class CameraIntegrationTest extends BaseTest {
     public void testPictureFormat_DNG() {
         openSync(true);
         if (camera.getCameraOptions().supports(PictureFormat.DNG)) {
+            Op<Boolean> op = new Op<>();
+            doEndOp(op, true).when(listener).onCameraOpened(any(CameraOptions.class));
             camera.setPictureFormat(PictureFormat.DNG);
+            assertNotNull(op.await(2000));
             camera.takePicture();
             PictureResult result = waitForPictureResult(true);
             // assert that result.getData() is a DNG file:
             // We can use the first 4 bytes assuming they are the same as a TIFF file
-            // https://en.wikipedia.org/wiki/List_of_file_signatures
+            // https://en.wikipedia.org/wiki/List_of_file_signatures 73, 73, 42, 0
             byte[] b = result.getData();
-            boolean isII = b[0] == 'I' && b[1] == 'I' && b[2] == '*' && b[3] == '.';
-            boolean isMM = b[0] == 'M' && b[1] == 'M' && b[2] == '.' && b[3] == '*';
-            if (!isII && !isMM) {
-                throw new RuntimeException("Not a DNG file.");
-            }
+            boolean isII = b[0] == 'I' && b[1] == 'I' && b[2] == '*' && b[3] == 0;
+            boolean isMM = b[0] == 'M' && b[1] == 'M' && b[2] == 0 && b[3] == '*';
+            assertTrue(isII || isMM);
         }
     }
 
