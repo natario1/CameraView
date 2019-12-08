@@ -24,7 +24,7 @@ import java.util.concurrent.CountDownLatch;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-// @RequiresDevice
+@RequiresDevice
 public class Camera2IntegrationTest extends CameraIntegrationTest {
 
     @NonNull
