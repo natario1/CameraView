@@ -55,7 +55,7 @@ jobs:
           arch: ${{ matrix.EMULATOR_ARCH }}
           disable-animations: true
           emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -memory 2048
-          script: ./gradlew cameraview:connectedCheck
+          script: adb logcat Camera*:I *:E & ./gradlew cameraview:connectedCheck
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
         with:
