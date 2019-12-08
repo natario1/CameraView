@@ -131,8 +131,8 @@ public abstract class CameraEngine implements
         void dispatchOnVideoRecordingEnd();
     }
 
-    private static final String TAG = CameraEngine.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+    protected static final String TAG = CameraEngine.class.getSimpleName();
+    protected static final CameraLogger LOG = CameraLogger.create(TAG);
 
     // Need to be protected
     @SuppressWarnings("WeakerAccess") protected final Callback mCallback;

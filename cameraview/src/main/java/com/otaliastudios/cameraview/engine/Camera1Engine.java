@@ -54,10 +54,6 @@ public class Camera1Engine extends CameraEngine implements
         Camera.PreviewCallback,
         Camera.ErrorCallback,
         FrameManager.BufferCallback {
-
-    private static final String TAG = Camera1Engine.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
-
     private static final String JOB_FOCUS_RESET = "focus reset";
     private static final String JOB_FOCUS_END = "focus end";
 

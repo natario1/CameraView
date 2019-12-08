@@ -80,10 +80,6 @@ import java.util.concurrent.ExecutionException;
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAvailableListener,
         ActionHolder {
-
-    private static final String TAG = Camera2Engine.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
-
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
