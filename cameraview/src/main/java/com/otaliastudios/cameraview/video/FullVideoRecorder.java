@@ -277,7 +277,15 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                     mError = e;
                 }
             }
-            mMediaRecorder.release();
+            try {
+                mMediaRecorder.release();
+            } catch (Exception e) {
+                mResult = null;
+                if (mError == null) {
+                    LOG.w("stop:", "Error while releasing media recorder.", e);
+                    mError = e;
+                }
+            }
         }
         mProfile = null;
         mMediaRecorder = null;
