@@ -275,7 +275,7 @@ public class Camera1Engine extends CameraEngine implements
                 throw new RuntimeException("Unknown CameraPreview output class.");
             }
         } catch (IOException e) {
-            LOG.e("unbindFromSurface", "Could not release surface", e);
+            LOG.e("onStopBind", "Could not release surface", e);
         }
         return Tasks.forResult(null);
     }
@@ -289,6 +289,7 @@ public class Camera1Engine extends CameraEngine implements
         mOrchestrator.remove(JOB_FOCUS_END);
         if (mCamera != null) {
             try {
+                // In certain states, this release() call can take up to various seconds.
                 LOG.i("onStopEngine:", "Clean up.", "Releasing camera.");
                 mCamera.release();
                 LOG.i("onStopEngine:", "Clean up.", "Released camera.");

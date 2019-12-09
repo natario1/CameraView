@@ -250,7 +250,8 @@ public abstract class CameraEngine implements
     private static class NoOpExceptionHandler implements Thread.UncaughtExceptionHandler {
         @Override
         public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {
-            // No-op.
+            LOG.w("EXCEPTION:", "In the NoOpExceptionHandler, probably while destroying.",
+                    "Thread:", thread, "Error:", throwable);
         }
     }
 
@@ -273,10 +274,11 @@ public abstract class CameraEngine implements
         if (!(throwable instanceof CameraException)) {
             // This is unexpected, either a bug or something the developer should know.
             // Release and crash the UI thread so we get bug reports.
-            LOG.e("EXCEPTION:", "Unexpected exception:", throwable);
+            LOG.e("EXCEPTION:", "Unexpected exception! Scheduling destroy...");
             mCrashHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    LOG.e("EXCEPTION:", "Unexpected exception! Executing destroy...");
                     destroy();
                     // Throws an unchecked exception without unnecessary wrapping.
                     if (throwable instanceof RuntimeException) {
@@ -290,7 +292,7 @@ public abstract class CameraEngine implements
         }
 
         final CameraException cameraException = (CameraException) throwable;
-        LOG.e("EXCEPTION:", "Received CameraException:", cameraException,
+        LOG.e("EXCEPTION:", "Received CameraException.",
                 "Engine state:", getState(), "Current thread:", Thread.currentThread());
         if (fromExceptionHandler) {
             // Got to restart the handler.
@@ -352,9 +354,9 @@ public abstract class CameraEngine implements
             }
         });
         try {
-            boolean success = latch.await(6, TimeUnit.SECONDS);
+            boolean success = latch.await(10, TimeUnit.SECONDS);
             if (!success) {
-                LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
+                LOG.e("DESTROY: Could not destroy synchronously after 10 seconds.",
                         "Current thread:", Thread.currentThread(),
                         "Handler thread: ", mHandler.getThread());
             }
