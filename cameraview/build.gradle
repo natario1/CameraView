@@ -243,13 +243,12 @@ task mergeCoverageReports(type: JacocoReport) {
         // run on the CI emulator.
         // classFilter.add('**/com/otaliastudios/cameraview/engine/CameraEngine**.*')
         // classFilter.add('**/com/otaliastudios/cameraview/engine/Camera1Engine**.*')
-        classFilter.add('**/com/otaliastudios/cameraview/engine/Camera2Engine**.*')
-        classFilter.add('**/com/otaliastudios/cameraview/engine/action/**.*')
-        classFilter.add('**/com/otaliastudios/cameraview/engine/lock/**.*')
-        classFilter.add('**/com/otaliastudios/cameraview/engine/meter/**.*')
-        classFilter.add('**/com/otaliastudios/cameraview/picture/**.*')
-        classFilter.add('**/com/otaliastudios/cameraview/video/**.*')
-        // TODO these below could be easily testable ALSO outside of the integration tests
+        // classFilter.add('**/com/otaliastudios/cameraview/engine/Camera2Engine**.*')
+        // classFilter.add('**/com/otaliastudios/cameraview/engine/action/**.*')
+        // classFilter.add('**/com/otaliastudios/cameraview/engine/lock/**.*')
+        // classFilter.add('**/com/otaliastudios/cameraview/engine/meter/**.*')
+        // classFilter.add('**/com/otaliastudios/cameraview/picture/**.*')
+        // classFilter.add('**/com/otaliastudios/cameraview/video/**.*')
         // classFilter.add('**/com/otaliastudios/cameraview/orchestrator/**.*')
         // classFilter.add('**/com/otaliastudios/cameraview/video/encoding/**.*')
     }
