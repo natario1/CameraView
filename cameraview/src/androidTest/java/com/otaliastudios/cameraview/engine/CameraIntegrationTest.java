@@ -630,7 +630,8 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @Test
     public void testEndVideo_withMaxSize() {
         camera.setMode(Mode.VIDEO);
-        camera.setVideoMaxSize(2000*1000); // Less is risky
+        camera.setVideoSize(SizeSelectors.smallest());
+        camera.setVideoMaxSize(1000*1000);
         openSync(true);
         takeVideoSync(true);
         waitForVideoResult(true);
@@ -638,7 +639,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     public void testEndVideoSnapshot_withMaxSize() {
-        camera.setVideoMaxSize(2000*1000);
+        camera.setVideoMaxSize(1000*1000);
         openSync(true);
         takeVideoSnapshotSync(true);
         waitForVideoResult(true);

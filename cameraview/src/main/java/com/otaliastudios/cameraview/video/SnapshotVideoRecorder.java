@@ -231,9 +231,10 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         }
 
         if (mCurrentState == STATE_RECORDING) {
+            LOG.i("scheduling frame.");
             synchronized (mEncoderEngineLock) {
                 if (mEncoderEngine != null) { // Can be null on teardown.
-                    LOG.v("dispatching frame.");
+                    LOG.i("dispatching frame.");
                     TextureMediaEncoder textureEncoder
                             = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
                     TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
