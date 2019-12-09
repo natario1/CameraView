@@ -55,7 +55,7 @@ public class CameraStateOrchestrator extends CameraOrchestrator {
         mTargetState = toState;
 
         final boolean isTearDown = !toState.isAtLeast(fromState);
-        final String name = isTearDown ? toState.name() + " << " + fromState.name()
+        final String name = isTearDown ? fromState.name() + " << " + toState.name()
                 : fromState.name() + " >> " + toState.name();
         return schedule(name, dispatchExceptions, new Callable<Task<Void>>() {
             @Override
