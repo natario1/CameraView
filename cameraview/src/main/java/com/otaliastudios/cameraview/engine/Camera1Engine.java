@@ -734,9 +734,8 @@ public class Camera1Engine extends CameraEngine implements
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         if (data == null) {
-            // Let's test this with an exception.
-            throw new RuntimeException("Camera1 returns null data from onPreviewFrame! " +
-                    "This would make the frame processors crash later.");
+            // Seen this happen in logs.
+            return;
         }
         Frame frame = getFrameManager().getFrame(data,
                 System.currentTimeMillis(),
