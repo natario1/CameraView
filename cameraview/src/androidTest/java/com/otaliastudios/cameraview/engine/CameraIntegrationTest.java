@@ -87,7 +87,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Before
     public void setUp() {
-        LOG.e("Test started. Setting up camera.");
+        LOG.w("[TEST STARTED]", "Setting up camera.");
         WorkerHandler.destroyAll();
 
         uiSync(new Runnable() {
@@ -115,7 +115,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
                 WorkerHandler crashThread = WorkerHandler.get("CrashThread");
                 crashThread.getThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                     @Override
-                    public void uncaughtException(Thread t, Throwable e) {
+                    public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+                        LOG.e("[UNCAUGHT EXCEPTION]", "Exception in exception handler:", e);
                         uiExceptionOp.controller().end(e);
                     }
                 });
@@ -126,9 +127,10 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @After
     public void tearDown() {
-        LOG.e("Test ended. Tearing down camera.");
+        LOG.w("[TEST ENDED]", "Tearing down camera.");
         camera.destroy();
         WorkerHandler.destroyAll();
+        LOG.w("[TEST ENDED]", "Torn down camera.");
     }
 
     private void waitForUiException() throws Throwable {
@@ -144,9 +146,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
         camera.open();
         CameraOptions result = open.await(DELAY);
         if (expectSuccess) {
+            LOG.i("[OPEN SYNC]", "Expecting success.");
             assertNotNull("Can open", result);
             onOpenSync();
         } else {
+            LOG.i("[OPEN SYNC]", "Expecting failure.");
             assertNull("Should not open", result);
         }
         return result;
@@ -166,8 +170,10 @@ public abstract class CameraIntegrationTest extends BaseTest {
         camera.close();
         Boolean result = close.await(DELAY);
         if (expectSuccess) {
+            LOG.i("[CLOSE SYNC]", "Expecting success.");
             assertNotNull("Can close", result);
         } else {
+            LOG.i("[CLOSE SYNC]", "Expecting failure.");
             assertNull("Should not close", result);
         }
     }
@@ -198,6 +204,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
         // long after the actual stop() call, so if we're still processing, let's wait more.
         if (expectSuccess && camera.isTakingVideo()) {
             while (camera.isTakingVideo()) {
+                LOG.w("[WAIT VIDEO]", "Waiting extra", DELAY, "milliseconds...");
                 video.listen();
                 result = video.await(DELAY);
             }
@@ -208,9 +215,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
         // Now we should be OK.
         if (expectSuccess) {
+            LOG.i("[WAIT VIDEO]", "Expecting success.");
             assertEquals("Should call onVideoRecordingEnd", 0, onVideoRecordingEnd.getCount());
             assertNotNull("Should end video", result);
         } else {
+            LOG.i("[WAIT VIDEO]", "Expecting failure.");
             assertNull("Should not end video", result);
         }
         return result;
@@ -228,8 +237,10 @@ public abstract class CameraIntegrationTest extends BaseTest {
         }));
         PictureResult result = pic.await(DELAY);
         if (expectSuccess) {
+            LOG.i("[WAIT PICTURE]", "Expecting success.");
             assertNotNull("Can take picture", result);
         } else {
+            LOG.i("[WAIT PICTURE]", "Expecting failure.");
             assertNull("Should not take picture", result);
         }
         return result;
@@ -256,9 +267,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
         }
         Boolean result = op.await(DELAY);
         if (expectSuccess) {
+            LOG.i("[WAIT VIDEO START]", "Expecting success.");
             assertNotNull("should start video recording or get CameraError", result);
             assertTrue("should start video recording successfully", result);
         } else {
+            LOG.i("[WAIT VIDEO START]", "Expecting failure.");
             assertTrue("should not start video recording", result == null || !result);
         }
     }
@@ -285,9 +298,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
         }
         Boolean result = op.await(DELAY);
         if (expectSuccess) {
+            LOG.i("[WAIT VIDEO SNAP START]", "Expecting success.");
             assertNotNull("should start video recording or get CameraError", result);
             assertTrue("should start video recording successfully", result);
         } else {
+            LOG.i("[WAIT VIDEO SNAP START]", "Expecting failure.");
             assertTrue("should not start video recording", result == null || !result);
         }
     }

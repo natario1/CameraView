@@ -231,16 +231,16 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         }
 
         if (mCurrentState == STATE_RECORDING) {
-            LOG.v("dispatching frame.");
-            TextureMediaEncoder textureEncoder
-                    = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
-            TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
-            frame.timestampNanos = surfaceTexture.getTimestamp();
-            // NOTE: this is an approximation but it seems to work:
-            frame.timestampMillis = System.currentTimeMillis();
-            surfaceTexture.getTransformMatrix(frame.transform);
             synchronized (mEncoderEngineLock) {
                 if (mEncoderEngine != null) { // Can be null on teardown.
+                    LOG.v("dispatching frame.");
+                    TextureMediaEncoder textureEncoder
+                            = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
+                    TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
+                    frame.timestampNanos = surfaceTexture.getTimestamp();
+                    // NOTE: this is an approximation but it seems to work:
+                    frame.timestampMillis = System.currentTimeMillis();
+                    surfaceTexture.getTransformMatrix(frame.transform);
                     mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
                 }
             }
