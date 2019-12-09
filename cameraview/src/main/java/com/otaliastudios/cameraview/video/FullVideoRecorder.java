@@ -203,7 +203,13 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         }
         mMediaRecorder.setOutputFile(stub.file.getAbsolutePath());
         mMediaRecorder.setOrientationHint(stub.rotation);
-        mMediaRecorder.setMaxFileSize(stub.maxSize);
+        // When using MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED, the recorder might have stopped
+        // before calling it. But this creates issues on Camera2 Legacy devices - they need a
+        // callback BEFORE the recorder stops (see Camera2Engine). For this reason, we increase
+        // the max size and use MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING instead.
+        // Would do this with max duration as well but there's no such callback.
+        mMediaRecorder.setMaxFileSize(stub.maxSize <= 0 ? stub.maxSize
+                : Math.round(stub.maxSize / 0.9D));
         mMediaRecorder.setMaxDuration(stub.maxDuration);
         mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
             @Override
@@ -213,7 +219,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                         mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
                         stop(false);
                         break;
-                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
+                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING:
                         mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
                         stop(false);
                         break;
