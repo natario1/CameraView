@@ -534,14 +534,17 @@ public abstract class MediaEncoder {
      * max length allowed. We will move to {@link #STATE_LIMIT_REACHED} and request a stop.
      */
     private void onMaxLengthReached() {
-        if (mMaxLengthReached) return;
-        mMaxLengthReached = true;
-        if (mState >= STATE_LIMIT_REACHED) {
-            LOG.w(mName, "onMaxLengthReached: Reached in wrong state. Aborting.", mState);
+        if (mMaxLengthReached) {
+            LOG.w(mName, "onMaxLengthReached: Called twice.");
         } else {
-            LOG.w(mName, "onMaxLengthReached: Requesting a stop.");
-            setState(STATE_LIMIT_REACHED);
-            mController.requestStop(mTrackIndex);
+            mMaxLengthReached = true;
+            if (mState >= STATE_LIMIT_REACHED) {
+                LOG.w(mName, "onMaxLengthReached: Reached in wrong state. Aborting.", mState);
+            } else {
+                LOG.w(mName, "onMaxLengthReached: Requesting a stop.");
+                setState(STATE_LIMIT_REACHED);
+                mController.requestStop(mTrackIndex);
+            }
         }
     }
 

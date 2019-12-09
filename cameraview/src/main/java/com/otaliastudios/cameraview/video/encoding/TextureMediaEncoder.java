@@ -181,6 +181,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         LOG.i("onEvent -",
                 "frameNumber:", mFrameNumber,
                 "timestampUs:", frame.timestampUs(),
+                "hasReachedMaxLength:", hasReachedMaxLength(),
                 "- draining.");
         drainOutput(false);
 
