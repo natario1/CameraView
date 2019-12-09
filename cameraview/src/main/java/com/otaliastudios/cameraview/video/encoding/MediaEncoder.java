@@ -397,7 +397,7 @@ public abstract class MediaEncoder {
     @SuppressLint("LogNotTimber")
     @SuppressWarnings("WeakerAccess")
     protected final void drainOutput(boolean drainAll) {
-        LOG.v(mName, "DRAINING - EOS:", drainAll);
+        LOG.i(mName, "DRAINING - EOS:", drainAll);
         if (mMediaCodec == null) {
             LOG.e("drain() was called before prepare() or after releasing.");
             return;
