@@ -125,16 +125,17 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     //region Utilities
 
+    @VisibleForTesting
     @NonNull
-    private <T> T readCharacteristic(@NonNull CameraCharacteristics.Key<T> key,
-                                     @NonNull T fallback) {
+    <T> T readCharacteristic(@NonNull CameraCharacteristics.Key<T> key,
+                             @NonNull T fallback) {
         return readCharacteristic(mCameraCharacteristics, key, fallback);
     }
 
     @NonNull
     private <T> T readCharacteristic(@NonNull CameraCharacteristics characteristics,
-                                     @NonNull CameraCharacteristics.Key<T> key,
-                                     @NonNull T fallback) {
+                             @NonNull CameraCharacteristics.Key<T> key,
+                             @NonNull T fallback) {
         T value = characteristics.get(key);
         return value == null ? fallback : value;
     }

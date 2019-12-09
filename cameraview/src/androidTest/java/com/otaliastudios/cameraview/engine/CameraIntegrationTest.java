@@ -64,7 +64,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public abstract class CameraIntegrationTest extends BaseTest {
+public abstract class CameraIntegrationTest<E extends CameraEngine> extends BaseTest {
 
     private final static CameraLogger LOG = CameraLogger.create(CameraIntegrationTest.class.getSimpleName());
     private final static long DELAY = 8000;
@@ -72,8 +72,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
 
-    private CameraView camera;
-    protected CameraEngine controller;
+    protected CameraView camera;
+    protected E controller;
     private CameraListener listener;
     private Op<Throwable> uiExceptionOp;
 
@@ -98,7 +98,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
                     @NonNull
                     @Override
                     protected CameraEngine instantiateCameraEngine(@NonNull Engine engine, @NonNull CameraEngine.Callback callback) {
-                        controller = super.instantiateCameraEngine(getEngine(), callback);
+                        //noinspection unchecked
+                        controller = (E) super.instantiateCameraEngine(getEngine(), callback);
                         return controller;
                     }
                 };
@@ -246,11 +247,11 @@ public abstract class CameraIntegrationTest extends BaseTest {
         return result;
     }
 
-    private void takeVideoSync(boolean expectSuccess) {
+    protected void takeVideoSync(boolean expectSuccess) {
         takeVideoSync(expectSuccess,0);
     }
 
-    private void takeVideoSync(boolean expectSuccess, int duration) {
+    protected void takeVideoSync(boolean expectSuccess, int duration) {
         final Op<Boolean> op = new Op<>();
         doEndOp(op, true).when(listener).onVideoRecordingStart();
         doEndOp(op, false).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
@@ -261,6 +262,8 @@ public abstract class CameraIntegrationTest extends BaseTest {
         }));
         File file = new File(getContext().getFilesDir(), "video.mp4");
         if (duration > 0) {
+            // On Camera2, on Legacy sensors, this call can crash (see FullVideoRecorder).
+            // For this reasons, tests that call this should not be run on such devices.
             camera.takeVideo(file, duration);
         } else {
             camera.takeVideo(file);
