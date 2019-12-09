@@ -139,9 +139,9 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     private CameraOptions openSync(boolean expectSuccess) {
-        camera.open();
         final Op<CameraOptions> open = new Op<>();
         doEndOp(open, 0).when(listener).onCameraOpened(any(CameraOptions.class));
+        camera.open();
         CameraOptions result = open.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Can open", result);
@@ -161,9 +161,9 @@ public abstract class CameraIntegrationTest extends BaseTest {
     }
 
     private void closeSync(boolean expectSuccess) {
-        camera.close();
         final Op<Boolean> close = new Op<>();
         doEndOp(close, true).when(listener).onCameraClosed();
+        camera.close();
         Boolean result = close.await(DELAY);
         if (expectSuccess) {
             assertNotNull("Can close", result);
@@ -604,7 +604,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
     @Test
     public void testEndVideo_withMaxSize() {
         camera.setMode(Mode.VIDEO);
-        camera.setVideoMaxSize(3000*1000); // Less is risky
+        camera.setVideoMaxSize(2000*1000); // Less is risky
         openSync(true);
         takeVideoSync(true);
         waitForVideoResult(true);
@@ -612,7 +612,7 @@ public abstract class CameraIntegrationTest extends BaseTest {
 
     @Test
     public void testEndVideoSnapshot_withMaxSize() {
-        camera.setVideoMaxSize(3000*1000);
+        camera.setVideoMaxSize(2000*1000);
         openSync(true);
         takeVideoSnapshotSync(true);
         waitForVideoResult(true);
