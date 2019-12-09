@@ -182,6 +182,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
                 "frameNumber:", mFrameNumber,
                 "timestampUs:", frame.timestampUs(),
                 "hasReachedMaxLength:", hasReachedMaxLength(),
+                "thread:", Thread.currentThread(),
                 "- draining.");
         drainOutput(false);
 
@@ -190,6 +191,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
                 "frameNumber:", mFrameNumber,
                 "timestampUs:", frame.timestampUs(),
                 "hasReachedMaxLength:", hasReachedMaxLength(),
+                "thread:", Thread.currentThread(),
                 "- rendering.");
 
         // 1. We must scale this matrix like GlCameraPreview does, because it might have some
@@ -232,6 +234,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
                 "frameNumber:", mFrameNumber,
                 "timestampUs:", frame.timestampUs(),
                 "hasReachedMaxLength:", hasReachedMaxLength(),
+                "thread:", Thread.currentThread(),
                 "- rendered.");
     }
 
