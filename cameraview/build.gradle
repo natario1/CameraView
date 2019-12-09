@@ -241,8 +241,8 @@ task mergeCoverageReports(type: JacocoReport) {
     if (isCI) {
         // All these classes are tested by the integration tests that we are not able to
         // run on the CI emulator.
-        classFilter.add('**/com/otaliastudios/cameraview/engine/CameraEngine**.*')
-        classFilter.add('**/com/otaliastudios/cameraview/engine/Camera1Engine**.*')
+        // classFilter.add('**/com/otaliastudios/cameraview/engine/CameraEngine**.*')
+        // classFilter.add('**/com/otaliastudios/cameraview/engine/Camera1Engine**.*')
         classFilter.add('**/com/otaliastudios/cameraview/engine/Camera2Engine**.*')
         classFilter.add('**/com/otaliastudios/cameraview/engine/action/**.*')
         classFilter.add('**/com/otaliastudios/cameraview/engine/lock/**.*')
@@ -250,8 +250,8 @@ task mergeCoverageReports(type: JacocoReport) {
         classFilter.add('**/com/otaliastudios/cameraview/picture/**.*')
         classFilter.add('**/com/otaliastudios/cameraview/video/**.*')
         // TODO these below could be easily testable ALSO outside of the integration tests
-        classFilter.add('**/com/otaliastudios/cameraview/orchestrator/**.*')
-        classFilter.add('**/com/otaliastudios/cameraview/video/encoding/**.*')
+        // classFilter.add('**/com/otaliastudios/cameraview/orchestrator/**.*')
+        // classFilter.add('**/com/otaliastudios/cameraview/video/encoding/**.*')
     }
     // We don't test OpenGL filters.
     classFilter.add('**/com/otaliastudios/cameraview/filters/**.*')
