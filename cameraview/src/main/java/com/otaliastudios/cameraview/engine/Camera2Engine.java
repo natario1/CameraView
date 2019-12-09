@@ -876,14 +876,16 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     public void onVideoRecordingEnd() {
         super.onVideoRecordingEnd();
         // SnapshotRecorder will invoke this on its own thread which is risky, but if it was a
-        // snapshot, this function returns early so its safe.
+        // snapshot, this function does nothing so it's safe.
         boolean needsIssue549Workaround = (mVideoRecorder instanceof Full2VideoRecorder) &&
                 (readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
                         == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
         if (needsIssue549Workaround) {
             LOG.w("Applying the Issue549 workaround.", Thread.currentThread());
             maybeRestorePreviewTemplateAfterVideo();
-            LOG.w("Applied the Issue549 workaround.", Thread.currentThread());
+            LOG.w("Applied the Issue549 workaround. Sleeping...");
+            try { Thread.sleep(600); } catch (InterruptedException ignore) {}
+            LOG.w("Applied the Issue549 workaround. Slept!");
         }
     }
 
