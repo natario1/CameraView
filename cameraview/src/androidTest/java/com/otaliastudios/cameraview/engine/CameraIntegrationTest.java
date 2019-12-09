@@ -141,7 +141,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         }
     }
 
-    private CameraOptions openSync(boolean expectSuccess) {
+    protected final CameraOptions openSync(boolean expectSuccess) {
         final Op<CameraOptions> open = new Op<>();
         doEndOp(open, 0).when(listener).onCameraOpened(any(CameraOptions.class));
         camera.open();
@@ -165,7 +165,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         while (controller.getState() != CameraState.PREVIEW) {}
     }
 
-    private void closeSync(boolean expectSuccess) {
+    protected final void closeSync(boolean expectSuccess) {
         final Op<Boolean> close = new Op<>();
         doEndOp(close, true).when(listener).onCameraClosed();
         camera.close();
