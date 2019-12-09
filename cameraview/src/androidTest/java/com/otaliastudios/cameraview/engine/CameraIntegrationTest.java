@@ -314,11 +314,11 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     public void testOpenClose() {
-        assertEquals(controller.getState(), CameraState.OFF);
+        assertEquals(CameraState.OFF, controller.getState());
         openSync(true);
         assertTrue(controller.getState().isAtLeast(CameraState.ENGINE));
         closeSync(true);
-        assertEquals(controller.getState(), CameraState.OFF);
+        assertEquals(CameraState.OFF, controller.getState());
     }
 
     @Test

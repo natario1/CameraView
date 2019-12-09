@@ -408,23 +408,24 @@ public abstract class CameraEngine implements
     private Task<Void> startEngine() {
         return mOrchestrator.scheduleStateChange(CameraState.OFF, CameraState.ENGINE,
                 true,
-                new Callable<Task<Void>>() {
+                new Callable<Task<CameraOptions>>() {
             @Override
-            public Task<Void> call() {
+            public Task<CameraOptions> call() {
                 if (!collectCameraInfo(mFacing)) {
                     LOG.e("onStartEngine:", "No camera available for facing", mFacing);
                     throw new CameraException(CameraException.REASON_NO_CAMERA);
                 }
-                return onStartEngine().onSuccessTask(
-                        new SuccessContinuation<CameraOptions, Void>() {
-                    @NonNull
-                    @Override
-                    public Task<Void> then(@Nullable CameraOptions cameraOptions) {
-                        if (cameraOptions == null) throw new RuntimeException("Null options!");
-                        mCallback.dispatchOnCameraOpened(cameraOptions);
-                        return Tasks.forResult(null);
-                    }
-                });
+                return onStartEngine();
+            }
+        }).onSuccessTask(new SuccessContinuation<CameraOptions, Void>() {
+            @NonNull
+            @Override
+            public Task<Void> then(@Nullable CameraOptions cameraOptions) {
+                // Put this on the outer task so we're sure it's called after getState() is changed.
+                // This was breaking some tests on rare occasions.
+                if (cameraOptions == null) throw new RuntimeException("Null options!");
+                mCallback.dispatchOnCameraOpened(cameraOptions);
+                return Tasks.forResult(null);
             }
         });
     }
@@ -437,12 +438,14 @@ public abstract class CameraEngine implements
                 new Callable<Task<Void>>() {
             @Override
             public Task<Void> call() {
-                return onStopEngine().addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        mCallback.dispatchOnCameraClosed();
-                    }
-                });
+                return onStopEngine();
+            }
+        }).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                // Put this on the outer task so we're sure it's called after getState() is OFF.
+                // This was breaking some tests on rare occasions.
+                mCallback.dispatchOnCameraClosed();
             }
         });
     }
