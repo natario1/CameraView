@@ -19,6 +19,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.engine.offset.Axis;
@@ -142,7 +143,7 @@ public class Camera1Engine extends CameraEngine implements
     @NonNull
     @EngineThread
     @Override
-    protected Task<Void> onStartEngine() {
+    protected Task<CameraOptions> onStartEngine() {
         try {
             mCamera = Camera.open(mCameraId);
         } catch (Exception e) {
@@ -161,7 +162,7 @@ public class Camera1Engine extends CameraEngine implements
         mCamera.setDisplayOrientation(getAngles().offset(Reference.SENSOR, Reference.VIEW,
                 Axis.ABSOLUTE)); // <- not allowed during preview
         LOG.i("onStartEngine:", "Ended");
-        return Tasks.forResult(null);
+        return Tasks.forResult(mCameraOptions);
     }
 
     @EngineThread

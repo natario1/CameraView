@@ -8,8 +8,10 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.SuccessContinuation;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
@@ -413,12 +415,16 @@ public abstract class CameraEngine implements
                     LOG.e("onStartEngine:", "No camera available for facing", mFacing);
                     throw new CameraException(CameraException.REASON_NO_CAMERA);
                 }
-                return onStartEngine();
-            }
-        }).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                mCallback.dispatchOnCameraOpened(mCameraOptions);
+                return onStartEngine().onSuccessTask(
+                        new SuccessContinuation<CameraOptions, Void>() {
+                    @NonNull
+                    @Override
+                    public Task<Void> then(@Nullable CameraOptions cameraOptions) {
+                        if (cameraOptions == null) throw new RuntimeException("Null options!");
+                        mCallback.dispatchOnCameraOpened(cameraOptions);
+                        return Tasks.forResult(null);
+                    }
+                });
             }
         });
     }
@@ -431,12 +437,12 @@ public abstract class CameraEngine implements
                 new Callable<Task<Void>>() {
             @Override
             public Task<Void> call() {
-                return onStopEngine();
-            }
-        }).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                mCallback.dispatchOnCameraClosed();
+                return onStopEngine().addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        mCallback.dispatchOnCameraClosed();
+                    }
+                });
             }
         });
     }
@@ -447,7 +453,7 @@ public abstract class CameraEngine implements
      */
     @NonNull
     @EngineThread
-    protected abstract Task<Void> onStartEngine();
+    protected abstract Task<CameraOptions> onStartEngine();
 
     /**
      * Stops the engine.

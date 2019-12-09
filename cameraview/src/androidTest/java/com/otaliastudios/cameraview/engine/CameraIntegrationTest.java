@@ -848,7 +848,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     //region Frame Processing
 
-    private void assert30Frames(FrameProcessor mock) throws Exception {
+    private void assert30Frames(@NonNull FrameProcessor mock) throws Exception {
         // Expect 30 frames
         CountDownLatch latch = new CountDownLatch(30);
         doCountDown(latch).when(mock).process(any(Frame.class));

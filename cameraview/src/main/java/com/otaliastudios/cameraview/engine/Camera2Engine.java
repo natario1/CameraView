@@ -35,6 +35,7 @@ import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Facing;
@@ -371,8 +372,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @SuppressLint("MissingPermission")
     @NonNull
     @Override
-    protected Task<Void> onStartEngine() {
-        final TaskCompletionSource<Void> task = new TaskCompletionSource<>();
+    protected Task<CameraOptions> onStartEngine() {
+        final TaskCompletionSource<CameraOptions> task = new TaskCompletionSource<>();
         try {
             // We have a valid camera for this Facing. Go on.
             mManager.openCamera(mCameraId, new CameraDevice.StateCallback() {
@@ -398,7 +399,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         task.trySetException(createCameraException(e));
                         return;
                     }
-                    task.trySetResult(null);
+                    task.trySetResult(mCameraOptions);
                 }
 
                 @Override

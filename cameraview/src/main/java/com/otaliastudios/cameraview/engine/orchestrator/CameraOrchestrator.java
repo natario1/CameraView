@@ -99,15 +99,17 @@ public class CameraOrchestrator {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
                                 Exception e = task.getException();
-                                LOG.i(name.toUpperCase(), "- Finished.", e);
                                 if (e != null) {
+                                    LOG.w(name.toUpperCase(), "- Finished with ERROR.", e);
                                     if (dispatchExceptions) {
                                         mCallback.handleJobException(name, e);
                                     }
                                     source.trySetException(e);
                                 } else if (task.isCanceled()) {
+                                    LOG.i(name.toUpperCase(), "- Finished because ABORTED.");
                                     source.trySetException(new CancellationException());
                                 } else {
+                                    LOG.i(name.toUpperCase(), "- Finished.");
                                     source.trySetResult(null);
                                 }
                             }

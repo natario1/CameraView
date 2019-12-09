@@ -37,7 +37,8 @@ public class CameraStateOrchestrator extends CameraOrchestrator {
     public boolean hasPendingStateChange() {
         synchronized (mLock) {
             for (Token token : mJobs) {
-                if (token.name.contains(" > ") && !token.task.isComplete()) {
+                if ((token.name.contains(" >> ") || token.name.contains(" << "))
+                        && !token.task.isComplete()) {
                     return true;
                 }
             }
@@ -54,16 +55,17 @@ public class CameraStateOrchestrator extends CameraOrchestrator {
         mTargetState = toState;
 
         final boolean isTearDown = !toState.isAtLeast(fromState);
-        final String changeName = fromState.name() + " > " + toState.name();
-        return schedule(changeName, dispatchExceptions, new Callable<Task<Void>>() {
+        final String name = isTearDown ? toState.name() + " << " + fromState.name()
+                : fromState.name() + " >> " + toState.name();
+        return schedule(name, dispatchExceptions, new Callable<Task<Void>>() {
             @Override
             public Task<Void> call() throws Exception {
                 if (getCurrentState() != fromState) {
-                    LOG.w(changeName.toUpperCase(), "- State mismatch, aborting. current:",
+                    LOG.w(name.toUpperCase(), "- State mismatch, aborting. current:",
                             getCurrentState(), "from:", fromState, "to:", toState);
                     return Tasks.forCanceled();
                 } else {
-                    Executor executor = mCallback.getJobWorker(changeName).getExecutor();
+                    Executor executor = mCallback.getJobWorker(name).getExecutor();
                     return stateChange.call().continueWithTask(executor,
                             new Continuation<Void, Task<Void>>() {
                         @Override
