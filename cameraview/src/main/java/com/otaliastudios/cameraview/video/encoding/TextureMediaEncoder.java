@@ -186,9 +186,10 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         drainOutput(false);
 
         // Then draw on the surface.
-        LOG.v("onEvent -",
+        LOG.i("onEvent -",
                 "frameNumber:", mFrameNumber,
                 "timestampUs:", frame.timestampUs(),
+                "hasReachedMaxLength:", hasReachedMaxLength(),
                 "- rendering.");
 
         // 1. We must scale this matrix like GlCameraPreview does, because it might have some
@@ -227,6 +228,11 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         mWindow.setPresentationTime(frame.timestampNanos);
         mWindow.swapBuffers();
         mFramePool.recycle(frame);
+        LOG.i("onEvent -",
+                "frameNumber:", mFrameNumber,
+                "timestampUs:", frame.timestampUs(),
+                "hasReachedMaxLength:", hasReachedMaxLength(),
+                "- rendered.");
     }
 
     @Override
