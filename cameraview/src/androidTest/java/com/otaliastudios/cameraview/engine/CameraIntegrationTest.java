@@ -33,6 +33,7 @@ import com.otaliastudios.cameraview.tools.Op;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.tools.RecoverCameraRule;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -71,7 +72,22 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     private final static long DELAY = 8000;
 
     @Rule
-    public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
+    public ActivityTestRule<TestActivity> activityRule = new ActivityTestRule<>(TestActivity.class);
+
+    @Rule
+    public RecoverCameraRule recoverRule = new RecoverCameraRule(new RecoverCameraRule.Callback() {
+        @NonNull
+        @Override
+        public CameraView getCamera() {
+            return camera;
+        }
+
+        @NonNull
+        @Override
+        public CameraLogger getLogger() {
+            return LOG;
+        }
+    });
 
     protected CameraView camera;
     protected E controller;
@@ -94,7 +110,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         uiSync(new Runnable() {
             @Override
             public void run() {
-                camera = new CameraView(rule.getActivity()) {
+                camera = new CameraView(activityRule.getActivity()) {
 
                     @NonNull
                     @Override
@@ -108,7 +124,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
                 camera.setExperimental(true);
                 camera.setEngine(getEngine());
                 camera.addCameraListener(listener);
-                rule.getActivity().inflate(camera);
+                activityRule.getActivity().inflate(camera);
 
                 // Ensure that controller exceptions are thrown on this thread (not on the UI thread).
                 // TODO this makes debugging for wrong tests very hard, as we don't get the exception
