@@ -92,7 +92,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     protected CameraView camera;
     protected E controller;
     private CameraListener listener;
-    private Op<Throwable> uiExceptionOp;
+    private Op<Throwable> errorOp;
 
     @BeforeClass
     public static void grant() {
@@ -114,7 +114,9 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
                     @NonNull
                     @Override
-                    protected CameraEngine instantiateCameraEngine(@NonNull Engine engine, @NonNull CameraEngine.Callback callback) {
+                    protected CameraEngine instantiateCameraEngine(
+                            @NonNull Engine engine,
+                            @NonNull CameraEngine.Callback callback) {
                         //noinspection unchecked
                         controller = (E) super.instantiateCameraEngine(getEngine(), callback);
                         return controller;
@@ -127,15 +129,14 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
                 activityRule.getActivity().inflate(camera);
 
                 // Ensure that controller exceptions are thrown on this thread (not on the UI thread).
-                // TODO this makes debugging for wrong tests very hard, as we don't get the exception
-                // unless waitForUiException() is called.
-                uiExceptionOp = new Op<>();
+                errorOp = new Op<>();
                 WorkerHandler crashThread = WorkerHandler.get("CrashThread");
                 crashThread.getThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                     @Override
                     public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
                         LOG.e("[UNCAUGHT EXCEPTION]", "Exception in exception handler:", e);
-                        uiExceptionOp.controller().end(e);
+                        errorOp.controller().end(e);
+                        throw new RuntimeException(e);
                     }
                 });
                 controller.mCrashHandler = crashThread.getHandler();
@@ -147,6 +148,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
                     public void onCameraError(@NonNull CameraException exception) {
                         super.onCameraError(exception);
                         if (exception.isUnrecoverable()) {
+                            LOG.e("[UNRECOVERABLE CAMERA EXCEPTION]", exception);
                             throw exception;
                         }
                     }
@@ -163,8 +165,8 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         LOG.w("[TEST ENDED]", "Torn down camera.");
     }
 
-    private void waitForUiException() throws Throwable {
-        Throwable throwable = uiExceptionOp.await(DELAY);
+    private void waitForError() throws Throwable {
+        Throwable throwable = errorOp.await(DELAY);
         if (throwable != null) {
             throw throwable;
         }
@@ -584,7 +586,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         camera.setMode(Mode.PICTURE);
         openSync(true);
         takeVideoSync(false);
-        waitForUiException();
+        waitForError();
     }
 
     @Test
@@ -776,7 +778,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         camera.setMode(Mode.VIDEO);
         openSync(true);
         camera.takePicture();
-        waitForUiException();
+        waitForError();
         camera.takePicture();
 
     }
