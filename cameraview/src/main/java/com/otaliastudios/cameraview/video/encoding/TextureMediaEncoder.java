@@ -119,12 +119,13 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     @Override
     protected boolean shouldRenderFrame(long timestampUs) {
         if (!super.shouldRenderFrame(timestampUs)) {
+            LOG.i("shouldRenderFrame - Dropping frame because of super()");
             return false;
         } else if (mFrameNumber <= 10) {
             // Always render the first few frames, or muxer fails.
             return true;
         } else if (getPendingEvents(FRAME_EVENT) > 2) {
-            LOG.v("shouldRenderFrame - Dropping, we already have too many pending events:",
+            LOG.i("shouldRenderFrame - Dropping, we already have too many pending events:",
                     getPendingEvents(FRAME_EVENT));
             return false;
         } else {
@@ -177,7 +178,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         }
 
         // First, drain any previous data.
-        LOG.v("onEvent -",
+        LOG.i("onEvent -",
                 "frameNumber:", mFrameNumber,
                 "timestampUs:", frame.timestampUs(),
                 "- draining.");
