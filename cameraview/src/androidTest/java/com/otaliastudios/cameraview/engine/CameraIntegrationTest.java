@@ -139,6 +139,18 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
                     }
                 });
                 controller.mCrashHandler = crashThread.getHandler();
+
+                // Ensure that important CameraExceptions are thrown, otherwise they are just
+                // logged and the test goes on.
+                camera.addCameraListener(new CameraListener() {
+                    @Override
+                    public void onCameraError(@NonNull CameraException exception) {
+                        super.onCameraError(exception);
+                        if (exception.isUnrecoverable()) {
+                            throw exception;
+                        }
+                    }
+                });
             }
         });
     }

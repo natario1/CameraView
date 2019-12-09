@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.tools;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraListener;
@@ -21,16 +22,6 @@ public class RecoverCameraRule implements TestRule {
     }
 
     private final Callback mCallback;
-    private final CameraListener mListener = new CameraListener() {
-        @Override
-        public void onCameraError(@NonNull CameraException exception) {
-            super.onCameraError(exception);
-            if (exception.isUnrecoverable()) {
-                mException = exception;
-            }
-        }
-    };
-    private CameraException mException;
 
     public RecoverCameraRule(@NonNull Callback callback) {
         mCallback = callback;
@@ -41,23 +32,30 @@ public class RecoverCameraRule implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                mException = null;
-                mCallback.getCamera().addCameraListener(mListener);
                 try {
                     base.evaluate();
                 } catch (Throwable throwable) {
-                    if (mException != null) {
+                    CameraException exception = findCameraException(throwable);
+                    if (exception != null) {
                         mCallback.getLogger().e("**************************************");
                         mCallback.getLogger().e("!!! TEST FAILED, TRYING TO RECOVER !!!");
                         mCallback.getLogger().e("**************************************");
-                        mException = null;
                         mCallback.getCamera().destroy();
                         base.evaluate();
                     }
-                } finally {
-                    mCallback.getCamera().removeCameraListener(mListener);
                 }
             }
         };
+    }
+
+    @Nullable
+    private CameraException findCameraException(@NonNull Throwable throwable) {
+        if (throwable instanceof CameraException
+                && ((CameraException) throwable).isUnrecoverable()) {
+            return (CameraException) throwable;
+        }
+        if (throwable.getCause() == null) return null;
+        if (throwable == throwable.getCause()) return null;
+        return findCameraException(throwable.getCause());
     }
 }

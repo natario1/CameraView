@@ -407,7 +407,7 @@ public abstract class MediaEncoder {
         }
         while (true) {
             int encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, OUTPUT_TIMEOUT_US);
-            LOG.i(mName, "DRAINING - Got status:", encoderStatus);
+            LOG.v(mName, "DRAINING - Got status:", encoderStatus);
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 // no output available yet
                 if (!drainAll) break; // out of while
