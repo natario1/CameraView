@@ -273,7 +273,7 @@ public abstract class CameraEngine implements
         if (!(throwable instanceof CameraException)) {
             // This is unexpected, either a bug or something the developer should know.
             // Release and crash the UI thread so we get bug reports.
-            LOG.e("uncaughtException:", "Unexpected exception:", throwable);
+            LOG.e("EXCEPTION:", "Unexpected exception:", throwable);
             mCrashHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -290,17 +290,21 @@ public abstract class CameraEngine implements
         }
 
         final CameraException cameraException = (CameraException) throwable;
-        LOG.e("uncaughtException:", "Got CameraException:", cameraException,
-                "on state:", getState());
+        LOG.e("EXCEPTION:", "Received CameraException:", cameraException,
+                "Engine state:", getState(), "Current thread:", Thread.currentThread());
         if (fromExceptionHandler) {
             // Got to restart the handler.
+            LOG.e("EXCEPTION:", "Handler thread is gone. Replacing.");
             thread.interrupt();
             mHandler = WorkerHandler.get("CameraViewEngine");
             mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
         }
 
+        LOG.e("EXCEPTION:", "Dispatching it to CameraListener.");
         mCallback.dispatchError(cameraException);
         if (cameraException.isUnrecoverable()) {
+            LOG.e("EXCEPTION:", "Since exception is unrecoverable, we stop(true)",
+                    "to release resources and make it easy to retry.");
             // Stop everything (if needed) without notifying teardown errors.
             stop(true);
         }
