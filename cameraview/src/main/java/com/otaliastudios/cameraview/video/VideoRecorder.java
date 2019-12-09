@@ -155,6 +155,7 @@ public abstract class VideoRecorder {
     @SuppressWarnings("WeakerAccess")
     @CallSuper
     protected void dispatchVideoRecordingStart() {
+        LOG.i("dispatchVideoRecordingStart:", "About to dispatch.");
         if (mListener != null) {
             mListener.onVideoRecordingStart();
         }
@@ -167,6 +168,7 @@ public abstract class VideoRecorder {
     @SuppressWarnings("WeakerAccess")
     @CallSuper
     protected void dispatchVideoRecordingEnd() {
+        LOG.i("dispatchVideoRecordingEnd:", "About to dispatch.");
         if (mListener != null) {
             mListener.onVideoRecordingEnd();
         }

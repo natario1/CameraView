@@ -312,6 +312,7 @@ public class Camera1Engine extends CameraEngine implements
     @EngineThread
     @Override
     protected void onTakePicture(@NonNull PictureResult.Stub stub, boolean doMetering) {
+        LOG.i("onTakePicture:", "executing.");
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
                 Axis.RELATIVE_TO_SENSOR);
         stub.size = getPictureSize(Reference.OUTPUT);
@@ -324,6 +325,7 @@ public class Camera1Engine extends CameraEngine implements
     protected void onTakePictureSnapshot(@NonNull PictureResult.Stub stub,
                                          @NonNull AspectRatio outputRatio,
                                          boolean doMetering) {
+        LOG.i("onTakePictureSnapshot:", "executing.");
         // Not the real size: it will be cropped to match the view ratio
         stub.size = getUncroppedSnapshotSize(Reference.OUTPUT);
         // Actually it will be rotated and set to 0.

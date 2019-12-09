@@ -45,6 +45,8 @@ public class RecoverCameraRule implements TestRule {
                         mCallback.getLogger().e("**************************************");
                         mCallback.getCamera().destroy();
                         base.evaluate();
+                    } else {
+                        throw throwable;
                     }
                 }
             }

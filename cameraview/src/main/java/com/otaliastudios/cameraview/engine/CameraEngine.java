@@ -340,7 +340,7 @@ public abstract class CameraEngine implements
         // Cannot use Tasks.await() because we might be on the UI thread.
         final CountDownLatch latch = new CountDownLatch(1);
         stop(true).addOnCompleteListener(
-                WorkerHandler.get().getExecutor(),
+                mHandler.getExecutor(),
                 new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -348,9 +348,9 @@ public abstract class CameraEngine implements
             }
         });
         try {
-            boolean success = latch.await(3, TimeUnit.SECONDS);
+            boolean success = latch.await(6, TimeUnit.SECONDS);
             if (!success) {
-                LOG.e("Probably some deadlock in destroy.",
+                LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Current thread:", Thread.currentThread(),
                         "Handler thread: ", mHandler.getThread());
             }
