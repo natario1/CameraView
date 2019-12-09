@@ -881,7 +881,9 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 (readCharacteristic(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
                         == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
         if (needsIssue549Workaround) {
+            LOG.w("Applying the Issue549 workaround.", Thread.currentThread());
             maybeRestorePreviewTemplateAfterVideo();
+            LOG.w("Applied the Issue549 workaround.", Thread.currentThread());
         }
     }
 
