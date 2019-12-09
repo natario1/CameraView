@@ -35,6 +35,9 @@ public class RecoverCameraRule implements TestRule {
                 try {
                     base.evaluate();
                 } catch (Throwable throwable) {
+                    mCallback.getLogger().w("**************************************");
+                    mCallback.getLogger().w("!!! TEST FAILED? THROWABLE FOUND:", throwable);
+                    mCallback.getLogger().w("**************************************");
                     CameraException exception = findCameraException(throwable);
                     if (exception != null) {
                         mCallback.getLogger().e("**************************************");
