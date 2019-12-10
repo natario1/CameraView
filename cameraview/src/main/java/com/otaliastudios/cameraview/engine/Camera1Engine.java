@@ -275,6 +275,8 @@ public class Camera1Engine extends CameraEngine implements
                 throw new RuntimeException("Unknown CameraPreview output class.");
             }
         } catch (IOException e) {
+            // NOTE: when this happens, the next onStopEngine() call hangs on camera.release(),
+            // Not sure for how long. This causes the destroy() flow to fail the timeout.
             LOG.e("onStopBind", "Could not release surface", e);
         }
         return Tasks.forResult(null);
@@ -289,8 +291,16 @@ public class Camera1Engine extends CameraEngine implements
         mOrchestrator.remove(JOB_FOCUS_END);
         if (mCamera != null) {
             try {
-                // In certain states, this release() call can take up to various seconds.
                 LOG.i("onStopEngine:", "Clean up.", "Releasing camera.");
+                // TODO just like Camera1Engine, this call can hang (at least on emulators) and make
+                // the destroy() cleanup fail the timeout, thus leaving camera in a bad state.
+                // This is anticipated by the exception in onStopBind() (see above).
+                // 12:29:32.163  1512  1512 E Camera3-Device: Camera 0: clearStreamingRequest: Device has encountered a serious error[0m
+                // 12:29:32.163  1512  1512 E Camera2-StreamingProcessor: stopStream: Camera 0: Can't clear stream request: Function not implemented (-38)[0m
+                // 12:29:32.163  1512  1512 E Camera2Client: stopPreviewL: Camera 0: Can't stop streaming: Function not implemented (-38)[0m
+                // 12:29:32.273  1512  1512 E Camera2-StreamingProcessor: deletePreviewStream: Unable to delete old preview stream: Device or resource busy (-16)[0m
+                // 12:29:32.274  1512  1512 E Camera2-CallbackProcessor: deleteStream: Unable to delete callback stream: Device or resource busy (-16)[0m
+                // 12:29:32.274  1512  1512 E Camera3-Device: Camera 0: disconnect: Shutting down in an error state[0m
                 mCamera.release();
                 LOG.i("onStopEngine:", "Clean up.", "Released camera.");
             } catch (Exception e) {

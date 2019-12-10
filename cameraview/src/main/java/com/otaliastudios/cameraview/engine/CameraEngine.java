@@ -273,7 +273,8 @@ public abstract class CameraEngine implements
                                  final @NonNull Throwable throwable,
                                  final boolean fromExceptionHandler) {
         // 1. If this comes from the exception handler, the thread has crashed. Replace it.
-        // I'm not sure if this can even be called now that all actions are wrapped into Tasks.
+        // Most actions are wrapped into Tasks so don't go here, but some callbacks do
+        // (at least in Camera1, e.g. onError).
         if (fromExceptionHandler) {
             LOG.e("EXCEPTION:", "Handler thread is gone. Replacing.");
             thread.interrupt();
