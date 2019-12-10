@@ -85,8 +85,9 @@ import java.util.concurrent.TimeUnit;
  *                     S3 and S4 are also performed.
  * - {@link #stop(boolean)}: ASYNC - stops everything: undoes S4, then S3, then S2.
  * - {@link #restart()}: ASYNC - completes a stop then a start.
- * - {@link #destroy()}: SYNC - performs a {@link #stop(boolean)} that will go on no matter what,
- *                       without throwing. Makes the engine unusable and clears resources.
+ * - {@link #destroy(boolean)}: SYNC - performs a {@link #stop(boolean)} that will go on no matter
+ *                              what, without throwing. Makes the engine unusable and clears
+ *                              resources.
  *
  * THREADING
  * Subclasses should always execute code on the thread given by {@link #mHandler}.
@@ -268,48 +269,45 @@ public abstract class CameraEngine implements
      * @param throwable the throwable
      * @param fromExceptionHandler true if coming from exception handler
      */
-    private void handleException(@NonNull Thread thread,
+    private void handleException(@NonNull final Thread thread,
                                  final @NonNull Throwable throwable,
                                  final boolean fromExceptionHandler) {
-        if (!(throwable instanceof CameraException)) {
-            // This is unexpected, either a bug or something the developer should know.
-            // Release and crash the UI thread so we get bug reports.
-            LOG.e("EXCEPTION:", "Unexpected exception! Scheduling destroy...");
-            mCrashHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    LOG.e("EXCEPTION:", "Unexpected exception! Executing destroy...");
-                    destroy();
-                    // Throws an unchecked exception without unnecessary wrapping.
-                    if (throwable instanceof RuntimeException) {
-                        throw (RuntimeException) throwable;
-                    } else {
-                        throw new RuntimeException(throwable);
-                    }
-                }
-            });
-            return;
-        }
-
-        final CameraException cameraException = (CameraException) throwable;
-        LOG.e("EXCEPTION:", "Received CameraException.",
-                "Engine state:", getState(), "Current thread:", Thread.currentThread());
+        // 1. If this comes from the exception handler, the thread has crashed. Replace it.
+        // I'm not sure if this can even be called now that all actions are wrapped into Tasks.
         if (fromExceptionHandler) {
-            // Got to restart the handler.
             LOG.e("EXCEPTION:", "Handler thread is gone. Replacing.");
             thread.interrupt();
             mHandler = WorkerHandler.get("CameraViewEngine");
             mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
         }
 
-        LOG.e("EXCEPTION:", "Dispatching it to CameraListener.");
-        mCallback.dispatchError(cameraException);
-        if (cameraException.isUnrecoverable()) {
-            LOG.e("EXCEPTION:", "Since exception is unrecoverable, we stop(true)",
-                    "to release resources and make it easy to retry.");
-            // Stop everything (if needed) without notifying teardown errors.
-            stop(true);
-        }
+        // 2. Depending on the exception, we must destroy(false|true) to release resources, and
+        // notify the outside, either with the callback or by crashing the app.
+        LOG.e("EXCEPTION:", "Scheduling on the crash handler...");
+        mCrashHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (throwable instanceof CameraException) {
+                    CameraException exception = (CameraException) throwable;
+                    if (exception.isUnrecoverable()) {
+                        LOG.e("EXCEPTION:", "Got CameraException. " +
+                                "Since it is unrecoverable, executing destroy(false).");
+                        destroy(false);
+                    }
+                    LOG.e("EXCEPTION:", "Got CameraException. Dispatching to callback.");
+                    mCallback.dispatchError(exception);
+                } else {
+                    LOG.e("EXCEPTION:", "Unexpected error! Executing destroy(true).");
+                    destroy(true);
+                    LOG.e("EXCEPTION:", "Unexpected error! Throwing.");
+                    if (throwable instanceof RuntimeException) {
+                        throw (RuntimeException) throwable;
+                    } else {
+                        throw new RuntimeException(throwable);
+                    }
+                }
+            }
+        });
     }
 
     //endregion
@@ -334,14 +332,21 @@ public abstract class CameraEngine implements
      * Calls {@link #stop(boolean)} and waits for it.
      * Not final due to mockito requirements.
      *
+     * If forever is true, this also releases resources and the engine will not be in a
+     * functional state after. If forever is false, this really is just a synchronous stop.
+     *
      * NOTE: Should not be called on the orchestrator thread! This would cause deadlocks due to us
      * awaiting for {@link #stop(boolean)} to return.
      */
-    public void destroy() {
-        LOG.i("DESTROY:", "state:", getState(), "thread:", Thread.currentThread());
-        // Prevent CameraEngine leaks. Don't set to null, or exceptions
-        // inside the standard stop() method might crash the main thread.
-        mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
+    public void destroy(boolean forever) {
+        LOG.i("DESTROY:", "state:", getState(),
+                "thread:", Thread.currentThread(),
+                "forever:", forever);
+        if (forever) {
+            // Prevent CameraEngine leaks. Don't set to null, or exceptions
+            // inside the standard stop() method might crash the main thread.
+            mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
+        }
         // Stop if needed, synchronously and silently.
         // Cannot use Tasks.await() because we might be on the UI thread.
         final CountDownLatch latch = new CountDownLatch(1);

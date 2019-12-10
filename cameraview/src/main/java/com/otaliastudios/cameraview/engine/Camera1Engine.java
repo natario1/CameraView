@@ -457,7 +457,7 @@ public class Camera1Engine extends CameraEngine implements
     public void setFlash(@NonNull Flash flash) {
         final Flash old = mFlash;
         mFlash = flash;
-        mFlashTask = mOrchestrator.scheduleStateful("flash",
+        mFlashTask = mOrchestrator.scheduleStateful("flash (" + flash + ")",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
@@ -508,7 +508,8 @@ public class Camera1Engine extends CameraEngine implements
     public void setWhiteBalance(@NonNull WhiteBalance whiteBalance) {
         final WhiteBalance old = mWhiteBalance;
         mWhiteBalance = whiteBalance;
-        mWhiteBalanceTask = mOrchestrator.scheduleStateful("white balance",
+        mWhiteBalanceTask = mOrchestrator.scheduleStateful(
+                "white balance (" + whiteBalance + ")",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
@@ -522,7 +523,11 @@ public class Camera1Engine extends CameraEngine implements
     private boolean applyWhiteBalance(@NonNull Camera.Parameters params,
                                       @NonNull WhiteBalance oldWhiteBalance) {
         if (mCameraOptions.supports(mWhiteBalance)) {
+            // If this lock key is present, the engine can throw when applying the
+            // parameters, not sure why. Since we never lock it, this should be
+            // harmless for the rest of the engine.
             params.setWhiteBalance(mMapper.mapWhiteBalance(mWhiteBalance));
+            params.remove("auto-whitebalance-lock");
             return true;
         }
         mWhiteBalance = oldWhiteBalance;
@@ -533,7 +538,7 @@ public class Camera1Engine extends CameraEngine implements
     public void setHdr(@NonNull Hdr hdr) {
         final Hdr old = mHdr;
         mHdr = hdr;
-        mHdrTask = mOrchestrator.scheduleStateful("hdr",
+        mHdrTask = mOrchestrator.scheduleStateful("hdr (" + hdr + ")",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
@@ -557,7 +562,7 @@ public class Camera1Engine extends CameraEngine implements
     public void setZoom(final float zoom, @Nullable final PointF[] points, final boolean notify) {
         final float old = mZoomValue;
         mZoomValue = zoom;
-        mZoomTask = mOrchestrator.scheduleStateful("zoom",
+        mZoomTask = mOrchestrator.scheduleStateful("zoom (" + zoom + ")",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
@@ -589,7 +594,8 @@ public class Camera1Engine extends CameraEngine implements
                                       @Nullable final PointF[] points, final boolean notify) {
         final float old = mExposureCorrectionValue;
         mExposureCorrectionValue = EVvalue;
-        mExposureCorrectionTask = mOrchestrator.scheduleStateful("exposure correction",
+        mExposureCorrectionTask = mOrchestrator.scheduleStateful(
+                "exposure correction (" + EVvalue + ")",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
@@ -629,7 +635,8 @@ public class Camera1Engine extends CameraEngine implements
     public void setPlaySounds(boolean playSounds) {
         final boolean old = mPlaySounds;
         mPlaySounds = playSounds;
-        mPlaySoundsTask = mOrchestrator.scheduleStateful("play sounds",
+        mPlaySoundsTask = mOrchestrator.scheduleStateful(
+                "play sounds (" + playSounds + ")",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
@@ -665,7 +672,8 @@ public class Camera1Engine extends CameraEngine implements
     public void setPreviewFrameRate(float previewFrameRate) {
         final float old = previewFrameRate;
         mPreviewFrameRate = previewFrameRate;
-        mPreviewFrameRateTask = mOrchestrator.scheduleStateful("preview fps",
+        mPreviewFrameRateTask = mOrchestrator.scheduleStateful(
+                "preview fps (" + previewFrameRate + ")",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override

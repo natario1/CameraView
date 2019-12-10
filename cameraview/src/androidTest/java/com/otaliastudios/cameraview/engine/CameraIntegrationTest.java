@@ -630,17 +630,26 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @Test
     public void testEndVideo_withMaxSize() {
         camera.setMode(Mode.VIDEO);
-        camera.setVideoSize(SizeSelectors.smallest());
-        camera.setVideoMaxSize(1000*1000);
+        camera.setVideoSize(SizeSelectors.maxArea(480 * 360));
         openSync(true);
+        // Assuming video frame rate is 12...
+        //noinspection ConstantConditions
+        camera.setVideoBitRate((int) estimateVideoBitRate(camera.getVideoSize(), 12));
+        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 4000));
         takeVideoSync(true);
         waitForVideoResult(true);
     }
 
     @Test
     public void testEndVideoSnapshot_withMaxSize() {
-        camera.setVideoMaxSize(1000*1000);
         openSync(true);
+        camera.setSnapshotMaxWidth(480);
+        camera.setSnapshotMaxHeight(480);
+        camera.setPreviewFrameRate(12F);
+        //noinspection ConstantConditions
+        camera.setVideoBitRate((int) estimateVideoBitRate(camera.getSnapshotSize(),
+                (int) camera.getPreviewFrameRate()));
+        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 4000));
         takeVideoSnapshotSync(true);
         waitForVideoResult(true);
     }
@@ -865,11 +874,11 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     //region Frame Processing
 
-    private void assert30Frames(@NonNull FrameProcessor mock) throws Exception {
-        // Expect 30 frames
-        CountDownLatch latch = new CountDownLatch(30);
+    private void assert15Frames(@NonNull FrameProcessor mock) throws Exception {
+        // Expect 15 frames. Time is very high because currently Camera2 keeps a very low FPS.
+        CountDownLatch latch = new CountDownLatch(15);
         doCountDown(latch).when(mock).process(any(Frame.class));
-        boolean did = latch.await(15, TimeUnit.SECONDS);
+        boolean did = latch.await(30, TimeUnit.SECONDS);
         assertTrue("Latch count should be 0: " + latch.getCount(), did);
     }
 
@@ -879,7 +888,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         camera.addFrameProcessor(processor);
         openSync(true);
 
-        assert30Frames(processor);
+        assert15Frames(processor);
     }
 
     @Test
@@ -893,7 +902,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         camera.takePictureSnapshot();
         waitForPictureResult(true);
 
-        assert30Frames(processor);
+        assert15Frames(processor);
     }
 
     @Test
@@ -904,7 +913,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         closeSync(true);
         openSync(true);
 
-        assert30Frames(processor);
+        assert15Frames(processor);
     }
 
 
@@ -917,7 +926,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         takeVideoSync(true,4000);
         waitForVideoResult(true);
 
-        assert30Frames(processor);
+        assert15Frames(processor);
     }
 
     @Test
@@ -930,7 +939,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         camera.addFrameProcessor(processor);
         openSync(true);
 
-        assert30Frames(processor);
+        assert15Frames(processor);
     }
 
     public class FreezeReleaseFrameProcessor implements FrameProcessor {
@@ -969,4 +978,15 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     //endregion
+
+    @SuppressWarnings("SameParameterValue")
+    private static long estimateVideoBitRate(@NonNull Size size, int frameRate) {
+        // Nasty estimate for a LQ video
+        return Math.round(0.05D * size.getWidth() * size.getHeight() * frameRate);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static long estimateVideoBytes(long bitRate, long millis) {
+        return Math.round(bitRate * (millis / 1000D) / 8D);
+    }
 }

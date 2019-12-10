@@ -808,7 +808,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (mInEditor) return;
         clearCameraListeners();
         clearFrameProcessors();
-        mCameraEngine.destroy();
+        mCameraEngine.destroy(true);
         if (mCameraPreview != null) mCameraPreview.onDestroy();
     }
 

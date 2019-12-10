@@ -76,6 +76,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
     @SuppressWarnings("SameParameterValue")
     private boolean prepareMediaRecorder(@NonNull VideoResult.Stub stub,
                                          boolean applyEncodersConstraints) {
+        LOG.i("prepareMediaRecorder:", "Preparing on thread", Thread.currentThread());
         // 1. Create reference and ask for the CamcorderProfile
         mMediaRecorder = new MediaRecorder();
         mProfile = getCamcorderProfile(stub);
@@ -210,10 +211,14 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         // Would do this with max duration as well but there's no such callback.
         mMediaRecorder.setMaxFileSize(stub.maxSize <= 0 ? stub.maxSize
                 : Math.round(stub.maxSize / 0.9D));
+        LOG.i("prepareMediaRecorder:", "Increased max size from", stub.maxSize, "to",
+                Math.round(stub.maxSize / 0.9D));
         mMediaRecorder.setMaxDuration(stub.maxDuration);
         mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
             @Override
             public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
+                LOG.i("OnInfoListener:", "Received info", what, extra,
+                        "Thread: ", Thread.currentThread());
                 switch (what) {
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
                         mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
@@ -224,6 +229,15 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                         stop(false);
                         break;
                 }
+            }
+        });
+        mMediaRecorder.setOnErrorListener(new MediaRecorder.OnErrorListener() {
+            @Override
+            public void onError(MediaRecorder mr, int what, int extra) {
+                LOG.e("OnErrorListener: got error", what, extra, ". Stopping.");
+                mResult = null;
+                mError = new RuntimeException("MediaRecorder error: " + what + " " + extra);
+                stop(false);
             }
         });
 
@@ -265,7 +279,9 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         if (mMediaRecorder != null) {
             dispatchVideoRecordingEnd();
             try {
+                LOG.i("stop:", "Stopping MediaRecorder...");
                 mMediaRecorder.stop();
+                LOG.i("stop:", "Stopped MediaRecorder.");
             } catch (Exception e) {
                 // This can happen if stopVideo() is called right after takeVideo()
                 // (in which case we don't care). Or when prepare()/start() have failed for
@@ -278,7 +294,9 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 }
             }
             try {
+                LOG.i("stop:", "Releasing MediaRecorder...");
                 mMediaRecorder.release();
+                LOG.i("stop:", "Released MediaRecorder.");
             } catch (Exception e) {
                 mResult = null;
                 if (mError == null) {

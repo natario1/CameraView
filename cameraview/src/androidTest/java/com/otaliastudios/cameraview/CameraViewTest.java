@@ -135,7 +135,7 @@ public class CameraViewTest extends BaseTest {
     public void testDestroy() {
         cameraView.destroy();
         verify(mockPreview, times(1)).onDestroy();
-        verify(mockController, times(1)).destroy();
+        verify(mockController, times(1)).destroy(true);
     }
 
     //region testDefaults
