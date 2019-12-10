@@ -55,7 +55,8 @@ jobs:
           api-level: ${{ matrix.EMULATOR_API }}
           arch: ${{ matrix.EMULATOR_ARCH }}
           disable-animations: true
-          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -memory 2048
+          profile: Nexus 5X
+          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated
           script: ./.github/workflows/emulator_script.sh
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
