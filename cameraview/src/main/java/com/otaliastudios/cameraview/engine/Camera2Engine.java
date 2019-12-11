@@ -818,7 +818,14 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         boolean unlock = (fullPicture && getPictureMetering())
                 || (!fullPicture && getPictureSnapshotMetering());
         if (unlock) {
-            unlockAndResetMetering();
+            mOrchestrator.scheduleStateful("reset metering after picture",
+                    CameraState.PREVIEW,
+                    new Runnable() {
+                @Override
+                public void run() {
+                    unlockAndResetMetering();
+                }
+            });
         }
     }
 
@@ -1479,7 +1486,8 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                         mCallback.dispatchOnFocusEnd(gesture, action.isSuccessful(), point);
                         mOrchestrator.remove("reset metering");
                         if (shouldResetAutoFocus()) {
-                            mOrchestrator.scheduleDelayed("reset metering",
+                            mOrchestrator.scheduleStatefulDelayed("reset metering",
+                                    CameraState.PREVIEW,
                                     getAutoFocusResetDelay(),
                                     new Runnable() {
                                 @Override
@@ -1510,26 +1518,26 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return mMeterAction;
     }
 
+    @EngineThread
     private void unlockAndResetMetering() {
-        if (getState() == CameraState.PREVIEW && !isChangingState()) {
-            Actions.sequence(
-                    new BaseAction() {
-                        @Override
-                        protected void onStart(@NonNull ActionHolder holder) {
-                            super.onStart(holder);
-                            applyDefaultFocus(holder.getBuilder(this));
-                            holder.getBuilder(this)
-                                    .set(CaptureRequest.CONTROL_AE_LOCK, false);
-                            holder.getBuilder(this)
-                                    .set(CaptureRequest.CONTROL_AWB_LOCK, false);
-                            holder.applyBuilder(this);
-                            setState(STATE_COMPLETED);
-                            // TODO should wait results?
-                        }
-                    },
-                    new MeterResetAction()
-            ).start(Camera2Engine.this);
-        }
+        // Needs the PREVIEW state!
+        Actions.sequence(
+                new BaseAction() {
+                    @Override
+                    protected void onStart(@NonNull ActionHolder holder) {
+                        super.onStart(holder);
+                        applyDefaultFocus(holder.getBuilder(this));
+                        holder.getBuilder(this)
+                                .set(CaptureRequest.CONTROL_AE_LOCK, false);
+                        holder.getBuilder(this)
+                                .set(CaptureRequest.CONTROL_AWB_LOCK, false);
+                        holder.applyBuilder(this);
+                        setState(STATE_COMPLETED);
+                        // TODO should wait results?
+                    }
+                },
+                new MeterResetAction()
+        ).start(Camera2Engine.this);
     }
 
     //endregion
@@ -1568,6 +1576,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
     @Override
     public void applyBuilder(@NonNull Action source) {
+        // NOTE: Should never be called on a non-engine thread!
         applyRepeatingRequestBuilder();
     }
 
