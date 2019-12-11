@@ -406,20 +406,28 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                 @Override
                 public void onDisconnected(@NonNull CameraDevice camera) {
                     // Not sure if this is called INSTEAD of onOpened() or can be called after
-                    // as well. However, using trySetException should address this problem -
-                    // it will only trigger if the task has no result.
-                    //
-                    // Docs say to release this camera instance, however, since we throw an
-                    // unrecoverable CameraException, this will trigger a stop() through the
-                    // exception handler.
-                    task.trySetException(new CameraException(CameraException.REASON_DISCONNECTED));
+                    // as well. Cover both cases with an unrecoverable exception so that the
+                    // engine is properly destroyed.
+                    CameraException exception
+                            = new CameraException(CameraException.REASON_DISCONNECTED);
+                    if (!task.getTask().isComplete()) {
+                        task.trySetException(exception);
+                    } else {
+                        LOG.i("CameraDevice.StateCallback reported disconnection.");
+                        throw exception;
+                    }
                 }
 
                 @Override
                 public void onError(@NonNull CameraDevice camera, int error) {
-                    // TODO provide a better implementation
-                    LOG.e("CameraDevice.StateCallback reported an error:", error);
-                    task.trySetException(createCameraException(error));
+                    if (!task.getTask().isComplete()) {
+                        task.trySetException(createCameraException(error));
+                    } else {
+                        // This happened while the engine is running. Throw unrecoverable exception
+                        // so that engine is properly destroyed.
+                        LOG.e("CameraDevice.StateCallback reported an error:", error);
+                        throw new CameraException(CameraException.REASON_DISCONNECTED);
+                    }
                 }
             }, null);
         } catch (CameraAccessException e) {
@@ -556,6 +564,12 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
                     String message = LOG.e("onConfigureFailed! Session", session);
                     throw new RuntimeException(message);
                 }
+
+                @Override
+                public void onReady(@NonNull CameraCaptureSession session) {
+                    super.onReady(session);
+                    LOG.i("CameraCaptureSession.StateCallback reported onReady.");
+                }
             }, null);
         } catch (CameraAccessException e) {
             throw createCameraException(e);
@@ -623,14 +637,20 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             getFrameManager().release();
         }
         try {
-            // NOTE: should we wait for onReady() like docs say?
-            // Leaving this synchronous for now.
-            mSession.stopRepeating();
+            // Preferring this over stopRepeating() so we're sure that all in-flights operations
+            // are discarded as fast as possible, which is exactly what we want.
+            // NOTE: this call is asynchronous. Should find a good way to wait for the outcome.
+            LOG.i("onStopPreview:", "calling abortCaptures().");
+            mSession.abortCaptures();
+            LOG.i("onStopPreview:", "called abortCaptures().");
         } catch (CameraAccessException e) {
             // This tells us that we should stop everything. It's better to throw an unrecoverable
             // exception rather than just swallow this, so everything gets stopped.
-            LOG.w("stopRepeating failed!", e);
+            LOG.w("onStopPreview:", "abortCaptures failed!", e);
             throw createCameraException(e);
+        } catch (IllegalStateException e) {
+            // This tells us that the session was already closed.
+            // Not sure if this can happen, but we can swallow it.
         }
         removeRepeatingRequestBuilderSurfaces();
         mLastRepeatingResult = null;
