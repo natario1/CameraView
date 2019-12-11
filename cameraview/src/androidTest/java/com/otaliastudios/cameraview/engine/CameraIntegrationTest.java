@@ -988,7 +988,8 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     @SuppressWarnings("SameParameterValue")
-    private static long estimateVideoBytes(long bitRate, long millis) {
-        return Math.round(bitRate * (millis / 1000D) / 8D);
+    private static long estimateVideoBytes(long videoBitRate, long millis) {
+        // 1.3F accounts for audio.
+        return Math.round((videoBitRate * 1.3F) * (millis / 1000D) / 8D);
     }
 }

@@ -237,11 +237,13 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
      * it should be set before calling this method, for example by calling
      * {@link #createRepeatingRequestBuilder(int)}.
      */
+    @EngineThread
     @SuppressWarnings("WeakerAccess")
     protected void applyRepeatingRequestBuilder() {
         applyRepeatingRequestBuilder(true, CameraException.REASON_DISCONNECTED);
     }
 
+    @EngineThread
     private void applyRepeatingRequestBuilder(boolean checkStarted, int errorReason) {
         if ((getState() == CameraState.PREVIEW && !isChangingState()) || !checkStarted) {
             try {
@@ -1574,15 +1576,19 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         return mRepeatingRequestBuilder;
     }
 
+    @EngineThread
     @Override
     public void applyBuilder(@NonNull Action source) {
         // NOTE: Should never be called on a non-engine thread!
+        // Non-engine threads are not protected by the uncaught exception handler
+        // and can make the process crash.
         applyRepeatingRequestBuilder();
     }
 
     @Override
     public void applyBuilder(@NonNull Action source, @NonNull CaptureRequest.Builder builder)
             throws CameraAccessException {
+        // Risky - would be better to ensure that thread is the engine one.
         if (getState() == CameraState.PREVIEW && !isChangingState()) {
             mSession.capture(builder.build(), mRepeatingRequestCallback, null);
         }
