@@ -632,10 +632,10 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         camera.setMode(Mode.VIDEO);
         camera.setVideoSize(SizeSelectors.maxArea(480 * 360));
         openSync(true);
-        // Assuming video frame rate is 12...
+        // Assuming video frame rate is 20...
         //noinspection ConstantConditions
-        camera.setVideoBitRate((int) estimateVideoBitRate(camera.getVideoSize(), 12));
-        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 4000));
+        camera.setVideoBitRate((int) estimateVideoBitRate(camera.getVideoSize(), 20));
+        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 6000));
         takeVideoSync(true);
         waitForVideoResult(true);
     }
@@ -645,11 +645,13 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         openSync(true);
         camera.setSnapshotMaxWidth(480);
         camera.setSnapshotMaxHeight(480);
-        camera.setPreviewFrameRate(12F);
+        // We don't want a very low FPS or the video frames are too sparse and recording
+        // can fail (e.g. audio reaching completion while video still struggling to start)
+        camera.setPreviewFrameRate(30F);
         //noinspection ConstantConditions
         camera.setVideoBitRate((int) estimateVideoBitRate(camera.getSnapshotSize(),
                 (int) camera.getPreviewFrameRate()));
-        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 4000));
+        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 6000));
         takeVideoSnapshotSync(true);
         waitForVideoResult(true);
     }
