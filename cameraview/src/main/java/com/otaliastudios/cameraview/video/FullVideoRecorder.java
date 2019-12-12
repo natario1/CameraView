@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.video;
 
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.os.Handler;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
@@ -219,15 +220,27 @@ public abstract class FullVideoRecorder extends VideoRecorder {
             public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
                 LOG.i("OnInfoListener:", "Received info", what, extra,
                         "Thread: ", Thread.currentThread());
+                boolean shouldStop = false;
                 switch (what) {
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
                         mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
-                        stop(false);
+                        shouldStop = true;
                         break;
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING:
                         mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
-                        stop(false);
+                        shouldStop = true;
                         break;
+                }
+                if (shouldStop) {
+                    // Do not block this callback with a stop() call: stop() closes the
+                    // MediaRecorder and I think that in some cases this creates a deadlock.
+                    new Handler().post(new Runnable() {
+                        @Override
+                        public void run() {
+                            LOG.i("OnInfoListener:", "Stopping");
+                            stop(false);
+                        }
+                    });
                 }
             }
         });
@@ -237,7 +250,13 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 LOG.e("OnErrorListener: got error", what, extra, ". Stopping.");
                 mResult = null;
                 mError = new RuntimeException("MediaRecorder error: " + what + " " + extra);
-                stop(false);
+                new Handler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        LOG.i("OnErrorListener:", "Stopping");
+                        stop(false);
+                    }
+                });
             }
         });
 
