@@ -310,7 +310,7 @@ public abstract class CameraEngine implements
     }
 
     private void recreateHandler() {
-        mHandler.getThread().interrupt();
+        mHandler.destroy();
         mHandler = WorkerHandler.get("CameraViewEngine");
         mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
     }
