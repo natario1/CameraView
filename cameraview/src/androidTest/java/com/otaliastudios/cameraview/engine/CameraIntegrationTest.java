@@ -207,7 +207,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
                 return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
             }
         }));
-        int maxLoops = 20;
+        int maxLoops = 10;
         int loops = 0;
 
         // First wait for onVideoRecordingEnd().
