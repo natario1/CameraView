@@ -1,5 +1,7 @@
 package com.otaliastudios.cameraview.tools;
 
+import android.os.Build;
+
 import com.otaliastudios.cameraview.CameraLogger;
 
 import org.junit.rules.TestRule;
@@ -24,7 +26,8 @@ public class RetryRule implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                if (description.getAnnotation(Retry.class) == null) {
+                Retry retry = description.getAnnotation(Retry.class);
+                if (retry == null || retry.emulatorOnly() && !isEmulator()) {
                     base.evaluate();
                 } else {
                     Throwable caught = null;
@@ -44,5 +47,12 @@ public class RetryRule implements TestRule {
                 }
             }
         };
+    }
+
+    private boolean isEmulator() {
+        // From Android's RequiresDeviceFilter
+        return Build.HARDWARE.equals("goldfish")
+                || Build.HARDWARE.equals("ranchu")
+                || Build.HARDWARE.equals("gce_x86");
     }
 }
