@@ -71,6 +71,7 @@ public class Full2PictureRecorder extends PictureRecorder
                     mResult = null;
                     mError = e;
                     dispatchResult();
+                    setState(STATE_COMPLETED);
                 }
             }
 
