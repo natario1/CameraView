@@ -232,15 +232,8 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                         break;
                 }
                 if (shouldStop) {
-                    // Do not block this callback with a stop() call: stop() closes the
-                    // MediaRecorder and I think that in some cases this creates a deadlock.
-                    new Handler().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            LOG.i("OnInfoListener:", "Stopping");
-                            stop(false);
-                        }
-                    });
+                    LOG.i("OnInfoListener:", "Stopping");
+                    stop(false);
                 }
             }
         });
@@ -250,13 +243,8 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 LOG.e("OnErrorListener: got error", what, extra, ". Stopping.");
                 mResult = null;
                 mError = new RuntimeException("MediaRecorder error: " + what + " " + extra);
-                new Handler().post(new Runnable() {
-                    @Override
-                    public void run() {
-                        LOG.i("OnErrorListener:", "Stopping");
-                        stop(false);
-                    }
-                });
+                LOG.i("OnErrorListener:", "Stopping");
+                stop(false);
             }
         });
 
