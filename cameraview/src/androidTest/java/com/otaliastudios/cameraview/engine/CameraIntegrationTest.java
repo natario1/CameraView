@@ -207,20 +207,22 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
                 return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
             }
         }));
+        int maxLoops = 20;
+        int loops = 0;
 
         // First wait for onVideoRecordingEnd().
-        LOG.i("[WAIT VIDEO]", "Waiting for onVideoRecordingEnd()...");
-        Boolean wait1Result = wait1.await(DELAY);
-
         // It seems that when running all the tests together, the device can go in some
         // power saving mode which makes the CPU extremely slow. This is especially problematic
         // with video snapshots where we do lots of processing. The videoEnd callback can return
         // long after the actual stop() call, so if we're still processing, let's wait more.
+        LOG.i("[WAIT VIDEO]", "Waiting for onVideoRecordingEnd()...");
+        Boolean wait1Result = wait1.await(DELAY);
         if (expectSuccess) {
-            while (wait1Result == null) {
+            while (wait1Result == null && loops <= maxLoops) {
                 LOG.w("[WAIT VIDEO]", "Waiting extra", DELAY, "milliseconds...");
                 wait1.listen();
                 wait1Result = wait1.await(DELAY);
+                loops++;
             }
         }
 
@@ -228,10 +230,11 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         LOG.i("[WAIT VIDEO]", "Waiting for onVideoTaken()...");
         VideoResult wait2Result = wait2.await(DELAY);
         if (expectSuccess) {
-            while (wait2Result == null) {
+            while (wait2Result == null && loops <= maxLoops) {
                 LOG.w("[WAIT VIDEO]", "Waiting extra", DELAY, "milliseconds...");
                 wait2.listen();
                 wait2Result = wait2.await(DELAY);
+                loops++;
             }
         }
 

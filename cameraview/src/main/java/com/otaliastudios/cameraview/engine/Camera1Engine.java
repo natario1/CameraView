@@ -73,20 +73,15 @@ public class Camera1Engine extends CameraEngine implements
 
     @Override
     public void onError(int error, Camera camera) {
-        if (error == Camera.CAMERA_ERROR_SERVER_DIED) {
-            // Looks like this is recoverable.
-            LOG.w("Recoverable error inside the onError callback.",
-                    "CAMERA_ERROR_SERVER_DIED");
-            restart();
-            return;
-        }
-
         String message = LOG.e("Internal Camera1 error.", error);
         Exception runtime = new RuntimeException(message);
         int reason;
         switch (error) {
-            case Camera.CAMERA_ERROR_EVICTED: reason = CameraException.REASON_DISCONNECTED; break;
-            case Camera.CAMERA_ERROR_UNKNOWN: reason = CameraException.REASON_UNKNOWN; break;
+            case Camera.CAMERA_ERROR_SERVER_DIED:
+            case Camera.CAMERA_ERROR_EVICTED:
+                reason = CameraException.REASON_DISCONNECTED; break;
+            case Camera.CAMERA_ERROR_UNKNOWN: // Pass DISCONNECTED which is considered unrecoverable
+                reason = CameraException.REASON_DISCONNECTED; break;
             default: reason = CameraException.REASON_UNKNOWN;
         }
         throw new CameraException(runtime, reason);
