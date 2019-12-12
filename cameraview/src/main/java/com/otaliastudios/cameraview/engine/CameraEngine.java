@@ -333,22 +333,25 @@ public abstract class CameraEngine implements
      * Calls {@link #stop(boolean)} and waits for it.
      * Not final due to mockito requirements.
      *
-     * If forever is true, this also releases resources and the engine will not be in a
+     * If unrecoverably is true, this also releases resources and the engine will not be in a
      * functional state after. If forever is false, this really is just a synchronous stop.
      *
      * NOTE: Should not be called on the orchestrator thread! This would cause deadlocks due to us
      * awaiting for {@link #stop(boolean)} to return.
      */
-    public void destroy(boolean forever) {
+    public void destroy(boolean unrecoverably) {
         LOG.i("DESTROY:", "state:", getState(),
                 "thread:", Thread.currentThread(),
-                "forever:", forever);
-        if (forever) {
+                "unrecoverably:", unrecoverably);
+        if (unrecoverably) {
             // Prevent CameraEngine leaks. Don't set to null, or exceptions
             // inside the standard stop() method might crash the main thread.
             mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
         }
-        // Stop if needed, synchronously and silently.
+        // Instead of waiting forever, it's better to wait a fixed amount of time and loop.
+        // This frees the thread in between the loop, and possibly solves deadlock issues
+        // in the internal camera implementation (see Camera1Engine.onStopEngine() and
+        // Camera2Engine.onStopEngine()).
         // Cannot use Tasks.await() because we might be on the UI thread.
         final CountDownLatch latch = new CountDownLatch(1);
         stop(true).addOnCompleteListener(
@@ -360,11 +363,13 @@ public abstract class CameraEngine implements
             }
         });
         try {
-            boolean success = latch.await(10, TimeUnit.SECONDS);
+            boolean success = latch.await(2000, TimeUnit.MILLISECONDS);
             if (!success) {
-                LOG.e("DESTROY: Could not destroy synchronously after 10 seconds.",
+                LOG.w("DESTROY: Could not destroy synchronously after 2 seconds.",
                         "Current thread:", Thread.currentThread(),
-                        "Handler thread: ", mHandler.getThread());
+                        "Handler thread: ", mHandler.getThread(),
+                        "Trying again...");
+                destroy(unrecoverably);
             }
         } catch (InterruptedException ignore) {}
     }

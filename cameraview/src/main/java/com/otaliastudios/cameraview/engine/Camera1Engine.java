@@ -292,15 +292,20 @@ public class Camera1Engine extends CameraEngine implements
         if (mCamera != null) {
             try {
                 LOG.i("onStopEngine:", "Clean up.", "Releasing camera.");
-                // TODO just like Camera1Engine, this call can hang (at least on emulators) and make
-                // the destroy() cleanup fail the timeout, thus leaving camera in a bad state.
+                // Just like Camera2Engine, this call can hang (at least on emulators) and if
+                // we don't find a way around the lock, it leaves the camera in a bad state.
                 // This is anticipated by the exception in onStopBind() (see above).
-                // 12:29:32.163  1512  1512 E Camera3-Device: Camera 0: clearStreamingRequest: Device has encountered a serious error[0m
-                // 12:29:32.163  1512  1512 E Camera2-StreamingProcessor: stopStream: Camera 0: Can't clear stream request: Function not implemented (-38)[0m
-                // 12:29:32.163  1512  1512 E Camera2Client: stopPreviewL: Camera 0: Can't stop streaming: Function not implemented (-38)[0m
-                // 12:29:32.273  1512  1512 E Camera2-StreamingProcessor: deletePreviewStream: Unable to delete old preview stream: Device or resource busy (-16)[0m
-                // 12:29:32.274  1512  1512 E Camera2-CallbackProcessor: deleteStream: Unable to delete callback stream: Device or resource busy (-16)[0m
-                // 12:29:32.274  1512  1512 E Camera3-Device: Camera 0: disconnect: Shutting down in an error state[0m
+                //
+                // 12:29:32.163 E Camera3-Device: Camera 0: clearStreamingRequest: Device has encountered a serious error[0m
+                // 12:29:32.163 E Camera2-StreamingProcessor: stopStream: Camera 0: Can't clear stream request: Function not implemented (-38)[0m
+                // 12:29:32.163 E Camera2Client: stopPreviewL: Camera 0: Can't stop streaming: Function not implemented (-38)[0m
+                // 12:29:32.273 E Camera2-StreamingProcessor: deletePreviewStream: Unable to delete old preview stream: Device or resource busy (-16)[0m
+                // 12:29:32.274 E Camera2-CallbackProcessor: deleteStream: Unable to delete callback stream: Device or resource busy (-16)[0m
+                // 12:29:32.274 E Camera3-Device: Camera 0: disconnect: Shutting down in an error state[0m
+                //
+                // I believe there is a thread deadlock due to this call internally waiting to
+                // dispatch some callback to us (pending captures, ...), but the callback thread
+                // is blocked here. We try to workaround this in CameraEngine.destroy().
                 mCamera.release();
                 LOG.i("onStopEngine:", "Clean up.", "Released camera.");
             } catch (Exception e) {

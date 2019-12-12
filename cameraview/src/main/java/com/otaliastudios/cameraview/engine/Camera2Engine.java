@@ -695,13 +695,18 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     protected Task<Void> onStopEngine() {
         try {
             LOG.i("onStopEngine:", "Clean up.", "Releasing camera.");
-            // TODO just like Camera1Engine, this call can hang (at least on emulators) and make
-            // the destroy() cleanup fail the timeout, thus leaving camera in a bad state.
+            // Just like Camera1Engine, this call can hang (at least on emulators) and if
+            // we don't find a way around the lock, it leaves the camera in a bad state.
+            //
             // 12:33:28.152  2888  5470 I CameraEngine: onStopEngine: Clean up. Releasing camera.[0m
             // 12:33:29.476  1384  1555 E audio_hw_generic: pcm_write failed cannot write stream data: I/O error[0m
             // 12:33:33.206  1512  3616 E Camera3-Device: Camera 0: waitUntilDrainedLocked: Error waiting for HAL to drain: Connection timed out (-110)[0m
             // 12:33:33.242  1512  3616 E CameraDeviceClient: detachDevice: waitUntilDrained failed with code 0xffffff92[0m
             // 12:33:33.243  1512  3616 E Camera3-Device: Camera 0: disconnect: Shutting down in an error state[0m
+            //
+            // I believe there is a thread deadlock due to this call internally waiting to
+            // dispatch some callback to us (pending captures, ...), but the callback thread
+            // is blocked here. We try to workaround this in CameraEngine.destroy().
             mCamera.close();
             LOG.i("onStopEngine:", "Clean up.", "Released camera.");
         } catch (Exception e) {
