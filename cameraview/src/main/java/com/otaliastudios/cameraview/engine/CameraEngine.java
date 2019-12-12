@@ -367,10 +367,10 @@ public abstract class CameraEngine implements
                 // This thread is likely stuck. The reason might be deadlock issues in the internal
                 // camera implementation, at least in emulators: see Camera1Engine and Camera2Engine
                 // onStopEngine() implementation and comments.
-                LOG.w("DESTROY: Could not destroy synchronously after 6 seconds.",
+                LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Current thread:", Thread.currentThread(),
                         "Handler thread: ", mHandler.getThread());
-                // TODO find a solution
+                // TODO Should we find a solution or is this emulator only?
             }
         } catch (InterruptedException ignore) {}
     }

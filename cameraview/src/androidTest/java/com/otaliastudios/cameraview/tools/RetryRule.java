@@ -33,6 +33,8 @@ public class RetryRule implements TestRule {
                             base.evaluate();
                             return;
                         } catch (Throwable throwable) {
+                            LOG.e("[RETRY] Test failed.", retries.get(),
+                                    "retries available...");
                             caught = throwable;
                         }
                     }
