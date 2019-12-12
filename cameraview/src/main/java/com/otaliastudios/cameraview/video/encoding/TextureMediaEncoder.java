@@ -192,7 +192,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
                 "timestampUs:", frame.timestampUs(),
                 "hasReachedMaxLength:", hasReachedMaxLength(),
                 "thread:", Thread.currentThread(),
-                "- rendering.");
+                "- drawing.");
 
         // 1. We must scale this matrix like GlCameraPreview does, because it might have some
         // cropping. Scaling takes place with respect to the (0, 0, 0) point, so we must apply
@@ -223,6 +223,12 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
             Matrix.translateM(mConfig.overlayDrawer.getTransform(),
                     0, -0.5F, -0.5F, 0);
         }
+        LOG.i("onEvent -",
+                "frameNumber:", mFrameNumber,
+                "timestampUs:", frame.timestampUs(),
+                "hasReachedMaxLength:", hasReachedMaxLength(),
+                "thread:", Thread.currentThread(),
+                "- gl rendering.");
         mViewport.drawFrame(frame.timestampUs(), mConfig.textureId, transform);
         if (mConfig.hasOverlay()) {
             mConfig.overlayDrawer.render(frame.timestampUs());
@@ -235,7 +241,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
                 "timestampUs:", frame.timestampUs(),
                 "hasReachedMaxLength:", hasReachedMaxLength(),
                 "thread:", Thread.currentThread(),
-                "- rendered.");
+                "- gl rendered.");
     }
 
     @Override

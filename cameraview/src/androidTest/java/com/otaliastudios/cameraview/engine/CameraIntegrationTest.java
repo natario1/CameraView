@@ -33,6 +33,8 @@ import com.otaliastudios.cameraview.tools.Op;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.cameraview.tools.Retry;
+import com.otaliastudios.cameraview.tools.RetryRule;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -73,9 +75,13 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @Rule
     public ActivityTestRule<TestActivity> activityRule = new ActivityTestRule<>(TestActivity.class);
 
+    @Rule
+    public RetryRule retryRule = new RetryRule(3);
+
     protected CameraView camera;
     protected E controller;
     private CameraListener listener;
+    private Op<Throwable> error;
 
     @BeforeClass
     public static void grant() {
@@ -104,27 +110,36 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
                         return controller;
                     }
                 };
-                listener = mock(CameraListener.class);
                 camera.setExperimental(true);
                 camera.setEngine(getEngine());
-                camera.addCameraListener(listener);
                 activityRule.getActivity().inflate(camera);
-
-                // Ensure that important CameraExceptions are thrown, otherwise they are just
-                // logged and the test goes on.
-                camera.addCameraListener(new CameraListener() {
-                    @Override
-                    public void onCameraError(@NonNull CameraException exception) {
-                        super.onCameraError(exception);
-                        if (exception.isUnrecoverable()) {
-                            LOG.e("[UNRECOVERABLE CAMERAEXCEPTION]", "Got unrecoverable ",
-                                    "exception, should throw to help RecoverCameraRule.");
-                            // TODO find a good solution
-                        }
-                    }
-                });
             }
         });
+
+        listener = mock(CameraListener.class);
+        camera.addCameraListener(listener);
+
+        error = new Op<>();
+        WorkerHandler crashThread = WorkerHandler.get("CrashThread");
+        crashThread.getThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(@NonNull Thread thread, @NonNull Throwable exception) {
+                error.controller().end(exception);
+            }
+        });
+        controller.mCrashHandler = crashThread.getHandler();
+
+        camera.addCameraListener(new CameraListener() {
+            @Override
+            public void onCameraError(@NonNull CameraException exception) {
+                super.onCameraError(exception);
+                if (exception.isUnrecoverable()) {
+                    LOG.e("[UNRECOVERABLE CAMERAEXCEPTION]",
+                            "Got unrecoverable exception, not clear what to do in a test.");
+                }
+            }
+        });
+
     }
 
     @After
@@ -314,6 +329,13 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         } else {
             LOG.i("[WAIT VIDEO SNAP START]", "Expecting failure.");
             assertTrue("should not start video recording", result == null || !result);
+        }
+    }
+
+    private void waitForError() throws Throwable {
+        Throwable throwable = error.await(DELAY);
+        if (throwable != null) {
+            throw throwable;
         }
     }
 
@@ -554,15 +576,16 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     //region test takeVideo
 
-    // TODO @Test(expected = RuntimeException.class)
+    @Test(expected = RuntimeException.class)
     public void testStartVideo_whileInPictureMode() throws Throwable {
         camera.setMode(Mode.PICTURE);
         openSync(true);
         takeVideoSync(false);
-        // waitForError();
+        waitForError();
     }
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testStartEndVideo() {
         camera.setMode(Mode.VIDEO);
         openSync(true);
@@ -571,6 +594,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testStartEndVideoSnapshot() {
         // TODO should check api level for snapshot?
         openSync(true);
@@ -579,6 +603,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testStartEndVideo_withManualStop() {
         camera.setMode(Mode.VIDEO);
         openSync(true);
@@ -598,6 +623,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testStartEndVideoSnapshot_withManualStop() {
         openSync(true);
         takeVideoSnapshotSync(true);
@@ -624,6 +650,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testEndVideo_withMaxSize() {
         camera.setMode(Mode.VIDEO);
         camera.setVideoSize(SizeSelectors.maxArea(480 * 360));
@@ -637,6 +664,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testEndVideoSnapshot_withMaxSize() {
         openSync(true);
         camera.setSnapshotMaxWidth(480);
@@ -653,6 +681,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testEndVideo_withMaxDuration() {
         camera.setMode(Mode.VIDEO);
         camera.setVideoMaxDuration(4000);
@@ -662,6 +691,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testEndVideoSnapshot_withMaxDuration() {
         camera.setVideoMaxDuration(4000);
         openSync(true);
@@ -758,12 +788,12 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         }
     }
 
-    // TODO @Test(expected = RuntimeException.class)
+    @Test(expected = RuntimeException.class)
     public void testCapturePicture_whileInVideoMode() throws Throwable {
         camera.setMode(Mode.VIDEO);
         openSync(true);
         camera.takePicture();
-        // waitForError();
+        waitForError();
         camera.takePicture();
 
     }
@@ -916,6 +946,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testFrameProcessing_afterVideo() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
@@ -964,6 +995,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     }
 
     @Test
+    @Retry(emulatorOnly = true)
     public void testOverlay_forVideoSnapshot() {
         Overlay overlay = mock(Overlay.class);
         when(overlay.drawsOn(any(Overlay.Target.class))).thenReturn(true);

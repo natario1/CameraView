@@ -38,6 +38,7 @@ public class RetryRule implements TestRule {
                         } catch (Throwable throwable) {
                             LOG.e("[RETRY] Test failed.", retries.get(),
                                     "retries available...");
+                            LOG.e("*******************************************************");
                             caught = throwable;
                         }
                     }
