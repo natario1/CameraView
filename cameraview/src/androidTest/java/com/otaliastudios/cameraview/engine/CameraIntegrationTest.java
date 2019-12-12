@@ -193,22 +193,26 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @SuppressWarnings("UnusedReturnValue")
     @Nullable
     private VideoResult waitForVideoResult(boolean expectSuccess) {
-        // CountDownLatch for onVideoRecordingEnd.
-        CountDownLatch onVideoRecordingEnd = new CountDownLatch(1);
-        doCountDown(onVideoRecordingEnd).when(listener).onVideoRecordingEnd();
-
-        // Op for onVideoTaken.
-        final Op<VideoResult> video = new Op<>();
-        doEndOp(video, 0).when(listener).onVideoTaken(any(VideoResult.class));
-        doEndOp(video, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
+        Op<Boolean> wait1 = new Op<>();
+        Op<VideoResult> wait2 = new Op<>();
+        doEndOp(wait1, true).when(listener).onVideoRecordingEnd();
+        doEndOp(wait1, false).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
+            @Override
+            public boolean matches(CameraException argument) {
+                return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
+            }
+        }));
+        doEndOp(wait2, 0).when(listener).onVideoTaken(any(VideoResult.class));
+        doEndOp(wait2, null).when(listener).onCameraError(argThat(new ArgumentMatcher<CameraException>() {
             @Override
             public boolean matches(CameraException argument) {
                 return argument.getReason() == CameraException.REASON_VIDEO_FAILED;
             }
         }));
 
-        // Wait for onVideoTaken and check.
-        VideoResult result = video.await(DELAY);
+        // First wait for onVideoRecordingEnd().
+        LOG.i("[WAIT VIDEO]", "Waiting for onVideoRecordingEnd()...");
+        Boolean wait1Result = wait1.await(DELAY);
 
         // It seems that when running all the tests together, the device can go in some
         // power saving mode which makes the CPU extremely slow. This is especially problematic
@@ -217,24 +221,26 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         if (expectSuccess && camera.isTakingVideo()) {
             while (camera.isTakingVideo()) {
                 LOG.w("[WAIT VIDEO]", "Waiting extra", DELAY, "milliseconds...");
-                video.listen();
-                result = video.await(DELAY);
+                wait1.listen();
+                wait1Result = wait1.await(DELAY);
             }
-            // Sleep another 1000, because camera.isTakingVideo() might return false even
-            // if the result still has to be dispatched. Rare but could happen.
-            try { Thread.sleep(1000); } catch (InterruptedException ignore) {}
         }
 
-        // Now we should be OK.
+        // Now wait for onVideoResult().
+        LOG.i("[WAIT VIDEO]", "Waiting for onVideoTaken()...");
+        VideoResult wait2Result = wait2.await(DELAY);
+
+        // Assert.
         if (expectSuccess) {
-            LOG.i("[WAIT VIDEO]", "Expecting success.");
-            assertEquals("Should call onVideoRecordingEnd", 0, onVideoRecordingEnd.getCount());
-            assertNotNull("Should end video", result);
+            assertNotNull("Should call onVideoRecordingEnd", wait1Result);
+            assertTrue("Should call onVideoRecordingEnd", wait1Result);
+            assertNotNull("Should call onVideoTaken", wait2Result);
         } else {
-            LOG.i("[WAIT VIDEO]", "Expecting failure.");
-            assertNull("Should not end video", result);
+            assertTrue("Should not call onVideoRecordingEnd",
+                    wait1Result == null || !wait1Result);
+            assertNull("Should not call onVideoTaken", wait2Result);
         }
-        return result;
+        return wait2Result;
     }
 
     @Nullable
@@ -635,7 +641,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         // Assuming video frame rate is 20...
         //noinspection ConstantConditions
         camera.setVideoBitRate((int) estimateVideoBitRate(camera.getVideoSize(), 20));
-        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 6000));
+        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 5000));
         takeVideoSync(true);
         waitForVideoResult(true);
     }
@@ -651,7 +657,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         //noinspection ConstantConditions
         camera.setVideoBitRate((int) estimateVideoBitRate(camera.getSnapshotSize(),
                 (int) camera.getPreviewFrameRate()));
-        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 6000));
+        camera.setVideoMaxSize(estimateVideoBytes(camera.getVideoBitRate(), 5000));
         takeVideoSnapshotSync(true);
         waitForVideoResult(true);
     }

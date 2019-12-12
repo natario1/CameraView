@@ -277,9 +277,7 @@ public abstract class CameraEngine implements
         // (at least in Camera1, e.g. onError).
         if (fromExceptionHandler) {
             LOG.e("EXCEPTION:", "Handler thread is gone. Replacing.");
-            thread.interrupt();
-            mHandler = WorkerHandler.get("CameraViewEngine");
-            mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
+            recreateHandler();
         }
 
         // 2. Depending on the exception, we must destroy(false|true) to release resources, and
@@ -309,6 +307,12 @@ public abstract class CameraEngine implements
                 }
             }
         });
+    }
+
+    private void recreateHandler() {
+        mHandler.getThread().interrupt();
+        mHandler = WorkerHandler.get("CameraViewEngine");
+        mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
     }
 
     //endregion
@@ -348,10 +352,6 @@ public abstract class CameraEngine implements
             // inside the standard stop() method might crash the main thread.
             mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
         }
-        // Instead of waiting forever, it's better to wait a fixed amount of time and loop.
-        // This frees the thread in between the loop, and possibly solves deadlock issues
-        // in the internal camera implementation (see Camera1Engine.onStopEngine() and
-        // Camera2Engine.onStopEngine()).
         // Cannot use Tasks.await() because we might be on the UI thread.
         final CountDownLatch latch = new CountDownLatch(1);
         stop(true).addOnCompleteListener(
@@ -365,10 +365,14 @@ public abstract class CameraEngine implements
         try {
             boolean success = latch.await(6, TimeUnit.SECONDS);
             if (!success) {
+                // This thread is likely stuck. The reason might be deadlock issues in the internal
+                // camera implementation, at least in emulators: see Camera1Engine and Camera2Engine
+                // onStopEngine() implementation and comments.
                 LOG.w("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Current thread:", Thread.currentThread(),
                         "Handler thread: ", mHandler.getThread(),
-                        "Trying again...");
+                        "Trying again on a new thread...");
+                recreateHandler();
                 destroy(unrecoverably);
             }
         } catch (InterruptedException ignore) {}
