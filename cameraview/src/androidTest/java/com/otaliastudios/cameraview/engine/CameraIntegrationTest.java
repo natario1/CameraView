@@ -33,11 +33,9 @@ import com.otaliastudios.cameraview.tools.Op;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.size.Size;
-import com.otaliastudios.cameraview.tools.RecoverCameraRule;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.annotation.UiThreadTest;
 import androidx.test.rule.ActivityTestRule;
 
 import org.junit.After;
@@ -74,21 +72,6 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Rule
     public ActivityTestRule<TestActivity> activityRule = new ActivityTestRule<>(TestActivity.class);
-
-    @Rule
-    public RecoverCameraRule recoverRule = new RecoverCameraRule(new RecoverCameraRule.Callback() {
-        @NonNull
-        @Override
-        public CameraView getCamera() {
-            return camera;
-        }
-
-        @NonNull
-        @Override
-        public CameraLogger getLogger() {
-            return LOG;
-        }
-    });
 
     protected CameraView camera;
     protected E controller;
@@ -218,15 +201,15 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         // power saving mode which makes the CPU extremely slow. This is especially problematic
         // with video snapshots where we do lots of processing. The videoEnd callback can return
         // long after the actual stop() call, so if we're still processing, let's wait more.
-        if (expectSuccess && camera.isTakingVideo()) {
-            while (camera.isTakingVideo()) {
+        if (expectSuccess) {
+            while (wait1Result == null) {
                 LOG.w("[WAIT VIDEO]", "Waiting extra", DELAY, "milliseconds...");
                 wait1.listen();
                 wait1Result = wait1.await(DELAY);
             }
         }
 
-        // Now wait for onVideoResult().
+        // Now wait for onVideoResult(). One cycle should be enough.
         LOG.i("[WAIT VIDEO]", "Waiting for onVideoTaken()...");
         VideoResult wait2Result = wait2.await(DELAY);
 

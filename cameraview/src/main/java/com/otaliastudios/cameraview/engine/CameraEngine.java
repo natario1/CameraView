@@ -214,10 +214,9 @@ public abstract class CameraEngine implements
     protected CameraEngine(@NonNull Callback callback) {
         mCallback = callback;
         mCrashHandler = new Handler(Looper.getMainLooper());
-        mHandler = WorkerHandler.get("CameraViewEngine");
-        mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
         mFrameManager = instantiateFrameManager();
         mAngles = new Angles();
+        recreateHandler();
     }
 
     public void setPreview(@NonNull CameraPreview cameraPreview) {
@@ -310,7 +309,7 @@ public abstract class CameraEngine implements
     }
 
     private void recreateHandler() {
-        mHandler.destroy();
+        if (mHandler != null) mHandler.destroy();
         mHandler = WorkerHandler.get("CameraViewEngine");
         mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
     }
@@ -370,10 +369,8 @@ public abstract class CameraEngine implements
                 // onStopEngine() implementation and comments.
                 LOG.w("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Current thread:", Thread.currentThread(),
-                        "Handler thread: ", mHandler.getThread(),
-                        "Trying again on a new thread...");
-                recreateHandler();
-                destroy(unrecoverably);
+                        "Handler thread: ", mHandler.getThread());
+                // TODO find a solution
             }
         } catch (InterruptedException ignore) {}
     }
