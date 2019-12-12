@@ -212,6 +212,13 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         // Now wait for onVideoResult(). One cycle should be enough.
         LOG.i("[WAIT VIDEO]", "Waiting for onVideoTaken()...");
         VideoResult wait2Result = wait2.await(DELAY);
+        if (expectSuccess) {
+            while (wait2Result == null) {
+                LOG.w("[WAIT VIDEO]", "Waiting extra", DELAY, "milliseconds...");
+                wait2.listen();
+                wait2Result = wait2.await(DELAY);
+            }
+        }
 
         // Assert.
         if (expectSuccess) {
