@@ -363,9 +363,9 @@ public abstract class CameraEngine implements
             }
         });
         try {
-            boolean success = latch.await(2000, TimeUnit.MILLISECONDS);
+            boolean success = latch.await(6, TimeUnit.SECONDS);
             if (!success) {
-                LOG.w("DESTROY: Could not destroy synchronously after 2 seconds.",
+                LOG.w("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Current thread:", Thread.currentThread(),
                         "Handler thread: ", mHandler.getThread(),
                         "Trying again...");
