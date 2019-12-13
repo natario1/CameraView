@@ -146,6 +146,19 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case DEVICE_DEFAULT: videoType = "video/avc"; break;
             }
             String audioType = "audio/mp4a-latm";
+            TextureConfig videoConfig = new TextureConfig();
+            AudioConfig audioConfig = new AudioConfig();
+
+            // See if we have audio
+            int audioChannels = 0;
+            if (mResult.audio == Audio.ON) {
+                audioChannels = audioConfig.channels;
+            } else if (mResult.audio == Audio.MONO) {
+                audioChannels = 1;
+            } else if (mResult.audio == Audio.STEREO) {
+                audioChannels = 2;
+            }
+            boolean hasAudio = audioChannels > 0;
 
             // Check the availability of values
             Size newVideoSize = null;
@@ -157,18 +170,30 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             boolean encodersFound = false;
             DeviceEncoders deviceEncoders = null;
             while (!encodersFound) {
+                LOG.i("Checking DeviceEncoders...",
+                        "videoOffset:", videoEncoderOffset,
+                        "audioOffset:", audioEncoderOffset);
                 deviceEncoders = new DeviceEncoders(DeviceEncoders.MODE_PREFER_HARDWARE,
                         videoType, audioType, videoEncoderOffset, audioEncoderOffset);
                 try {
                     newVideoSize = deviceEncoders.getSupportedVideoSize(mResult.size);
                     newVideoBitRate = deviceEncoders.getSupportedVideoBitRate(mResult.videoBitRate);
-                    newAudioBitRate = deviceEncoders.getSupportedAudioBitRate(mResult.audioBitRate);
                     newVideoFrameRate = deviceEncoders.getSupportedVideoFrameRate(newVideoSize,
                             mResult.videoFrameRate);
+                    deviceEncoders.tryConfigureVideo(videoType, newVideoSize, newVideoFrameRate,
+                            newVideoBitRate);
+                    if (hasAudio) {
+                        newAudioBitRate = deviceEncoders
+                                .getSupportedAudioBitRate(mResult.audioBitRate);
+                        deviceEncoders.tryConfigureAudio(audioType, newAudioBitRate,
+                                audioConfig.samplingFrequency, audioChannels);
+                    }
                     encodersFound = true;
                 } catch (DeviceEncoders.VideoException videoException) {
+                    LOG.i("Got VideoException:", videoException.getMessage());
                     videoEncoderOffset++;
                 } catch (DeviceEncoders.AudioException audioException) {
+                    LOG.i("Got AudioException:", audioException.getMessage());
                     audioEncoderOffset++;
                 }
             }
@@ -178,7 +203,6 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mResult.videoFrameRate = newVideoFrameRate;
 
             // Video
-            TextureConfig videoConfig = new TextureConfig();
             videoConfig.width = mResult.size.getWidth();
             videoConfig.height = mResult.size.getHeight();
             videoConfig.bitRate = mResult.videoBitRate;
@@ -206,12 +230,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
             // Audio
             AudioMediaEncoder audioEncoder = null;
-            if (mResult.audio == Audio.ON || mResult.audio == Audio.MONO
-                    || mResult.audio == Audio.STEREO) {
-                AudioConfig audioConfig = new AudioConfig();
+            if (hasAudio) {
                 audioConfig.bitRate = mResult.audioBitRate;
-                if (mResult.audio == Audio.MONO) audioConfig.channels = 1;
-                if (mResult.audio == Audio.STEREO) audioConfig.channels = 2;
+                audioConfig.channels = audioChannels;
                 audioConfig.encoder = deviceEncoders.getAudioEncoder();
                 audioEncoder = new AudioMediaEncoder(audioConfig);
             }

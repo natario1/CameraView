@@ -1,8 +1,11 @@
 package com.otaliastudios.cameraview.internal;
 
 import android.annotation.SuppressLint;
+import android.media.AudioFormat;
+import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import android.media.MediaFormat;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -49,8 +52,9 @@ import java.util.List;
  * - MediaCodecList (https://android.googlesource.com/platform/frameworks/av/+/master/media/libstagefright/MediaCodecList.cpp#322)
  *
  * To be fair, what {@link android.media.MediaRecorder} does is actually choose the first one
- * that configures itself without errors. We currently do not offer this option here.
- * TODO add a tryConfigure() step, that throws AudioException/VideoException ?
+ * that configures itself without errors. We offer this option through
+ * {@link #tryConfigureVideo(String, Size, int, int)} and
+ * {@link #tryConfigureAudio(String, int, int, int)}.
  *
  * 2. {@link #MODE_PREFER_HARDWARE}
  *
@@ -347,6 +351,65 @@ public class DeviceEncoders {
             return mAudioEncoder.getName();
         } else {
             return null;
+        }
+    }
+
+    @SuppressLint("NewApi")
+    public void tryConfigureVideo(@NonNull String mimeType,
+                                  @NonNull Size size,
+                                  int frameRate,
+                                  int bitRate) {
+        if (mVideoEncoder != null) {
+            MediaCodec codec = null;
+            try {
+                MediaFormat format = MediaFormat.createVideoFormat(mimeType, size.getWidth(),
+                        size.getHeight());
+                format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                        MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+                format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
+                format.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
+                codec = MediaCodec.createByCodecName(mVideoEncoder.getName());
+                codec.configure(format, null, null,
+                        MediaCodec.CONFIGURE_FLAG_ENCODE);
+            } catch (Exception e) {
+                throw new VideoException("Failed to configure video codec: " + e.getMessage());
+            } finally {
+                if (codec != null) {
+                    try {
+                        codec.release();
+                    } catch (Exception ignore) {}
+                }
+            }
+        }
+    }
+
+    @SuppressLint("NewApi")
+    public void tryConfigureAudio(@NonNull String mimeType,
+                                  int bitRate,
+                                  int sampleRate,
+                                  int channels) {
+        if (mAudioEncoder != null) {
+            MediaCodec codec = null;
+            try {
+                final MediaFormat format = MediaFormat.createAudioFormat(mimeType, sampleRate,
+                        channels);
+                int channelMask = channels == 2 ? AudioFormat.CHANNEL_IN_STEREO
+                        : AudioFormat.CHANNEL_IN_MONO;
+                format.setInteger(MediaFormat.KEY_CHANNEL_MASK, channelMask);
+                format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
+
+                codec = MediaCodec.createByCodecName(mAudioEncoder.getName());
+                codec.configure(format, null, null,
+                        MediaCodec.CONFIGURE_FLAG_ENCODE);
+            } catch (Exception e) {
+                throw new AudioException("Failed to configure video audio: " + e.getMessage());
+            } finally {
+                if (codec != null) {
+                    try {
+                        codec.release();
+                    } catch (Exception ignore) {}
+                }
+            }
         }
     }
 

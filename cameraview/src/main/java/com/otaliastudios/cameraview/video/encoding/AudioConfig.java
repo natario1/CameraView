@@ -16,11 +16,11 @@ public class AudioConfig {
     public int channels = 1;
     public String encoder;
     public String mimeType = "audio/mp4a-latm";
+    public int samplingFrequency = 44100; // samples/sec
 
     // Not configurable options (for now)
     final int encoding = AudioFormat.ENCODING_PCM_16BIT; // Determines the sampleSizePerChannel
     // The 44.1KHz frequency is the only setting guaranteed to be available on all devices.
-    final int samplingFrequency = 44100; // samples/sec
     // If sampleSizePerChannel changes, review noise introduction
     final int sampleSizePerChannel = 2; // byte/sample/channel [16bit].
     final int byteRatePerChannel = samplingFrequency * sampleSizePerChannel; // byte/sec/channel
@@ -28,10 +28,11 @@ public class AudioConfig {
     @NonNull
     AudioConfig copy() {
         AudioConfig config = new AudioConfig();
-        config.bitRate = this.bitRate;
-        config.channels = this.channels;
-        config.encoder = this.encoder;
+        config.bitRate = bitRate;
+        config.channels = channels;
+        config.encoder = encoder;
         config.mimeType = mimeType;
+        config.samplingFrequency = samplingFrequency;
         return config;
     }
 

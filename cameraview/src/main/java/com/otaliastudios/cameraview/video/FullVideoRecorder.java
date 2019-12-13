@@ -84,9 +84,15 @@ public abstract class FullVideoRecorder extends VideoRecorder {
 
         // 2. Set the video and audio sources.
         applyVideoSource(stub, mMediaRecorder);
-        boolean hasAudio = stub.audio == Audio.ON
-                || stub.audio == Audio.MONO
-                || stub.audio == Audio.STEREO;
+        int audioChannels = 0;
+        if (stub.audio == Audio.ON) {
+            audioChannels = mProfile.audioChannels;
+        } else if (stub.audio == Audio.MONO) {
+            audioChannels = 1;
+        } else if (stub.audio == Audio.STEREO) {
+            audioChannels = 2;
+        }
+        boolean hasAudio = audioChannels > 0;
         if (hasAudio) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         }
@@ -156,13 +162,23 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 try {
                     newVideoSize = encoders.getSupportedVideoSize(stub.size);
                     newVideoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);
-                    newAudioBitRate = encoders.getSupportedAudioBitRate(stub.audioBitRate);
                     newVideoFrameRate = encoders.getSupportedVideoFrameRate(newVideoSize,
                             stub.videoFrameRate);
+                    encoders.tryConfigureVideo(videoType, newVideoSize, newVideoFrameRate,
+                            newVideoBitRate);
+                    if (hasAudio) {
+                        newAudioBitRate = encoders.getSupportedAudioBitRate(stub.audioBitRate);
+                        encoders.tryConfigureAudio(audioType, newAudioBitRate,
+                                mProfile.audioSampleRate, audioChannels);
+                    }
                     encodersFound = true;
                 } catch (DeviceEncoders.VideoException videoException) {
+                    LOG.i("prepareMediaRecorder:", "Got VideoException:",
+                            videoException.getMessage());
                     videoEncoderOffset++;
                 } catch (DeviceEncoders.AudioException audioException) {
+                    LOG.i("prepareMediaRecorder:", "Got AudioException:",
+                            audioException.getMessage());
                     audioEncoderOffset++;
                 }
             }
@@ -185,13 +201,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
 
         // 6B. Configure MediaRecorder from stub and from profile (audio)
         if (hasAudio) {
-            if (stub.audio == Audio.ON) {
-                mMediaRecorder.setAudioChannels(mProfile.audioChannels);
-            } else if (stub.audio == Audio.MONO) {
-                mMediaRecorder.setAudioChannels(1);
-            } else if (stub.audio == Audio.STEREO) {
-                mMediaRecorder.setAudioChannels(2);
-            }
+            mMediaRecorder.setAudioChannels(audioChannels);
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
             mMediaRecorder.setAudioEncoder(mProfile.audioCodec);
             mMediaRecorder.setAudioEncodingBitRate(stub.audioBitRate);
