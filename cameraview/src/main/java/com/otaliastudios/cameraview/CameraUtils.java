@@ -33,6 +33,8 @@ import java.io.OutputStream;
 @SuppressWarnings("unused")
 public class CameraUtils {
 
+    private final static String TAG = CameraUtils.class.getSimpleName();
+    private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     /**
      * Determines whether the device has valid camera sensors, so the library
@@ -289,9 +291,9 @@ public class CameraUtils {
                         exifOrientation == ExifInterface.ORIENTATION_FLIP_VERTICAL ||
                         exifOrientation == ExifInterface.ORIENTATION_TRANSPOSE ||
                         exifOrientation == ExifInterface.ORIENTATION_TRANSVERSE;
-
+                LOG.i("decodeBitmap:", "got orientation from EXIF.", orientation);
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.e("decodeBitmap:", "could not get orientation from EXIF.", e);
                 orientation = 0;
                 flip = false;
             } finally {
@@ -304,6 +306,7 @@ public class CameraUtils {
         } else {
             orientation = rotation;
             flip = false;
+            LOG.i("decodeBitmap:", "got orientation from constructor.", orientation);
         }
 
         Bitmap bitmap;

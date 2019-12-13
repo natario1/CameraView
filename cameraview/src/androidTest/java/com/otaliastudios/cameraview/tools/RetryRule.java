@@ -27,7 +27,7 @@ public class RetryRule implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 Retry retry = description.getAnnotation(Retry.class);
-                if (retry == null || retry.emulatorOnly() && !isEmulator()) {
+                if (retry == null || retry.emulatorOnly() && !Emulator.isEmulator()) {
                     base.evaluate();
                 } else {
                     Throwable caught = null;
@@ -48,12 +48,5 @@ public class RetryRule implements TestRule {
                 }
             }
         };
-    }
-
-    private boolean isEmulator() {
-        // From Android's RequiresDeviceFilter
-        return Build.HARDWARE.equals("goldfish")
-                || Build.HARDWARE.equals("ranchu")
-                || Build.HARDWARE.equals("gce_x86");
     }
 }

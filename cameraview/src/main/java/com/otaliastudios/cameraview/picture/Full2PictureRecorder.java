@@ -149,7 +149,9 @@ public class Full2PictureRecorder extends PictureRecorder
             int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
                     ExifInterface.ORIENTATION_NORMAL);
             mResult.rotation = ExifHelper.getOrientation(exifOrientation);
-        } catch (IOException ignore) { }
+        } catch (IOException ignore) {
+            // Should not happen
+        }
     }
 
     private void readRawImage(@NonNull Image image) {

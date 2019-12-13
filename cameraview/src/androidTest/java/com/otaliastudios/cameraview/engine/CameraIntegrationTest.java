@@ -29,6 +29,7 @@ import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.size.SizeSelectors;
+import com.otaliastudios.cameraview.tools.Emulator;
 import com.otaliastudios.cameraview.tools.Op;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.overlay.Overlay;
@@ -800,7 +801,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @Retry(emulatorOnly = true)
     public void testCapturePicture_size() {
         // Decoding can fail for large bitmaps. set a small size.
-        camera.setPictureSize(SizeSelectors.smallest());
+        // camera.setPictureSize(SizeSelectors.smallest());
         openSync(true);
         Size size = camera.getPictureSize();
         assertNotNull(size);
@@ -817,8 +818,18 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
             assertNotNull(bitmap);
             String message = LOG.i("[PICTURE SIZE]", "Desired:", size, "Bitmap:",
                     new Size(bitmap.getWidth(), bitmap.getHeight()));
-            assertEquals(message, bitmap.getWidth(), size.getWidth());
-            assertEquals(message, bitmap.getHeight(), size.getHeight());
+            if (!Emulator.isEmulator()) {
+                assertEquals(message, bitmap.getWidth(), size.getWidth());
+                assertEquals(message, bitmap.getHeight(), size.getHeight());
+            } else {
+                // Emulator implementation sometimes does not rotate the image correctly.
+                assertTrue(message, bitmap.getWidth() == size.getWidth()
+                        || bitmap.getWidth() == size.getHeight());
+                assertTrue(message, bitmap.getHeight() == size.getWidth()
+                        || bitmap.getHeight() == size.getHeight());
+                assertEquals(message, size.getWidth() * size.getHeight(),
+                        bitmap.getWidth() * bitmap.getHeight());
+            }
         }
     }
 
