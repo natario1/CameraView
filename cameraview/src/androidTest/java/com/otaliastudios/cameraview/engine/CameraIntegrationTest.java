@@ -39,6 +39,7 @@ import com.otaliastudios.cameraview.tools.RetryRule;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
+import androidx.test.rule.GrantPermissionRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -78,15 +79,17 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @Rule
     public RetryRule retryRule = new RetryRule(3);
 
+    @Rule
+    public GrantPermissionRule permissionRule = GrantPermissionRule.grant(
+            "android.permission.CAMERA",
+            "android.permission.RECORD_AUDIO",
+            "android.permission.WRITE_EXTERNAL_STORAGE"
+    );
+
     protected CameraView camera;
     protected E controller;
     private CameraListener listener;
     private Op<Throwable> error;
-
-    @BeforeClass
-    public static void grant() {
-        grantAllPermissions();
-    }
 
     @NonNull
     protected abstract Engine getEngine();
@@ -559,11 +562,14 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @Test
     @Retry(emulatorOnly = true)
     public void testSetPreviewFrameRate() {
-        openSync(true);
+        CameraOptions options = openSync(true);
         camera.setPreviewFrameRate(30);
         Op<Void> op = new Op<>(controller.mPreviewFrameRateTask);
         op.await(300);
-        assertEquals(camera.getPreviewFrameRate(), 30, 0);
+        assertEquals(camera.getPreviewFrameRate(),
+                Math.min(options.getPreviewFrameRateMaxValue(),
+                        Math.max(options.getPreviewFrameRateMinValue(), 30)),
+                0);
     }
 
     @Test
@@ -809,8 +815,10 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
                 Integer.MAX_VALUE, Integer.MAX_VALUE);
         if (bitmap != null) {
             assertNotNull(bitmap);
-            assertEquals(bitmap.getWidth(), size.getWidth());
-            assertEquals(bitmap.getHeight(), size.getHeight());
+            String message = LOG.i("[PICTURE SIZE]", "Desired:", size, "Bitmap:",
+                    new Size(bitmap.getWidth(), bitmap.getHeight()));
+            assertEquals(message, bitmap.getWidth(), size.getWidth());
+            assertEquals(message, bitmap.getHeight(), size.getHeight());
         }
     }
 
@@ -883,9 +891,11 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         Bitmap bitmap = CameraUtils.decodeBitmap(result.getData(),
                 Integer.MAX_VALUE, Integer.MAX_VALUE);
         if (bitmap != null) {
+            String message = LOG.i("[PICTURE SIZE]", "Desired:", size, "Bitmap:",
+                    new Size(bitmap.getWidth(), bitmap.getHeight()));
             assertNotNull(bitmap);
-            assertEquals(bitmap.getWidth(), size.getWidth());
-            assertEquals(bitmap.getHeight(), size.getHeight());
+            assertEquals(message, bitmap.getWidth(), size.getWidth());
+            assertEquals(message, bitmap.getHeight(), size.getHeight());
         }
     }
 

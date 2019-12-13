@@ -237,6 +237,9 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                         shouldStop = true;
                         break;
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING:
+                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
+                        // On rare occasions APPROACHING is not called. Make sure we listen to
+                        // REACHED as well.
                         mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
                         shouldStop = true;
                         break;
