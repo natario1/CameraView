@@ -173,6 +173,18 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 LOG.i("Checking DeviceEncoders...",
                         "videoOffset:", videoEncoderOffset,
                         "audioOffset:", audioEncoderOffset);
+                try {
+                    deviceEncoders = new DeviceEncoders(DeviceEncoders.MODE_RESPECT_ORDER,
+                            videoType, audioType, videoEncoderOffset, audioEncoderOffset);
+                } catch (RuntimeException e) {
+                    LOG.w("Could not respect encoders parameters.",
+                            "Going on again without checking encoders, possibly failing.");
+                    newVideoSize = mResult.size;
+                    newVideoBitRate = mResult.videoBitRate;
+                    newVideoFrameRate = mResult.videoFrameRate;
+                    newAudioBitRate = mResult.audioBitRate;
+                    break;
+                }
                 deviceEncoders = new DeviceEncoders(DeviceEncoders.MODE_PREFER_HARDWARE,
                         videoType, audioType, videoEncoderOffset, audioEncoderOffset);
                 try {

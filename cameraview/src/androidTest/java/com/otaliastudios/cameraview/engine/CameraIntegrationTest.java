@@ -624,6 +624,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testStartEndVideoSnapshot() {
         // TODO should check api level for snapshot?
         openSync(true);
@@ -654,6 +655,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testStartEndVideoSnapshot_withManualStop() {
         openSync(true);
         takeVideoSnapshotSync(true);
@@ -697,6 +699,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testEndVideoSnapshot_withMaxSize() {
         openSync(true);
         camera.setSnapshotMaxWidth(480);
@@ -725,6 +728,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testEndVideoSnapshot_withMaxDuration() {
         camera.setVideoMaxDuration(4000);
         openSync(true);

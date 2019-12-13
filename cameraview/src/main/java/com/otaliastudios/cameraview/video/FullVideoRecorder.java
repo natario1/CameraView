@@ -157,8 +157,15 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 LOG.i("prepareMediaRecorder:", "Checking DeviceEncoders...",
                         "videoOffset:", videoEncoderOffset,
                         "audioOffset:", audioEncoderOffset);
-                DeviceEncoders encoders = new DeviceEncoders(DeviceEncoders.MODE_RESPECT_ORDER,
-                        videoType, audioType, videoEncoderOffset, audioEncoderOffset);
+                DeviceEncoders encoders;
+                try {
+                    encoders = new DeviceEncoders(DeviceEncoders.MODE_RESPECT_ORDER,
+                            videoType, audioType, videoEncoderOffset, audioEncoderOffset);
+                } catch (RuntimeException e) {
+                    LOG.w("prepareMediaRecorder:", "Could not respect encoders parameters.",
+                            "Trying again without checking encoders.");
+                    return prepareMediaRecorder(stub, false);
+                }
                 try {
                     newVideoSize = encoders.getSupportedVideoSize(stub.size);
                     newVideoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);
