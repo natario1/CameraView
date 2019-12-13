@@ -38,19 +38,33 @@ jobs:
     name: Emulator Tests
     runs-on: macOS-latest
     strategy:
+      fail-fast: false
       matrix:
         # TODO 29 fails due to Mockito issues, probably reproducible locally.
-        # 22, 23, 24, 25, 26, 27, 28 work - some of them, with SdkExclude restrictions.
-        # EMULATOR_API: [22, 23, 24, 25, 26, 27, 28]
-        EMULATOR_API: [25]
-        EMULATOR_ARCH: [x86_64]
+        # 22-28 work (some of them, with SdkExclude restrictions)
+        EMULATOR_API: [22, 23, 24, 25, 26, 27, 28]
+        include:
+          - EMULATOR_API: 28
+            EMULATOR_ARCH: x86_64
+          - EMULATOR_API: 27
+            EMULATOR_ARCH: x86_64
+          - EMULATOR_API: 26
+            EMULATOR_ARCH: x86_64
+          - EMULATOR_API: 25
+            EMULATOR_ARCH: x86
+          - EMULATOR_API: 24
+            EMULATOR_ARCH: x86
+          - EMULATOR_API: 23
+            EMULATOR_ARCH: x86
+          - EMULATOR_API: 22
+            EMULATOR_ARCH: x86
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
         with:
           java-version: 1.8
       - name: Execute emulator tests
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@v2.0.0
         with:
           api-level: ${{ matrix.EMULATOR_API }}
           arch: ${{ matrix.EMULATOR_ARCH }}

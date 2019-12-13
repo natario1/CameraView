@@ -36,6 +36,7 @@ import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.tools.Retry;
 import com.otaliastudios.cameraview.tools.RetryRule;
+import com.otaliastudios.cameraview.tools.SdkExclude;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -613,6 +614,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 25, emulatorOnly = true)
     public void testStartEndVideo() {
         camera.setMode(Mode.VIDEO);
         openSync(true);
@@ -631,6 +633,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 25, emulatorOnly = true)
     public void testStartEndVideo_withManualStop() {
         camera.setMode(Mode.VIDEO);
         openSync(true);
@@ -679,6 +682,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 25, emulatorOnly = true)
     public void testEndVideo_withMaxSize() {
         camera.setMode(Mode.VIDEO);
         camera.setVideoSize(SizeSelectors.maxArea(480 * 360));
@@ -710,6 +714,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 25, emulatorOnly = true)
     public void testEndVideo_withMaxDuration() {
         camera.setMode(Mode.VIDEO);
         camera.setVideoMaxDuration(4000);
@@ -1006,6 +1011,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 25, emulatorOnly = true)
     public void testFrameProcessing_afterVideo() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
