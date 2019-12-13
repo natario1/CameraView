@@ -75,7 +75,7 @@ jobs:
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
         with:
-          name: emulator_tests
+          name: emulator_tests_${{ matrix.EMULATOR_API }}
           path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
   CODE_COVERAGE:
     name: Code Coverage Report
@@ -89,13 +89,15 @@ jobs:
       - name: Download unit tests artifact
         uses: actions/download-artifact@v1
         with:
-            name: unit_tests
-            path: ./cameraview/build/jacoco/
+          name: unit_tests
+          path: ./cameraview/build/jacoco/
       - name: Download emulator tests artifact
         uses: actions/download-artifact@v1
         with:
-            name: emulator_tests
-            path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
+          # 27 is the EMULATOR_API with less SdkExclude annotations, and should have
+          # the best possible coverage.
+          name: emulator_tests_27
+          path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
       - name: Create merged coverage report
         run: ./gradlew cameraview:mergeCoverageReports
       - name: Upload merged coverage report (GitHub)
