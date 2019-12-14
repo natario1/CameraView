@@ -1,14 +1,11 @@
 package com.otaliastudios.cameraview.picture;
 
-import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 
-import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
-import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.RotationHelper;
@@ -23,11 +20,7 @@ import java.io.ByteArrayOutputStream;
 /**
  * A {@link PictureRecorder} that uses standard APIs.
  */
-public class Snapshot1PictureRecorder extends PictureRecorder {
-
-    private static final String TAG = Snapshot1PictureRecorder.class.getSimpleName();
-    @SuppressWarnings("unused")
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+public class Snapshot1PictureRecorder extends SnapshotPictureRecorder {
 
     private Camera1Engine mEngine1;
     private Camera mCamera;

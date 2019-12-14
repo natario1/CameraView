@@ -2,7 +2,6 @@ package com.otaliastudios.cameraview.picture;
 
 import android.hardware.Camera;
 
-import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.internal.utils.ExifHelper;
 
@@ -16,11 +15,7 @@ import java.io.IOException;
 /**
  * A {@link PictureResult} that uses standard APIs.
  */
-public class Full1PictureRecorder extends PictureRecorder {
-
-    private static final String TAG = Full1PictureRecorder.class.getSimpleName();
-    @SuppressWarnings("unused")
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+public class Full1PictureRecorder extends FullPictureRecorder {
 
     private Camera mCamera;
 
@@ -39,10 +34,12 @@ public class Full1PictureRecorder extends PictureRecorder {
 
     @Override
     public void take() {
+        LOG.i("take() called.");
         mCamera.takePicture(
                 new Camera.ShutterCallback() {
                     @Override
                     public void onShutter() {
+                        LOG.i("take(): got onShutter callback.");
                         dispatchOnShutter(true);
                     }
                 },
@@ -51,6 +48,7 @@ public class Full1PictureRecorder extends PictureRecorder {
                 new Camera.PictureCallback() {
                     @Override
                     public void onPictureTaken(byte[] data, final Camera camera) {
+                        LOG.i("take(): got picture callback.");
                         int exifRotation;
                         try {
                             ExifInterface exif = new ExifInterface(new ByteArrayInputStream(data));
@@ -63,15 +61,18 @@ public class Full1PictureRecorder extends PictureRecorder {
                         }
                         mResult.data = data;
                         mResult.rotation = exifRotation;
+                        LOG.i("take(): starting preview again. ", Thread.currentThread());
                         camera.startPreview(); // This is needed, read somewhere in the docs.
                         dispatchResult();
                     }
                 }
         );
+        LOG.i("take() returned.");
     }
 
     @Override
     protected void dispatchResult() {
+        LOG.i("dispatching result. Thread:", Thread.currentThread());
         mCamera = null;
         super.dispatchResult();
     }

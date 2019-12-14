@@ -9,7 +9,6 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 
-import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
@@ -33,11 +32,8 @@ import androidx.exifinterface.media.ExifInterface;
  * A {@link PictureResult} that uses standard APIs.
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class Full2PictureRecorder extends PictureRecorder
+public class Full2PictureRecorder extends FullPictureRecorder
         implements ImageReader.OnImageAvailableListener {
-
-    private static final String TAG = Full2PictureRecorder.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private final ActionHolder mHolder;
     private final Action mAction;

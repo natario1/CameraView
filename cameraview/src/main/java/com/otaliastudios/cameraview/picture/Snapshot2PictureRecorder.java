@@ -10,7 +10,6 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
 import com.otaliastudios.cameraview.engine.action.Action;
@@ -44,8 +43,6 @@ import com.otaliastudios.cameraview.size.AspectRatio;
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
 
-    private final static String TAG = Snapshot2PictureRecorder.class.getSimpleName();
-    private final static CameraLogger LOG = CameraLogger.create(TAG);
     private final static long LOCK_TIMEOUT = 2500;
 
     private class FlashAction extends BaseAction {

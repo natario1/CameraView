@@ -30,7 +30,7 @@ import androidx.annotation.Nullable;
 public abstract class FullVideoRecorder extends VideoRecorder {
 
     private static final String TAG = FullVideoRecorder.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+    protected static final CameraLogger LOG = CameraLogger.create(TAG);
 
     @SuppressWarnings("WeakerAccess") protected MediaRecorder mMediaRecorder;
     private CamcorderProfile mProfile;

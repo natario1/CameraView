@@ -3,9 +3,7 @@ package com.otaliastudios.cameraview.video;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.util.Log;
 
-import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
@@ -18,9 +16,6 @@ import androidx.annotation.NonNull;
  * for the Camera1 engine.
  */
 public class Full1VideoRecorder extends FullVideoRecorder {
-
-    private static final String TAG = Full1VideoRecorder.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private final Camera1Engine mEngine;
     private final Camera mCamera;
