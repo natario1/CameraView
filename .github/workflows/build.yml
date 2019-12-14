@@ -74,20 +74,9 @@ jobs:
           emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
           emulator-build: 6031357
           script: |
-            # Core
-            ADB_TAGS="CameraView:I CameraCallbacks:I CameraOrchestrator:I CameraEngine:I"
-            ADB_TAGS="$ADB_TAGS CameraUtils:I WorkerHandler:I"
-            # Recorders
-            ADB_TAGS="$ADB_TAGS VideoRecorder:I FullVideoRecorder:I SnapshotVideoRecorder:I"
-            ADB_TAGS="$ADB_TAGS FullPictureRecorder:I SnapshotPictureRecorder:I DeviceEncoders:I"
-            # Video encoders
-            ADB_TAGS="$ADB_TAGS MediaEncoderEngine:I MediaEncoder:I AudioMediaEncoder:I VideoMediaEncoder:I TextureMediaEncoder:I"
-            # Debugging
-            ADB_TAGS="$ADB_TAGS CameraIntegrationTest:I MessageQueue:W MPEG4Writer:I"
-            echo "Logcat tags: $ADB_TAGS"
-            adb logcat -c
-            adb logcat $ADB_TAGS *:E -v color &
             emulator -version
+            adb logcat -c
+            adb logcat CameraView:I CameraCallbacks:I CameraOrchestrator:I CameraEngine:I CameraUtils:I WorkerHandler:I VideoRecorder:I FullVideoRecorder:I SnapshotVideoRecorder:I FullPictureRecorder:I SnapshotPictureRecorder:I DeviceEncoders:I MediaEncoderEngine:I MediaEncoder:I AudioMediaEncoder:I VideoMediaEncoder:I TextureMediaEncoder:I  CameraIntegrationTest:I MessageQueue:W MPEG4Writer:I *:E -v color
             ./gradlew cameraview:connectedCheck
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
