@@ -60,47 +60,20 @@ public class Camera2IntegrationTest extends CameraIntegrationTest<Camera2Engine>
         return Camera2Engine.METER_TIMEOUT;
     }
 
-    private boolean needsVideoDurationWorkaround() {
-        return controller.readCharacteristic(
+    /**
+     * setMaxDuration can crash on legacy devices (most emulator are), and I don't see
+     * any way to fix this in code. They shouldn't use Camera2 at all.
+     * @return true if possible.
+     */
+    @Override
+    protected boolean canSetVideoMaxDuration() {
+        if (!super.canSetVideoMaxDuration()) return false;
+        boolean shouldOpen = !camera.isOpened();
+        if (shouldOpen) openSync(true);
+        boolean result = controller.readCharacteristic(
                 CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
-                == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
-    }
-
-    @Override
-    protected void takeVideoSync(boolean expectSuccess, final int duration) {
-        if (duration > 0 && needsVideoDurationWorkaround()) {
-            // setMaxDuration can crash on legacy devices (most emulator are), and I don't see
-            // any way to fix this in code. They shouldn't use Camera2 at all.
-            // For tests, use a handler to trigger the stop.
-            final int delay = Math.round(duration * 1.2F); // Compensate for thread jumps, ...
-            uiSync(new Runnable() {
-                @Override
-                public void run() {
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            camera.stopVideo();
-                        }
-                    }, delay);
-                }
-            });
-            super.takeVideoSync(expectSuccess, 0);
-        } else {
-            super.takeVideoSync(expectSuccess, duration);
-        }
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public void testEndVideo_withMaxDuration() {
-        openSync(true);
-        boolean workaround = needsVideoDurationWorkaround();
-        closeSync(true);
-        if (!workaround) {
-            super.testEndVideo_withMaxDuration();
-        } else {
-            // In this case, the workaround is simply not executing it.
-            // This feature is already tested elsewhere so it's not an issue.
-        }
+                != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
+        if (shouldOpen) closeSync(true);
+        return result;
     }
 }

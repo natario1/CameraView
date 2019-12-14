@@ -277,6 +277,15 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         return result;
     }
 
+    /**
+     * Emulators do not respond well to setVideoMaxDuration() with full videos.
+     * The mediaRecorder.stop() call can hang forever.
+     * @return true if possible
+     */
+    protected boolean canSetVideoMaxDuration() {
+        return !Emulator.isEmulator();
+    }
+
     protected void takeVideoSync(boolean expectSuccess) {
         takeVideoSync(expectSuccess,0);
     }
@@ -292,9 +301,23 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         }));
         File file = new File(getContext().getFilesDir(), "video.mp4");
         if (duration > 0) {
-            // On Camera2, on Legacy sensors, this call can crash (see FullVideoRecorder).
-            // For this reasons, tests that call this should not be run on such devices.
-            camera.takeVideo(file, duration);
+            if (canSetVideoMaxDuration()) {
+                camera.takeVideo(file, duration);
+            } else {
+                final int delay = Math.round(duration * 1.2F); // Compensate for thread jumps, ...
+                uiSync(new Runnable() {
+                    @Override
+                    public void run() {
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                camera.stopVideo();
+                            }
+                        }, delay);
+                    }
+                });
+                camera.takeVideo(file);
+            }
         } else {
             camera.takeVideo(file);
         }
@@ -351,6 +374,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testOpenClose() {
         assertEquals(CameraState.OFF, controller.getState());
         openSync(true);
@@ -361,6 +385,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testOpenTwice() {
         openSync(true);
         openSync(false);
@@ -368,12 +393,14 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCloseTwice() {
         closeSync(false);
     }
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     // This works great on the device but crashes often on the emulator.
     // There must be something wrong with the emulated camera...
     // Like stopPreview() and release() are not really sync calls?
@@ -393,6 +420,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testStartInitializesOptions() {
         assertNull(camera.getCameraOptions());
         openSync(true);
@@ -406,6 +434,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetFacing() throws Exception {
         CameraOptions o = openSync(true);
         int size = o.getSupportedFacing().size();
@@ -424,6 +453,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetMode() throws Exception {
         camera.setMode(Mode.PICTURE);
         openSync(true);
@@ -447,6 +477,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetZoom() {
         CameraOptions options = openSync(true);
         float oldValue = camera.getZoom();
@@ -464,6 +495,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetExposureCorrection() {
         CameraOptions options = openSync(true);
         float oldValue = camera.getExposureCorrection();
@@ -481,6 +513,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetFlash() {
         CameraOptions options = openSync(true);
         Flash[] values = Flash.values();
@@ -501,6 +534,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetWhiteBalance() {
         CameraOptions options = openSync(true);
         WhiteBalance[] values = WhiteBalance.values();
@@ -520,6 +554,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetHdr() {
         CameraOptions options = openSync(true);
         Hdr[] values = Hdr.values();
@@ -539,6 +574,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetAudio() {
         openSync(true);
         Audio[] values = Audio.values();
@@ -550,6 +586,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetLocation() {
         openSync(true);
         camera.setLocation(10d, 2d);
@@ -577,6 +614,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetPlaySounds() {
         boolean oldValue = camera.getPlaySounds();
         boolean newValue = !oldValue;
@@ -606,6 +644,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test(expected = RuntimeException.class)
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testStartVideo_whileInPictureMode() throws Throwable {
         camera.setMode(Mode.PICTURE);
         openSync(true);
@@ -676,6 +715,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testEndVideo_withoutStarting() {
         camera.setMode(Mode.VIDEO);
         openSync(true);
@@ -720,11 +760,13 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 25, emulatorOnly = true)
     public void testEndVideo_withMaxDuration() {
-        camera.setMode(Mode.VIDEO);
-        camera.setVideoMaxDuration(4000);
-        openSync(true);
-        takeVideoSync(true);
-        waitForVideoResult(true);
+        if (canSetVideoMaxDuration()) {
+            camera.setMode(Mode.VIDEO);
+            camera.setVideoMaxDuration(4000);
+            openSync(true);
+            takeVideoSync(true);
+            waitForVideoResult(true);
+        }
     }
 
     @Test
@@ -743,6 +785,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testStartAutoFocus() {
         CameraOptions o = openSync(true);
 
@@ -761,6 +804,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testStopAutoFocus() {
         CameraOptions o = openSync(true);
 
@@ -786,6 +830,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCapturePicture_beforeStarted() {
         camera.takePicture();
         waitForPictureResult(false);
@@ -793,6 +838,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCapturePicture_concurrentCalls() throws Exception {
         // Second take should fail.
         openSync(true);
@@ -809,6 +855,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCapturePicture_size() {
         // Decoding can fail for large bitmaps. set a small size.
         // camera.setPictureSize(SizeSelectors.smallest());
@@ -845,6 +892,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test(expected = RuntimeException.class)
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCapturePicture_whileInVideoMode() throws Throwable {
         camera.setMode(Mode.VIDEO);
         openSync(true);
@@ -856,6 +904,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCapturePicture_withMetering() {
         openSync(true);
         camera.setPictureMetering(true);
@@ -865,6 +914,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCapturePicture_withoutMetering() {
         openSync(true);
         camera.setPictureMetering(false);
@@ -874,6 +924,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCaptureSnapshot_beforeStarted() {
         camera.takePictureSnapshot();
         waitForPictureResult(false);
@@ -881,6 +932,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCaptureSnapshot_concurrentCalls() throws Exception {
         // Second take should fail.
         openSync(true);
@@ -897,6 +949,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCaptureSnapshot_size() {
         openSync(true);
         Size size = camera.getSnapshotSize();
@@ -922,6 +975,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCaptureSnapshot_withMetering() {
         openSync(true);
         camera.setPictureSnapshotMetering(true);
@@ -931,6 +985,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testCaptureSnapshot_withoutMetering() {
         openSync(true);
         camera.setPictureSnapshotMetering(false);
@@ -945,6 +1000,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @SuppressWarnings("ConstantConditions")
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testPictureFormat_DNG() {
         openSync(true);
         if (camera.getCameraOptions().supports(PictureFormat.DNG)) {
@@ -978,6 +1034,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testFrameProcessing_simple() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
@@ -988,6 +1045,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testFrameProcessing_afterSnapshot() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
@@ -1003,6 +1061,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testFrameProcessing_afterRestart() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
@@ -1030,6 +1089,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testFrameProcessing_freezeRelease() throws Exception {
         // Ensure that freeze/release cycles do not cause OOMs.
         // There was a bug doing this and it might resurface for any improper
@@ -1055,6 +1115,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testOverlay_forPictureSnapshot() {
         Overlay overlay = mock(Overlay.class);
         when(overlay.drawsOn(any(Overlay.Target.class))).thenReturn(true);
@@ -1068,6 +1129,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testOverlay_forVideoSnapshot() {
         Overlay overlay = mock(Overlay.class);
         when(overlay.drawsOn(any(Overlay.Target.class))).thenReturn(true);
