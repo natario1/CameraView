@@ -318,6 +318,7 @@ public abstract class CameraEngine implements
         if (mHandler != null) mHandler.destroy();
         mHandler = WorkerHandler.get("CameraViewEngine");
         mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
+        if (resetOrchestrator) mOrchestrator.reset();
     }
 
     //endregion
