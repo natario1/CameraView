@@ -563,6 +563,7 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
 
     @Test
     @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testSetPreviewFrameRate() {
         CameraOptions options = openSync(true);
         camera.setPreviewFrameRate(30);

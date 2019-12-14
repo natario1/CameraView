@@ -216,7 +216,7 @@ public abstract class CameraEngine implements
         mCrashHandler = new Handler(Looper.getMainLooper());
         mFrameManager = instantiateFrameManager();
         mAngles = new Angles();
-        recreateHandler();
+        recreateHandler(false);
     }
 
     public void setPreview(@NonNull CameraPreview cameraPreview) {
@@ -276,7 +276,7 @@ public abstract class CameraEngine implements
         // (at least in Camera1, e.g. onError).
         if (fromExceptionHandler) {
             LOG.e("EXCEPTION:", "Handler thread is gone. Replacing.");
-            recreateHandler();
+            recreateHandler(false);
         }
 
         // 2. Depending on the exception, we must destroy(false|true) to release resources, and
@@ -308,7 +308,13 @@ public abstract class CameraEngine implements
         });
     }
 
-    private void recreateHandler() {
+    /**
+     * Recreates the handler, to ensure we use a fresh one from now on.
+     * If we suspect that handler is currently stuck, the orchestrator should be reset
+     * because it hosts a chain of tasks and the last one will never complete.
+     * @param resetOrchestrator true to reset
+     */
+    private void recreateHandler(boolean resetOrchestrator) {
         if (mHandler != null) mHandler.destroy();
         mHandler = WorkerHandler.get("CameraViewEngine");
         mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
@@ -370,7 +376,7 @@ public abstract class CameraEngine implements
                 LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Current thread:", Thread.currentThread(),
                         "Handler thread:", mHandler.getThread());
-                recreateHandler();
+                recreateHandler(true);
                 LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Trying again on thread:", mHandler.getThread());
                 destroy(unrecoverably);

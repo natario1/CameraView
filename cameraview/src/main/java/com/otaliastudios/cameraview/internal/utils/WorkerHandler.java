@@ -96,7 +96,13 @@ public class WorkerHandler {
 
     private WorkerHandler(@NonNull String name) {
         mName = name;
-        mThread = new HandlerThread(name);
+        mThread = new HandlerThread(name) {
+            @NonNull
+            @Override
+            public String toString() {
+                return super.toString() + "[" + getThreadId() + "]";
+            }
+        };
         mThread.setDaemon(true);
         mThread.start();
         mHandler = new Handler(mThread.getLooper());

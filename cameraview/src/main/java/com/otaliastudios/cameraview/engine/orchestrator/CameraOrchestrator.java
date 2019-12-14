@@ -11,7 +11,9 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -158,6 +160,20 @@ public class CameraOrchestrator {
             //noinspection StatementWithEmptyBody
             while (mJobs.remove(token)) { /* do nothing */ }
             ensureToken();
+        }
+    }
+
+    public void reset() {
+        synchronized (mLock) {
+            List<String> all = new ArrayList<>();
+            //noinspection CollectionAddAllCanBeReplacedWithConstructor
+            all.addAll(mDelayedJobs.keySet());
+            for (Token token : mJobs) {
+                all.add(token.name);
+            }
+            for (String job : all) {
+                remove(job);
+            }
         }
     }
 
