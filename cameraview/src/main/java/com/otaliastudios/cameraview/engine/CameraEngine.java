@@ -137,6 +137,9 @@ public abstract class CameraEngine implements
     protected static final String TAG = CameraEngine.class.getSimpleName();
     protected static final CameraLogger LOG = CameraLogger.create(TAG);
 
+    // If this is 2, this means we'll try to run destroy() twice.
+    private static final int DESTROY_RETRIES = 2;
+
     // Need to be protected
     @SuppressWarnings("WeakerAccess") protected final Callback mCallback;
     @SuppressWarnings("WeakerAccess") protected CameraPreview mPreview;
@@ -350,8 +353,13 @@ public abstract class CameraEngine implements
      * awaiting for {@link #stop(boolean)} to return.
      */
     public void destroy(boolean unrecoverably) {
+        destroy(unrecoverably, 0);
+    }
+
+    private void destroy(boolean unrecoverably, int depth) {
         LOG.i("DESTROY:", "state:", getState(),
                 "thread:", Thread.currentThread(),
+                "depth:", depth,
                 "unrecoverably:", unrecoverably);
         if (unrecoverably) {
             // Prevent CameraEngine leaks. Don't set to null, or exceptions
@@ -363,11 +371,11 @@ public abstract class CameraEngine implements
         stop(true).addOnCompleteListener(
                 mHandler.getExecutor(),
                 new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                latch.countDown();
-            }
-        });
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        latch.countDown();
+                    }
+                });
         try {
             boolean success = latch.await(6, TimeUnit.SECONDS);
             if (!success) {
@@ -377,10 +385,14 @@ public abstract class CameraEngine implements
                 LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Current thread:", Thread.currentThread(),
                         "Handler thread:", mHandler.getThread());
-                recreateHandler(true);
-                LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
-                        "Trying again on thread:", mHandler.getThread());
-                destroy(unrecoverably);
+                depth++;
+                if (depth < DESTROY_RETRIES) {
+                    recreateHandler(true);
+                    LOG.e("DESTROY: Trying again on thread:", mHandler.getThread());
+                    destroy(unrecoverably, depth);
+                } else {
+                    LOG.w("DESTROY: Giving up because DESTROY_RETRIES was reached.");
+                }
             }
         } catch (InterruptedException ignore) {}
     }

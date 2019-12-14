@@ -38,8 +38,8 @@ public class Full1PictureRecorder extends FullPictureRecorder {
     @Override
     public void take() {
         LOG.i("take() called.");
-        // TODO HANGS (rare, emulator only)
-        // Trying to fix by stopping preview callback before.
+        // Stopping the preview callback is important on older APIs / emulators,
+        // or takePicture can hang and leave the camera in a bad state.
         mCamera.setPreviewCallbackWithBuffer(null);
         mCamera.takePicture(
                 new Camera.ShutterCallback() {

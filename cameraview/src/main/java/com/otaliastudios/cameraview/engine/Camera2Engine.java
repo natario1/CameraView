@@ -638,20 +638,19 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (hasFrameProcessors()) {
             getFrameManager().release();
         }
+        // Removing the part below for now. It hangs on emulators and can take a lot of time
+        // in real devices, for benefits that I'm not 100% sure about.
         if (false) {
             try {
-                // Preferring this over stopRepeating() so we're sure that all in-flights operations
-                // are discarded as fast as possible, which is exactly what we want.
+                // Preferring abortCaptures() over stopRepeating(): it makes sure that all
+                // in-flight operations are discarded as fast as possible, which is what we want.
                 // NOTE: this call is asynchronous. Should find a good way to wait for the outcome.
-                LOG.i("onStopPreview:", "calling stopRepeating().");
-                // TODO HANGS (rare, emulator only)
-                mSession.stopRepeating();
                 LOG.i("onStopPreview:", "calling abortCaptures().");
                 mSession.abortCaptures();
                 LOG.i("onStopPreview:", "called abortCaptures().");
             } catch (CameraAccessException e) {
-                // This tells us that we should stop everything. It's better to throw an unrecoverable
-                // exception rather than just swallow this, so everything gets stopped.
+                // This tells us that we should stop everything. It's better to throw an
+                // unrecoverable exception rather than just swallow, so everything gets stopped.
                 LOG.w("onStopPreview:", "abortCaptures failed!", e);
                 throw createCameraException(e);
             } catch (IllegalStateException e) {
