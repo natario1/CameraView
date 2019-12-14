@@ -583,7 +583,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @NonNull
     @Override
     protected Task<Void> onStartPreview() {
-        LOG.i("onStartPreview", "Dispatching onCameraPreviewStreamSizeChanged.");
+        LOG.i("onStartPreview:", "Dispatching onCameraPreviewStreamSizeChanged.");
         mCallback.onCameraPreviewStreamSizeChanged();
 
         Size previewSizeForView = getPreviewStreamSize(Reference.VIEW);
@@ -596,11 +596,11 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             getFrameManager().setUp(FRAME_PROCESSING_FORMAT, mFrameProcessingSize);
         }
 
-        LOG.i("onStartPreview", "Starting preview.");
+        LOG.i("onStartPreview:", "Starting preview.");
         addRepeatingRequestBuilderSurfaces();
         applyRepeatingRequestBuilder(false,
                 CameraException.REASON_FAILED_TO_START_PREVIEW);
-        LOG.i("onStartPreview", "Started preview.");
+        LOG.i("onStartPreview:", "Started preview.");
 
         // Start delayed video if needed.
         if (mFullVideoPendingStub != null) {
@@ -642,8 +642,10 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             // Preferring this over stopRepeating() so we're sure that all in-flights operations
             // are discarded as fast as possible, which is exactly what we want.
             // NOTE: this call is asynchronous. Should find a good way to wait for the outcome.
-            LOG.i("onStopPreview:", "calling abortCaptures().");
+            LOG.i("onStopPreview:", "calling stopRepeating().");
             // TODO HANGS (rare, emulator only)
+            mSession.stopRepeating();
+            LOG.i("onStopPreview:", "calling abortCaptures().");
             mSession.abortCaptures();
             LOG.i("onStopPreview:", "called abortCaptures().");
         } catch (CameraAccessException e) {

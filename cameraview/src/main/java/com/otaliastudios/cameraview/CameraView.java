@@ -411,22 +411,20 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             return;
         }
 
-        Size previewSize = mCameraEngine.getPreviewStreamSize(Reference.VIEW);
-        if (previewSize == null) {
+        mLastPreviewStreamSize = mCameraEngine.getPreviewStreamSize(Reference.VIEW);
+        if (mLastPreviewStreamSize == null) {
             LOG.w("onMeasure:", "surface is not ready. Calling default behavior.");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            mLastPreviewStreamSize = null;
             return;
         }
-        mLastPreviewStreamSize = previewSize;
 
         // Let's which dimensions need to be adapted.
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         final int widthValue = MeasureSpec.getSize(widthMeasureSpec);
         final int heightValue = MeasureSpec.getSize(heightMeasureSpec);
-        final float previewWidth = previewSize.getWidth();
-        final float previewHeight = previewSize.getHeight();
+        final float previewWidth = mLastPreviewStreamSize.getWidth();
+        final float previewHeight = mLastPreviewStreamSize.getHeight();
 
         // Pre-process specs
         final ViewGroup.LayoutParams lp = getLayoutParams();
@@ -441,10 +439,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             if (heightMode == AT_MOST && lp.height == MATCH_PARENT) heightMode = EXACTLY;
         }
 
-        LOG.i("onMeasure:", "requested dimensions are (" + widthValue + "[" + ms(widthMode)
-                + "]x" + heightValue + "[" + ms(heightMode) + "])");
-        LOG.i("onMeasure:",  "previewSize is", "(" + previewWidth + "x"
-                + previewHeight + ")");
+        LOG.i("onMeasure:", "requested dimensions are ("
+                + widthValue + "[" + ms(widthMode) + "]x"
+                + heightValue + "[" + ms(heightMode) + "])");
+        LOG.i("onMeasure:",  "previewSize is", "("
+                + previewWidth + "x" + previewHeight + ")");
 
         // (1) If we have fixed dimensions (either 300dp or MATCH_PARENT), there's nothing we
         // should do, other than respect it. The preview will eventually be cropped at the sides
