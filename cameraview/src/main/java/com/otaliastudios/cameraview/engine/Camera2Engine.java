@@ -1415,7 +1415,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         Image image = null;
         try {
             image = reader.acquireLatestImage();
-        } catch (IllegalStateException ignore) { }
+        } catch (Exception ignore) { }
         if (image == null) {
             LOG.w("onImageAvailable", "we have a byte buffer but no Image!");
             getFrameManager().onBufferUnused(data);
