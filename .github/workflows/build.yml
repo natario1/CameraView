@@ -73,10 +73,7 @@ jobs:
           profile: Nexus 5X
           emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
           emulator-build: 6031357
-          script: |
-            # adb logcat -c
-            adb logcat CameraView:I CameraCallbacks:I CameraOrchestrator:I CameraEngine:I CameraUtils:I WorkerHandler:I VideoRecorder:I FullVideoRecorder:I SnapshotVideoRecorder:I FullPictureRecorder:I SnapshotPictureRecorder:I DeviceEncoders:I MediaEncoderEngine:I MediaEncoder:I AudioMediaEncoder:I VideoMediaEncoder:I TextureMediaEncoder:I  CameraIntegrationTest:I MessageQueue:W MPEG4Writer:I *:E -v color &
-            ./gradlew cameraview:connectedCheck
+          script: ./.github/workflows/emulator_script.sh
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
         with:
