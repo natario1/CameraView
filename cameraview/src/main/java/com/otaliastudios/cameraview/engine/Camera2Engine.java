@@ -627,7 +627,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
     @NonNull
     @Override
     protected Task<Void> onStopPreview() {
-        LOG.i("onStopPreview:", "About to clean up.");
+        LOG.i("onStopPreview:", "Started.");
         if (mVideoRecorder != null) {
             // This should synchronously call onVideoResult that will reset the repeating builder
             // to the PREVIEW template. This is very important.
@@ -643,6 +643,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
             // are discarded as fast as possible, which is exactly what we want.
             // NOTE: this call is asynchronous. Should find a good way to wait for the outcome.
             LOG.i("onStopPreview:", "calling abortCaptures().");
+            // TODO HANGS (rare, emulator only)
             mSession.abortCaptures();
             LOG.i("onStopPreview:", "called abortCaptures().");
         } catch (CameraAccessException e) {

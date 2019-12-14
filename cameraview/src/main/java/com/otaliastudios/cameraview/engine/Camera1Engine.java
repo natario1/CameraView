@@ -240,15 +240,19 @@ public class Camera1Engine extends CameraEngine implements
     @NonNull
     @Override
     protected Task<Void> onStopPreview() {
+        LOG.i("onStopPreview:", "Started.");
         if (mVideoRecorder != null) {
             mVideoRecorder.stop(true);
             mVideoRecorder = null;
         }
         mPictureRecorder = null;
         getFrameManager().release();
+        LOG.i("onStopPreview:", "Releasing preview buffers.");
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         try {
+            LOG.i("onStopPreview:", "Stopping preview.");
             mCamera.stopPreview();
+            LOG.i("onStopPreview:", "Stopped preview.");
         } catch (Exception e) {
             LOG.e("stopPreview", "Could not stop preview", e);
         }

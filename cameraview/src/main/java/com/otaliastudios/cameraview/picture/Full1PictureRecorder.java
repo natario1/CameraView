@@ -35,6 +35,7 @@ public class Full1PictureRecorder extends FullPictureRecorder {
     @Override
     public void take() {
         LOG.i("take() called.");
+        // TODO HANGS (rare, emulator only)
         mCamera.takePicture(
                 new Camera.ShutterCallback() {
                     @Override
