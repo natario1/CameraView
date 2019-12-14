@@ -386,7 +386,7 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
 
                     // Set parameters that might have been set before the camera was opened.
                     try {
-                        LOG.i("createCamera:", "Applying default parameters.");
+                        LOG.i("onStartEngine:", "Opened camera device.");
                         mCameraCharacteristics = mManager.getCameraCharacteristics(mCameraId);
                         boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
                         int format;

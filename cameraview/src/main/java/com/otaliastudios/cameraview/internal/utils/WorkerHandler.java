@@ -89,18 +89,20 @@ public class WorkerHandler {
         get().post(action);
     }
 
+    private String mName;
     private HandlerThread mThread;
     private Handler mHandler;
     private Executor mExecutor;
 
     private WorkerHandler(@NonNull String name) {
+        mName = name;
         mThread = new HandlerThread(name);
         mThread.setDaemon(true);
         mThread.start();
         mHandler = new Handler(mThread.getLooper());
         mExecutor = new Executor() {
             @Override
-            public void execute(Runnable command) {
+            public void execute(@NonNull Runnable command) {
                 WorkerHandler.this.run(command);
             }
         };
@@ -245,6 +247,10 @@ public class WorkerHandler {
             // after quit(), the thread will die at some point in the future. Might take some ms.
             // try { handler.getThread().join(); } catch (InterruptedException ignore) {}
         }
+        // This should not be needed, but just to be sure, let's remove it from cache.
+        // For example, interrupt() won't interrupt the thread if it's blocked - it will throw
+        // an exception instead.
+        sCache.remove(mName);
     }
 
     /**

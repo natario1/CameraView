@@ -369,8 +369,11 @@ public abstract class CameraEngine implements
                 // onStopEngine() implementation and comments.
                 LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Current thread:", Thread.currentThread(),
-                        "Handler thread: ", mHandler.getThread());
-                // TODO Should we find a solution or is this emulator only?
+                        "Handler thread:", mHandler.getThread());
+                recreateHandler();
+                LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
+                        "Trying again on thread:", mHandler.getThread());
+                destroy(unrecoverably);
             }
         } catch (InterruptedException ignore) {}
     }

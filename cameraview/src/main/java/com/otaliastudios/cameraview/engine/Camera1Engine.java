@@ -329,6 +329,7 @@ public class Camera1Engine extends CameraEngine implements
         stub.size = getPictureSize(Reference.OUTPUT);
         mPictureRecorder = new Full1PictureRecorder(stub, Camera1Engine.this, mCamera);
         mPictureRecorder.take();
+        LOG.i("onTakePicture:", "executed.");
     }
 
     @EngineThread
@@ -347,6 +348,7 @@ public class Camera1Engine extends CameraEngine implements
             mPictureRecorder = new Snapshot1PictureRecorder(stub, this, mCamera, outputRatio);
         }
         mPictureRecorder.take();
+        LOG.i("onTakePictureSnapshot:", "executed.");
     }
 
     //endregion

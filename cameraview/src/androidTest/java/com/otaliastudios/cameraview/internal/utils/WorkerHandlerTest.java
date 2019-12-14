@@ -220,12 +220,12 @@ public class WorkerHandlerTest extends BaseTest {
         final WorkerHandler handler = WorkerHandler.get("handler");
         assertTrue(handler.getThread().isAlive());
         handler.destroy();
-        // Wait for the thread to die.
-        try { handler.getThread().join(500); } catch (InterruptedException ignore) {}
-        assertFalse(handler.getThread().isAlive());
         WorkerHandler newHandler = WorkerHandler.get("handler");
         assertNotSame(handler, newHandler);
         assertTrue(newHandler.getThread().isAlive());
+        // Ensure old thread dies at some point.
+        try { handler.getThread().join(500); } catch (InterruptedException ignore) {}
+        assertFalse(handler.getThread().isAlive());
     }
 
     @Test
