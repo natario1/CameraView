@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.picture;
 import android.hardware.Camera;
 
 import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.internal.utils.ExifHelper;
 
 import androidx.annotation.NonNull;
@@ -17,12 +18,14 @@ import java.io.IOException;
  */
 public class Full1PictureRecorder extends FullPictureRecorder {
 
-    private Camera mCamera;
+    private final Camera mCamera;
+    private final Camera1Engine mEngine;
 
     public Full1PictureRecorder(@NonNull PictureResult.Stub stub,
-                                @Nullable PictureResultListener listener,
+                                @NonNull Camera1Engine engine,
                                 @NonNull Camera camera) {
-        super(stub, listener);
+        super(stub, engine);
+        mEngine = engine;
         mCamera = camera;
 
         // We set the rotation to the camera parameters, but we don't know if the result will be
@@ -36,6 +39,8 @@ public class Full1PictureRecorder extends FullPictureRecorder {
     public void take() {
         LOG.i("take() called.");
         // TODO HANGS (rare, emulator only)
+        // Trying to fix by stopping preview callback before.
+        mCamera.setPreviewCallbackWithBuffer(null);
         mCamera.takePicture(
                 new Camera.ShutterCallback() {
                     @Override
@@ -63,6 +68,7 @@ public class Full1PictureRecorder extends FullPictureRecorder {
                         mResult.data = data;
                         mResult.rotation = exifRotation;
                         LOG.i("take(): starting preview again. ", Thread.currentThread());
+                        camera.setPreviewCallbackWithBuffer(mEngine);
                         camera.startPreview(); // This is needed, read somewhere in the docs.
                         dispatchResult();
                     }
@@ -74,7 +80,6 @@ public class Full1PictureRecorder extends FullPictureRecorder {
     @Override
     protected void dispatchResult() {
         LOG.i("dispatching result. Thread:", Thread.currentThread());
-        mCamera = null;
         super.dispatchResult();
     }
 }
