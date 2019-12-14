@@ -74,7 +74,7 @@ jobs:
           emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
           emulator-build: 6031357
           script: |
-            emulator -version
+            ${ANDROID_HOME}/emulator/emulator -version
             adb logcat -c
             adb logcat CameraView:I CameraCallbacks:I CameraOrchestrator:I CameraEngine:I CameraUtils:I WorkerHandler:I VideoRecorder:I FullVideoRecorder:I SnapshotVideoRecorder:I FullPictureRecorder:I SnapshotPictureRecorder:I DeviceEncoders:I MediaEncoderEngine:I MediaEncoder:I AudioMediaEncoder:I VideoMediaEncoder:I TextureMediaEncoder:I  CameraIntegrationTest:I MessageQueue:W MPEG4Writer:I *:E -v color
             ./gradlew cameraview:connectedCheck
