@@ -638,24 +638,26 @@ public class Camera2Engine extends CameraEngine implements ImageReader.OnImageAv
         if (hasFrameProcessors()) {
             getFrameManager().release();
         }
-        try {
-            // Preferring this over stopRepeating() so we're sure that all in-flights operations
-            // are discarded as fast as possible, which is exactly what we want.
-            // NOTE: this call is asynchronous. Should find a good way to wait for the outcome.
-            LOG.i("onStopPreview:", "calling stopRepeating().");
-            // TODO HANGS (rare, emulator only)
-            mSession.stopRepeating();
-            LOG.i("onStopPreview:", "calling abortCaptures().");
-            mSession.abortCaptures();
-            LOG.i("onStopPreview:", "called abortCaptures().");
-        } catch (CameraAccessException e) {
-            // This tells us that we should stop everything. It's better to throw an unrecoverable
-            // exception rather than just swallow this, so everything gets stopped.
-            LOG.w("onStopPreview:", "abortCaptures failed!", e);
-            throw createCameraException(e);
-        } catch (IllegalStateException e) {
-            // This tells us that the session was already closed.
-            // Not sure if this can happen, but we can swallow it.
+        if (false) {
+            try {
+                // Preferring this over stopRepeating() so we're sure that all in-flights operations
+                // are discarded as fast as possible, which is exactly what we want.
+                // NOTE: this call is asynchronous. Should find a good way to wait for the outcome.
+                LOG.i("onStopPreview:", "calling stopRepeating().");
+                // TODO HANGS (rare, emulator only)
+                mSession.stopRepeating();
+                LOG.i("onStopPreview:", "calling abortCaptures().");
+                mSession.abortCaptures();
+                LOG.i("onStopPreview:", "called abortCaptures().");
+            } catch (CameraAccessException e) {
+                // This tells us that we should stop everything. It's better to throw an unrecoverable
+                // exception rather than just swallow this, so everything gets stopped.
+                LOG.w("onStopPreview:", "abortCaptures failed!", e);
+                throw createCameraException(e);
+            } catch (IllegalStateException e) {
+                // This tells us that the session was already closed.
+                // Not sure if this can happen, but we can swallow it.
+            }
         }
         removeRepeatingRequestBuilderSurfaces();
         mLastRepeatingResult = null;

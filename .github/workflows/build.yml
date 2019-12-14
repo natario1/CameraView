@@ -64,15 +64,31 @@ jobs:
         with:
           java-version: 1.8
       - name: Execute emulator tests
-        timeout-minutes: 20
-        uses: reactivecircus/android-emulator-runner@v2.0.0
+        timeout-minutes: 16
+        uses: reactivecircus/android-emulator-runner@v2.2.0
         with:
           api-level: ${{ matrix.EMULATOR_API }}
           arch: ${{ matrix.EMULATOR_ARCH }}
           disable-animations: true
           profile: Nexus 5X
-          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated
-          script: ./.github/workflows/emulator_script.sh
+          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
+          emulator-build: 6031357
+          script: |
+            # Core
+            ADB_TAGS="CameraView:I CameraCallbacks:I CameraOrchestrator:I CameraEngine:I"
+            ADB_TAGS="$ADB_TAGS CameraUtils:I WorkerHandler:I"
+            # Recorders
+            ADB_TAGS="$ADB_TAGS VideoRecorder:I FullVideoRecorder:I SnapshotVideoRecorder:I"
+            ADB_TAGS="$ADB_TAGS FullPictureRecorder:I SnapshotPictureRecorder:I DeviceEncoders:I"
+            # Video encoders
+            ADB_TAGS="$ADB_TAGS MediaEncoderEngine:I MediaEncoder:I AudioMediaEncoder:I VideoMediaEncoder:I TextureMediaEncoder:I"
+            # Debugging
+            ADB_TAGS="$ADB_TAGS CameraIntegrationTest:I MessageQueue:W MPEG4Writer:I"
+            echo "Logcat tags: $ADB_TAGS"
+            adb logcat -c
+            adb logcat $ADB_TAGS *:E -v color &
+            emulator -version
+            ./gradlew cameraview:connectedCheck
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
         with:
