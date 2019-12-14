@@ -64,7 +64,7 @@ jobs:
         with:
           java-version: 1.8
       - name: Execute emulator tests
-        timeout-minutes: 18
+        timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2.2.0
         with:
           api-level: ${{ matrix.EMULATOR_API }}
