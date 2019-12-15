@@ -1046,6 +1046,27 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
+    public void testFrameProcessing_maxSize() {
+        final int max = 600;
+        camera.setFrameProcessingMaxWidth(max);
+        camera.setFrameProcessingMaxHeight(max);
+        final Op<Size> sizeOp = new Op<>();
+        camera.addFrameProcessor(new FrameProcessor() {
+            @Override
+            public void process(@NonNull Frame frame) {
+                sizeOp.controller().end(frame.getSize());
+            }
+        });
+        openSync(true);
+        Size size = sizeOp.await(2000);
+        assertNotNull(size);
+        assertTrue(size.getWidth() <= max);
+        assertTrue(size.getHeight() <= max);
+    }
+
+    @Test
+    @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testFrameProcessing_afterSnapshot() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);

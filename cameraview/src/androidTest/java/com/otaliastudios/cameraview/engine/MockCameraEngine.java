@@ -171,6 +171,12 @@ public class MockCameraEngine extends CameraBaseEngine {
         return new ArrayList<>();
     }
 
+    @NonNull
+    @Override
+    protected List<Size> getFrameProcessingAvailableSizes() {
+        return new ArrayList<>();
+    }
+
     @Override
     public void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point) {
         mFocusStarted = true;

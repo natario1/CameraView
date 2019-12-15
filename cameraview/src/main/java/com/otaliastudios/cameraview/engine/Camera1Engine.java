@@ -47,6 +47,8 @@ import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -102,6 +104,15 @@ public class Camera1Engine extends CameraBaseEngine implements
         }
         LOG.i("getPreviewStreamAvailableSizes:", result);
         return result;
+    }
+
+    @EngineThread
+    @NonNull
+    @Override
+    protected List<Size> getFrameProcessingAvailableSizes() {
+        // We don't choose the frame processing size.
+        // It comes from the preview stream.
+        return Collections.singletonList(mPreviewStreamSize);
     }
 
     @EngineThread

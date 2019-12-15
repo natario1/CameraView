@@ -51,6 +51,7 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @SuppressWarnings("WeakerAccess") protected VideoRecorder mVideoRecorder;
     @SuppressWarnings("WeakerAccess") protected Size mCaptureSize;
     @SuppressWarnings("WeakerAccess") protected Size mPreviewStreamSize;
+    @SuppressWarnings("WeakerAccess") protected Size mFrameProcessingSize;
     @SuppressWarnings("WeakerAccess") protected Flash mFlash;
     @SuppressWarnings("WeakerAccess") protected WhiteBalance mWhiteBalance;
     @SuppressWarnings("WeakerAccess") protected VideoCodec mVideoCodec;
@@ -80,6 +81,8 @@ public abstract class CameraBaseEngine extends CameraEngine {
     private long mAutoFocusResetDelayMillis;
     private int mSnapshotMaxWidth; // in REF_VIEW like SizeSelectors
     private int mSnapshotMaxHeight; // in REF_VIEW like SizeSelectors
+    private int mFrameProcessingMaxWidth; // in REF_VIEW like SizeSelectors
+    private int mFrameProcessingMaxHeight; // in REF_VIEW like SizeSelectors
     private Overlay mOverlay;
 
     // Ops used for testing.
@@ -259,6 +262,26 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @Override
     public final int getSnapshotMaxHeight() {
         return mSnapshotMaxHeight;
+    }
+
+    @Override
+    public final void setFrameProcessingMaxWidth(int maxWidth) {
+        mFrameProcessingMaxWidth = maxWidth;
+    }
+
+    @Override
+    public final int getFrameProcessingMaxWidth() {
+        return mFrameProcessingMaxWidth;
+    }
+
+    @Override
+    public final void setFrameProcessingMaxHeight(int maxHeight) {
+        mFrameProcessingMaxHeight = maxHeight;
+    }
+
+    @Override
+    public final int getFrameProcessingMaxHeight() {
+        return mFrameProcessingMaxHeight;
     }
 
     @Override
@@ -843,6 +866,59 @@ public abstract class CameraBaseEngine extends CameraEngine {
         }
         if (flip) result = result.flip();
         LOG.i("computePreviewStreamSize:", "result:", result, "flip:", flip);
+        return result;
+    }
+
+    /**
+     * This is called anytime {@link #computeFrameProcessingSize()} is called.
+     * Implementors can return null if frame processor size is not selectable
+     * @return a list of available sizes for frame processing
+     */
+    @EngineThread
+    @NonNull
+    protected abstract List<Size> getFrameProcessingAvailableSizes();
+
+    @EngineThread
+    @NonNull
+    @SuppressWarnings("WeakerAccess")
+    protected final Size computeFrameProcessingSize() {
+        @NonNull List<Size> frameSizes = getFrameProcessingAvailableSizes();
+        // These sizes come in REF_SENSOR. Since there is an external selector involved,
+        // we must convert all of them to REF_VIEW, then flip back when returning.
+        boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
+        List<Size> sizes = new ArrayList<>(frameSizes.size());
+        for (Size size : frameSizes) {
+            sizes.add(flip ? size.flip() : size);
+        }
+        AspectRatio targetRatio = AspectRatio.of(
+                mPreviewStreamSize.getWidth(),
+                mPreviewStreamSize.getHeight());
+        if (flip) targetRatio = targetRatio.flip();
+        int maxWidth = mFrameProcessingMaxWidth;
+        int maxHeight = mFrameProcessingMaxHeight;
+        if (maxWidth <= 0 || maxWidth == Integer.MAX_VALUE) maxWidth = 640;
+        if (maxHeight <= 0 || maxHeight == Integer.MAX_VALUE) maxHeight = 640;
+        Size targetMaxSize = new Size(maxWidth, maxHeight);
+        LOG.i("computeFrameProcessingSize:",
+                "targetRatio:", targetRatio,
+                "targetMaxSize:", targetMaxSize);
+        SizeSelector matchRatio = SizeSelectors.aspectRatio(targetRatio, 0);
+        SizeSelector matchSize = SizeSelectors.and(
+                SizeSelectors.maxHeight(targetMaxSize.getHeight()),
+                SizeSelectors.maxWidth(targetMaxSize.getWidth()),
+                SizeSelectors.biggest());
+        SizeSelector matchAll = SizeSelectors.or(
+                SizeSelectors.and(matchRatio, matchSize), // Try to respect both constraints.
+                matchSize, // If couldn't match aspect ratio, at least respect the size
+                SizeSelectors.smallest() // If couldn't match any, take the smallest.
+        );
+        Size result = matchAll.select(sizes).get(0);
+        if (!sizes.contains(result)) {
+            throw new RuntimeException("SizeSelectors must not return Sizes other than " +
+                    "those in the input list.");
+        }
+        if (flip) result = result.flip();
+        LOG.i("computeFrameProcessingSize:", "result:", result, "flip:", flip);
         return result;
     }
 

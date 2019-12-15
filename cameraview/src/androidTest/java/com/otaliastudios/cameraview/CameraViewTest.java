@@ -170,6 +170,8 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getZoom(), 0f, 0f);
         assertEquals(cameraView.getVideoMaxDuration(), 0, 0);
         assertEquals(cameraView.getVideoMaxSize(), 0, 0);
+        assertEquals(cameraView.getSnapshotMaxWidth(), 0, 0);
+        assertEquals(cameraView.getSnapshotMaxHeight(), 0, 0);
 
         // Self managed
         GestureParser gestures = new GestureParser(empty);
@@ -801,6 +803,22 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getPreviewFrameRate(), 60, 0);
     }
 
+    @Test
+    public void testSnapshotMaxSize() {
+        cameraView.setSnapshotMaxWidth(500);
+        assertEquals(cameraView.getSnapshotMaxWidth(), 500);
+        cameraView.setSnapshotMaxHeight(700);
+        assertEquals(cameraView.getSnapshotMaxHeight(), 700);
+    }
+
+    @Test
+    public void testFrameProcessingMaxSize() {
+        cameraView.setFrameProcessingMaxWidth(500);
+        assertEquals(cameraView.getFrameProcessingMaxWidth(), 500);
+        cameraView.setFrameProcessingMaxHeight(700);
+        assertEquals(cameraView.getFrameProcessingMaxHeight(), 700);
+    }
+
     //endregion
 
     //region Lists of listeners and processors
@@ -975,7 +993,6 @@ public class CameraViewTest extends BaseTest {
     }
 
     //endregion
-    // TODO: test permissions
 
     //region Filter
 
@@ -1002,4 +1019,6 @@ public class CameraViewTest extends BaseTest {
         //noinspection ResultOfMethodCallIgnored
         verify(mockPreview, times(1)).getCurrentFilter();
     }
+
+    //endregion
 }

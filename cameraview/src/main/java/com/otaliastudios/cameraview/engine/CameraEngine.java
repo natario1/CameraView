@@ -641,6 +641,12 @@ public abstract class CameraEngine implements
     public abstract void setSnapshotMaxHeight(int maxHeight);
     public abstract int getSnapshotMaxHeight();
 
+    public abstract void setFrameProcessingMaxWidth(int maxWidth);
+    public abstract int getFrameProcessingMaxWidth();
+
+    public abstract void setFrameProcessingMaxHeight(int maxHeight);
+    public abstract int getFrameProcessingMaxHeight();
+
     public abstract void setAutoFocusResetDelay(long delayMillis);
     public abstract long getAutoFocusResetDelay();
 

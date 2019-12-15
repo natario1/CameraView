@@ -95,7 +95,6 @@ public class Camera2Engine extends CameraBaseEngine implements
     private final Camera2Mapper mMapper = Camera2Mapper.get();
 
     // Frame processing
-    private Size mFrameProcessingSize;
     private ImageReader mFrameProcessingReader; // need this or the reader surface is collected
     private final WorkerHandler mFrameConversionHandler;
     private final Object mFrameProcessingImageLock = new Object();
@@ -327,6 +326,29 @@ public class Camera2Engine extends CameraBaseEngine implements
     }
 
     @EngineThread
+    @NonNull
+    @Override
+    protected List<Size> getFrameProcessingAvailableSizes() {
+        try {
+            CameraCharacteristics characteristics = mManager.getCameraCharacteristics(mCameraId);
+            StreamConfigurationMap streamMap =
+                    characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (streamMap == null) {
+                throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
+            }
+            android.util.Size[] sizes = streamMap.getOutputSizes(FRAME_PROCESSING_INPUT_FORMAT);
+            List<Size> candidates = new ArrayList<>(sizes.length);
+            for (android.util.Size size : sizes) {
+                Size add = new Size(size.getWidth(), size.getHeight());
+                if (!candidates.contains(add)) candidates.add(add);
+            }
+            return candidates;
+        } catch (CameraAccessException e) {
+            throw createCameraException(e);
+        }
+    }
+
+    @EngineThread
     @Override
     protected void onPreviewStreamSizeChanged() {
         LOG.i("onPreviewStreamSizeChanged:", "Calling restartBind().");
@@ -520,21 +542,7 @@ public class Camera2Engine extends CameraBaseEngine implements
 
         // 4. FRAME PROCESSING
         if (hasFrameProcessors()) {
-            // Choose the size.
-            StreamConfigurationMap streamMap = mCameraCharacteristics
-                    .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            if (streamMap == null) {
-                throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
-            }
-            android.util.Size[] aSizes = streamMap.getOutputSizes(FRAME_PROCESSING_INPUT_FORMAT);
-            List<Size> sizes = new ArrayList<>();
-            for (android.util.Size aSize : aSizes) {
-                sizes.add(new Size(aSize.getWidth(), aSize.getHeight()));
-            }
-            mFrameProcessingSize = SizeSelectors.and(
-                    SizeSelectors.maxWidth(Math.min(640, mPreviewStreamSize.getWidth())),
-                    SizeSelectors.maxHeight(Math.min(640, mPreviewStreamSize.getHeight())),
-                    SizeSelectors.biggest()).select(sizes).get(0);
+            mFrameProcessingSize = computeFrameProcessingSize();
             mFrameProcessingReader = ImageReader.newInstance(
                     mFrameProcessingSize.getWidth(),
                     mFrameProcessingSize.getHeight(),

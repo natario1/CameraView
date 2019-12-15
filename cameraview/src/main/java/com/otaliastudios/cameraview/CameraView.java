@@ -1731,6 +1731,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
+     * The max width for snapshots.
+     * @see #setSnapshotMaxWidth(int)
+     * @return max width
+     */
+    public int getSnapshotMaxWidth() {
+        return mCameraEngine.getSnapshotMaxWidth();
+    }
+
+    /**
+     * The max height for snapshots.
+     * @see #setSnapshotMaxHeight(int)
+     * @return max height
+     */
+    public int getSnapshotMaxHeight() {
+        return mCameraEngine.getSnapshotMaxHeight();
+    }
+
+    /**
      * Returns the size used for snapshots, or null if it hasn't been computed
      * (for example if the surface is not ready). This is the preview size, rotated to match
      * the output orientation, and cropped to the visible part.
@@ -2303,6 +2321,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setFrameProcessingMaxHeight(int maxHeight) {
         mCameraEngine.setFrameProcessingMaxHeight(maxHeight);
+    }
+
+    /**
+     * The max width for frame processing frames.
+     * @see #setFrameProcessingMaxWidth(int)
+     * @return max width
+     */
+    public int getFrameProcessingMaxWidth() {
+        return mCameraEngine.getFrameProcessingMaxWidth();
+    }
+
+    /**
+     * The max height for frame processing frames.
+     * @see #setFrameProcessingMaxHeight(int)
+     * @return max height
+     */
+    public int getFrameProcessingMaxHeight() {
+        return mCameraEngine.getFrameProcessingMaxHeight();
     }
 
     //endregion
