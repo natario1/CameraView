@@ -397,7 +397,7 @@ public abstract class MediaEncoder {
     @SuppressLint("LogNotTimber")
     @SuppressWarnings("WeakerAccess")
     protected final void drainOutput(boolean drainAll) {
-        LOG.v(mName, "DRAINING - EOS:", drainAll);
+        LOG.i(mName, "DRAINING - EOS:", drainAll);
         if (mMediaCodec == null) {
             LOG.e("drain() was called before prepare() or after releasing.");
             return;
@@ -407,6 +407,7 @@ public abstract class MediaEncoder {
         }
         while (true) {
             int encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, OUTPUT_TIMEOUT_US);
+            LOG.i(mName, "DRAINING - Got status:", encoderStatus);
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 // no output available yet
                 if (!drainAll) break; // out of while
@@ -534,14 +535,17 @@ public abstract class MediaEncoder {
      * max length allowed. We will move to {@link #STATE_LIMIT_REACHED} and request a stop.
      */
     private void onMaxLengthReached() {
-        if (mMaxLengthReached) return;
-        mMaxLengthReached = true;
-        if (mState >= STATE_LIMIT_REACHED) {
-            LOG.w(mName, "onMaxLengthReached: Reached in wrong state. Aborting.", mState);
+        if (mMaxLengthReached) {
+            LOG.w(mName, "onMaxLengthReached: Called twice.");
         } else {
-            LOG.w(mName, "onMaxLengthReached: Requesting a stop.");
-            setState(STATE_LIMIT_REACHED);
-            mController.requestStop(mTrackIndex);
+            mMaxLengthReached = true;
+            if (mState >= STATE_LIMIT_REACHED) {
+                LOG.w(mName, "onMaxLengthReached: Reached in wrong state. Aborting.", mState);
+            } else {
+                LOG.w(mName, "onMaxLengthReached: Requesting a stop.");
+                setState(STATE_LIMIT_REACHED);
+                mController.requestStop(mTrackIndex);
+            }
         }
     }
 

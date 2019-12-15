@@ -1,19 +1,14 @@
 package com.otaliastudios.cameraview.video;
 
-import android.annotation.SuppressLint;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.TotalCaptureResult;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.view.Surface;
 
-import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
 import com.otaliastudios.cameraview.engine.action.Action;
-import com.otaliastudios.cameraview.engine.action.ActionCallback;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 import com.otaliastudios.cameraview.engine.action.CompletionCallback;
@@ -30,9 +25,6 @@ import androidx.annotation.RequiresApi;
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class Full2VideoRecorder extends FullVideoRecorder {
-
-    private static final String TAG = Full2VideoRecorder.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private ActionHolder mHolder;
     private final String mCameraId;

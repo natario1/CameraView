@@ -40,8 +40,8 @@ public class MockCameraEngine extends CameraEngine {
 
     @NonNull
     @Override
-    protected Task<Void> onStartEngine() {
-        return Tasks.forResult(null);
+    protected Task<CameraOptions> onStartEngine() {
+        return Tasks.forResult(mCameraOptions);
     }
 
     @NonNull

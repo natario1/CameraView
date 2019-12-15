@@ -1,4 +1,5 @@
 # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
+# Renaming ? Change the README badge.
 name: Build
 on:
   push:
@@ -37,28 +38,46 @@ jobs:
     name: Emulator Tests
     runs-on: macOS-latest
     strategy:
+      fail-fast: false
       matrix:
-        # TODO 29 fails due to Mockito issues, probably reproducible locally.
-        # 22, 23, 24, 25, 26, 27, 28 work - some of them, with SdkExclude restrictions.
+        # TODO 29 fails due to Mockito issues, probably reproducible locally
+        # 22-28 work (some of them, with SdkExclude restrictions)
         EMULATOR_API: [22, 23, 24, 25, 26, 27, 28]
-        EMULATOR_ARCH: [x86_64]
+        include:
+          - EMULATOR_API: 28
+            EMULATOR_ARCH: x86_64
+          - EMULATOR_API: 27
+            EMULATOR_ARCH: x86_64
+          - EMULATOR_API: 26
+            EMULATOR_ARCH: x86_64
+          - EMULATOR_API: 25
+            EMULATOR_ARCH: x86
+          - EMULATOR_API: 24
+            EMULATOR_ARCH: x86
+          - EMULATOR_API: 23
+            EMULATOR_ARCH: x86
+          - EMULATOR_API: 22
+            EMULATOR_ARCH: x86
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
         with:
           java-version: 1.8
       - name: Execute emulator tests
-        uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2.2.0
         with:
           api-level: ${{ matrix.EMULATOR_API }}
           arch: ${{ matrix.EMULATOR_ARCH }}
           disable-animations: true
-          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -memory 2048
-          script: ./gradlew cameraview:connectedCheck
+          profile: Nexus 5X
+          emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
+          emulator-build: 6031357
+          script: ./.github/workflows/emulator_script.sh
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
         with:
-          name: emulator_tests
+          name: emulator_tests_${{ matrix.EMULATOR_API }}
           path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
   CODE_COVERAGE:
     name: Code Coverage Report
@@ -72,13 +91,15 @@ jobs:
       - name: Download unit tests artifact
         uses: actions/download-artifact@v1
         with:
-            name: unit_tests
-            path: ./cameraview/build/jacoco/
+          name: unit_tests
+          path: ./cameraview/build/jacoco/
       - name: Download emulator tests artifact
         uses: actions/download-artifact@v1
         with:
-            name: emulator_tests
-            path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
+          # 27 is the EMULATOR_API with less SdkExclude annotations, and should have
+          # the best possible coverage.
+          name: emulator_tests_27
+          path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
       - name: Create merged coverage report
         run: ./gradlew cameraview:mergeCoverageReports
       - name: Upload merged coverage report (GitHub)

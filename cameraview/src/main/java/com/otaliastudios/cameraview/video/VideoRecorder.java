@@ -73,6 +73,7 @@ public abstract class VideoRecorder {
                         "Ignoring. state:", mState);
                 return;
             }
+            LOG.i("start:", "Changed state to STATE_RECORDING");
             mState = STATE_RECORDING;
         }
         mResult = stub;
@@ -91,6 +92,7 @@ public abstract class VideoRecorder {
                         "Ignoring. isCameraShutdown:", isCameraShutdown);
                 return;
             }
+            LOG.i("stop:", "Changed state to STATE_STOPPING");
             mState = STATE_STOPPING;
         }
         onStop(isCameraShutdown);
@@ -123,10 +125,15 @@ public abstract class VideoRecorder {
      */
     protected final void dispatchResult() {
         synchronized (mStateLock) {
-            if (!isRecording()) return;
+            if (!isRecording()) {
+                LOG.w("dispatchResult:", "Called, but not recording! Aborting.");
+                return;
+            }
+            LOG.i("dispatchResult:", "Changed state to STATE_IDLE.");
             mState = STATE_IDLE;
         }
         onDispatchResult();
+        LOG.i("dispatchResult:", "About to dispatch result:", mResult, mError);
         if (mListener != null) {
             mListener.onVideoResult(mResult, mError);
         }
@@ -148,6 +155,7 @@ public abstract class VideoRecorder {
     @SuppressWarnings("WeakerAccess")
     @CallSuper
     protected void dispatchVideoRecordingStart() {
+        LOG.i("dispatchVideoRecordingStart:", "About to dispatch.");
         if (mListener != null) {
             mListener.onVideoRecordingStart();
         }
@@ -160,6 +168,7 @@ public abstract class VideoRecorder {
     @SuppressWarnings("WeakerAccess")
     @CallSuper
     protected void dispatchVideoRecordingEnd() {
+        LOG.i("dispatchVideoRecordingEnd:", "About to dispatch.");
         if (mListener != null) {
             mListener.onVideoRecordingEnd();
         }

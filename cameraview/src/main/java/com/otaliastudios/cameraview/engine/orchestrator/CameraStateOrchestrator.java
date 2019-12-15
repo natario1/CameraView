@@ -37,7 +37,8 @@ public class CameraStateOrchestrator extends CameraOrchestrator {
     public boolean hasPendingStateChange() {
         synchronized (mLock) {
             for (Token token : mJobs) {
-                if (token.name.contains(" > ") && !token.task.isComplete()) {
+                if ((token.name.contains(" >> ") || token.name.contains(" << "))
+                        && !token.task.isComplete()) {
                     return true;
                 }
             }
@@ -46,28 +47,29 @@ public class CameraStateOrchestrator extends CameraOrchestrator {
     }
 
     @NonNull
-    public Task<Void> scheduleStateChange(@NonNull final CameraState fromState,
-                                          @NonNull final CameraState toState,
-                                          boolean dispatchExceptions,
-                                          @NonNull final Callable<Task<Void>> stateChange) {
+    public <T> Task<T> scheduleStateChange(@NonNull final CameraState fromState,
+                                           @NonNull final CameraState toState,
+                                           boolean dispatchExceptions,
+                                           @NonNull final Callable<Task<T>> stateChange) {
         final int changeCount = ++mStateChangeCount;
         mTargetState = toState;
 
         final boolean isTearDown = !toState.isAtLeast(fromState);
-        final String changeName = fromState.name() + " > " + toState.name();
-        return schedule(changeName, dispatchExceptions, new Callable<Task<Void>>() {
+        final String name = isTearDown ? fromState.name() + " << " + toState.name()
+                : fromState.name() + " >> " + toState.name();
+        return schedule(name, dispatchExceptions, new Callable<Task<T>>() {
             @Override
-            public Task<Void> call() throws Exception {
+            public Task<T> call() throws Exception {
                 if (getCurrentState() != fromState) {
-                    LOG.w(changeName.toUpperCase(), "- State mismatch, aborting. current:",
+                    LOG.w(name.toUpperCase(), "- State mismatch, aborting. current:",
                             getCurrentState(), "from:", fromState, "to:", toState);
                     return Tasks.forCanceled();
                 } else {
-                    Executor executor = mCallback.getJobWorker(changeName).getExecutor();
+                    Executor executor = mCallback.getJobWorker(name).getExecutor();
                     return stateChange.call().continueWithTask(executor,
-                            new Continuation<Void, Task<Void>>() {
+                            new Continuation<T, Task<T>>() {
                         @Override
-                        public Task<Void> then(@NonNull Task<Void> task) {
+                        public Task<T> then(@NonNull Task<T> task) {
                             if (task.isSuccessful() || isTearDown) {
                                 mCurrentState = toState;
                             }
@@ -76,9 +78,9 @@ public class CameraStateOrchestrator extends CameraOrchestrator {
                     });
                 }
             }
-        }).addOnCompleteListener(new OnCompleteListener<Void>() {
+        }).addOnCompleteListener(new OnCompleteListener<T>() {
             @Override
-            public void onComplete(@NonNull Task<Void> task) {
+            public void onComplete(@NonNull Task<T> task) {
                 if (changeCount == mStateChangeCount) {
                     mTargetState = mCurrentState;
                 }

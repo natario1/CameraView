@@ -18,8 +18,8 @@ import androidx.test.filters.RequiresDevice;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-@RequiresDevice
-public class Camera1IntegrationTest extends CameraIntegrationTest {
+// @RequiresDevice
+public class Camera1IntegrationTest extends CameraIntegrationTest<Camera1Engine> {
 
     @NonNull
     @Override

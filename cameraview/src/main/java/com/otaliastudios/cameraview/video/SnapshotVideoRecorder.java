@@ -146,6 +146,19 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case DEVICE_DEFAULT: videoType = "video/avc"; break;
             }
             String audioType = "audio/mp4a-latm";
+            TextureConfig videoConfig = new TextureConfig();
+            AudioConfig audioConfig = new AudioConfig();
+
+            // See if we have audio
+            int audioChannels = 0;
+            if (mResult.audio == Audio.ON) {
+                audioChannels = audioConfig.channels;
+            } else if (mResult.audio == Audio.MONO) {
+                audioChannels = 1;
+            } else if (mResult.audio == Audio.STEREO) {
+                audioChannels = 2;
+            }
+            boolean hasAudio = audioChannels > 0;
 
             // Check the availability of values
             Size newVideoSize = null;
@@ -157,18 +170,42 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             boolean encodersFound = false;
             DeviceEncoders deviceEncoders = null;
             while (!encodersFound) {
+                LOG.i("Checking DeviceEncoders...",
+                        "videoOffset:", videoEncoderOffset,
+                        "audioOffset:", audioEncoderOffset);
+                try {
+                    deviceEncoders = new DeviceEncoders(DeviceEncoders.MODE_RESPECT_ORDER,
+                            videoType, audioType, videoEncoderOffset, audioEncoderOffset);
+                } catch (RuntimeException e) {
+                    LOG.w("Could not respect encoders parameters.",
+                            "Going on again without checking encoders, possibly failing.");
+                    newVideoSize = mResult.size;
+                    newVideoBitRate = mResult.videoBitRate;
+                    newVideoFrameRate = mResult.videoFrameRate;
+                    newAudioBitRate = mResult.audioBitRate;
+                    break;
+                }
                 deviceEncoders = new DeviceEncoders(DeviceEncoders.MODE_PREFER_HARDWARE,
                         videoType, audioType, videoEncoderOffset, audioEncoderOffset);
                 try {
                     newVideoSize = deviceEncoders.getSupportedVideoSize(mResult.size);
                     newVideoBitRate = deviceEncoders.getSupportedVideoBitRate(mResult.videoBitRate);
-                    newAudioBitRate = deviceEncoders.getSupportedAudioBitRate(mResult.audioBitRate);
                     newVideoFrameRate = deviceEncoders.getSupportedVideoFrameRate(newVideoSize,
                             mResult.videoFrameRate);
+                    deviceEncoders.tryConfigureVideo(videoType, newVideoSize, newVideoFrameRate,
+                            newVideoBitRate);
+                    if (hasAudio) {
+                        newAudioBitRate = deviceEncoders
+                                .getSupportedAudioBitRate(mResult.audioBitRate);
+                        deviceEncoders.tryConfigureAudio(audioType, newAudioBitRate,
+                                audioConfig.samplingFrequency, audioChannels);
+                    }
                     encodersFound = true;
                 } catch (DeviceEncoders.VideoException videoException) {
+                    LOG.i("Got VideoException:", videoException.getMessage());
                     videoEncoderOffset++;
                 } catch (DeviceEncoders.AudioException audioException) {
+                    LOG.i("Got AudioException:", audioException.getMessage());
                     audioEncoderOffset++;
                 }
             }
@@ -178,7 +215,6 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mResult.videoFrameRate = newVideoFrameRate;
 
             // Video
-            TextureConfig videoConfig = new TextureConfig();
             videoConfig.width = mResult.size.getWidth();
             videoConfig.height = mResult.size.getHeight();
             videoConfig.bitRate = mResult.videoBitRate;
@@ -206,12 +242,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
             // Audio
             AudioMediaEncoder audioEncoder = null;
-            if (mResult.audio == Audio.ON || mResult.audio == Audio.MONO
-                    || mResult.audio == Audio.STEREO) {
-                AudioConfig audioConfig = new AudioConfig();
+            if (hasAudio) {
                 audioConfig.bitRate = mResult.audioBitRate;
-                if (mResult.audio == Audio.MONO) audioConfig.channels = 1;
-                if (mResult.audio == Audio.STEREO) audioConfig.channels = 2;
+                audioConfig.channels = audioChannels;
                 audioConfig.encoder = deviceEncoders.getAudioEncoder();
                 audioEncoder = new AudioMediaEncoder(audioConfig);
             }
@@ -231,16 +264,17 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         }
 
         if (mCurrentState == STATE_RECORDING) {
-            LOG.v("dispatching frame.");
-            TextureMediaEncoder textureEncoder
-                    = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
-            TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
-            frame.timestampNanos = surfaceTexture.getTimestamp();
-            // NOTE: this is an approximation but it seems to work:
-            frame.timestampMillis = System.currentTimeMillis();
-            surfaceTexture.getTransformMatrix(frame.transform);
+            LOG.i("scheduling frame.");
             synchronized (mEncoderEngineLock) {
                 if (mEncoderEngine != null) { // Can be null on teardown.
+                    LOG.i("dispatching frame.");
+                    TextureMediaEncoder textureEncoder
+                            = (TextureMediaEncoder) mEncoderEngine.getVideoEncoder();
+                    TextureMediaEncoder.Frame frame = textureEncoder.acquireFrame();
+                    frame.timestampNanos = surfaceTexture.getTimestamp();
+                    // NOTE: this is an approximation but it seems to work:
+                    frame.timestampMillis = System.currentTimeMillis();
+                    surfaceTexture.getTransformMatrix(frame.transform);
                     mEncoderEngine.notify(TextureMediaEncoder.FRAME_EVENT, frame);
                 }
             }

@@ -349,14 +349,17 @@ public class AudioMediaEncoder extends MediaEncoder {
      */
     private class AudioEncodingThread extends Thread {
         private AudioEncodingThread() {
-            setPriority(Thread.MAX_PRIORITY);
+            // Not sure about this... This thread can do VERY time consuming operations,
+            // and slowing down the preview/camera threads can break them e.g. hit internal
+            // timeouts for camera requests to be consumed.
+            // setPriority(Thread.MAX_PRIORITY);
         }
 
         @Override
         public void run() {
             encoding: while (true) {
                 if (mInputBufferQueue.isEmpty()) {
-                    skipFrames(2);
+                    skipFrames(3);
                 } else {
                     LOG.v("encoding thread - performing", mInputBufferQueue.size(),
                             "pending operations.");
@@ -387,7 +390,7 @@ public class AudioMediaEncoder extends MediaEncoder {
                         } else if (tryAcquireInputBuffer(inputBuffer)) {
                             encode(inputBuffer);
                         } else {
-                            skipFrames(1);
+                            skipFrames(3);
                         }
                     }
                 }

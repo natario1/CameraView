@@ -125,6 +125,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private CameraPreview mCameraPreview;
     private OrientationHelper mOrientationHelper;
     private CameraEngine mCameraEngine;
+    private Size mLastPreviewStreamSize;
     private MediaActionSound mSound;
     private AutoFocusMarker mAutoFocusMarker;
     @VisibleForTesting List<CameraListener> mListeners = new CopyOnWriteArrayList<>();
@@ -367,6 +368,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Override
     protected void onDetachedFromWindow() {
         if (!mInEditor) mOrientationHelper.disable();
+        mLastPreviewStreamSize = null;
         super.onDetachedFromWindow();
     }
 
@@ -409,8 +411,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             return;
         }
 
-        Size previewSize = mCameraEngine.getPreviewStreamSize(Reference.VIEW);
-        if (previewSize == null) {
+        mLastPreviewStreamSize = mCameraEngine.getPreviewStreamSize(Reference.VIEW);
+        if (mLastPreviewStreamSize == null) {
             LOG.w("onMeasure:", "surface is not ready. Calling default behavior.");
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
@@ -421,8 +423,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         final int widthValue = MeasureSpec.getSize(widthMeasureSpec);
         final int heightValue = MeasureSpec.getSize(heightMeasureSpec);
-        final float previewWidth = previewSize.getWidth();
-        final float previewHeight = previewSize.getHeight();
+        final float previewWidth = mLastPreviewStreamSize.getWidth();
+        final float previewHeight = mLastPreviewStreamSize.getHeight();
 
         // Pre-process specs
         final ViewGroup.LayoutParams lp = getLayoutParams();
@@ -437,10 +439,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             if (heightMode == AT_MOST && lp.height == MATCH_PARENT) heightMode = EXACTLY;
         }
 
-        LOG.i("onMeasure:", "requested dimensions are (" + widthValue + "[" + ms(widthMode)
-                + "]x" + heightValue + "[" + ms(heightMode) + "])");
-        LOG.i("onMeasure:",  "previewSize is", "(" + previewWidth + "x"
-                + previewHeight + ")");
+        LOG.i("onMeasure:", "requested dimensions are ("
+                + widthValue + "[" + ms(widthMode) + "]x"
+                + heightValue + "[" + ms(heightMode) + "])");
+        LOG.i("onMeasure:",  "previewSize is", "("
+                + previewWidth + "x" + previewHeight + ")");
 
         // (1) If we have fixed dimensions (either 300dp or MATCH_PARENT), there's nothing we
         // should do, other than respect it. The preview will eventually be cropped at the sides
@@ -808,7 +811,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         if (mInEditor) return;
         clearCameraListeners();
         clearFrameProcessors();
-        mCameraEngine.destroy();
+        mCameraEngine.destroy(true);
         if (mCameraPreview != null) mCameraPreview.onDestroy();
     }
 
@@ -2036,17 +2039,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void onCameraPreviewStreamSizeChanged() {
-            mLogger.i("onCameraPreviewStreamSizeChanged");
             // Camera preview size has changed.
             // Request a layout pass for onMeasure() to do its stuff.
             // Potentially this will change CameraView size, which changes Surface size,
             // which triggers a new Preview size. But hopefully it will converge.
-            mUiHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    requestLayout();
-                }
-            });
+            Size previewSize = mCameraEngine.getPreviewStreamSize(Reference.VIEW);
+            if (previewSize == null) {
+                throw new RuntimeException("Preview stream size should not be null here.");
+            } else if (previewSize.equals(mLastPreviewStreamSize)) {
+                mLogger.i("onCameraPreviewStreamSizeChanged:",
+                        "swallowing because the preview size has not changed.", previewSize);
+            } else {
+                mLogger.i("onCameraPreviewStreamSizeChanged: posting a requestLayout call.",
+                        "Preview stream size:", previewSize);
+                mUiHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        requestLayout();
+                    }
+                });
+            }
         }
 
         @Override

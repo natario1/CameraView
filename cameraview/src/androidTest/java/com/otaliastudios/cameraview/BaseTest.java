@@ -10,6 +10,7 @@ import android.os.PowerManager;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.GrantPermissionRule;
 
 import com.otaliastudios.cameraview.tools.Op;
 
@@ -87,19 +88,6 @@ public class BaseTest {
     @SuppressWarnings("unused")
     protected static void waitUiIdle() {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-    }
-
-    protected static void grantAllPermissions() {
-        grantPermission("android.permission.CAMERA");
-        grantPermission("android.permission.RECORD_AUDIO");
-        grantPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    protected static void grantPermission(@NonNull String permission) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
-        String command = "pm grant " + getContext().getPackageName() + " " + permission;
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(command);
     }
 
     @NonNull

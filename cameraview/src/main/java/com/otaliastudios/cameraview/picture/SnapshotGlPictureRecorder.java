@@ -9,7 +9,6 @@ import android.opengl.EGLContext;
 import android.opengl.Matrix;
 import android.os.Build;
 
-import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.internal.egl.EglBaseSurface;
 import com.otaliastudios.cameraview.overlay.Overlay;
@@ -54,10 +53,7 @@ import android.view.Surface;
  * 2. We have overlays to be drawn - we don't want to draw them on the preview surface,
  *    not even for a frame.
  */
-public class SnapshotGlPictureRecorder extends PictureRecorder {
-
-    private static final String TAG = SnapshotGlPictureRecorder.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+public class SnapshotGlPictureRecorder extends SnapshotPictureRecorder {
 
     private CameraEngine mEngine;
     private GlCameraPreview mPreview;

@@ -5,6 +5,8 @@ import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.TestActivity;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.tools.Op;
+import com.otaliastudios.cameraview.tools.Retry;
+import com.otaliastudios.cameraview.tools.RetryRule;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -25,6 +27,9 @@ public class GridLinesLayoutTest extends BaseTest {
 
     @Rule
     public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
+
+    @Rule
+    public RetryRule retryRule = new RetryRule(3);
 
     private GridLinesLayout layout;
 
@@ -59,24 +64,28 @@ public class GridLinesLayoutTest extends BaseTest {
         return result;
     }
 
+    @Retry
     @Test
     public void testOff() {
         int linesDrawn = setGridAndWait(Grid.OFF);
         assertEquals(0, linesDrawn);
     }
 
+    @Retry
     @Test
     public void test3x3() {
         int linesDrawn = setGridAndWait(Grid.DRAW_3X3);
         assertEquals(2, linesDrawn);
     }
 
+    @Retry
     @Test
     public void testPhi() {
         int linesDrawn = setGridAndWait(Grid.DRAW_PHI);
         assertEquals(2, linesDrawn);
     }
 
+    @Retry
     @Test
     public void test4x4() {
         int linesDrawn = setGridAndWait(Grid.DRAW_4X4);

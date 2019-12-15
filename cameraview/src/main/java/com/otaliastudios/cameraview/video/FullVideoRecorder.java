@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.video;
 
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.os.Handler;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
@@ -29,7 +30,7 @@ import androidx.annotation.Nullable;
 public abstract class FullVideoRecorder extends VideoRecorder {
 
     private static final String TAG = FullVideoRecorder.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+    protected static final CameraLogger LOG = CameraLogger.create(TAG);
 
     @SuppressWarnings("WeakerAccess") protected MediaRecorder mMediaRecorder;
     private CamcorderProfile mProfile;
@@ -76,15 +77,22 @@ public abstract class FullVideoRecorder extends VideoRecorder {
     @SuppressWarnings("SameParameterValue")
     private boolean prepareMediaRecorder(@NonNull VideoResult.Stub stub,
                                          boolean applyEncodersConstraints) {
+        LOG.i("prepareMediaRecorder:", "Preparing on thread", Thread.currentThread());
         // 1. Create reference and ask for the CamcorderProfile
         mMediaRecorder = new MediaRecorder();
         mProfile = getCamcorderProfile(stub);
 
         // 2. Set the video and audio sources.
         applyVideoSource(stub, mMediaRecorder);
-        boolean hasAudio = stub.audio == Audio.ON
-                || stub.audio == Audio.MONO
-                || stub.audio == Audio.STEREO;
+        int audioChannels = 0;
+        if (stub.audio == Audio.ON) {
+            audioChannels = mProfile.audioChannels;
+        } else if (stub.audio == Audio.MONO) {
+            audioChannels = 1;
+        } else if (stub.audio == Audio.STEREO) {
+            audioChannels = 2;
+        }
+        boolean hasAudio = audioChannels > 0;
         if (hasAudio) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         }
@@ -149,18 +157,35 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 LOG.i("prepareMediaRecorder:", "Checking DeviceEncoders...",
                         "videoOffset:", videoEncoderOffset,
                         "audioOffset:", audioEncoderOffset);
-                DeviceEncoders encoders = new DeviceEncoders(DeviceEncoders.MODE_RESPECT_ORDER,
-                        videoType, audioType, videoEncoderOffset, audioEncoderOffset);
+                DeviceEncoders encoders;
+                try {
+                    encoders = new DeviceEncoders(DeviceEncoders.MODE_RESPECT_ORDER,
+                            videoType, audioType, videoEncoderOffset, audioEncoderOffset);
+                } catch (RuntimeException e) {
+                    LOG.w("prepareMediaRecorder:", "Could not respect encoders parameters.",
+                            "Trying again without checking encoders.");
+                    return prepareMediaRecorder(stub, false);
+                }
                 try {
                     newVideoSize = encoders.getSupportedVideoSize(stub.size);
                     newVideoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);
-                    newAudioBitRate = encoders.getSupportedAudioBitRate(stub.audioBitRate);
                     newVideoFrameRate = encoders.getSupportedVideoFrameRate(newVideoSize,
                             stub.videoFrameRate);
+                    encoders.tryConfigureVideo(videoType, newVideoSize, newVideoFrameRate,
+                            newVideoBitRate);
+                    if (hasAudio) {
+                        newAudioBitRate = encoders.getSupportedAudioBitRate(stub.audioBitRate);
+                        encoders.tryConfigureAudio(audioType, newAudioBitRate,
+                                mProfile.audioSampleRate, audioChannels);
+                    }
                     encodersFound = true;
                 } catch (DeviceEncoders.VideoException videoException) {
+                    LOG.i("prepareMediaRecorder:", "Got VideoException:",
+                            videoException.getMessage());
                     videoEncoderOffset++;
                 } catch (DeviceEncoders.AudioException audioException) {
+                    LOG.i("prepareMediaRecorder:", "Got AudioException:",
+                            audioException.getMessage());
                     audioEncoderOffset++;
                 }
             }
@@ -183,13 +208,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
 
         // 6B. Configure MediaRecorder from stub and from profile (audio)
         if (hasAudio) {
-            if (stub.audio == Audio.ON) {
-                mMediaRecorder.setAudioChannels(mProfile.audioChannels);
-            } else if (stub.audio == Audio.MONO) {
-                mMediaRecorder.setAudioChannels(1);
-            } else if (stub.audio == Audio.STEREO) {
-                mMediaRecorder.setAudioChannels(2);
-            }
+            mMediaRecorder.setAudioChannels(audioChannels);
             mMediaRecorder.setAudioSamplingRate(mProfile.audioSampleRate);
             mMediaRecorder.setAudioEncoder(mProfile.audioCodec);
             mMediaRecorder.setAudioEncodingBitRate(stub.audioBitRate);
@@ -203,21 +222,49 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         }
         mMediaRecorder.setOutputFile(stub.file.getAbsolutePath());
         mMediaRecorder.setOrientationHint(stub.rotation);
-        mMediaRecorder.setMaxFileSize(stub.maxSize);
+        // When using MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED, the recorder might have stopped
+        // before calling it. But this creates issues on Camera2 Legacy devices - they need a
+        // callback BEFORE the recorder stops (see Camera2Engine). For this reason, we increase
+        // the max size and use MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING instead.
+        // Would do this with max duration as well but there's no such callback.
+        mMediaRecorder.setMaxFileSize(stub.maxSize <= 0 ? stub.maxSize
+                : Math.round(stub.maxSize / 0.9D));
+        LOG.i("prepareMediaRecorder:", "Increased max size from", stub.maxSize, "to",
+                Math.round(stub.maxSize / 0.9D));
         mMediaRecorder.setMaxDuration(stub.maxDuration);
         mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
             @Override
             public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
+                LOG.i("OnInfoListener:", "Received info", what, extra,
+                        "Thread: ", Thread.currentThread());
+                boolean shouldStop = false;
                 switch (what) {
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
                         mResult.endReason = VideoResult.REASON_MAX_DURATION_REACHED;
-                        stop(false);
+                        shouldStop = true;
                         break;
+                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING:
                     case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
+                        // On rare occasions APPROACHING is not called. Make sure we listen to
+                        // REACHED as well.
                         mResult.endReason = VideoResult.REASON_MAX_SIZE_REACHED;
-                        stop(false);
+                        shouldStop = true;
                         break;
                 }
+                if (shouldStop) {
+                    LOG.i("OnInfoListener:", "Stopping");
+                    stop(false);
+                }
+            }
+        });
+        mMediaRecorder.setOnErrorListener(new MediaRecorder.OnErrorListener() {
+            @Override
+            public void onError(MediaRecorder mr, int what, int extra) {
+                LOG.e("OnErrorListener: got error", what, extra, ". Stopping.");
+                mResult = null;
+                mError = new RuntimeException("MediaRecorder error: " + what + " " + extra);
+                LOG.i("OnErrorListener:", "Stopping");
+                stop(false);
             }
         });
 
@@ -259,7 +306,10 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         if (mMediaRecorder != null) {
             dispatchVideoRecordingEnd();
             try {
+                LOG.i("stop:", "Stopping MediaRecorder...");
+                // TODO HANGS (rare, emulator only)
                 mMediaRecorder.stop();
+                LOG.i("stop:", "Stopped MediaRecorder.");
             } catch (Exception e) {
                 // This can happen if stopVideo() is called right after takeVideo()
                 // (in which case we don't care). Or when prepare()/start() have failed for
@@ -271,7 +321,17 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                     mError = e;
                 }
             }
-            mMediaRecorder.release();
+            try {
+                LOG.i("stop:", "Releasing MediaRecorder...");
+                mMediaRecorder.release();
+                LOG.i("stop:", "Released MediaRecorder.");
+            } catch (Exception e) {
+                mResult = null;
+                if (mError == null) {
+                    LOG.w("stop:", "Error while releasing media recorder.", e);
+                    mError = e;
+                }
+            }
         }
         mProfile = null;
         mMediaRecorder = null;

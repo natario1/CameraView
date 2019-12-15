@@ -8,8 +8,10 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.SuccessContinuation;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
@@ -83,8 +85,9 @@ import java.util.concurrent.TimeUnit;
  *                     S3 and S4 are also performed.
  * - {@link #stop(boolean)}: ASYNC - stops everything: undoes S4, then S3, then S2.
  * - {@link #restart()}: ASYNC - completes a stop then a start.
- * - {@link #destroy()}: SYNC - performs a {@link #stop(boolean)} that will go on no matter what,
- *                       without throwing. Makes the engine unusable and clears resources.
+ * - {@link #destroy(boolean)}: SYNC - performs a {@link #stop(boolean)} that will go on no matter
+ *                              what, without throwing. Makes the engine unusable and clears
+ *                              resources.
  *
  * THREADING
  * Subclasses should always execute code on the thread given by {@link #mHandler}.
@@ -131,8 +134,11 @@ public abstract class CameraEngine implements
         void dispatchOnVideoRecordingEnd();
     }
 
-    private static final String TAG = CameraEngine.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
+    protected static final String TAG = CameraEngine.class.getSimpleName();
+    protected static final CameraLogger LOG = CameraLogger.create(TAG);
+
+    // If this is 2, this means we'll try to run destroy() twice.
+    private static final int DESTROY_RETRIES = 2;
 
     // Need to be protected
     @SuppressWarnings("WeakerAccess") protected final Callback mCallback;
@@ -211,10 +217,9 @@ public abstract class CameraEngine implements
     protected CameraEngine(@NonNull Callback callback) {
         mCallback = callback;
         mCrashHandler = new Handler(Looper.getMainLooper());
-        mHandler = WorkerHandler.get("CameraViewEngine");
-        mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
         mFrameManager = instantiateFrameManager();
         mAngles = new Angles();
+        recreateHandler(false);
     }
 
     public void setPreview(@NonNull CameraPreview cameraPreview) {
@@ -248,7 +253,8 @@ public abstract class CameraEngine implements
     private static class NoOpExceptionHandler implements Thread.UncaughtExceptionHandler {
         @Override
         public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {
-            // No-op.
+            LOG.w("EXCEPTION:", "In the NoOpExceptionHandler, probably while destroying.",
+                    "Thread:", thread, "Error:", throwable);
         }
     }
 
@@ -265,43 +271,57 @@ public abstract class CameraEngine implements
      * @param throwable the throwable
      * @param fromExceptionHandler true if coming from exception handler
      */
-    private void handleException(@NonNull Thread thread,
+    private void handleException(@NonNull final Thread thread,
                                  final @NonNull Throwable throwable,
                                  final boolean fromExceptionHandler) {
-        if (!(throwable instanceof CameraException)) {
-            // This is unexpected, either a bug or something the developer should know.
-            // Release and crash the UI thread so we get bug reports.
-            LOG.e("uncaughtException:", "Unexpected exception:", throwable);
-            mCrashHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    destroy();
-                    // Throws an unchecked exception without unnecessary wrapping.
+        // 1. If this comes from the exception handler, the thread has crashed. Replace it.
+        // Most actions are wrapped into Tasks so don't go here, but some callbacks do
+        // (at least in Camera1, e.g. onError).
+        if (fromExceptionHandler) {
+            LOG.e("EXCEPTION:", "Handler thread is gone. Replacing.");
+            recreateHandler(false);
+        }
+
+        // 2. Depending on the exception, we must destroy(false|true) to release resources, and
+        // notify the outside, either with the callback or by crashing the app.
+        LOG.e("EXCEPTION:", "Scheduling on the crash handler...");
+        mCrashHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (throwable instanceof CameraException) {
+                    CameraException exception = (CameraException) throwable;
+                    if (exception.isUnrecoverable()) {
+                        LOG.e("EXCEPTION:", "Got CameraException. " +
+                                "Since it is unrecoverable, executing destroy(false).");
+                        destroy(false);
+                    }
+                    LOG.e("EXCEPTION:", "Got CameraException. Dispatching to callback.");
+                    mCallback.dispatchError(exception);
+                } else {
+                    LOG.e("EXCEPTION:", "Unexpected error! Executing destroy(true).");
+                    destroy(true);
+                    LOG.e("EXCEPTION:", "Unexpected error! Throwing.");
                     if (throwable instanceof RuntimeException) {
                         throw (RuntimeException) throwable;
                     } else {
                         throw new RuntimeException(throwable);
                     }
                 }
-            });
-            return;
-        }
+            }
+        });
+    }
 
-        final CameraException cameraException = (CameraException) throwable;
-        LOG.e("uncaughtException:", "Got CameraException:", cameraException,
-                "on state:", getState());
-        if (fromExceptionHandler) {
-            // Got to restart the handler.
-            thread.interrupt();
-            mHandler = WorkerHandler.get("CameraViewEngine");
-            mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
-        }
-
-        mCallback.dispatchError(cameraException);
-        if (cameraException.isUnrecoverable()) {
-            // Stop everything (if needed) without notifying teardown errors.
-            stop(true);
-        }
+    /**
+     * Recreates the handler, to ensure we use a fresh one from now on.
+     * If we suspect that handler is currently stuck, the orchestrator should be reset
+     * because it hosts a chain of tasks and the last one will never complete.
+     * @param resetOrchestrator true to reset
+     */
+    private void recreateHandler(boolean resetOrchestrator) {
+        if (mHandler != null) mHandler.destroy();
+        mHandler = WorkerHandler.get("CameraViewEngine");
+        mHandler.getThread().setUncaughtExceptionHandler(new CrashExceptionHandler());
+        if (resetOrchestrator) mOrchestrator.reset();
     }
 
     //endregion
@@ -326,31 +346,53 @@ public abstract class CameraEngine implements
      * Calls {@link #stop(boolean)} and waits for it.
      * Not final due to mockito requirements.
      *
+     * If unrecoverably is true, this also releases resources and the engine will not be in a
+     * functional state after. If forever is false, this really is just a synchronous stop.
+     *
      * NOTE: Should not be called on the orchestrator thread! This would cause deadlocks due to us
      * awaiting for {@link #stop(boolean)} to return.
      */
-    public void destroy() {
-        LOG.i("DESTROY:", "state:", getState(), "thread:", Thread.currentThread());
-        // Prevent CameraEngine leaks. Don't set to null, or exceptions
-        // inside the standard stop() method might crash the main thread.
-        mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
-        // Stop if needed, synchronously and silently.
+    public void destroy(boolean unrecoverably) {
+        destroy(unrecoverably, 0);
+    }
+
+    private void destroy(boolean unrecoverably, int depth) {
+        LOG.i("DESTROY:", "state:", getState(),
+                "thread:", Thread.currentThread(),
+                "depth:", depth,
+                "unrecoverably:", unrecoverably);
+        if (unrecoverably) {
+            // Prevent CameraEngine leaks. Don't set to null, or exceptions
+            // inside the standard stop() method might crash the main thread.
+            mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
+        }
         // Cannot use Tasks.await() because we might be on the UI thread.
         final CountDownLatch latch = new CountDownLatch(1);
         stop(true).addOnCompleteListener(
-                WorkerHandler.get().getExecutor(),
+                mHandler.getExecutor(),
                 new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                latch.countDown();
-            }
-        });
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        latch.countDown();
+                    }
+                });
         try {
-            boolean success = latch.await(3, TimeUnit.SECONDS);
+            boolean success = latch.await(6, TimeUnit.SECONDS);
             if (!success) {
-                LOG.e("Probably some deadlock in destroy.",
+                // This thread is likely stuck. The reason might be deadlock issues in the internal
+                // camera implementation, at least in emulators: see Camera1Engine and Camera2Engine
+                // onStopEngine() implementation and comments.
+                LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
                         "Current thread:", Thread.currentThread(),
-                        "Handler thread: ", mHandler.getThread());
+                        "Handler thread:", mHandler.getThread());
+                depth++;
+                if (depth < DESTROY_RETRIES) {
+                    recreateHandler(true);
+                    LOG.e("DESTROY: Trying again on thread:", mHandler.getThread());
+                    destroy(unrecoverably, depth);
+                } else {
+                    LOG.w("DESTROY: Giving up because DESTROY_RETRIES was reached.");
+                }
             }
         } catch (InterruptedException ignore) {}
     }
@@ -406,19 +448,24 @@ public abstract class CameraEngine implements
     private Task<Void> startEngine() {
         return mOrchestrator.scheduleStateChange(CameraState.OFF, CameraState.ENGINE,
                 true,
-                new Callable<Task<Void>>() {
+                new Callable<Task<CameraOptions>>() {
             @Override
-            public Task<Void> call() {
+            public Task<CameraOptions> call() {
                 if (!collectCameraInfo(mFacing)) {
                     LOG.e("onStartEngine:", "No camera available for facing", mFacing);
                     throw new CameraException(CameraException.REASON_NO_CAMERA);
                 }
                 return onStartEngine();
             }
-        }).addOnSuccessListener(new OnSuccessListener<Void>() {
+        }).onSuccessTask(new SuccessContinuation<CameraOptions, Void>() {
+            @NonNull
             @Override
-            public void onSuccess(Void aVoid) {
-                mCallback.dispatchOnCameraOpened(mCameraOptions);
+            public Task<Void> then(@Nullable CameraOptions cameraOptions) {
+                // Put this on the outer task so we're sure it's called after getState() is changed.
+                // This was breaking some tests on rare occasions.
+                if (cameraOptions == null) throw new RuntimeException("Null options!");
+                mCallback.dispatchOnCameraOpened(cameraOptions);
+                return Tasks.forResult(null);
             }
         });
     }
@@ -436,6 +483,8 @@ public abstract class CameraEngine implements
         }).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
+                // Put this on the outer task so we're sure it's called after getState() is OFF.
+                // This was breaking some tests on rare occasions.
                 mCallback.dispatchOnCameraClosed();
             }
         });
@@ -447,7 +496,7 @@ public abstract class CameraEngine implements
      */
     @NonNull
     @EngineThread
-    protected abstract Task<Void> onStartEngine();
+    protected abstract Task<CameraOptions> onStartEngine();
 
     /**
      * Stops the engine.

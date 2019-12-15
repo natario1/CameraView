@@ -1,7 +1,9 @@
 package com.otaliastudios.cameraview.engine;
 
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
+import android.os.Handler;
 
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
@@ -24,8 +26,8 @@ import java.util.concurrent.CountDownLatch;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-@RequiresDevice
-public class Camera2IntegrationTest extends CameraIntegrationTest {
+// @RequiresDevice
+public class Camera2IntegrationTest extends CameraIntegrationTest<Camera2Engine> {
 
     @NonNull
     @Override
@@ -39,7 +41,6 @@ public class Camera2IntegrationTest extends CameraIntegrationTest {
         // Extra wait for the first frame to be dispatched.
         // This is because various classes require getLastResult to be non-null
         // and that's typically the case in a real app.
-        Camera2Engine engine = (Camera2Engine) controller;
         final CountDownLatch latch = new CountDownLatch(1);
         new BaseAction() {
             @Override
@@ -50,12 +51,29 @@ public class Camera2IntegrationTest extends CameraIntegrationTest {
                 latch.countDown();
                 setState(STATE_COMPLETED);
             }
-        }.start(engine);
+        }.start(controller);
         try { latch.await(); } catch (InterruptedException ignore) {}
     }
 
     @Override
     protected long getMeteringTimeoutMillis() {
         return Camera2Engine.METER_TIMEOUT;
+    }
+
+    /**
+     * setMaxDuration can crash on legacy devices (most emulator are), and I don't see
+     * any way to fix this in code. They shouldn't use Camera2 at all.
+     * @return true if possible.
+     */
+    @Override
+    protected boolean canSetVideoMaxDuration() {
+        if (!super.canSetVideoMaxDuration()) return false;
+        boolean shouldOpen = !camera.isOpened();
+        if (shouldOpen) openSync(true);
+        boolean result = controller.readCharacteristic(
+                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
+                != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
+        if (shouldOpen) closeSync(true);
+        return result;
     }
 }

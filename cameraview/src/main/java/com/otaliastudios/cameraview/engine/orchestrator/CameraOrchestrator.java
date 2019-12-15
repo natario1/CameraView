@@ -11,7 +11,9 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -40,9 +42,9 @@ public class CameraOrchestrator {
 
     protected static class Token {
         public final String name;
-        public final Task<Void> task;
+        public final Task<?> task;
 
-        private Token(@NonNull String name, @NonNull Task<Void> task) {
+        private Token(@NonNull String name, @NonNull Task<?> task) {
             this.name = name;
             this.task = task;
         }
@@ -76,39 +78,42 @@ public class CameraOrchestrator {
         });
     }
 
+    @SuppressWarnings("unchecked")
     @NonNull
-    public Task<Void> schedule(@NonNull final String name,
-                               final boolean dispatchExceptions,
-                               @NonNull final Callable<Task<Void>> job) {
+    public <T> Task<T> schedule(@NonNull final String name,
+                                final boolean dispatchExceptions,
+                                @NonNull final Callable<Task<T>> job) {
         LOG.i(name.toUpperCase(), "- Scheduling.");
-        final TaskCompletionSource<Void> source = new TaskCompletionSource<>();
+        final TaskCompletionSource<T> source = new TaskCompletionSource<>();
         final WorkerHandler handler = mCallback.getJobWorker(name);
         synchronized (mLock) {
             applyCompletionListener(mJobs.getLast().task, handler,
-                    new OnCompleteListener<Void>() {
+                    new OnCompleteListener() {
                 @Override
-                public void onComplete(@NonNull Task<Void> task) {
+                public void onComplete(@NonNull Task task) {
                     synchronized (mLock) {
                         mJobs.removeFirst();
                         ensureToken();
                     }
                     try {
                         LOG.i(name.toUpperCase(), "- Executing.");
-                        Task<Void> inner = job.call();
-                        applyCompletionListener(inner, handler, new OnCompleteListener<Void>() {
+                        Task<T> inner = job.call();
+                        applyCompletionListener(inner, handler, new OnCompleteListener<T>() {
                             @Override
-                            public void onComplete(@NonNull Task<Void> task) {
+                            public void onComplete(@NonNull Task<T> task) {
                                 Exception e = task.getException();
-                                LOG.i(name.toUpperCase(), "- Finished.", e);
                                 if (e != null) {
+                                    LOG.w(name.toUpperCase(), "- Finished with ERROR.", e);
                                     if (dispatchExceptions) {
                                         mCallback.handleJobException(name, e);
                                     }
                                     source.trySetException(e);
                                 } else if (task.isCanceled()) {
+                                    LOG.i(name.toUpperCase(), "- Finished because ABORTED.");
                                     source.trySetException(new CancellationException());
                                 } else {
-                                    source.trySetResult(null);
+                                    LOG.i(name.toUpperCase(), "- Finished.");
+                                    source.trySetResult(task.getResult());
                                 }
                             }
                         });
@@ -151,24 +156,38 @@ public class CameraOrchestrator {
                 mCallback.getJobWorker(name).remove(mDelayedJobs.get(name));
                 mDelayedJobs.remove(name);
             }
-            Token token = new Token(name, Tasks.<Void>forResult(null));
+            Token token = new Token(name, Tasks.forResult(null));
             //noinspection StatementWithEmptyBody
             while (mJobs.remove(token)) { /* do nothing */ }
             ensureToken();
         }
     }
 
-    private void ensureToken() {
+    public void reset() {
         synchronized (mLock) {
-            if (mJobs.isEmpty()) {
-                mJobs.add(new Token("BASE", Tasks.<Void>forResult(null)));
+            List<String> all = new ArrayList<>();
+            //noinspection CollectionAddAllCanBeReplacedWithConstructor
+            all.addAll(mDelayedJobs.keySet());
+            for (Token token : mJobs) {
+                all.add(token.name);
+            }
+            for (String job : all) {
+                remove(job);
             }
         }
     }
 
-    private static void applyCompletionListener(@NonNull final Task<Void> task,
-                                                @NonNull WorkerHandler handler,
-                                                @NonNull final OnCompleteListener<Void> listener) {
+    private void ensureToken() {
+        synchronized (mLock) {
+            if (mJobs.isEmpty()) {
+                mJobs.add(new Token("BASE", Tasks.forResult(null)));
+            }
+        }
+    }
+
+    private static <T> void applyCompletionListener(@NonNull final Task<T> task,
+                                                    @NonNull WorkerHandler handler,
+                                                    @NonNull final OnCompleteListener<T> listener) {
         if (task.isComplete()) {
             handler.run(new Runnable() {
                 @Override

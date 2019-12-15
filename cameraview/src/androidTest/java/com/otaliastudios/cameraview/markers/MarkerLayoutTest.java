@@ -27,10 +27,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
- * Not clear why, but for some reason on API 28 the UiThreadTests here crash for an internal NPE
+ * Not clear why, but for some reason on API 28+ the UiThreadTests here crash for an internal NPE
  * in FrameLayout.onMeasure.
  */
-@SdkExclude(minSdkVersion = 28, maxSdkVersion = 28)
+@SdkExclude(minSdkVersion = 28, maxSdkVersion = 29)
 @TargetApi(17)
 public class MarkerLayoutTest extends BaseTest {
 
