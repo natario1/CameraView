@@ -25,6 +25,7 @@ import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.engine.options.Camera1Options;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
+import com.otaliastudios.cameraview.frame.ByteBufferFrameManager;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
@@ -47,7 +48,6 @@ import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,7 +55,7 @@ import java.util.List;
 public class Camera1Engine extends CameraBaseEngine implements
         Camera.PreviewCallback,
         Camera.ErrorCallback,
-        FrameManager.BufferCallback {
+        ByteBufferFrameManager.BufferCallback {
     private static final String JOB_FOCUS_RESET = "focus reset";
     private static final String JOB_FOCUS_END = "focus end";
 
@@ -758,7 +758,13 @@ public class Camera1Engine extends CameraBaseEngine implements
     @NonNull
     @Override
     protected FrameManager instantiateFrameManager() {
-        return new FrameManager(2, this);
+        return new ByteBufferFrameManager(2, this);
+    }
+
+    @NonNull
+    @Override
+    public ByteBufferFrameManager getFrameManager() {
+        return (ByteBufferFrameManager) super.getFrameManager();
     }
 
     @Override

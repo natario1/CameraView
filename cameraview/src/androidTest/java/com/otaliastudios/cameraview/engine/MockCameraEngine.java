@@ -13,6 +13,7 @@ import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
+import com.otaliastudios.cameraview.frame.ByteBufferFrameManager;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -185,7 +186,7 @@ public class MockCameraEngine extends CameraBaseEngine {
     @NonNull
     @Override
     protected FrameManager instantiateFrameManager() {
-        return new FrameManager(2, null);
+        return new ByteBufferFrameManager(2, null);
     }
 
     @Override

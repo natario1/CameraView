@@ -126,7 +126,7 @@ public abstract class CameraBaseEngine extends CameraEngine {
 
     @NonNull
     @Override
-    public final FrameManager getFrameManager() {
+    public FrameManager getFrameManager() {
         return mFrameManager;
     }
 

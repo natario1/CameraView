@@ -78,18 +78,24 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                     lastTime = newTime;
                     LOG.e("Frame delayMillis:", delay, "FPS:", 1000 / delay);
                     if (DECODE_BITMAP) {
-                        YuvImage yuvImage = new YuvImage(frame.getData(), ImageFormat.NV21,
-                                frame.getSize().getWidth(),
-                                frame.getSize().getHeight(),
-                                null);
-                        ByteArrayOutputStream jpegStream = new ByteArrayOutputStream();
-                        yuvImage.compressToJpeg(new Rect(0, 0,
-                                frame.getSize().getWidth(),
-                                frame.getSize().getHeight()), 100, jpegStream);
-                        byte[] jpegByteArray = jpegStream.toByteArray();
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.length);
-                        //noinspection ResultOfMethodCallIgnored
-                        bitmap.toString();
+                        if (frame.getFormat() == ImageFormat.NV21
+                                && frame.getDataClass() == byte[].class) {
+                            byte[] data = frame.getData();
+                            YuvImage yuvImage = new YuvImage(data,
+                                    frame.getFormat(),
+                                    frame.getSize().getWidth(),
+                                    frame.getSize().getHeight(),
+                                    null);
+                            ByteArrayOutputStream jpegStream = new ByteArrayOutputStream();
+                            yuvImage.compressToJpeg(new Rect(0, 0,
+                                    frame.getSize().getWidth(),
+                                    frame.getSize().getHeight()), 100, jpegStream);
+                            byte[] jpegByteArray = jpegStream.toByteArray();
+                            Bitmap bitmap = BitmapFactory.decodeByteArray(jpegByteArray,
+                                    0, jpegByteArray.length);
+                            //noinspection ResultOfMethodCallIgnored
+                            bitmap.toString();
+                        }
                     }
                 }
             });

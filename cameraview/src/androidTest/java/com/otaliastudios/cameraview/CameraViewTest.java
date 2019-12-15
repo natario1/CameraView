@@ -996,22 +996,8 @@ public class CameraViewTest extends BaseTest {
 
     //region Filter
 
-    @Test(expected = RuntimeException.class)
-    public void testSetFilter_notExperimental() {
-        cameraView.setExperimental(false);
-        cameraView.setFilter(Filters.AUTO_FIX.newInstance());
-    }
-
-    @Test
-    public void testSetFilter_notExperimental_noFilter() {
-        cameraView.setExperimental(false);
-        cameraView.setFilter(Filters.NONE.newInstance());
-        // no exception thrown
-    }
-
     @Test
     public void testSetFilter() {
-        cameraView.setExperimental(true);
         Filter filter = Filters.AUTO_FIX.newInstance();
         cameraView.setFilter(filter);
         verify(mockPreview, times(1)).setFilter(filter);

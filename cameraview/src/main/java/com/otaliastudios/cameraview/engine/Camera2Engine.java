@@ -56,6 +56,7 @@ import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.engine.options.Camera2Options;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
+import com.otaliastudios.cameraview.frame.ByteBufferFrameManager;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
@@ -67,7 +68,6 @@ import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
-import com.otaliastudios.cameraview.size.SizeSelectors;
 import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
@@ -82,7 +82,6 @@ public class Camera2Engine extends CameraBaseEngine implements
         ImageReader.OnImageAvailableListener,
         ActionHolder {
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
-    private static final int FRAME_PROCESSING_INPUT_FORMAT = ImageFormat.YUV_420_888;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
@@ -336,7 +335,7 @@ public class Camera2Engine extends CameraBaseEngine implements
             if (streamMap == null) {
                 throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
             }
-            android.util.Size[] sizes = streamMap.getOutputSizes(FRAME_PROCESSING_INPUT_FORMAT);
+            android.util.Size[] sizes = streamMap.getOutputSizes(getFrameProcessingImageFormat());
             List<Size> candidates = new ArrayList<>(sizes.length);
             for (android.util.Size size : sizes) {
                 Size add = new Size(size.getWidth(), size.getHeight());
@@ -546,7 +545,7 @@ public class Camera2Engine extends CameraBaseEngine implements
             mFrameProcessingReader = ImageReader.newInstance(
                     mFrameProcessingSize.getWidth(),
                     mFrameProcessingSize.getHeight(),
-                    FRAME_PROCESSING_INPUT_FORMAT,
+                    getFrameProcessingImageFormat(),
                     2);
             mFrameProcessingReader.setOnImageAvailableListener(this,
                     mFrameConversionHandler.getHandler());
@@ -1408,7 +1407,24 @@ public class Camera2Engine extends CameraBaseEngine implements
     @NonNull
     @Override
     protected FrameManager instantiateFrameManager() {
-        return new FrameManager(2, null);
+        return new ByteBufferFrameManager(2, null);
+    }
+
+    @NonNull
+    @Override
+    public ByteBufferFrameManager getFrameManager() {
+        return (ByteBufferFrameManager) super.getFrameManager();
+    }
+
+    /**
+     * Returns the frame processing image format.
+     * Defaults to {@link ImageFormat#YUV_420_888}.
+     * Override at your own risk!
+     * @return format
+     */
+    @SuppressWarnings("WeakerAccess")
+    protected int getFrameProcessingImageFormat() {
+        return ImageFormat.YUV_420_888;
     }
 
     @Override
