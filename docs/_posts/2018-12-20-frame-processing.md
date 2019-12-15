@@ -78,12 +78,37 @@ public void process(@NonNull Frame frame) {
     latch.await();
 }
 ```
+
+### Frame Size
   
+The Camera2 engine offers the option to set size constraints for the incoming frames.
+
+```java
+cameraView.setFrameProcessingMaxWidth(maxWidth);
+cameraView.setFrameProcessingMaxHeight(maxWidth);
+```
+
+With other engines, these API have no effect.
+
+### XML Attributes
+
+```xml
+<com.otaliastudios.cameraview.CameraView
+    app:cameraFrameProcessingMaxWidth="640"
+    app:cameraFrameProcessingMaxHeight="640"/>
+```
+
 ### Related APIs
 
 |Frame API|Type|Description|
 |---------|----|-----------|
 |`camera.addFrameProcessor(FrameProcessor)`|`-`|Register a `FrameProcessor`.|
+|`camera.removeFrameProcessor(FrameProcessor)`|`-`|Removes a `FrameProcessor`.|
+|`camera.clearFrameProcessors()`|`-`|Removes all `FrameProcessor`s.|
+|`camera.setFrameProcessingMaxWidth(int)`|`-`|Sets the max width for incoming frames.|
+|`camera.setFrameProcessingMaxHeight(int)`|`-`|Sets the max height for incoming frames.|
+|`camera.getFrameProcessingMaxWidth()`|`int`|Gets the max width for incoming frames.|
+|`camera.getFrameProcessingMaxHeight()`|`int`|Gets the max height for incoming frames.|
 |`frame.getData()`|`byte[]`|The current preview frame, in its original orientation.|
 |`frame.getTime()`|`long`|The preview timestamp, in `System.currentTimeMillis()` reference.|
 |`frame.getRotation()`|`int`|The rotation that should be applied to the byte array in order to see what the user sees.|

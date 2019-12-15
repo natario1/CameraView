@@ -114,6 +114,8 @@ Using CameraView is extremely simple:
     app:cameraVideoSizeAspectRatio="@string/video_ratio"
     app:cameraSnapshotMaxWidth="@integer/snapshot_max_width"
     app:cameraSnapshotMaxHeight="@integer/snapshot_max_height"
+    app:cameraFrameProcessingMaxWidth="@integer/processing_max_width"
+    app:cameraFrameProcessingMaxHeight="@integer/processing_max_height"
     app:cameraVideoBitRate="@integer/video_bit_rate"
     app:cameraAudioBitRate="@integer/audio_bit_rate"
     app:cameraGestureTap="none|autoFocus|takePicture"
