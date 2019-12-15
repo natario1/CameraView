@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class MockCameraEngine extends CameraEngine {
+public class MockCameraEngine extends CameraBaseEngine {
 
     public boolean mPictureCaptured;
     public boolean mFocusStarted;
@@ -83,7 +83,7 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     public void setMockState(@NonNull CameraState state) {
-        Task<Void> change = mOrchestrator.scheduleStateChange(getState(),
+        Task<Void> change = getOrchestrator().scheduleStateChange(getState(),
                 state,
                 false,
                 new Callable<Task<Void>>() {
@@ -108,7 +108,6 @@ public class MockCameraEngine extends CameraEngine {
         mExposureCorrectionValue = EVvalue;
         mExposureCorrectionChanged = true;
     }
-
 
     @Override
     public void setFlash(@NonNull Flash flash) {
@@ -184,9 +183,7 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     @Override
-    public void setPlaySounds(boolean playSounds) {
-
-    }
+    public void setPlaySounds(boolean playSounds) { }
 
     @Override
     protected boolean collectCameraInfo(@NonNull Facing facing) {

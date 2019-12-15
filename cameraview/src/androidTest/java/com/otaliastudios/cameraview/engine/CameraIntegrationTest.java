@@ -70,7 +70,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public abstract class CameraIntegrationTest<E extends CameraEngine> extends BaseTest {
+public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends BaseTest {
 
     private final static CameraLogger LOG = CameraLogger.create(CameraIntegrationTest.class.getSimpleName());
     private final static long DELAY = 8000;
