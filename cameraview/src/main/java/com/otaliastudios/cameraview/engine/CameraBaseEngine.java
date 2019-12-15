@@ -78,8 +78,8 @@ public abstract class CameraBaseEngine extends CameraEngine {
     private int mAudioBitRate;
     private boolean mHasFrameProcessors;
     private long mAutoFocusResetDelayMillis;
-    private int mSnapshotMaxWidth = Integer.MAX_VALUE; // in REF_VIEW like SizeSelectors
-    private int mSnapshotMaxHeight = Integer.MAX_VALUE; // in REF_VIEW like SizeSelectors
+    private int mSnapshotMaxWidth; // in REF_VIEW like SizeSelectors
+    private int mSnapshotMaxHeight; // in REF_VIEW like SizeSelectors
     private Overlay mOverlay;
 
     // Ops used for testing.
@@ -721,6 +721,8 @@ public abstract class CameraBaseEngine extends CameraEngine {
         boolean flip = getAngles().flip(reference, Reference.VIEW);
         int maxWidth = flip ? mSnapshotMaxHeight : mSnapshotMaxWidth;
         int maxHeight = flip ? mSnapshotMaxWidth : mSnapshotMaxHeight;
+        if (maxWidth <= 0) maxWidth = Integer.MAX_VALUE;
+        if (maxHeight <= 0) maxHeight = Integer.MAX_VALUE;
         float baseRatio = AspectRatio.of(baseSize).toFloat();
         float maxValuesRatio = AspectRatio.of(maxWidth, maxHeight).toFloat();
         if (maxValuesRatio >= baseRatio) {
