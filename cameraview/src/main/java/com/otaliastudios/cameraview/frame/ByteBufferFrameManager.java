@@ -21,15 +21,15 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * 1. {@link #BUFFER_MODE_DISPATCH}: in this mode, as soon as we have a buffer, it is dispatched to
  *    the {@link BufferCallback}. The callback should then fill the buffer, and finally call
- *    {@link #getFrame(byte[], long, int)} to receive a frame.
+ *    {@link FrameManager#getFrame(Object, long, int)} to receive a frame.
  *    This is used for Camera1.
  *
  * 2. {@link #BUFFER_MODE_ENQUEUE}: in this mode, the manager internally keeps a queue of byte
  *    buffers, instead of handing them to the callback. The users can ask for buffers through
  *    {@link #getBuffer()}.
  *    This buffer can be filled with data and used to get a frame
- *    {@link #getFrame(byte[], long, int)}, or, in case it was not filled, returned to the queue
- *    using {@link #onBufferUnused(byte[])}.
+ *    {@link FrameManager#getFrame(Object, long, int)}, or, in case it was not filled, returned to
+ *    the queue using {@link #onBufferUnused(byte[])}.
  *    This is used for Camera2.
  */
 public class ByteBufferFrameManager extends FrameManager<byte[]> {
@@ -97,7 +97,7 @@ public class ByteBufferFrameManager extends FrameManager<byte[]> {
      * manager also holds a queue of the byte buffers.
      *
      * If not null, the buffer returned by this method can be filled and used to get
-     * a new frame through {@link #getFrame(byte[], long, int)}.
+     * a new frame through {@link FrameManager#getFrame(Object, long, int)}.
      *
      * @return a buffer, or null
      */

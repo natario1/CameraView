@@ -23,10 +23,11 @@ import static org.mockito.Mockito.verify;
 
 public class FrameTest {
 
-    private FrameManager manager;
+    private FrameManager<byte[]> manager;
 
     @Before
     public void setUp() {
+        //noinspection unchecked
         manager = mock(FrameManager.class);
     }
 
@@ -38,10 +39,10 @@ public class FrameTest {
     @Test
     public void testEquals() {
         // Only time should count.
-        Frame f1 = new Frame(manager);
+        Frame f1 = new Frame(manager, byte[].class);
         long time = 1000;
         f1.setContent(new byte[3], time, 90, new Size(5, 5), ImageFormat.NV21);
-        Frame f2 = new Frame(manager);
+        Frame f2 = new Frame(manager, byte[].class);
         f2.setContent(new byte[2], time, 0, new Size(10, 10), ImageFormat.NV21);
         assertEquals(f1, f2);
 
@@ -51,7 +52,7 @@ public class FrameTest {
 
     @Test
     public void testReleaseThrows() {
-        final Frame frame = new Frame(manager);
+        final Frame frame = new Frame(manager, byte[].class);
         frame.setContent(new byte[2], 1000, 90, new Size(10, 10), ImageFormat.NV21);
         frame.release();
         verify(manager, times(1)).onFrameReleased(eq(frame), any(byte[].class));
@@ -74,7 +75,7 @@ public class FrameTest {
 
     @Test
     public void testFreeze() {
-        Frame frame = new Frame(manager);
+        Frame frame = new Frame(manager, byte[].class);
         byte[] data = new byte[]{0, 1, 5, 0, 7, 3, 4, 5};
         long time = 1000;
         int rotation = 90;
@@ -83,14 +84,14 @@ public class FrameTest {
         frame.setContent(data, time, rotation, size, format);
 
         Frame frozen = frame.freeze();
-        assertArrayEquals(data, frozen.getData());
+        assertArrayEquals(data, (byte[]) frozen.getData());
         assertEquals(time, frozen.getTime());
         assertEquals(rotation, frozen.getRotation());
         assertEquals(size, frozen.getSize());
 
         // Mutate the first, ensure that frozen is not affected
         frame.setContent(new byte[]{3, 2, 1}, 50, 180, new Size(1, 1), ImageFormat.JPEG);
-        assertArrayEquals(data, frozen.getData());
+        assertArrayEquals(data, (byte[]) frozen.getData());
         assertEquals(time, frozen.getTime());
         assertEquals(rotation, frozen.getRotation());
         assertEquals(size, frozen.getSize());

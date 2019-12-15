@@ -127,7 +127,6 @@ public class Frame {
      * - {@link Engine#CAMERA2} will produce {@link android.media.Image}s
      * @return the data class
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Class<?> getDataClass() {
         return mDataClass;
