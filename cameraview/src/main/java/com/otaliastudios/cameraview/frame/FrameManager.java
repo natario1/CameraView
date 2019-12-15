@@ -67,6 +67,14 @@ public abstract class FrameManager<T> {
     }
 
     /**
+     * Returns the frame data class.
+     * @return frame data class
+     */
+    public final Class<T> getFrameDataClass() {
+        return mFrameDataClass;
+    }
+
+    /**
      * Allocates a {@link #mPoolSize} number of buffers. Should be called once
      * the preview size and the image format value are known.
      *
@@ -123,7 +131,7 @@ public abstract class FrameManager<T> {
             LOG.v("getFrame for time:", time, "RECYCLING.");
         } else {
             LOG.v("getFrame for time:", time, "CREATING.");
-            frame = new Frame(this, mFrameDataClass);
+            frame = new Frame(this);
         }
         frame.setContent(data, time, rotation, mFrameSize, mFrameFormat);
         return frame;

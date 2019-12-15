@@ -1,7 +1,6 @@
 package com.otaliastudios.cameraview.frame;
 
 import android.annotation.SuppressLint;
-import android.media.Image;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.controls.Engine;
@@ -27,9 +26,9 @@ public class Frame {
     private Size mSize = null;
     private int mFormat = -1;
 
-    Frame(@NonNull FrameManager manager, @NonNull Class<?> dataClass) {
+    Frame(@NonNull FrameManager manager) {
         mManager = manager;
-        mDataClass = dataClass;
+        mDataClass = manager.getFrameDataClass();
     }
 
     void setContent(@NonNull Object data, long time, int rotation, @NonNull Size size, int format) {
@@ -73,7 +72,7 @@ public class Frame {
     @NonNull
     public Frame freeze() {
         ensureHasContent();
-        Frame other = new Frame(mManager, mDataClass);
+        Frame other = new Frame(mManager);
         //noinspection unchecked
         Object data = mManager.cloneFrameData(getData());
         other.setContent(data, mTime, mRotation, mSize, mFormat);
