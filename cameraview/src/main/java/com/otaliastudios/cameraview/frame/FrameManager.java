@@ -7,7 +7,6 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -138,19 +137,27 @@ public abstract class FrameManager<T> {
         if (!isSetUp()) return;
         // If frame queue is full, let's drop everything.
         // If frame queue accepts this frame, let's recycle the buffer as well.
-        if (mFrameQueue.offer(frame)) {
-            onFrameDataRecycled(data);
-        }
+        boolean recycled = mFrameQueue.offer(frame);
+        onFrameDataReleased(data, recycled);
     }
 
     /**
-     * Called when a Frame was recycled and its data is now available.
+     * Called when a Frame was released and its data is now available.
      * This might be called from old Frames that belong to an old 'setUp'
      * of this FrameManager instance. So the buffer size might be different,
      * for instance.
      * @param data data
+     * @param recycled recycled
      */
-    protected abstract void onFrameDataRecycled(@NonNull T data);
+    protected abstract void onFrameDataReleased(@NonNull T data, boolean recycled);
+
+    @NonNull
+    final T cloneFrameData(@NonNull T data) {
+        return onCloneFrameData(data);
+    }
+
+    @NonNull
+    protected abstract T onCloneFrameData(@NonNull T data);
 
     /**
      * Releases all frames controlled by this manager and

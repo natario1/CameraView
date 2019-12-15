@@ -10,17 +10,12 @@ import androidx.test.filters.SmallTest;
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.size.Size;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @RunWith(AndroidJUnit4.class)
@@ -32,7 +27,13 @@ public class FrameManagerTest extends BaseTest {
         // A 1-pool manager will always recycle the same frame.
         FrameManager<String> manager = new FrameManager<String>(1, String.class) {
             @Override
-            protected void onFrameDataRecycled(@NonNull String data) { }
+            protected void onFrameDataReleased(@NonNull String data, boolean recycled) { }
+
+            @NonNull
+            @Override
+            protected String onCloneFrameData(@NonNull String data) {
+                return data;
+            }
         };
         manager.setUp(ImageFormat.NV21, new Size(50, 50));
 

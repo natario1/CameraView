@@ -47,7 +47,7 @@ import java.util.List;
 public class CameraActivity extends AppCompatActivity implements View.OnClickListener, OptionView.Callback {
 
     private final static CameraLogger LOG = CameraLogger.create("DemoApp");
-    private final static boolean USE_FRAME_PROCESSOR = false;
+    private final static boolean USE_FRAME_PROCESSOR = true;
     private final static boolean DECODE_BITMAP = true;
 
     private CameraView camera;

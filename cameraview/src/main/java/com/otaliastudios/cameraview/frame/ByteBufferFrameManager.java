@@ -129,14 +129,22 @@ public class ByteBufferFrameManager extends FrameManager<byte[]> {
     }
 
     @Override
-    protected void onFrameDataRecycled(@NonNull byte[] data) {
-        if (data.length == getFrameBytes()) {
+    protected void onFrameDataReleased(@NonNull byte[] data, boolean recycled) {
+        if (recycled && data.length == getFrameBytes()) {
             if (mBufferMode == BUFFER_MODE_DISPATCH) {
                 mBufferCallback.onBufferAvailable(data);
             } else {
                 mBufferQueue.offer(data);
             }
         }
+    }
+
+    @NonNull
+    @Override
+    protected byte[] onCloneFrameData(@NonNull byte[] data) {
+        byte[] clone = new byte[data.length];
+        System.arraycopy(data, 0, clone, 0, data.length);
+        return clone;
     }
 
     /**

@@ -74,18 +74,9 @@ public class Frame {
     public Frame freeze() {
         ensureHasContent();
         Frame other = new Frame(mManager, mDataClass);
-        if (getDataClass() == byte[].class) {
-            byte[] input = getData();
-            byte[] output = new byte[input.length];
-            System.arraycopy(input, 0, output, 0, input.length);
-            other.setContent(output, mTime, mRotation, mSize, mFormat);
-        } else if (getDataClass() == Image.class) {
-            throw new RuntimeException("Cannot freeze() a Image Frame. " +
-                    "Please consider using the frame synchronously in your process() method, " +
-                    "which also gives better performance.");
-        } else {
-            throw new RuntimeException("Unknown data class: " + getDataClass());
-        }
+        //noinspection unchecked
+        Object data = mManager.cloneFrameData(getData());
+        other.setContent(data, mTime, mRotation, mSize, mFormat);
         return other;
     }
 

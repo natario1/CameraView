@@ -56,12 +56,11 @@ import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.engine.options.Camera2Options;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
-import com.otaliastudios.cameraview.frame.ByteBufferFrameManager;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
+import com.otaliastudios.cameraview.frame.ImageFrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
-import com.otaliastudios.cameraview.internal.utils.ImageHelper;
 import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;
@@ -95,8 +94,6 @@ public class Camera2Engine extends CameraBaseEngine implements
 
     // Frame processing
     private ImageReader mFrameProcessingReader; // need this or the reader surface is collected
-    private final WorkerHandler mFrameConversionHandler;
-    private final Object mFrameProcessingImageLock = new Object();
     private Surface mFrameProcessingSurface;
 
     // Preview
@@ -118,7 +115,6 @@ public class Camera2Engine extends CameraBaseEngine implements
     public Camera2Engine(Callback callback) {
         super(callback);
         mManager = (CameraManager) getCallback().getContext().getSystemService(Context.CAMERA_SERVICE);
-        mFrameConversionHandler = WorkerHandler.get("CameraFrameConversion");
         new LogAction().start(this);
     }
 
@@ -546,9 +542,8 @@ public class Camera2Engine extends CameraBaseEngine implements
                     mFrameProcessingSize.getWidth(),
                     mFrameProcessingSize.getHeight(),
                     getFrameProcessingImageFormat(),
-                    2);
-            mFrameProcessingReader.setOnImageAvailableListener(this,
-                    mFrameConversionHandler.getHandler());
+                    3);
+            mFrameProcessingReader.setOnImageAvailableListener(this, null);
             mFrameProcessingSurface = mFrameProcessingReader.getSurface();
             outputSurfaces.add(mFrameProcessingSurface);
         } else {
@@ -682,12 +677,9 @@ public class Camera2Engine extends CameraBaseEngine implements
         mCaptureSize = null;
         mFrameProcessingSize = null;
         if (mFrameProcessingReader != null) {
-            synchronized (mFrameProcessingImageLock) {
-                // This call synchronously releases all Images and their underlying properties.
-                // This can cause a segmentation fault while converting the Image to NV21.
-                // So we use this lock for the two operations.
-                mFrameProcessingReader.close();
-            }
+            // WARNING: This call synchronously releases all Images and their underlying
+            // properties. This can cause issues if the Image is being used.
+            mFrameProcessingReader.close();
             mFrameProcessingReader = null;
         }
         if (mPictureReader != null) {
@@ -1407,13 +1399,7 @@ public class Camera2Engine extends CameraBaseEngine implements
     @NonNull
     @Override
     protected FrameManager instantiateFrameManager() {
-        return new ByteBufferFrameManager(2, null);
-    }
-
-    @NonNull
-    @Override
-    public ByteBufferFrameManager getFrameManager() {
-        return (ByteBufferFrameManager) super.getFrameManager();
+        return new ImageFrameManager(2);
     }
 
     /**
@@ -1429,42 +1415,24 @@ public class Camera2Engine extends CameraBaseEngine implements
 
     @Override
     public void onImageAvailable(ImageReader reader) {
-        byte[] data = getFrameManager().getBuffer();
-        if (data == null) {
-            LOG.w("onImageAvailable", "no byte buffer!");
-            return;
-        }
         LOG.v("onImageAvailable", "trying to acquire Image.");
         Image image = null;
         try {
             image = reader.acquireLatestImage();
         } catch (Exception ignore) { }
         if (image == null) {
-            LOG.w("onImageAvailable", "we have a byte buffer but no Image!");
-            getFrameManager().onBufferUnused(data);
-            return;
-        }
-        LOG.v("onImageAvailable", "we have both a byte buffer and an Image.");
-        try {
-            synchronized (mFrameProcessingImageLock) {
-                ImageHelper.convertToNV21(image, data);
-            }
-        } catch (Exception e) {
-            LOG.w("onImageAvailable", "error while converting.");
-            getFrameManager().onBufferUnused(data);
-            image.close();
-            return;
-        }
-        image.close();
-        if (getState() == CameraState.PREVIEW && !isChangingState()) {
+            LOG.w("onImageAvailable", "failed to acquire Image!");
+        } else if (getState() == CameraState.PREVIEW && !isChangingState()) {
             // After preview, the frame manager is correctly set up
-            Frame frame = getFrameManager().getFrame(data,
+            //noinspection unchecked
+            Frame frame = getFrameManager().getFrame(image,
                     System.currentTimeMillis(),
-                    getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
+                    getAngles().offset(Reference.SENSOR,
+                            Reference.OUTPUT,
                             Axis.RELATIVE_TO_SENSOR));
             getCallback().dispatchFrame(frame);
         } else {
-            getFrameManager().onBufferUnused(data);
+            image.close();
         }
     }
 
