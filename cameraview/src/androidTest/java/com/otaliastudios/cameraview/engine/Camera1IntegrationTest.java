@@ -31,4 +31,10 @@ public class Camera1IntegrationTest extends CameraIntegrationTest<Camera1Engine>
     protected long getMeteringTimeoutMillis() {
         return Camera1Engine.AUTOFOCUS_END_DELAY_MILLIS;
     }
+
+    @Override
+    public void testFrameProcessing_maxSize() {
+        // Camera1Engine does not support different sizes.
+        // super.testFrameProcessing_maxSize();
+    }
 }
