@@ -667,7 +667,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 break;
 
             case FILTER_CONTROL_1:
-                if (!mExperimental) break;
                 if (getFilter() instanceof OneParameterFilter) {
                     OneParameterFilter filter = (OneParameterFilter) getFilter();
                     oldValue = filter.getParameter1();
@@ -679,7 +678,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 break;
 
             case FILTER_CONTROL_2:
-                if (!mExperimental) break;
                 if (getFilter() instanceof TwoParameterFilter) {
                     TwoParameterFilter filter = (TwoParameterFilter) getFilter();
                     oldValue = filter.getParameter2();
@@ -2333,11 +2331,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         } else {
             boolean isNoFilter = filter instanceof NoFilter;
             boolean isFilterPreview = mCameraPreview instanceof FilterCameraPreview;
-            // If not experimental, we only allow NoFilter (called on creation).
-            if (!isNoFilter && !mExperimental) {
-                throw new RuntimeException("Filters are an experimental features and" +
-                        " need the experimental flag set.");
-            }
             // If not a filter preview, we only allow NoFilter (called on creation).
             if (!isNoFilter && !isFilterPreview) {
                 throw new RuntimeException("Filters are only supported by the GL_SURFACE preview." +
@@ -2362,10 +2355,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @NonNull
     public Filter getFilter() {
-        if (!mExperimental) {
-            throw new RuntimeException("Filters are an experimental features and need " +
-                    "the experimental flag set.");
-        } else if (mCameraPreview == null) {
+        if (mCameraPreview == null) {
             return mPendingFilter;
         } else if (mCameraPreview instanceof FilterCameraPreview) {
             return ((FilterCameraPreview) mCameraPreview).getCurrentFilter();
