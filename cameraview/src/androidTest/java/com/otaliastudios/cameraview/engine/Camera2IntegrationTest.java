@@ -77,4 +77,10 @@ public class Camera2IntegrationTest extends CameraIntegrationTest<Camera2Engine>
         if (shouldOpen) closeSync(true);
         return result;
     }
+
+    @Override
+    public void testFrameProcessing_freezeRelease() {
+        // Camera2 Frames are not freezable.
+        // super.testFrameProcessing_freezeRelease();
+    }
 }

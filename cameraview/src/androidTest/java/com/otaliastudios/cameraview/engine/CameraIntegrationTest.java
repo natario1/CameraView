@@ -1137,20 +1137,17 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
     public void testFrameProcessing_format() {
         CameraOptions o = openSync(true);
         Collection<Integer> formats = o.getSupportedFrameProcessingFormats();
-        closeSync(true);
-
         for (int format : formats) {
             LOG.i("[TEST FRAME FORMAT]", "Testing", format, "...");
             Op<Boolean> op = testFrameProcessorFormat(format);
             assertNotNull(op.await(DELAY));
         }
     }
-    
+
     @NonNull
     private Op<Boolean> testFrameProcessorFormat(final int format) {
         final Op<Boolean> op = new Op<>();
         camera.setFrameProcessingFormat(format);
-        camera.clearFrameProcessors();
         camera.addFrameProcessor(new FrameProcessor() {
             @Override
             public void process(@NonNull Frame frame) {

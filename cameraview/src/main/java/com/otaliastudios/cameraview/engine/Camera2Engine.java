@@ -82,6 +82,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         ActionHolder {
 
     private static final int FRAME_PROCESSING_POOL_SIZE = 2;
+    private static final int FRAME_PROCESSING_FORMAT = ImageFormat.YUV_420_888;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
@@ -115,7 +116,8 @@ public class Camera2Engine extends CameraBaseEngine implements
 
     public Camera2Engine(Callback callback) {
         super(callback);
-        mManager = (CameraManager) getCallback().getContext().getSystemService(Context.CAMERA_SERVICE);
+        mManager = (CameraManager) getCallback().getContext()
+                .getSystemService(Context.CAMERA_SERVICE);
         new LogAction().start(this);
     }
 
@@ -1455,6 +1457,8 @@ public class Camera2Engine extends CameraBaseEngine implements
 
     @Override
     public void setFrameProcessingFormat(final int format) {
+        // This is called during initialization. Set our default first.
+        if (mFrameProcessingFormat == 0) mFrameProcessingFormat = FRAME_PROCESSING_FORMAT;
         // Frame processing format is used both when binding and when starting the preview.
         // If the value is changed between the two, the preview step can crash.
         getOrchestrator().schedule("frame processing format (" + format + ")",
@@ -1467,7 +1471,7 @@ public class Camera2Engine extends CameraBaseEngine implements
                     setFrameProcessingFormat(format);
                     return;
                 }
-                mFrameProcessingFormat = format > 0 ? format : ImageFormat.YUV_420_888;
+                mFrameProcessingFormat = format > 0 ? format : FRAME_PROCESSING_FORMAT;
                 if (getState().isAtLeast(CameraState.BIND)) {
                     restartBind();
                 }
