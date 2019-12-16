@@ -56,6 +56,7 @@ public abstract class CameraOptions {
     protected Set<AspectRatio> supportedPictureAspectRatio = new HashSet<>(4);
     protected Set<AspectRatio> supportedVideoAspectRatio = new HashSet<>(3);
     protected Set<PictureFormat> supportedPictureFormats = new HashSet<>(2);
+    protected Set<Integer> supportedFrameProcessingFormats = new HashSet<>(2);
 
     protected boolean zoomSupported;
     protected boolean exposureCorrectionSupported;
@@ -235,6 +236,18 @@ public abstract class CameraOptions {
     @NonNull
     public final Collection<PictureFormat> getSupportedPictureFormats() {
         return Collections.unmodifiableSet(supportedPictureFormats);
+    }
+
+    /**
+     * Set of supported formats for frame processing,
+     * as {@link ImageFormat} constants.
+     *
+     * @see CameraView#setFrameProcessingFormat(int)
+     * @return a collection of supported values.
+     */
+    @NonNull
+    public final Collection<Integer> getSupportedFrameProcessingFormats() {
+        return Collections.unmodifiableSet(supportedFrameProcessingFormats);
     }
 
     /**

@@ -115,6 +115,7 @@ cameraView.setFrameProcessingFormat(ImageFormat.YUV_422_888);
 ```
 
 With the Camera1 engine, the incoming format will always be `ImageFormat.NV21`.
+You can check which formats are available for use through `CameraOptions.getSupportedFrameProcessingFormats()`.
 
 ### XML Attributes
 

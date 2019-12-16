@@ -174,5 +174,15 @@ public class Camera2Options extends CameraOptions {
                 }
             }
         }
+
+        // Frame processing formats
+        supportedFrameProcessingFormats.add(ImageFormat.YUV_420_888);
+        int[] outputFormats = streamMap.getOutputFormats();
+        for (int outputFormat : outputFormats) {
+            // Ensure it is a raw format
+            if (ImageFormat.getBitsPerPixel(outputFormat) > 0) {
+                supportedFrameProcessingFormats.add(outputFormat);
+            }
+        }
     }
 }
