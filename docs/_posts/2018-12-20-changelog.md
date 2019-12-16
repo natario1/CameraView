@@ -11,6 +11,29 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
+## v2.5.0
+
+- [*Camera2*] New: support for RAW pictures with new APIs `setPictureFormat()` and `CameraOptions.getSupportedPictureFormats()`. Contains a **breaking change**: `PictureResult.getFormat()` is not an integer anymore but rather a `PictureFormat`. This API had no real purpose so this might not affect you ([#691][691])
+- [*Camera2*] New: support for constraining the frame processing size through `setFrameProcessingMaxWidth()` and `setFrameProcessingMaxHeight()`. This can improve processing performance ([#691][691])
+- [*Camera2*] New: support for choosing the frame processing format through `setFrameProcessingFormat()` and `CameraOptions.getSupportedFrameProcessingFormats()` ([#691][691])
+- [*Camera2*] Improvement: Frame processing FPS for Camera2 is now smooth and typically better than Camera1. This required some **breaking changes** (see below) ([#691][691])
+- [*Camera1, Camera2*] Improvement: improved internal threading ([#697][697])
+- [*Camera1, Camera2*] Improvement: improvements to stability and edge cases behavior ([#696][696])
+- [*Real time filters*] Change: filters do not need the experimental flag anymore ([#691][691])
+
+The new frame processing approach will force you to update your code, because `Frame.getData()` is 
+not a a byte[] anymore. The class of this object now depends on the engine being used. You can use 
+`frame.getDataClass()` (or instanceof) to check.
+
+If you are using the Camera1 engine, you will still receive byte arrays, so you can just cast `frame.getData()` to 
+`byte[]`, assuming it's not done already by the compiler.
+
+If you are using the experimental Camera2 engine, you will receive `android.media.Image`s instead.
+This object will likely be accepted by frame processing libraries, and also offers access to raw byte data.
+This change greatly improved the FPS performance, which is what matters the most at the library level.
+
+https://github.com/natario1/CameraView/compare/v2.4.0...v2.5.0
+
 ## v2.4.0
 
 - [*Camera2*] New: support for `previewFrameRate`. Controls preview FPS, snapshot FPS, processor FPS, thanks to [@vaibhavbhandula][vaibhavbhandula] ([#653][653])
@@ -353,3 +376,7 @@ https://github.com/natario1/CameraView/compare/v1.2.3...v1.3.0
 [651]: https://github.com/natario1/CameraView/pull/651
 [653]: https://github.com/natario1/CameraView/pull/653
 [661]: https://github.com/natario1/CameraView/pull/661
+[691]: https://github.com/natario1/CameraView/pull/691
+[696]: https://github.com/natario1/CameraView/pull/696
+[697]: https://github.com/natario1/CameraView/pull/697
+[704]: https://github.com/natario1/CameraView/pull/704
