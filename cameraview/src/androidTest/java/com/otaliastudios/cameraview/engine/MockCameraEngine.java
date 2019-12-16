@@ -136,6 +136,16 @@ public class MockCameraEngine extends CameraBaseEngine {
     }
 
     @Override
+    public void setHasFrameProcessors(boolean hasFrameProcessors) {
+        mHasFrameProcessors = hasFrameProcessors;
+    }
+
+    @Override
+    public void setFrameProcessingFormat(int format) {
+        mFrameProcessingFormat = format;
+    }
+
+    @Override
     public void takePicture(@NonNull PictureResult.Stub stub) {
         super.takePicture(stub);
         mPictureCaptured = true;

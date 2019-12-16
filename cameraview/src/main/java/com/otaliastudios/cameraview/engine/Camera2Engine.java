@@ -80,6 +80,7 @@ import java.util.concurrent.ExecutionException;
 public class Camera2Engine extends CameraBaseEngine implements
         ImageReader.OnImageAvailableListener,
         ActionHolder {
+
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
@@ -331,7 +332,7 @@ public class Camera2Engine extends CameraBaseEngine implements
             if (streamMap == null) {
                 throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
             }
-            android.util.Size[] sizes = streamMap.getOutputSizes(getFrameProcessingImageFormat());
+            android.util.Size[] sizes = streamMap.getOutputSizes(getFrameProcessingFormat());
             List<Size> candidates = new ArrayList<>(sizes.length);
             for (android.util.Size size : sizes) {
                 Size add = new Size(size.getWidth(), size.getHeight());
@@ -541,7 +542,7 @@ public class Camera2Engine extends CameraBaseEngine implements
             mFrameProcessingReader = ImageReader.newInstance(
                     mFrameProcessingSize.getWidth(),
                     mFrameProcessingSize.getHeight(),
-                    getFrameProcessingImageFormat(),
+                    mFrameProcessingFormat,
                     3);
             mFrameProcessingReader.setOnImageAvailableListener(this, null);
             mFrameProcessingSurface = mFrameProcessingReader.getSurface();
@@ -595,7 +596,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         mPreview.setStreamSize(previewSizeForView.getWidth(), previewSizeForView.getHeight());
         mPreview.setDrawRotation(getAngles().offset(Reference.BASE, Reference.VIEW, Axis.ABSOLUTE));
         if (hasFrameProcessors()) {
-            getFrameManager().setUp(FRAME_PROCESSING_FORMAT, mFrameProcessingSize);
+            getFrameManager().setUp(mFrameProcessingFormat, mFrameProcessingSize);
         }
 
         LOG.i("onStartPreview:", "Starting preview.");
@@ -1402,17 +1403,6 @@ public class Camera2Engine extends CameraBaseEngine implements
         return new ImageFrameManager(2);
     }
 
-    /**
-     * Returns the frame processing image format.
-     * Defaults to {@link ImageFormat#YUV_420_888}.
-     * Override at your own risk!
-     * @return format
-     */
-    @SuppressWarnings("WeakerAccess")
-    protected int getFrameProcessingImageFormat() {
-        return ImageFormat.YUV_420_888;
-    }
-
     @Override
     public void onImageAvailable(ImageReader reader) {
         LOG.v("onImageAvailable", "trying to acquire Image.");
@@ -1448,13 +1438,34 @@ public class Camera2Engine extends CameraBaseEngine implements
                     // Extremely rare case in which this was called in between startBind and
                     // startPreview. This can cause issues. Try later.
                     setHasFrameProcessors(hasFrameProcessors);
-                } else if (getState().isAtLeast(CameraState.BIND)) {
-                    // Apply and restart.
-                    Camera2Engine.super.setHasFrameProcessors(hasFrameProcessors);
+                    return;
+                }
+                // Apply and restart.
+                mHasFrameProcessors = hasFrameProcessors;
+                if (getState().isAtLeast(CameraState.BIND)) {
                     restartBind();
-                } else {
-                    // Just apply.
-                    Camera2Engine.super.setHasFrameProcessors(hasFrameProcessors);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void setFrameProcessingFormat(final int format) {
+        // Frame processing format is used both when binding and when starting the preview.
+        // If the value is changed between the two, the preview step can crash.
+        getOrchestrator().schedule("frame processing format (" + format + ")",
+                true, new Runnable() {
+            @Override
+            public void run() {
+                if (getState().isAtLeast(CameraState.BIND) && isChangingState()) {
+                    // Extremely rare case in which this was called in between startBind and
+                    // startPreview. This can cause issues. Try later.
+                    setFrameProcessingFormat(format);
+                    return;
+                }
+                mFrameProcessingFormat = format > 0 ? format : ImageFormat.YUV_420_888;
+                if (getState().isAtLeast(CameraState.BIND)) {
+                    restartBind();
                 }
             }
         });

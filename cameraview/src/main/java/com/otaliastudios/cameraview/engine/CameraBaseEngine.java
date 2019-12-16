@@ -52,6 +52,8 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @SuppressWarnings("WeakerAccess") protected Size mCaptureSize;
     @SuppressWarnings("WeakerAccess") protected Size mPreviewStreamSize;
     @SuppressWarnings("WeakerAccess") protected Size mFrameProcessingSize;
+    @SuppressWarnings("WeakerAccess") protected int mFrameProcessingFormat;
+    @SuppressWarnings("WeakerAccess") protected boolean mHasFrameProcessors;
     @SuppressWarnings("WeakerAccess") protected Flash mFlash;
     @SuppressWarnings("WeakerAccess") protected WhiteBalance mWhiteBalance;
     @SuppressWarnings("WeakerAccess") protected VideoCodec mVideoCodec;
@@ -77,7 +79,6 @@ public abstract class CameraBaseEngine extends CameraEngine {
     private int mVideoMaxDuration;
     private int mVideoBitRate;
     private int mAudioBitRate;
-    private boolean mHasFrameProcessors;
     private long mAutoFocusResetDelayMillis;
     private int mSnapshotMaxWidth; // in REF_VIEW like SizeSelectors
     private int mSnapshotMaxHeight; // in REF_VIEW like SizeSelectors
@@ -285,6 +286,11 @@ public abstract class CameraBaseEngine extends CameraEngine {
     }
 
     @Override
+    public final int getFrameProcessingFormat() {
+        return mFrameProcessingFormat;
+    }
+
+    @Override
     public final void setAutoFocusResetDelay(long delayMillis) {
         mAutoFocusResetDelayMillis = delayMillis;
     }
@@ -421,11 +427,6 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @Override
     public final float getPreviewFrameRate() {
         return mPreviewFrameRate;
-    }
-
-    @Override
-    public void setHasFrameProcessors(boolean hasFrameProcessors) {
-        mHasFrameProcessors = hasFrameProcessors;
     }
 
     @Override

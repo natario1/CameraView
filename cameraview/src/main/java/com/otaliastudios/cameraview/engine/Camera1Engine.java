@@ -768,6 +768,18 @@ public class Camera1Engine extends CameraBaseEngine implements
     }
 
     @Override
+    public void setHasFrameProcessors(boolean hasFrameProcessors) {
+        // we don't care, FP is always on
+        mHasFrameProcessors = hasFrameProcessors;
+    }
+
+    @Override
+    public void setFrameProcessingFormat(int format) {
+        // Ignore input: we only support NV21.
+        mFrameProcessingFormat = ImageFormat.NV21;
+    }
+
+    @Override
     public void onBufferAvailable(@NonNull byte[] buffer) {
         if (getState().isAtLeast(CameraState.ENGINE)
                 && getTargetState().isAtLeast(CameraState.ENGINE)) {

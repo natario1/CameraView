@@ -554,4 +554,27 @@ public abstract class Option<T> {
         }
     }
 
+    public static class FrameProcessingFormat extends Option<Integer> {
+
+        FrameProcessingFormat() {
+            super("Frame Processing Format");
+        }
+
+        @Override
+        public void set(@NonNull CameraView view, @NonNull Integer value) {
+            view.setFrameProcessingFormat(value);
+        }
+
+        @NonNull
+        @Override
+        public Integer get(@NonNull CameraView view) {
+            return view.getFrameProcessingFormat();
+        }
+
+        @NonNull
+        @Override
+        public Collection<Integer> getAll(@NonNull CameraView view, @NonNull CameraOptions options) {
+            return options.getSupportedFrameProcessingFormats();
+        }
+    }
 }

@@ -51,6 +51,7 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -1128,6 +1129,38 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
         public void process(@NonNull Frame frame) {
             frame.freeze().release();
         }
+    }
+
+    @Test
+    @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
+    public void testFrameProcessing_format() {
+        CameraOptions o = openSync(true);
+        Collection<Integer> formats = o.getSupportedFrameProcessingFormats();
+        closeSync(true);
+
+        for (int format : formats) {
+            LOG.i("[TEST FRAME FORMAT]", "Testing", format, "...");
+            Op<Boolean> op = testFrameProcessorFormat(format);
+            assertNotNull(op.await(DELAY));
+        }
+    }
+    
+    @NonNull
+    private Op<Boolean> testFrameProcessorFormat(final int format) {
+        final Op<Boolean> op = new Op<>();
+        camera.setFrameProcessingFormat(format);
+        camera.clearFrameProcessors();
+        camera.addFrameProcessor(new FrameProcessor() {
+            @Override
+            public void process(@NonNull Frame frame) {
+                if (frame.getFormat() == format) {
+                    op.controller().start();
+                    op.controller().end(true);
+                }
+            }
+        });
+        return op;
     }
 
     //endregion

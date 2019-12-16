@@ -131,6 +131,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 new Option.OverlayInPreview(watermark),
                 new Option.OverlayInPictureSnapshot(watermark),
                 new Option.OverlayInVideoSnapshot(watermark),
+                // Frame Processing
+                new Option.FrameProcessingFormat(),
                 // Other
                 new Option.Grid(), new Option.GridColor(), new Option.UseDeviceOrientation()
         );
@@ -147,6 +149,8 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 false, false, false, false, true,
                 // Watermarks
                 false, false, true,
+                // Frame Processing
+                true,
                 // Other
                 false, false, true
         );
