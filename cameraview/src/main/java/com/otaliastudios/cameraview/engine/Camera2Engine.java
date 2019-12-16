@@ -81,7 +81,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         ImageReader.OnImageAvailableListener,
         ActionHolder {
 
-    private static final int FRAME_PROCESSING_FORMAT = ImageFormat.NV21;
+    private static final int FRAME_PROCESSING_POOL_SIZE = 2;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
     private final CameraManager mManager;
@@ -543,7 +543,7 @@ public class Camera2Engine extends CameraBaseEngine implements
                     mFrameProcessingSize.getWidth(),
                     mFrameProcessingSize.getHeight(),
                     mFrameProcessingFormat,
-                    3);
+                    getFrameProcessingPoolSize());
             mFrameProcessingReader.setOnImageAvailableListener(this, null);
             mFrameProcessingSurface = mFrameProcessingReader.getSurface();
             outputSurfaces.add(mFrameProcessingSurface);
@@ -1397,10 +1397,14 @@ public class Camera2Engine extends CameraBaseEngine implements
 
     //region Frame Processing
 
+    protected int getFrameProcessingPoolSize() {
+        return FRAME_PROCESSING_POOL_SIZE;
+    }
+
     @NonNull
     @Override
     protected FrameManager instantiateFrameManager() {
-        return new ImageFrameManager(2);
+        return new ImageFrameManager(getFrameProcessingPoolSize());
     }
 
     @Override

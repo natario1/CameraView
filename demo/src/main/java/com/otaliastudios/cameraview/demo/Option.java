@@ -4,6 +4,7 @@ import android.graphics.Color;
 import androidx.annotation.NonNull;
 import androidx.core.util.Pair;
 
+import android.graphics.ImageFormat;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -575,6 +576,24 @@ public abstract class Option<T> {
         @Override
         public Collection<Integer> getAll(@NonNull CameraView view, @NonNull CameraOptions options) {
             return options.getSupportedFrameProcessingFormats();
+        }
+
+        @NonNull
+        @Override
+        public String toString(@NonNull Integer value) {
+            switch (value) {
+                case ImageFormat.NV21: return "NV21";
+                case ImageFormat.NV16: return "NV16";
+                case ImageFormat.JPEG: return "JPEG";
+                case ImageFormat.YUY2: return "YUY2";
+                case ImageFormat.YUV_420_888: return "YUV_420_888";
+                case ImageFormat.YUV_422_888: return "YUV_422_888";
+                case ImageFormat.YUV_444_888: return "YUV_444_888";
+                case ImageFormat.RAW10: return "RAW10";
+                case ImageFormat.RAW12: return "RAW12";
+                case ImageFormat.RAW_SENSOR: return "RAW_SENSOR";
+            }
+            return super.toString(value);
         }
     }
 }

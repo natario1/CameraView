@@ -267,6 +267,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFrameProcessingMaxWidth(frameMaxWidth);
         setFrameProcessingMaxHeight(frameMaxHeight);
         setFrameProcessingFormat(frameFormat);
+        mCameraEngine.setHasFrameProcessors(!mFrameProcessors.isEmpty());
 
         // Apply gestures
         mapGesture(Gesture.TAP, gestures.getTapAction());
