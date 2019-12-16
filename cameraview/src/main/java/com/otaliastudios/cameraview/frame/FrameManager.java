@@ -7,76 +7,33 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * This class manages the allocation of byte buffers and {@link Frame} objects.
- * We are interested in recycling both of them, especially byte[] buffers which can create a lot
- * of overhead.
- *
+ * This class manages the allocation of {@link Frame} objects.
  * The FrameManager keeps a {@link #mPoolSize} integer that defines the number of instances to keep.
- * The pool size applies to both the {@link Frame} pool and the byte[] pool - it makes sense to use
- * the same number since they are consumed at the same time.
  *
  * Main methods are:
  * - {@link #setUp(int, Size)}: to set up with size and allocate buffers
  * - {@link #release()}: to release. After release, a manager can be setUp again.
- * - {@link #getFrame(byte[], long, int)}: gets a new {@link Frame}.
+ * - {@link #getFrame(Object, long, int)}: gets a new {@link Frame}.
  *
- * For both byte buffers and frames to get back to the FrameManager pool, all you have to do
+ * For frames to get back to the FrameManager pool, all you have to do
  * is call {@link Frame#release()} when done.
- *
- * Other than this, the FrameManager can work in two modes, depending on whether a
- * {@link BufferCallback} is passed to the constructor. The modes changes the buffer behavior.
- *
- * 1. {@link #BUFFER_MODE_DISPATCH}: in this mode, as soon as we have a buffer, it is dispatched to
- *    the {@link BufferCallback}. The callback should then fill the buffer, and finally call
- *    {@link #getFrame(byte[], long, int)} to receive a frame.
- *    This is used for Camera1.
- *
- * 2. {@link #BUFFER_MODE_ENQUEUE}: in this mode, the manager internally keeps a queue of byte
- *    buffers, instead of handing them to the callback. The users can ask for buffers through
- *    {@link #getBuffer()}.
- *    This buffer can be filled with data and used to get a frame
- *    {@link #getFrame(byte[], long, int)}, or, in case it was not filled, returned to the queue
- *    using {@link #onBufferUnused(byte[])}.
- *    This is used for Camera2.
  */
-public class FrameManager {
+public abstract class FrameManager<T> {
 
     private static final String TAG = FrameManager.class.getSimpleName();
-    private static final CameraLogger LOG = CameraLogger.create(TAG);
-
-    /**
-     * Receives callbacks on buffer availability
-     * (when a Frame is released, we reuse its buffer).
-     */
-    public interface BufferCallback {
-        void onBufferAvailable(@NonNull byte[] buffer);
-    }
+    protected static final CameraLogger LOG = CameraLogger.create(TAG);
 
     private final int mPoolSize;
-    private int mBufferSize = -1;
+    private int mFrameBytes = -1;
     private Size mFrameSize = null;
     private int mFrameFormat = -1;
+    private final Class<T> mFrameDataClass;
     private LinkedBlockingQueue<Frame> mFrameQueue;
-    private LinkedBlockingQueue<byte[]> mBufferQueue;
-    private BufferCallback mBufferCallback;
-    private final int mBufferMode;
 
-    /**
-     * In this mode, we have a {@link #mBufferCallback} and dispatch
-     * new buffers to the callback.
-     */
-    private final static int BUFFER_MODE_DISPATCH = 0;
-
-    /**
-     * In this mode, we have a {@link #mBufferQueue} where we store
-     * buffers and only dispatch when requested.
-     */
-    private final static int BUFFER_MODE_ENQUEUE = 1;
 
     /**
      * Construct a new frame manager.
@@ -84,18 +41,37 @@ public class FrameManager {
      * as soon as the parameters are known.
      *
      * @param poolSize the size of the backing pool.
-     * @param callback a callback
      */
-    public FrameManager(int poolSize, @Nullable BufferCallback callback) {
+    protected FrameManager(int poolSize, @NonNull Class<T> dataClass) {
         mPoolSize = poolSize;
+        mFrameDataClass = dataClass;
         mFrameQueue = new LinkedBlockingQueue<>(mPoolSize);
-        if (callback != null) {
-            mBufferCallback = callback;
-            mBufferMode = BUFFER_MODE_DISPATCH;
-        } else {
-            mBufferQueue = new LinkedBlockingQueue<>(mPoolSize);
-            mBufferMode = BUFFER_MODE_ENQUEUE;
-        }
+    }
+
+    /**
+     * Returns the pool size.
+     * @return pool size
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final int getPoolSize() {
+        return mPoolSize;
+    }
+
+    /**
+     * Returns the frame size in bytes.
+     * @return frame size in bytes
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final int getFrameBytes() {
+        return mFrameBytes;
+    }
+
+    /**
+     * Returns the frame data class.
+     * @return frame data class
+     */
+    public final Class<T> getFrameDataClass() {
+        return mFrameDataClass;
     }
 
     /**
@@ -106,9 +82,8 @@ public class FrameManager {
      *
      * @param format the image format
      * @param size the frame size
-     * @return the buffer size
      */
-    public int setUp(int format, @NonNull Size size) {
+    public void setUp(int format, @NonNull Size size) {
         if (isSetUp()) {
             // TODO throw or just reconfigure?
         }
@@ -116,15 +91,7 @@ public class FrameManager {
         mFrameFormat = format;
         int bitsPerPixel = ImageFormat.getBitsPerPixel(format);
         long sizeInBits = size.getHeight() * size.getWidth() * bitsPerPixel;
-        mBufferSize = (int) Math.ceil(sizeInBits / 8.0d);
-        for (int i = 0; i < mPoolSize; i++) {
-            if (mBufferMode == BUFFER_MODE_DISPATCH) {
-                mBufferCallback.onBufferAvailable(new byte[mBufferSize]);
-            } else {
-                mBufferQueue.offer(new byte[mBufferSize]);
-            }
-        }
-        return mBufferSize;
+        mFrameBytes = (int) Math.ceil(sizeInBits / 8.0d);
     }
 
     /**
@@ -134,45 +101,8 @@ public class FrameManager {
      *
      * @return true if set up
      */
-    private boolean isSetUp() {
+    protected boolean isSetUp() {
         return mFrameSize != null;
-    }
-
-    /**
-     * Returns a new byte buffer than can be filled.
-     * This can only be called in {@link #BUFFER_MODE_ENQUEUE} mode! Where the frame
-     * manager also holds a queue of the byte buffers.
-     *
-     * If not null, the buffer returned by this method can be filled and used to get
-     * a new frame through {@link #getFrame(byte[], long, int)}.
-     *
-     * @return a buffer, or null
-     */
-    @Nullable
-    public byte[] getBuffer() {
-        if (mBufferMode != BUFFER_MODE_ENQUEUE) {
-            throw new IllegalStateException("Can't call getBuffer() " +
-                    "when not in BUFFER_MODE_ENQUEUE.");
-        }
-        return mBufferQueue.poll();
-    }
-
-    /**
-     * Can be called if the buffer obtained by {@link #getBuffer()}
-     * was not used to construct a frame, so it can be put back into the queue.
-     * @param buffer a buffer
-     */
-    public void onBufferUnused(@NonNull byte[] buffer) {
-        if (mBufferMode != BUFFER_MODE_ENQUEUE) {
-            throw new IllegalStateException("Can't call onBufferUnused() " +
-                    "when not in BUFFER_MODE_ENQUEUE.");
-        }
-
-        if (isSetUp()) {
-            mBufferQueue.offer(buffer);
-        } else {
-            LOG.w("onBufferUnused: buffer was returned but we're not set up anymore.");
-        }
     }
 
     /**
@@ -190,7 +120,7 @@ public class FrameManager {
      * @return a new frame
      */
     @NonNull
-    public Frame getFrame(@NonNull byte[] data, long time, int rotation) {
+    public Frame getFrame(@NonNull T data, long time, int rotation) {
         if (!isSetUp()) {
             throw new IllegalStateException("Can't call getFrame() after releasing " +
                     "or before setUp.");
@@ -209,33 +139,37 @@ public class FrameManager {
 
     /**
      * Called by child frames when they are released.
-     * This might be called from old Frames that belong to an old 'setUp'
-     * of this FrameManager instance. So the buffer size might be different,
-     * for instance.
-     *
      * @param frame the released frame
      */
-    void onFrameReleased(@NonNull Frame frame, @NonNull byte[] buffer) {
+    void onFrameReleased(@NonNull Frame frame, @NonNull T data) {
         if (!isSetUp()) return;
         // If frame queue is full, let's drop everything.
         // If frame queue accepts this frame, let's recycle the buffer as well.
-        if (mFrameQueue.offer(frame)) {
-            int currSize = buffer.length;
-            int reqSize = mBufferSize;
-            if (currSize == reqSize) {
-                if (mBufferMode == BUFFER_MODE_DISPATCH) {
-                    mBufferCallback.onBufferAvailable(buffer);
-                } else {
-                    mBufferQueue.offer(buffer);
-                }
-            }
-        }
+        boolean recycled = mFrameQueue.offer(frame);
+        onFrameDataReleased(data, recycled);
     }
+
+    /**
+     * Called when a Frame was released and its data is now available.
+     * This might be called from old Frames that belong to an old 'setUp'
+     * of this FrameManager instance. So the buffer size might be different,
+     * for instance.
+     * @param data data
+     * @param recycled recycled
+     */
+    protected abstract void onFrameDataReleased(@NonNull T data, boolean recycled);
+
+    @NonNull
+    final T cloneFrameData(@NonNull T data) {
+        return onCloneFrameData(data);
+    }
+
+    @NonNull
+    protected abstract T onCloneFrameData(@NonNull T data);
 
     /**
      * Releases all frames controlled by this manager and
      * clears the pool.
-     * In BUFFER_MODE_ENQUEUE, releases also all the buffers.
      */
     public void release() {
         if (!isSetUp()) {
@@ -245,10 +179,7 @@ public class FrameManager {
 
         LOG.i("release: Clearing the frame and buffer queue.");
         mFrameQueue.clear();
-        if (mBufferMode == BUFFER_MODE_ENQUEUE) {
-            mBufferQueue.clear();
-        }
-        mBufferSize = -1;
+        mFrameBytes = -1;
         mFrameSize = null;
         mFrameFormat = -1;
     }

@@ -9,6 +9,7 @@ import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import androidx.annotation.NonNull;
@@ -75,5 +76,11 @@ public class Camera2IntegrationTest extends CameraIntegrationTest<Camera2Engine>
                 != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
         if (shouldOpen) closeSync(true);
         return result;
+    }
+
+    @Override
+    public void testFrameProcessing_freezeRelease() {
+        // Camera2 Frames are not freezable.
+        // super.testFrameProcessing_freezeRelease();
     }
 }

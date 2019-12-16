@@ -25,6 +25,10 @@
         <attr name="cameraSnapshotMaxWidth" format="integer|reference" />
         <attr name="cameraSnapshotMaxHeight" format="integer|reference" />
 
+        <attr name="cameraFrameProcessingMaxWidth" format="integer|reference" />
+        <attr name="cameraFrameProcessingMaxHeight" format="integer|reference" />
+        <attr name="cameraFrameProcessingFormat" format="integer|reference" />
+
         <attr name="cameraVideoBitRate" format="integer|reference" />
         <attr name="cameraAudioBitRate" format="integer|reference" />
         <attr name="cameraPreviewFrameRate" format="integer|reference" />

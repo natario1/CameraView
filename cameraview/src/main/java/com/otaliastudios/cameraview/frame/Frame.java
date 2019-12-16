@@ -1,6 +1,9 @@
 package com.otaliastudios.cameraview.frame;
 
+import android.annotation.SuppressLint;
+
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -14,8 +17,9 @@ public class Frame {
     private final static CameraLogger LOG = CameraLogger.create(TAG);
 
     private final FrameManager mManager;
+    private final Class<?> mDataClass;
 
-    private byte[] mData = null;
+    private Object mData = null;
     private long mTime = -1;
     private long mLastTime = -1;
     private int mRotation = 0;
@@ -24,9 +28,10 @@ public class Frame {
 
     Frame(@NonNull FrameManager manager) {
         mManager = manager;
+        mDataClass = manager.getFrameDataClass();
     }
 
-    void setContent(@NonNull byte[] data, long time, int rotation, @NonNull Size size, int format) {
+    void setContent(@NonNull Object data, long time, int rotation, @NonNull Size size, int format) {
         this.mData = data;
         this.mTime = time;
         this.mLastTime = time;
@@ -63,12 +68,13 @@ public class Frame {
      *
      * @return a frozen Frame
      */
+    @SuppressLint("NewApi")
     @NonNull
     public Frame freeze() {
         ensureHasContent();
-        byte[] data = new byte[mData.length];
-        System.arraycopy(mData, 0, data, 0, mData.length);
         Frame other = new Frame(mManager);
+        //noinspection unchecked
+        Object data = mManager.cloneFrameData(getData());
         other.setContent(data, mTime, mRotation, mSize, mFormat);
         return other;
     }
@@ -80,7 +86,7 @@ public class Frame {
     public void release() {
         if (!hasContent()) return;
         LOG.v("Frame with time", mTime, "is being released.");
-        byte[] data = mData;
+        Object data = mData;
         mData = null;
         mRotation = 0;
         mTime = -1;
@@ -89,6 +95,7 @@ public class Frame {
         // After the manager is notified, this frame instance can be taken by
         // someone else, possibly from another thread. So this should be the
         // last call in this method. If we null data after, we can have issues.
+        //noinspection unchecked
         mManager.onFrameReleased(this, data);
     }
 
@@ -96,10 +103,23 @@ public class Frame {
      * Returns the frame data.
      * @return the frame data
      */
+    @SuppressWarnings("unchecked")
     @NonNull
-    public byte[] getData() {
+    public <T> T getData() {
         ensureHasContent();
-        return mData;
+        return (T) mData;
+    }
+
+    /**
+     * Returns the class returned by {@link #getData()}.
+     * This class depends on the engine that produced this frame.
+     * - {@link Engine#CAMERA1} will produce byte[] arrays
+     * - {@link Engine#CAMERA2} will produce {@link android.media.Image}s
+     * @return the data class
+     */
+    @NonNull
+    public Class<?> getDataClass() {
+        return mDataClass;
     }
 
     /**

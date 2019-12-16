@@ -13,6 +13,7 @@ import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
+import com.otaliastudios.cameraview.frame.ByteBufferFrameManager;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -27,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class MockCameraEngine extends CameraEngine {
+public class MockCameraEngine extends CameraBaseEngine {
 
     public boolean mPictureCaptured;
     public boolean mFocusStarted;
@@ -83,7 +84,7 @@ public class MockCameraEngine extends CameraEngine {
     }
 
     public void setMockState(@NonNull CameraState state) {
-        Task<Void> change = mOrchestrator.scheduleStateChange(getState(),
+        Task<Void> change = getOrchestrator().scheduleStateChange(getState(),
                 state,
                 false,
                 new Callable<Task<Void>>() {
@@ -109,7 +110,6 @@ public class MockCameraEngine extends CameraEngine {
         mExposureCorrectionChanged = true;
     }
 
-
     @Override
     public void setFlash(@NonNull Flash flash) {
         mFlash = flash;
@@ -133,6 +133,16 @@ public class MockCameraEngine extends CameraEngine {
     @Override
     public void setPictureFormat(@NonNull PictureFormat pictureFormat) {
         mPictureFormat = pictureFormat;
+    }
+
+    @Override
+    public void setHasFrameProcessors(boolean hasFrameProcessors) {
+        mHasFrameProcessors = hasFrameProcessors;
+    }
+
+    @Override
+    public void setFrameProcessingFormat(int format) {
+        mFrameProcessingFormat = format;
     }
 
     @Override
@@ -172,6 +182,12 @@ public class MockCameraEngine extends CameraEngine {
         return new ArrayList<>();
     }
 
+    @NonNull
+    @Override
+    protected List<Size> getFrameProcessingAvailableSizes() {
+        return new ArrayList<>();
+    }
+
     @Override
     public void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point) {
         mFocusStarted = true;
@@ -180,13 +196,11 @@ public class MockCameraEngine extends CameraEngine {
     @NonNull
     @Override
     protected FrameManager instantiateFrameManager() {
-        return new FrameManager(2, null);
+        return new ByteBufferFrameManager(2, null);
     }
 
     @Override
-    public void setPlaySounds(boolean playSounds) {
-
-    }
+    public void setPlaySounds(boolean playSounds) { }
 
     @Override
     protected boolean collectCameraInfo(@NonNull Facing facing) {

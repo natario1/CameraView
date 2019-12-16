@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.engine.options;
 
+import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 
@@ -128,5 +129,8 @@ public class Camera1Options extends CameraOptions {
 
         // Picture formats
         supportedPictureFormats.add(PictureFormat.JPEG);
+
+        // Frame processing formats
+        supportedFrameProcessingFormats.add(ImageFormat.NV21);
     }
 }

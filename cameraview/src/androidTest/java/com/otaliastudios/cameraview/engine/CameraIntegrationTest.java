@@ -51,6 +51,7 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -70,7 +71,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public abstract class CameraIntegrationTest<E extends CameraEngine> extends BaseTest {
+public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends BaseTest {
 
     private final static CameraLogger LOG = CameraLogger.create(CameraIntegrationTest.class.getSimpleName());
     private final static long DELAY = 8000;
@@ -1046,6 +1047,27 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
+    public void testFrameProcessing_maxSize() {
+        final int max = 600;
+        camera.setFrameProcessingMaxWidth(max);
+        camera.setFrameProcessingMaxHeight(max);
+        final Op<Size> sizeOp = new Op<>();
+        camera.addFrameProcessor(new FrameProcessor() {
+            @Override
+            public void process(@NonNull Frame frame) {
+                sizeOp.controller().end(frame.getSize());
+            }
+        });
+        openSync(true);
+        Size size = sizeOp.await(2000);
+        assertNotNull(size);
+        assertTrue(size.getWidth() <= max);
+        assertTrue(size.getHeight() <= max);
+    }
+
+    @Test
+    @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testFrameProcessing_afterSnapshot() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
@@ -1107,6 +1129,35 @@ public abstract class CameraIntegrationTest<E extends CameraEngine> extends Base
         public void process(@NonNull Frame frame) {
             frame.freeze().release();
         }
+    }
+
+    @Test
+    @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
+    public void testFrameProcessing_format() {
+        CameraOptions o = openSync(true);
+        Collection<Integer> formats = o.getSupportedFrameProcessingFormats();
+        for (int format : formats) {
+            LOG.i("[TEST FRAME FORMAT]", "Testing", format, "...");
+            Op<Boolean> op = testFrameProcessorFormat(format);
+            assertNotNull(op.await(DELAY));
+        }
+    }
+
+    @NonNull
+    private Op<Boolean> testFrameProcessorFormat(final int format) {
+        final Op<Boolean> op = new Op<>();
+        camera.setFrameProcessingFormat(format);
+        camera.addFrameProcessor(new FrameProcessor() {
+            @Override
+            public void process(@NonNull Frame frame) {
+                if (frame.getFormat() == format) {
+                    op.controller().start();
+                    op.controller().end(true);
+                }
+            }
+        });
+        return op;
     }
 
     //endregion

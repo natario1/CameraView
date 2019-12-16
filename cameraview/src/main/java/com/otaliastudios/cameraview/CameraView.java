@@ -201,6 +201,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         boolean pictureSnapshotMetering = a.getBoolean(
                 R.styleable.CameraView_cameraPictureSnapshotMetering,
                 DEFAULT_PICTURE_SNAPSHOT_METERING);
+        int snapshotMaxWidth = a.getInteger(R.styleable.CameraView_cameraSnapshotMaxWidth, 0);
+        int snapshotMaxHeight = a.getInteger(R.styleable.CameraView_cameraSnapshotMaxHeight, 0);
+        int frameMaxWidth = a.getInteger(R.styleable.CameraView_cameraFrameProcessingMaxWidth, 0);
+        int frameMaxHeight = a.getInteger(R.styleable.CameraView_cameraFrameProcessingMaxHeight, 0);
+        int frameFormat = a.getInteger(R.styleable.CameraView_cameraFrameProcessingFormat, 0);
 
         // Size selectors and gestures
         SizeSelectorParser sizeSelectors = new SizeSelectorParser(a);
@@ -257,6 +262,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoBitRate(videoBitRate);
         setAutoFocusResetDelay(autoFocusResetDelay);
         setPreviewFrameRate(videoFrameRate);
+        setSnapshotMaxWidth(snapshotMaxWidth);
+        setSnapshotMaxHeight(snapshotMaxHeight);
+        setFrameProcessingMaxWidth(frameMaxWidth);
+        setFrameProcessingMaxHeight(frameMaxHeight);
+        setFrameProcessingFormat(frameFormat);
+        mCameraEngine.setHasFrameProcessors(!mFrameProcessors.isEmpty());
 
         // Apply gestures
         mapGesture(Gesture.TAP, gestures.getTapAction());
@@ -667,7 +678,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 break;
 
             case FILTER_CONTROL_1:
-                if (!mExperimental) break;
                 if (getFilter() instanceof OneParameterFilter) {
                     OneParameterFilter filter = (OneParameterFilter) getFilter();
                     oldValue = filter.getParameter1();
@@ -679,7 +689,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 break;
 
             case FILTER_CONTROL_2:
-                if (!mExperimental) break;
                 if (getFilter() instanceof TwoParameterFilter) {
                     TwoParameterFilter filter = (TwoParameterFilter) getFilter();
                     oldValue = filter.getParameter2();
@@ -968,6 +977,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoBitRate(oldEngine.getVideoBitRate());
         setAutoFocusResetDelay(oldEngine.getAutoFocusResetDelay());
         setPreviewFrameRate(oldEngine.getPreviewFrameRate());
+        setSnapshotMaxWidth(oldEngine.getSnapshotMaxWidth());
+        setSnapshotMaxHeight(oldEngine.getSnapshotMaxHeight());
+        setFrameProcessingMaxWidth(oldEngine.getFrameProcessingMaxWidth());
+        setFrameProcessingMaxHeight(oldEngine.getFrameProcessingMaxHeight());
+        setFrameProcessingFormat(0 /* this is very engine specific, so do not pass */);
     }
 
     /**
@@ -1556,47 +1570,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
-     * Adds a {@link FrameProcessor} instance to be notified of
-     * new frames in the preview stream.
-     *
-     * @param processor a frame processor.
-     */
-    public void addFrameProcessor(@Nullable FrameProcessor processor) {
-        if (processor != null) {
-            mFrameProcessors.add(processor);
-            if (mFrameProcessors.size() == 1) {
-                mCameraEngine.setHasFrameProcessors(true);
-            }
-        }
-    }
-
-    /**
-     * Remove a {@link FrameProcessor} that was previously registered.
-     *
-     * @param processor a frame processor
-     */
-    public void removeFrameProcessor(@Nullable FrameProcessor processor) {
-        if (processor != null) {
-            mFrameProcessors.remove(processor);
-            if (mFrameProcessors.size() == 0) {
-                mCameraEngine.setHasFrameProcessors(false);
-            }
-        }
-    }
-
-    /**
-     * Clears the list of {@link FrameProcessor} that have been registered
-     * to preview frames.
-     */
-    public void clearFrameProcessors() {
-        boolean had = mFrameProcessors.size() > 0;
-        mFrameProcessors.clear();
-        if (had) {
-            mCameraEngine.setHasFrameProcessors(false);
-        }
-    }
-
-    /**
      * Asks the camera to capture an image of the current scene.
      * This will trigger {@link CameraListener#onPictureTaken(PictureResult)} if a listener
      * was registered.
@@ -1765,6 +1738,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setSnapshotMaxHeight(int maxHeight) {
         mCameraEngine.setSnapshotMaxHeight(maxHeight);
+    }
+
+    /**
+     * The max width for snapshots.
+     * @see #setSnapshotMaxWidth(int)
+     * @return max width
+     */
+    public int getSnapshotMaxWidth() {
+        return mCameraEngine.getSnapshotMaxWidth();
+    }
+
+    /**
+     * The max height for snapshots.
+     * @see #setSnapshotMaxHeight(int)
+     * @return max height
+     */
+    public int getSnapshotMaxHeight() {
+        return mCameraEngine.getSnapshotMaxHeight();
     }
 
     /**
@@ -2277,6 +2268,110 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     //endregion
 
+    //region Frame Processing
+
+    /**
+     * Adds a {@link FrameProcessor} instance to be notified of
+     * new frames in the preview stream.
+     *
+     * @param processor a frame processor.
+     */
+    public void addFrameProcessor(@Nullable FrameProcessor processor) {
+        if (processor != null) {
+            mFrameProcessors.add(processor);
+            if (mFrameProcessors.size() == 1) {
+                mCameraEngine.setHasFrameProcessors(true);
+            }
+        }
+    }
+
+    /**
+     * Remove a {@link FrameProcessor} that was previously registered.
+     *
+     * @param processor a frame processor
+     */
+    public void removeFrameProcessor(@Nullable FrameProcessor processor) {
+        if (processor != null) {
+            mFrameProcessors.remove(processor);
+            if (mFrameProcessors.size() == 0) {
+                mCameraEngine.setHasFrameProcessors(false);
+            }
+        }
+    }
+
+    /**
+     * Clears the list of {@link FrameProcessor} that have been registered
+     * to preview frames.
+     */
+    public void clearFrameProcessors() {
+        boolean had = mFrameProcessors.size() > 0;
+        mFrameProcessors.clear();
+        if (had) {
+            mCameraEngine.setHasFrameProcessors(false);
+        }
+    }
+
+    /**
+     * Sets the max width for frame processing {@link Frame}s.
+     * This option is only supported by {@link Engine#CAMERA2} and will have no effect
+     * on other engines.
+     *
+     * @param maxWidth max width for frames
+     */
+    public void setFrameProcessingMaxWidth(int maxWidth) {
+        mCameraEngine.setFrameProcessingMaxWidth(maxWidth);
+    }
+
+    /**
+     * Sets the max height for frame processing {@link Frame}s.
+     * This option is only supported by {@link Engine#CAMERA2} and will have no effect
+     * on other engines.
+     *
+     * @param maxHeight max height for frames
+     */
+    public void setFrameProcessingMaxHeight(int maxHeight) {
+        mCameraEngine.setFrameProcessingMaxHeight(maxHeight);
+    }
+
+    /**
+     * The max width for frame processing frames.
+     * @see #setFrameProcessingMaxWidth(int)
+     * @return max width
+     */
+    public int getFrameProcessingMaxWidth() {
+        return mCameraEngine.getFrameProcessingMaxWidth();
+    }
+
+    /**
+     * The max height for frame processing frames.
+     * @see #setFrameProcessingMaxHeight(int)
+     * @return max height
+     */
+    public int getFrameProcessingMaxHeight() {
+        return mCameraEngine.getFrameProcessingMaxHeight();
+    }
+
+    /**
+     * Sets the {@link android.graphics.ImageFormat} for frame processing.
+     * Before applying you should check {@link CameraOptions#getSupportedFrameProcessingFormats()}.
+     *
+     * @param format image format
+     */
+    public void setFrameProcessingFormat(int format) {
+        mCameraEngine.setFrameProcessingFormat(format);
+    }
+
+    /**
+     * Returns the current frame processing format.
+     * @see #setFrameProcessingFormat(int)
+     * @return image format
+     */
+    public int getFrameProcessingFormat() {
+        return mCameraEngine.getFrameProcessingFormat();
+    }
+
+    //endregion
+
     //region Overlays
 
     @Override
@@ -2333,11 +2428,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         } else {
             boolean isNoFilter = filter instanceof NoFilter;
             boolean isFilterPreview = mCameraPreview instanceof FilterCameraPreview;
-            // If not experimental, we only allow NoFilter (called on creation).
-            if (!isNoFilter && !mExperimental) {
-                throw new RuntimeException("Filters are an experimental features and" +
-                        " need the experimental flag set.");
-            }
             // If not a filter preview, we only allow NoFilter (called on creation).
             if (!isNoFilter && !isFilterPreview) {
                 throw new RuntimeException("Filters are only supported by the GL_SURFACE preview." +
@@ -2362,10 +2452,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     @NonNull
     public Filter getFilter() {
-        if (!mExperimental) {
-            throw new RuntimeException("Filters are an experimental features and need " +
-                    "the experimental flag set.");
-        } else if (mCameraPreview == null) {
+        if (mCameraPreview == null) {
             return mPendingFilter;
         } else if (mCameraPreview instanceof FilterCameraPreview) {
             return ((FilterCameraPreview) mCameraPreview).getCurrentFilter();
