@@ -981,7 +981,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setSnapshotMaxHeight(oldEngine.getSnapshotMaxHeight());
         setFrameProcessingMaxWidth(oldEngine.getFrameProcessingMaxWidth());
         setFrameProcessingMaxHeight(oldEngine.getFrameProcessingMaxHeight());
-        setFrameProcessingFormat(oldEngine.getFrameProcessingFormat());
+        setFrameProcessingFormat(0 /* this is very engine specific, so do not pass */);
     }
 
     /**

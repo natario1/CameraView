@@ -334,7 +334,7 @@ public class Camera2Engine extends CameraBaseEngine implements
             if (streamMap == null) {
                 throw new RuntimeException("StreamConfigurationMap is null. Should not happen.");
             }
-            android.util.Size[] sizes = streamMap.getOutputSizes(getFrameProcessingFormat());
+            android.util.Size[] sizes = streamMap.getOutputSizes(mFrameProcessingFormat);
             List<Size> candidates = new ArrayList<>(sizes.length);
             for (android.util.Size size : sizes) {
                 Size add = new Size(size.getWidth(), size.getHeight());
