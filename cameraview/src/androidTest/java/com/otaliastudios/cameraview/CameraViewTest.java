@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.ImageFormat;
 import android.graphics.PointF;
 import android.location.Location;
 import androidx.annotation.NonNull;
@@ -168,10 +169,13 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getLocation(), null);
         assertEquals(cameraView.getExposureCorrection(), 0f, 0f);
         assertEquals(cameraView.getZoom(), 0f, 0f);
-        assertEquals(cameraView.getVideoMaxDuration(), 0, 0);
-        assertEquals(cameraView.getVideoMaxSize(), 0, 0);
-        assertEquals(cameraView.getSnapshotMaxWidth(), 0, 0);
-        assertEquals(cameraView.getSnapshotMaxHeight(), 0, 0);
+        assertEquals(cameraView.getVideoMaxDuration(), 0);
+        assertEquals(cameraView.getVideoMaxSize(), 0);
+        assertEquals(cameraView.getSnapshotMaxWidth(), 0);
+        assertEquals(cameraView.getSnapshotMaxHeight(), 0);
+        assertEquals(cameraView.getFrameProcessingMaxWidth(), 0);
+        assertEquals(cameraView.getFrameProcessingMaxHeight(), 0);
+        assertEquals(cameraView.getFrameProcessingFormat(), 0);
 
         // Self managed
         GestureParser gestures = new GestureParser(empty);
@@ -806,17 +810,25 @@ public class CameraViewTest extends BaseTest {
     @Test
     public void testSnapshotMaxSize() {
         cameraView.setSnapshotMaxWidth(500);
-        assertEquals(cameraView.getSnapshotMaxWidth(), 500);
+        assertEquals(500, cameraView.getSnapshotMaxWidth());
         cameraView.setSnapshotMaxHeight(700);
-        assertEquals(cameraView.getSnapshotMaxHeight(), 700);
+        assertEquals(700, cameraView.getSnapshotMaxHeight());
     }
 
     @Test
     public void testFrameProcessingMaxSize() {
         cameraView.setFrameProcessingMaxWidth(500);
-        assertEquals(cameraView.getFrameProcessingMaxWidth(), 500);
+        assertEquals(500, cameraView.getFrameProcessingMaxWidth());
         cameraView.setFrameProcessingMaxHeight(700);
-        assertEquals(cameraView.getFrameProcessingMaxHeight(), 700);
+        assertEquals(700, cameraView.getFrameProcessingMaxHeight());
+    }
+
+    @Test
+    public void testFrameProcessingFormat() {
+        cameraView.setFrameProcessingFormat(ImageFormat.YUV_420_888);
+        assertEquals(ImageFormat.YUV_420_888, cameraView.getFrameProcessingFormat());
+        cameraView.setFrameProcessingFormat(ImageFormat.YUV_422_888);
+        assertEquals(ImageFormat.YUV_422_888, cameraView.getFrameProcessingFormat());
     }
 
     //endregion

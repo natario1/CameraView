@@ -203,6 +203,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 DEFAULT_PICTURE_SNAPSHOT_METERING);
         int snapshotMaxWidth = a.getInteger(R.styleable.CameraView_cameraSnapshotMaxWidth, 0);
         int snapshotMaxHeight = a.getInteger(R.styleable.CameraView_cameraSnapshotMaxHeight, 0);
+        int frameMaxWidth = a.getInteger(R.styleable.CameraView_cameraFrameProcessingMaxWidth, 0);
+        int frameMaxHeight = a.getInteger(R.styleable.CameraView_cameraFrameProcessingMaxHeight, 0);
+        int frameFormat = a.getInteger(R.styleable.CameraView_cameraFrameProcessingFormat, 0);
 
         // Size selectors and gestures
         SizeSelectorParser sizeSelectors = new SizeSelectorParser(a);
@@ -261,6 +264,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setPreviewFrameRate(videoFrameRate);
         setSnapshotMaxWidth(snapshotMaxWidth);
         setSnapshotMaxHeight(snapshotMaxHeight);
+        setFrameProcessingMaxWidth(frameMaxWidth);
+        setFrameProcessingMaxHeight(frameMaxHeight);
+        setFrameProcessingFormat(frameFormat);
 
         // Apply gestures
         mapGesture(Gesture.TAP, gestures.getTapAction());
@@ -972,6 +978,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setPreviewFrameRate(oldEngine.getPreviewFrameRate());
         setSnapshotMaxWidth(oldEngine.getSnapshotMaxWidth());
         setSnapshotMaxHeight(oldEngine.getSnapshotMaxHeight());
+        setFrameProcessingMaxWidth(oldEngine.getFrameProcessingMaxWidth());
+        setFrameProcessingMaxHeight(oldEngine.getFrameProcessingMaxHeight());
+        setFrameProcessingFormat(oldEngine.getFrameProcessingFormat());
     }
 
     /**
@@ -2303,7 +2312,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     /**
      * Sets the max width for frame processing {@link Frame}s.
-     * This option is only supported by {@link Camera2Engine} and will have no effect
+     * This option is only supported by {@link Engine#CAMERA2} and will have no effect
      * on other engines.
      *
      * @param maxWidth max width for frames
@@ -2314,7 +2323,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     /**
      * Sets the max height for frame processing {@link Frame}s.
-     * This option is only supported by {@link Camera2Engine} and will have no effect
+     * This option is only supported by {@link Engine#CAMERA2} and will have no effect
      * on other engines.
      *
      * @param maxHeight max height for frames
@@ -2339,6 +2348,25 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public int getFrameProcessingMaxHeight() {
         return mCameraEngine.getFrameProcessingMaxHeight();
+    }
+
+    /**
+     * Sets the {@link android.graphics.ImageFormat} for frame processing.
+     * Before applying you should check {@link CameraOptions#getSupportedFrameProcessingFormats()}.
+     *
+     * @param format image format
+     */
+    public void setFrameProcessingFormat(int format) {
+        mCameraEngine.setFrameProcessingFormat(format);
+    }
+
+    /**
+     * Returns the current frame processing format.
+     * @see #setFrameProcessingFormat(int)
+     * @return image format
+     */
+    public int getFrameProcessingFormat() {
+        return mCameraEngine.getFrameProcessingFormat();
     }
 
     //endregion

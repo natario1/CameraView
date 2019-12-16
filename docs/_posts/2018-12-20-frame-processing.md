@@ -19,12 +19,17 @@ cameraView.addFrameProcessor(new FrameProcessor() {
     @Override
     @WorkerThread
     public void process(@NonNull Frame frame) {
-        byte[] data = frame.getData();
         int rotation = frame.getRotation();
         long time = frame.getTime();
         Size size = frame.getSize();
         int format = frame.getFormat();
-        // Process...
+        if (frame.getDataClass() == byte[].class) {
+            byte[] data = frame.getData();
+            // Process byte array...
+        } else if (frame.getDataClass() == Image.class) {
+            Image data = frame.getData();
+            // Process android.media.Image...
+        }
     }
 }
 ```
@@ -79,6 +84,15 @@ public void process(@NonNull Frame frame) {
 }
 ```
 
+### Frame Data
+
+Starting from `v2.5.0`, the type of data offered by `frame.getData()` depends on the camera engine
+that created this frame:
+- The Camera1 engine will offer `byte[]` arrays
+- The Camera2 engine will offer `android.media.Image` objects
+
+You can check this at runtime by inspecting the data class using `frame.getDataClass()`.
+
 ### Frame Size
   
 The Camera2 engine offers the option to set size constraints for the incoming frames.
@@ -90,12 +104,25 @@ cameraView.setFrameProcessingMaxHeight(maxWidth);
 
 With other engines, these API have no effect.
 
+### Frame Format
+  
+The Camera2 engine offers the option to set the frame format as one of the ImageFormat 
+constants. The default is `ImageFormat.YUV_420_888`.
+
+```java
+cameraView.setFrameProcessingFormat(ImageFormat.YUV_420_888);
+cameraView.setFrameProcessingFormat(ImageFormat.YUV_422_888);
+```
+
+With the Camera1 engine, the incoming format will always be `ImageFormat.NV21`.
+
 ### XML Attributes
 
 ```xml
 <com.otaliastudios.cameraview.CameraView
     app:cameraFrameProcessingMaxWidth="640"
-    app:cameraFrameProcessingMaxHeight="640"/>
+    app:cameraFrameProcessingMaxHeight="640"
+    app:cameraFrameProcessingFormat="0x23"/>
 ```
 
 ### Related APIs
@@ -109,7 +136,10 @@ With other engines, these API have no effect.
 |`camera.setFrameProcessingMaxHeight(int)`|`-`|Sets the max height for incoming frames.|
 |`camera.getFrameProcessingMaxWidth()`|`int`|Gets the max width for incoming frames.|
 |`camera.getFrameProcessingMaxHeight()`|`int`|Gets the max height for incoming frames.|
-|`frame.getData()`|`byte[]`|The current preview frame, in its original orientation.|
+|`camera.setFrameProcessingFormat(int)`|`-`|Sets the desired format for incoming frames. Should be one of the ImageFormat constants.|
+|`camera.getFrameProcessingFormat()`|`-`|Gets the format for incoming frames. One of the ImageFormat constants.|
+|`frame.getDataClass()`|`Class<T>`|The class of the data returned by `getData()`. Either `byte[]` or `android.media.Image`.|
+|`frame.getData()`|`T`|The current preview frame, in its original orientation.|
 |`frame.getTime()`|`long`|The preview timestamp, in `System.currentTimeMillis()` reference.|
 |`frame.getRotation()`|`int`|The rotation that should be applied to the byte array in order to see what the user sees.|
 |`frame.getSize()`|`Size`|The frame size, before any rotation is applied, to access data.|
