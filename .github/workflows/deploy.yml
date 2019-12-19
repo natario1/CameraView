@@ -1,6 +1,8 @@
 # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
 name: Deploy
-on: [release]
+on:
+  release:
+    types: [published]
 jobs:
   BINTRAY_UPLOAD:
     name: Bintray Upload
