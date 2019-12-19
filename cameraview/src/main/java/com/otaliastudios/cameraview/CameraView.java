@@ -111,6 +111,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     final static boolean DEFAULT_USE_DEVICE_ORIENTATION = true;
     final static boolean DEFAULT_PICTURE_METERING = true;
     final static boolean DEFAULT_PICTURE_SNAPSHOT_METERING = false;
+    final static int DEFAULT_FRAME_PROCESSING_POOL_SIZE = 2;
 
     // Self managed parameters
     private boolean mPlaySounds;
@@ -206,6 +207,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int frameMaxWidth = a.getInteger(R.styleable.CameraView_cameraFrameProcessingMaxWidth, 0);
         int frameMaxHeight = a.getInteger(R.styleable.CameraView_cameraFrameProcessingMaxHeight, 0);
         int frameFormat = a.getInteger(R.styleable.CameraView_cameraFrameProcessingFormat, 0);
+        int framePoolSize = a.getInteger(R.styleable.CameraView_cameraFrameProcessingPoolSize,
+                DEFAULT_FRAME_PROCESSING_POOL_SIZE);
 
         // Size selectors and gestures
         SizeSelectorParser sizeSelectors = new SizeSelectorParser(a);
@@ -267,6 +270,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFrameProcessingMaxWidth(frameMaxWidth);
         setFrameProcessingMaxHeight(frameMaxHeight);
         setFrameProcessingFormat(frameFormat);
+        setFrameProcessingPoolSize(framePoolSize);
         mCameraEngine.setHasFrameProcessors(!mFrameProcessors.isEmpty());
 
         // Apply gestures
@@ -982,6 +986,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFrameProcessingMaxWidth(oldEngine.getFrameProcessingMaxWidth());
         setFrameProcessingMaxHeight(oldEngine.getFrameProcessingMaxHeight());
         setFrameProcessingFormat(0 /* this is very engine specific, so do not pass */);
+        setFrameProcessingPoolSize(oldEngine.getFrameProcessingPoolSize());
     }
 
     /**
@@ -2368,6 +2373,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public int getFrameProcessingFormat() {
         return mCameraEngine.getFrameProcessingFormat();
+    }
+
+    /**
+     * Sets the frame processing pool size. This is (roughly) the max number of
+     * {@link Frame} instances that can exist at a given moment in the frame pipeline,
+     * excluding frozen frames.
+     *
+     * @param poolSize pool size
+     */
+    public void setFrameProcessingPoolSize(int poolSize) {
+        mCameraEngine.setFrameProcessingPoolSize(poolSize);
+    }
+
+    /**
+     * Returns the current frame processing pool size.
+     * @see #setFrameProcessingPoolSize(int)
+     * @return pool size
+     */
+    public int getFrameProcessingPoolSize() {
+        return mCameraEngine.getFrameProcessingPoolSize();
     }
 
     //endregion

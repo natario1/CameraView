@@ -184,6 +184,7 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getUseDeviceOrientation(), CameraView.DEFAULT_USE_DEVICE_ORIENTATION);
         assertEquals(cameraView.getPictureMetering(), CameraView.DEFAULT_PICTURE_METERING);
         assertEquals(cameraView.getPictureSnapshotMetering(), CameraView.DEFAULT_PICTURE_SNAPSHOT_METERING);
+        assertEquals(cameraView.getFrameProcessingPoolSize(), CameraView.DEFAULT_FRAME_PROCESSING_POOL_SIZE);
         assertEquals(cameraView.getGestureAction(Gesture.TAP), gestures.getTapAction());
         assertEquals(cameraView.getGestureAction(Gesture.LONG_TAP), gestures.getLongTapAction());
         assertEquals(cameraView.getGestureAction(Gesture.PINCH), gestures.getPinchAction());
@@ -829,6 +830,14 @@ public class CameraViewTest extends BaseTest {
         assertEquals(ImageFormat.YUV_420_888, cameraView.getFrameProcessingFormat());
         cameraView.setFrameProcessingFormat(ImageFormat.YUV_422_888);
         assertEquals(ImageFormat.YUV_422_888, cameraView.getFrameProcessingFormat());
+    }
+
+    @Test
+    public void testFrameProcessingPoolSize() {
+        cameraView.setFrameProcessingPoolSize(4);
+        assertEquals(4, cameraView.getFrameProcessingPoolSize());
+        cameraView.setFrameProcessingPoolSize(6);
+        assertEquals(6, cameraView.getFrameProcessingPoolSize());
     }
 
     //endregion

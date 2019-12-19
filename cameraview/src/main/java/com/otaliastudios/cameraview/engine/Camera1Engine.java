@@ -757,8 +757,8 @@ public class Camera1Engine extends CameraBaseEngine implements
 
     @NonNull
     @Override
-    protected FrameManager instantiateFrameManager() {
-        return new ByteBufferFrameManager(2, this);
+    protected FrameManager instantiateFrameManager(int poolSize) {
+        return new ByteBufferFrameManager(poolSize, this);
     }
 
     @NonNull

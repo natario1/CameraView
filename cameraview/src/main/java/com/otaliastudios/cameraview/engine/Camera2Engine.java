@@ -61,7 +61,6 @@ import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.frame.ImageFrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
@@ -81,7 +80,6 @@ public class Camera2Engine extends CameraBaseEngine implements
         ImageReader.OnImageAvailableListener,
         ActionHolder {
 
-    private static final int FRAME_PROCESSING_POOL_SIZE = 2;
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.YUV_420_888;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
@@ -97,8 +95,6 @@ public class Camera2Engine extends CameraBaseEngine implements
     // Frame processing
     private ImageReader mFrameProcessingReader; // need this or the reader surface is collected
     private Surface mFrameProcessingSurface;
-    private final WorkerHandler mFrameProcessingHandler = WorkerHandler.get("FrameProcessing");
-    private final Object mFrameProcessingImageLock = new Object();
 
     // Preview
     private Surface mPreviewStreamSurface;
@@ -549,7 +545,7 @@ public class Camera2Engine extends CameraBaseEngine implements
                     mFrameProcessingFormat,
                     getFrameProcessingPoolSize());
             mFrameProcessingReader.setOnImageAvailableListener(this,
-                    mFrameProcessingHandler.getHandler());
+                    null);
             mFrameProcessingSurface = mFrameProcessingReader.getSurface();
             outputSurfaces.add(mFrameProcessingSurface);
         } else {
@@ -1402,17 +1398,13 @@ public class Camera2Engine extends CameraBaseEngine implements
 
     //region Frame Processing
 
-    protected int getFrameProcessingPoolSize() {
-        return FRAME_PROCESSING_POOL_SIZE;
-    }
-
     @NonNull
     @Override
-    protected FrameManager instantiateFrameManager() {
-        return new ImageFrameManager(getFrameProcessingPoolSize());
+    protected FrameManager instantiateFrameManager(int poolSize) {
+        return new ImageFrameManager(poolSize);
     }
 
-    // Frame processing thread
+    @EngineThread
     @Override
     public void onImageAvailable(ImageReader reader) {
         LOG.v("onImageAvailable", "trying to acquire Image.");

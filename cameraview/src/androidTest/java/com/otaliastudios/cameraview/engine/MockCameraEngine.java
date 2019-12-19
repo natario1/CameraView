@@ -195,8 +195,8 @@ public class MockCameraEngine extends CameraBaseEngine {
 
     @NonNull
     @Override
-    protected FrameManager instantiateFrameManager() {
-        return new ByteBufferFrameManager(2, null);
+    protected FrameManager instantiateFrameManager(int poolSize) {
+        return new ByteBufferFrameManager(poolSize, null);
     }
 
     @Override
