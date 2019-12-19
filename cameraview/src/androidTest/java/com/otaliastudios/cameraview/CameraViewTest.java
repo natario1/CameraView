@@ -840,6 +840,19 @@ public class CameraViewTest extends BaseTest {
         assertEquals(6, cameraView.getFrameProcessingPoolSize());
     }
 
+    @Test
+    public void testFrameProcessingExecutors() {
+        cameraView.setFrameProcessingExecutors(5);
+        assertEquals(5, cameraView.getFrameProcessingExecutors());
+        cameraView.setFrameProcessingExecutors(2);
+        assertEquals(2, cameraView.getFrameProcessingExecutors());
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testFrameProcessingExecutors_throws() {
+        cameraView.setFrameProcessingExecutors(0);
+    }
+
     //endregion
 
     //region Lists of listeners and processors
