@@ -9,15 +9,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.engine.Camera2Engine;
-import com.otaliastudios.cameraview.engine.action.ActionHolder;
-import com.otaliastudios.cameraview.engine.action.BaseAction;
+import com.otaliastudios.cameraview.engine.CameraEngine;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class LogAction extends BaseAction {
 
     private final static CameraLogger LOG
-            = CameraLogger.create(Camera2Engine.class.getSimpleName());
+            = CameraLogger.create(CameraEngine.class.getSimpleName());
 
     private String lastLog;
 

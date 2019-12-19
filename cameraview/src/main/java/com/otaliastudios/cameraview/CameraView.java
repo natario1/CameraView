@@ -2223,7 +2223,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 mFrameProcessingExecutor.execute(new Runnable() {
                     @Override
                     public void run() {
-                        LOG.v("dispatchFrame: dispatching", frame.getTime(),
+                        LOG.v("dispatchFrame: executing. Passing", frame.getTime(),
                                 "to processors.");
                         for (FrameProcessor processor : mFrameProcessors) {
                             try {

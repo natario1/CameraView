@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -56,9 +57,11 @@ public class ByteBufferFrameManagerTest extends BaseTest {
         int length = manager.getFrameBytes();
 
         Frame frame1 = manager.getFrame(new byte[length], 0, 0);
-        // Since frame1 is already taken and poolSize = 1, a new Frame is created.
-        Frame frame2 = manager.getFrame(new byte[length], 0, 0);
-        // Release the first frame so it goes back into the pool.
+        assertNotNull(frame1);
+        // Since frame1 is already taken and poolSize = 1, getFrame() would return null.
+        // To create a new frame, freeze the first one.
+        Frame frame2 = frame1.freeze();
+        // Now release the first frame so it goes back into the pool.
         manager.onFrameReleased(frame1, (byte[]) frame1.getData());
         reset(callback);
         // Release the second. The pool is already full, so onBufferAvailable should not be called
@@ -76,6 +79,7 @@ public class ByteBufferFrameManagerTest extends BaseTest {
         // A camera preview frame comes. Request a frame.
         byte[] picture = new byte[length];
         Frame frame = manager.getFrame(picture, 0, 0);
+        assertNotNull(frame);
 
         // Release the frame and ensure that onBufferAvailable is called.
         reset(callback);
@@ -92,6 +96,7 @@ public class ByteBufferFrameManagerTest extends BaseTest {
         // A camera preview frame comes. Request a frame.
         byte[] picture = new byte[length];
         Frame frame = manager.getFrame(picture, 0, 0);
+        assertNotNull(frame);
 
         // Don't release the frame. Change the allocation size.
         manager.setUp(ImageFormat.NV16, new Size(15, 15));

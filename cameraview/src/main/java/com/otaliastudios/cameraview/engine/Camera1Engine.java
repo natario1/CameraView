@@ -793,10 +793,12 @@ public class Camera1Engine extends CameraBaseEngine implements
             // Seen this happen in logs.
             return;
         }
-        Frame frame = getFrameManager().getFrame(data,
-                System.currentTimeMillis(),
-                getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR));
-        getCallback().dispatchFrame(frame);
+        int rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
+                Axis.RELATIVE_TO_SENSOR);
+        Frame frame = getFrameManager().getFrame(data, System.currentTimeMillis(), rotation);
+        if (frame != null) {
+            getCallback().dispatchFrame(frame);
+        }
     }
 
     //endregion

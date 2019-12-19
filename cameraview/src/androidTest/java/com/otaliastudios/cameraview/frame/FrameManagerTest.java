@@ -14,8 +14,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 @RunWith(AndroidJUnit4.class)
@@ -38,9 +42,31 @@ public class FrameManagerTest extends BaseTest {
         manager.setUp(ImageFormat.NV21, new Size(50, 50));
 
         Frame first = manager.getFrame("foo", 0, 0);
+        assertNotNull(first);
         first.release();
         Frame second = manager.getFrame("bar", 0, 0);
+        assertNotNull(second);
         second.release();
         assertEquals(first, second);
+    }
+
+    @Test
+    public void testGetFrame() {
+        FrameManager<String> manager = new FrameManager<String>(1, String.class) {
+            @Override
+            protected void onFrameDataReleased(@NonNull String data, boolean recycled) { }
+
+            @NonNull
+            @Override
+            protected String onCloneFrameData(@NonNull String data) {
+                return data;
+            }
+        };
+        manager.setUp(ImageFormat.NV21, new Size(50, 50));
+
+        Frame first = manager.getFrame("foo", 0, 0);
+        assertNotNull(first);
+        Frame second = manager.getFrame("bar", 0, 0);
+        assertNull(second);
     }
 }
