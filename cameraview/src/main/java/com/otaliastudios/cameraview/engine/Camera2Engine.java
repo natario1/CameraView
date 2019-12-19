@@ -97,6 +97,8 @@ public class Camera2Engine extends CameraBaseEngine implements
     // Frame processing
     private ImageReader mFrameProcessingReader; // need this or the reader surface is collected
     private Surface mFrameProcessingSurface;
+    private final WorkerHandler mFrameProcessingHandler = WorkerHandler.get("FrameProcessing");
+    private final Object mFrameProcessingImageLock = new Object();
 
     // Preview
     private Surface mPreviewStreamSurface;
@@ -546,7 +548,8 @@ public class Camera2Engine extends CameraBaseEngine implements
                     mFrameProcessingSize.getHeight(),
                     mFrameProcessingFormat,
                     getFrameProcessingPoolSize());
-            mFrameProcessingReader.setOnImageAvailableListener(this, null);
+            mFrameProcessingReader.setOnImageAvailableListener(this,
+                    mFrameProcessingHandler.getHandler());
             mFrameProcessingSurface = mFrameProcessingReader.getSurface();
             outputSurfaces.add(mFrameProcessingSurface);
         } else {
@@ -1409,6 +1412,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         return new ImageFrameManager(getFrameProcessingPoolSize());
     }
 
+    // Frame processing thread
     @Override
     public void onImageAvailable(ImageReader reader) {
         LOG.v("onImageAvailable", "trying to acquire Image.");
