@@ -480,8 +480,9 @@ public class Camera2Engine extends CameraBaseEngine implements
 
         // 1. PREVIEW
         // Create a preview surface with the correct size.
+        final Class outputClass = mPreview.getOutputClass();
         final Object output = mPreview.getOutput();
-        if (output instanceof SurfaceHolder) {
+        if (outputClass == SurfaceHolder.class) {
             try {
                 // This must be called from the UI thread...
                 Tasks.await(Tasks.call(new Callable<Void>() {
@@ -497,7 +498,7 @@ public class Camera2Engine extends CameraBaseEngine implements
                 throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
             }
             mPreviewStreamSurface = ((SurfaceHolder) output).getSurface();
-        } else if (output instanceof SurfaceTexture) {
+        } else if (outputClass == SurfaceTexture.class) {
             ((SurfaceTexture) output).setDefaultBufferSize(
                     mPreviewStreamSize.getWidth(),
                     mPreviewStreamSize.getHeight());
