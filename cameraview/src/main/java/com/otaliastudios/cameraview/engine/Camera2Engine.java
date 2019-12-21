@@ -628,7 +628,20 @@ public class Camera2Engine extends CameraBaseEngine implements
                 }
             });
         }
-        return Tasks.forResult(null);
+
+        // Wait for the first frame.
+        final TaskCompletionSource<Void> task = new TaskCompletionSource<>();
+        new BaseAction() {
+            @Override
+            public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                           @NonNull CaptureRequest request,
+                                           @NonNull TotalCaptureResult result) {
+                super.onCaptureCompleted(holder, request, result);
+                setState(STATE_COMPLETED);
+                task.trySetResult(null);
+            }
+        }.start(this);
+        return task.getTask();
     }
 
     //endregion

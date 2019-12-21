@@ -36,7 +36,7 @@ public class Camera2IntegrationTest extends CameraIntegrationTest<Camera2Engine>
         return Engine.CAMERA2;
     }
 
-    @Override
+    /* @Override
     protected void onOpenSync() {
         super.onOpenSync();
         // Extra wait for the first frame to be dispatched.
@@ -54,7 +54,7 @@ public class Camera2IntegrationTest extends CameraIntegrationTest<Camera2Engine>
             }
         }.start(controller);
         try { latch.await(); } catch (InterruptedException ignore) {}
-    }
+    } */
 
     @Override
     protected long getMeteringTimeoutMillis() {
