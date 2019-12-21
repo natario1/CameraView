@@ -67,7 +67,6 @@ import com.otaliastudios.cameraview.gesture.TapGestureFinder;
 import com.otaliastudios.cameraview.internal.GridLinesLayout;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
 import com.otaliastudios.cameraview.internal.utils.OrientationHelper;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.markers.AutoFocusMarker;
 import com.otaliastudios.cameraview.markers.AutoFocusTrigger;
 import com.otaliastudios.cameraview.markers.MarkerLayout;
@@ -89,6 +88,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static android.view.View.MeasureSpec.AT_MOST;
 import static android.view.View.MeasureSpec.EXACTLY;
@@ -111,6 +116,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     final static boolean DEFAULT_USE_DEVICE_ORIENTATION = true;
     final static boolean DEFAULT_PICTURE_METERING = true;
     final static boolean DEFAULT_PICTURE_SNAPSHOT_METERING = false;
+    final static int DEFAULT_FRAME_PROCESSING_POOL_SIZE = 2;
+    final static int DEFAULT_FRAME_PROCESSING_EXECUTORS = 1;
 
     // Self managed parameters
     private boolean mPlaySounds;
@@ -119,8 +126,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private Preview mPreview;
     private Engine mEngine;
     private Filter mPendingFilter;
+    private int mFrameProcessingExecutors;
 
     // Components
+    private Handler mUiHandler;
+    private Executor mFrameProcessingExecutor;
     @VisibleForTesting CameraCallbacks mCameraCallbacks;
     private CameraPreview mCameraPreview;
     private OrientationHelper mOrientationHelper;
@@ -147,10 +157,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     // Overlays
     @VisibleForTesting OverlayLayout mOverlayLayout;
-
-    // Threading
-    private Handler mUiHandler;
-    private WorkerHandler mFrameProcessorsHandler;
 
     public CameraView(@NonNull Context context) {
         super(context, null);
@@ -206,6 +212,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int frameMaxWidth = a.getInteger(R.styleable.CameraView_cameraFrameProcessingMaxWidth, 0);
         int frameMaxHeight = a.getInteger(R.styleable.CameraView_cameraFrameProcessingMaxHeight, 0);
         int frameFormat = a.getInteger(R.styleable.CameraView_cameraFrameProcessingFormat, 0);
+        int framePoolSize = a.getInteger(R.styleable.CameraView_cameraFrameProcessingPoolSize,
+                DEFAULT_FRAME_PROCESSING_POOL_SIZE);
+        int frameExecutors = a.getInteger(R.styleable.CameraView_cameraFrameProcessingExecutors,
+                DEFAULT_FRAME_PROCESSING_EXECUTORS);
 
         // Size selectors and gestures
         SizeSelectorParser sizeSelectors = new SizeSelectorParser(a);
@@ -218,7 +228,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // Components
         mCameraCallbacks = new CameraCallbacks();
         mUiHandler = new Handler(Looper.getMainLooper());
-        mFrameProcessorsHandler = WorkerHandler.get("FrameProcessorsWorker");
 
         // Gestures
         mPinchGestureFinder = new PinchGestureFinder(mCameraCallbacks);
@@ -267,7 +276,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFrameProcessingMaxWidth(frameMaxWidth);
         setFrameProcessingMaxHeight(frameMaxHeight);
         setFrameProcessingFormat(frameFormat);
-        mCameraEngine.setHasFrameProcessors(!mFrameProcessors.isEmpty());
+        setFrameProcessingPoolSize(framePoolSize);
+        setFrameProcessingExecutors(frameExecutors);
 
         // Apply gestures
         mapGesture(Gesture.TAP, gestures.getTapAction());
@@ -982,6 +992,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFrameProcessingMaxWidth(oldEngine.getFrameProcessingMaxWidth());
         setFrameProcessingMaxHeight(oldEngine.getFrameProcessingMaxHeight());
         setFrameProcessingFormat(0 /* this is very engine specific, so do not pass */);
+        setFrameProcessingPoolSize(oldEngine.getFrameProcessingPoolSize());
+        mCameraEngine.setHasFrameProcessors(!mFrameProcessors.isEmpty());
     }
 
     /**
@@ -1984,7 +1996,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             OrientationHelper.Callback,
             GestureFinder.Controller {
 
-        private CameraLogger mLogger = CameraLogger.create(CameraCallbacks.class.getSimpleName());
+        private final String TAG = CameraCallbacks.class.getSimpleName();
+        private final CameraLogger LOG = CameraLogger.create(TAG);
 
         @NonNull
         @Override
@@ -2004,7 +2017,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchOnCameraOpened(@NonNull final CameraOptions options) {
-            mLogger.i("dispatchOnCameraOpened", options);
+            LOG.i("dispatchOnCameraOpened", options);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2017,7 +2030,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchOnCameraClosed() {
-            mLogger.i("dispatchOnCameraClosed");
+            LOG.i("dispatchOnCameraClosed");
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2038,10 +2051,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             if (previewSize == null) {
                 throw new RuntimeException("Preview stream size should not be null here.");
             } else if (previewSize.equals(mLastPreviewStreamSize)) {
-                mLogger.i("onCameraPreviewStreamSizeChanged:",
+                LOG.i("onCameraPreviewStreamSizeChanged:",
                         "swallowing because the preview size has not changed.", previewSize);
             } else {
-                mLogger.i("onCameraPreviewStreamSizeChanged: posting a requestLayout call.",
+                LOG.i("onCameraPreviewStreamSizeChanged: posting a requestLayout call.",
                         "Preview stream size:", previewSize);
                 mUiHandler.post(new Runnable() {
                     @Override
@@ -2061,7 +2074,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchOnPictureTaken(@NonNull final PictureResult.Stub stub) {
-            mLogger.i("dispatchOnPictureTaken", stub);
+            LOG.i("dispatchOnPictureTaken", stub);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2075,7 +2088,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchOnVideoTaken(@NonNull final VideoResult.Stub stub) {
-            mLogger.i("dispatchOnVideoTaken", stub);
+            LOG.i("dispatchOnVideoTaken", stub);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2090,7 +2103,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         @Override
         public void dispatchOnFocusStart(@Nullable final Gesture gesture,
                                          @NonNull final PointF point) {
-            mLogger.i("dispatchOnFocusStart", gesture, point);
+            LOG.i("dispatchOnFocusStart", gesture, point);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2112,7 +2125,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         public void dispatchOnFocusEnd(@Nullable final Gesture gesture,
                                        final boolean success,
                                        @NonNull final PointF point) {
-            mLogger.i("dispatchOnFocusEnd", gesture, success, point);
+            LOG.i("dispatchOnFocusEnd", gesture, success, point);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2135,7 +2148,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void onDeviceOrientationChanged(int deviceOrientation) {
-            mLogger.i("onDeviceOrientationChanged", deviceOrientation);
+            LOG.i("onDeviceOrientationChanged", deviceOrientation);
             int displayOffset = mOrientationHelper.getLastDisplayOffset();
             if (!mUseDeviceOrientation) {
                 // To fool the engine to return outputs in the VIEW reference system,
@@ -2158,12 +2171,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void onDisplayOffsetChanged(int displayOffset, boolean willRecreate) {
-            mLogger.i("onDisplayOffsetChanged", displayOffset, "recreate:", willRecreate);
+            LOG.i("onDisplayOffsetChanged", displayOffset, "recreate:", willRecreate);
             if (isOpened() && !willRecreate) {
                 // Display offset changes when the device rotation lock is off and the activity
                 // is free to rotate. However, some changes will NOT recreate the activity, namely
                 // 180 degrees flips. In this case, we must restart the camera manually.
-                mLogger.w("onDisplayOffsetChanged", "restarting the camera.");
+                LOG.w("onDisplayOffsetChanged", "restarting the camera.");
                 close();
                 open();
             }
@@ -2171,7 +2184,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchOnZoomChanged(final float newValue, @Nullable final PointF[] fingers) {
-            mLogger.i("dispatchOnZoomChanged", newValue);
+            LOG.i("dispatchOnZoomChanged", newValue);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2186,7 +2199,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         public void dispatchOnExposureCorrectionChanged(final float newValue,
                                                         @NonNull final float[] bounds,
                                                         @Nullable final PointF[] fingers) {
-            mLogger.i("dispatchOnExposureCorrectionChanged", newValue);
+            LOG.i("dispatchOnExposureCorrectionChanged", newValue);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2201,23 +2214,22 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         public void dispatchFrame(@NonNull final Frame frame) {
             // The getTime() below might crash if developers incorrectly release
             // frames asynchronously.
-            mLogger.v("dispatchFrame:", frame.getTime(), "processors:", mFrameProcessors.size());
+            LOG.v("dispatchFrame:", frame.getTime(), "processors:", mFrameProcessors.size());
             if (mFrameProcessors.isEmpty()) {
                 // Mark as released. This instance will be reused.
                 frame.release();
             } else {
                 // Dispatch this frame to frame processors.
-                mFrameProcessorsHandler.run(new Runnable() {
+                mFrameProcessingExecutor.execute(new Runnable() {
                     @Override
                     public void run() {
-                        mLogger.v("dispatchFrame: dispatching", frame.getTime(),
+                        LOG.v("dispatchFrame: executing. Passing", frame.getTime(),
                                 "to processors.");
                         for (FrameProcessor processor : mFrameProcessors) {
                             try {
                                 processor.process(frame);
                             } catch (Exception e) {
-                                // Don't let a single processor crash the processor thread.
-                                mLogger.w("Frame processor crashed:", e);
+                                LOG.w("Frame processor crashed:", e);
                             }
                         }
                         frame.release();
@@ -2228,7 +2240,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchError(final CameraException exception) {
-            mLogger.i("dispatchError", exception);
+            LOG.i("dispatchError", exception);
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2241,7 +2253,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchOnVideoRecordingStart() {
-            mLogger.i("dispatchOnVideoRecordingStart");
+            LOG.i("dispatchOnVideoRecordingStart");
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2254,7 +2266,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
         @Override
         public void dispatchOnVideoRecordingEnd() {
-            mLogger.i("dispatchOnVideoRecordingEnd");
+            LOG.i("dispatchOnVideoRecordingEnd");
             mUiHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -2368,6 +2380,75 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public int getFrameProcessingFormat() {
         return mCameraEngine.getFrameProcessingFormat();
+    }
+
+    /**
+     * Sets the frame processing pool size. This is (roughly) the max number of
+     * {@link Frame} instances that can exist at a given moment in the frame pipeline,
+     * excluding frozen frames.
+     *
+     * Defaults to 2 - higher values will increase the memory usage with little benefit.
+     * Can be higher than 2 if {@link #setFrameProcessingExecutors(int)} is used.
+     * These values should be tuned together. We recommend setting a pool size that's equal to
+     * the number of executors plus 1, so that there's always a free Frame for the camera engine.
+     *
+     * Changing this value after camera initialization will have no effect.
+     * @param poolSize pool size
+     */
+    public void setFrameProcessingPoolSize(int poolSize) {
+        mCameraEngine.setFrameProcessingPoolSize(poolSize);
+    }
+
+    /**
+     * Returns the current frame processing pool size.
+     * @see #setFrameProcessingPoolSize(int)
+     * @return pool size
+     */
+    public int getFrameProcessingPoolSize() {
+        return mCameraEngine.getFrameProcessingPoolSize();
+    }
+
+    /**
+     * Sets the thread pool size for frame processing. This means that if the processing rate
+     * is slower than the preview rate, you can set this value to something bigger than 1
+     * to avoid losing frames.
+     * Defaults to 1 and this should be OK for most applications.
+     *
+     * Should be tuned depending on the task, the processor implementation, and along with
+     * {@link #setFrameProcessingPoolSize(int)}. We recommend choosing a pool size that is
+     * equal to the executors plus 1.
+     * @param executors thread count
+     */
+    public void setFrameProcessingExecutors(int executors) {
+        if (executors < 1) {
+            throw new IllegalArgumentException("Need at least 1 executor, got " + executors);
+        }
+        mFrameProcessingExecutors = executors;
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                executors,
+                executors,
+                4,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(),
+                new ThreadFactory() {
+                    private final AtomicInteger mCount = new AtomicInteger(1);
+                    @Override
+                    public Thread newThread(@NonNull Runnable r) {
+                        return new Thread(r, "FrameExecutor #" + mCount.getAndIncrement());
+                    }
+                }
+        );
+        executor.allowCoreThreadTimeOut(true);
+        mFrameProcessingExecutor = executor;
+    }
+
+    /**
+     * Returns the current executors count.
+     * @see #setFrameProcessingExecutors(int)
+     * @return thread count
+     */
+    public int getFrameProcessingExecutors() {
+        return mFrameProcessingExecutors;
     }
 
     //endregion

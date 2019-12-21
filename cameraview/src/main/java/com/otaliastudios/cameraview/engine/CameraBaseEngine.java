@@ -67,8 +67,8 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @SuppressWarnings("WeakerAccess") protected boolean mPictureSnapshotMetering;
     @SuppressWarnings("WeakerAccess") protected float mPreviewFrameRate;
 
-    private final FrameManager mFrameManager;
-    private final Angles mAngles;
+    private FrameManager mFrameManager;
+    private final Angles mAngles = new Angles();
     @Nullable private SizeSelector mPreviewStreamSizeSelector;
     private SizeSelector mPictureSizeSelector;
     private SizeSelector mVideoSizeSelector;
@@ -84,6 +84,7 @@ public abstract class CameraBaseEngine extends CameraEngine {
     private int mSnapshotMaxHeight; // in REF_VIEW like SizeSelectors
     private int mFrameProcessingMaxWidth; // in REF_VIEW like SizeSelectors
     private int mFrameProcessingMaxHeight; // in REF_VIEW like SizeSelectors
+    private int mFrameProcessingPoolSize;
     private Overlay mOverlay;
 
     // Ops used for testing.
@@ -107,17 +108,16 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @SuppressWarnings("WeakerAccess")
     protected CameraBaseEngine(@NonNull Callback callback) {
         super(callback);
-        mFrameManager = instantiateFrameManager();
-        mAngles = new Angles();
     }
 
     /**
      * Called at construction time to get a frame manager that can later be
      * accessed through {@link #getFrameManager()}.
+     * @param poolSize pool size
      * @return a frame manager
      */
     @NonNull
-    protected abstract FrameManager instantiateFrameManager();
+    protected abstract FrameManager instantiateFrameManager(int poolSize);
 
     @NonNull
     @Override
@@ -128,6 +128,9 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @NonNull
     @Override
     public FrameManager getFrameManager() {
+        if (mFrameManager == null) {
+            mFrameManager = instantiateFrameManager(mFrameProcessingPoolSize);
+        }
         return mFrameManager;
     }
 
@@ -288,6 +291,16 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @Override
     public final int getFrameProcessingFormat() {
         return mFrameProcessingFormat;
+    }
+
+    @Override
+    public final void setFrameProcessingPoolSize(int poolSize) {
+        mFrameProcessingPoolSize = poolSize;
+    }
+
+    @Override
+    public final int getFrameProcessingPoolSize() {
+        return mFrameProcessingPoolSize;
     }
 
     @Override

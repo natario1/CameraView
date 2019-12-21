@@ -1135,12 +1135,17 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testFrameProcessing_format() {
+        // We wouldn't need to open/close for each format, but we do because legacy devices can
+        // crash due to their bad internal implementation when we perform restartBind().
+        // And setFrameProcessorFormat can trigger such restart.
         CameraOptions o = openSync(true);
         Collection<Integer> formats = o.getSupportedFrameProcessingFormats();
+        closeSync(true);
         for (int format : formats) {
             LOG.i("[TEST FRAME FORMAT]", "Testing", format, "...");
             Op<Boolean> op = testFrameProcessorFormat(format);
             assertNotNull(op.await(DELAY));
+            closeSync(true);
         }
     }
 
@@ -1157,6 +1162,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
                 }
             }
         });
+        openSync(true);
         return op;
     }
 

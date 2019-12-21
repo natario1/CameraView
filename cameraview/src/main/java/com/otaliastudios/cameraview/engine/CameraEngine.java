@@ -650,6 +650,9 @@ public abstract class CameraEngine implements
     public abstract void setFrameProcessingFormat(int format);
     public abstract int getFrameProcessingFormat();
 
+    public abstract void setFrameProcessingPoolSize(int poolSize);
+    public abstract int getFrameProcessingPoolSize();
+
     public abstract void setAutoFocusResetDelay(long delayMillis);
     public abstract long getAutoFocusResetDelay();
 

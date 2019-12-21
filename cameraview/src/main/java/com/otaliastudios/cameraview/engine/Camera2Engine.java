@@ -61,7 +61,6 @@ import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.frame.ImageFrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
 import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
@@ -81,7 +80,6 @@ public class Camera2Engine extends CameraBaseEngine implements
         ImageReader.OnImageAvailableListener,
         ActionHolder {
 
-    private static final int FRAME_PROCESSING_POOL_SIZE = 2;
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.YUV_420_888;
     @VisibleForTesting static final long METER_TIMEOUT = 2500;
 
@@ -541,12 +539,21 @@ public class Camera2Engine extends CameraBaseEngine implements
         // 4. FRAME PROCESSING
         if (hasFrameProcessors()) {
             mFrameProcessingSize = computeFrameProcessingSize();
+            // Hard to write down why, but in Camera2 we need a number of Frames that's one less
+            // than the number of Images. If we let all Images be part of Frames, thus letting all
+            // Images be used by processor at any given moment, the Camera2 output breaks.
+            // In fact, if there are no Images available, the sensor BLOCKS until it finds one,
+            // which is a big issue because processor times become a bottleneck for the preview.
+            // This is a design flaw in the ImageReader / sensor implementation, as they should
+            // simply DROP frames written to the surface if there are no Images available.
+            // Since this is not how things work, we ensure that one Image is always available here.
             mFrameProcessingReader = ImageReader.newInstance(
                     mFrameProcessingSize.getWidth(),
                     mFrameProcessingSize.getHeight(),
                     mFrameProcessingFormat,
-                    getFrameProcessingPoolSize());
-            mFrameProcessingReader.setOnImageAvailableListener(this, null);
+                    getFrameProcessingPoolSize() + 1);
+            mFrameProcessingReader.setOnImageAvailableListener(this,
+                    null);
             mFrameProcessingSurface = mFrameProcessingReader.getSurface();
             outputSurfaces.add(mFrameProcessingSurface);
         } else {
@@ -621,7 +628,20 @@ public class Camera2Engine extends CameraBaseEngine implements
                 }
             });
         }
-        return Tasks.forResult(null);
+
+        // Wait for the first frame.
+        final TaskCompletionSource<Void> task = new TaskCompletionSource<>();
+        new BaseAction() {
+            @Override
+            public void onCaptureCompleted(@NonNull ActionHolder holder,
+                                           @NonNull CaptureRequest request,
+                                           @NonNull TotalCaptureResult result) {
+                super.onCaptureCompleted(holder, request, result);
+                setState(STATE_COMPLETED);
+                task.trySetResult(null);
+            }
+        }.start(this);
+        return task.getTask();
     }
 
     //endregion
@@ -1399,25 +1419,22 @@ public class Camera2Engine extends CameraBaseEngine implements
 
     //region Frame Processing
 
-    protected int getFrameProcessingPoolSize() {
-        return FRAME_PROCESSING_POOL_SIZE;
-    }
-
     @NonNull
     @Override
-    protected FrameManager instantiateFrameManager() {
-        return new ImageFrameManager(getFrameProcessingPoolSize());
+    protected FrameManager instantiateFrameManager(int poolSize) {
+        return new ImageFrameManager(poolSize);
     }
 
+    @EngineThread
     @Override
     public void onImageAvailable(ImageReader reader) {
-        LOG.v("onImageAvailable", "trying to acquire Image.");
+        LOG.v("onImageAvailable:", "trying to acquire Image.");
         Image image = null;
         try {
             image = reader.acquireLatestImage();
         } catch (Exception ignore) { }
         if (image == null) {
-            LOG.w("onImageAvailable", "failed to acquire Image!");
+            LOG.w("onImageAvailable:", "failed to acquire Image!");
         } else if (getState() == CameraState.PREVIEW && !isChangingState()) {
             // After preview, the frame manager is correctly set up
             //noinspection unchecked
@@ -1426,8 +1443,14 @@ public class Camera2Engine extends CameraBaseEngine implements
                     getAngles().offset(Reference.SENSOR,
                             Reference.OUTPUT,
                             Axis.RELATIVE_TO_SENSOR));
-            getCallback().dispatchFrame(frame);
+            if (frame != null) {
+                LOG.v("onImageAvailable:", "Image acquired, dispatching.");
+                getCallback().dispatchFrame(frame);
+            } else {
+                LOG.i("onImageAvailable:", "Image acquired, but no free frames. DROPPING.");
+            }
         } else {
+            LOG.i("onImageAvailable:", "Image acquired in wrong state. Closing it now.");
             image.close();
         }
     }

@@ -7,6 +7,7 @@ import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -92,6 +93,9 @@ public abstract class FrameManager<T> {
         int bitsPerPixel = ImageFormat.getBitsPerPixel(format);
         long sizeInBits = size.getHeight() * size.getWidth() * bitsPerPixel;
         mFrameBytes = (int) Math.ceil(sizeInBits / 8.0d);
+        for (int i = 0; i < getPoolSize(); i++) {
+            mFrameQueue.offer(new Frame(this));
+        }
     }
 
     /**
@@ -108,18 +112,14 @@ public abstract class FrameManager<T> {
     /**
      * Returns a new Frame for the given data. This must be called
      * - after {@link #setUp(int, Size)}, which sets the buffer size
-     * - after the byte buffer given by setUp() has been filled.
-     *   If this is called X times in a row without releasing frames, it will allocate
-     *   X frames and that's bad. Callers must wait for the preview buffer to be available.
-     *
-     * In Camera1, this is always respected thanks to its internals.
+     * - after the T data has been filled
      *
      * @param data data
      * @param time timestamp
      * @param rotation rotation
      * @return a new frame
      */
-    @NonNull
+    @Nullable
     public Frame getFrame(@NonNull T data, long time, int rotation) {
         if (!isSetUp()) {
             throw new IllegalStateException("Can't call getFrame() after releasing " +
@@ -129,12 +129,13 @@ public abstract class FrameManager<T> {
         Frame frame = mFrameQueue.poll();
         if (frame != null) {
             LOG.v("getFrame for time:", time, "RECYCLING.");
+            frame.setContent(data, time, rotation, mFrameSize, mFrameFormat);
+            return frame;
         } else {
-            LOG.v("getFrame for time:", time, "CREATING.");
-            frame = new Frame(this);
+            LOG.i("getFrame for time:", time, "NOT AVAILABLE.");
+            onFrameDataReleased(data, false);
+            return null;
         }
-        frame.setContent(data, time, rotation, mFrameSize, mFrameFormat);
-        return frame;
     }
 
     /**
