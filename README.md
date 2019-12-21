@@ -117,6 +117,8 @@ Using CameraView is extremely simple:
     app:cameraFrameProcessingMaxWidth="@integer/processing_max_width"
     app:cameraFrameProcessingMaxHeight="@integer/processing_max_height"
     app:cameraFrameProcessingFormat="@integer/processing_format"
+    app:cameraFrameProcessingPoolSize="@integer/processing_pool_size"
+    app:cameraFrameProcessingExecutors="@integer/processing_executors"
     app:cameraVideoBitRate="@integer/video_bit_rate"
     app:cameraAudioBitRate="@integer/audio_bit_rate"
     app:cameraGestureTap="none|autoFocus|takePicture"

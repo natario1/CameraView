@@ -3,7 +3,7 @@
 # Source site: http://bruth.github.io/jekyll-docs-template/
 # Ref guide: https://visualstudiomagazine.com/Articles/2015/03/01/GitHub-Pages.aspx?Page=2
 
-title: CameraView v2
+title: CameraView
 
 # subtitle is used by ourselves, description is used by seo tag.
 subtitle: A well documented, high-level Android interface that makes capturing pictures and videos easy, addressing all of the common issues and needs.

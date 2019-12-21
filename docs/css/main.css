@@ -6,7 +6,7 @@ pre, code, pre code {
     border: none;
     border-radius: 0;
     background-color: #f9f9f9;
-    font-size: 1em;
+    font-size: 0.8em;
 }
 
 .highlight {
@@ -35,6 +35,27 @@ code {
     text-decoration: none;
 }
 
+#content {
+    /* bigger font */
+    font-size: 1.1em;
+}
+
+#content p {
+    /* spacing for all paragraphs */
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+#content ul li {
+    /* spacing for lists */
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+#content h5 {
+    font-size: 1.1em;
+}
+
 #footer {
     margin: 20px 0;
     font-size: 0.85em;
@@ -52,7 +73,7 @@ code {
 
 
 #navigation {
-    font-size: 0.9em;
+    font-size: 1.0em;
 }
 
 #navigation li a {
@@ -68,9 +89,9 @@ code {
 }
 
 .nav-header {
-    font-size: 1em;
+    font-size: 1.1em;
     cursor: default;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     font-weight: bold;
 }
 

@@ -1,6 +1,6 @@
 ---
 layout: default
-title: "CameraView v2"
+title: "CameraView"
 ---
 
 # CameraView
