@@ -156,7 +156,8 @@
             <enum name="dng" value="1" />
         </attr>
 
-        <attr name="cameraExperimental" format="boolean" />
+        <attr name="cameraRequestPermissions" format="boolean|reference"/>
+        <attr name="cameraExperimental" format="boolean|reference" />
 
     </declare-styleable>
 

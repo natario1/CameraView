@@ -148,6 +148,7 @@ Using CameraView is extremely simple:
     app:cameraPictureMetering="true|false"
     app:cameraPictureSnapshotMetering="false|true"
     app:cameraPictureFormat="jpeg|dng"
+    app:cameraRequestPermissions="true|false"
     app:cameraExperimental="false|true">
     
     <!-- Watermark! -->

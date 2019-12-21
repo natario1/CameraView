@@ -116,12 +116,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     final static boolean DEFAULT_USE_DEVICE_ORIENTATION = true;
     final static boolean DEFAULT_PICTURE_METERING = true;
     final static boolean DEFAULT_PICTURE_SNAPSHOT_METERING = false;
+    final static boolean DEFAULT_REQUEST_PERMISSIONS = true;
     final static int DEFAULT_FRAME_PROCESSING_POOL_SIZE = 2;
     final static int DEFAULT_FRAME_PROCESSING_EXECUTORS = 1;
 
     // Self managed parameters
     private boolean mPlaySounds;
     private boolean mUseDeviceOrientation;
+    private boolean mRequestPermissions;
     private HashMap<Gesture, GestureAction> mGestureMap = new HashMap<>(4);
     private Preview mPreview;
     private Engine mEngine;
@@ -186,6 +188,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         boolean useDeviceOrientation = a.getBoolean(
                 R.styleable.CameraView_cameraUseDeviceOrientation, DEFAULT_USE_DEVICE_ORIENTATION);
         mExperimental = a.getBoolean(R.styleable.CameraView_cameraExperimental, false);
+        mRequestPermissions = a.getBoolean(R.styleable.CameraView_cameraRequestPermissions,
+                DEFAULT_REQUEST_PERMISSIONS);
         mPreview = controls.getPreview();
         mEngine = controls.getEngine();
 
@@ -779,11 +783,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         needsAudio = needsAudio && c.checkSelfPermission(Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED;
 
-        if (needsCamera || needsAudio) {
+        if (!needsCamera && !needsAudio) {
+            return true;
+        } else if (mRequestPermissions) {
             requestPermissions(needsCamera, needsAudio);
             return false;
+        } else {
+            return false;
         }
-        return true;
     }
 
     /**
