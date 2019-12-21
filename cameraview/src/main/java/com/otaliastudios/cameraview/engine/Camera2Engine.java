@@ -665,7 +665,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         }
         // Removing the part below for now. It hangs on emulators and can take a lot of time
         // in real devices, for benefits that I'm not 100% sure about.
-        if (true) {
+        if (false) {
             try {
                 // Preferring abortCaptures() over stopRepeating(): it makes sure that all
                 // in-flight operations are discarded as fast as possible, which is what we want.
