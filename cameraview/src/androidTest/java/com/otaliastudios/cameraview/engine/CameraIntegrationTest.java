@@ -1135,6 +1135,12 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testFrameProcessing_format() {
+        // Add a empty processor before opening. This makes sure that future addFrameProcessor
+        // calls will not trigger a restartBind() which can cause issues on legacy devices,
+        // since the setFrameProcessingFormat already triggers one.
+        camera.addFrameProcessor(new FrameProcessor() {
+            public void process(@NonNull Frame frame) { }
+        });
         CameraOptions o = openSync(true);
         Collection<Integer> formats = o.getSupportedFrameProcessingFormats();
         for (int format : formats) {
