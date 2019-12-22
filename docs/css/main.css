@@ -1,21 +1,29 @@
+@import url('https://fonts.googleapis.com/css?family=Calistoga|Roboto+Mono|Source+Sans+Pro:400,700&display=swap');
+
 body {
     font-weight: 400;
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, th {
+    font-family: 'Calistoga', sans-serif;
+}
+
+small {
+    font-weight: 400;
+    font-family: 'Source Sans Pro', sans-serif;
 }
 
 pre, code, pre code {
     border: none;
     border-radius: 0;
-    background-color: #f9f9f9;
+    background-color: #fafafa;
     font-size: 0.8em;
 }
 
 .highlight {
-    background-color: #f9f9f9;
-}
-
-/* This changes inline code and hopefully nothing else */
-.highlighter-rouge {
-    color: #336699
+    background-color: #fafafa;
+    border-radius: 12px;
 }
 
 pre {
@@ -24,6 +32,12 @@ pre {
 
 code {
     color: inherit;
+    font-family: 'Roboto Mono', monospace;
+    color: #dd2200;
+}
+
+a {
+    color: #0e95e3;
 }
 
 #header {
@@ -71,14 +85,27 @@ code {
     margin-top: 0;
 }
 
+#content .page-subtitle {
+    font-size: 0.45em;
+}
 
 #navigation {
     font-size: 1.0em;
 }
 
 #navigation li a {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-radius: 32px;
+}
+
+#navigation li a:hover {
+    background: #fafafa;
+}
+
+#navigation li.active a {
+    background: #f76c16;
+    color: #FFFFFF;
 }
 
 #navigation .nav-header {
@@ -93,6 +120,7 @@ code {
     cursor: default;
     /* text-transform: uppercase; */
     font-weight: bold;
+    font-family: 'Calistoga', sans-serif;
 }
 
 body.rtl {
@@ -135,4 +163,5 @@ td {
 th {
   padding: 8px 12px;
   border: 1px solid #e5e5e5;
+  font-weight: 400;
 }

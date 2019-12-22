@@ -6,7 +6,7 @@
 .highlight .cm { color: #888888 } /* Comment.Multiline */
 .highlight .cp { color: #cc0000; font-weight: bold } /* Comment.Preproc */
 .highlight .c1 { color: #888888 } /* Comment.Single */
-.highlight .cs { color: #cc0000; font-weight: bold; background-color: #fff0f0 } /* Comment.Special */
+.highlight .cs { color: #cc0000; font-weight: bold; /* background-color: #fff0f0 */ } /* Comment.Special */
 .highlight .gd { color: #000000; background-color: #ffdddd } /* Generic.Deleted */
 .highlight .ge { font-style: italic } /* Generic.Emph */
 .highlight .gr { color: #aa0000 } /* Generic.Error */
