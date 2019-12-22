@@ -122,7 +122,7 @@ This was it, but there is a ton of other options available to customize the came
 to control the sensor, the UI appearance, the quality and size of the output, or to live process
 frames. Keep reading the documentation!
 
-For runtime permissions and Manifest setup, please read the [permissions page]().
+For runtime permissions and Manifest setup, please read the [permissions page](../docs/runtime-permissions).
 
 ### Without support libraries
 

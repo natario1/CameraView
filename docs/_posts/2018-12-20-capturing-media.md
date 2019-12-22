@@ -22,7 +22,7 @@ or dynamically changed using `cameraView.setMode()`. The current mode value has 
 - Capturing: while in video mode, `takePicture` will throw an exception.
 - Permission behavior: when requesting a `video` session, the record audio permission will be requested.
   If this is needed, the audio permission should be added to your manifest or the app will crash.
-  Please read the [permissions page](runtime-permissions.html).
+  Please read the [permissions page](runtime-permissions).
 
 ```java
 cameraView.setMode(Mode.PICTURE); // for pictures
@@ -46,20 +46,20 @@ resulting snapshots are square as well, no matter what the sensor available size
 |------|-----|-------|--------------------------|------------------------|---------|-----------|
 |`takePicture()`|Pictures|Standard|`yes`|`no`|`no`|That of `setPictureSize`|
 |`takeVideo(File)`|Videos|Standard|`no`|`yes`|`no`|That of `setVideoSize`|
-|`takePictureSnapshot()`|Pictures|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size.html)|
-|`takeVideoSnapshot(File)`|Videos|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size.html)|
+|`takePictureSnapshot()`|Pictures|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size)|
+|`takeVideoSnapshot(File)`|Videos|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size)|
 
 Please note that the video snaphot features requires:
 
 - API 18. If called before, it throws
-- An OpenGL preview (see [previews](previews.html)). If not, it throws
+- An OpenGL preview (see [previews](previews)). If not, it throws
 
 ### Capturing pictures while recording
 
 This is allowed at the following conditions:
 
 - `takePictureSnapshot()` is used (no HQ pictures)
-- the `GL_SURFACE` preview is used (see [previews](previews.html))
+- the `GL_SURFACE` preview is used (see [previews](previews))
 
 ### Related XML attributes
 

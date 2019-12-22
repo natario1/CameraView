@@ -83,7 +83,7 @@ https://github.com/natario1/CameraView/compare/v2.1.0...v2.2.0
 
 ## v2.1.0
 
-This release adds experimental support for [real-time filters](../docs/filters.html) thanks to [@agrawalsuneet][agrawalsuneet].
+This release adds experimental support for [real-time filters](../docs/filters) thanks to [@agrawalsuneet][agrawalsuneet].
 Please read the documentation page for usage instructions.
 
 - New: Real-time filters support ([#527][527])
@@ -111,7 +111,7 @@ https://github.com/natario1/CameraView/compare/v2.0.0-rc1...v2.0.0-rc2
 
 This is likely to be the last release before v2.0.0.
 
-- New: support for watermarks and animated overlays ([docs](../docs/watermarks-and-overlays.html)), thanks to [@RAN3000][RAN3000] ([#502][502], [#421][421])
+- New: support for watermarks and animated overlays ([docs](../docs/watermarks-and-overlays)), thanks to [@RAN3000][RAN3000] ([#502][502], [#421][421])
 - New: added `onVideoRecordingStart()` to be notified when video recording starts, thanks to [@agrawalsuneet][agrawalsuneet] ([#498][498])
 - New: added `onVideoRecordingEnd()` to be notified when video recording ends ([#506][506])
 - New: added `Audio.MONO` and `Audio.STEREO` to control the channel count for videos and video snapshots ([#506][506])
@@ -126,14 +126,14 @@ https://github.com/natario1/CameraView/compare/v2.0.0-beta06...v2.0.0-rc1
 - New: Full featured Camera2 integration! Use `cameraExperimental="true"` and `cameraEngine="camera2"` to test this out. ([#490][490])
 - Improvement: we now choose a video recording profile that is compatible with the chosen size. Should fix some video recording issues. ([#477][477])
 - Improvement: most internals are now open to be accessed by subclassing. Feel free to open PRs with more protected methods to be overriden. ([#494][494])
-- **Breaking change**: some public classes have been moved to different packages. See [table here](../extra/v1-migration-guide.html#repackaging). ([#482][482])
+- **Breaking change**: some public classes have been moved to different packages. See [table here](../extra/v1-migration-guide#repackaging). ([#482][482])
 - **Breaking change**: the listener methods `onFocusStart` and `onFocusEnd` are now called `onAutoFocusStart` and `onAutoFocusEnd`. ([#484][484])
 - **Breaking change**: the gesture actions `focus` and `focusWithMarker` have been removed and replaced by `autoFocus`, which shows no marker. ([#484][484])
 - New: new API called `setAutoFocusMarker()` lets you choose your own marker. ([#484][484])
 
 If you were using `focus`, just switch to `autoFocus`.
 
-If you were using `focusWithMarker`, you can [add back the old marker](../docs/metering.html#touch-metering-markers).
+If you were using `focusWithMarker`, you can [add back the old marker](../docs/metering#touch-metering-markers).
 
 https://github.com/natario1/CameraView/compare/v2.0.0-beta05...v2.0.0-beta06
 
@@ -170,7 +170,7 @@ https://github.com/natario1/CameraView/compare/v2.0.0-beta01...v2.0.0-beta02
 
 ## v2.0.0-beta01
 
-This is the first beta release. For changes with respect to v1, please take a look at the [migration guide](../extra/v1-migration-guide.html).
+This is the first beta release. For changes with respect to v1, please take a look at the [migration guide](../extra/v1-migration-guide).
 
 ### v1.6.1
 

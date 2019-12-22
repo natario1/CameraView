@@ -26,17 +26,17 @@ api 'com.otaliastudios:cameraview:2.5.0'
 ```
 
 - Fast & reliable
-- Gestures support [[docs]](https://natario1.github.io/CameraView/docs/gestures.html)
-- Real-time filters [[docs]](https://natario1.github.io/CameraView/docs/filters.html)
-- Camera1 or Camera2 powered engine [[docs]](https://natario1.github.io/CameraView/docs/previews.html)
-- Frame processing support [[docs]](https://natario1.github.io/CameraView/docs/frame-processing.html)
-- Watermarks & animated overlays [[docs]](https://natario1.github.io/CameraView/docs/watermarks-and-overlays.html)
-- OpenGL powered preview [[docs]](https://natario1.github.io/CameraView/docs/previews.html)
-- Take high-quality content with `takePicture` and `takeVideo` [[docs]](https://natario1.github.io/CameraView/docs/capturing-media.html)
-- Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot` [[docs]](https://natario1.github.io/CameraView/docs/capturing-media.html)
-- Smart sizing: create a `CameraView` of any size [[docs]](https://natario1.github.io/CameraView/docs/preview-size.html)
-- Control HDR, flash, zoom, white balance, exposure, location, grid drawing & more [[docs]](https://natario1.github.io/CameraView/docs/controls.html)
-- RAW pictures support [[docs]](https://natario1.github.io/CameraView/docs/controls.html)
+- Gestures support [[docs]](https://natario1.github.io/CameraView/docs/gestures)
+- Real-time filters [[docs]](https://natario1.github.io/CameraView/docs/filters)
+- Camera1 or Camera2 powered engine [[docs]](https://natario1.github.io/CameraView/docs/previews)
+- Frame processing support [[docs]](https://natario1.github.io/CameraView/docs/frame-processing)
+- Watermarks & animated overlays [[docs]](https://natario1.github.io/CameraView/docs/watermarks-and-overlays)
+- OpenGL powered preview [[docs]](https://natario1.github.io/CameraView/docs/previews)
+- Take high-quality content with `takePicture` and `takeVideo` [[docs]](https://natario1.github.io/CameraView/docs/capturing-media)
+- Take super-fast snapshots with `takePictureSnapshot` and `takeVideoSnapshot` [[docs]](https://natario1.github.io/CameraView/docs/capturing-media)
+- Smart sizing: create a `CameraView` of any size [[docs]](https://natario1.github.io/CameraView/docs/preview-size)
+- Control HDR, flash, zoom, white balance, exposure, location, grid drawing & more [[docs]](https://natario1.github.io/CameraView/docs/controls)
+- RAW pictures support [[docs]](https://natario1.github.io/CameraView/docs/controls)
 - Lightweight
 - Works down to API level 15
 - Well tested
@@ -85,8 +85,8 @@ Thanks to all our project backers... [[become a backer]](https://opencollective.
 ## Setup
 
 Please read the [official website](https://natario1.github.io/CameraView) for setup instructions and documentation.
-You might also be interested in our [changelog](https://natario1.github.io/CameraView/about/changelog.html)
-or in the [v1 migration guide](https://natario1.github.io/CameraView/extra/v1-migration-guide.html). 
+You might also be interested in our [changelog](https://natario1.github.io/CameraView/about/changelog)
+or in the [v1 migration guide](https://natario1.github.io/CameraView/extra/v1-migration-guide). 
 Using CameraView is extremely simple:
 
 ```xml

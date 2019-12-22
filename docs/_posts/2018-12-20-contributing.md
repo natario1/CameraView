@@ -10,7 +10,7 @@ Everyone is welcome to contribute with suggestions or pull requests, as the libr
 although it has reached a high level of stability.
 
 We are grateful to anyone who has contributed with fixes, features or feature requests. If you don't
-want to get involved but still want to support the project, please [consider donating](donate.html).
+want to get involved but still want to support the project, please [consider donating](donate).
 
 ## Bug reports
 

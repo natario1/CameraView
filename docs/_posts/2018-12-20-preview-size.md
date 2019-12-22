@@ -57,9 +57,9 @@ that were not visible during the capture, **unless it is taken as a snapshot, si
 
 ## Advanced feature: Preview Stream Size Selection
 
-**Only do this if you know what you are doing. This is typically not needed - prefer picture/video size selectors,
+*Only do this if you know what you are doing. This is typically not needed - prefer picture/video size selectors,
 as they will drive the preview stream size selection and, eventually, the view size. If what you want is just
-choose an aspect ratio, do so with [Capture Size](capture-size.html) selection.**
+choose an aspect ratio, do so with [Capture Size](capture-size) selection.*
 
 As said, `WRAP_CONTENT` adapts the view boundaries to the preview stream size. The preview stream size must be determined
 based on the sizes that the device sensor & hardware actually support. This operation is done automatically
@@ -85,5 +85,5 @@ cameraView.setPreviewStreamSize(new SizeSelector() {
 After the preview stream size is determined, if it has changed since list time, the `CameraView` will receive
 another call to `onMeasure` so the `WRAP_CONTENT` magic can take place.
 
-To understand how SizeSelectors work and the available utilities, please read the [Capture Size](capture-size.html) document.
+To understand how SizeSelectors work and the available utilities, please read the [Capture Size](capture-size) document.
 

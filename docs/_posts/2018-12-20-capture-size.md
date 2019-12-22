@@ -10,8 +10,8 @@ disqus: 1
 ---
 
 If you are planning to use the snapshot APIs, the size of the media output is that of the preview stream,
-accounting for any cropping made when [measuring the view](preview-size.html) and other constraints.
-Please read the [Snapshot Size](snapshot-size.html) document.
+accounting for any cropping made when [measuring the view](preview-size) and other constraints.
+Please read the [Snapshot Size](snapshot-size) document.
 
 If you are planning to use the standard APIs, then what follows applies.
 

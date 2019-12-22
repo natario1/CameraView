@@ -13,7 +13,7 @@ Snapshots are captured from the preview stream instead of using a separate captu
 They are extremely fast, small in size, and give you a low-quality output that can be easily
 uploaded or processed.
 
-The snapshot size is based on the size of the preview stream, which is described in the [Preview Size](preview-size.html) document.
+The snapshot size is based on the size of the preview stream, which is described in the [Preview Size](preview-size) document.
 Although the preview stream size is customizable, note that this is considered an advanced feature,
 as the best preview stream size selector already does a good job for the vast majority of use cases.
 
@@ -24,7 +24,7 @@ When taking snapshots, the preview stream size is then changed to match some con
 Snapshots will automatically be cropped to match the preview aspect ratio. This means that if your
 preview is square, you can finally take a square picture or video, regardless of the available sensor sizes.
 
-Take a look at the [Preview Size](preview-size.html) document to learn about preview sizing.
+Take a look at the [Preview Size](preview-size) document to learn about preview sizing.
 
 ### Other constraints
 
