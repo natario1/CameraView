@@ -95,13 +95,13 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
+                dispatchOnSurfaceDestroyed();
                 glView.queueEvent(new Runnable() {
                     @Override
                     public void run() {
                         renderer.onSurfaceDestroyed();
                     }
                 });
-                dispatchOnSurfaceDestroyed();
                 mDispatched = false;
             }
         });

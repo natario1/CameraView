@@ -175,12 +175,11 @@ public class Camera1Engine extends CameraBaseEngine implements
     @Override
     protected Task<Void> onStartBind() {
         LOG.i("onStartBind:", "Started");
-        Object output = mPreview.getOutput();
         try {
-            if (output instanceof SurfaceHolder) {
-                mCamera.setPreviewDisplay((SurfaceHolder) output);
-            } else if (output instanceof SurfaceTexture) {
-                mCamera.setPreviewTexture((SurfaceTexture) output);
+            if (mPreview.getOutputClass() == SurfaceHolder.class) {
+                mCamera.setPreviewDisplay((SurfaceHolder) mPreview.getOutput());
+            } else if (mPreview.getOutputClass() == SurfaceTexture.class) {
+                mCamera.setPreviewTexture((SurfaceTexture) mPreview.getOutput());
             } else {
                 throw new RuntimeException("Unknown CameraPreview output class.");
             }

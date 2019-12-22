@@ -39,11 +39,14 @@ device has cameras, and then start the camera view.
 
 ### Handling
 
-On Marshmallow+, the user must explicitly approve our permissions. You can
+On Marshmallow+, the user must explicitly approve our permissions. You can either:
 
 - handle permissions yourself and then call `open()` or `setLifecycleOwner()` once they are acquired
-- ignore this: `CameraView` will present a permission request to the user based on
+- let `CameraView` request permissions: we will present a permission request to the user based on
   whether they are needed or not with the current configuration.
   
-Note however, that this is done at the activity level, so the permission request callback 
+The automatic request is currently done at the activity level, so the permission request callback 
 `onRequestPermissionResults()` will be invoked on the parent activity, not the fragment.
+
+The automatic request can be disabled by setting `app:cameraRequestPermissions="false"` in your
+XML declaration.
