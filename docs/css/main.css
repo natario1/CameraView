@@ -95,12 +95,18 @@ a {
 }
 
 #landing h1 {
-    font-size: 4em;
+    font-size: 10vw;
     color: white;
     margin-top: 16px;
     margin-bottom: 0px;
     letter-spacing: 0.04em;
     font-weight: bold;
+}
+
+@media (min-width: 576px) {
+  #landing h1 {
+    font-size: 4em;
+  }
 }
 
 #landing p {
@@ -117,11 +123,19 @@ a {
     border-radius: 24px;
     padding: 10px 20px 10px 20px;
     margin-top: 16px;
-    margin-left: 8px;
-    margin-right: 8px;
     display: inline-block;
     font-family: 'Calistoga', sans-serif;
     font-size: 1.1em;
+}
+
+#landing #screenshots img {
+    max-width: 100%;
+    padding: 12px;
+}
+
+#landing #screenshots {
+    margin-top: 24px;
+    margin-bottom: 24px;
 }
 
 #navigation {
