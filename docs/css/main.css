@@ -89,6 +89,41 @@ a {
     font-size: 0.45em;
 }
 
+#landing {
+    background: radial-gradient(ellipse, #f7a816, #f76c16) !important;
+    background-attachment: fixed !important;
+}
+
+#landing h1 {
+    font-size: 4.5em;
+    color: white;
+    margin-top: 16px;
+    margin-bottom: 0px;
+    letter-spacing: 0.04em;
+    font-weight: bold;
+}
+
+#landing p {
+    font-size: 1.2em;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 8px;
+    max-width: 80%;
+    line-height: 100%;
+}
+
+#landing a {
+    background-color: rgba(240, 240, 240, 0.3);
+    color: white;
+    border-radius: 24px;
+    padding: 10px 20px 10px 20px;
+    margin-top: 16px;
+    margin-left: 8px;
+    margin-right: 8px;
+    display: inline-block;
+    font-family: 'Calistoga', sans-serif;
+    font-size: 1.1em;
+}
+
 #navigation {
     font-size: 1.0em;
 }

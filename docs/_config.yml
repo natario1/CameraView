@@ -52,8 +52,8 @@ sections: [
 # path (e.g. on GitHub pages) leave off the trailing slash, e.g. /my-project
 baseurl: '/CameraView'
 
-# Dates are not included in permalinks
-permalink: none
+# Ensure permalinks have no date nor extension
+permalink: /:categories/:title
 
 # Syntax highlighting
 highlighter: rouge
