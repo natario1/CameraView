@@ -26,7 +26,7 @@ plugins:
 disqus_shortname: 'cameraview'
 
 # if you use google analytics, add your tracking id here
-google_analytics_id: ''
+google_analytics_id: 'UA-155077779-1'
 
 # Enable/show navigation. There are there options:
 #   0 - always hide
