@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.engine;
 
 import android.content.Context;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.location.Location;
 
 
@@ -21,6 +22,7 @@ import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraOrchestrator;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraStateOrchestrator;
+import com.otaliastudios.cameraview.metering.MeteringRegions;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.engine.offset.Angles;
@@ -699,7 +701,9 @@ public abstract class CameraEngine implements
     public abstract void setPictureSnapshotMetering(boolean enable);
     public abstract boolean getPictureSnapshotMetering();
 
-    public abstract void startAutoFocus(@Nullable Gesture gesture, @NonNull PointF point);
+    public abstract void startAutoFocus(@Nullable Gesture gesture,
+                                        @NonNull MeteringRegions regions,
+                                        @NonNull PointF legacyPoint);
 
     public abstract void setPlaySounds(boolean playSounds);
 
