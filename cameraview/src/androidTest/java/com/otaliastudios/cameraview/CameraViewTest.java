@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.ImageFormat;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.location.Location;
 import androidx.annotation.NonNull;
 import androidx.test.annotation.UiThreadTest;
@@ -632,6 +633,20 @@ public class CameraViewTest extends BaseTest {
         cameraView.startAutoFocus(200, 200);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartAutoFocus_illegal3() {
+        cameraView.startAutoFocus(new RectF(-1, -1, 1, 1));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartAutoFocus_illegal4() {
+        cameraView.setLeft(0);
+        cameraView.setRight(100);
+        cameraView.setTop(0);
+        cameraView.setBottom(100);
+        cameraView.startAutoFocus(new RectF(-100, -100, 200, 200));
+    }
+
     @Test
     public void testStartAutoFocus() {
         cameraView.setLeft(0);
@@ -639,6 +654,16 @@ public class CameraViewTest extends BaseTest {
         cameraView.setTop(0);
         cameraView.setBottom(100);
         cameraView.startAutoFocus(50, 50);
+        assertTrue(mockController.mFocusStarted);
+    }
+
+    @Test
+    public void testStartAutoFocusRect() {
+        cameraView.setLeft(0);
+        cameraView.setRight(100);
+        cameraView.setTop(0);
+        cameraView.setBottom(100);
+        cameraView.startAutoFocus(new RectF(25, 25, 75, 75));
         assertTrue(mockController.mFocusStarted);
     }
 

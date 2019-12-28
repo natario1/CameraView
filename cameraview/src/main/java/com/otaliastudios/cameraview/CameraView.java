@@ -72,7 +72,6 @@ import com.otaliastudios.cameraview.markers.AutoFocusMarker;
 import com.otaliastudios.cameraview.markers.AutoFocusTrigger;
 import com.otaliastudios.cameraview.markers.MarkerLayout;
 import com.otaliastudios.cameraview.markers.MarkerParser;
-import com.otaliastudios.cameraview.metering.MeteringRegion;
 import com.otaliastudios.cameraview.metering.MeteringRegions;
 import com.otaliastudios.cameraview.overlay.OverlayLayout;
 import com.otaliastudios.cameraview.preview.CameraPreview;

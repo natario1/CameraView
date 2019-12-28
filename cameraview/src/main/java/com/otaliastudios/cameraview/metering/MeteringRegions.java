@@ -4,20 +4,23 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.otaliastudios.cameraview.size.Size;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class MeteringRegions {
     private final static float POINT_AREA = 0.05F;
-    private final static float BLUR_FACTOR_WEIGHT = 0.1F;
+
+    @VisibleForTesting
+    final static float BLUR_FACTOR_WEIGHT = 0.1F;
     private final static float BLUR_FACTOR_SIZE = 1.5F;
 
-    private final List<MeteringRegion> mRegions;
+    @VisibleForTesting
+    final List<MeteringRegion> mRegions;
 
     private MeteringRegions(@NonNull List<MeteringRegion> regions) {
         mRegions = regions;

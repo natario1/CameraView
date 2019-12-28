@@ -7,9 +7,9 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.size.Size;
 
-public class MeteringRegion implements Comparable<MeteringRegion> {
+class MeteringRegion implements Comparable<MeteringRegion> {
 
-    public final static int MAX_WEIGHT = 1000;
+    final static int MAX_WEIGHT = 1000;
 
     final RectF mRegion;
     final int mWeight;
@@ -55,6 +55,7 @@ public class MeteringRegion implements Comparable<MeteringRegion> {
         return clip(new RectF(0, 0, bounds.getWidth(), bounds.getHeight()));
     }
 
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     MeteringRegion clip(@NonNull RectF bounds) {
         RectF region = new RectF();
