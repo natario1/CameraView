@@ -1,5 +1,7 @@
 package com.otaliastudios.cameraview.engine;
 
+import android.graphics.PointF;
+import android.graphics.RectF;
 import android.location.Location;
 
 import androidx.annotation.CallSuper;
@@ -25,6 +27,7 @@ import com.otaliastudios.cameraview.engine.offset.Angles;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.frame.FrameManager;
+import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.picture.PictureRecorder;
 import com.otaliastudios.cameraview.preview.CameraPreview;

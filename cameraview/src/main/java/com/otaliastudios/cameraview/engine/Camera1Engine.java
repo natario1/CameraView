@@ -21,6 +21,7 @@ import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
+import com.otaliastudios.cameraview.engine.metering.Camera1MeteringTransform;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.engine.options.Camera1Options;
@@ -37,6 +38,8 @@ import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
+import com.otaliastudios.cameraview.metering.MeteringRegions;
+import com.otaliastudios.cameraview.metering.MeteringTransform;
 import com.otaliastudios.cameraview.picture.Full1PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
@@ -805,36 +808,26 @@ public class Camera1Engine extends CameraBaseEngine implements
     //region Auto Focus
 
     @Override
-    public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
-        // Must get width and height from the UI thread.
-        // TODO could take mPreview.surfaceSize like Camera2 does?
-        int viewWidth = 0, viewHeight = 0;
-        if (mPreview != null && mPreview.hasSurface()) {
-            viewWidth = mPreview.getView().getWidth();
-            viewHeight = mPreview.getView().getHeight();
-        }
-        final int viewWidthF = viewWidth;
-        final int viewHeightF = viewHeight;
-        getOrchestrator().scheduleStateful("auto focus", CameraState.ENGINE, new Runnable() {
+    public void startAutoFocus(@Nullable final Gesture gesture,
+                               @NonNull final MeteringRegions regions,
+                               @NonNull final PointF legacyPoint) {
+        getOrchestrator().scheduleStateful("auto focus", CameraState.BIND, new Runnable() {
             @Override
             public void run() {
                 if (!mCameraOptions.isAutoFocusSupported()) return;
-                final PointF p = new PointF(point.x, point.y); // copy.
-                int offset = getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE);
-                List<Camera.Area> meteringAreas2 = computeMeteringAreas(p.x, p.y,
-                        viewWidthF, viewHeightF, offset);
-                List<Camera.Area> meteringAreas1 = meteringAreas2.subList(0, 1);
+                MeteringTransform<Camera.Area> transform = new Camera1MeteringTransform(
+                        getAngles(),
+                        getPreview().getSurfaceSize());
+                MeteringRegions transformed = regions.transform(transform);
 
-                // At this point we are sure that camera supports auto focus... right?
-                // Look at CameraView.onTouchEvent().
                 Camera.Parameters params = mCamera.getParameters();
                 int maxAF = params.getMaxNumFocusAreas();
                 int maxAE = params.getMaxNumMeteringAreas();
-                if (maxAF > 0) params.setFocusAreas(maxAF > 1 ? meteringAreas2 : meteringAreas1);
-                if (maxAE > 0) params.setMeteringAreas(maxAE > 1 ? meteringAreas2 : meteringAreas1);
+                if (maxAF > 0) params.setFocusAreas(transformed.get(maxAF, transform));
+                if (maxAE > 0) params.setMeteringAreas(transformed.get(maxAE, transform));
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
                 mCamera.setParameters(params);
-                getCallback().dispatchOnFocusStart(gesture, p);
+                getCallback().dispatchOnFocusStart(gesture, legacyPoint);
 
                 // The auto focus callback is not guaranteed to be called, but we really want it
                 // to be. So we remove the old runnable if still present and post a new one.
@@ -843,7 +836,7 @@ public class Camera1Engine extends CameraBaseEngine implements
                         new Runnable() {
                     @Override
                     public void run() {
-                        getCallback().dispatchOnFocusEnd(gesture, false, p);
+                        getCallback().dispatchOnFocusEnd(gesture, false, legacyPoint);
                     }
                 });
 
@@ -855,7 +848,7 @@ public class Camera1Engine extends CameraBaseEngine implements
                         public void onAutoFocus(boolean success, Camera camera) {
                             getOrchestrator().remove(JOB_FOCUS_END);
                             getOrchestrator().remove(JOB_FOCUS_RESET);
-                            getCallback().dispatchOnFocusEnd(gesture, success, p);
+                            getCallback().dispatchOnFocusEnd(gesture, success, legacyPoint);
                             if (shouldResetAutoFocus()) {
                                 getOrchestrator().scheduleStatefulDelayed(
                                         JOB_FOCUS_RESET,
@@ -884,52 +877,6 @@ public class Camera1Engine extends CameraBaseEngine implements
                 }
             }
         });
-    }
-
-    @NonNull
-    @EngineThread
-    private static List<Camera.Area> computeMeteringAreas(double viewClickX, double viewClickY,
-                                                          int viewWidth, int viewHeight,
-                                                          int sensorToDisplay) {
-        // Event came in view coordinates. We must rotate to sensor coordinates.
-        // First, rescale to the -1000 ... 1000 range.
-        int displayToSensor = -sensorToDisplay;
-        viewClickX = -1000d + (viewClickX / (double) viewWidth) * 2000d;
-        viewClickY = -1000d + (viewClickY / (double) viewHeight) * 2000d;
-
-        // Apply rotation to this point.
-        // https://academo.org/demos/rotation-about-point/
-        double theta = ((double) displayToSensor) * Math.PI / 180;
-        double sensorClickX = viewClickX * Math.cos(theta) - viewClickY * Math.sin(theta);
-        double sensorClickY = viewClickX * Math.sin(theta) + viewClickY * Math.cos(theta);
-        LOG.i("focus:", "viewClickX:", viewClickX, "viewClickY:", viewClickY);
-        LOG.i("focus:", "sensorClickX:", sensorClickX, "sensorClickY:", sensorClickY);
-
-        // Compute the rect bounds.
-        Rect rect1 = computeMeteringArea(sensorClickX, sensorClickY, 150d);
-        int weight1 = 1000; // 150 * 150 * 1000 = more than 10.000.000
-        Rect rect2 = computeMeteringArea(sensorClickX, sensorClickY, 300d);
-        int weight2 = 100; // 300 * 300 * 100 = 9.000.000
-
-        List<Camera.Area> list = new ArrayList<>(2);
-        list.add(new Camera.Area(rect1, weight1));
-        list.add(new Camera.Area(rect2, weight2));
-        return list;
-    }
-
-    @NonNull
-    private static Rect computeMeteringArea(double centerX, double centerY, double size) {
-        double delta = size / 2d;
-        int top = (int) Math.max(centerY - delta, -1000);
-        int bottom = (int) Math.min(centerY + delta, 1000);
-        int left = (int) Math.max(centerX - delta, -1000);
-        int right = (int) Math.min(centerX + delta, 1000);
-        LOG.i("focus:", "computeMeteringArea:",
-                "top:", top,
-                "left:", left,
-                "bottom:", bottom,
-                "right:", right);
-        return new Rect(left, top, right, bottom);
     }
 
     //endregion

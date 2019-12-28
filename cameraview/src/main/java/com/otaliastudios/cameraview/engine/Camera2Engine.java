@@ -61,6 +61,7 @@ import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.frame.ImageFrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.internal.utils.CropHelper;
+import com.otaliastudios.cameraview.metering.MeteringRegions;
 import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
@@ -1508,7 +1509,9 @@ public class Camera2Engine extends CameraBaseEngine implements
     //region 3A Metering
 
     @Override
-    public void startAutoFocus(@Nullable final Gesture gesture, @NonNull final PointF point) {
+    public void startAutoFocus(@Nullable final Gesture gesture,
+                               @NonNull final MeteringRegions regions,
+                               @NonNull final PointF legacyPoint) {
         // This will only work when we have a preview, since it launches the preview
         // in the end. Even without this it would need the bind state at least,
         // since we need the preview size.
@@ -1522,14 +1525,15 @@ public class Camera2Engine extends CameraBaseEngine implements
                 if (!mCameraOptions.isAutoFocusSupported()) return;
 
                 // Create the meter and start.
-                getCallback().dispatchOnFocusStart(gesture, point);
-                final MeterAction action = createMeterAction(point);
+                getCallback().dispatchOnFocusStart(gesture, legacyPoint);
+                final MeterAction action = createMeterAction(regions);
                 Action wrapper = Actions.timeout(METER_TIMEOUT, action);
                 wrapper.start(Camera2Engine.this);
                 wrapper.addCallback(new CompletionCallback() {
                     @Override
                     protected void onActionCompleted(@NonNull Action a) {
-                        getCallback().dispatchOnFocusEnd(gesture, action.isSuccessful(), point);
+                        getCallback().dispatchOnFocusEnd(gesture,
+                                action.isSuccessful(), legacyPoint);
                         getOrchestrator().remove("reset metering");
                         if (shouldResetAutoFocus()) {
                             getOrchestrator().scheduleStatefulDelayed("reset metering",
@@ -1549,7 +1553,7 @@ public class Camera2Engine extends CameraBaseEngine implements
     }
 
     @NonNull
-    private MeterAction createMeterAction(@Nullable PointF point) {
+    private MeterAction createMeterAction(@Nullable MeteringRegions regions) {
         // Before creating any new meter action, abort the old one.
         if (mMeterAction != null) mMeterAction.abort(this);
         // The meter will check the current configuration to see if AF/AE/AWB should run.
@@ -1559,8 +1563,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         // The last one is under our control because the library has no focus API.
         // So let's set a good af mode here. This operation is reverted during onMeteringReset().
         applyFocusForMetering(mRepeatingRequestBuilder);
-        mMeterAction = new MeterAction(Camera2Engine.this, point,
-                point == null);
+        mMeterAction = new MeterAction(Camera2Engine.this, regions, regions == null);
         return mMeterAction;
     }
 

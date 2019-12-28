@@ -11,6 +11,14 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
+## v2.6.0
+
+-<small>[Metering]</small> New: `startAutoFocus(RectF)` will start 3A metering to a given rect instead of a spot ([#724][724]) 
+-<small>[Permissions]</small> New: `app:cameraRequestPermissions` flag to disable the automatic activity permission request ([#718][718])
+-<small>[Frame processing]</small> New: `setFrameProcessingPoolSize()` to set the number of Frame instances that can exist at any given time. Useful in conjunction with `setFrameProcessingExecutors()`. Please read docs ([#716][716])
+-<small>[Frame processing]</small> New: `setFrameProcessingExecutors()` to set the number of threads involved in frame processing. Useful in conjunction with `setFrameProcessingPoolSize()`. Please read docs ([#716][716])
+-<small>[Frame processing, Camera2]</small> Improvement: ensure that slow processing does now slow down the preview ([#716][716])
+
 ## v2.5.0
 
 - <small>[Camera2]</small> New: support for RAW pictures with new APIs `setPictureFormat()` and `CameraOptions.getSupportedPictureFormats()`. Contains a **breaking change**: `PictureResult.getFormat()` is not an integer anymore but rather a `PictureFormat`. This API had no real purpose so this might not affect you ([#691][691])
@@ -380,3 +388,6 @@ This is the last release before v2.
 [696]: https://github.com/natario1/CameraView/pull/696
 [697]: https://github.com/natario1/CameraView/pull/697
 [704]: https://github.com/natario1/CameraView/pull/704
+[716]: https://github.com/natario1/CameraView/pull/716
+[718]: https://github.com/natario1/CameraView/pull/718
+[724]: https://github.com/natario1/CameraView/pull/724
