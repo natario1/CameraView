@@ -19,6 +19,8 @@ Companies can share a tiny part of their revenue and get private support hours i
 -<small>[Frame processing]</small> New: `setFrameProcessingExecutors()` to set the number of threads involved in frame processing. Useful in conjunction with `setFrameProcessingPoolSize()`. Please read docs ([#716][716])
 -<small>[Frame processing, Camera2]</small> Improvement: ensure that slow processing does now slow down the preview ([#716][716])
 
+<https://github.com/natario1/CameraView/compare/v2.5.0...v2.6.0>
+
 ## v2.5.0
 
 - <small>[Camera2]</small> New: support for RAW pictures with new APIs `setPictureFormat()` and `CameraOptions.getSupportedPictureFormats()`. Contains a **breaking change**: `PictureResult.getFormat()` is not an integer anymore but rather a `PictureFormat`. This API had no real purpose so this might not affect you ([#691][691])
