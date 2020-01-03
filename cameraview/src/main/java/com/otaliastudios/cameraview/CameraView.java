@@ -86,6 +86,7 @@ import com.otaliastudios.cameraview.size.SizeSelectorParser;
 import com.otaliastudios.cameraview.size.SizeSelectors;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -1646,8 +1647,28 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param file a file where the video will be saved
      */
     public void takeVideo(@NonNull File file) {
+        takeVideo(file, null);
+    }
+
+    /**
+     * Starts recording a video. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     *
+     * @param fileDescriptor a file descriptor where the video will be saved
+     */
+    public void takeVideo(@NonNull FileDescriptor fileDescriptor) {
+        takeVideo(null, fileDescriptor);
+    }
+
+    private void takeVideo(@Nullable File file, @Nullable FileDescriptor fileDescriptor) {
         VideoResult.Stub stub = new VideoResult.Stub();
-        mCameraEngine.takeVideo(stub, file);
+        if (file != null) {
+            mCameraEngine.takeVideo(stub, file, null);
+        } else if (fileDescriptor != null) {
+            mCameraEngine.takeVideo(stub, null, fileDescriptor);
+        } else {
+            throw new IllegalStateException("file and fileDescriptor are both null.");
+        }
         mUiHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -1686,9 +1707,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param file a file where the video will be saved
      * @param durationMillis recording max duration
-     *
      */
     public void takeVideo(@NonNull File file, int durationMillis) {
+        takeVideo(file, null, durationMillis);
+    }
+
+    /**
+     * Starts recording a video. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     * Recording will be automatically stopped after the given duration, overriding
+     * temporarily any duration limit set by {@link #setVideoMaxDuration(int)}.
+     *
+     * @param fileDescriptor a file descriptor where the video will be saved
+     * @param durationMillis recording max duration
+     */
+    public void takeVideo(@NonNull FileDescriptor fileDescriptor, int durationMillis) {
+        takeVideo(null, fileDescriptor, durationMillis);
+    }
+
+    private void takeVideo(@Nullable File file, @Nullable FileDescriptor fileDescriptor,
+                           int durationMillis) {
         final int old = getVideoMaxDuration();
         addCameraListener(new CameraListener() {
             @Override
@@ -1707,7 +1745,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
         });
         setVideoMaxDuration(durationMillis);
-        takeVideo(file);
+        takeVideo(file, fileDescriptor);
     }
 
     /**

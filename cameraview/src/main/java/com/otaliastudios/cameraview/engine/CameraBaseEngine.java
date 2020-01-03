@@ -38,6 +38,7 @@ import com.otaliastudios.cameraview.size.SizeSelectors;
 import com.otaliastudios.cameraview.video.VideoRecorder;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -549,7 +550,9 @@ public abstract class CameraBaseEngine extends CameraEngine {
     }
 
     @Override
-    public final void takeVideo(final @NonNull VideoResult.Stub stub, final @NonNull File file) {
+    public final void takeVideo(final @NonNull VideoResult.Stub stub,
+                                final @Nullable File file,
+                                final @Nullable FileDescriptor fileDescriptor) {
         getOrchestrator().scheduleStateful("take video", CameraState.BIND, new Runnable() {
             @Override
             public void run() {
@@ -558,7 +561,13 @@ public abstract class CameraBaseEngine extends CameraEngine {
                 if (mMode == Mode.PICTURE) {
                     throw new IllegalStateException("Can't record video while in PICTURE mode");
                 }
-                stub.file = file;
+                if (file != null) {
+                    stub.file = file;
+                } else if (fileDescriptor != null) {
+                    stub.fileDescriptor = fileDescriptor;
+                } else {
+                    throw new IllegalStateException("file and fileDescriptor are both null.");
+                }
                 stub.isSnapshot = false;
                 stub.videoCodec = mVideoCodec;
                 stub.location = mLocation;

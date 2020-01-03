@@ -102,7 +102,9 @@ camera.addCameraListener(new CameraListener() {
 |`isTakingPicture()`|Returns true if the camera is currently capturing a picture.|
 |`takePicture()`|Takes a high quality picture.|
 |`takeVideo(File)`|Takes a high quality video.|
+|`takeVideo(FileDescriptor)`|Takes a high quality video.|
 |`takeVideo(File, long)`|Takes a high quality video, stopping after the given duration.|
+|`takeVideo(FileDescriptor, long)`|Takes a high quality video, stopping after the given duration.|
 |`takePictureSnapshot()`|Takes a picture snapshot.|
 |`takeVideoSnapshot(File)`|Takes a video snapshot.|
 |`takeVideoSnapshot(File, long)`|Takes a video snapshot, stopping after the given duration.|
