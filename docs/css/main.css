@@ -23,7 +23,7 @@ html, body {
 /* header */
 
 header {
-    background: radial-gradient(ellipse, var(--color-secondary), var(--color-primary)) fixed;
+    background: linear-gradient(-45deg, var(--color-secondary), var(--color-primary)) fixed;
     position: fixed;
     top: 0;
     width: 100%;
