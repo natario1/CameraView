@@ -1,43 +1,30 @@
 <!DOCTYPE html>
-<html style="height:100%;width:100%;margin:0px;">
+<html lang="en">
     <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <meta name="viewport" content="width=device-width">
-
+        {% include head.html %}
         <title>{{ site.title }}</title>
-        <meta name="description" content="{{ site.subtitle }}">
-        <meta name="google-site-verification" content="4x49i17ABIrSvUl52SeL0-t0341aTnWWaC62-FYCRT4" />
-
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">        <link rel="stylesheet" href="{{ site.baseurl }}/css/syntax.css">
-        <link rel="stylesheet" href="{{ site.baseurl }}/css/main.css">
-
-        {% seo %}
+        <link rel="stylesheet" href="{{ site.baseurl }}/css/landing.css">
+        <link rel="stylesheet" href="{{ site.baseurl }}/css/fonts_responsive.css">
     </head>
-    <body id="landing">
-        <div class="container" align="center">
-            <div>
-                <img src="static/icon_foreground.png" width="45%" style="max-width:400px">
-            </div>
-            <div id="content">
+    <body>
+        <div class="container p-5">
+            <img class="d-block mx-auto" id="logo" src="{{ site.baseurl }}/static/icon_foreground.png" alt="Logo">
+            <div class="text-center">
+                <h1 id="title" class="display-2 font-weight-bold mt-2">{{ site.title }}</h1>
                 {{ content }}
             </div>
-            <div class="row justify-content-sm-center">
-                <div class="col-xs-12 col-sm-auto"><a href="home">Documentation</a></div>
-                <div class="col-xs-12 col-sm-auto"><a href="about/changelog">Changelog</a></div>
-                <div class="col-xs-12 col-sm-auto"><a href="{{ site.codeurl }}">GitHub</a></div>
-                <div class="col-xs-12 col-sm-auto"><a href="extra/donate">Support</a></div>
+            <div class="text-center">
+                <a class="btn rounded-pill px-3 py-2 mx-2 mt-2" href="{{ site.baseurl }}/home">Documentation</a>
+                <a class="btn rounded-pill px-3 py-2 mx-2 mt-2" href="{{ site.baseurl }}/about/changelog">Changelog</a>
+                <a class="btn rounded-pill px-3 py-2 mx-2 mt-2" href="https://github.com/{{ site.author.github }}/{{ site.github_repo }}">GitHub</a>
+                <a class="btn rounded-pill px-3 py-2 mx-2 mt-2" href="{{ site.baseurl }}{{ site.donateurl }}">Support</a>
             </div>
             <br/>
-            <div class="row" id="screenshots">
-                <div class="col-sm-4"><img src="static/screen1.png"></div>
-                <div class="col-sm-4"><img src="static/screen2.png"></div>
-                <div class="col-sm-4"><img src="static/screen3.png"></div>
+            <div class="row">
+                <div class="col-12 col-sm-4 mt-4"><img class="img-fluid" src="{{ site.baseurl }}/static/screen1.png" alt="Screenshot 1"></div>
+                <div class="col-12 col-sm-4 mt-4"><img class="img-fluid" src="{{ site.baseurl }}/static/screen2.png" alt="Screenshot 2"></div>
+                <div class="col-12 col-sm-4 mt-4"><img class="img-fluid" src="{{ site.baseurl }}/static/screen3.png" alt="Screenshot 3"></div>
             </div>
         </div>
-
-        {% if site.google_analytics_id != "" %}
-        {% include google_analytics.html %}
-        {% endif %}
     </body>
 </html>

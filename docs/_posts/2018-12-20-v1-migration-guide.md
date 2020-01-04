@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "v1 Migration Guide"
-subtitle: "Breaking Changes & new concepts"
 description: "Breaking Changes & new concepts"
 category: extra
 date: 2018-12-20 19:01:55
@@ -77,7 +76,7 @@ The engine will use the video size selector when mode is `VIDEO`, and the pictur
   
 ### Picture and videos
 
-#### Take, not capture
+##### Take, not capture
 
 - `capturePicture()` is now `takePicture()`
 - `captureSnapshot()` is now `takePictureSnapshot()`
@@ -86,7 +85,7 @@ The engine will use the video size selector when mode is `VIDEO`, and the pictur
 
 The new `isTakingPicture()` method was added for symmetry with videos.
 
-#### Snapshots
+##### Snapshots
 This is the major improvement over v1. There are now 4 capture APIs, two for pictures and two for videos.
 
 - Standard APIs: `takePicture()` and `takeVideo()`. These take a high quality picture or video, depending
@@ -111,7 +110,7 @@ which makes it a powerful tool. The drawback is that it needs:
 - API 18. If called before, it throws
 - An OpenGL preview (see below). If not, it throws
 
-#### Video capturing
+##### Video capturing
 Some new APIs were introduced, which are respected by both standard videos and snapshot videos:
 
 - `setAudioBitRate()` and `cameraAudioBitRate`: sets the audio bit rate in bit/s

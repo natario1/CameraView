@@ -1,8 +1,7 @@
 ---
 layout: page
 title: "Capturing Media"
-subtitle: "Taking pictures and videos"
-description: "Taking pictures and videos"
+description: "Understanding pictures, videos and the snapshot concept"
 category: docs
 order: 3
 date: 2018-12-20 20:53:17
@@ -49,10 +48,9 @@ resulting snapshots are square as well, no matter what the sensor available size
 |`takePictureSnapshot()`|Pictures|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size)|
 |`takeVideoSnapshot(File)`|Videos|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size)|
 
-Please note that the video snaphot features requires:
-
-- API 18. If called before, it throws
-- An OpenGL preview (see [previews](previews)). If not, it throws
+> Please note that the video snaphot features requires:
+> - API 18. If called before, it throws
+> - An OpenGL preview (see [previews](previews)). If not, it throws
 
 ### Capturing pictures while recording
 

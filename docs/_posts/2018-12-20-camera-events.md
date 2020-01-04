@@ -1,8 +1,7 @@
 ---
 layout: page
 title: "Camera Events"
-subtitle: "Events and lifecycle"
-description: "Events and lifecycle"
+description: "Dealing with the camera lifecycle and callbacks"
 category: docs
 date: 2018-12-20 20:02:08
 order: 1

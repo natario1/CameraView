@@ -3,69 +3,38 @@
 # Source site: http://bruth.github.io/jekyll-docs-template/
 # Ref guide: https://visualstudiomagazine.com/Articles/2015/03/01/GitHub-Pages.aspx?Page=2
 
+# Used by us
 title: CameraView
-
-# subtitle is used by ourselves, description is used by seo tag.
-subtitle: A well documented, high-level Android interface that makes capturing pictures and videos easy, addressing all of the common issues and needs.
-description: A well documented, high-level Android interface that makes capturing pictures and videos easy, addressing all of the common issues and needs.
-
-# Can't remember what this does.
-github: [metadata]
-
-# Should be used by some plugins but we're not using any,
-author:
-  name: Mattia Iavarone
-  email: mat.iavarone@gmail.com
-  github: natario1
-
-# Add head tags.
-plugins:
-  - jekyll-seo-tag
-
-# if you wish to integrate disqus on pages set your shortname here
+color: '#f76c16'
+description: A well documented, high-level Android interface that makes capturing pictures and videos easy, addressing all of the common issues and needs. # used by ourselves and by seo tag.
 disqus_shortname: 'cameraview'
-
-# if you use google analytics, add your tracking id here
 google_analytics_id: 'UA-155077779-1'
-
-# Enable/show navigation. There are there options:
-#   0 - always hide
-#   1 - always show
-#   2 - show only if posts are present
-navigation: 2
-
-# URL to source code, used in _includes/footer.html
-codeurl: 'https://github.com/natario1/CameraView'
-
-# relative URL for donations, used in footer.html
-donateurl: '/extra/donate.html'
-
-# Default categories (in order) to appear in the navigation
-# (Missing: DOCS and DONATE info)
+google_site_verification: '4x49i17ABIrSvUl52SeL0-t0341aTnWWaC62-FYCRT4'
+github: [metadata] # TODO What's this?
+github_repo: CameraView
+github_version: 2.6.0
+donateurl: '/extra/donate' # relative URL for donations, used in footer.html
+baseurl: '/CameraView' # Keep as an empty string if served up at the root
 sections: [
-    ['about', 'Overview'],
-    ['docs', 'Documentation'],
-    ['extra', 'More']
+  ['about', 'Overview'],
+  ['docs', 'Documentation'],
+  ['extra', 'More']
 ]
 
-# Keep as an empty string if served up at the root. If served up at a specific
-# path (e.g. on GitHub pages) leave off the trailing slash, e.g. /my-project
-baseurl: '/CameraView'
+# Jekyll specific stuff
+author:
+  name: Mattia Iavarone # Should appear in <head>.
+  email: mat.iavarone@gmail.com
+  github: natario1
+  website: https://natario.dev
+plugins:
+  - jekyll-seo-tag # Add SEO tags
+permalink: /:categories/:title # Ensure permalinks have no date nor extension
+exclude: ['script', 'README.md'] # Exclude non-site files
 
-# Ensure permalinks have no date nor extension
-permalink: /:categories/:title
-
-# Syntax highlighting
-highlighter: rouge
-
-# Since these are pages, it doesn't really matter
-future: true
-
-# Exclude non-site files
-exclude: ['script', 'README.md']
-
-# Use the kramdown Markdown renderer
-markdown: kramdown
+highlighter: rouge # Syntax highlighting
+future: true # What's this?
+markdown: kramdown # Use the kramdown Markdown renderer
 redcarpet:
     extensions: [
         'no_intra_emphasis',
@@ -77,7 +46,5 @@ redcarpet:
         'tables',
         'hardwrap'
     ]
-
-# Use Github Flavored Markdown
 kramdown:
-  input: GFM
+  input: GFM # Use Github Flavored Markdown

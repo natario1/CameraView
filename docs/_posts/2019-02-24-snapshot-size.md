@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "Snapshot Size"
-subtitle: "Sizing the snapshots output"
 description: "Sizing the snapshots output"
 category: docs
 order: 10

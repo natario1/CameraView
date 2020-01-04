@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "Preview Size"
-subtitle: "Measuring behavior"
 description: "Measuring behavior"
 category: docs
 order: 8
@@ -22,7 +21,7 @@ This means that your visible preview can be of any size, not just the presets.
 Whatever you do, the preview will never be distorted - it can only be cropped
 if needed.
 
-## Examples
+### Examples
 
 ##### Center Inside
 
@@ -55,11 +54,11 @@ This means that part of the preview might be hidden, and the output might contai
 that were not visible during the capture, **unless it is taken as a snapshot, since snapshots account for cropping**.
 
 
-## Advanced feature: Preview Stream Size Selection
+### Advanced feature: Preview Stream Size Selection
 
-*Only do this if you know what you are doing. This is typically not needed - prefer picture/video size selectors,
+> Only do this if you know what you are doing. This is typically not needed - prefer picture/video size selectors,
 as they will drive the preview stream size selection and, eventually, the view size. If what you want is just
-choose an aspect ratio, do so with [Capture Size](capture-size) selection.*
+choose an aspect ratio, do so with [Capture Size](capture-size) selection.
 
 As said, `WRAP_CONTENT` adapts the view boundaries to the preview stream size. The preview stream size must be determined
 based on the sizes that the device sensor & hardware actually support. This operation is done automatically

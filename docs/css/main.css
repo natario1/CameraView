@@ -1,216 +1,274 @@
-@import url('https://fonts.googleapis.com/css?family=Calistoga|Roboto+Mono|Source+Sans+Pro:400,700&display=swap');
+@import "fonts.css";
+@import "colors.css";
+@import "syntax.css";
+
+:root {
+    --color-footer: var(--color-code-background);
+    --color-table-head: var(--color-code-background);
+    --color-divider: rgba(230, 230, 230, 0.7);
+    --header-height: 65px; /* kind of */
+    --cards-radius: 4px;
+}
+
+html, body {
+    height: 100%;
+}
+
+/* dividers */
+
+.has-divider {
+    border-color: var(--color-divider) !important;
+}
+
+/* header */
+
+header {
+    background: radial-gradient(ellipse, var(--color-secondary), var(--color-primary)) fixed;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+header .left {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+header .right {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+header a {
+    color: white !important;
+}
+
+header a:hover {
+    color: white !important;
+}
+
+header .logo {
+    height: 32px;
+    width: auto;
+}
+
+header .version {
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.8);
+}
 
 body {
-    font-weight: 400;
-    font-family: 'Source Sans Pro', sans-serif;
+    /* to offset wrt sticky header */
+    padding-top: var(--header-height);
 }
 
-h1, h2, h3, h4, h5, h6, th {
-    font-family: 'Calistoga', sans-serif;
+/* footer */
+
+footer {
+    background-color: var(--color-footer);
+    color: var(--color-text-muted);
+    font-size: 0.9em;
 }
 
-small {
-    font-weight: 400;
-    font-family: 'Source Sans Pro', sans-serif;
+/* drawer */
+
+.drawer-toggle:hover {
+    background-color: rgba(240, 240, 240, 0.25);
+    border-radius: 50%;
 }
 
-pre, code, pre code {
-    border: none;
-    border-radius: 0;
-    background-color: #fafafa;
-    font-size: 0.8em;
+@media (max-width: 768px) {
+    .drawer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 300px;
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        background-color: var(--color-background);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0, 1);
+        z-index: 5;
+        padding-top: var(--header-height);
+    }
+
+    .drawer-closed {
+        transform: translateX(-100%);
+    }
 }
 
-.highlight {
-    background-color: #fafafa;
-    border-radius: 12px;
+@media (max-width: 480px) {
+    .drawer {
+        width: 100%;
+    }
 }
 
-pre {
-    font-size: 1em;
-}
-
-code {
-    color: inherit;
-    font-family: 'Roboto Mono', monospace;
-    color: #dd2200;
-}
-
-a {
-    color: #0e95e3;
-}
-
-#header {
-    border-bottom: 1px solid #eee;
-    margin-bottom: 20px;
-}
-
-#header a:hover {
-    text-decoration: none;
-}
-
-#content {
-    /* bigger font */
-    font-size: 1.1em;
-}
-
-#content p {
-    /* spacing for all paragraphs */
-    margin-top: 16px;
-    margin-bottom: 16px;
-}
-
-#content ul li {
-    /* spacing for lists */
-    margin-top: 8px;
-    margin-bottom: 8px;
-}
-
-#content h5 {
-    font-size: 1.1em;
-}
-
-#footer {
-    margin: 20px 0;
-    font-size: 0.85em;
-    color: #999;
-    text-align: center;
-}
-
-#content > .page-header:first-child {
-    margin-top: 0;
-}
-
-#content > .page-header:first-child h2 {
-    margin-top: 0;
-}
-
-#content .page-subtitle {
-    font-size: 0.45em;
-}
-
-#landing {
-    background: radial-gradient(ellipse, #f7a816, #f76c16) !important;
-    background-attachment: fixed !important;
-}
-
-#landing h1 {
-    font-size: 10vw;
-    color: white;
-    margin-top: 16px;
-    margin-bottom: 0px;
-    letter-spacing: 0.04em;
-    font-weight: bold;
-}
-
-@media (min-width: 576px) {
-  #landing h1 {
-    font-size: 4em;
-  }
-}
-
-#landing p {
-    font-size: 1.2em;
-    color: rgba(255, 255, 255, 0.7);
-    margin: 8px;
-    max-width: 80%;
+.drawer ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     line-height: 100%;
 }
 
-#landing a {
-    background-color: rgba(240, 240, 240, 0.3);
-    color: white;
-    border-radius: 24px;
-    padding: 10px 20px 10px 20px;
-    margin-top: 16px;
+.drawer a {
+    color: inherit;
+}
+
+.drawer a:hover {
+    color: var(--color-primary-hover) !important;
+}
+
+.drawer li.active a {
+    color: var(--color-primary);
+    position: relative;
+}
+
+/* .drawer li.active a:hover {
+    color: var(--color-primary-active) !important;
+    text-decoration: none;
+} */
+
+.drawer li.active {
+    position: relative;
+}
+
+.drawer li.active::after {
+    content: '';
     display: inline-block;
-    font-family: 'Calistoga', sans-serif;
-    font-size: 1.1em;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-primary);
+    border-radius: 50%;
 }
 
-#landing #screenshots img {
-    max-width: 100%;
-    padding: 12px;
-}
-
-#landing #screenshots {
-    margin-top: 24px;
-    margin-bottom: 24px;
-}
-
-#navigation {
-    font-size: 1.0em;
-}
-
-#navigation li a {
-    padding-left: 16px;
-    padding-right: 16px;
-    border-radius: 32px;
-}
-
-#navigation li a:hover {
-    background: #fafafa;
-}
-
-#navigation li.active a {
-    background: #f76c16;
-    color: #FFFFFF;
-}
-
-#navigation .nav-header {
-    padding-top: 16px;
-    padding-bottom: 4px;
-    padding-left: 0;
-    padding-right: 0;
-}
-
-.nav-header {
-    font-size: 1.1em;
-    cursor: default;
-    /* text-transform: uppercase; */
-    font-weight: bold;
-    font-family: 'Calistoga', sans-serif;
-}
-
-body.rtl {
-	direction: rtl;
-}
-
-body.rtl #header .brand {
-	float: right;
-    margin-left: 5px;
-}
-body.rtl .row-fluid [class*="span"] {
-	float: right !important;
-	margin-left: 0;
-	margin-right: 2.564102564102564%;
-}
-body.rtl .row-fluid [class*="span"]:first-child {
-	margin-right: 0;
-}
-
-body.rtl ul, body.rtl ol {
-    margin: 0 25px 10px 0;
-}
+/* tables */
 
 table {
-  margin-top: 25px;
-  margin-bottom: 25px;
-  border: 1px solid #e5e5e5;
-  border-collapse: collapse;
+    /* same margins that reboot gives to pre */
+    margin-top: 0;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+    /* make it scrollable if needed */
+    display: block;
+    overflow-x: auto;
 }
 
 thead {
-  background-color: #f9f9f9;
-}
-
-td {
-  padding: .25rem .5rem;
-  border: 1px solid #e5e5e5;
+    background-color: var(--color-table-head);
 }
 
 th {
-  padding: 8px 12px;
-  border: 1px solid #e5e5e5;
-  font-weight: 400;
+    padding: 8px;
+    border: 1px solid var(--color-divider);
+    font-family: var(--font-display), sans-serif;
+    font-weight: 700;
+}
+
+td {
+    padding: 8px;
+    border: 1px solid var(--color-divider);
+}
+
+/* page and content */
+
+.content a, footer a {
+    color: var(--color-accent);
+}
+
+.content a:hover, footer a:hover {
+    color: var(--color-accent) !important;
+}
+
+.content ul {
+    padding-left: 24px;
+}
+
+.content blockquote {
+    background-color: var(--color-code-background);
+    border-radius: var(--cards-radius);
+    border-left: 4px;
+    border-left-style: solid;
+    border-left-color: var(--color-accent);
+    font-size: 0.9em;
+    color: var(--color-text-muted);
+    padding: 0.8rem;
+    /* text-align: justify;
+    position: relative;
+    padding: 0.5rem 32px 0.5rem 0.5rem;
+    text-justify: inter-word; */
+}
+
+/* .content blockquote::after {
+    content: '!';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 16px;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: var(--color-accent);
+} */
+
+.content blockquote p, .content blockquote ul {
+    margin: 0;
+}
+
+.content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
+    margin-top: 1.4rem;
+    margin-bottom: 0.8rem;
+}
+
+.page-header span {
+    font-size: 0.9em;
+    color: var(--color-text-muted);
+}
+
+/* code */
+
+pre {
+    border-radius: var(--cards-radius);
+    padding: 0.8rem;
+    font-size: 0.8rem !important;
+    line-height: 1.6;
+}
+
+:not(pre) > code {
+    border-radius: var(--cards-radius);
+    padding: 2px;
+    font-weight: 700 !important;
+    font-size: 0.8rem !important;
+}
+
+.language-java, .language-xml, .language-groovy {
+    position: relative;
+}
+
+.language-java::after, .language-xml::after, .language-groovy::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 6px;
+    font-size: 0.65rem;
+    color: var(--color-text-muted);
+}
+
+.language-java::after {
+    content: 'java';
+}
+
+.language-xml::after {
+    content: 'xml';
+}
+
+.language-groovy::after {
+    content: 'groovy';
 }

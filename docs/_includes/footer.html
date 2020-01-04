@@ -1,1 +1,4 @@
-View on GitHub: <a href="{% if site.codeurl %}{{ site.codeurl }}{% else %}{{ site.baseurl }}{% endif %}">{{ site.title }}</a> or <a href="{{ site.baseurl }}{{ site.donateurl }}">donate</a>
+<footer class="text-center py-3 border-top has-divider">
+    <span>View on <a href="https://github.com/{{ site.author.github }}/{{ site.github_repo }}">GitHub</a> or become <a href="{{ site.baseurl }}{{ site.donateurl }}">a sponsor</a>!</span>
+    <span class="d-block">Made by <a href="{{ site.author.website }}">{{ site.author.name }}</a></span>
+</footer>
