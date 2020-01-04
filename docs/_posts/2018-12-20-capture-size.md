@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "Capture Size"
-subtitle: "Set size of output media"
 description: "Set size of output media"
 category: docs
 order: 9

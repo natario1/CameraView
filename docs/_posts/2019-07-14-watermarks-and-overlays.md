@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "Watermarks and Overlays"
-subtitle: "Static and animated overlays"
 description: "Static and animated overlays"
 category: docs
 order: 11

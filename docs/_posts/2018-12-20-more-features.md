@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "More features"
-subtitle: "Undocumented features & more"
 description: "Undocumented features & more"
 category: docs
 order: 16

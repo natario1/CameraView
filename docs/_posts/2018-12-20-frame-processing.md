@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "Frame Processing"
-subtitle: "Process each frame in real time"
 description: "Process each frame in real time"
 category: docs
 order: 6

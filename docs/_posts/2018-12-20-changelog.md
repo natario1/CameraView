@@ -8,7 +8,7 @@ order: 3
 
 New versions are released through GitHub, so the reference page is the [GitHub Releases](https://github.com/natario1/CameraView/releases) page.
 
-Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
+> Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
 ## v2.6.0
@@ -54,7 +54,7 @@ This change greatly improved the FPS performance, which is what matters the most
 
 <https://github.com/natario1/CameraView/compare/v2.3.1...v2.4.0>
 
-### v2.3.1
+#### v2.3.1
 
 - <small>[Video]</small> Improvement: better timing for `onVideoRecordingStart()` thanks to [@agrawalsuneet][agrawalsuneet] ([#632][632])
 - <small>[Video, Camera1]</small> Fix: fixed video errors when starting on specific devices ([#617][617])
@@ -110,7 +110,7 @@ Please read the documentation page for usage instructions.
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-rc2...v2.0.0>
 
-### v2.0.0-rc2
+#### v2.0.0-rc2
 
 - Fix: crashes when stopping video snapshots ([#513][513])
 - Fix: dependencies missing, leading to runtime crashes ([#517][517])
@@ -131,7 +131,7 @@ This is likely to be the last release before v2.0.0.
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta06...v2.0.0-rc1>
 
-### v2.0.0-beta06
+#### v2.0.0-beta06
 
 - New: Full featured Camera2 integration! Use `cameraExperimental="true"` and `cameraEngine="camera2"` to test this out. ([#490][490])
 - Improvement: we now choose a video recording profile that is compatible with the chosen size. Should fix some video recording issues. ([#477][477])
@@ -147,7 +147,7 @@ If you were using `focusWithMarker`, you can [add back the old marker](../docs/m
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta05...v2.0.0-beta06>
 
-### v2.0.0-beta05
+#### v2.0.0-beta05
 
 - Fixed `FrameProcessor` freeze and release behavior, was broken ([#431][431])
 - New: new api `setAutoFocusResetDelay` to control the delay to reset the focus after autofocus was performed, thanks to [@cneuwirt][cneuwirt] ([#435][435])
@@ -156,21 +156,21 @@ If you were using `focusWithMarker`, you can [add back the old marker](../docs/m
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta04...v2.0.0-beta05>
 
-### v2.0.0-beta04
+#### v2.0.0-beta04
 
 - Renames setPreviewSize to setPreviewStreamSize (previewSize suggests it is related to the view size but it's not) ([#393][393])
 - Added new APIs `setSnapshotMaxWidth` and `setSnapshotMaxHeight` ([#393][393]). You can now have a good looking preview but still take low-res snapshots using these snapshot constraints. Before this, the two sizes were coupled.
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta03...v2.0.0-beta04>
 
-### v2.0.0-beta03
+#### v2.0.0-beta03
 
 - Fixed a few bugs ([#392][392])
 - Important fixes to video snapshot recording ([#374][374])
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta02...v2.0.0-beta03>
 
-### v2.0.0-beta02
+#### v2.0.0-beta02
 
 - Fixed important bugs ([#356][356])
 - Picture snapshots are now flipped when front camera is used ([#360][360])
@@ -182,7 +182,7 @@ If you were using `focusWithMarker`, you can [add back the old marker](../docs/m
 
 This is the first beta release. For changes with respect to v1, please take a look at the [migration guide](../extra/v1-migration-guide).
 
-### v1.6.1
+#### v1.6.1
 
 This is the last release before v2.
 
@@ -204,7 +204,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.5.1...v1.6.0>
 
-### v1.5.1
+#### v1.5.1
 
 - Bug: byte array length for Frames was incorrect thanks to [@ssakhavi][ssakhavi] ([#205][205])
 - Bug: gestures were crashing in some conditions ([#222][222])
@@ -223,7 +223,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.4.2...v1.5.0>
 
-### v1.4.2
+#### v1.4.2
 
 - Add prefix to XML resources so they don't collide, thanks to [@RocketRider][RocketRider] ([#162][162])
 - Add `videoMaxSize` API and XML attribute, to set max size video in bytes, thanks to [@chaitanyaraghav][chaitanyaraghav] ([#104][104])
@@ -232,7 +232,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.4.1...v1.4.2>
 
-### v1.4.1
+#### v1.4.1
 
 - Fixed a bug that would flip the front camera preview on some devices ([#112][112])
 - Two new `CameraOptions` APIs: `o.getSupportedPictureSizes()` and `o.getSupportedPictureAspectRatios()` ([#101][101])
@@ -264,7 +264,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.3.2...v1.4.0>
 
-### v1.3.2
+#### v1.3.2
 
 - Fixed a memory leak thanks to [@andrewmunn][andrewmunn] ([#92][92])
 - Reduced memory usage when using cropOutput thanks to [@RobertoMorelos][RobertoMorelos] ([#93][93])
@@ -272,7 +272,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.3.1...v1.3.2>
 
-### v1.3.1
+#### v1.3.1
 
 - Fixed a bug that would make setFacing and other APIs freeze the camera ([#86][86])
 - Fixed ConcurrentModificationExceptions during CameraListener callbacks ([#88][88])

@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "Runtime Permissions"
-subtitle: "Permissions and Manifest setup"
 description: "Permissions and Manifest setup"
 category: docs
 order: 13
@@ -9,7 +8,7 @@ date: 2018-12-20 20:03:03
 disqus: 1
 ---
 
-`CameraView` needs two permissions:
+CameraView needs two permissions:
 
 - `android.permission.CAMERA` : required for capturing pictures and videos
 - `android.permission.RECORD_AUDIO` : required for capturing videos with `Audio.ON` (the default)

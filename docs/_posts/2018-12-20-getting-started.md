@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "Getting Started"
-subtitle: "Simple guide to take your first picture"
 description: "Simple guide to take your first picture"
 category: about
 date: 2018-12-20 17:48:58
@@ -64,9 +63,9 @@ camera.addCameraListener(new CameraListener() {
 })
 ```
 
-### Take a picture
+### Taking a picture
 
-We're done. To take a picture upon user input, just call `takePicture()`.
+To take a picture upon user input, just call `takePicture()`.
 
 ```java
 camera.addCameraListener(new CameraListener() {
@@ -90,7 +89,7 @@ camera.takePicture();
 
 Read the docs about `takePictureSnapshot()` for a super fast, lower quality alternative.
 
-### Take a video
+### Taking a video
 
 Taking a video is just the same thing, except that you must make sure that camera is in `Mode.VIDEO` mode,
 and that you have write permissions to write the file:
@@ -122,7 +121,7 @@ This was it, but there is a ton of other options available to customize the came
 to control the sensor, the UI appearance, the quality and size of the output, or to live process
 frames. Keep reading the documentation!
 
-For runtime permissions and Manifest setup, please read the [permissions page](../docs/runtime-permissions).
+> For runtime permissions and Manifest setup, please read the [permissions page](../docs/runtime-permissions).
 
 ### Without support libraries
 

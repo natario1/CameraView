@@ -1,3 +1,21 @@
-<h4><a class="brand" href="{{ site.baseurl }}/home">{{ site.title }}</a>
-    {% if site.subtitle %}<small>{{ site.subtitle }}</small>{% endif %}
-</h4>
+<header class="text-center py-3 border-bottom has-divider">
+    <!-- center -->
+    <img class="logo align-middle" alt="Logo" src="{{ site.baseurl }}/static/icon_foreground.png"/>
+    <a class="h3 mx-2 align-middle text-decoration-none" href="{{ site.baseurl }}/home">{{ site.title }}</a>
+
+    <!-- left -->
+    <div class="left align-middle">
+        <img class="drawer-toggle p-2 mx-2 d-md-none"
+             alt="Menu toggle"
+             src="{{ site.baseurl }}/icons/menu.svg"
+             onclick="document.getElementById('drawer').classList.toggle('drawer-closed');"/>
+    </div>
+
+    <!-- right -->
+    <div class="right align-middle">
+        <span class="version d-none d-sm-inline-block">latest: v{{ site.github_version }}</span>
+        <a class="p-2 mx-2" href="https://github.com/{{ site.author.github }}/{{ site.github_repo }}">
+            <img alt="GitHub" src="{{ site.baseurl }}/icons/github.svg">
+        </a>
+    </div>
+</header>

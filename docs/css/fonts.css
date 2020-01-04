@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css?family=Lobster+Two:400i,700i|Roboto+Mono|Source+Sans+Pro:400,700&display=swap');
+@import "fonts_responsive.css";
+
+:root {
+  --font-mono: 'Roboto Mono';
+  --font-sans: 'Source Sans Pro';
+  --font-display: 'Lobster Two';
+}
+
+* {
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 400;
+}
+
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
+  font-family: var(--font-display), cursive;
+  font-style: italic;
+  font-weight: 700 !important;
+}
+
+h4, .h4, h5, .h5, h6, .h6 {
+  font-weight: 400;
+}
+
+button, .btn {
+  font-family: var(--font-display), cursive !important;
+  font-style: italic !important;
+  font-weight: 700 !important;
+}
+
+code, code * {
+  font-family: var(--font-mono) !important;
+}
