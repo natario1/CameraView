@@ -5,7 +5,7 @@
 
 # Used by us
 title: CameraView
-color: '#f76c16'
+color: '#f8f8f8'
 description: A well documented, high-level Android interface that makes capturing pictures and videos easy, addressing all of the common issues and needs. # used by ourselves and by seo tag.
 disqus_shortname: 'cameraview'
 google_analytics_id: 'UA-155077779-1'
