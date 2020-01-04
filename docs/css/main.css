@@ -77,9 +77,13 @@ footer {
 
 /* drawer */
 
+.drawer-toggle {
+    background-color: transparent;
+    border-radius: 50%;
+}
+
 .drawer-toggle:hover {
     background-color: rgba(240, 240, 240, 0.25);
-    border-radius: 50%;
 }
 
 @media (max-width: 768px) {
