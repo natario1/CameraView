@@ -1,9 +1,7 @@
 ---
 layout: page
 title: "Debugging"
-category: docs
 order: 15
-date: 2018-12-20 20:02:38
 disqus: 1
 ---
 

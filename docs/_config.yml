@@ -14,13 +14,21 @@ github: [metadata] # TODO What's this?
 github_repo: CameraView
 github_version: 2.6.0
 github_branch: master
-donateurl: '/extra/donate' # relative URL for donations, used in footer.html
 baseurl: '/CameraView' # Keep as an empty string if served up at the root
-sections: [
-  ['about', 'Overview'],
-  ['docs', 'Documentation'],
-  ['extra', 'More']
-]
+collections:
+  about:
+    name: Overview
+    output: true
+  docs:
+    name: Documentation
+    output: true
+  extra:
+    name: More
+    output: true
+screenshots:
+  - 'screen1.png'
+  - 'screen2.png'
+  - 'screen3.png'
 
 # Jekyll specific stuff
 author:
@@ -32,20 +40,7 @@ plugins:
   - jekyll-seo-tag # Add SEO tags
 permalink: /:categories/:title # Ensure permalinks have no date nor extension
 exclude: ['script', 'README.md'] # Exclude non-site files
-
 highlighter: rouge # Syntax highlighting
-future: true # What's this?
 markdown: kramdown # Use the kramdown Markdown renderer
-redcarpet:
-    extensions: [
-        'no_intra_emphasis',
-        'fenced_code_blocks',
-        'autolink',
-        'strikethrough',
-        'superscript',
-        'with_toc_data',
-        'tables',
-        'hardwrap'
-    ]
 kramdown:
   input: GFM # Use Github Flavored Markdown

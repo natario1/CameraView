@@ -2,8 +2,6 @@
 layout: page
 title: "v1 Migration Guide"
 description: "Breaking Changes & new concepts"
-category: extra
-date: 2018-12-20 19:01:55
 order: 1
 disqus: 1
 ---

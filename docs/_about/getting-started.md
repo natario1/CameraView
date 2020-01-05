@@ -2,8 +2,6 @@
 layout: page
 title: "Getting Started"
 description: "Simple guide to take your first picture"
-category: about
-date: 2018-12-20 17:48:58
 order: 2
 disqus: 1
 ---

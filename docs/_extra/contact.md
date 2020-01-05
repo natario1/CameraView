@@ -1,8 +1,6 @@
 ---
 layout: page
 title: "Contact"
-category: extra
-date: 2018-12-20 19:47:10
 order: 4
 ---
 

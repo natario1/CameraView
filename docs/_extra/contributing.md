@@ -1,8 +1,6 @@
 ---
 layout: page
 title: "Contributing & License"
-category: extra
-date: 2018-12-20 19:28:45
 order: 2
 ---
 

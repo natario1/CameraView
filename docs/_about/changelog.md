@@ -1,8 +1,6 @@
 ---
 layout: page
 title: "Changelog"
-category: about
-date: 2018-12-20 17:49:29
 order: 3
 ---
 

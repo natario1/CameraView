@@ -2,9 +2,7 @@
 layout: page
 title: "Metering"
 description: "Exposure and metering controls"
-category: docs
 order: 4
-date: 2019-09-04 19:39:03
 disqus: 1
 ---
 

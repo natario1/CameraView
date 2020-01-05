@@ -2,9 +2,7 @@
 layout: page
 title: "Controls"
 description: "Configuring output parameters and capture options"
-category: docs
 order: 2
-date: 2018-12-20 21:08:53
 disqus: 1
 ---
 

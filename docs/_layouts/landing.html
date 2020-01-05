@@ -17,13 +17,16 @@
                 <a class="btn rounded-pill px-3 py-2 mx-2 mt-2" href="{{ site.baseurl }}/home">Documentation</a>
                 <a class="btn rounded-pill px-3 py-2 mx-2 mt-2" href="{{ site.baseurl }}/about/changelog">Changelog</a>
                 <a class="btn rounded-pill px-3 py-2 mx-2 mt-2" href="https://github.com/{{ site.author.github }}/{{ site.github_repo }}">GitHub</a>
-                <a class="btn rounded-pill px-3 py-2 mx-2 mt-2" href="{{ site.baseurl }}{{ site.donateurl }}">Support</a>
+                <a class="btn rounded-pill px-3 py-2 mx-2 mt-2" href="{{ site.baseurl }}/extra/donate">Support</a>
             </div>
             <br/>
             <div class="row">
-                <div class="col-12 col-sm-4 mt-4"><img class="img-fluid" src="{{ site.baseurl }}/static/screen1.png" alt="Screenshot 1"></div>
-                <div class="col-12 col-sm-4 mt-4"><img class="img-fluid" src="{{ site.baseurl }}/static/screen2.png" alt="Screenshot 2"></div>
-                <div class="col-12 col-sm-4 mt-4"><img class="img-fluid" src="{{ site.baseurl }}/static/screen3.png" alt="Screenshot 3"></div>
+                {% assign col = 12 | divided_by: site.screenshots.size %}
+                {% for screenshot in site.screenshots %}
+                <div class="col-12 col-sm-{{ col }} mt-4">
+                    <img class="img-fluid" src="{{ site.baseurl }}/static/{{ screenshot }}" alt="Screenshot">
+                </div>
+                {% endfor %}
             </div>
         </div>
     </body>

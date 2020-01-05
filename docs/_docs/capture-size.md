@@ -2,9 +2,7 @@
 layout: page
 title: "Capture Size"
 description: "Set size of output media"
-category: docs
 order: 9
-date: 2018-12-20 22:07:22
 disqus: 1
 ---
 

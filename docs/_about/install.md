@@ -2,9 +2,7 @@
 layout: page
 title: "Install"
 description: "Integrate in your project"
-category: about
 order: 1
-date: 2018-12-20 17:47:32
 ---
 
 The library works on API 15+, which is the only requirement and should be met by most projects nowadays.

@@ -2,9 +2,7 @@
 layout: page
 title: "Runtime Permissions"
 description: "Permissions and Manifest setup"
-category: docs
 order: 13
-date: 2018-12-20 20:03:03
 disqus: 1
 ---
 

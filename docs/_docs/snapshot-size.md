@@ -2,9 +2,7 @@
 layout: page
 title: "Snapshot Size"
 description: "Sizing the snapshots output"
-category: docs
 order: 10
-date: 2019-02-24 17:36:39
 disqus: 1
 ---
 

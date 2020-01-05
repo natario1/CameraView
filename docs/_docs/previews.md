@@ -2,9 +2,7 @@
 layout: page
 title: "Engine and Previews"
 description: "Camera engine and preview implementations"
-category: docs
 order: 7
-date: 2018-12-20 21:58:16
 disqus: 1
 ---
 

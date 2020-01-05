@@ -1,8 +1,6 @@
 ---
 layout: page
 title: "Donate"
-category: extra
-date: 2018-12-21 13:51:39
 order: 3
 ---
 

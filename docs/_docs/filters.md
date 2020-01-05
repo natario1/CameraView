@@ -2,9 +2,7 @@
 layout: page
 title: "Real-time Filters"
 description: "Apply filters to preview and snapshots"
-category: docs
 order: 12
-date: 2019-08-06 17:10:17
 disqus: 1
 ---
 

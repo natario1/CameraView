@@ -2,9 +2,7 @@
 layout: page
 title: "Gestures"
 description: "Gestures control"
-category: docs
 order: 5
-date: 2018-12-20 20:49:35
 disqus: 1
 ---
 
