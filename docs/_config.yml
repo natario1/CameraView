@@ -13,6 +13,7 @@ google_site_verification: '4x49i17ABIrSvUl52SeL0-t0341aTnWWaC62-FYCRT4'
 github: [metadata] # TODO What's this?
 github_repo: CameraView
 github_version: 2.6.0
+github_branch: master
 donateurl: '/extra/donate' # relative URL for donations, used in footer.html
 baseurl: '/CameraView' # Keep as an empty string if served up at the root
 sections: [

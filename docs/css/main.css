@@ -77,13 +77,11 @@ footer {
 
 /* drawer */
 
-.drawer-toggle {
-    background-color: transparent;
-    border-radius: 50%;
-}
-
-.drawer-toggle:hover {
-    background-color: rgba(240, 240, 240, 0.25);
+@media (hover: hover) {
+    .drawer-toggle:hover {
+        background-color: rgba(240, 240, 240, 0.15);
+        border-radius: 50%;
+    }
 }
 
 @media (max-width: 768px) {
@@ -236,6 +234,13 @@ td {
     color: var(--color-text-muted);
 }
 
+.page-footer a {
+    color: black;
+    font-family: var(--font-display), cursive;
+    font-weight: 700;
+    font-size: 1.2em;
+}
+
 /* code */
 
 pre {
@@ -252,11 +257,11 @@ pre {
     font-size: 0.8rem !important;
 }
 
-.language-java, .language-xml, .language-groovy {
+.language-java, .language-xml, .language-kotlin, .language-groovy {
     position: relative;
 }
 
-.language-java::after, .language-xml::after, .language-groovy::after {
+.language-java::after, .language-xml::after, .language-kotlin::after, .language-groovy::after {
     position: absolute;
     top: 0;
     right: 0;
@@ -275,4 +280,8 @@ pre {
 
 .language-groovy::after {
     content: 'groovy';
+}
+
+.language-kotlin::after {
+    content: 'kotlin';
 }
