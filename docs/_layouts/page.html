@@ -12,19 +12,19 @@ layout: main
 </div>
 <div class="page-footer border-top has-divider">
     <div class="row text-center">
+        {% assign collection = site.collections | where:"label", page.collection | first %}
         {% assign next = page.order | plus: 1 %}
         {% assign previous = page.order | minus: 1 %}
-        {% for other in site.categories[page.category] %}
-        {% if other.order == previous %}
-        <a class="previous col mt-3" href="{{ site.baseurl }}{{ other.url }}">< {{ other.title }}</a>
+        {% for doc in collection.docs %}
+        {% if doc.order == previous %}
+        <a class="previous col mt-3" href="{{ site.baseurl }}{{ doc.url }}">< {{ doc.title }}</a>
         {% endif %}
         {% endfor %}
 
-        {% for other in site.categories[page.category] %}
-        {% if other.order == next %}
-        <a class="next col mt-3" href="{{ site.baseurl }}{{ other.url }}">{{ other.title }} ></a>
+        {% for doc in collection.docs %}
+        {% if doc.order == next %}
+        <a class="next col mt-3" href="{{ site.baseurl }}{{ doc.url }}">{{ doc.title }} ></a>
         {% endif %}
         {% endfor %}
     </div>
 </div>
-
