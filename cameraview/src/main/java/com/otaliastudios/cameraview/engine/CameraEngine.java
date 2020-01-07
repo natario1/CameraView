@@ -49,6 +49,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -712,7 +713,9 @@ public abstract class CameraEngine implements
     public abstract void takePictureSnapshot(final @NonNull PictureResult.Stub stub);
 
     public abstract boolean isTakingVideo();
-    public abstract void takeVideo(@NonNull VideoResult.Stub stub, @NonNull File file);
+    public abstract void takeVideo(@NonNull VideoResult.Stub stub,
+                                   @Nullable File file,
+                                   @Nullable FileDescriptor fileDescriptor);
     public abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file);
     public abstract void stopVideo();
 

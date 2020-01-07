@@ -2,7 +2,6 @@ package com.otaliastudios.cameraview.video;
 
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.os.Handler;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
@@ -220,7 +219,15 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                     (float) stub.location.getLatitude(),
                     (float) stub.location.getLongitude());
         }
-        mMediaRecorder.setOutputFile(stub.file.getAbsolutePath());
+
+        if (stub.file != null) {
+            mMediaRecorder.setOutputFile(stub.file.getAbsolutePath());
+        } else if (stub.fileDescriptor != null) {
+            mMediaRecorder.setOutputFile(stub.fileDescriptor);
+        } else {
+            throw new IllegalStateException("file and fileDescriptor are both null.");
+        }
+
         mMediaRecorder.setOrientationHint(stub.rotation);
         // When using MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED, the recorder might have stopped
         // before calling it. But this creates issues on Camera2 Legacy devices - they need a

@@ -7,10 +7,11 @@ import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.size.Size;
 
+import java.io.File;
+import java.io.FileDescriptor;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import java.io.File;
 
 /**
  * Wraps the result of a video recording started by {@link CameraView#takeVideo(File)}.
@@ -30,6 +31,7 @@ public class VideoResult {
         public int rotation;
         public Size size;
         public File file;
+        public FileDescriptor fileDescriptor;
         public Facing facing;
         public VideoCodec videoCodec;
         public Audio audio;
@@ -55,6 +57,7 @@ public class VideoResult {
     private final int rotation;
     private final Size size;
     private final File file;
+    private final FileDescriptor fileDescriptor;
     private final Facing facing;
     private final VideoCodec videoCodec;
     private final Audio audio;
@@ -71,6 +74,7 @@ public class VideoResult {
         rotation = builder.rotation;
         size = builder.size;
         file = builder.file;
+        fileDescriptor = builder.fileDescriptor;
         facing = builder.facing;
         videoCodec = builder.videoCodec;
         audio = builder.audio;
@@ -130,7 +134,23 @@ public class VideoResult {
      */
     @NonNull
     public File getFile() {
+        if (file == null) {
+            throw new RuntimeException("File is only available when takeVideo(File) is used.");
+        }
         return file;
+    }
+
+    /**
+     * Returns the file descriptor where the video was saved.
+     *
+     * @return the File Descriptor of this video
+     */
+    @NonNull
+    public FileDescriptor getFileDescriptor() {
+        if (fileDescriptor == null) {
+            throw new RuntimeException("FileDescriptor is only available when takeVideo(FileDescriptor) is used.");
+        }
+        return fileDescriptor;
     }
 
     /**
