@@ -83,7 +83,8 @@ public class Camera2Engine extends CameraBaseEngine implements
         ActionHolder {
 
     private static final int FRAME_PROCESSING_FORMAT = ImageFormat.YUV_420_888;
-    @VisibleForTesting static final long METER_TIMEOUT = 2500;
+    @VisibleForTesting static final long METER_TIMEOUT = 5000;
+    private static final long METER_TIMEOUT_SHORT = 2500;
 
     private final CameraManager mManager;
     private String mCameraId;
@@ -770,7 +771,7 @@ public class Camera2Engine extends CameraBaseEngine implements
                                          boolean doMetering) {
         if (doMetering) {
             LOG.i("onTakePictureSnapshot:", "doMetering is true. Delaying.");
-            Action action = Actions.timeout(METER_TIMEOUT, createMeterAction(null));
+            Action action = Actions.timeout(METER_TIMEOUT_SHORT, createMeterAction(null));
             action.addCallback(new CompletionCallback() {
                 @Override
                 protected void onActionCompleted(@NonNull Action action) {
@@ -803,7 +804,7 @@ public class Camera2Engine extends CameraBaseEngine implements
     protected void onTakePicture(@NonNull final PictureResult.Stub stub, boolean doMetering) {
         if (doMetering) {
             LOG.i("onTakePicture:", "doMetering is true. Delaying.");
-            Action action = Actions.timeout(METER_TIMEOUT, createMeterAction(null));
+            Action action = Actions.timeout(METER_TIMEOUT_SHORT, createMeterAction(null));
             action.addCallback(new CompletionCallback() {
                 @Override
                 protected void onActionCompleted(@NonNull Action action) {

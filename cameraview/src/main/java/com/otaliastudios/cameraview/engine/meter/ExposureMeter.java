@@ -24,6 +24,9 @@ public class ExposureMeter extends BaseMeter {
     private static final int STATE_WAITING_PRECAPTURE = 0;
     private static final int STATE_WAITING_PRECAPTURE_END = 1;
 
+    private boolean mSupportsAreas = false;
+    private boolean mSupportsTrigger = false;
+
     @SuppressWarnings("WeakerAccess")
     public ExposureMeter(@NonNull List<MeteringRectangle> areas, boolean skipIfPossible) {
         super(areas, skipIfPossible);
@@ -32,9 +35,9 @@ public class ExposureMeter extends BaseMeter {
     @Override
     protected boolean checkIsSupported(@NonNull ActionHolder holder) {
         // In our case, this means checking if we support the AE precapture trigger.
-        boolean isNotLegacy = readCharacteristic(
+        boolean isLegacy = readCharacteristic(
                 CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL, -1)
-                != CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
+                == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
         Integer aeMode = holder.getBuilder(this).get(CaptureRequest.CONTROL_AE_MODE);
         boolean isAEOn = aeMode != null &&
                 (aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON
@@ -43,8 +46,13 @@ public class ExposureMeter extends BaseMeter {
                         || aeMode == CameraCharacteristics.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
                         || aeMode == 5
                         /* CameraCharacteristics.CONTROL_AE_MODE_ON_EXTERNAL_FLASH, API 28 */);
-        boolean result = isNotLegacy && isAEOn;
-        LOG.i("checkIsSupported:", result);
+        mSupportsTrigger = !isLegacy;
+        mSupportsAreas = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE,
+                0) > 0;
+        boolean result = isAEOn && (mSupportsTrigger || mSupportsAreas);
+        LOG.i("checkIsSupported:", result,
+                "trigger:", mSupportsTrigger,
+                "areas:", mSupportsAreas);
         return result;
     }
 
@@ -66,22 +74,26 @@ public class ExposureMeter extends BaseMeter {
     protected void onStarted(@NonNull ActionHolder holder, @NonNull List<MeteringRectangle> areas) {
         LOG.i("onStarted:", "with areas:", areas);
 
-        // Launch the precapture trigger.
-        holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-
-        // Check the regions.
-        int maxRegions = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE,
-                0);
-        if (!areas.isEmpty() && maxRegions > 0) {
-            int max = Math.min(maxRegions, areas.size());
+        if (mSupportsAreas && !areas.isEmpty()) {
+            int max = readCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AE, 0);
+            max = Math.min(max, areas.size());
             holder.getBuilder(this).set(CaptureRequest.CONTROL_AE_REGIONS,
                     areas.subList(0, max).toArray(new MeteringRectangle[]{}));
         }
 
+        if (mSupportsTrigger) {
+            holder.getBuilder(this).set(
+                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+        }
+
         // Apply
         holder.applyBuilder(this);
-        setState(STATE_WAITING_PRECAPTURE);
+        if (mSupportsTrigger) {
+            setState(STATE_WAITING_PRECAPTURE);
+        } else {
+            setState(STATE_WAITING_PRECAPTURE_END);
+        }
     }
 
     @Override

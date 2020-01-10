@@ -72,7 +72,7 @@ jobs:
           disable-animations: true
           profile: Nexus 5X
           emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
-          emulator-build: 6031357
+          emulator-build: 6110076
           script: ./.github/workflows/emulator_script.sh
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
