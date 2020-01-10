@@ -261,29 +261,30 @@ public class DeviceEncoders {
                     " Range:" + mVideoCapabilities.getSupportedHeights());
         }
 
-        // It's still possible that we're unsupported for other reasons.
-        if (!mVideoCapabilities.isSizeSupported(width, height)) {
-            try {
-                if (!mVideoCapabilities.getSupportedHeightsFor(width).contains(height)) {
-                    // We cannot change the aspect ratio, but the max block count might also be the
-                    // issue. Try to find a width that contains a height that would accept our AR.
-                    int candidateWidth = width;
-                    int minWidth = mVideoCapabilities.getSupportedWidths().getLower();
-                    int widthAlignment = mVideoCapabilities.getWidthAlignment();
-                    while (candidateWidth >= minWidth) {
-                        // Reduce by 32 and realign just in case, then check if our AR is now
-                        // supported. If it is, restart from scratch to go through the other checks.
-                        candidateWidth -= 32;
-                        while (candidateWidth % widthAlignment != 0) candidateWidth--;
-                        int candidateHeight = (int) Math.round(candidateWidth / aspect);
-                        if (mVideoCapabilities.getSupportedHeightsFor(candidateWidth)
-                                .contains(candidateHeight)) {
-                            LOG.w("getSupportedVideoSize - restarting with smaller size.");
-                            return getSupportedVideoSize(new Size(candidateWidth, candidateHeight));
-                        }
+        // We cannot change the aspect ratio, but the max block count might also be the
+        // issue. Try to find a width that contains a height that would accept our AR.
+        try {
+            if (!mVideoCapabilities.getSupportedHeightsFor(width).contains(height)) {
+                int candidateWidth = width;
+                int minWidth = mVideoCapabilities.getSupportedWidths().getLower();
+                int widthAlignment = mVideoCapabilities.getWidthAlignment();
+                while (candidateWidth >= minWidth) {
+                    // Reduce by 32 and realign just in case, then check if our AR is now
+                    // supported. If it is, restart from scratch to go through the other checks.
+                    candidateWidth -= 32;
+                    while (candidateWidth % widthAlignment != 0) candidateWidth--;
+                    int candidateHeight = (int) Math.round(candidateWidth / aspect);
+                    if (mVideoCapabilities.getSupportedHeightsFor(candidateWidth)
+                            .contains(candidateHeight)) {
+                        LOG.w("getSupportedVideoSize - restarting with smaller size.");
+                        return getSupportedVideoSize(new Size(candidateWidth, candidateHeight));
                     }
                 }
-            } catch (IllegalArgumentException ignore) {}
+            }
+        } catch (IllegalArgumentException ignore) {}
+
+        // It's still possible that we're unsupported for other reasons.
+        if (!mVideoCapabilities.isSizeSupported(width, height)) {
             throw new VideoException("Size not supported for unknown reason." +
                     " Might be an aspect ratio issue." +
                     " Desired size:" + new Size(width, height));
