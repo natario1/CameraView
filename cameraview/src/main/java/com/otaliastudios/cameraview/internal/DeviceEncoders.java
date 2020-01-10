@@ -7,6 +7,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.util.Range;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -262,6 +263,27 @@ public class DeviceEncoders {
 
         // It's still possible that we're unsupported for other reasons.
         if (!mVideoCapabilities.isSizeSupported(width, height)) {
+            try {
+                if (!mVideoCapabilities.getSupportedHeightsFor(width).contains(height)) {
+                    // We cannot change the aspect ratio, but the max block count might also be the
+                    // issue. Try to find a width that contains a height that would accept our AR.
+                    int candidateWidth = width;
+                    int minWidth = mVideoCapabilities.getSupportedWidths().getLower();
+                    int widthAlignment = mVideoCapabilities.getWidthAlignment();
+                    while (candidateWidth >= minWidth) {
+                        // Reduce by 32 and realign just in case, then check if our AR is now
+                        // supported. If it is, restart from scratch to go through the other checks.
+                        candidateWidth -= 32;
+                        while (candidateWidth % widthAlignment != 0) candidateWidth--;
+                        int candidateHeight = (int) Math.round(candidateWidth / aspect);
+                        if (mVideoCapabilities.getSupportedHeightsFor(candidateWidth)
+                                .contains(candidateHeight)) {
+                            LOG.w("getSupportedVideoSize - restarting with smaller size.");
+                            return getSupportedVideoSize(new Size(candidateWidth, candidateHeight));
+                        }
+                    }
+                }
+            } catch (IllegalArgumentException ignore) {}
             throw new VideoException("Size not supported for unknown reason." +
                     " Might be an aspect ratio issue." +
                     " Desired size:" + new Size(width, height));
