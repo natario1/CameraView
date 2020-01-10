@@ -197,10 +197,7 @@ public class DeviceEncoders {
                 public int compare(MediaCodecInfo o1, MediaCodecInfo o2) {
                     boolean hw1 = isHardwareEncoder(o1.getName());
                     boolean hw2 = isHardwareEncoder(o2.getName());
-                    if (hw1 && hw2) return 0;
-                    if (hw1) return -1;
-                    if (hw2) return 1;
-                    return 0;
+                    return Boolean.compare(hw2, hw1);
                 }
             });
         }
