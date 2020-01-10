@@ -9,7 +9,16 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 > Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
-## v2.6.0
+##### v2.6.1
+
+- <small>[Video]</small> New: `takeVideo(FileDescriptor)` for file descriptors, thanks to [@sewar][sewar] ([#732][732])
+- <small>[Video]</small> Improvement: fixed "no encoder found" issues for some devices ([#741][741])
+- <small>[Camera2, Metering]</small> Improvement: increased metering timeout for touch metering ([#741][741])
+- <small>[Camera2, Metering]</small> Improvement: extended touch metering to LEGACY devices ([#741][741])
+
+<https://github.com/natario1/CameraView/compare/v2.6.0...v2.6.1>
+
+### v2.6.0
 
 - <small>[Metering]</small> New: `startAutoFocus(RectF)` will start 3A metering to a given rect instead of a spot ([#724][724]) 
 - <small>[Permissions]</small> New: `app:cameraRequestPermissions` flag to disable the automatic activity permission request ([#718][718])
@@ -19,7 +28,7 @@ Companies can share a tiny part of their revenue and get private support hours i
 
 <https://github.com/natario1/CameraView/compare/v2.5.0...v2.6.0>
 
-## v2.5.0
+### v2.5.0
 
 - <small>[Camera2]</small> New: support for RAW pictures with new APIs `setPictureFormat()` and `CameraOptions.getSupportedPictureFormats()`. Contains a **breaking change**: `PictureResult.getFormat()` is not an integer anymore but rather a `PictureFormat`. This API had no real purpose so this might not affect you ([#691][691])
 - <small>[Camera2]</small> New: support for constraining the frame processing size through `setFrameProcessingMaxWidth()` and `setFrameProcessingMaxHeight()`. This can improve processing performance ([#691][691])
@@ -42,7 +51,7 @@ This change greatly improved the FPS performance, which is what matters the most
 
 <https://github.com/natario1/CameraView/compare/v2.4.0...v2.5.0>
 
-## v2.4.0
+### v2.4.0
 
 - <small>[Camera2]</small> New: support for `previewFrameRate`. Controls preview FPS, snapshot FPS, processor FPS, thanks to [@vaibhavbhandula][vaibhavbhandula] ([#653][653])
 - <small>[Camera1]</small> New: support for `previewFrameRate` for Camera1 ([#661][661])
@@ -52,7 +61,7 @@ This change greatly improved the FPS performance, which is what matters the most
 
 <https://github.com/natario1/CameraView/compare/v2.3.1...v2.4.0>
 
-#### v2.3.1
+##### v2.3.1
 
 - <small>[Video]</small> Improvement: better timing for `onVideoRecordingStart()` thanks to [@agrawalsuneet][agrawalsuneet] ([#632][632])
 - <small>[Video, Camera1]</small> Fix: fixed video errors when starting on specific devices ([#617][617])
@@ -61,7 +70,7 @@ This change greatly improved the FPS performance, which is what matters the most
 
 <https://github.com/natario1/CameraView/compare/v2.3.0...v2.3.1>
 
-## v2.3.0
+### v2.3.0
 
 - <small>[Camera2, Metering]</small> New: `startAutoFocus` is much more powerful and does 3A metering (AF, AE, AWB) ([#574][574])
 - <small>[Camera2, Metering]</small> New: `setPictureMetering(boolean)` decides whether to do metering before `takePicture()`. Defaults to true to improve quality. ([#580][580])
@@ -77,7 +86,7 @@ This change greatly improved the FPS performance, which is what matters the most
 
 <https://github.com/natario1/CameraView/compare/v2.2.0...v2.3.0>
 
-## v2.2.0
+### v2.2.0
 
 - <small>[Real time filters]</small> New: `SimpleFilter` class accepts a fragment shader in the constructor ([#552][552])
 - <small>[Real time filters]</small> New: `MultiFilter` to apply more than one filter at the same time ([#559][559])
@@ -89,7 +98,7 @@ This change greatly improved the FPS performance, which is what matters the most
 
 <https://github.com/natario1/CameraView/compare/v2.1.0...v2.2.0>
 
-## v2.1.0
+### v2.1.0
 
 This release adds experimental support for [real-time filters](../docs/filters) thanks to [@agrawalsuneet][agrawalsuneet].
 Please read the documentation page for usage instructions.
@@ -100,7 +109,7 @@ Please read the documentation page for usage instructions.
 
 <https://github.com/natario1/CameraView/compare/v2.0.0...v2.1.0>
 
-## v2.0.0
+### v2.0.0
 
 - Fix: bug with picture recorder ([#521][521])
 - Fix: video snapshots appearing black ([#528][528])
@@ -108,14 +117,14 @@ Please read the documentation page for usage instructions.
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-rc2...v2.0.0>
 
-#### v2.0.0-rc2
+##### v2.0.0-rc2
 
 - Fix: crashes when stopping video snapshots ([#513][513])
 - Fix: dependencies missing, leading to runtime crashes ([#517][517])
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-rc1...v2.0.0-rc2>
 
-## v2.0.0-rc1
+### v2.0.0-rc1
 
 This is likely to be the last release before v2.0.0.
 
@@ -129,7 +138,7 @@ This is likely to be the last release before v2.0.0.
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta06...v2.0.0-rc1>
 
-#### v2.0.0-beta06
+##### v2.0.0-beta06
 
 - New: Full featured Camera2 integration! Use `cameraExperimental="true"` and `cameraEngine="camera2"` to test this out. ([#490][490])
 - Improvement: we now choose a video recording profile that is compatible with the chosen size. Should fix some video recording issues. ([#477][477])
@@ -145,7 +154,7 @@ If you were using `focusWithMarker`, you can [add back the old marker](../docs/m
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta05...v2.0.0-beta06>
 
-#### v2.0.0-beta05
+##### v2.0.0-beta05
 
 - Fixed `FrameProcessor` freeze and release behavior, was broken ([#431][431])
 - New: new api `setAutoFocusResetDelay` to control the delay to reset the focus after autofocus was performed, thanks to [@cneuwirt][cneuwirt] ([#435][435])
@@ -154,21 +163,21 @@ If you were using `focusWithMarker`, you can [add back the old marker](../docs/m
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta04...v2.0.0-beta05>
 
-#### v2.0.0-beta04
+##### v2.0.0-beta04
 
 - Renames setPreviewSize to setPreviewStreamSize (previewSize suggests it is related to the view size but it's not) ([#393][393])
 - Added new APIs `setSnapshotMaxWidth` and `setSnapshotMaxHeight` ([#393][393]). You can now have a good looking preview but still take low-res snapshots using these snapshot constraints. Before this, the two sizes were coupled.
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta03...v2.0.0-beta04>
 
-#### v2.0.0-beta03
+##### v2.0.0-beta03
 
 - Fixed a few bugs ([#392][392])
 - Important fixes to video snapshot recording ([#374][374])
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta02...v2.0.0-beta03>
 
-#### v2.0.0-beta02
+##### v2.0.0-beta02
 
 - Fixed important bugs ([#356][356])
 - Picture snapshots are now flipped when front camera is used ([#360][360])
@@ -176,11 +185,11 @@ If you were using `focusWithMarker`, you can [add back the old marker](../docs/m
 
 <https://github.com/natario1/CameraView/compare/v2.0.0-beta01...v2.0.0-beta02>
 
-## v2.0.0-beta01
+### v2.0.0-beta01
 
 This is the first beta release. For changes with respect to v1, please take a look at the [migration guide](../extra/v1-migration-guide).
 
-#### v1.6.1
+##### v1.6.1
 
 This is the last release before v2.
 
@@ -191,7 +200,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.6.0...v1.6.1>
 
-## v1.6.0
+### v1.6.0
 
 - Lifecycle support. Use `setLifecycleOwner` instead of calling start, stop and destroy ([#265][265])
 - Enhancement: provide synchronous version of CameraUtils.decodeBitmap thanks to [@athornz][athornz] ([#224][224])
@@ -202,7 +211,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.5.1...v1.6.0>
 
-#### v1.5.1
+##### v1.5.1
 
 - Bug: byte array length for Frames was incorrect thanks to [@ssakhavi][ssakhavi] ([#205][205])
 - Bug: gestures were crashing in some conditions ([#222][222])
@@ -211,7 +220,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.5.0...v1.5.1>
 
-## v1.5.0
+### v1.5.0
 
 - New: set encoder for video recordings with `cameraVideoCodec` ([#174][174])
 - New: set max duration for videos with `cameraVideoMaxDuration` ([#172][172])
@@ -221,7 +230,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.4.2...v1.5.0>
 
-#### v1.4.2
+##### v1.4.2
 
 - Add prefix to XML resources so they don't collide, thanks to [@RocketRider][RocketRider] ([#162][162])
 - Add `videoMaxSize` API and XML attribute, to set max size video in bytes, thanks to [@chaitanyaraghav][chaitanyaraghav] ([#104][104])
@@ -230,7 +239,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.4.1...v1.4.2>
 
-#### v1.4.1
+##### v1.4.1
 
 - Fixed a bug that would flip the front camera preview on some devices ([#112][112])
 - Two new `CameraOptions` APIs: `o.getSupportedPictureSizes()` and `o.getSupportedPictureAspectRatios()` ([#101][101])
@@ -243,7 +252,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.4.0...v1.4.1>
 
-## v1.4.0
+### v1.4.0
 
 - CameraView is now completely thread-safe. All actions are asynchronous. ([#97][97])
   This has some breaking drawbacks. Specifically, the `get` methods (e.g., `getWhiteBalance`) might
@@ -262,7 +271,7 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.3.2...v1.4.0>
 
-#### v1.3.2
+##### v1.3.2
 
 - Fixed a memory leak thanks to [@andrewmunn][andrewmunn] ([#92][92])
 - Reduced memory usage when using cropOutput thanks to [@RobertoMorelos][RobertoMorelos] ([#93][93])
@@ -270,14 +279,14 @@ This is the last release before v2.
 
 <https://github.com/natario1/CameraView/compare/v1.3.1...v1.3.2>
 
-#### v1.3.1
+##### v1.3.1
 
 - Fixed a bug that would make setFacing and other APIs freeze the camera ([#86][86])
 - Fixed ConcurrentModificationExceptions during CameraListener callbacks ([#88][88])
 
 <https://github.com/natario1/CameraView/compare/v1.3.0...v1.3.1>
 
-## v1.3.0
+### v1.3.0
 
 - Ability to inject frame processors to do your own visual tasks (barcodes, facial recognition etc.) ([#82][82])
 - Ability to inject external loggers (e.g. Crashlytics) to listen for internal logging events ([#80][80])
@@ -306,6 +315,7 @@ This is the last release before v2.
 [agrawalsuneet]: https://github.com/agrawalsuneet
 [RAN3000]: https://github.com/RAN3000
 [vaibhavbhandula]: https://github.com/vaibhavbhandula
+[sewar]: https://github.com/sewar
 
 
 [73]: https://github.com/natario1/CameraView/pull/73
@@ -391,3 +401,5 @@ This is the last release before v2.
 [716]: https://github.com/natario1/CameraView/pull/716
 [718]: https://github.com/natario1/CameraView/pull/718
 [724]: https://github.com/natario1/CameraView/pull/724
+[732]: https://github.com/natario1/CameraView/pull/732
+[741]: https://github.com/natario1/CameraView/pull/741
