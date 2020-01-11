@@ -38,7 +38,7 @@ Part of the XML layout with the CameraView declaration, so we can read its attri
 If applicable, add screenshots to help explain your problem.
 
 ### Logs
-Use `CameraLogger.setLogLevel(LEVEL_VERBOSE)` to see all logs into LogCat.
+Use `CameraLogger.setLogLevel(LEVEL_INFO)` to see all logs into LogCat.
 
 Use `CameraLogger.registerLogger()` to export to file or crash reporting service.
 
