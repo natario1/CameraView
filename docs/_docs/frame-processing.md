@@ -16,10 +16,11 @@ cameraView.addFrameProcessor(new FrameProcessor() {
     @Override
     @WorkerThread
     public void process(@NonNull Frame frame) {
-        int rotation = frame.getRotation();
         long time = frame.getTime();
         Size size = frame.getSize();
         int format = frame.getFormat();
+        int userRotation = frame.getRotationToUser();
+        int viewRotation = frame.getRotationToView();
         if (frame.getDataClass() == byte[].class) {
             byte[] data = frame.getData();
             // Process byte array...
@@ -173,7 +174,8 @@ cameraView.setFrameProcessingPoolSize(3);
 |`frame.getDataClass()`|`Class<T>`|The class of the data returned by `getData()`. Either `byte[]` or `android.media.Image`.|
 |`frame.getData()`|`T`|The current preview frame, in its original orientation.|
 |`frame.getTime()`|`long`|The preview timestamp, in `System.currentTimeMillis()` reference.|
-|`frame.getRotation()`|`int`|The rotation that should be applied to the byte array in order to see what the user sees.|
+|`frame.getRotationToUser()`|`int`|The rotation that should be applied to the byte array in order to see what the user sees. Can be useful in the processing phase.|
+|`frame.getRotationToView()`|`int`|The rotation that should be applied to the byte array in order to match the View / Activity orientation. Can be useful in the drawing / rendering phase.|
 |`frame.getSize()`|`Size`|The frame size, before any rotation is applied, to access data.|
 |`frame.getFormat()`|`int`|The frame `ImageFormat`. Defaults to `ImageFormat.NV21` for Camera1 and `ImageFormat.YUV_420_888` for Camera2.|
 |`frame.freeze()`|`Frame`|Clones this frame and makes it immutable. Can be expensive because requires copying the byte array.|
