@@ -4,6 +4,9 @@ package com.otaliastudios.cameraview.frame;
 import android.graphics.ImageFormat;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.engine.offset.Angles;
+import com.otaliastudios.cameraview.engine.offset.Axis;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
@@ -16,9 +19,9 @@ import java.util.concurrent.LinkedBlockingQueue;
  * The FrameManager keeps a {@link #mPoolSize} integer that defines the number of instances to keep.
  *
  * Main methods are:
- * - {@link #setUp(int, Size)}: to set up with size and allocate buffers
+ * - {@link #setUp(int, Size, Angles)}: to set up with size and allocate buffers
  * - {@link #release()}: to release. After release, a manager can be setUp again.
- * - {@link #getFrame(Object, long, int)}: gets a new {@link Frame}.
+ * - {@link #getFrame(Object, long)}: gets a new {@link Frame}.
  *
  * For frames to get back to the FrameManager pool, all you have to do
  * is call {@link Frame#release()} when done.
@@ -34,11 +37,12 @@ public abstract class FrameManager<T> {
     private int mFrameFormat = -1;
     private final Class<T> mFrameDataClass;
     private LinkedBlockingQueue<Frame> mFrameQueue;
+    private Angles mAngles;
 
 
     /**
      * Construct a new frame manager.
-     * The construction must be followed by an {@link #setUp(int, Size)} call
+     * The construction must be followed by an {@link #setUp(int, Size, Angles)} call
      * as soon as the parameters are known.
      *
      * @param poolSize the size of the backing pool.
@@ -80,11 +84,11 @@ public abstract class FrameManager<T> {
      * the preview size and the image format value are known.
      *
      * This method can be called again after {@link #release()} has been called.
-     *
-     * @param format the image format
+     *  @param format the image format
      * @param size the frame size
+     * @param angles angle object
      */
-    public void setUp(int format, @NonNull Size size) {
+    public void setUp(int format, @NonNull Size size, @NonNull Angles angles) {
         if (isSetUp()) {
             // TODO throw or just reconfigure?
         }
@@ -96,10 +100,11 @@ public abstract class FrameManager<T> {
         for (int i = 0; i < getPoolSize(); i++) {
             mFrameQueue.offer(new Frame(this));
         }
+        mAngles = angles;
     }
 
     /**
-     * Returns true after {@link #setUp(int, Size)}
+     * Returns true after {@link #setUp(int, Size, Angles)}
      * but before {@link #release()}.
      * Returns false otherwise.
      *
@@ -111,16 +116,15 @@ public abstract class FrameManager<T> {
 
     /**
      * Returns a new Frame for the given data. This must be called
-     * - after {@link #setUp(int, Size)}, which sets the buffer size
+     * - after {@link #setUp(int, Size, Angles)}, which sets the buffer size
      * - after the T data has been filled
      *
      * @param data data
      * @param time timestamp
-     * @param rotation rotation
      * @return a new frame
      */
     @Nullable
-    public Frame getFrame(@NonNull T data, long time, int rotation) {
+    public Frame getFrame(@NonNull T data, long time) {
         if (!isSetUp()) {
             throw new IllegalStateException("Can't call getFrame() after releasing " +
                     "or before setUp.");
@@ -129,7 +133,11 @@ public abstract class FrameManager<T> {
         Frame frame = mFrameQueue.poll();
         if (frame != null) {
             LOG.v("getFrame for time:", time, "RECYCLING.");
-            frame.setContent(data, time, rotation, mFrameSize, mFrameFormat);
+            int userRotation = mAngles.offset(Reference.SENSOR, Reference.OUTPUT,
+                    Axis.RELATIVE_TO_SENSOR);
+            int viewRotation = mAngles.offset(Reference.SENSOR, Reference.VIEW,
+                    Axis.RELATIVE_TO_SENSOR);
+            frame.setContent(data, time, userRotation, viewRotation, mFrameSize, mFrameFormat);
             return frame;
         } else {
             LOG.i("getFrame for time:", time, "NOT AVAILABLE.");
@@ -183,5 +191,6 @@ public abstract class FrameManager<T> {
         mFrameBytes = -1;
         mFrameSize = null;
         mFrameFormat = -1;
+        mAngles = null;
     }
 }
