@@ -177,7 +177,7 @@ public abstract class BaseFilter implements Filter {
     }
 
     @Override
-    public void draw(long timestampUs, float[] transformMatrix) {
+    public void draw(long timestampUs, @NonNull float[] transformMatrix) {
         if (programHandle == -1) {
             LOG.w("Filter.draw() called after destroying the filter. " +
                     "This can happen rarely because of threading.");
@@ -188,7 +188,7 @@ public abstract class BaseFilter implements Filter {
         }
     }
 
-    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+    protected void onPreDraw(long timestampUs, @NonNull float[] transformMatrix) {
         // Copy the model / view / projection matrix over.
         GLES20.glUniformMatrix4fv(vertexModelViewProjectionMatrixLocation, 1,
                 false, GlUtils.IDENTITY_MATRIX, 0);
