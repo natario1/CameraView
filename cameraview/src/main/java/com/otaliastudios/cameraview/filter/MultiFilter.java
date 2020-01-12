@@ -237,7 +237,7 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
     }
 
     @Override
-    public void draw(long timestampUs, float[] transformMatrix) {
+    public void draw(long timestampUs, @NonNull float[] transformMatrix) {
         synchronized (lock) {
             for (int i = 0; i < filters.size(); i++) {
                 boolean isFirst = i == 0;

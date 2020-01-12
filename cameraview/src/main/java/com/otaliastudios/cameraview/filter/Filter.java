@@ -70,7 +70,7 @@ public interface Filter {
      * @param timestampUs timestamp in microseconds
      * @param transformMatrix matrix
      */
-    void draw(long timestampUs, float[] transformMatrix);
+    void draw(long timestampUs, @NonNull float[] transformMatrix);
 
     /**
      * Called anytime the output size changes.

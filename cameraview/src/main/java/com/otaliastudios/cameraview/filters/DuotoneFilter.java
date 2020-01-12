@@ -137,7 +137,7 @@ public class DuotoneFilter extends BaseFilter implements TwoParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+    protected void onPreDraw(long timestampUs, @NonNull float[] transformMatrix) {
         super.onPreDraw(timestampUs, transformMatrix);
         float[] first = new float[]{
                 Color.red(mFirstColor) / 255f,

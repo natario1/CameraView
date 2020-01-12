@@ -231,7 +231,7 @@ public class Camera1Engine extends CameraBaseEngine implements
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
-        getFrameManager().setUp(PREVIEW_FORMAT, mPreviewStreamSize);
+        getFrameManager().setUp(PREVIEW_FORMAT, mPreviewStreamSize, getAngles());
 
         LOG.i("onStartPreview", "Starting preview with startPreview().");
         try {
@@ -795,9 +795,7 @@ public class Camera1Engine extends CameraBaseEngine implements
             // Seen this happen in logs.
             return;
         }
-        int rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
-                Axis.RELATIVE_TO_SENSOR);
-        Frame frame = getFrameManager().getFrame(data, System.currentTimeMillis(), rotation);
+        Frame frame = getFrameManager().getFrame(data, System.currentTimeMillis());
         if (frame != null) {
             getCallback().dispatchFrame(frame);
         }

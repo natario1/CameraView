@@ -106,7 +106,7 @@ public class SaturationFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+    protected void onPreDraw(long timestampUs, @NonNull float[] transformMatrix) {
         super.onPreDraw(timestampUs, transformMatrix);
         if (scale > 0.0f) {
             GLES20.glUniform1f(scaleLocation, 0F);

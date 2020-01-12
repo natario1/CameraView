@@ -96,7 +96,7 @@ public class HueFilter extends BaseFilter implements OneParameterFilter {
     }
 
     @Override
-    protected void onPreDraw(long timestampUs, float[] transformMatrix) {
+    protected void onPreDraw(long timestampUs, @NonNull float[] transformMatrix) {
         super.onPreDraw(timestampUs, transformMatrix);
         // map it on 360 degree circle
         float shaderHue = ((hue - 45) / 45f + 0.5f) * -1;

@@ -4,6 +4,7 @@ package com.otaliastudios.cameraview.frame;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.otaliastudios.cameraview.engine.offset.Angles;
 import com.otaliastudios.cameraview.size.Size;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -21,14 +22,14 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * 1. {@link #BUFFER_MODE_DISPATCH}: in this mode, as soon as we have a buffer, it is dispatched to
  *    the {@link BufferCallback}. The callback should then fill the buffer, and finally call
- *    {@link FrameManager#getFrame(Object, long, int)} to receive a frame.
+ *    {@link FrameManager#getFrame(Object, long)} to receive a frame.
  *    This is used for Camera1.
  *
  * 2. {@link #BUFFER_MODE_ENQUEUE}: in this mode, the manager internally keeps a queue of byte
  *    buffers, instead of handing them to the callback. The users can ask for buffers through
  *    {@link #getBuffer()}.
  *    This buffer can be filled with data and used to get a frame
- *    {@link FrameManager#getFrame(Object, long, int)}, or, in case it was not filled, returned to
+ *    {@link FrameManager#getFrame(Object, long)}, or, in case it was not filled, returned to
  *    the queue using {@link #onBufferUnused(byte[])}.
  *    This is used for Camera2.
  */
@@ -60,7 +61,7 @@ public class ByteBufferFrameManager extends FrameManager<byte[]> {
 
     /**
      * Construct a new frame manager.
-     * The construction must be followed by an {@link #setUp(int, Size)} call
+     * The construction must be followed by an {@link FrameManager#setUp(int, Size, Angles)} call
      * as soon as the parameters are known.
      *
      * @param poolSize the size of the backing pool.
@@ -79,8 +80,8 @@ public class ByteBufferFrameManager extends FrameManager<byte[]> {
 
 
     @Override
-    public void setUp(int format, @NonNull Size size) {
-        super.setUp(format, size);
+    public void setUp(int format, @NonNull Size size, @NonNull Angles angles) {
+        super.setUp(format, size, angles);
         int bytes = getFrameBytes();
         for (int i = 0; i < getPoolSize(); i++) {
             if (mBufferMode == BUFFER_MODE_DISPATCH) {
@@ -97,7 +98,7 @@ public class ByteBufferFrameManager extends FrameManager<byte[]> {
      * manager also holds a queue of the byte buffers.
      *
      * If not null, the buffer returned by this method can be filled and used to get
-     * a new frame through {@link FrameManager#getFrame(Object, long, int)}.
+     * a new frame through {@link FrameManager#getFrame(Object, long)}.
      *
      * @return a buffer, or null
      */

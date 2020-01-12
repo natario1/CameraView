@@ -70,7 +70,6 @@ import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
-import java.io.FileDescriptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -609,7 +608,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         mPreview.setStreamSize(previewSizeForView.getWidth(), previewSizeForView.getHeight());
         mPreview.setDrawRotation(getAngles().offset(Reference.BASE, Reference.VIEW, Axis.ABSOLUTE));
         if (hasFrameProcessors()) {
-            getFrameManager().setUp(mFrameProcessingFormat, mFrameProcessingSize);
+            getFrameManager().setUp(mFrameProcessingFormat, mFrameProcessingSize, getAngles());
         }
 
         LOG.i("onStartPreview:", "Starting preview.");
@@ -1443,10 +1442,7 @@ public class Camera2Engine extends CameraBaseEngine implements
             // After preview, the frame manager is correctly set up
             //noinspection unchecked
             Frame frame = getFrameManager().getFrame(image,
-                    System.currentTimeMillis(),
-                    getAngles().offset(Reference.SENSOR,
-                            Reference.OUTPUT,
-                            Axis.RELATIVE_TO_SENSOR));
+                    System.currentTimeMillis());
             if (frame != null) {
                 LOG.v("onImageAvailable:", "Image acquired, dispatching.");
                 getCallback().dispatchFrame(frame);

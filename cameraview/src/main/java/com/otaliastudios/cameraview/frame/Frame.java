@@ -22,7 +22,8 @@ public class Frame {
     private Object mData = null;
     private long mTime = -1;
     private long mLastTime = -1;
-    private int mRotation = 0;
+    private int mUserRotation = 0;
+    private int mViewRotation = 0;
     private Size mSize = null;
     private int mFormat = -1;
 
@@ -31,13 +32,15 @@ public class Frame {
         mDataClass = manager.getFrameDataClass();
     }
 
-    void setContent(@NonNull Object data, long time, int rotation, @NonNull Size size, int format) {
-        this.mData = data;
-        this.mTime = time;
-        this.mLastTime = time;
-        this.mRotation = rotation;
-        this.mSize = size;
-        this.mFormat = format;
+    void setContent(@NonNull Object data, long time, int userRotation, int viewRotation,
+                    @NonNull Size size, int format) {
+        mData = data;
+        mTime = time;
+        mLastTime = time;
+        mUserRotation = userRotation;
+        mViewRotation = viewRotation;
+        mSize = size;
+        mFormat = format;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -75,7 +78,7 @@ public class Frame {
         Frame other = new Frame(mManager);
         //noinspection unchecked
         Object data = mManager.cloneFrameData(getData());
-        other.setContent(data, mTime, mRotation, mSize, mFormat);
+        other.setContent(data, mTime, mUserRotation, mViewRotation, mSize, mFormat);
         return other;
     }
 
@@ -88,7 +91,8 @@ public class Frame {
         LOG.v("Frame with time", mTime, "is being released.");
         Object data = mData;
         mData = null;
-        mRotation = 0;
+        mUserRotation = 0;
+        mViewRotation = 0;
         mTime = -1;
         mSize = null;
         mFormat = -1;
@@ -134,15 +138,35 @@ public class Frame {
     }
 
     /**
+     * @deprecated use {@link #getRotationToUser()} instead
+     */
+    @Deprecated
+    public int getRotation() {
+        return getRotationToUser();
+    }
+
+    /**
      * Returns the clock-wise rotation that should be applied on the data
      * array, such that the resulting frame matches what the user is seeing
-     * on screen.
+     * on screen. Knowing this can help in the processing phase.
      *
      * @return clock-wise rotation
      */
-    public int getRotation() {
+    public int getRotationToUser() {
         ensureHasContent();
-        return mRotation;
+        return mUserRotation;
+    }
+
+    /**
+     * Returns the clock-wise rotation that should be applied on the data
+     * array, such that the resulting frame matches the View / Activity orientation.
+     * Knowing this can help in the drawing / rendering phase.
+     *
+     * @return clock-wise rotation
+     */
+    public int getRotationToView() {
+        ensureHasContent();
+        return mViewRotation;
     }
 
     /**
