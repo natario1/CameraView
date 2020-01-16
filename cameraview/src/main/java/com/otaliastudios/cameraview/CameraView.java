@@ -206,6 +206,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
         int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
         float videoFrameRate = a.getFloat(R.styleable.CameraView_cameraPreviewFrameRate, 0);
+        boolean videoFrameRateExact = a.getBoolean(R.styleable.CameraView_cameraPreviewFrameRateExact, false);
         long autoFocusResetDelay = (long) a.getInteger(
                 R.styleable.CameraView_cameraAutoFocusResetDelay,
                 (int) DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS);
@@ -277,6 +278,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoMaxDuration(videoMaxDuration);
         setVideoBitRate(videoBitRate);
         setAutoFocusResetDelay(autoFocusResetDelay);
+        setPreviewFrameRateExact(videoFrameRateExact);
         setPreviewFrameRate(videoFrameRate);
         setSnapshotMaxWidth(snapshotMaxWidth);
         setSnapshotMaxHeight(snapshotMaxHeight);
@@ -1541,6 +1543,24 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @SuppressWarnings("unused")
     public int getVideoBitRate() {
         return mCameraEngine.getVideoBitRate();
+    }
+
+    /**
+     * A flag to control the behavior when calling {@link #setPreviewFrameRate(float)}.
+     *
+     * If the value is set to true, {@link #setPreviewFrameRate(float)} will choose the preview
+     * frame range as close to the desired new frame rate as possible. Which mean it may choose a
+     * narrow range around the desired frame rate.
+     *
+     * If the value is set to false, {@link #setPreviewFrameRate(float)} will choose as broad range
+     * as it can.
+     *
+     * @param videoFrameRateExact whether want a more exact preview frame range
+     *
+     * @see #setPreviewFrameRate(float)
+     */
+    private void setPreviewFrameRateExact(boolean videoFrameRateExact) {
+        mCameraEngine.setPreviewFrameRateExact(videoFrameRateExact);
     }
 
     /**

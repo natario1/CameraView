@@ -71,6 +71,8 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -1354,6 +1356,11 @@ public class Camera2Engine extends CameraBaseEngine implements
     }
 
     @Override
+    public void setPreviewFrameRateExact(boolean previewFrameRateExact) {
+        mPreviewFrameRateExact = previewFrameRateExact;
+    }
+
+    @Override
     public void setPreviewFrameRate(float previewFrameRate) {
         final float oldPreviewFrameRate = mPreviewFrameRate;
         mPreviewFrameRate = previewFrameRate;
@@ -1387,6 +1394,7 @@ public class Camera2Engine extends CameraBaseEngine implements
                 }
             }
         } else {
+            sortRanges(fpsRanges);
             // If out of boundaries, adjust it.
             mPreviewFrameRate = Math.min(mPreviewFrameRate,
                     mCameraOptions.getPreviewFrameRateMaxValue());
@@ -1401,6 +1409,26 @@ public class Camera2Engine extends CameraBaseEngine implements
         }
         mPreviewFrameRate = oldPreviewFrameRate;
         return false;
+    }
+
+    private void sortRanges(Range<Integer>[] fpsRanges) {
+        if (mPreviewFrameRateExact) {
+            Arrays.sort(fpsRanges, new Comparator<Range<Integer>>() {
+                @Override
+                public int compare(Range<Integer> range1, Range<Integer> range2) {
+                    return (range1.getUpper() - range1.getLower())
+                            - (range2.getUpper() - range2.getLower());
+                }
+            });
+        } else {
+            Arrays.sort(fpsRanges, new Comparator<Range<Integer>>() {
+                @Override
+                public int compare(Range<Integer> range1, Range<Integer> range2) {
+                    return (range2.getUpper() - range2.getLower())
+                            - (range1.getUpper() - range1.getLower());
+                }
+            });
+        }
     }
 
     @Override

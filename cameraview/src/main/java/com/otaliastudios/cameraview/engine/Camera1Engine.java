@@ -52,6 +52,7 @@ import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -697,6 +698,11 @@ public class Camera1Engine extends CameraBaseEngine implements
     }
 
     @Override
+    public void setPreviewFrameRateExact(boolean previewFrameRateExact) {
+        mPreviewFrameRateExact = previewFrameRateExact;
+    }
+
+    @Override
     public void setPreviewFrameRate(float previewFrameRate) {
         final float old = previewFrameRate;
         mPreviewFrameRate = previewFrameRate;
@@ -726,6 +732,7 @@ public class Camera1Engine extends CameraBaseEngine implements
                 }
             }
         } else {
+            sortRanges(fpsRanges);
             // If out of boundaries, adjust it.
             mPreviewFrameRate = Math.min(mPreviewFrameRate,
                     mCameraOptions.getPreviewFrameRateMaxValue());
@@ -743,6 +750,24 @@ public class Camera1Engine extends CameraBaseEngine implements
         }
         mPreviewFrameRate = oldPreviewFrameRate;
         return false;
+    }
+
+    private void sortRanges(List<int[]> fpsRanges) {
+        if (mPreviewFrameRateExact) { // sort by range width in ascending order
+            Collections.sort(fpsRanges, new Comparator<int[]>() {
+                @Override
+                public int compare(int[] range1, int[] range2) {
+                    return (range1[1] - range1[0]) - (range2[1] - range2[0]);
+                }
+            });
+        } else { // sort by range width in descending order
+            Collections.sort(fpsRanges, new Comparator<int[]>() {
+                @Override
+                public int compare(int[] range1, int[] range2) {
+                    return (range2[1] - range2[0]) - (range1[1] - range1[0]);
+                }
+            });
+        }
     }
 
     @Override

@@ -690,6 +690,7 @@ public abstract class CameraEngine implements
     public abstract void setPictureFormat(@NonNull PictureFormat pictureFormat);
     @NonNull public abstract PictureFormat getPictureFormat();
 
+    public abstract void setPreviewFrameRateExact(boolean previewFrameRateExact);
     public abstract void setPreviewFrameRate(float previewFrameRate);
     public abstract float getPreviewFrameRate();
 
