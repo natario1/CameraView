@@ -748,7 +748,7 @@ public class Camera1Engine extends CameraBaseEngine implements
     }
 
     private void sortRanges(List<int[]> fpsRanges) {
-        if (mPreviewFrameRateExact && mPreviewFrameRate != 0F) { // sort by range width in ascending order
+        if (getPreviewFrameRateExact() && mPreviewFrameRate != 0F) { // sort by range width in ascending order
             Collections.sort(fpsRanges, new Comparator<int[]>() {
                 @Override
                 public int compare(int[] range1, int[] range2) {
