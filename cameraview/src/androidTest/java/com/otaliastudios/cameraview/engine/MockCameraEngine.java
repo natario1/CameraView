@@ -212,9 +212,4 @@ public class MockCameraEngine extends CameraBaseEngine {
     @Override public void setPreviewFrameRate(float previewFrameRate) {
         mPreviewFrameRate = previewFrameRate;
     }
-
-    @Override
-    public void setPreviewFrameRateExact(boolean previewFrameRateExact) {
-        mPreviewFrameRateExact = previewFrameRateExact;
-    }
 }
