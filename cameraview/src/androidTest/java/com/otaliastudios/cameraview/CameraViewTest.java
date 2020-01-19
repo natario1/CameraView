@@ -839,7 +839,7 @@ public class CameraViewTest extends BaseTest {
         cameraView.setPreviewFrameRateExact(true);
         assertTrue(cameraView.getPreviewFrameRateExact());
         cameraView.setPreviewFrameRateExact(false);
-        assertTrue(cameraView.getPreviewFrameRateExact());
+        assertFalse(cameraView.getPreviewFrameRateExact());
     }
 
     @Test
