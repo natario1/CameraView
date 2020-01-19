@@ -182,6 +182,10 @@ td {
 
 /* page and content */
 
+.content p {
+    overflow-x: auto; /* for changelog compare links */
+}
+
 .content a, footer a {
     color: var(--color-accent);
 }
