@@ -206,6 +206,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int videoBitRate = a.getInteger(R.styleable.CameraView_cameraVideoBitRate, 0);
         int audioBitRate = a.getInteger(R.styleable.CameraView_cameraAudioBitRate, 0);
         float videoFrameRate = a.getFloat(R.styleable.CameraView_cameraPreviewFrameRate, 0);
+        boolean videoFrameRateExact = a.getBoolean(R.styleable.CameraView_cameraPreviewFrameRateExact, false);
         long autoFocusResetDelay = (long) a.getInteger(
                 R.styleable.CameraView_cameraAutoFocusResetDelay,
                 (int) DEFAULT_AUTOFOCUS_RESET_DELAY_MILLIS);
@@ -277,6 +278,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoMaxDuration(videoMaxDuration);
         setVideoBitRate(videoBitRate);
         setAutoFocusResetDelay(autoFocusResetDelay);
+        setPreviewFrameRateExact(videoFrameRateExact);
         setPreviewFrameRate(videoFrameRate);
         setSnapshotMaxWidth(snapshotMaxWidth);
         setSnapshotMaxHeight(snapshotMaxHeight);
@@ -999,6 +1001,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoBitRate(oldEngine.getVideoBitRate());
         setAutoFocusResetDelay(oldEngine.getAutoFocusResetDelay());
         setPreviewFrameRate(oldEngine.getPreviewFrameRate());
+        setPreviewFrameRateExact(oldEngine.getPreviewFrameRateExact());
         setSnapshotMaxWidth(oldEngine.getSnapshotMaxWidth());
         setSnapshotMaxHeight(oldEngine.getSnapshotMaxHeight());
         setFrameProcessingMaxWidth(oldEngine.getFrameProcessingMaxWidth());
@@ -1541,6 +1544,38 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @SuppressWarnings("unused")
     public int getVideoBitRate() {
         return mCameraEngine.getVideoBitRate();
+    }
+
+    /**
+     * A flag to control the behavior when calling {@link #setPreviewFrameRate(float)}.
+     *
+     * If the value is set to true, {@link #setPreviewFrameRate(float)} will choose the preview
+     * frame range as close to the desired new frame rate as possible. Which mean it may choose a
+     * narrow range around the desired frame rate. Note: This option will give you as exact fps as
+     * you want but the sensor will have less freedom when adapting the exposure to the environment,
+     * which may lead to dark preview.
+     *
+     * If the value is set to false, {@link #setPreviewFrameRate(float)} will choose as broad range
+     * as it can.
+     *
+     * @param videoFrameRateExact whether want a more exact preview frame range
+     *
+     * @see #setPreviewFrameRate(float)
+     */
+    public void setPreviewFrameRateExact(boolean videoFrameRateExact) {
+        mCameraEngine.setPreviewFrameRateExact(videoFrameRateExact);
+    }
+
+    /**
+     * Returns whether we want to set preview fps as exact as we set through
+     * {@link #setPreviewFrameRate(float)}.
+     *
+     * @see #setPreviewFrameRateExact(boolean)
+     * @see #setPreviewFrameRate(float)
+     * @return current option
+     */
+    public boolean getPreviewFrameRateExact() {
+        return mCameraEngine.getPreviewFrameRateExact();
     }
 
     /**

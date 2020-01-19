@@ -52,6 +52,7 @@ import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -715,6 +716,7 @@ public class Camera1Engine extends CameraBaseEngine implements
     private boolean applyPreviewFrameRate(@NonNull Camera.Parameters params,
                                           float oldPreviewFrameRate) {
         List<int[]> fpsRanges = params.getSupportedPreviewFpsRange();
+        sortRanges(fpsRanges);
         if (mPreviewFrameRate == 0F) {
             // 0F is a special value. Fallback to a reasonable default.
             for (int[] fpsRange : fpsRanges) {
@@ -743,6 +745,24 @@ public class Camera1Engine extends CameraBaseEngine implements
         }
         mPreviewFrameRate = oldPreviewFrameRate;
         return false;
+    }
+
+    private void sortRanges(List<int[]> fpsRanges) {
+        if (getPreviewFrameRateExact() && mPreviewFrameRate != 0F) { // sort by range width in ascending order
+            Collections.sort(fpsRanges, new Comparator<int[]>() {
+                @Override
+                public int compare(int[] range1, int[] range2) {
+                    return (range1[1] - range1[0]) - (range2[1] - range2[0]);
+                }
+            });
+        } else { // sort by range width in descending order
+            Collections.sort(fpsRanges, new Comparator<int[]>() {
+                @Override
+                public int compare(int[] range1, int[] range2) {
+                    return (range2[1] - range2[0]) - (range1[1] - range1[0]);
+                }
+            });
+        }
     }
 
     @Override

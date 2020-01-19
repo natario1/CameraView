@@ -177,6 +177,7 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getFrameProcessingMaxWidth(), 0);
         assertEquals(cameraView.getFrameProcessingMaxHeight(), 0);
         assertEquals(cameraView.getFrameProcessingFormat(), 0);
+        assertFalse(cameraView.getPreviewFrameRateExact());
 
         // Self managed
         GestureParser gestures = new GestureParser(empty);
@@ -831,6 +832,14 @@ public class CameraViewTest extends BaseTest {
     public void testPreviewFrameRate() {
         cameraView.setPreviewFrameRate(60);
         assertEquals(cameraView.getPreviewFrameRate(), 60, 0);
+    }
+
+    @Test
+    public void testPreviewFrameRateExact() {
+        cameraView.setPreviewFrameRateExact(true);
+        assertTrue(cameraView.getPreviewFrameRateExact());
+        cameraView.setPreviewFrameRateExact(false);
+        assertFalse(cameraView.getPreviewFrameRateExact());
     }
 
     @Test

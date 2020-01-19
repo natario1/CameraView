@@ -70,6 +70,7 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @SuppressWarnings("WeakerAccess") protected boolean mPictureMetering;
     @SuppressWarnings("WeakerAccess") protected boolean mPictureSnapshotMetering;
     @SuppressWarnings("WeakerAccess") protected float mPreviewFrameRate;
+    @SuppressWarnings("WeakerAccess") private boolean mPreviewFrameRateExact;
 
     private FrameManager mFrameManager;
     private final Angles mAngles = new Angles();
@@ -439,6 +440,16 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @Override
     public final PictureFormat getPictureFormat() {
         return mPictureFormat;
+    }
+
+    @Override
+    public final void setPreviewFrameRateExact(boolean previewFrameRateExact) {
+        mPreviewFrameRateExact = previewFrameRateExact;
+    }
+
+    @Override
+    public final boolean getPreviewFrameRateExact() {
+        return mPreviewFrameRateExact;
     }
 
     @Override

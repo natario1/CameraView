@@ -71,6 +71,8 @@ import com.otaliastudios.cameraview.video.Full2VideoRecorder;
 import com.otaliastudios.cameraview.video.SnapshotVideoRecorder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -1378,6 +1380,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         Range<Integer>[] fpsRanges = readCharacteristic(
                 CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
                 fallback);
+        sortRanges(fpsRanges);
         if (mPreviewFrameRate == 0F) {
             // 0F is a special value. Fallback to a reasonable default.
             for (Range<Integer> fpsRange : fpsRanges) {
@@ -1401,6 +1404,26 @@ public class Camera2Engine extends CameraBaseEngine implements
         }
         mPreviewFrameRate = oldPreviewFrameRate;
         return false;
+    }
+
+    private void sortRanges(Range<Integer>[] fpsRanges) {
+        if (getPreviewFrameRateExact() && mPreviewFrameRate != 0) { // sort by range width in ascending order
+            Arrays.sort(fpsRanges, new Comparator<Range<Integer>>() {
+                @Override
+                public int compare(Range<Integer> range1, Range<Integer> range2) {
+                    return (range1.getUpper() - range1.getLower())
+                            - (range2.getUpper() - range2.getLower());
+                }
+            });
+        } else { // sort by range width in descending order
+            Arrays.sort(fpsRanges, new Comparator<Range<Integer>>() {
+                @Override
+                public int compare(Range<Integer> range1, Range<Integer> range2) {
+                    return (range2.getUpper() - range2.getLower())
+                            - (range1.getUpper() - range1.getLower());
+                }
+            });
+        }
     }
 
     @Override

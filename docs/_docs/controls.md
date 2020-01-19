@@ -29,7 +29,8 @@ or `CameraOptions.supports(Control)` to see if it is supported.
     app:cameraVideoMaxSize="0"
     app:cameraVideoMaxDuration="0"
     app:cameraVideoBitRate="0"
-    app:cameraPreviewFrameRate="30"/>
+    app:cameraPreviewFrameRate="30"
+    app:cameraPreviewFrameRateExact="false|true"/>
 ```
 
 ### APIs
@@ -178,6 +179,18 @@ The available values are exposed through the `CameraOptions` object:
 ```java
 float min = options.getPreviewFrameRateMinValue();
 float max = options.getPreviewFrameRateMaxValue();
+```
+
+##### cameraPreviewFrameRateExact
+Controls the behavior of `cameraPreviewFrameRate`. If this option is set to `true`, the narrowest
+range containing the new preview fps will be used. If this option is set to `false` the broadest
+range containing the new preview fps will be used. Note: If set this option to true, it will give as
+exact preview fps as you want, but the sensor will have less freedom when adapting the exposure to
+the environment, which may lead to dark preview.
+
+```java
+cameraView.setPreviewFrameRateExact(true);
+cameraView.setPreviewFrameRageExact(false);
 ```
 
 ### Zoom

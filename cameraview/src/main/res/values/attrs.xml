@@ -34,6 +34,7 @@
         <attr name="cameraVideoBitRate" format="integer|reference" />
         <attr name="cameraAudioBitRate" format="integer|reference" />
         <attr name="cameraPreviewFrameRate" format="integer|reference" />
+        <attr name="cameraPreviewFrameRateExact" format="boolean" />
 
         <attr name="cameraGestureTap" format="enum">
             <enum name="none" value="0" />
