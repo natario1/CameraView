@@ -1356,11 +1356,6 @@ public class Camera2Engine extends CameraBaseEngine implements
     }
 
     @Override
-    public void setPreviewFrameRateExact(boolean previewFrameRateExact) {
-        mPreviewFrameRateExact = previewFrameRateExact;
-    }
-
-    @Override
     public void setPreviewFrameRate(float previewFrameRate) {
         final float oldPreviewFrameRate = mPreviewFrameRate;
         mPreviewFrameRate = previewFrameRate;
@@ -1385,6 +1380,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         Range<Integer>[] fpsRanges = readCharacteristic(
                 CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
                 fallback);
+        sortRanges(fpsRanges);
         if (mPreviewFrameRate == 0F) {
             // 0F is a special value. Fallback to a reasonable default.
             for (Range<Integer> fpsRange : fpsRanges) {
@@ -1394,7 +1390,6 @@ public class Camera2Engine extends CameraBaseEngine implements
                 }
             }
         } else {
-            sortRanges(fpsRanges);
             // If out of boundaries, adjust it.
             mPreviewFrameRate = Math.min(mPreviewFrameRate,
                     mCameraOptions.getPreviewFrameRateMaxValue());
@@ -1412,7 +1407,7 @@ public class Camera2Engine extends CameraBaseEngine implements
     }
 
     private void sortRanges(Range<Integer>[] fpsRanges) {
-        if (mPreviewFrameRateExact) {
+        if (mPreviewFrameRateExact && mPreviewFrameRate != 0) { // sort by range width in ascending order
             Arrays.sort(fpsRanges, new Comparator<Range<Integer>>() {
                 @Override
                 public int compare(Range<Integer> range1, Range<Integer> range2) {
@@ -1420,7 +1415,7 @@ public class Camera2Engine extends CameraBaseEngine implements
                             - (range2.getUpper() - range2.getLower());
                 }
             });
-        } else {
+        } else { // sort by range width in descending order
             Arrays.sort(fpsRanges, new Comparator<Range<Integer>>() {
                 @Override
                 public int compare(Range<Integer> range1, Range<Integer> range2) {

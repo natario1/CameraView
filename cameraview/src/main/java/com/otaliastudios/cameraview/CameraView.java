@@ -1001,6 +1001,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoBitRate(oldEngine.getVideoBitRate());
         setAutoFocusResetDelay(oldEngine.getAutoFocusResetDelay());
         setPreviewFrameRate(oldEngine.getPreviewFrameRate());
+        setPreviewFrameRateExact(oldEngine.getPreviewFrameRateExact());
         setSnapshotMaxWidth(oldEngine.getSnapshotMaxWidth());
         setSnapshotMaxHeight(oldEngine.getSnapshotMaxHeight());
         setFrameProcessingMaxWidth(oldEngine.getFrameProcessingMaxWidth());
@@ -1550,7 +1551,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * If the value is set to true, {@link #setPreviewFrameRate(float)} will choose the preview
      * frame range as close to the desired new frame rate as possible. Which mean it may choose a
-     * narrow range around the desired frame rate.
+     * narrow range around the desired frame rate. Note: This option will give you as exact fps as
+     * you want but the sensor will have less freedom when adapting the exposure to the environment,
+     * which may lead to dark preview.
      *
      * If the value is set to false, {@link #setPreviewFrameRate(float)} will choose as broad range
      * as it can.
@@ -1559,8 +1562,20 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @see #setPreviewFrameRate(float)
      */
-    private void setPreviewFrameRateExact(boolean videoFrameRateExact) {
+    public void setPreviewFrameRateExact(boolean videoFrameRateExact) {
         mCameraEngine.setPreviewFrameRateExact(videoFrameRateExact);
+    }
+
+    /**
+     * Returns whether we want to set preview fps as exact as we set through
+     * {@link #setPreviewFrameRate(float)}.
+     *
+     * @see #setPreviewFrameRateExact(boolean)
+     * @see #setPreviewFrameRate(float)
+     * @return current option
+     */
+    public boolean getPreviewFrameRateExact() {
+        return mCameraEngine.getPreviewFrameRateExact();
     }
 
     /**

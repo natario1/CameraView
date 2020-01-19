@@ -443,6 +443,16 @@ public abstract class CameraBaseEngine extends CameraEngine {
     }
 
     @Override
+    public final void setPreviewFrameRateExact(boolean previewFrameRateExact) {
+        mPreviewFrameRateExact = previewFrameRateExact;
+    }
+
+    @Override
+    public final boolean getPreviewFrameRateExact() {
+        return mPreviewFrameRateExact;
+    }
+
+    @Override
     public final float getPreviewFrameRate() {
         return mPreviewFrameRate;
     }

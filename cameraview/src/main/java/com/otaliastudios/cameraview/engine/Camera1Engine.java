@@ -698,11 +698,6 @@ public class Camera1Engine extends CameraBaseEngine implements
     }
 
     @Override
-    public void setPreviewFrameRateExact(boolean previewFrameRateExact) {
-        mPreviewFrameRateExact = previewFrameRateExact;
-    }
-
-    @Override
     public void setPreviewFrameRate(float previewFrameRate) {
         final float old = previewFrameRate;
         mPreviewFrameRate = previewFrameRate;
@@ -721,6 +716,7 @@ public class Camera1Engine extends CameraBaseEngine implements
     private boolean applyPreviewFrameRate(@NonNull Camera.Parameters params,
                                           float oldPreviewFrameRate) {
         List<int[]> fpsRanges = params.getSupportedPreviewFpsRange();
+        sortRanges(fpsRanges);
         if (mPreviewFrameRate == 0F) {
             // 0F is a special value. Fallback to a reasonable default.
             for (int[] fpsRange : fpsRanges) {
@@ -732,7 +728,6 @@ public class Camera1Engine extends CameraBaseEngine implements
                 }
             }
         } else {
-            sortRanges(fpsRanges);
             // If out of boundaries, adjust it.
             mPreviewFrameRate = Math.min(mPreviewFrameRate,
                     mCameraOptions.getPreviewFrameRateMaxValue());
@@ -753,7 +748,7 @@ public class Camera1Engine extends CameraBaseEngine implements
     }
 
     private void sortRanges(List<int[]> fpsRanges) {
-        if (mPreviewFrameRateExact) { // sort by range width in ascending order
+        if (mPreviewFrameRateExact && mPreviewFrameRate != 0F) { // sort by range width in ascending order
             Collections.sort(fpsRanges, new Comparator<int[]>() {
                 @Override
                 public int compare(int[] range1, int[] range2) {
