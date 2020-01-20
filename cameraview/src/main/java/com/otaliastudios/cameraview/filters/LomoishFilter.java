@@ -5,7 +5,7 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
-import com.otaliastudios.cameraview.internal.GlUtils;
+import com.otaliastudios.opengl.core.Egloo;
 
 import java.util.Random;
 
@@ -122,13 +122,13 @@ public class LomoishFilter extends BaseFilter {
     public void onCreate(int programHandle) {
         super.onCreate(programHandle);
         scaleLocation = GLES20.glGetUniformLocation(programHandle, "scale");
-        GlUtils.checkLocation(scaleLocation, "scale");
+        Egloo.checkGlProgramLocation(scaleLocation, "scale");
         maxDistLocation = GLES20.glGetUniformLocation(programHandle, "inv_max_dist");
-        GlUtils.checkLocation(maxDistLocation, "inv_max_dist");
+        Egloo.checkGlProgramLocation(maxDistLocation, "inv_max_dist");
         stepSizeXLocation = GLES20.glGetUniformLocation(programHandle, "stepsizeX");
-        GlUtils.checkLocation(stepSizeXLocation, "stepsizeX");
+        Egloo.checkGlProgramLocation(stepSizeXLocation, "stepsizeX");
         stepSizeYLocation = GLES20.glGetUniformLocation(programHandle, "stepsizeY");
-        GlUtils.checkLocation(stepSizeYLocation, "stepsizeY");
+        Egloo.checkGlProgramLocation(stepSizeYLocation, "stepsizeY");
     }
 
     @Override
@@ -153,12 +153,12 @@ public class LomoishFilter extends BaseFilter {
         }
         float maxDist = ((float) Math.sqrt(scale[0] * scale[0] + scale[1] * scale[1])) * 0.5f;
         GLES20.glUniform2fv(scaleLocation, 1, scale, 0);
-        GlUtils.checkError("glUniform2fv");
+        Egloo.checkGlError("glUniform2fv");
         GLES20.glUniform1f(maxDistLocation, 1.0F / maxDist);
-        GlUtils.checkError("glUniform1f");
+        Egloo.checkGlError("glUniform1f");
         GLES20.glUniform1f(stepSizeXLocation, 1.0F / width);
-        GlUtils.checkError("glUniform1f");
+        Egloo.checkGlError("glUniform1f");
         GLES20.glUniform1f(stepSizeYLocation, 1.0F / height);
-        GlUtils.checkError("glUniform1f");
+        Egloo.checkGlError("glUniform1f");
     }
 }

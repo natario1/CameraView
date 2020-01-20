@@ -5,7 +5,7 @@ import android.opengl.GLES20;
 import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
-import com.otaliastudios.cameraview.internal.GlUtils;
+import com.otaliastudios.opengl.core.Egloo;
 
 import java.util.Random;
 
@@ -80,9 +80,9 @@ public class DocumentaryFilter extends BaseFilter {
     public void onCreate(int programHandle) {
         super.onCreate(programHandle);
         mScaleLocation = GLES20.glGetUniformLocation(programHandle, "scale");
-        GlUtils.checkLocation(mScaleLocation, "scale");
+        Egloo.checkGlProgramLocation(mScaleLocation, "scale");
         mMaxDistLocation = GLES20.glGetUniformLocation(programHandle, "inv_max_dist");
-        GlUtils.checkLocation(mMaxDistLocation, "inv_max_dist");
+        Egloo.checkGlProgramLocation(mMaxDistLocation, "inv_max_dist");
     }
 
     @Override
@@ -104,12 +104,12 @@ public class DocumentaryFilter extends BaseFilter {
             scale[1] = 1f;
         }
         GLES20.glUniform2fv(mScaleLocation, 1, scale, 0);
-        GlUtils.checkError("glUniform2fv");
+        Egloo.checkGlError("glUniform2fv");
 
         float maxDist = ((float) Math.sqrt(scale[0] * scale[0] + scale[1] * scale[1])) * 0.5f;
         float invMaxDist = 1F / maxDist;
         GLES20.glUniform1f(mMaxDistLocation, invMaxDist);
-        GlUtils.checkError("glUniform1f");
+        Egloo.checkGlError("glUniform1f");
 
     }
 }

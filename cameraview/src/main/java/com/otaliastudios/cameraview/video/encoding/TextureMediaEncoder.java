@@ -229,7 +229,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
                 "hasReachedMaxLength:", hasReachedMaxLength(),
                 "thread:", Thread.currentThread(),
                 "- gl rendering.");
-        mViewport.drawFrame(frame.timestampUs(), mConfig.textureId, transform);
+        mViewport.draw(frame.timestampUs(), mConfig.textureId, transform);
         if (mConfig.hasOverlay()) {
             mConfig.overlayDrawer.render(frame.timestampUs());
         }

@@ -25,7 +25,6 @@ import androidx.annotation.RequiresApi;
 import android.util.Log;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.internal.GlUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -188,7 +187,7 @@ public class EglBaseSurface {
         buf.order(ByteOrder.LITTLE_ENDIAN);
         GLES20.glReadPixels(0, 0, width, height,
                 GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
-        GlUtils.checkError("glReadPixels");
+        Egloo.checkGlError("glReadPixels");
         buf.rewind();
 
         BufferedOutputStream bos = null;
@@ -231,7 +230,7 @@ public class EglBaseSurface {
         buf.order(ByteOrder.LITTLE_ENDIAN);
         GLES20.glReadPixels(0, 0, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,
                 buf);
-        GlUtils.checkError("glReadPixels");
+        Egloo.checkGlError("glReadPixels");
         buf.rewind();
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream(buf.array().length);
