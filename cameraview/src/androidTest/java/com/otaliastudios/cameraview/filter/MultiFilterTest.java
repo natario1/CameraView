@@ -11,8 +11,8 @@ import com.otaliastudios.cameraview.filters.AutoFixFilter;
 import com.otaliastudios.cameraview.filters.BrightnessFilter;
 import com.otaliastudios.cameraview.filters.DuotoneFilter;
 import com.otaliastudios.cameraview.filters.VignetteFilter;
-import com.otaliastudios.cameraview.internal.GlUtils;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
+import com.otaliastudios.opengl.program.GlProgram;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -127,7 +127,7 @@ public class MultiFilterTest extends BaseEglTest {
         DuotoneFilter filter = spy(new DuotoneFilter());
         MultiFilter multiFilter = new MultiFilter(filter);
 
-        int program = GlUtils.createProgram(multiFilter.getVertexShader(),
+        int program = GlProgram.create(multiFilter.getVertexShader(),
                 multiFilter.getFragmentShader());
         multiFilter.onCreate(program);
         verify(filter, never()).onCreate(anyInt());
@@ -145,7 +145,7 @@ public class MultiFilterTest extends BaseEglTest {
         EglViewport viewport = new EglViewport(multiFilter);
         int texture = viewport.createTexture();
         float[] matrix = new float[16];
-        viewport.drawFrame(0L, texture, matrix);
+        viewport.draw(0L, texture, matrix);
         viewport.release();
 
         // The child should have experienced the whole lifecycle.
@@ -173,7 +173,7 @@ public class MultiFilterTest extends BaseEglTest {
             public Object answer(InvocationOnMock invocation) {
                 MultiFilter.State state = multiFilter.states.get(filter1);
                 assertNotNull(state);
-                assertTrue(state.isCreated);
+                assertTrue(state.isProgramCreated);
                 assertTrue(state.isFramebufferCreated);
 
                 GLES20.glGetIntegerv(GLES20.GL_FRAMEBUFFER_BINDING, result, 0);
@@ -189,7 +189,7 @@ public class MultiFilterTest extends BaseEglTest {
                 // The last filter has no FBO / texture.
                 MultiFilter.State state = multiFilter.states.get(filter2);
                 assertNotNull(state);
-                assertTrue(state.isCreated);
+                assertTrue(state.isProgramCreated);
                 assertFalse(state.isFramebufferCreated);
 
                 GLES20.glGetIntegerv(GLES20.GL_FRAMEBUFFER_BINDING, result, 0);
@@ -201,7 +201,7 @@ public class MultiFilterTest extends BaseEglTest {
 
         EglViewport viewport = new EglViewport(multiFilter);
         int texture = viewport.createTexture();
-        viewport.drawFrame(0L, texture, matrix);
+        viewport.draw(0L, texture, matrix);
         viewport.release();
 
         // Verify that both are drawn.

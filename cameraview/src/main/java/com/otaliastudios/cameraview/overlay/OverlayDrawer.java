@@ -105,7 +105,7 @@ public class OverlayDrawer {
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         synchronized (mIssue514WorkaroundLock) {
-            mViewport.drawFrame(timestampUs, mTextureId, mTransform);
+            mViewport.draw(timestampUs, mTextureId, mTransform);
         }
     }
 

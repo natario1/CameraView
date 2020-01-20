@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
 import com.otaliastudios.cameraview.filter.OneParameterFilter;
-import com.otaliastudios.cameraview.internal.GlUtils;
+import com.otaliastudios.opengl.core.Egloo;
 
 /**
  * Sharpens the input frames.
@@ -100,11 +100,11 @@ public class SharpnessFilter extends BaseFilter implements OneParameterFilter {
     public void onCreate(int programHandle) {
         super.onCreate(programHandle);
         scaleLocation = GLES20.glGetUniformLocation(programHandle, "scale");
-        GlUtils.checkLocation(scaleLocation, "scale");
+        Egloo.checkGlProgramLocation(scaleLocation, "scale");
         stepSizeXLocation = GLES20.glGetUniformLocation(programHandle, "stepsizeX");
-        GlUtils.checkLocation(stepSizeXLocation, "stepsizeX");
+        Egloo.checkGlProgramLocation(stepSizeXLocation, "stepsizeX");
         stepSizeYLocation = GLES20.glGetUniformLocation(programHandle, "stepsizeY");
-        GlUtils.checkLocation(stepSizeYLocation, "stepsizeY");
+        Egloo.checkGlProgramLocation(stepSizeYLocation, "stepsizeY");
     }
 
     @Override
@@ -119,10 +119,10 @@ public class SharpnessFilter extends BaseFilter implements OneParameterFilter {
     protected void onPreDraw(long timestampUs, @NonNull float[] transformMatrix) {
         super.onPreDraw(timestampUs, transformMatrix);
         GLES20.glUniform1f(scaleLocation, scale);
-        GlUtils.checkError("glUniform1f");
+        Egloo.checkGlError("glUniform1f");
         GLES20.glUniform1f(stepSizeXLocation, 1.0F / width);
-        GlUtils.checkError("glUniform1f");
+        Egloo.checkGlError("glUniform1f");
         GLES20.glUniform1f(stepSizeYLocation, 1.0F / height);
-        GlUtils.checkError("glUniform1f");
+        Egloo.checkGlError("glUniform1f");
     }
 }

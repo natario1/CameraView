@@ -1,1 +1,3 @@
 include ':demo', ':cameraview'
+include ':egloo'
+project(':egloo').projectDir = file('../Egloo/library')

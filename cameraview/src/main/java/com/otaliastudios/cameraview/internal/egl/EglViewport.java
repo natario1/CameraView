@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filter.NoFilter;
-import com.otaliastudios.cameraview.internal.GlUtils;
+import com.otaliastudios.opengl.program.GlProgram;
 
 
 public class EglViewport {
@@ -35,7 +35,7 @@ public class EglViewport {
     }
 
     private void createProgram() {
-        mProgramHandle = GlUtils.createProgram(mFilter.getVertexShader(),
+        mProgramHandle = GlProgram.create(mFilter.getVertexShader(),
                 mFilter.getFragmentShader());
         mFilter.onCreate(mProgramHandle);
     }
@@ -51,12 +51,12 @@ public class EglViewport {
     public int createTexture() {
         int[] textures = new int[1];
         GLES20.glGenTextures(1, textures, 0);
-        GlUtils.checkError("glGenTextures");
+        Egloo.checkGlError("glGenTextures");
 
         int texId = textures[0];
         GLES20.glActiveTexture(mTextureUnit);
         GLES20.glBindTexture(mTextureTarget, texId);
-        GlUtils.checkError("glBindTexture " + texId);
+        Egloo.checkGlError("glBindTexture " + texId);
 
         GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER,
                 GLES20.GL_NEAREST);
@@ -66,7 +66,7 @@ public class EglViewport {
                 GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T,
                 GLES20.GL_CLAMP_TO_EDGE);
-        GlUtils.checkError("glTexParameter");
+        Egloo.checkGlError("glTexParameter");
 
         return texId;
     }
@@ -77,7 +77,7 @@ public class EglViewport {
         mPendingFilter = filter;
     }
 
-    public void drawFrame(long timestampUs, int textureId, float[] textureMatrix) {
+    public void draw(long timestampUs, int textureId, float[] textureMatrix) {
         if (mPendingFilter != null) {
             release();
             mFilter = mPendingFilter;
@@ -85,11 +85,11 @@ public class EglViewport {
             createProgram();
         }
 
-        GlUtils.checkError("draw start");
+        Egloo.checkGlError("draw start");
 
         // Select the program and the active texture.
         GLES20.glUseProgram(mProgramHandle);
-        GlUtils.checkError("glUseProgram");
+        Egloo.checkGlError("glUseProgram");
         GLES20.glActiveTexture(mTextureUnit);
         GLES20.glBindTexture(mTextureTarget, textureId);
 
