@@ -11,7 +11,6 @@ import android.os.Build;
 
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.internal.GlTextureDrawer;
-import com.otaliastudios.cameraview.internal.egl.EglBaseSurface;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.engine.CameraEngine;
@@ -46,7 +45,7 @@ import android.view.Surface;
  * - We move to another thread, and create a new EGL surface for that EGL context.
  * - We make this new surface current, and re-draw the textureId on it
  * - [Optional: fill the overlayTextureId and draw it on the same surface]
- * - We use glReadPixels (through {@link EglBaseSurface#saveFrameTo(Bitmap.CompressFormat)})
+ * - We use glReadPixels (through {@link EglSurface#toByteArray(Bitmap.CompressFormat)})
  *   and save to file.
  *
  * We create a new EGL surface and redraw the frame because:
