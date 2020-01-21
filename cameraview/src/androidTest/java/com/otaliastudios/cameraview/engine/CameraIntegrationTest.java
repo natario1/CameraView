@@ -31,7 +31,7 @@ import com.otaliastudios.cameraview.frame.FrameProcessor;
 import com.otaliastudios.cameraview.size.SizeSelectors;
 import com.otaliastudios.cameraview.tools.Emulator;
 import com.otaliastudios.cameraview.tools.Op;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.internal.WorkerHandler;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.tools.Retry;
@@ -45,7 +45,6 @@ import androidx.test.rule.GrantPermissionRule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;

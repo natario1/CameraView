@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.video.encoding;
 
-import com.otaliastudios.cameraview.internal.utils.Pool;
+import com.otaliastudios.cameraview.internal.Pool;
 
 /**
  * A simple {@link Pool(int, Factory)} implementation for input buffers.

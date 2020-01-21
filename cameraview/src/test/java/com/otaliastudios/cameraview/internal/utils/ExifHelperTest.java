@@ -3,6 +3,8 @@ package com.otaliastudios.cameraview.internal.utils;
 
 import androidx.exifinterface.media.ExifInterface;
 
+import com.otaliastudios.cameraview.internal.ExifHelper;
+
 import org.junit.Test;
 
 import static junit.framework.Assert.assertNotNull;

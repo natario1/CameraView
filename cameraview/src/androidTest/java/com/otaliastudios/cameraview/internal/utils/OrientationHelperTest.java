@@ -6,6 +6,7 @@ import androidx.test.filters.SmallTest;
 import android.view.OrientationEventListener;
 
 import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.internal.OrientationHelper;
 
 import org.junit.After;
 import org.junit.Before;

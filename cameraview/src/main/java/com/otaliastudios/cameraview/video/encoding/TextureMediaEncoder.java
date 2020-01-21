@@ -13,7 +13,7 @@ import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.internal.egl.EglCore;
 import com.otaliastudios.cameraview.internal.egl.EglViewport;
 import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
-import com.otaliastudios.cameraview.internal.utils.Pool;
+import com.otaliastudios.cameraview.internal.Pool;
 
 /**
  * Default implementation for video encoding.

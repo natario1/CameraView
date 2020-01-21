@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview.internal.utils;
 
 
+import com.otaliastudios.cameraview.internal.Pool;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
