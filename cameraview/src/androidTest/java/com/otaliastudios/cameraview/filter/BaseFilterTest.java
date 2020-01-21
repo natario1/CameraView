@@ -8,7 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseEglTest;
-import com.otaliastudios.cameraview.internal.egl.EglViewport;
+import com.otaliastudios.cameraview.internal.GlTextureDrawer;
 import com.otaliastudios.opengl.program.GlTextureProgram;
 
 import org.junit.Test;
@@ -111,18 +111,18 @@ public class BaseFilterTest extends BaseEglTest {
 
     @Test
     public void testDraw() {
-        // Use an EglViewport which cares about GL setup.
+        // Use a drawer which cares about GL setup.
         filter = spy(new TestFilter());
-        EglViewport viewport = new EglViewport(filter);
-        int texture = viewport.createTexture();
+        GlTextureDrawer drawer = new GlTextureDrawer();
+        drawer.setFilter(filter);
 
-        float[] matrix = new float[16];
-        viewport.draw(0L, texture, matrix);
+        float[] matrix = drawer.getTextureTransform();
+        drawer.draw(0L);
         verify(filter, times(1)).onPreDraw(0L, matrix);
         verify(filter, times(1)).onDraw(0L);
         verify(filter, times(1)).onPostDraw(0L);
 
-        viewport.release();
+        drawer.release();
     }
 
     @Test(expected = RuntimeException.class)
