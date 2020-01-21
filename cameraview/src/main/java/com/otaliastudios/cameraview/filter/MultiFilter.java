@@ -10,6 +10,8 @@ import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.opengl.core.Egloo;
 import com.otaliastudios.opengl.program.GlProgram;
 import com.otaliastudios.opengl.program.GlTextureProgram;
+import com.otaliastudios.opengl.texture.GlFramebuffer;
+import com.otaliastudios.opengl.texture.GlTexture;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,8 +50,8 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
         @VisibleForTesting boolean isFramebufferCreated = false;
         @VisibleForTesting Size size = null;
         private int programHandle = -1;
-        private int outputFramebufferId = -1;
-        private int outputTextureId = -1;
+        private GlFramebuffer outputFramebuffer = null;
+        private GlTexture outputTexture = null;
     }
 
     @VisibleForTesting final List<Filter> filters = new ArrayList<>();
@@ -136,40 +138,12 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
         //noinspection ConstantConditions
         if (state.isFramebufferCreated || isLast) return;
         state.isFramebufferCreated = true;
-
-        int[] framebufferArray = new int[1];
-        int[] textureArray = new int[1];
-        GLES20.glGenFramebuffers(1, framebufferArray, 0);
-        GLES20.glGenTextures(1, textureArray, 0);
-        state.outputFramebufferId = framebufferArray[0];
-        state.outputTextureId = textureArray[0];
-
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, state.outputTextureId);
-        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
-                state.size.getWidth(), state.size.getHeight(), 0, GLES20.GL_RGBA,
-                GLES20.GL_UNSIGNED_BYTE, null);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
-                GLES20.GL_LINEAR);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER,
-                GLES20.GL_LINEAR);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,
-                GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,
-                GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, state.outputFramebufferId);
-        GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
-                GLES20.GL_COLOR_ATTACHMENT0,
+        state.outputTexture = new GlTexture(GLES20.GL_TEXTURE0,
                 GLES20.GL_TEXTURE_2D,
-                state.outputTextureId,
-                0);
-
-        int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
-        if (status != GLES20.GL_FRAMEBUFFER_COMPLETE) {
-            throw new RuntimeException("Invalid framebuffer generation. Error:" + status);
-        }
-
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+                state.size.getWidth(),
+                state.size.getHeight());
+        state.outputFramebuffer = new GlFramebuffer();
+        state.outputFramebuffer.attach(state.outputTexture);
     }
 
     private void maybeDestroyFramebuffer(@NonNull Filter filter) {
@@ -177,10 +151,10 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
         //noinspection ConstantConditions
         if (!state.isFramebufferCreated) return;
         state.isFramebufferCreated = false;
-        GLES20.glDeleteFramebuffers(1, new int[]{state.outputFramebufferId}, 0);
-        state.outputFramebufferId = -1;
-        GLES20.glDeleteTextures(1, new int[]{state.outputTextureId}, 0);
-        state.outputTextureId = -1;
+        state.outputFramebuffer.release();
+        state.outputFramebuffer = null;
+        state.outputTexture.release();
+        state.outputTexture = null;
     }
 
     private void maybeSetSize(@NonNull Filter filter) {
@@ -240,6 +214,7 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
                 boolean isLast = i == filters.size() - 1;
                 Filter filter = filters.get(i);
                 State state = states.get(filter);
+
                 maybeSetSize(filter);
                 maybeCreateProgram(filter, isFirst, isLast);
                 maybeCreateFramebuffer(filter, isFirst, isLast);
@@ -251,7 +226,7 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
                 // Each filter outputs into its own framebuffer object, except the
                 // last filter, which outputs into the default framebuffer.
                 if (!isLast) {
-                    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, state.outputFramebufferId);
+                    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, state.outputFramebuffer.getId());
                     GLES20.glClearColor(0, 0, 0, 0);
                 } else {
                     GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
@@ -270,7 +245,7 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
                 // It is the framebuffer texture from this cycle. If this is the last
                 // filter, reset this value just to cleanup.
                 if (!isLast) {
-                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, state.outputTextureId);
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, state.outputTexture.getId());
                 } else {
                     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
                 }
@@ -285,6 +260,9 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
     public Filter copy() {
         synchronized (lock) {
             MultiFilter copy = new MultiFilter();
+            if (size != null) {
+                copy.setSize(size.getWidth(), size.getHeight());
+            }
             for (Filter filter : filters) {
                 copy.addFilter(filter.copy());
             }
