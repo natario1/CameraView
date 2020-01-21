@@ -226,7 +226,7 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
                 // Each filter outputs into its own framebuffer object, except the
                 // last filter, which outputs into the default framebuffer.
                 if (!isLast) {
-                    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, state.outputFramebuffer.getId());
+                    state.outputFramebuffer.bind();
                     GLES20.glClearColor(0, 0, 0, 0);
                 } else {
                     GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
@@ -245,9 +245,10 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
                 // It is the framebuffer texture from this cycle. If this is the last
                 // filter, reset this value just to cleanup.
                 if (!isLast) {
-                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, state.outputTexture.getId());
+                    state.outputTexture.bind();
                 } else {
                     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+                    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
                 }
 
                 GLES20.glUseProgram(0);
