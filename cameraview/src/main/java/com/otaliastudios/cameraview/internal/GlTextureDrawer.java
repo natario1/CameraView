@@ -23,7 +23,7 @@ public class GlTextureDrawer {
     private final static int TEXTURE_UNIT = GLES20.GL_TEXTURE0;
 
     private final GlTexture mTexture;
-    private final float[] mTextureTransform = Egloo.IDENTITY_MATRIX.clone();
+    private float[] mTextureTransform = Egloo.IDENTITY_MATRIX.clone();
 
     @NonNull
     private Filter mFilter = new NoFilter();
@@ -57,6 +57,10 @@ public class GlTextureDrawer {
     @NonNull
     public float[] getTextureTransform() {
         return mTextureTransform;
+    }
+
+    public void setTextureTransform(@NonNull float[] textureTransform) {
+        mTextureTransform = textureTransform;
     }
 
     public void draw(long timestampUs) {
