@@ -156,7 +156,7 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
                 GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,
                 GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, state.outputTextureId);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, state.outputFramebufferId);
         GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,
                 GLES20.GL_COLOR_ATTACHMENT0,
                 GLES20.GL_TEXTURE_2D,
