@@ -11,7 +11,7 @@ import com.otaliastudios.cameraview.filters.AutoFixFilter;
 import com.otaliastudios.cameraview.filters.BrightnessFilter;
 import com.otaliastudios.cameraview.filters.DuotoneFilter;
 import com.otaliastudios.cameraview.filters.VignetteFilter;
-import com.otaliastudios.cameraview.internal.egl.EglViewport;
+import com.otaliastudios.cameraview.internal.GlTextureDrawer;
 import com.otaliastudios.opengl.program.GlProgram;
 
 import org.junit.Test;
@@ -142,11 +142,11 @@ public class MultiFilterTest extends BaseEglTest {
         DuotoneFilter filter = spy(new DuotoneFilter());
         MultiFilter multiFilter = new MultiFilter(filter);
         multiFilter.setSize(WIDTH, HEIGHT);
-        EglViewport viewport = new EglViewport(multiFilter);
-        int texture = viewport.createTexture();
-        float[] matrix = new float[16];
-        viewport.draw(0L, texture, matrix);
-        viewport.release();
+        GlTextureDrawer drawer = new GlTextureDrawer();
+        drawer.setFilter(multiFilter);
+        float[] matrix = drawer.getTextureTransform();
+        drawer.draw(0L);
+        drawer.release();
 
         // The child should have experienced the whole lifecycle.
         verify(filter, atLeastOnce()).getVertexShader();
@@ -165,7 +165,9 @@ public class MultiFilterTest extends BaseEglTest {
         final DuotoneFilter filter2 = spy(new DuotoneFilter());
         final MultiFilter multiFilter = new MultiFilter(filter1, filter2);
         multiFilter.setSize(WIDTH, HEIGHT);
-        float[] matrix = new float[16];
+        GlTextureDrawer drawer = new GlTextureDrawer();
+        drawer.setFilter(multiFilter);
+        float[] matrix = drawer.getTextureTransform();
         final int[] result = new int[1];
 
         doAnswer(new Answer() {
@@ -199,10 +201,8 @@ public class MultiFilterTest extends BaseEglTest {
             }
         }).when(filter2).draw(eq(0L), any(float[].class));
 
-        EglViewport viewport = new EglViewport(multiFilter);
-        int texture = viewport.createTexture();
-        viewport.draw(0L, texture, matrix);
-        viewport.release();
+        drawer.draw(0L);
+        drawer.release();
 
         // Verify that both are drawn.
         verify(filter1, times(1)).draw(0L, matrix);
