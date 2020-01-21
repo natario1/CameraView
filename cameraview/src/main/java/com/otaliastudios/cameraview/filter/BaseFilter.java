@@ -133,9 +133,10 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void onDestroy() {
-        // NOTE: this destroys the GL program, but Filter consumers (GlTextureDrawer, MultiFilter)
-        // will destroy it too (just like they create it). Hope this doesn't cause any issue;
-        // if it does, we could avoid calling release here.
+        // Since we used the handle constructor of GlTextureProgram, calling release here
+        // will NOT destroy the GL program. This is important because Filters are not supposed
+        // to have ownership of programs. Creation and deletion happen outside, and deleting twice
+        // would cause an error.
         program.release();
         program = null;
     }
