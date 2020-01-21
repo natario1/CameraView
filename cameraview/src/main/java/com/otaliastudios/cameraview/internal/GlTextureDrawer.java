@@ -63,11 +63,12 @@ public class GlTextureDrawer {
         mTextureTransform = textureTransform;
     }
 
-    public void draw(long timestampUs) {
+    public void draw(final long timestampUs) {
         if (mPendingFilter != null) {
             release();
             mFilter = mPendingFilter;
             mPendingFilter = null;
+
         }
 
         if (mProgramHandle == -1) {
@@ -75,20 +76,16 @@ public class GlTextureDrawer {
                     mFilter.getVertexShader(),
                     mFilter.getFragmentShader());
             mFilter.onCreate(mProgramHandle);
+            Egloo.checkGlError("program creation");
         }
 
-        Egloo.checkGlError("draw start");
-        // Select the program and the active texture.
         GLES20.glUseProgram(mProgramHandle);
-        Egloo.checkGlError("glUseProgram");
-        GLES20.glActiveTexture(mTexture.getUnit());
-        GLES20.glBindTexture(mTexture.getTarget(), mTexture.getId());
-
-        // Draw and release.
+        Egloo.checkGlError("glUseProgram(handle)");
+        mTexture.bind();
         mFilter.draw(timestampUs, mTextureTransform);
-        GLES20.glBindTexture(mTexture.getTarget(), 0);
+        mTexture.unbind();
         GLES20.glUseProgram(0);
-        Egloo.checkGlError("draw end");
+        Egloo.checkGlError("glUseProgram(0)");
     }
 
     public void release() {

@@ -63,7 +63,6 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
      * Creates a new group with the given filters.
      * @param filters children
      */
-    @SuppressWarnings("WeakerAccess")
     public MultiFilter(@NonNull Filter... filters) {
         this(Arrays.asList(filters));
     }

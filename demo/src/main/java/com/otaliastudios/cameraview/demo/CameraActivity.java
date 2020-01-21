@@ -372,13 +372,13 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         message(filter.toString(), false);
 
         // Normal behavior:
-        camera.setFilter(filter.newInstance());
+        // camera.setFilter(filter.newInstance());
 
         // To test MultiFilter:
-        // DuotoneFilter duotone = new DuotoneFilter();
-        // duotone.setFirstColor(Color.RED);
-        // duotone.setSecondColor(Color.GREEN);
-        // camera.setFilter(new MultiFilter(duotone, filter.newInstance()));
+        DuotoneFilter duotone = new DuotoneFilter();
+        duotone.setFirstColor(Color.RED);
+        duotone.setSecondColor(Color.GREEN);
+        camera.setFilter(new MultiFilter(duotone, filter.newInstance()));
     }
 
     @Override
