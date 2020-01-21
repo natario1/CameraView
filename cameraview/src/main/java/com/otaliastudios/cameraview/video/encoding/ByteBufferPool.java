@@ -1,6 +1,6 @@
 package com.otaliastudios.cameraview.video.encoding;
 
-import com.otaliastudios.cameraview.internal.utils.Pool;
+import com.otaliastudios.cameraview.internal.Pool;
 
 import java.nio.ByteBuffer;
 

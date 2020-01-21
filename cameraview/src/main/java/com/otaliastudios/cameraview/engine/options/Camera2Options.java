@@ -21,7 +21,7 @@ import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
-import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
+import com.otaliastudios.cameraview.internal.CamcorderProfiles;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 

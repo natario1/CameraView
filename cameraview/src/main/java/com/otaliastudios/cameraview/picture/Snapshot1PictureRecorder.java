@@ -7,9 +7,9 @@ import android.hardware.Camera;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.offset.Reference;
-import com.otaliastudios.cameraview.internal.utils.CropHelper;
-import com.otaliastudios.cameraview.internal.utils.RotationHelper;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.internal.CropHelper;
+import com.otaliastudios.cameraview.internal.RotationHelper;
+import com.otaliastudios.cameraview.internal.WorkerHandler;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 

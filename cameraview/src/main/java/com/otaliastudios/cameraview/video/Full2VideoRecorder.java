@@ -12,7 +12,7 @@ import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 import com.otaliastudios.cameraview.engine.action.CompletionCallback;
-import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
+import com.otaliastudios.cameraview.internal.CamcorderProfiles;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;

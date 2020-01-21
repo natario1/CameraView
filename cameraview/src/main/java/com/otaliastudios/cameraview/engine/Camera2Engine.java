@@ -60,7 +60,7 @@ import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.frame.ImageFrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
-import com.otaliastudios.cameraview.internal.utils.CropHelper;
+import com.otaliastudios.cameraview.internal.CropHelper;
 import com.otaliastudios.cameraview.metering.MeteringRegions;
 import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;

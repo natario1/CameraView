@@ -2,16 +2,6 @@ package com.otaliastudios.cameraview;
 
 
 import android.graphics.ImageFormat;
-import android.hardware.Camera;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
-import android.os.Build;
-import android.util.Range;
-import android.util.Rational;
 
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.controls.Control;
@@ -20,26 +10,21 @@ import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.controls.Preview;
-import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
-import com.otaliastudios.cameraview.engine.mappers.Camera2Mapper;
 import com.otaliastudios.cameraview.gesture.GestureAction;
 import com.otaliastudios.cameraview.controls.Grid;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
-import com.otaliastudios.cameraview.internal.utils.CamcorderProfiles;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**

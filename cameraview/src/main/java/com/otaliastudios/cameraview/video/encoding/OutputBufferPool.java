@@ -3,7 +3,7 @@ package com.otaliastudios.cameraview.video.encoding;
 import android.media.MediaCodec;
 import android.os.Build;
 
-import com.otaliastudios.cameraview.internal.utils.Pool;
+import com.otaliastudios.cameraview.internal.Pool;
 
 import androidx.annotation.RequiresApi;
 

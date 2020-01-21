@@ -15,8 +15,8 @@ import com.otaliastudios.cameraview.engine.Camera2Engine;
 import com.otaliastudios.cameraview.engine.action.Action;
 import com.otaliastudios.cameraview.engine.action.ActionHolder;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
-import com.otaliastudios.cameraview.internal.utils.ExifHelper;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.internal.ExifHelper;
+import com.otaliastudios.cameraview.internal.WorkerHandler;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
