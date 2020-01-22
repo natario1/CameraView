@@ -49,7 +49,11 @@ dependencies {
     api 'com.google.android.gms:play-services-tasks:17.0.0'
     implementation 'androidx.annotation:annotation:1.1.0'
 
-    implementation project(':egloo')
+    api 'com.github.natario1:Egloo:refactor-SNAPSHOT'
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
 //endregion
