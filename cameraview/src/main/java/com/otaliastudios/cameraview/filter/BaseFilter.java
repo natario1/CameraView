@@ -89,7 +89,7 @@ public abstract class BaseFilter implements Filter {
     }
 
     @VisibleForTesting GlTextureProgram program = null;
-    private final GlDrawable programDrawable = new GlRect();
+    private GlDrawable programDrawable = null;
     @VisibleForTesting Size size;
 
     @SuppressWarnings("WeakerAccess")
@@ -121,17 +121,12 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void onCreate(int programHandle) {
-        program = onCreateProgram(programHandle);
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    @NonNull
-    protected GlTextureProgram onCreateProgram(int programHandle) {
-        return new GlTextureProgram(programHandle,
+        program = new GlTextureProgram(programHandle,
                 vertexPositionName,
                 vertexModelViewProjectionMatrixName,
                 vertexTextureCoordinateName,
                 vertexTransformMatrixName);
+        programDrawable = new GlRect();
     }
 
     @Override
@@ -142,6 +137,7 @@ public abstract class BaseFilter implements Filter {
         // would cause an error.
         program.release();
         program = null;
+        programDrawable = null;
     }
 
     @NonNull
