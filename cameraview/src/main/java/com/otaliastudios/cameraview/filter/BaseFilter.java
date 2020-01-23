@@ -8,7 +8,6 @@ import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.opengl.draw.GlDrawable;
 import com.otaliastudios.opengl.draw.GlRect;
 import com.otaliastudios.opengl.program.GlTextureProgram;
-import com.otaliastudios.opengl.texture.GlTexture;
 
 /**
  * A base implementation of {@link Filter} that just leaves the fragment shader to subclasses.
@@ -122,13 +121,17 @@ public abstract class BaseFilter implements Filter {
 
     @Override
     public void onCreate(int programHandle) {
-        program = new GlTextureProgram(
-                programHandle,
+        program = onCreateProgram(programHandle);
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    protected GlTextureProgram onCreateProgram(int programHandle) {
+        return new GlTextureProgram(programHandle,
                 vertexPositionName,
                 vertexModelViewProjectionMatrixName,
                 vertexTextureCoordinateName,
-                vertexTransformMatrixName
-        );
+                vertexTransformMatrixName);
     }
 
     @Override
@@ -195,6 +198,7 @@ public abstract class BaseFilter implements Filter {
         return copy;
     }
 
+    @NonNull
     protected BaseFilter onCopy() {
         try {
             return getClass().newInstance();

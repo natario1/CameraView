@@ -33,6 +33,7 @@ public final class SimpleFilter extends BaseFilter {
         return fragmentShader;
     }
 
+    @NonNull
     @Override
     protected BaseFilter onCopy() {
         return new SimpleFilter(fragmentShader);
