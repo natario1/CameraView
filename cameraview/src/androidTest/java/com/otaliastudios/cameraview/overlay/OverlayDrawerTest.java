@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseEglTest;
+import com.otaliastudios.cameraview.internal.GlTextureDrawer;
 import com.otaliastudios.cameraview.size.Size;
 
 import org.hamcrest.BaseMatcher;
@@ -69,9 +70,9 @@ public class OverlayDrawerTest extends BaseEglTest {
     @Test
     public void testRelease() {
         OverlayDrawer drawer = new OverlayDrawer(mock(Overlay.class), new Size(WIDTH, HEIGHT));
-        drawer.mTextureDrawer = spy(drawer.mTextureDrawer);
-
+        GlTextureDrawer textureDrawer = spy(drawer.mTextureDrawer);
+        drawer.mTextureDrawer = textureDrawer;
         drawer.release();
-        verify(drawer.mTextureDrawer, times(1)).release();
+        verify(textureDrawer, times(1)).release();
     }
 }
