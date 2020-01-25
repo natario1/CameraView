@@ -2,7 +2,6 @@ package com.otaliastudios.cameraview.engine;
 
 import android.content.Context;
 import android.graphics.PointF;
-import android.graphics.RectF;
 import android.location.Location;
 
 
@@ -29,7 +28,7 @@ import com.otaliastudios.cameraview.engine.offset.Angles;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.frame.Frame;
 import com.otaliastudios.cameraview.frame.FrameManager;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.internal.WorkerHandler;
 import com.otaliastudios.cameraview.picture.PictureRecorder;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 import com.otaliastudios.cameraview.controls.Audio;

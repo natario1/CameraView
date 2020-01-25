@@ -48,6 +48,7 @@ dependencies {
     api 'androidx.lifecycle:lifecycle-common:2.1.0'
     api 'com.google.android.gms:play-services-tasks:17.0.0'
     implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'com.otaliastudios.opengl:egloo:0.4.0'
 }
 
 //endregion

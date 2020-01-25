@@ -1,9 +1,10 @@
-package com.otaliastudios.cameraview.internal.utils;
+package com.otaliastudios.cameraview.internal;
 
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.internal.WorkerHandler;
 import com.otaliastudios.cameraview.tools.Op;
 
 import androidx.annotation.NonNull;

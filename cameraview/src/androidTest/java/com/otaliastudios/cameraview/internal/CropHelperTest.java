@@ -1,9 +1,10 @@
-package com.otaliastudios.cameraview.internal.utils;
+package com.otaliastudios.cameraview.internal;
 
 
 import android.graphics.Rect;
 
 import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.internal.CropHelper;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 

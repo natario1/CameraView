@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.internal.utils;
+package com.otaliastudios.cameraview.internal;
 
 import com.otaliastudios.cameraview.size.Size;
 

@@ -10,17 +10,14 @@ import android.opengl.Matrix;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.internal.egl.EglBaseSurface;
+import com.otaliastudios.cameraview.internal.GlTextureDrawer;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.engine.offset.Axis;
 import com.otaliastudios.cameraview.engine.offset.Reference;
-import com.otaliastudios.cameraview.internal.egl.EglCore;
-import com.otaliastudios.cameraview.internal.egl.EglViewport;
-import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
-import com.otaliastudios.cameraview.internal.utils.CropHelper;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.internal.CropHelper;
+import com.otaliastudios.cameraview.internal.WorkerHandler;
 import com.otaliastudios.cameraview.overlay.OverlayDrawer;
 import com.otaliastudios.cameraview.preview.GlCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
@@ -28,6 +25,9 @@ import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
+import com.otaliastudios.opengl.core.EglCore;
+import com.otaliastudios.opengl.surface.EglSurface;
+import com.otaliastudios.opengl.surface.EglWindowSurface;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
@@ -45,7 +45,7 @@ import android.view.Surface;
  * - We move to another thread, and create a new EGL surface for that EGL context.
  * - We make this new surface current, and re-draw the textureId on it
  * - [Optional: fill the overlayTextureId and draw it on the same surface]
- * - We use glReadPixels (through {@link EglBaseSurface#saveFrameTo(Bitmap.CompressFormat)})
+ * - We use glReadPixels (through {@link EglSurface#toByteArray(Bitmap.CompressFormat)})
  *   and save to file.
  *
  * We create a new EGL surface and redraw the frame because:
@@ -62,12 +62,7 @@ public class SnapshotGlPictureRecorder extends SnapshotPictureRecorder {
     private Overlay mOverlay;
     private boolean mHasOverlay;
     private OverlayDrawer mOverlayDrawer;
-
-    private int mTextureId;
-    private float[] mTransform;
-
-
-    private EglViewport mViewport;
+    private GlTextureDrawer mTextureDrawer;
 
     public SnapshotGlPictureRecorder(
             @NonNull PictureResult.Stub stub,
@@ -114,14 +109,10 @@ public class SnapshotGlPictureRecorder extends SnapshotPictureRecorder {
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
     protected void onRendererTextureCreated(int textureId) {
-        mTextureId = textureId;
-        mViewport = new EglViewport();
+        mTextureDrawer = new GlTextureDrawer(textureId);
         // Need to crop the size.
         Rect crop = CropHelper.computeCrop(mResult.size, mOutputRatio);
         mResult.size = new Size(crop.width(), crop.height());
-        mTransform = new float[16];
-        Matrix.setIdentityM(mTransform, 0);
-
         if (mHasOverlay) {
             mOverlayDrawer = new OverlayDrawer(mOverlay, mResult.size);
         }
@@ -131,7 +122,7 @@ public class SnapshotGlPictureRecorder extends SnapshotPictureRecorder {
     @RendererThread
     @TargetApi(Build.VERSION_CODES.KITKAT)
     protected void onRendererFilterChanged(@NonNull Filter filter) {
-        mViewport.setFilter(filter.copy());
+        mTextureDrawer.setFilter(filter.copy());
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -194,8 +185,9 @@ public class SnapshotGlPictureRecorder extends SnapshotPictureRecorder {
 
         // 1. Create an EGL surface
         final EglCore core = new EglCore(eglContext, EglCore.FLAG_RECORDABLE);
-        final EglBaseSurface eglSurface = new EglWindowSurface(core, fakeOutputSurface);
+        final EglSurface eglSurface = new EglWindowSurface(core, fakeOutputSurface);
         eglSurface.makeCurrent();
+        final float[] transform = mTextureDrawer.getTextureTransform();
 
         // 2. Apply scale and crop
         boolean flip = mEngine.getAngles().flip(Reference.VIEW, Reference.SENSOR);
@@ -203,17 +195,17 @@ public class SnapshotGlPictureRecorder extends SnapshotPictureRecorder {
         float realScaleY = flip ? scaleX : scaleY;
         float scaleTranslX = (1F - realScaleX) / 2F;
         float scaleTranslY = (1F - realScaleY) / 2F;
-        Matrix.translateM(mTransform, 0, scaleTranslX, scaleTranslY, 0);
-        Matrix.scaleM(mTransform, 0, realScaleX, realScaleY, 1);
+        Matrix.translateM(transform, 0, scaleTranslX, scaleTranslY, 0);
+        Matrix.scaleM(transform, 0, realScaleX, realScaleY, 1);
 
         // 3. Apply rotation and flip
-        Matrix.translateM(mTransform, 0, 0.5F, 0.5F, 0); // Go back to 0,0
-        Matrix.rotateM(mTransform, 0, -mResult.rotation, 0, 0, 1); // Rotate (not sure why we need the minus)
+        Matrix.translateM(transform, 0, 0.5F, 0.5F, 0); // Go back to 0,0
+        Matrix.rotateM(transform, 0, -mResult.rotation, 0, 0, 1); // Rotate (not sure why we need the minus)
         mResult.rotation = 0;
         if (mResult.facing == Facing.FRONT) { // 5. Flip horizontally for front camera
-            Matrix.scaleM(mTransform, 0, -1, 1, 1);
+            Matrix.scaleM(transform, 0, -1, 1, 1);
         }
-        Matrix.translateM(mTransform, 0, -0.5F, -0.5F, 0); // Go back to old position
+        Matrix.translateM(transform, 0, -0.5F, -0.5F, 0); // Go back to old position
 
         // 4. Do pretty much the same for overlays
         if (mHasOverlay) {
@@ -232,13 +224,13 @@ public class SnapshotGlPictureRecorder extends SnapshotPictureRecorder {
         // 5. Draw and save
         long timestampUs = surfaceTexture.getTimestamp() / 1000L;
         LOG.i("takeFrame:", "timestampUs:", timestampUs);
-        mViewport.drawFrame(timestampUs, mTextureId, mTransform);
+        mTextureDrawer.draw(timestampUs);
         if (mHasOverlay) mOverlayDrawer.render(timestampUs);
-        mResult.data = eglSurface.saveFrameTo(Bitmap.CompressFormat.JPEG);
+        mResult.data = eglSurface.toByteArray(Bitmap.CompressFormat.JPEG);
 
         // 6. Cleanup
-        eglSurface.releaseEglSurface();
-        mViewport.release();
+        eglSurface.release();
+        mTextureDrawer.release();
         fakeOutputSurface.release();
         if (mHasOverlay) mOverlayDrawer.release();
         core.release();

@@ -14,7 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.R;
-import com.otaliastudios.cameraview.internal.egl.EglViewport;
+import com.otaliastudios.cameraview.internal.GlTextureDrawer;
 import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.filter.NoFilter;
 import com.otaliastudios.cameraview.size.AspectRatio;
@@ -63,10 +63,8 @@ import javax.microedition.khronos.opengles.GL10;
 public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceTexture> {
 
     private boolean mDispatched;
-    private final float[] mTransformMatrix = new float[16];
-    private int mOutputTextureId = 0;
     private SurfaceTexture mInputSurfaceTexture;
-    private EglViewport mOutputViewport;
+    private GlTextureDrawer mOutputTextureDrawer;
     // A synchronized set was not enough to avoid crashes, probably due to external classes
     // removing the callback while this set is being iterated. CopyOnWriteArraySet solves this.
     private final Set<RendererFrameCallback> mRendererFrameCallbacks = new CopyOnWriteArraySet<>();
@@ -146,14 +144,15 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
             if (mCurrentFilter == null) {
                 mCurrentFilter = new NoFilter();
             }
-            mOutputViewport = new EglViewport(mCurrentFilter);
-            mOutputTextureId = mOutputViewport.createTexture();
-            mInputSurfaceTexture = new SurfaceTexture(mOutputTextureId);
+            mOutputTextureDrawer = new GlTextureDrawer();
+            mOutputTextureDrawer.setFilter(mCurrentFilter);
+            final int textureId = mOutputTextureDrawer.getTexture().getId();
+            mInputSurfaceTexture = new SurfaceTexture(textureId);
             getView().queueEvent(new Runnable() {
                 @Override
                 public void run() {
                     for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                        callback.onRendererTextureCreated(mOutputTextureId);
+                        callback.onRendererTextureCreated(textureId);
                     }
                 }
             });
@@ -176,10 +175,9 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
                 mInputSurfaceTexture.release();
                 mInputSurfaceTexture = null;
             }
-            mOutputTextureId = 0;
-            if (mOutputViewport != null) {
-                mOutputViewport.release();
-                mOutputViewport = null;
+            if (mOutputTextureDrawer != null) {
+                mOutputTextureDrawer.release();
+                mOutputTextureDrawer = null;
             }
         }
 
@@ -207,17 +205,17 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
 
             // Latch the latest frame. If there isn't anything new,
             // we'll just re-use whatever was there before.
+            final float[] transform = mOutputTextureDrawer.getTextureTransform();
             mInputSurfaceTexture.updateTexImage();
-            mInputSurfaceTexture.getTransformMatrix(mTransformMatrix);
+            mInputSurfaceTexture.getTransformMatrix(transform);
             // LOG.v("onDrawFrame:", "timestamp:", mInputSurfaceTexture.getTimestamp());
-
 
             // For Camera2, apply the draw rotation.
             // See TextureCameraPreview.setDrawRotation() for info.
             if (mDrawRotation != 0) {
-                Matrix.translateM(mTransformMatrix, 0, 0.5F, 0.5F, 0);
-                Matrix.rotateM(mTransformMatrix, 0, mDrawRotation, 0, 0, 1);
-                Matrix.translateM(mTransformMatrix, 0, -0.5F, -0.5F, 0);
+                Matrix.translateM(transform, 0, 0.5F, 0.5F, 0);
+                Matrix.rotateM(transform, 0, mDrawRotation, 0, 0, 1);
+                Matrix.translateM(transform, 0, -0.5F, -0.5F, 0);
             }
 
             if (isCropping()) {
@@ -228,11 +226,11 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
                 // of the preview (not the center one).
                 float translX = (1F - mCropScaleX) / 2F;
                 float translY = (1F - mCropScaleY) / 2F;
-                Matrix.translateM(mTransformMatrix, 0, translX, translY, 0);
-                Matrix.scaleM(mTransformMatrix, 0, mCropScaleX, mCropScaleY, 1);
+                Matrix.translateM(transform, 0, translX, translY, 0);
+                Matrix.scaleM(transform, 0, mCropScaleX, mCropScaleY, 1);
             }
-            mOutputViewport.drawFrame(mInputSurfaceTexture.getTimestamp() / 1000L,
-                    mOutputTextureId, mTransformMatrix);
+
+            mOutputTextureDrawer.draw(mInputSurfaceTexture.getTimestamp() / 1000L);
             for (RendererFrameCallback callback : mRendererFrameCallbacks) {
                 callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
             }
@@ -301,7 +299,10 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
             @Override
             public void run() {
                 mRendererFrameCallbacks.add(callback);
-                if (mOutputTextureId != 0) callback.onRendererTextureCreated(mOutputTextureId);
+                if (mOutputTextureDrawer != null) {
+                    int textureId = mOutputTextureDrawer.getTexture().getId();
+                    callback.onRendererTextureCreated(textureId);
+                }
                 callback.onRendererFilterChanged(mCurrentFilter);
             }
         });
@@ -322,7 +323,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
      */
     @SuppressWarnings("unused")
     protected int getTextureId() {
-        return mOutputTextureId;
+        return mOutputTextureDrawer != null ? mOutputTextureDrawer.getTexture().getId() : -1;
     }
 
     /**
@@ -354,8 +355,8 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
         getView().queueEvent(new Runnable() {
             @Override
             public void run() {
-                if (mOutputViewport != null) {
-                    mOutputViewport.setFilter(filter);
+                if (mOutputTextureDrawer != null) {
+                    mOutputTextureDrawer.setFilter(filter);
                 }
                 for (RendererFrameCallback callback : mRendererFrameCallbacks) {
                     callback.onRendererFilterChanged(filter);

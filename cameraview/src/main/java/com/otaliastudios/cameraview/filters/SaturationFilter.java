@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
 import com.otaliastudios.cameraview.filter.OneParameterFilter;
-import com.otaliastudios.cameraview.internal.GlUtils;
+import com.otaliastudios.opengl.core.Egloo;
 
 /**
  * Adjusts color saturation.
@@ -93,9 +93,9 @@ public class SaturationFilter extends BaseFilter implements OneParameterFilter {
     public void onCreate(int programHandle) {
         super.onCreate(programHandle);
         scaleLocation = GLES20.glGetUniformLocation(programHandle, "scale");
-        GlUtils.checkLocation(scaleLocation, "scale");
+        Egloo.checkGlProgramLocation(scaleLocation, "scale");
         exponentsLocation = GLES20.glGetUniformLocation(programHandle, "exponents");
-        GlUtils.checkLocation(exponentsLocation, "exponents");
+        Egloo.checkGlProgramLocation(exponentsLocation, "exponents");
     }
 
     @Override
@@ -110,18 +110,18 @@ public class SaturationFilter extends BaseFilter implements OneParameterFilter {
         super.onPreDraw(timestampUs, transformMatrix);
         if (scale > 0.0f) {
             GLES20.glUniform1f(scaleLocation, 0F);
-            GlUtils.checkError("glUniform1f");
+            Egloo.checkGlError("glUniform1f");
             GLES20.glUniform3f(exponentsLocation,
                     (0.9f * scale) + 1.0f,
                     (2.1f * scale) + 1.0f,
                     (2.7f * scale) + 1.0f
             );
-            GlUtils.checkError("glUniform3f");
+            Egloo.checkGlError("glUniform3f");
         } else {
             GLES20.glUniform1f(scaleLocation, 1.0F + scale);
-            GlUtils.checkError("glUniform1f");
+            Egloo.checkGlError("glUniform1f");
             GLES20.glUniform3f(exponentsLocation, 0F, 0F, 0F);
-            GlUtils.checkError("glUniform3f");
+            Egloo.checkGlError("glUniform3f");
         }
     }
 }

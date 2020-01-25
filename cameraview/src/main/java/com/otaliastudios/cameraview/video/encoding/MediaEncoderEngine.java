@@ -4,10 +4,9 @@ import android.annotation.SuppressLint;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
-import android.text.format.DateFormat;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.internal.WorkerHandler;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

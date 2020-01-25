@@ -8,7 +8,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.internal.WorkerHandler;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

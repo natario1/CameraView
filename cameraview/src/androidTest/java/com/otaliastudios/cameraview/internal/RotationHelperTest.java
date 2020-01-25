@@ -1,4 +1,4 @@
-package com.otaliastudios.cameraview.internal.utils;
+package com.otaliastudios.cameraview.internal;
 
 
 import android.graphics.ImageFormat;
@@ -8,6 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.internal.RotationHelper;
 import com.otaliastudios.cameraview.size.Size;
 
 import org.junit.Test;

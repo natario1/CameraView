@@ -48,7 +48,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
 
     private final static CameraLogger LOG = CameraLogger.create("DemoApp");
     private final static boolean USE_FRAME_PROCESSOR = true;
-    private final static boolean DECODE_BITMAP = true;
+    private final static boolean DECODE_BITMAP = false;
 
     private CameraView camera;
     private ViewGroup controlPanel;
@@ -76,7 +76,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                     long newTime = frame.getTime();
                     long delay = newTime - lastTime;
                     lastTime = newTime;
-                    LOG.e("Frame delayMillis:", delay, "FPS:", 1000 / delay);
+                    LOG.v("Frame delayMillis:", delay, "FPS:", 1000 / delay);
                     if (DECODE_BITMAP) {
                         if (frame.getFormat() == ImageFormat.NV21
                                 && frame.getDataClass() == byte[].class) {

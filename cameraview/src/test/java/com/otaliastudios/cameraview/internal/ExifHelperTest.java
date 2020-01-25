@@ -1,7 +1,9 @@
-package com.otaliastudios.cameraview.internal.utils;
+package com.otaliastudios.cameraview.internal;
 
 
 import androidx.exifinterface.media.ExifInterface;
+
+import com.otaliastudios.cameraview.internal.ExifHelper;
 
 import org.junit.Test;
 

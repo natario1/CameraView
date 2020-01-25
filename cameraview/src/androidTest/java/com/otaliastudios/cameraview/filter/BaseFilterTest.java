@@ -8,16 +8,16 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseEglTest;
-import com.otaliastudios.cameraview.internal.GlUtils;
-import com.otaliastudios.cameraview.internal.egl.EglViewport;
+import com.otaliastudios.cameraview.internal.GlTextureDrawer;
+import com.otaliastudios.opengl.program.GlTextureProgram;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -91,11 +91,11 @@ public class BaseFilterTest extends BaseEglTest {
     @Test
     public void testOnProgramCreate() {
         filter = new TestFilter();
-        int handle = GlUtils.createProgram(filter.getVertexShader(), filter.getFragmentShader());
+        int handle = GlTextureProgram.create(filter.getVertexShader(), filter.getFragmentShader());
         filter.onCreate(handle);
-        assertTrue(filter.programHandle >= 0);
+        assertNotNull(filter.program);
         filter.onDestroy();
-        assertTrue(filter.programHandle < 0);
+        assertNull(filter.program);
         GLES20.glDeleteProgram(handle);
     }
 
@@ -111,18 +111,18 @@ public class BaseFilterTest extends BaseEglTest {
 
     @Test
     public void testDraw() {
-        // Use an EglViewport which cares about GL setup.
+        // Use a drawer which cares about GL setup.
         filter = spy(new TestFilter());
-        EglViewport viewport = new EglViewport(filter);
-        int texture = viewport.createTexture();
+        GlTextureDrawer drawer = new GlTextureDrawer();
+        drawer.setFilter(filter);
 
-        float[] matrix = new float[16];
-        viewport.drawFrame(0L, texture, matrix);
+        float[] matrix = drawer.getTextureTransform();
+        drawer.draw(0L);
         verify(filter, times(1)).onPreDraw(0L, matrix);
         verify(filter, times(1)).onDraw(0L);
         verify(filter, times(1)).onPostDraw(0L);
 
-        viewport.release();
+        drawer.release();
     }
 
     @Test(expected = RuntimeException.class)

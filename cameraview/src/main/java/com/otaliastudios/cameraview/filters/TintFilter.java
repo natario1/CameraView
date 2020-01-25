@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
 import com.otaliastudios.cameraview.filter.OneParameterFilter;
-import com.otaliastudios.cameraview.internal.GlUtils;
+import com.otaliastudios.opengl.core.Egloo;
 
 
 /**
@@ -81,7 +81,7 @@ public class TintFilter extends BaseFilter implements OneParameterFilter {
     public void onCreate(int programHandle) {
         super.onCreate(programHandle);
         tintLocation = GLES20.glGetUniformLocation(programHandle, "tint");
-        GlUtils.checkLocation(tintLocation, "tint");
+        Egloo.checkGlProgramLocation(tintLocation, "tint");
     }
 
     @Override
@@ -99,6 +99,6 @@ public class TintFilter extends BaseFilter implements OneParameterFilter {
                 Color.blue(tint) / 255f
         };
         GLES20.glUniform3fv(tintLocation, 1, channels, 0);
-        GlUtils.checkError("glUniform3fv");
+        Egloo.checkGlError("glUniform3fv");
     }
 }

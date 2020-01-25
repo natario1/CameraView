@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filter.BaseFilter;
 import com.otaliastudios.cameraview.filter.OneParameterFilter;
-import com.otaliastudios.cameraview.internal.GlUtils;
+import com.otaliastudios.opengl.core.Egloo;
 
 /**
  * Applies back-light filling to the frames.
@@ -82,9 +82,9 @@ public class FillLightFilter extends BaseFilter implements OneParameterFilter {
     public void onCreate(int programHandle) {
         super.onCreate(programHandle);
         multiplierLocation = GLES20.glGetUniformLocation(programHandle, "mult");
-        GlUtils.checkLocation(multiplierLocation, "mult");
+        Egloo.checkGlProgramLocation(multiplierLocation, "mult");
         gammaLocation = GLES20.glGetUniformLocation(programHandle, "igamma");
-        GlUtils.checkLocation(gammaLocation, "igamma");
+        Egloo.checkGlProgramLocation(gammaLocation, "igamma");
     }
 
     @Override
@@ -100,12 +100,12 @@ public class FillLightFilter extends BaseFilter implements OneParameterFilter {
         float amount = 1.0f - strength;
         float multiplier = 1.0f / (amount * 0.7f + 0.3f);
         GLES20.glUniform1f(multiplierLocation, multiplier);
-        GlUtils.checkError("glUniform1f");
+        Egloo.checkGlError("glUniform1f");
 
         float fadeGamma = 0.3f;
         float faded = fadeGamma + (1.0f - fadeGamma) * multiplier;
         float gamma = 1.0f / faded;
         GLES20.glUniform1f(gammaLocation, gamma);
-        GlUtils.checkError("glUniform1f");
+        Egloo.checkGlError("glUniform1f");
     }
 }

@@ -37,7 +37,7 @@ import com.otaliastudios.cameraview.gesture.Gesture;
 import com.otaliastudios.cameraview.controls.Hdr;
 import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.WhiteBalance;
-import com.otaliastudios.cameraview.internal.utils.CropHelper;
+import com.otaliastudios.cameraview.internal.CropHelper;
 import com.otaliastudios.cameraview.metering.MeteringRegions;
 import com.otaliastudios.cameraview.metering.MeteringTransform;
 import com.otaliastudios.cameraview.picture.Full1PictureRecorder;

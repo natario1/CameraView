@@ -1,5 +1,7 @@
-package com.otaliastudios.cameraview.internal.utils;
+package com.otaliastudios.cameraview.internal;
 
+
+import com.otaliastudios.cameraview.internal.Pool;
 
 import org.junit.After;
 import org.junit.Before;

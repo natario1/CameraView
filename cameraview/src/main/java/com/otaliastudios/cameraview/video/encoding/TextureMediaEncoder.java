@@ -10,10 +10,10 @@ import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.filter.Filter;
-import com.otaliastudios.cameraview.internal.egl.EglCore;
-import com.otaliastudios.cameraview.internal.egl.EglViewport;
-import com.otaliastudios.cameraview.internal.egl.EglWindowSurface;
-import com.otaliastudios.cameraview.internal.utils.Pool;
+import com.otaliastudios.cameraview.internal.GlTextureDrawer;
+import com.otaliastudios.cameraview.internal.Pool;
+import com.otaliastudios.opengl.core.EglCore;
+import com.otaliastudios.opengl.surface.EglWindowSurface;
 
 /**
  * Default implementation for video encoding.
@@ -30,7 +30,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     private int mTransformRotation;
     private EglCore mEglCore;
     private EglWindowSurface mWindow;
-    private EglViewport mViewport;
+    private GlTextureDrawer mDrawer;
     private Pool<Frame> mFramePool = new Pool<>(Integer.MAX_VALUE, new Pool.Factory<Frame>() {
         @Override
         public Frame create() {
@@ -99,7 +99,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
         mEglCore = new EglCore(mConfig.eglContext, EglCore.FLAG_RECORDABLE);
         mWindow = new EglWindowSurface(mEglCore, mSurface, true);
         mWindow.makeCurrent();
-        mViewport = new EglViewport();
+        mDrawer = new GlTextureDrawer(mConfig.textureId);
     }
 
     /**
@@ -149,7 +149,7 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
     }
 
     private void onFilter(@NonNull Filter filter) {
-        mViewport.setFilter(filter);
+        mDrawer.setFilter(filter);
     }
 
     private void onFrame(@NonNull Frame frame) {
@@ -229,7 +229,8 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
                 "hasReachedMaxLength:", hasReachedMaxLength(),
                 "thread:", Thread.currentThread(),
                 "- gl rendering.");
-        mViewport.drawFrame(frame.timestampUs(), mConfig.textureId, transform);
+        mDrawer.setTextureTransform(transform);
+        mDrawer.draw(frame.timestampUs());
         if (mConfig.hasOverlay()) {
             mConfig.overlayDrawer.render(frame.timestampUs());
         }
@@ -252,9 +253,9 @@ public class TextureMediaEncoder extends VideoMediaEncoder<TextureConfig> {
             mWindow.release();
             mWindow = null;
         }
-        if (mViewport != null) {
-            mViewport.release();
-            mViewport = null;
+        if (mDrawer != null) {
+            mDrawer.release();
+            mDrawer = null;
         }
         if (mEglCore != null) {
             mEglCore.release();

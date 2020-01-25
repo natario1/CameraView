@@ -11,7 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.otaliastudios.cameraview.CameraLogger;
-import com.otaliastudios.cameraview.internal.utils.WorkerHandler;
+import com.otaliastudios.cameraview.internal.WorkerHandler;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
