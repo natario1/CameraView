@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.otaliastudios.cameraview.CameraException;
@@ -57,6 +58,12 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
     private int mCurrentFilter = 0;
     private final Filters[] mAllFilters = Filters.values();
 
+
+    private ImageButton mImgPlayPauseVideo;
+    private ImageButton mImgStopVideo;
+
+    private static final int MAX_RECORDING_TIME = 2 * 60 * 1000; // 2 MINUTES!
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +73,40 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
         camera = findViewById(R.id.camera);
         camera.setLifecycleOwner(this);
         camera.addCameraListener(new Listener());
+
+        mImgPlayPauseVideo = findViewById(R.id.imgPlayPauseVideo);
+        mImgStopVideo = findViewById(R.id.imgStopVideo);
+
+        mImgStopVideo.setVisibility(View.GONE);
+
+
+        mImgPlayPauseVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                camera.setMode(Mode.VIDEO);
+                mImgStopVideo.setVisibility(View.VISIBLE);
+                if (camera.isTakingVideo()) {
+                    mImgPlayPauseVideo.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+                    camera.pauseVideoRecording();
+                } else if (camera.isRecordingPaused()) {
+                    mImgPlayPauseVideo.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
+                    camera.resumeVideoRecording();
+                } else {
+                    mImgPlayPauseVideo.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
+                    camera.takeVideo(new File(getFilesDir(), "video.mp4"), MAX_RECORDING_TIME);
+                }
+
+            }
+        });
+
+
+        mImgStopVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                camera.stopVideo();
+            }
+        });
+
 
         if (USE_FRAME_PROCESSOR) {
             camera.addFrameProcessor(new FrameProcessor() {
@@ -257,7 +298,25 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
             super.onVideoRecordingEnd();
             message("Video taken. Processing...", false);
             LOG.w("onVideoRecordingEnd!");
+            mImgPlayPauseVideo.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+            mImgStopVideo.setVisibility(View.GONE);
         }
+
+
+        @Override
+        public void onVideoRecordingPause() {
+            super.onVideoRecordingPause();
+            message("Video pause", true);
+            mImgPlayPauseVideo.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+        }
+
+        @Override
+        public void onVideoRecordingResume() {
+            super.onVideoRecordingResume();
+            message("Video resume",true);
+            mImgPlayPauseVideo.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
+        }
+
 
         @Override
         public void onExposureCorrectionChanged(float newValue, @NonNull float[] bounds, @Nullable PointF[] fingers) {

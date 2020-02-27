@@ -439,6 +439,16 @@ public class Camera1Engine extends CameraBaseEngine implements
         }
     }
 
+    @Override
+    public void onVideoRecordingPause() {
+        setVideoRecordingPauseCallback();
+    }
+
+    @Override
+    public void onVideoRecordingResume() {
+        setVideoRecordingResumeCallback();
+    }
+
     //endregion
 
     //region Parameters

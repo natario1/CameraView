@@ -52,6 +52,23 @@
         android:layout_gravity="bottom|start">
 
         <ImageButton
+            android:id="@+id/imgStopVideo"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_margin="16dp"
+            android:background="@drawable/background"
+            android:elevation="3dp"
+            app:srcCompat="@drawable/ic_stop_white_24dp" />
+        <ImageButton
+            android:id="@+id/imgPlayPauseVideo"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_margin="16dp"
+            android:background="@drawable/background"
+            android:elevation="3dp"
+            app:srcCompat="@drawable/ic_play_circle_outline_black_24dp" />
+
+        <ImageButton
             android:id="@+id/changeFilter"
             android:layout_width="56dp"
             android:layout_height="56dp"
