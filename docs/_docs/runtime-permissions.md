@@ -46,4 +46,4 @@ The automatic request is currently done at the activity level, so the permission
 `onRequestPermissionResults()` will be invoked on the parent activity, not the fragment.
 
 The automatic request can be disabled by setting `app:cameraRequestPermissions="false"` in your
-XML declaration.
+XML declaration or by using this method `setRequestPermissions(boolean requestPermissions)` in your code.
