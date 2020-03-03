@@ -4,6 +4,10 @@
     package="com.otaliastudios.cameraview.demo">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-sdk tools:overrideLibrary="com.otaliastudios.opengl" />
 
     <application
         android:allowBackup="false"
@@ -11,6 +15,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
+        android:requestLegacyExternalStorage="true"
         tools:ignore="GoogleAppIndexingWarning">
 
         <activity
@@ -40,6 +45,8 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths" />
         </provider>
+
+
 
     </application>
 
