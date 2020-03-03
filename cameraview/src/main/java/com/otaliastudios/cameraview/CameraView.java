@@ -727,6 +727,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     //region Lifecycle APIs
 
     /**
+     * Sets permissions flag if you want enable auto check permissions or disable it.
+     * @param requestPermissions - true: auto check permissions enabled, false: auto check permissions disabled.
+     */
+    public void setRequestPermissions(boolean requestPermissions) {
+        mRequestPermissions = requestPermissions;
+    }
+
+    /**
      * Returns whether the camera engine has started.
      * @return whether the camera has started
      */
