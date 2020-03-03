@@ -35,7 +35,7 @@ public class LogAction extends BaseAction {
                 " afState: " + afState + " afTriggerState: " + afTriggerState;
         if (!log.equals(lastLog)) {
             lastLog = log;
-            LOG.v(log);
+            LOG.i(log);
         }
     }
 
