@@ -110,6 +110,5 @@ jobs:
       - name: Upload merged coverage report (Codecov)
         uses: codecov/codecov-action@v1
         with:
-          token: ${{ secrets.CODECOV_KEY }}
           file: ./cameraview/build/reports/mergedCoverageReport/*
           fail_ci_if_error: true

@@ -9,6 +9,15 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 > Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
+##### v2.6.2
+
+- <small>[Frame processing]</small> New: `frame.getRotationToUser()` and `frame.getRotationToView()` APIs to help with processing vs. rendering ([#745][745])
+- <small>[Camera1, Camera2]</small> New: `cameraPreviewFrameRateExact="true|false"` to tell whether the desired preview frame rate should be as exact as possible, thanks to [@hualong-shen][hualong-shenn] ([#754][754])
+- <small>[Logging]</small> Improvement: `CameraLogger` is now thread safe, thanks to [@Namazed][Namazed] ([#779][779])
+- <small>[Permissions]</small> Improvement: added runtime API `setRequestPermissions()` that matches the XML attribute, thanks to [@Namazed][Namazed] ([#775][775])
+
+<https://github.com/natario1/CameraView/compare/v2.6.1...v2.6.2>
+
 ##### v2.6.1
 
 - <small>[Video]</small> New: `takeVideo(FileDescriptor)` for file descriptors, thanks to [@sewar][sewar] ([#732][732])
@@ -316,6 +325,7 @@ This is the last release before v2.
 [RAN3000]: https://github.com/RAN3000
 [vaibhavbhandula]: https://github.com/vaibhavbhandula
 [sewar]: https://github.com/sewar
+[hualong-shen]: https://github.com/hualong-shen
 
 
 [73]: https://github.com/natario1/CameraView/pull/73
@@ -403,3 +413,7 @@ This is the last release before v2.
 [724]: https://github.com/natario1/CameraView/pull/724
 [732]: https://github.com/natario1/CameraView/pull/732
 [741]: https://github.com/natario1/CameraView/pull/741
+[745]: https://github.com/natario1/CameraView/pull/745
+[754]: https://github.com/natario1/CameraView/pull/754
+[775]: https://github.com/natario1/CameraView/pull/775
+[779]: https://github.com/natario1/CameraView/pull/779
