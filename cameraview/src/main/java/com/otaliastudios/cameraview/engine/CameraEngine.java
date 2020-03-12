@@ -664,7 +664,7 @@ public abstract class CameraEngine implements
     public abstract void setAudio(@NonNull Audio audio);
     @NonNull public abstract Audio getAudio();
 
-    public abstract void setMode(@NonNull Mode mode);
+    public abstract void setMode(@NonNull Mode mode, boolean withoutRestart);
     @NonNull public abstract Mode getMode();
 
     public abstract void setZoom(float zoom, @Nullable PointF[] points, boolean notify);

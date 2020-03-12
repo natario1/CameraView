@@ -145,6 +145,28 @@ public class Camera1Engine extends CameraBaseEngine implements
         return false;
     }
 
+    @EngineThread
+    @Override
+    protected void prepareNewMode() {
+        mCaptureSize = computeCaptureSize();
+        Camera.Parameters params = mCamera.getParameters();
+        if (getMode() == Mode.PICTURE) {
+            // setPictureSize is allowed during preview
+            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+        } else {
+            // mCaptureSize in this case is a video size. The available video sizes are not
+            // necessarily a subset of the picture sizes, so we can't use the mCaptureSize value:
+            // it might crash. However, the setPictureSize() passed here is useless : we don't allow
+            // HQ pictures in video mode.
+            // While this might be lifted in the future, for now, just use a picture capture size.
+            Size pictureSize = computeCaptureSize(Mode.PICTURE);
+            params.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
+        }
+        applyDefaultFocus(params);
+        params.setRecordingHint(getMode() == Mode.VIDEO);
+        mCamera.setParameters(params);
+    }
+
     //endregion
 
     //region Start
