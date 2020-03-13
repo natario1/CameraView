@@ -752,12 +752,23 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Sets the lifecycle owner for this view. This means you don't need
      * to call {@link #open()}, {@link #close()} or {@link #destroy()} at all.
      *
+     * If you want that lifecycle stopped controlling the state of the camera,
+     * pass null in this method.
+     *
      * @param owner the owner activity or fragment
      */
-    public void setLifecycleOwner(@NonNull LifecycleOwner owner) {
+    public void setLifecycleOwner(@Nullable LifecycleOwner owner) {
+        if (owner == null) {
+            clearLifecycleObserver();
+        } else {
+            clearLifecycleObserver();
+            mLifecycle = owner.getLifecycle();
+            mLifecycle.addObserver(this);
+        }
+    }
+
+    private void clearLifecycleObserver() {
         if (mLifecycle != null) mLifecycle.removeObserver(this);
-        mLifecycle = owner.getLifecycle();
-        mLifecycle.addObserver(this);
     }
 
     /**
