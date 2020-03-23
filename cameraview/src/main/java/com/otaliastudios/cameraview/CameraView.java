@@ -870,6 +870,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mExperimental = experimental;
     }
 
+    /**
+     * Sets the flag if you want disable restart camera on change mode (Photo/Video),
+     * but only for {@link Engine#CAMERA1}
+     * @param changeModeWithoutRestart - true if you want disable restart
+     */
     public void setChangeModeWithoutRestart(boolean changeModeWithoutRestart) {
         mChangeModeWithoutRestart = changeModeWithoutRestart;
     }

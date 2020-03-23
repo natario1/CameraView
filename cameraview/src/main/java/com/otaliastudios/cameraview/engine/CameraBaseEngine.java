@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.engine;
 
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.hardware.Camera;
 import android.location.Location;
 
 import androidx.annotation.CallSuper;
@@ -754,6 +755,21 @@ public abstract class CameraBaseEngine extends CameraEngine {
         if (preview == null) return null;
         return getAngles().flip(Reference.VIEW, reference) ? preview.getSurfaceSize().flip()
                 : preview.getSurfaceSize();
+    }
+
+    void setPictureSize(Camera.Parameters params) {
+        if (getMode() == Mode.PICTURE) {
+            // setPictureSize is allowed during preview
+            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+        } else {
+            // mCaptureSize in this case is a video size. The available video sizes are not
+            // necessarily a subset of the picture sizes, so we can't use the mCaptureSize value:
+            // it might crash. However, the setPictureSize() passed here is useless : we don't allow
+            // HQ pictures in video mode.
+            // While this might be lifted in the future, for now, just use a picture capture size.
+            Size pictureSize = computeCaptureSize(Mode.PICTURE);
+            params.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
+        }
     }
 
     /**
