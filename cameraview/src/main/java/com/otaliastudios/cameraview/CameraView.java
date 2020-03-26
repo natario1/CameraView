@@ -768,7 +768,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     private void clearLifecycleObserver() {
-        if (mLifecycle != null) mLifecycle.removeObserver(this);
+        if (mLifecycle != null) {
+            mLifecycle.removeObserver(this);
+            mLifecycle = null;
+        }
     }
 
     /**
