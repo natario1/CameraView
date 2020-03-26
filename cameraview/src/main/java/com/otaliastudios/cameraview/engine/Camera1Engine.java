@@ -160,6 +160,9 @@ public class Camera1Engine extends CameraBaseEngine implements
     }
 
     private boolean previewAspectRatioEqualsForModes() {
+        if (mCaptureSize == null) {
+            return false;
+        }
         Size prevModeSize = mCaptureSize;
         mCaptureSize = computeCaptureSize();
 
