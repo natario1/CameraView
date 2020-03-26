@@ -148,12 +148,28 @@ public class Camera1Engine extends CameraBaseEngine implements
     @EngineThread
     @Override
     protected void prepareNewMode() {
+        if(previewAspectRatioEqualsForModes()) {
+            Camera.Parameters params = mCamera.getParameters();
+            setPictureSize(params);
+            applyDefaultFocus(params);
+            params.setRecordingHint(getMode() == Mode.VIDEO);
+            mCamera.setParameters(params);
+        } else {
+            restartBind();
+        }
+    }
+
+    private boolean previewAspectRatioEqualsForModes() {
+        Size prevModeSize = mCaptureSize;
         mCaptureSize = computeCaptureSize();
-        Camera.Parameters params = mCamera.getParameters();
-        setPictureSize(params);
-        applyDefaultFocus(params);
-        params.setRecordingHint(getMode() == Mode.VIDEO);
-        mCamera.setParameters(params);
+
+        boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
+        AspectRatio prevModePreviewTargetRatio = AspectRatio.of(prevModeSize.getWidth(), prevModeSize.getHeight());
+        AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+        if (flip) prevModePreviewTargetRatio = prevModePreviewTargetRatio.flip();
+        if (flip) targetRatio = targetRatio.flip();
+
+        return prevModePreviewTargetRatio.equals(targetRatio);
     }
 
     //endregion

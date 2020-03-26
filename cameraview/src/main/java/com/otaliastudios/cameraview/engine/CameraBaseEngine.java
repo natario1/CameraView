@@ -384,18 +384,14 @@ public abstract class CameraBaseEngine extends CameraEngine {
      * @param mode desired mode.
      */
     @Override
-    public final void setMode(@NonNull Mode mode, final boolean withoutRestart) {
+    public final void setMode(@NonNull Mode mode) {
         if (mode != mMode) {
             mMode = mode;
             getOrchestrator().scheduleStateful("mode", CameraState.ENGINE,
                     new Runnable() {
                 @Override
                 public void run() {
-                    if (withoutRestart) {
-                        prepareNewMode();
-                    } else {
-                        restart();
-                    }
+                    prepareNewMode();
                 }
             });
         }

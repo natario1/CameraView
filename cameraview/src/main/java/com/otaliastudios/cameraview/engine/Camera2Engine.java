@@ -393,7 +393,7 @@ public class Camera2Engine extends CameraBaseEngine implements
     @Override
     protected void prepareNewMode() {
         LOG.w("prepareNewMode:", "can't prepare new mode without restart for Engine2");
-        restart();
+        restartBind();
     }
 
     //endregion

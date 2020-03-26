@@ -159,7 +159,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private boolean mExperimental;
     private boolean mInEditor;
-    private boolean mChangeModeWithoutRestart;
 
     // Overlays
     @VisibleForTesting OverlayLayout mOverlayLayout;
@@ -871,15 +870,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     }
 
     /**
-     * Sets the flag if you want disable restart camera on change mode (Photo/Video),
-     * but only for {@link Engine#CAMERA1}
-     * @param changeModeWithoutRestart - true if you want disable restart
-     */
-    public void setChangeModeWithoutRestart(boolean changeModeWithoutRestart) {
-        mChangeModeWithoutRestart = changeModeWithoutRestart;
-    }
-
-    /**
      * Shorthand for the appropriate set* method.
      * For example, if control is a {@link Grid}, this calls {@link #setGrid(Grid)}.
      *
@@ -1430,7 +1420,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param mode desired session type.
      */
     public void setMode(@NonNull Mode mode) {
-        mCameraEngine.setMode(mode, mChangeModeWithoutRestart);
+        mCameraEngine.setMode(mode);
     }
 
     /**
