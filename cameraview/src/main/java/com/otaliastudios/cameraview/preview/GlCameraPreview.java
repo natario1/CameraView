@@ -60,7 +60,8 @@ import javax.microedition.khronos.opengles.GL10;
  * which means that we can fetch the GL context that was created and is managed
  * by the {@link GLSurfaceView}.
  */
-public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceTexture> {
+public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture>
+        implements FilterCameraPreview {
 
     private boolean mDispatched;
     private SurfaceTexture mInputSurfaceTexture;
@@ -110,7 +111,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
 
     @NonNull
     @Override
-    View getRootView() {
+    public View getRootView() {
         return mRootView;
     }
 

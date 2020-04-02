@@ -62,18 +62,24 @@ public abstract class CameraPreview<T extends View, Output> {
     @VisibleForTesting CropCallback mCropCallback;
     private SurfaceCallback mSurfaceCallback;
     private T mView;
-    boolean mCropping;
+    @SuppressWarnings("WeakerAccess")
+    protected boolean mCropping;
 
     // These are the surface dimensions in REF_VIEW.
-    int mOutputSurfaceWidth;
-    int mOutputSurfaceHeight;
+    @SuppressWarnings("WeakerAccess")
+    protected int mOutputSurfaceWidth;
+    @SuppressWarnings("WeakerAccess")
+    protected int mOutputSurfaceHeight;
 
     // These are the preview stream dimensions, in REF_VIEW.
-    int mInputStreamWidth;
-    int mInputStreamHeight;
+    @SuppressWarnings("WeakerAccess")
+    protected int mInputStreamWidth;
+    @SuppressWarnings("WeakerAccess")
+    protected int mInputStreamHeight;
 
     // The rotation, if any, to be applied when drawing.
-    int mDrawRotation;
+    @SuppressWarnings("WeakerAccess")
+    protected int mDrawRotation;
 
     /**
      * Creates a new preview.
@@ -88,7 +94,7 @@ public abstract class CameraPreview<T extends View, Output> {
      * Sets a callback to be notified of surface events (creation, change, destruction)
      * @param callback a callback
      */
-    public final void setSurfaceCallback(@Nullable SurfaceCallback callback) {
+    public void setSurfaceCallback(@Nullable SurfaceCallback callback) {
         if (hasSurface() && mSurfaceCallback != null) {
             mSurfaceCallback.onSurfaceDestroyed();
         }
@@ -124,9 +130,8 @@ public abstract class CameraPreview<T extends View, Output> {
      * @return the root view
      */
     @SuppressWarnings("unused")
-    @VisibleForTesting
     @NonNull
-    abstract View getRootView();
+    public abstract View getRootView();
 
     /**
      * Returns the output surface object (for example a SurfaceHolder
@@ -162,7 +167,7 @@ public abstract class CameraPreview<T extends View, Output> {
      * Returns the current input stream size, in view coordinates.
      * @return the current input stream size
      */
-    @SuppressWarnings("unused")
+    @VisibleForTesting
     @NonNull
     final Size getStreamSize() {
         return new Size(mInputStreamWidth, mInputStreamHeight);

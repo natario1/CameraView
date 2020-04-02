@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import com.otaliastudios.cameraview.filter.Filter;
 import com.otaliastudios.cameraview.preview.CameraPreview;
 
-public class MockCameraPreview extends FilterCameraPreview<View, Void> {
+public class MockCameraPreview extends CameraPreview<View, Void> implements FilterCameraPreview {
 
     public MockCameraPreview(Context context, ViewGroup parent) {
         super(context, parent);
