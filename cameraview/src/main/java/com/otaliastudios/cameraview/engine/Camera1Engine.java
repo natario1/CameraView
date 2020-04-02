@@ -43,7 +43,7 @@ import com.otaliastudios.cameraview.metering.MeteringTransform;
 import com.otaliastudios.cameraview.picture.Full1PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.RendererCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.video.Full1VideoRecorder;
@@ -359,8 +359,8 @@ public class Camera1Engine extends CameraBaseEngine implements
         stub.size = getUncroppedSnapshotSize(Reference.OUTPUT);
         // Actually it will be rotated and set to 0.
         stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
-        if (mPreview instanceof GlCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio);
+        if (mPreview instanceof RendererCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (RendererCameraPreview) mPreview, outputRatio);
         } else {
             mPictureRecorder = new Snapshot1PictureRecorder(stub, this, mCamera, outputRatio);
         }
@@ -397,13 +397,13 @@ public class Camera1Engine extends CameraBaseEngine implements
     @Override
     protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub,
                                        @NonNull AspectRatio outputRatio) {
-        if (!(mPreview instanceof GlCameraPreview)) {
+        if (!(mPreview instanceof RendererCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GL_SURFACE.");
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
             throw new IllegalStateException("Video snapshots are only supported on API 18+.");
         }
-        GlCameraPreview glPreview = (GlCameraPreview) mPreview;
+        RendererCameraPreview glPreview = (RendererCameraPreview) mPreview;
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
             throw new IllegalStateException("outputSize should not be null.");

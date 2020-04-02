@@ -61,7 +61,7 @@ import javax.microedition.khronos.opengles.GL10;
  * by the {@link GLSurfaceView}.
  */
 public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture>
-        implements FilterCameraPreview {
+        implements FilterCameraPreview, RendererCameraPreview {
 
     private boolean mDispatched;
     private SurfaceTexture mInputSurfaceTexture;
@@ -290,11 +290,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         if (callback != null) callback.onCrop();
     }
 
-    /**
-     * Method specific to the GL preview. Adds a {@link RendererFrameCallback}
-     * to receive renderer frame events.
-     * @param callback a callback
-     */
+    @Override
     public void addRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
         getView().queueEvent(new Runnable() {
             @Override
@@ -309,11 +305,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
         });
     }
 
-    /**
-     * Method specific to the GL preview. Removes a {@link RendererFrameCallback}
-     * that was previously added to receive renderer frame events.
-     * @param callback a callback
-     */
+    @Override
     public void removeRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
         mRendererFrameCallbacks.remove(callback);
     }

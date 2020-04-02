@@ -19,7 +19,7 @@ import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.internal.CropHelper;
 import com.otaliastudios.cameraview.internal.WorkerHandler;
 import com.otaliastudios.cameraview.overlay.OverlayDrawer;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.RendererCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.filter.Filter;
@@ -36,7 +36,7 @@ import android.view.Surface;
 
 /**
  * API 19.
- * Records a picture snapshots from the {@link GlCameraPreview}. It works as follows:
+ * Records a picture snapshots from the {@link RendererCameraPreview}. It works as follows:
  *
  * - We register a one time {@link RendererFrameCallback} on the preview
  * - We get the textureId and the frame callback on the {@link RendererThread}
@@ -56,7 +56,7 @@ import android.view.Surface;
 public class SnapshotGlPictureRecorder extends SnapshotPictureRecorder {
 
     private CameraEngine mEngine;
-    private GlCameraPreview mPreview;
+    private RendererCameraPreview mPreview;
     private AspectRatio mOutputRatio;
 
     private Overlay mOverlay;
@@ -67,7 +67,7 @@ public class SnapshotGlPictureRecorder extends SnapshotPictureRecorder {
     public SnapshotGlPictureRecorder(
             @NonNull PictureResult.Stub stub,
             @NonNull CameraEngine engine,
-            @NonNull GlCameraPreview preview,
+            @NonNull RendererCameraPreview preview,
             @NonNull AspectRatio outputRatio) {
         super(stub, engine);
         mEngine = engine;

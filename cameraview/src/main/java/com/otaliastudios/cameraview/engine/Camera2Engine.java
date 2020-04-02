@@ -64,7 +64,7 @@ import com.otaliastudios.cameraview.internal.CropHelper;
 import com.otaliastudios.cameraview.metering.MeteringRegions;
 import com.otaliastudios.cameraview.picture.Full2PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot2PictureRecorder;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.RendererCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.video.Full2VideoRecorder;
@@ -785,7 +785,7 @@ public class Camera2Engine extends CameraBaseEngine implements
             action.start(this);
         } else {
             LOG.i("onTakePictureSnapshot:", "doMetering is false. Performing.");
-            if (!(mPreview instanceof GlCameraPreview)) {
+            if (!(mPreview instanceof RendererCameraPreview)) {
                 throw new RuntimeException("takePictureSnapshot with Camera2 is only " +
                         "supported with Preview.GL_SURFACE");
             }
@@ -795,7 +795,7 @@ public class Camera2Engine extends CameraBaseEngine implements
             stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT,
                     Axis.RELATIVE_TO_SENSOR);
             mPictureRecorder = new Snapshot2PictureRecorder(stub, this,
-                    (GlCameraPreview) mPreview, outputRatio);
+                    (RendererCameraPreview) mPreview, outputRatio);
             mPictureRecorder.take();
         }
     }
@@ -910,10 +910,10 @@ public class Camera2Engine extends CameraBaseEngine implements
     @Override
     protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub,
                                        @NonNull AspectRatio outputRatio) {
-        if (!(mPreview instanceof GlCameraPreview)) {
+        if (!(mPreview instanceof RendererCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GL_SURFACE.");
         }
-        GlCameraPreview glPreview = (GlCameraPreview) mPreview;
+        RendererCameraPreview glPreview = (RendererCameraPreview) mPreview;
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
             throw new IllegalStateException("outputSize should not be null.");

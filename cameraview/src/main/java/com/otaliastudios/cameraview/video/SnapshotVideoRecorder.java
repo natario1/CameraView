@@ -11,7 +11,7 @@ import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.overlay.OverlayDrawer;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.RendererCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.filter.Filter;
@@ -52,7 +52,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     private MediaEncoderEngine mEncoderEngine;
     private final Object mEncoderEngineLock = new Object();
-    private GlCameraPreview mPreview;
+    private RendererCameraPreview mPreview;
 
     private int mCurrentState = STATE_NOT_RECORDING;
     private int mDesiredState = STATE_NOT_RECORDING;
@@ -66,7 +66,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private Filter mCurrentFilter;
 
     public SnapshotVideoRecorder(@NonNull CameraEngine engine,
-                                 @NonNull GlCameraPreview preview,
+                                 @NonNull RendererCameraPreview preview,
                                  @Nullable Overlay overlay,
                                  int overlayRotation) {
         super(engine);
