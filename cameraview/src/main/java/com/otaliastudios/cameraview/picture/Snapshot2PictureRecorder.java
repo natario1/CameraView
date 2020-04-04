@@ -109,7 +109,7 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
                                     @NonNull Camera2Engine engine,
                                     @NonNull RendererCameraPreview preview,
                                     @NonNull AspectRatio outputRatio) {
-        super(stub, engine, preview, outputRatio);
+        super(stub, engine, preview, outputRatio, engine.getOverlay());
         mHolder = engine;
 
         mAction = Actions.sequence(

@@ -18,6 +18,7 @@ import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.size.Size;
 
 /**
@@ -331,11 +332,15 @@ public abstract class CameraPreview<T extends View, Output> {
      * Sometimes we don't need this:
      * - In Camera1, the buffer producer sets our Surface size and rotates it based on the value
      *   that we pass to {@link android.hardware.Camera.Parameters#setDisplayOrientation(int)},
-     *   so the stream that comes in is already rotated.
+     *   so the stream that comes in is already rotated (if we apply SurfaceTexture transform).
      * - In Camera2, for {@link android.view.SurfaceView} based previews, apparently it just works
      *   out of the box. The producer might be doing something similar.
      *
      * But in all the other Camera2 cases, we need to apply this rotation when drawing the surface.
+     * Seems that Camera1 can correctly rotate the stream/transform to {@link Reference#VIEW},
+     * while Camera2, that does not have any rotation API, will only rotate to {@link Reference#BASE}.
+     * That's why in Camera2 this angle is set as the offset between BASE and VIEW.
+     *
      * @param drawRotation the rotation in degrees
      */
     public void setDrawRotation(int drawRotation) {

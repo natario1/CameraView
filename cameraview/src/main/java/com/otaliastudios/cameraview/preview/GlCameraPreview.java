@@ -233,7 +233,7 @@ public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture
 
             mOutputTextureDrawer.draw(mInputSurfaceTexture.getTimestamp() / 1000L);
             for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
+                callback.onRendererFrame(mInputSurfaceTexture, mDrawRotation, mCropScaleX, mCropScaleY);
             }
         }
     }
