@@ -60,7 +60,8 @@ import javax.microedition.khronos.opengles.GL10;
  * which means that we can fetch the GL context that was created and is managed
  * by the {@link GLSurfaceView}.
  */
-public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceTexture> {
+public class GlCameraPreview extends CameraPreview<GLSurfaceView, SurfaceTexture>
+        implements FilterCameraPreview, RendererCameraPreview {
 
     private boolean mDispatched;
     private SurfaceTexture mInputSurfaceTexture;
@@ -110,7 +111,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
 
     @NonNull
     @Override
-    View getRootView() {
+    public View getRootView() {
         return mRootView;
     }
 
@@ -232,7 +233,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
 
             mOutputTextureDrawer.draw(mInputSurfaceTexture.getTimestamp() / 1000L);
             for (RendererFrameCallback callback : mRendererFrameCallbacks) {
-                callback.onRendererFrame(mInputSurfaceTexture, mCropScaleX, mCropScaleY);
+                callback.onRendererFrame(mInputSurfaceTexture, mDrawRotation, mCropScaleX, mCropScaleY);
             }
         }
     }
@@ -289,11 +290,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
         if (callback != null) callback.onCrop();
     }
 
-    /**
-     * Method specific to the GL preview. Adds a {@link RendererFrameCallback}
-     * to receive renderer frame events.
-     * @param callback a callback
-     */
+    @Override
     public void addRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
         getView().queueEvent(new Runnable() {
             @Override
@@ -308,11 +305,7 @@ public class GlCameraPreview extends FilterCameraPreview<GLSurfaceView, SurfaceT
         });
     }
 
-    /**
-     * Method specific to the GL preview. Removes a {@link RendererFrameCallback}
-     * that was previously added to receive renderer frame events.
-     * @param callback a callback
-     */
+    @Override
     public void removeRendererFrameCallback(@NonNull final RendererFrameCallback callback) {
         mRendererFrameCallbacks.remove(callback);
     }

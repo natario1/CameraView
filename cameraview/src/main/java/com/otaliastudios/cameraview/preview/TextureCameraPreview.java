@@ -68,7 +68,7 @@ public class TextureCameraPreview extends CameraPreview<TextureView, SurfaceText
 
     @NonNull
     @Override
-    View getRootView() {
+    public View getRootView() {
         return mRootView;
     }
 

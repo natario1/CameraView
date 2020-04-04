@@ -16,18 +16,13 @@ import com.otaliastudios.cameraview.filter.Filter;
  * The preview has the responsibility of calling {@link Filter#setSize(int, int)}
  * whenever the preview size changes and as soon as the filter is applied.
  */
-public abstract class FilterCameraPreview<T extends View, Output> extends CameraPreview<T, Output> {
-
-    @SuppressWarnings("WeakerAccess")
-    public FilterCameraPreview(@NonNull Context context, @NonNull ViewGroup parent) {
-        super(context, parent);
-    }
+public interface FilterCameraPreview {
 
     /**
      * Sets a new filter.
      * @param filter new filter
      */
-    public abstract void setFilter(@NonNull Filter filter);
+    void setFilter(@NonNull Filter filter);
 
     /**
      * Returns the currently used filter.
@@ -35,5 +30,5 @@ public abstract class FilterCameraPreview<T extends View, Output> extends Camera
      */
     @SuppressWarnings("unused")
     @NonNull
-    public abstract Filter getCurrentFilter();
+    Filter getCurrentFilter();
 }
