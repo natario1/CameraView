@@ -7,13 +7,31 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
+
     <!-- Camera -->
     <com.otaliastudios.cameraview.CameraView
         android:id="@+id/camera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_gravity="center"
         android:layout_marginBottom="88dp"
+
+        app:cameraVideoCodec="h264"
+        app:cameraVideoSizeMinWidth="100"
+        app:cameraVideoSizeMinHeight="100"
+        app:cameraVideoSizeMaxWidth="780"
+        app:cameraVideoSizeMaxHeight="1280"
+
+
+        app:cameraSnapshotMaxWidth="1080"
+        app:cameraSnapshotMaxHeight="1920"
+
+        app:cameraUseDeviceOrientation="true"
+        app:cameraPictureSnapshotMetering="true"
+
+        app:cameraPreviewFrameRate="30"
+
         android:keepScreenOn="true"
         app:cameraExperimental="true"
         app:cameraEngine="camera2"
@@ -26,6 +44,7 @@
         app:cameraGestureTap="autoFocus"
         app:cameraGestureLongTap="none"
         app:cameraGesturePinch="zoom"
+        app:cameraRequestPermissions="true"
         app:cameraGestureScrollHorizontal="filterControl1"
         app:cameraGestureScrollVertical="exposureCorrection"
         app:cameraMode="picture"
@@ -50,6 +69,23 @@
         android:orientation="vertical"
         android:layout_marginBottom="96dp"
         android:layout_gravity="bottom|start">
+
+        <ImageButton
+            android:id="@+id/imgStopVideo"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_margin="16dp"
+            android:background="@drawable/background"
+            android:elevation="3dp"
+            app:srcCompat="@drawable/ic_stop_white_24dp" />
+        <ImageButton
+            android:id="@+id/imgPlayPauseVideo"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_margin="16dp"
+            android:background="@drawable/background"
+            android:elevation="3dp"
+            app:srcCompat="@drawable/ic_play_circle_outline_black_24dp" />
 
         <ImageButton
             android:id="@+id/changeFilter"
@@ -162,7 +198,15 @@
                 android:text="SNAP"/>
         </LinearLayout>
     </LinearLayout>
-
+    <TextView
+        android:id="@+id/tvTimer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TIME"
+        android:layout_margin="10dp"
+        android:textSize="20sp"
+        android:textColor="#FFFFFF"
+        />
     <!-- Edit -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/controls"

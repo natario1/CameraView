@@ -127,6 +127,8 @@ public abstract class CameraEngine implements
         void dispatchError(CameraException exception);
         void dispatchOnVideoRecordingStart();
         void dispatchOnVideoRecordingEnd();
+        void dispatchOnVideoRecordingPause();
+        void dispatchOnVideoRecordingResume();
     }
 
     protected static final String TAG = CameraEngine.class.getSimpleName();
@@ -714,11 +716,14 @@ public abstract class CameraEngine implements
     public abstract void takePictureSnapshot(final @NonNull PictureResult.Stub stub);
 
     public abstract boolean isTakingVideo();
+    public abstract boolean isRecordingPaused();
     public abstract void takeVideo(@NonNull VideoResult.Stub stub,
                                    @Nullable File file,
                                    @Nullable FileDescriptor fileDescriptor);
     public abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file);
     public abstract void stopVideo();
+    public abstract void pauseVideoRecording();
+    public abstract void resumeVideoRecording();
 
     //endregion
 }

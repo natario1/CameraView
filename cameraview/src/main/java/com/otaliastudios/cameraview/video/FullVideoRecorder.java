@@ -2,6 +2,8 @@ package com.otaliastudios.cameraview.video;
 
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.os.Build;
+import android.util.Log;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
@@ -344,6 +346,31 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         mMediaRecorder = null;
         mMediaRecorderPrepared = false;
         dispatchResult();
+    }
+
+
+    @Override
+    protected void onPauseVideoRecording() {
+        Log.d(TAG, "onPauseVideoRecording: ");
+        if (mMediaRecorder != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
+                mMediaRecorder.pause();
+                dispatchVideoRecordingPause();
+            }
+
+        }
+    }
+
+
+    @Override
+    protected void onResumeVideoRecording() {
+        Log.d(TAG, "onPauseVideoRecording: ");
+        if (mMediaRecorder != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
+                mMediaRecorder.resume();
+                dispatchVideoRecordingResume();
+            }
+        }
     }
 
 }

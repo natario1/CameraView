@@ -1856,6 +1856,27 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         });
     }
 
+    public void pauseVideoRecording() {
+        mCameraEngine.pauseVideoRecording();
+        mUiHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (getKeepScreenOn() != mKeepScreenOn) setKeepScreenOn(mKeepScreenOn);
+            }
+        });
+    }
+
+
+    public void resumeVideoRecording() {
+        mCameraEngine.resumeVideoRecording();
+        mUiHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (getKeepScreenOn() != mKeepScreenOn) setKeepScreenOn(mKeepScreenOn);
+            }
+        });
+    }
+
     /**
      * Sets the max width for snapshots taken with {@link #takePictureSnapshot()} or
      * {@link #takeVideoSnapshot(File)}. If the snapshot width exceeds this value, the snapshot
@@ -2102,6 +2123,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public boolean isTakingVideo() {
         return mCameraEngine.isTakingVideo();
+    }
+
+
+    public boolean isRecordingPaused() {
+        return mCameraEngine.isRecordingPaused();
     }
 
     /**
@@ -2398,6 +2424,30 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 public void run() {
                     for (CameraListener listener : mListeners) {
                         listener.onVideoRecordingEnd();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void dispatchOnVideoRecordingPause() {
+            mUiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onVideoRecordingPause();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void dispatchOnVideoRecordingResume() {
+            mUiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onVideoRecordingResume();
                     }
                 }
             });

@@ -39,11 +39,17 @@ public abstract class VideoRecorder {
          * and soon {@link #onVideoResult(VideoResult.Stub, Exception)} will be called.
          */
         void onVideoRecordingEnd();
+
+        void onVideoRecordingPause();
+
+        void onVideoRecordingResume();
+
     }
 
     private final static int STATE_IDLE = 0;
     private final static int STATE_RECORDING = 1;
     private final static int STATE_STOPPING = 2;
+    private final static int STATE_PAUSING = 3;
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED) VideoResult.Stub mResult;
     private final VideoResultListener mListener;
@@ -105,7 +111,15 @@ public abstract class VideoRecorder {
     public boolean isRecording() {
         // true if not idle.
         synchronized (mStateLock) {
-            return mState != STATE_IDLE;
+            return mState != STATE_IDLE && mState!=STATE_PAUSING;
+        }
+    }
+
+
+    public boolean isRecordingPaused() {
+        // true if not idle.
+        synchronized (mStateLock) {
+            return mState ==STATE_PAUSING;
         }
     }
 
@@ -173,4 +187,50 @@ public abstract class VideoRecorder {
             mListener.onVideoRecordingEnd();
         }
     }
+
+
+    public final void pauseVideoRecording() {
+        synchronized (mStateLock) {
+            if (mState == STATE_IDLE) {
+                return;
+            }
+            LOG.i("pause:", "Changed state to STATE_PAUSING");
+            mState = STATE_PAUSING;
+        }
+        onPauseVideoRecording();
+    }
+
+    protected abstract void onPauseVideoRecording();
+
+    public final void resumeVideoRecording() {
+        synchronized (mStateLock) {
+            if (mState == STATE_IDLE) {
+                return;
+            }
+            LOG.i("resume:", "Changed state to STATE_RECORDING");
+            mState = STATE_RECORDING;
+        }
+        onResumeVideoRecording();
+    }
+
+    protected abstract void onResumeVideoRecording();
+
+    @SuppressWarnings("WeakerAccess")
+    @CallSuper
+    protected void dispatchVideoRecordingPause() {
+        LOG.i("dispatchVideoRecordingPause:", "pause");
+        if (mListener != null) {
+            mListener.onVideoRecordingPause();
+        }
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    @CallSuper
+    protected void dispatchVideoRecordingResume() {
+        LOG.i("dispatchVideoRecordingResume:", "resume");
+        if (mListener != null) {
+            mListener.onVideoRecordingResume();
+        }
+    }
+
 }

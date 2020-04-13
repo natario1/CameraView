@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview.video;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Build;
+import android.util.Log;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.internal.DeviceEncoders;
@@ -99,6 +100,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             mDesiredState = STATE_NOT_RECORDING;
         }
     }
+
 
     @RendererThread
     @Override
@@ -336,4 +338,16 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
         }
         dispatchResult();
     }
+
+
+    @Override
+    protected void onPauseVideoRecording() {
+        // not supported
+    }
+
+    @Override
+    protected void onResumeVideoRecording() {
+        // not supported
+    }
+
 }

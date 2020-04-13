@@ -23,5 +23,8 @@ android {
 dependencies {
     implementation project(':cameraview')
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'com.google.android.material:material:1.1.0-beta01'
+    implementation 'com.google.android.material:material:1.1.0-alpha09'
+    implementation 'com.otaliastudios:transcoder:0.8.0'
+    implementation 'com.otaliastudios.opengl:egloo:0.4.0'
+
 }

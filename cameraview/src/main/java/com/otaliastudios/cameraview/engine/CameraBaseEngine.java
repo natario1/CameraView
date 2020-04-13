@@ -560,6 +560,13 @@ public abstract class CameraBaseEngine extends CameraEngine {
         return mVideoRecorder != null && mVideoRecorder.isRecording();
     }
 
+
+    @Override
+    public final boolean isRecordingPaused() {
+        return mVideoRecorder != null && mVideoRecorder.isRecordingPaused();
+    }
+
+
     @Override
     public final void takeVideo(final @NonNull VideoResult.Stub stub,
                                 final @Nullable File file,
@@ -643,6 +650,57 @@ public abstract class CameraBaseEngine extends CameraEngine {
             // It will be nulled in onVideoResult.
         }
     }
+
+    @Override
+    public final void pauseVideoRecording() {
+        getOrchestrator().schedule("pause video", true, new Runnable() {
+            @Override
+            public void run() {
+//                LOG.i("pauseVideoRecording", "running. isTakingVideo?", isTakingVideo());
+                onPauseVideoRecording();
+            }
+        });
+    }
+
+    @EngineThread
+    @SuppressWarnings("WeakerAccess")
+    protected void onPauseVideoRecording() {
+        if (mVideoRecorder != null) {
+            mVideoRecorder.pauseVideoRecording();
+        }
+    }
+
+
+    protected void setVideoRecordingPauseCallback() {
+        getCallback().dispatchOnVideoRecordingPause();
+    }
+
+
+    @Override
+    public final void resumeVideoRecording() {
+        getOrchestrator().schedule("resume video", true, new Runnable() {
+            @Override
+            public void run() {
+//                LOG.i("pauseVideoRecording", "running. isTakingVideo?", isTakingVideo());
+                onResumeVideoRecording();
+            }
+        });
+    }
+
+
+    @EngineThread
+    @SuppressWarnings("WeakerAccess")
+    protected void onResumeVideoRecording() {
+        if (mVideoRecorder != null) {
+            mVideoRecorder.resumeVideoRecording();
+        }
+    }
+
+    protected void setVideoRecordingResumeCallback() {
+        getCallback().dispatchOnVideoRecordingResume();
+    }
+
+
 
     @CallSuper
     @Override

@@ -19,6 +19,7 @@ import android.location.Location;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
+import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
 import android.util.Rational;
@@ -950,6 +951,22 @@ public class Camera2Engine extends CameraBaseEngine implements
             LOG.w("Applied the Issue549 workaround. Slept!");
         }
     }
+
+    @Override
+    public void onVideoRecordingPause() {
+        Log.d(TAG, "onVideoRecordingPause: ");
+        setVideoRecordingPauseCallback();
+
+
+    }
+
+    @Override
+    public void onVideoRecordingResume() {
+        Log.d(TAG, "onVideoRecordingResume: ");
+        setVideoRecordingResumeCallback();
+    }
+
+
 
     @Override
     public void onVideoResult(@Nullable VideoResult.Stub result, @Nullable Exception exception) {
