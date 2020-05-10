@@ -105,16 +105,27 @@ public class CameraUtils {
     @WorkerThread
     @SuppressLint("NewApi")
     public static Uri writeToFile(Context context, @NonNull final byte[] data, @NonNull Uri file) {
+        OutputStream stream =  null;
+        Uri result;
         try {
             ParcelFileDescriptor fd = context.getContentResolver().openFileDescriptor(file, "w");
-            OutputStream stream = new ParcelFileDescriptor.AutoCloseOutputStream(fd);
+            stream = new ParcelFileDescriptor.AutoCloseOutputStream(fd);
             stream.write(data);
             stream.flush();
+            result = file;
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
         } finally {
-            return file;
+            try {
+                if (stream != null) {
+                    stream.close();
+                }
+            } catch (Exception ignored) {
+
+            }
         }
+        return result;
     }
 
 
