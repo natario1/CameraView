@@ -100,7 +100,13 @@ public class Camera1Engine extends CameraBaseEngine implements
     @NonNull
     @Override
     protected List<Size> getPreviewStreamAvailableSizes() {
-        List<Camera.Size> sizes = mCamera.getParameters().getSupportedPreviewSizes();
+        List<Camera.Size> sizes;
+        try {
+            sizes = mCamera.getParameters().getSupportedPreviewSizes();
+        } catch (Exception e) {
+            LOG.e("getPreviewStreamAvailableSizes:", "Failed to compute preview size. Camera params is empty");
+            throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
+        }
         List<Size> result = new ArrayList<>(sizes.size());
         for (Camera.Size size : sizes) {
             Size add = new Size(size.width, size.height);
@@ -163,11 +169,16 @@ public class Camera1Engine extends CameraBaseEngine implements
 
         // Set parameters that might have been set before the camera was opened.
         LOG.i("onStartEngine:", "Applying default parameters.");
-        Camera.Parameters params = mCamera.getParameters();
-        mCameraOptions = new Camera1Options(params, mCameraId,
-                getAngles().flip(Reference.SENSOR, Reference.VIEW));
-        applyAllParameters(params);
-        mCamera.setParameters(params);
+        try {
+            Camera.Parameters params = mCamera.getParameters();
+            mCameraOptions = new Camera1Options(params, mCameraId,
+                    getAngles().flip(Reference.SENSOR, Reference.VIEW));
+            applyAllParameters(params);
+            mCamera.setParameters(params);
+        } catch (Exception e) {
+            LOG.e("onStartEngine:", "Failed to connect. Problem with camera params");
+            throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
+        }
         mCamera.setDisplayOrientation(getAngles().offset(Reference.SENSOR, Reference.VIEW,
                 Axis.ABSOLUTE)); // <- not allowed during preview
         LOG.i("onStartEngine:", "Ended");
