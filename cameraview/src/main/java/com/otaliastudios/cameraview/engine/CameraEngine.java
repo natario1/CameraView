@@ -17,6 +17,7 @@ import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraOrchestrator;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
@@ -636,6 +637,9 @@ public abstract class CameraEngine implements
 
     public abstract void setAudioBitRate(int audioBitRate);
     public abstract int getAudioBitRate();
+
+    public abstract void setAudioCodec(@NonNull AudioCodec codec);
+    @NonNull public abstract AudioCodec getAudioCodec();
 
     public abstract void setSnapshotMaxWidth(int maxWidth);
     public abstract int getSnapshotMaxWidth();

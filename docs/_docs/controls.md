@@ -70,6 +70,28 @@ cameraView.setVideoCodec(VideoCodec.H_263);
 cameraView.setVideoCodec(VideoCodec.H_264);
 ```
 
+##### cameraAudioCodec
+
+Sets the audio encoder for video recordings. Defaults to `DEVICE_DEFAULT`,
+which should typically be AAC.
+The available values are exposed through the `CameraOptions` object.
+
+`AudioCodec.VORBIS` is optionally supported on devices running Lolipop and above.
+`AudioCodec.HE_AAC` and `AudioCodec.AAC_ELD` require at least JellyBean.
+
+The library will safely fall back to device default if the min API requirements
+are not met.
+
+```java
+cameraView.setAudioCodec(AudioCodec.DEVICE_DEFAULT);
+cameraView.setAudioCodec(AudioCodec.AMR_NB);
+cameraView.setAudioCodec(AudioCodec.AMR_WB);
+cameraView.setAudioCodec(AudioCodec.AAC);
+cameraView.setAudioCodec(AudioCodec.HE_AAC);
+cameraView.setAudioCodec(AudioCodec.AAC_ELD);
+cameraView.setAudioCodec(AudioCodec.VORBIS);
+```
+
 ##### cameraWhiteBalance
 
 Sets the desired white balance for the current session.

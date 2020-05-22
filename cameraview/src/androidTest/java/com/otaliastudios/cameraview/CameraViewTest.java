@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.controls.ControlParser;
 import com.otaliastudios.cameraview.controls.Engine;
 import com.otaliastudios.cameraview.controls.Facing;
@@ -165,6 +166,7 @@ public class CameraViewTest extends BaseTest {
         assertEquals(cameraView.getHdr(), controls.getHdr());
         assertEquals(cameraView.getAudio(), controls.getAudio());
         assertEquals(cameraView.getVideoCodec(), controls.getVideoCodec());
+        assertEquals(cameraView.getAudioCodec(), controls.getAudioCodec());
         assertEquals(cameraView.getPictureFormat(), controls.getPictureFormat());
         //noinspection SimplifiableJUnitAssertion
         assertEquals(cameraView.getLocation(), null);
@@ -772,6 +774,25 @@ public class CameraViewTest extends BaseTest {
         cameraView.set(Audio.STEREO);
         assertEquals(cameraView.get(Audio.class), Audio.STEREO);
     }
+
+    @Test
+    public void testAudioCodec() {
+        cameraView.set(AudioCodec.DEVICE_DEFAULT);
+        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.DEVICE_DEFAULT);
+        cameraView.set(AudioCodec.AMR_NB);
+        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.AMR_NB);
+        cameraView.set(AudioCodec.AMR_WB);
+        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.AMR_WB);
+        cameraView.set(AudioCodec.AAC);
+        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.AAC);
+        cameraView.set(AudioCodec.HE_AAC);
+        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.HE_AAC);
+        cameraView.set(AudioCodec.AAC_ELD);
+        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.AAC_ELD);
+        cameraView.set(AudioCodec.VORBIS);
+        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.VORBIS);
+    }
+
 
     @Test
     public void testVideoCodec() {

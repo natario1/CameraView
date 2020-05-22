@@ -2,10 +2,12 @@ package com.otaliastudios.cameraview.video;
 
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.internal.DeviceEncoders;
 import com.otaliastudios.cameraview.internal.CamcorderProfiles;
@@ -13,6 +15,7 @@ import com.otaliastudios.cameraview.size.Size;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 /**
  * A {@link VideoRecorder} that uses {@link android.media.MediaRecorder} APIs.
@@ -106,6 +109,20 @@ public abstract class FullVideoRecorder extends VideoRecorder {
             mProfile.fileFormat = MediaRecorder.OutputFormat.MPEG_4; // should work
         }
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
+        // Set audio codec if the user has specified a specific codec.
+        if (stub.audioCodec == AudioCodec.AMR_NB) {
+            mProfile.audioCodec = MediaRecorder.AudioEncoder.AMR_NB;
+        } else if (stub.audioCodec == AudioCodec.AMR_WB) {
+            mProfile.audioCodec = MediaRecorder.AudioEncoder.AMR_WB;
+        } else if (stub.audioCodec == AudioCodec.AAC) {
+            mProfile.audioCodec = MediaRecorder.AudioEncoder.AAC;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && stub.audioCodec == AudioCodec.HE_AAC) {
+            mProfile.audioCodec = MediaRecorder.AudioEncoder.HE_AAC;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN &&stub.audioCodec == AudioCodec.AAC_ELD) {
+            mProfile.audioCodec = MediaRecorder.AudioEncoder.AAC_ELD;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && stub.audioCodec == AudioCodec.VORBIS) {
+            mProfile.audioCodec = MediaRecorder.AudioEncoder.VORBIS;
+        }
 
         // 4. Update the VideoResult stub with information from the profile, if the
         // stub values are absent or incomplete

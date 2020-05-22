@@ -123,7 +123,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 new Option.PictureMetering(), new Option.PictureSnapshotMetering(),
                 new Option.PictureFormat(),
                 // Video recording
-                new Option.PreviewFrameRate(), new Option.VideoCodec(), new Option.Audio(),
+                new Option.PreviewFrameRate(), new Option.VideoCodec(), new Option.Audio(), new Option.AudioCodec(),
                 // Gestures
                 new Option.Pinch(), new Option.HorizontalScroll(), new Option.VerticalScroll(),
                 new Option.Tap(), new Option.LongTap(),
@@ -144,7 +144,7 @@ public class CameraActivity extends AppCompatActivity implements View.OnClickLis
                 // Some controls
                 false, false, false, false, false, true,
                 // Video recording
-                false, false, true,
+                false, false, false, true,
                 // Gestures
                 false, false, false, false, true,
                 // Watermarks
