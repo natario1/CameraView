@@ -148,9 +148,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case AAC:
                 case HE_AAC:
                 case AAC_ELD:
-                    audioType = "audio/mp4a-latm"; break;
                 case DEVICE_DEFAULT:
-                    audioType = "audio/3gpp";
+                    audioType = "audio/mp4a-latm"; break;
             }
             TextureConfig videoConfig = new TextureConfig();
             AudioConfig audioConfig = new AudioConfig();
