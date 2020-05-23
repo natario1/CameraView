@@ -144,18 +144,13 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case DEVICE_DEFAULT: videoType = "video/avc"; break;
             }
             String audioType = "";
-            if (mResult.audioCodec == AudioCodec.AMR_NB) {
-                audioType = "audio/3gpp";
-            } else if (mResult.audioCodec == AudioCodec.AMR_WB) {
-                audioType = "audio/amr-wb";
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                    && mResult.audioCodec == AudioCodec.VORBIS) {
-                audioType = "audio/vorbis";
-            } else if (mResult.audioCodec == AudioCodec.AAC
-                    || mResult.audioCodec == AudioCodec.HE_AAC
-                    || mResult.audioCodec == AudioCodec.AAC_ELD
-                    || mResult.audioCodec == AudioCodec.DEVICE_DEFAULT) {
-                audioType = "audio/mp4a-latm";
+            switch (mResult.audioCodec) {
+                case AAC:
+                case HE_AAC:
+                case AAC_ELD:
+                    audioType = "audio/mp4a-latm"; break;
+                case DEVICE_DEFAULT:
+                    audioType = "audio/3gpp";
             }
             TextureConfig videoConfig = new TextureConfig();
             AudioConfig audioConfig = new AudioConfig();

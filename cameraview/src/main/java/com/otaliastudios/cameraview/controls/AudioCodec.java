@@ -22,37 +22,21 @@ public enum AudioCodec implements Control {
     DEVICE_DEFAULT(0),
 
     /**
-     * The AMR_NB codec.
-     */
-    AMR_NB(1),
-
-    /**
-     * The AMR_WB codec.
-     */
-    AMR_WB(2),
-
-    /**
      * The AAC codec.
      */
-    AAC(3),
+    AAC(1),
 
     /**
      * The HE_AAC codec.
      */
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN)
-    HE_AAC(4),
+    HE_AAC(2),
 
     /**
      * The AAC_ELD codec.
      */
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN)
-    AAC_ELD(5),
-
-    /**
-     * The VORBIS codec.
-     */
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    VORBIS(6);
+    AAC_ELD(3);
 
     static final AudioCodec DEFAULT = DEVICE_DEFAULT;
 

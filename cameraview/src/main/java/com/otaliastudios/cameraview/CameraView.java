@@ -1655,12 +1655,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Defaults to {@link AudioCodec#DEVICE_DEFAULT}.
      *
      * @see AudioCodec#DEVICE_DEFAULT
-     * @see AudioCodec#AMR_NB
-     * @see AudioCodec#AMR_WB
      * @see AudioCodec#AAC
      * @see AudioCodec#HE_AAC
      * @see AudioCodec#AAC_ELD
-     * @see AudioCodec#VORBIS
      *
      * @param codec requested audio codec
      */

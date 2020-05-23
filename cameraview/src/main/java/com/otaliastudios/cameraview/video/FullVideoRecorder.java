@@ -109,11 +109,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
             mProfile.fileFormat = MediaRecorder.OutputFormat.MPEG_4; // should work
         }
         // Set audio codec if the user has specified a specific codec.
-        if (stub.audioCodec == AudioCodec.AMR_NB) {
-            mProfile.audioCodec = MediaRecorder.AudioEncoder.AMR_NB;
-        } else if (stub.audioCodec == AudioCodec.AMR_WB) {
-            mProfile.audioCodec = MediaRecorder.AudioEncoder.AMR_WB;
-        } else if (stub.audioCodec == AudioCodec.AAC) {
+        if (stub.audioCodec == AudioCodec.AAC) {
             mProfile.audioCodec = MediaRecorder.AudioEncoder.AAC;
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
                 && stub.audioCodec == AudioCodec.HE_AAC) {
@@ -121,9 +117,6 @@ public abstract class FullVideoRecorder extends VideoRecorder {
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
                 && stub.audioCodec == AudioCodec.AAC_ELD) {
             mProfile.audioCodec = MediaRecorder.AudioEncoder.AAC_ELD;
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                && stub.audioCodec == AudioCodec.VORBIS) {
-            mProfile.audioCodec = MediaRecorder.AudioEncoder.VORBIS;
         }
         mMediaRecorder.setOutputFormat(mProfile.fileFormat);
 

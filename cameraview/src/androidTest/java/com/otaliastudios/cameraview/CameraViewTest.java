@@ -779,18 +779,12 @@ public class CameraViewTest extends BaseTest {
     public void testAudioCodec() {
         cameraView.set(AudioCodec.DEVICE_DEFAULT);
         assertEquals(cameraView.get(AudioCodec.class), AudioCodec.DEVICE_DEFAULT);
-        cameraView.set(AudioCodec.AMR_NB);
-        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.AMR_NB);
-        cameraView.set(AudioCodec.AMR_WB);
-        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.AMR_WB);
         cameraView.set(AudioCodec.AAC);
         assertEquals(cameraView.get(AudioCodec.class), AudioCodec.AAC);
         cameraView.set(AudioCodec.HE_AAC);
         assertEquals(cameraView.get(AudioCodec.class), AudioCodec.HE_AAC);
         cameraView.set(AudioCodec.AAC_ELD);
         assertEquals(cameraView.get(AudioCodec.class), AudioCodec.AAC_ELD);
-        cameraView.set(AudioCodec.VORBIS);
-        assertEquals(cameraView.get(AudioCodec.class), AudioCodec.VORBIS);
     }
 
 
