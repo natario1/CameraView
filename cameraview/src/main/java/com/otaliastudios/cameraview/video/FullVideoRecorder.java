@@ -108,7 +108,6 @@ public abstract class FullVideoRecorder extends VideoRecorder {
             mProfile.videoCodec = MediaRecorder.VideoEncoder.H263;
             mProfile.fileFormat = MediaRecorder.OutputFormat.MPEG_4; // should work
         }
-        mMediaRecorder.setOutputFormat(mProfile.fileFormat);
         // Set audio codec if the user has specified a specific codec.
         if (stub.audioCodec == AudioCodec.AMR_NB) {
             mProfile.audioCodec = MediaRecorder.AudioEncoder.AMR_NB;
@@ -126,6 +125,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 && stub.audioCodec == AudioCodec.VORBIS) {
             mProfile.audioCodec = MediaRecorder.AudioEncoder.VORBIS;
         }
+        mMediaRecorder.setOutputFormat(mProfile.fileFormat);
 
         // 4. Update the VideoResult stub with information from the profile, if the
         // stub values are absent or incomplete

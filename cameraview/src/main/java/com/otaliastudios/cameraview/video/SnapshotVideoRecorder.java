@@ -1,10 +1,12 @@
 package com.otaliastudios.cameraview.video;
 
 import android.graphics.SurfaceTexture;
+import android.media.MediaRecorder;
 import android.opengl.EGL14;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.internal.DeviceEncoders;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
@@ -141,7 +143,20 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case H_264: videoType = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
                 case DEVICE_DEFAULT: videoType = "video/avc"; break;
             }
-            String audioType = "audio/mp4a-latm";
+            String audioType = "";
+            if (mResult.audioCodec == AudioCodec.AMR_NB) {
+                audioType = "audio/3gpp";
+            } else if (mResult.audioCodec == AudioCodec.AMR_WB) {
+                audioType = "audio/amr-wb";
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+                    && mResult.audioCodec == AudioCodec.VORBIS) {
+                audioType = "audio/vorbis";
+            } else if (mResult.audioCodec == AudioCodec.AAC
+                    || mResult.audioCodec == AudioCodec.HE_AAC
+                    || mResult.audioCodec == AudioCodec.AAC_ELD
+                    || mResult.audioCodec == AudioCodec.DEVICE_DEFAULT) {
+                audioType = "audio/mp4a-latm";
+            }
             TextureConfig videoConfig = new TextureConfig();
             AudioConfig audioConfig = new AudioConfig();
 
