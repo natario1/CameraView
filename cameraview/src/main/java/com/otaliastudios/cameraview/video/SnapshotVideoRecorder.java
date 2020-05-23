@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.video;
 
 import android.graphics.SurfaceTexture;
+import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.opengl.EGL14;
 import android.os.Build;
@@ -147,9 +148,9 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             switch (mResult.audioCodec) {
                 case AAC:
                 case HE_AAC:
-                case AAC_ELD:
-                case DEVICE_DEFAULT:
-                    audioType = "audio/mp4a-latm"; break;
+                case AAC_ELD: audioType = "audio/mp4a-latm"; break; // MediaFormat.MIMETYPE_AUDIO_AAC:
+                case DEVICE_DEFAULT: audioType = "audio/mp4a-latm"; break;
+
             }
             TextureConfig videoConfig = new TextureConfig();
             AudioConfig audioConfig = new AudioConfig();
