@@ -33,6 +33,7 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
 
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.controls.Control;
 import com.otaliastudios.cameraview.controls.ControlParser;
 import com.otaliastudios.cameraview.controls.Engine;
@@ -268,6 +269,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setHdr(controls.getHdr());
         setAudio(controls.getAudio());
         setAudioBitRate(audioBitRate);
+        setAudioCodec(controls.getAudioCodec());
         setPictureSize(sizeSelectors.getPictureSizeSelector());
         setPictureMetering(pictureMetering);
         setPictureSnapshotMetering(pictureSnapshotMetering);
@@ -906,6 +908,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             setWhiteBalance((WhiteBalance) control);
         } else if (control instanceof VideoCodec) {
             setVideoCodec((VideoCodec) control);
+        } else if (control instanceof AudioCodec) {
+            setAudioCodec((AudioCodec) control);
         } else if (control instanceof Preview) {
             setPreview((Preview) control);
         } else if (control instanceof Engine) {
@@ -942,6 +946,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             return (T) getWhiteBalance();
         } else if (controlClass == VideoCodec.class) {
             return (T) getVideoCodec();
+        } else if (controlClass == AudioCodec.class) {
+            return (T) getAudioCodec();
         } else if (controlClass == Preview.class) {
             return (T) getPreview();
         } else if (controlClass == Engine.class) {
@@ -1014,6 +1020,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setHdr(oldEngine.getHdr());
         setAudio(oldEngine.getAudio());
         setAudioBitRate(oldEngine.getAudioBitRate());
+        setAudioCodec(oldEngine.getAudioCodec());
         setPictureSize(oldEngine.getPictureSizeSelector());
         setPictureFormat(oldEngine.getPictureFormat());
         setVideoSize(oldEngine.getVideoSizeSelector());
@@ -1641,6 +1648,30 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @SuppressWarnings("unused")
     public int getAudioBitRate() {
         return mCameraEngine.getAudioBitRate();
+    }
+
+    /**
+     * Sets the encoder for audio recordings.
+     * Defaults to {@link AudioCodec#DEVICE_DEFAULT}.
+     *
+     * @see AudioCodec#DEVICE_DEFAULT
+     * @see AudioCodec#AAC
+     * @see AudioCodec#HE_AAC
+     * @see AudioCodec#AAC_ELD
+     *
+     * @param codec requested audio codec
+     */
+    public void setAudioCodec(@NonNull AudioCodec codec) {
+        mCameraEngine.setAudioCodec(codec);
+    }
+
+    /**
+     * Gets the current encoder for audio recordings.
+     * @return the current audio codec
+     */
+    @NonNull
+    public AudioCodec getAudioCodec() {
+        return mCameraEngine.getAudioCodec();
     }
 
     /**

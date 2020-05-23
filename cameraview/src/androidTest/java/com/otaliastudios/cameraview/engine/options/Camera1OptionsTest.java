@@ -7,6 +7,7 @@ import android.hardware.Camera;
 import com.otaliastudios.cameraview.BaseTest;
 import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.PictureFormat;
@@ -244,10 +245,12 @@ public class Camera1OptionsTest extends BaseTest {
 
         Collection<Grid> grids = o.getSupportedControls(Grid.class);
         Collection<VideoCodec> video = o.getSupportedControls(VideoCodec.class);
+        Collection<AudioCodec> audioCodecs = o.getSupportedControls(AudioCodec.class);
         Collection<Mode> sessions = o.getSupportedControls(Mode.class);
         Collection<Audio> audio = o.getSupportedControls(Audio.class);
         assertEquals(grids.size(), Grid.values().length);
         assertEquals(video.size(), VideoCodec.values().length);
+        assertEquals(audioCodecs.size(), AudioCodec.values().length);
         assertEquals(sessions.size(), Mode.values().length);
         assertEquals(audio.size(), Audio.values().length);
     }

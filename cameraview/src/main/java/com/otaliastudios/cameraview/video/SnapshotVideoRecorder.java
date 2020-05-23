@@ -1,10 +1,13 @@
 package com.otaliastudios.cameraview.video;
 
 import android.graphics.SurfaceTexture;
+import android.media.MediaFormat;
+import android.media.MediaRecorder;
 import android.opengl.EGL14;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.internal.DeviceEncoders;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
@@ -141,7 +144,14 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case H_264: videoType = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
                 case DEVICE_DEFAULT: videoType = "video/avc"; break;
             }
-            String audioType = "audio/mp4a-latm";
+            String audioType = "";
+            switch (mResult.audioCodec) {
+                case AAC:
+                case HE_AAC:
+                case AAC_ELD: audioType = "audio/mp4a-latm"; break; // MediaFormat.MIMETYPE_AUDIO_AAC:
+                case DEVICE_DEFAULT: audioType = "audio/mp4a-latm"; break;
+
+            }
             TextureConfig videoConfig = new TextureConfig();
             AudioConfig audioConfig = new AudioConfig();
 

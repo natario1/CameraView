@@ -308,6 +308,12 @@ public abstract class Option<T> {
         }
     }
 
+    public static class AudioCodec extends ControlOption<com.otaliastudios.cameraview.controls.AudioCodec> {
+        public AudioCodec() {
+            super(com.otaliastudios.cameraview.controls.AudioCodec.class, "Audio Codec");
+        }
+    }
+
     public static class Audio extends ControlOption<com.otaliastudios.cameraview.controls.Audio> {
         public Audio() {
             super(com.otaliastudios.cameraview.controls.Audio.class, "Audio");
