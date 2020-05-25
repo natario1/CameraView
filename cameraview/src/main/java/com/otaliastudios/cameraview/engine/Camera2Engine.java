@@ -389,6 +389,13 @@ public class Camera2Engine extends CameraBaseEngine implements
         return false;
     }
 
+    @EngineThread
+    @Override
+    protected void prepareNewMode() {
+        LOG.w("prepareNewMode:", "can't prepare new mode without restart for Engine2");
+        restartBind();
+    }
+
     //endregion
 
     //region Start

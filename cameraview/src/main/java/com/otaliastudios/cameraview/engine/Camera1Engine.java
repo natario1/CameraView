@@ -145,6 +145,36 @@ public class Camera1Engine extends CameraBaseEngine implements
         return false;
     }
 
+    @EngineThread
+    @Override
+    protected void prepareNewMode() {
+        if(previewAspectRatioEqualsForModes()) {
+            Camera.Parameters params = mCamera.getParameters();
+            setPictureSize(params);
+            applyDefaultFocus(params);
+            params.setRecordingHint(getMode() == Mode.VIDEO);
+            mCamera.setParameters(params);
+        } else {
+            restartBind();
+        }
+    }
+
+    private boolean previewAspectRatioEqualsForModes() {
+        if (mCaptureSize == null) {
+            return false;
+        }
+        Size prevModeSize = mCaptureSize;
+        mCaptureSize = computeCaptureSize();
+
+        boolean flip = getAngles().flip(Reference.SENSOR, Reference.VIEW);
+        AspectRatio prevModePreviewTargetRatio = AspectRatio.of(prevModeSize.getWidth(), prevModeSize.getHeight());
+        AspectRatio targetRatio = AspectRatio.of(mCaptureSize.getWidth(), mCaptureSize.getHeight());
+        if (flip) prevModePreviewTargetRatio = prevModePreviewTargetRatio.flip();
+        if (flip) targetRatio = targetRatio.flip();
+
+        return prevModePreviewTargetRatio.equals(targetRatio);
+    }
+
     //endregion
 
     //region Start
@@ -217,18 +247,7 @@ public class Camera1Engine extends CameraBaseEngine implements
         params.setPreviewFormat(ImageFormat.NV21);
         // setPreviewSize is not allowed during preview
         params.setPreviewSize(mPreviewStreamSize.getWidth(), mPreviewStreamSize.getHeight());
-        if (getMode() == Mode.PICTURE) {
-            // setPictureSize is allowed during preview
-            params.setPictureSize(mCaptureSize.getWidth(), mCaptureSize.getHeight());
-        } else {
-            // mCaptureSize in this case is a video size. The available video sizes are not
-            // necessarily a subset of the picture sizes, so we can't use the mCaptureSize value:
-            // it might crash. However, the setPictureSize() passed here is useless : we don't allow
-            // HQ pictures in video mode.
-            // While this might be lifted in the future, for now, just use a picture capture size.
-            Size pictureSize = computeCaptureSize(Mode.PICTURE);
-            params.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
-        }
+        setPictureSize(params);
         mCamera.setParameters(params);
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
