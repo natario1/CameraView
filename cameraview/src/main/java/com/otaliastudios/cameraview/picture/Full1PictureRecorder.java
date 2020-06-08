@@ -2,12 +2,14 @@ package com.otaliastudios.cameraview.picture;
 
 import android.hardware.Camera;
 
-import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.engine.Camera1Engine;
-import com.otaliastudios.cameraview.internal.ExifHelper;
-
 import androidx.annotation.NonNull;
 import androidx.exifinterface.media.ExifInterface;
+
+import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.engine.Camera1Engine;
+import com.otaliastudios.cameraview.engine.offset.Reference;
+import com.otaliastudios.cameraview.internal.ExifHelper;
+import com.otaliastudios.cameraview.size.Size;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,6 +42,7 @@ public class Full1PictureRecorder extends FullPictureRecorder {
         // Stopping the preview callback is important on older APIs / emulators,
         // or takePicture can hang and leave the camera in a bad state.
         mCamera.setPreviewCallbackWithBuffer(null);
+        mEngine.getFrameManager().release();
         mCamera.takePicture(
                 new Camera.ShutterCallback() {
                     @Override
@@ -67,7 +70,21 @@ public class Full1PictureRecorder extends FullPictureRecorder {
                         mResult.data = data;
                         mResult.rotation = exifRotation;
                         LOG.i("take(): starting preview again. ", Thread.currentThread());
+
                         camera.setPreviewCallbackWithBuffer(mEngine);
+                        Size previewStreamSize = mEngine.getPreviewStreamSize(Reference.SENSOR);
+                        if (previewStreamSize == null) {
+                            throw new IllegalStateException("Preview stream size " +
+                                    "should never be null here.");
+                        }
+                        // Need to re-setup the frame manager, otherwise no frames are processed
+                        // after takePicture() is called
+                        mEngine.getFrameManager().setUp(
+                                mEngine.getFrameProcessingFormat(),
+                                previewStreamSize,
+                                mEngine.getAngles()
+                        );
+
                         camera.startPreview(); // This is needed, read somewhere in the docs.
                         dispatchResult();
                     }
