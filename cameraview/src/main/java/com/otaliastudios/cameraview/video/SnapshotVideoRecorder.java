@@ -1,17 +1,20 @@
 package com.otaliastudios.cameraview.video;
 
 import android.graphics.SurfaceTexture;
+import android.media.MediaFormat;
+import android.media.MediaRecorder;
 import android.opengl.EGL14;
 import android.os.Build;
 
 import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.internal.DeviceEncoders;
 import com.otaliastudios.cameraview.overlay.Overlay;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
 import com.otaliastudios.cameraview.engine.CameraEngine;
 import com.otaliastudios.cameraview.overlay.OverlayDrawer;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.RendererCameraPreview;
 import com.otaliastudios.cameraview.preview.RendererFrameCallback;
 import com.otaliastudios.cameraview.preview.RendererThread;
 import com.otaliastudios.cameraview.filter.Filter;
@@ -52,7 +55,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     private MediaEncoderEngine mEncoderEngine;
     private final Object mEncoderEngineLock = new Object();
-    private GlCameraPreview mPreview;
+    private RendererCameraPreview mPreview;
 
     private int mCurrentState = STATE_NOT_RECORDING;
     private int mDesiredState = STATE_NOT_RECORDING;
@@ -61,19 +64,16 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
     private Overlay mOverlay;
     private OverlayDrawer mOverlayDrawer;
     private boolean mHasOverlay;
-    private int mOverlayRotation;
 
     private Filter mCurrentFilter;
 
     public SnapshotVideoRecorder(@NonNull CameraEngine engine,
-                                 @NonNull GlCameraPreview preview,
-                                 @Nullable Overlay overlay,
-                                 int overlayRotation) {
+                                 @NonNull RendererCameraPreview preview,
+                                 @Nullable Overlay overlay) {
         super(engine);
         mPreview = preview;
         mOverlay = overlay;
         mHasOverlay = overlay != null && overlay.drawsOn(Overlay.Target.VIDEO_SNAPSHOT);
-        mOverlayRotation = overlayRotation;
     }
 
     @Override
@@ -126,9 +126,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
     @RendererThread
     @Override
-    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture,
-                                float scaleX,
-                                float scaleY) {
+    public void onRendererFrame(@NonNull SurfaceTexture surfaceTexture, int rotation,
+                                float scaleX, float scaleY) {
         if (mCurrentState == STATE_NOT_RECORDING && mDesiredState == STATE_RECORDING) {
             LOG.i("Starting the encoder engine.");
 
@@ -145,7 +144,14 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
                 case H_264: videoType = "video/avc"; break; // MediaFormat.MIMETYPE_VIDEO_AVC:
                 case DEVICE_DEFAULT: videoType = "video/avc"; break;
             }
-            String audioType = "audio/mp4a-latm";
+            String audioType = "";
+            switch (mResult.audioCodec) {
+                case AAC:
+                case HE_AAC:
+                case AAC_ELD: audioType = "audio/mp4a-latm"; break; // MediaFormat.MIMETYPE_AUDIO_AAC:
+                case DEVICE_DEFAULT: audioType = "audio/mp4a-latm"; break;
+
+            }
             TextureConfig videoConfig = new TextureConfig();
             AudioConfig audioConfig = new AudioConfig();
 
@@ -219,7 +225,7 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             videoConfig.height = mResult.size.getHeight();
             videoConfig.bitRate = mResult.videoBitRate;
             videoConfig.frameRate = mResult.videoFrameRate;
-            videoConfig.rotation = mResult.rotation;
+            videoConfig.rotation = rotation + mResult.rotation;
             videoConfig.mimeType = videoType;
             videoConfig.encoder = deviceEncoders.getVideoEncoder();
             videoConfig.textureId = mTextureId;
@@ -232,7 +238,8 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
             if (mHasOverlay) {
                 videoConfig.overlayTarget = Overlay.Target.VIDEO_SNAPSHOT;
                 videoConfig.overlayDrawer = mOverlayDrawer;
-                videoConfig.overlayRotation = mOverlayRotation;
+                videoConfig.overlayRotation = mResult.rotation;
+                // ^ no "rotation" here! Overlays are already in VIEW ref.
             }
             TextureMediaEncoder videoEncoder = new TextureMediaEncoder(videoConfig);
 

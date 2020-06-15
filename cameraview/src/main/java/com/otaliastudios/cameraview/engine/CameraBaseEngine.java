@@ -16,6 +16,7 @@ import com.otaliastudios.cameraview.CameraOptions;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.VideoResult;
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.controls.Hdr;
@@ -61,6 +62,7 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @SuppressWarnings("WeakerAccess") protected Flash mFlash;
     @SuppressWarnings("WeakerAccess") protected WhiteBalance mWhiteBalance;
     @SuppressWarnings("WeakerAccess") protected VideoCodec mVideoCodec;
+    @SuppressWarnings("WeakerAccess") protected AudioCodec mAudioCodec;
     @SuppressWarnings("WeakerAccess") protected Hdr mHdr;
     @SuppressWarnings("WeakerAccess") protected PictureFormat mPictureFormat;
     @SuppressWarnings("WeakerAccess") protected Location mLocation;
@@ -241,6 +243,17 @@ public abstract class CameraBaseEngine extends CameraEngine {
     @Override
     public final int getVideoBitRate() {
         return mVideoBitRate;
+    }
+
+    @Override
+    public final void setAudioCodec(@NonNull AudioCodec codec) {
+        mAudioCodec = codec;
+    }
+
+    @NonNull
+    @Override
+    public final AudioCodec getAudioCodec() {
+        return mAudioCodec;
     }
 
     @Override
@@ -581,6 +594,7 @@ public abstract class CameraBaseEngine extends CameraEngine {
                 }
                 stub.isSnapshot = false;
                 stub.videoCodec = mVideoCodec;
+                stub.audioCodec = mAudioCodec;
                 stub.location = mLocation;
                 stub.facing = mFacing;
                 stub.audio = mAudio;
@@ -608,6 +622,7 @@ public abstract class CameraBaseEngine extends CameraEngine {
                 stub.file = file;
                 stub.isSnapshot = true;
                 stub.videoCodec = mVideoCodec;
+                stub.audioCodec = mAudioCodec;
                 stub.location = mLocation;
                 stub.facing = mFacing;
                 stub.videoBitRate = mVideoBitRate;

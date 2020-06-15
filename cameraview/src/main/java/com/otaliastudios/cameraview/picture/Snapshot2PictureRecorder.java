@@ -18,7 +18,7 @@ import com.otaliastudios.cameraview.engine.action.Actions;
 import com.otaliastudios.cameraview.engine.action.BaseAction;
 import com.otaliastudios.cameraview.engine.action.CompletionCallback;
 import com.otaliastudios.cameraview.engine.lock.LockAction;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.RendererCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 
 /**
@@ -107,9 +107,9 @@ public class Snapshot2PictureRecorder extends SnapshotGlPictureRecorder {
 
     public Snapshot2PictureRecorder(@NonNull PictureResult.Stub stub,
                                     @NonNull Camera2Engine engine,
-                                    @NonNull GlCameraPreview preview,
+                                    @NonNull RendererCameraPreview preview,
                                     @NonNull AspectRatio outputRatio) {
-        super(stub, engine, preview, outputRatio);
+        super(stub, engine, preview, outputRatio, engine.getOverlay());
         mHolder = engine;
 
         mAction = Actions.sequence(

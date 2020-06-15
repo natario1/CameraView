@@ -40,6 +40,11 @@
             android:layout_height="wrap_content"/>
 
         <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/audioCodec"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.otaliastudios.cameraview.demo.MessageView
             android:id="@+id/videoCodec"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>

@@ -43,7 +43,7 @@ import com.otaliastudios.cameraview.metering.MeteringTransform;
 import com.otaliastudios.cameraview.picture.Full1PictureRecorder;
 import com.otaliastudios.cameraview.picture.Snapshot1PictureRecorder;
 import com.otaliastudios.cameraview.picture.SnapshotGlPictureRecorder;
-import com.otaliastudios.cameraview.preview.GlCameraPreview;
+import com.otaliastudios.cameraview.preview.RendererCameraPreview;
 import com.otaliastudios.cameraview.size.AspectRatio;
 import com.otaliastudios.cameraview.size.Size;
 import com.otaliastudios.cameraview.video.Full1VideoRecorder;
@@ -220,6 +220,7 @@ public class Camera1Engine extends CameraBaseEngine implements
             throw new IllegalStateException("previewStreamSize should not be null at this point.");
         }
         mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
+        mPreview.setDrawRotation(0);
 
         Camera.Parameters params = mCamera.getParameters();
         // NV21 should be the default, but let's make sure, since YuvImage will only support this
@@ -368,11 +369,12 @@ public class Camera1Engine extends CameraBaseEngine implements
         LOG.i("onTakePictureSnapshot:", "executing.");
         // Not the real size: it will be cropped to match the view ratio
         stub.size = getUncroppedSnapshotSize(Reference.OUTPUT);
-        // Actually it will be rotated and set to 0.
-        stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
-        if (mPreview instanceof GlCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this, (GlCameraPreview) mPreview, outputRatio);
+        if (mPreview instanceof RendererCameraPreview && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            stub.rotation = getAngles().offset(Reference.VIEW, Reference.OUTPUT, Axis.ABSOLUTE);
+            mPictureRecorder = new SnapshotGlPictureRecorder(stub, this,
+                    (RendererCameraPreview) mPreview, outputRatio, getOverlay());
         } else {
+            stub.rotation = getAngles().offset(Reference.SENSOR, Reference.OUTPUT, Axis.RELATIVE_TO_SENSOR);
             mPictureRecorder = new Snapshot1PictureRecorder(stub, this, mCamera, outputRatio);
         }
         mPictureRecorder.take();
@@ -408,13 +410,13 @@ public class Camera1Engine extends CameraBaseEngine implements
     @Override
     protected void onTakeVideoSnapshot(@NonNull VideoResult.Stub stub,
                                        @NonNull AspectRatio outputRatio) {
-        if (!(mPreview instanceof GlCameraPreview)) {
+        if (!(mPreview instanceof RendererCameraPreview)) {
             throw new IllegalStateException("Video snapshots are only supported with GL_SURFACE.");
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
             throw new IllegalStateException("Video snapshots are only supported on API 18+.");
         }
-        GlCameraPreview glPreview = (GlCameraPreview) mPreview;
+        RendererCameraPreview glPreview = (RendererCameraPreview) mPreview;
         Size outputSize = getUncroppedSnapshotSize(Reference.OUTPUT);
         if (outputSize == null) {
             throw new IllegalStateException("outputSize should not be null.");
@@ -436,8 +438,7 @@ public class Camera1Engine extends CameraBaseEngine implements
         LOG.i("onTakeVideoSnapshot", "rotation:", stub.rotation, "size:", stub.size);
 
         // Start.
-        mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview,
-                getOverlay(), stub.rotation);
+        mVideoRecorder = new SnapshotVideoRecorder(Camera1Engine.this, glPreview, getOverlay());
         mVideoRecorder.start(stub);
     }
 

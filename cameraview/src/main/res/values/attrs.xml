@@ -141,6 +141,13 @@
             <enum name="h264" value="2" />
         </attr>
 
+        <attr name="cameraAudioCodec" format="enum">
+            <enum name="deviceDefault" value="0" />
+            <enum name="aac" value="1" />
+            <enum name="heAac" value="2" />
+            <enum name="aacEld" value="3" />
+        </attr>
+
         <attr name="cameraAutoFocusResetDelay" format="integer|reference"/>
 
         <attr name="cameraAutoFocusMarker" format="string|reference"/>

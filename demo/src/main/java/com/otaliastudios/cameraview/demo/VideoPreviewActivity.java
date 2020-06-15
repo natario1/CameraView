@@ -59,6 +59,7 @@ public class VideoPreviewActivity extends AppCompatActivity {
         final MessageView audio = findViewById(R.id.audio);
         final MessageView audioBitRate = findViewById(R.id.audioBitRate);
         final MessageView videoCodec = findViewById(R.id.videoCodec);
+        final MessageView audioCodec = findViewById(R.id.audioCodec);
         final MessageView videoBitRate = findViewById(R.id.videoBitRate);
         final MessageView videoFrameRate = findViewById(R.id.videoFrameRate);
 
@@ -69,6 +70,7 @@ public class VideoPreviewActivity extends AppCompatActivity {
         audio.setTitleAndMessage("Audio", result.getAudio().name());
         audioBitRate.setTitleAndMessage("Audio bit rate", result.getAudioBitRate() + " bits per sec.");
         videoCodec.setTitleAndMessage("VideoCodec", result.getVideoCodec().name());
+        audioCodec.setTitleAndMessage("AudioCodec", result.getAudioCodec().name());
         videoBitRate.setTitleAndMessage("Video bit rate", result.getVideoBitRate() + " bits per sec.");
         videoFrameRate.setTitleAndMessage("Video frame rate", result.getVideoFrameRate() + " fps");
         MediaController controller = new MediaController(this);

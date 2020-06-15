@@ -3,6 +3,7 @@ package com.otaliastudios.cameraview;
 import android.location.Location;
 
 import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.AudioCodec;
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.VideoCodec;
 import com.otaliastudios.cameraview.size.Size;
@@ -34,6 +35,7 @@ public class VideoResult {
         public FileDescriptor fileDescriptor;
         public Facing facing;
         public VideoCodec videoCodec;
+        public AudioCodec audioCodec;
         public Audio audio;
         public long maxSize;
         public int maxDuration;
@@ -60,6 +62,7 @@ public class VideoResult {
     private final FileDescriptor fileDescriptor;
     private final Facing facing;
     private final VideoCodec videoCodec;
+    private final AudioCodec audioCodec;
     private final Audio audio;
     private final long maxSize;
     private final int maxDuration;
@@ -77,6 +80,7 @@ public class VideoResult {
         fileDescriptor = builder.fileDescriptor;
         facing = builder.facing;
         videoCodec = builder.videoCodec;
+        audioCodec = builder.audioCodec;
         audio = builder.audio;
         maxSize = builder.maxSize;
         maxDuration = builder.maxDuration;
@@ -171,6 +175,16 @@ public class VideoResult {
     @NonNull
     public VideoCodec getVideoCodec() {
         return videoCodec;
+    }
+
+    /**
+     * Returns the codec that was used to encode the audio frames.
+     *
+     * @return the audio codec
+     */
+    @NonNull
+    public AudioCodec getAudioCodec() {
+        return audioCodec;
     }
 
     /**

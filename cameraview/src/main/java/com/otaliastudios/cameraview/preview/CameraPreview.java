@@ -18,6 +18,7 @@ import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraLogger;
 import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.size.Size;
 
 /**
@@ -62,18 +63,24 @@ public abstract class CameraPreview<T extends View, Output> {
     @VisibleForTesting CropCallback mCropCallback;
     private SurfaceCallback mSurfaceCallback;
     private T mView;
-    boolean mCropping;
+    @SuppressWarnings("WeakerAccess")
+    protected boolean mCropping;
 
     // These are the surface dimensions in REF_VIEW.
-    int mOutputSurfaceWidth;
-    int mOutputSurfaceHeight;
+    @SuppressWarnings("WeakerAccess")
+    protected int mOutputSurfaceWidth;
+    @SuppressWarnings("WeakerAccess")
+    protected int mOutputSurfaceHeight;
 
     // These are the preview stream dimensions, in REF_VIEW.
-    int mInputStreamWidth;
-    int mInputStreamHeight;
+    @SuppressWarnings("WeakerAccess")
+    protected int mInputStreamWidth;
+    @SuppressWarnings("WeakerAccess")
+    protected int mInputStreamHeight;
 
     // The rotation, if any, to be applied when drawing.
-    int mDrawRotation;
+    @SuppressWarnings("WeakerAccess")
+    protected int mDrawRotation;
 
     /**
      * Creates a new preview.
@@ -88,7 +95,7 @@ public abstract class CameraPreview<T extends View, Output> {
      * Sets a callback to be notified of surface events (creation, change, destruction)
      * @param callback a callback
      */
-    public final void setSurfaceCallback(@Nullable SurfaceCallback callback) {
+    public void setSurfaceCallback(@Nullable SurfaceCallback callback) {
         if (hasSurface() && mSurfaceCallback != null) {
             mSurfaceCallback.onSurfaceDestroyed();
         }
@@ -124,9 +131,8 @@ public abstract class CameraPreview<T extends View, Output> {
      * @return the root view
      */
     @SuppressWarnings("unused")
-    @VisibleForTesting
     @NonNull
-    abstract View getRootView();
+    public abstract View getRootView();
 
     /**
      * Returns the output surface object (for example a SurfaceHolder
@@ -162,7 +168,7 @@ public abstract class CameraPreview<T extends View, Output> {
      * Returns the current input stream size, in view coordinates.
      * @return the current input stream size
      */
-    @SuppressWarnings("unused")
+    @VisibleForTesting
     @NonNull
     final Size getStreamSize() {
         return new Size(mInputStreamWidth, mInputStreamHeight);
@@ -326,11 +332,15 @@ public abstract class CameraPreview<T extends View, Output> {
      * Sometimes we don't need this:
      * - In Camera1, the buffer producer sets our Surface size and rotates it based on the value
      *   that we pass to {@link android.hardware.Camera.Parameters#setDisplayOrientation(int)},
-     *   so the stream that comes in is already rotated.
+     *   so the stream that comes in is already rotated (if we apply SurfaceTexture transform).
      * - In Camera2, for {@link android.view.SurfaceView} based previews, apparently it just works
      *   out of the box. The producer might be doing something similar.
      *
      * But in all the other Camera2 cases, we need to apply this rotation when drawing the surface.
+     * Seems that Camera1 can correctly rotate the stream/transform to {@link Reference#VIEW},
+     * while Camera2, that does not have any rotation API, will only rotate to {@link Reference#BASE}.
+     * That's why in Camera2 this angle is set as the offset between BASE and VIEW.
+     *
      * @param drawRotation the rotation in degrees
      */
     public void setDrawRotation(int drawRotation) {
