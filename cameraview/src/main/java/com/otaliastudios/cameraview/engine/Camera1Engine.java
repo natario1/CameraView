@@ -159,6 +159,10 @@ public class Camera1Engine extends CameraBaseEngine implements
             LOG.e("onStartEngine:", "Failed to connect. Maybe in use by another app?");
             throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
         }
+        if (mCamera == null) {
+            LOG.e("onStartEngine:", "Failed to connect. Camera is null, maybe in use by another app or already released?");
+            throw new CameraException(CameraException.REASON_FAILED_TO_CONNECT);
+        }
         mCamera.setErrorCallback(this);
 
         // Set parameters that might have been set before the camera was opened.
@@ -168,8 +172,13 @@ public class Camera1Engine extends CameraBaseEngine implements
                 getAngles().flip(Reference.SENSOR, Reference.VIEW));
         applyAllParameters(params);
         mCamera.setParameters(params);
-        mCamera.setDisplayOrientation(getAngles().offset(Reference.SENSOR, Reference.VIEW,
-                Axis.ABSOLUTE)); // <- not allowed during preview
+        try {
+            mCamera.setDisplayOrientation(getAngles().offset(Reference.SENSOR, Reference.VIEW,
+                    Axis.ABSOLUTE)); // <- not allowed during preview
+        } catch (Exception e) {
+            LOG.e("onStartEngine:", "Failed to connect. Can't set display orientation, maybe preview already exists?");
+            throw new CameraException(CameraException.REASON_FAILED_TO_CONNECT);
+        }
         LOG.i("onStartEngine:", "Ended");
         return Tasks.forResult(mCameraOptions);
     }
@@ -211,7 +220,13 @@ public class Camera1Engine extends CameraBaseEngine implements
         mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
         mPreview.setDrawRotation(0);
 
-        Camera.Parameters params = mCamera.getParameters();
+        Camera.Parameters params;
+        try {
+            params = mCamera.getParameters();
+        } catch (Exception e) {
+            LOG.e("onStartPreview:", "Failed to get params from camera. Maybe low level problem with camera or camera has already released?");
+            throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
+        }
         // NV21 should be the default, but let's make sure, since YuvImage will only support this
         // and a few others
         params.setPreviewFormat(ImageFormat.NV21);
@@ -229,7 +244,12 @@ public class Camera1Engine extends CameraBaseEngine implements
             Size pictureSize = computeCaptureSize(Mode.PICTURE);
             params.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
         }
-        mCamera.setParameters(params);
+        try {
+            mCamera.setParameters(params);
+        } catch (Exception e) {
+            LOG.e("onStartPreview:", "Failed to set params for camera. Maybe incorrect parameter put in params?");
+            throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
+        }
 
         mCamera.setPreviewCallbackWithBuffer(null); // Release anything left
         mCamera.setPreviewCallbackWithBuffer(this); // Add ourselves
