@@ -8,6 +8,7 @@ import androidx.exifinterface.media.ExifInterface;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.offset.Reference;
+import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.internal.ExifHelper;
 import com.otaliastudios.cameraview.size.Size;
 
@@ -71,19 +72,21 @@ public class Full1PictureRecorder extends FullPictureRecorder {
                         mResult.rotation = exifRotation;
                         LOG.i("take(): starting preview again. ", Thread.currentThread());
 
-                        camera.setPreviewCallbackWithBuffer(mEngine);
-                        Size previewStreamSize = mEngine.getPreviewStreamSize(Reference.SENSOR);
-                        if (previewStreamSize == null) {
-                            throw new IllegalStateException("Preview stream size " +
-                                    "should never be null here.");
+                        if (mEngine.getState().isAtLeast(CameraState.PREVIEW)) {
+                            camera.setPreviewCallbackWithBuffer(mEngine);
+                            Size previewStreamSize = mEngine.getPreviewStreamSize(Reference.SENSOR);
+                            if (previewStreamSize == null) {
+                                throw new IllegalStateException("Preview stream size " +
+                                        "should never be null here.");
+                            }
+                            // Need to re-setup the frame manager, otherwise no frames are processed
+                            // after takePicture() is called
+                            mEngine.getFrameManager().setUp(
+                                    mEngine.getFrameProcessingFormat(),
+                                    previewStreamSize,
+                                    mEngine.getAngles()
+                            );
                         }
-                        // Need to re-setup the frame manager, otherwise no frames are processed
-                        // after takePicture() is called
-                        mEngine.getFrameManager().setUp(
-                                mEngine.getFrameProcessingFormat(),
-                                previewStreamSize,
-                                mEngine.getAngles()
-                        );
 
                         camera.startPreview(); // This is needed, read somewhere in the docs.
                         dispatchResult();
