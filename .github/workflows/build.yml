@@ -18,7 +18,7 @@ jobs:
         with:
           java-version: 1.8
       - name: Perform base checks
-        run: ./gradlew demo:assembleDebug cameraview:javadoc
+        run: ./gradlew demo:assembleDebug cameraview:publishToDirectory
   ANDROID_UNIT_TESTS:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -28,12 +28,12 @@ jobs:
         with:
           java-version: 1.8
       - name: Execute unit tests
-        run: ./gradlew cameraview:testDebugUnitTest
+        run: ./gradlew cameraview:runUnitTests
       - name: Upload unit tests artifact
         uses: actions/upload-artifact@v1
         with:
           name: unit_tests
-          path: ./cameraview/build/jacoco/
+          path: ./cameraview/build/coverage_input/unit_tests
   ANDROID_EMULATOR_TESTS:
     name: Emulator Tests
     runs-on: macOS-latest
@@ -78,7 +78,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: emulator_tests_${{ matrix.EMULATOR_API }}
-          path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
+          path: ./cameraview/build/coverage_input/android_tests
   CODE_COVERAGE:
     name: Code Coverage Report
     runs-on: ubuntu-latest
@@ -92,23 +92,23 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: unit_tests
-          path: ./cameraview/build/jacoco/
+          path: ./cameraview/build/coverage_input/unit_tests
       - name: Download emulator tests artifact
         uses: actions/download-artifact@v1
         with:
           # 27 is the EMULATOR_API with less SdkExclude annotations, and should have
           # the best possible coverage.
           name: emulator_tests_27
-          path: ./cameraview/build/outputs/code_coverage/debugAndroidTest/connected
+          path: ./cameraview/build/coverage_input/android_tests
       - name: Create merged coverage report
-        run: ./gradlew cameraview:mergeCoverageReports
+        run: ./gradlew cameraview:computeCoverage
       - name: Upload merged coverage report (GitHub)
         uses: actions/upload-artifact@v1
         with:
           name: report
-          path: ./cameraview/build/reports/mergedCoverageReport
+          path: ./cameraview/build/coverage_output/xml
       - name: Upload merged coverage report (Codecov)
         uses: codecov/codecov-action@v1
         with:
-          file: ./cameraview/build/reports/mergedCoverageReport/*
+          file: ./cameraview/build/coverage_output/xml/*
           fail_ci_if_error: true

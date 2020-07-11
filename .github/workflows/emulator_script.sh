@@ -11,4 +11,4 @@ ADB_TAGS="$ADB_TAGS MediaEncoderEngine:I MediaEncoder:I AudioMediaEncoder:I Vide
 ADB_TAGS="$ADB_TAGS CameraIntegrationTest:I MessageQueue:W MPEG4Writer:I"
 adb logcat -c
 adb logcat $ADB_TAGS *:E -v color &
-./gradlew cameraview:connectedCheck
+./gradlew cameraview:runAndroidTests
