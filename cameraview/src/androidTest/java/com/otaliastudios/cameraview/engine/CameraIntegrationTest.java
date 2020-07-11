@@ -1083,6 +1083,20 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
+    public void testFrameProcessing_afterPicture() throws Exception {
+        FrameProcessor processor = mock(FrameProcessor.class);
+        camera.addFrameProcessor(processor);
+        openSync(true);
+
+        camera.takePicture();
+        waitForPictureResult(true);
+
+        assert15Frames(processor);
+    }
+
+    @Test
+    @Retry(emulatorOnly = true)
+    @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
     public void testFrameProcessing_afterRestart() throws Exception {
         FrameProcessor processor = mock(FrameProcessor.class);
         camera.addFrameProcessor(processor);
