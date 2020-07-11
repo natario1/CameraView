@@ -72,6 +72,8 @@ public class Full1PictureRecorder extends FullPictureRecorder {
                         mResult.rotation = exifRotation;
                         LOG.i("take(): starting preview again. ", Thread.currentThread());
 
+                        // It's possible that by the time this callback is invoked, we're not previewing
+                        // anymore, so check before restarting preview.
                         if (mEngine.getState().isAtLeast(CameraState.PREVIEW)) {
                             camera.setPreviewCallbackWithBuffer(mEngine);
                             Size previewStreamSize = mEngine.getPreviewStreamSize(Reference.SENSOR);
@@ -86,9 +88,8 @@ public class Full1PictureRecorder extends FullPictureRecorder {
                                     previewStreamSize,
                                     mEngine.getAngles()
                             );
+                            camera.startPreview();
                         }
-
-                        camera.startPreview(); // This is needed, read somewhere in the docs.
                         dispatchResult();
                     }
                 }
