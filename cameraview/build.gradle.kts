@@ -14,7 +14,7 @@ android {
         setMinSdkVersion(rootProject.property("minSdkVersion") as Int)
         setTargetSdkVersion(rootProject.property("targetSdkVersion") as Int)
         versionCode = 1
-        versionName = "2.6.2"
+        versionName = "2.6.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArgument("filter", "" +
                 "com.otaliastudios.cameraview.tools.SdkExcludeFilter," +
