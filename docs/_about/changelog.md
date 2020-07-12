@@ -9,6 +9,16 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 > Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
+##### v2.6.3
+
+- <small>[Video]</small> New: `setAudioCodec` and `app:cameraAudioCodec` to choose the audio encoding format, thanks to [@EverydayPineapple][EverydayPineapple] ([#861][861])
+- <small>[Camera1, Frame processing]</small> Fix: frame processing restarts automatically after taking a picture, thanks to [@jeffreyfjohnson][jeffreyfjohnson] ([#877][877])
+- <small>[Camera1]</small> Improvement: catch more errors in Camera1 lifecycle to avoid crashes, thanks to [@Namazed][Namazed] ([#851][851] and [#897][897])
+- <small>[CameraView]</small> Improvement: `setLifecycleOwner` is now nullable and will unbind the lifecycle, thanks to [@Namazed][Namazed] ([#798][798])
+- <small>[Preview]</small> Improvement: the `CameraPreview` APIs are much more friendly for subclassing ([#816][816])
+
+<https://github.com/natario1/CameraView/compare/v2.6.2...v2.6.3>
+
 ##### v2.6.2
 
 - <small>[Frame processing]</small> New: `frame.getRotationToUser()` and `frame.getRotationToView()` APIs to help with processing vs. rendering ([#745][745])
@@ -326,6 +336,8 @@ This is the last release before v2.
 [vaibhavbhandula]: https://github.com/vaibhavbhandula
 [sewar]: https://github.com/sewar
 [hualong-shen]: https://github.com/hualong-shen
+[EverydayPineapple]: https://github.com/EverydayPineapple
+[jeffreyfjohnson]: https://github.com/jeffreyfjohnson
 
 
 [73]: https://github.com/natario1/CameraView/pull/73
@@ -417,3 +429,9 @@ This is the last release before v2.
 [754]: https://github.com/natario1/CameraView/pull/754
 [775]: https://github.com/natario1/CameraView/pull/775
 [779]: https://github.com/natario1/CameraView/pull/779
+[798]: https://github.com/natario1/CameraView/pull/798
+[816]: https://github.com/natario1/CameraView/pull/816
+[851]: https://github.com/natario1/CameraView/pull/851
+[861]: https://github.com/natario1/CameraView/pull/861
+[877]: https://github.com/natario1/CameraView/pull/877
+[897]: https://github.com/natario1/CameraView/pull/897
