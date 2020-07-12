@@ -1,0 +1,2 @@
+include(":cameraview")
+include(":demo")
