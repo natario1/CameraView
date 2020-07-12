@@ -6,6 +6,8 @@ order: 4
 disqus: 1
 ---
 
+### Usage
+
 ##### Q: Why is front camera flipped horizontally when using takePicture() or takeVideo() ?
 
 A: It's actually not flipped - if you show your left hand, the person in the picture will show its left hand as well,
@@ -55,6 +57,8 @@ A: By using video controls, for instance:
 A: This is often caused by bad [framerate](../docs/controls#cameraPreviewFrameRate). Try using
 a lower value, so that there's more time for frame exposure.
 
+### Project Management
+
 ##### Q: I have found a bug with Camera1, can you fix it?
 
 A: No, we will not address Camera1 bugs anymore - development is focused on Camera2. However, if you find a solution,
@@ -76,4 +80,16 @@ If you are sure about the template, you can get private support by [sponsoring t
 A: Either because the pull requests did not respect the provided template, or because I don't have time.
 If you are sure about the template, you can get private support by [sponsoring the project](../extra/donate).
 
+##### Q: When will you do a new release?
+
+A: We don't have a release schedule. New releases happen when there's enough changes to justify one,
+and maintainers have had time to execute and publish the release. You can speed things up by 
+[sponsoring the project](../extra/donate) or pull snapshots from [jitpack.io](https://jitpack.io):
+
+```groovy
+implementation 'com.github.natario1:CameraView:master-SNAPSHOT'
+implementation 'com.github.natario1:CameraView:<commit hash>'
+```
+
+Check their website for more information about how to set things up.
 
