@@ -21,7 +21,7 @@ android {
                 "com.otaliastudios.cameraview.tools.SdkIncludeFilter")
     }
     buildTypes["debug"].isTestCoverageEnabled = true
-    buildTypes["release"].isMinifyEnabled = true
+    buildTypes["release"].isMinifyEnabled = false
 }
 
 dependencies {
