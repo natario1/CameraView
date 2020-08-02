@@ -45,8 +45,8 @@ Any changes in the overlay appearance will be recorded in real-time in the pictu
 or video snapshot that you are capturing.
  
 As you can see in the example, you can also selectively choose, for each overlay, whether it
-will draw on the preview (`layout_drawOnPreview`), on picture snapshots (`layout_drawOnPreview`), 
-on video snapshots (`layout_drawOnPreview`).
+will draw on the preview (`layout_drawOnPreview`), on picture snapshots (`layout_drawOnPictureSnapshot`), 
+on video snapshots (`layout_drawOnVideoSnapshot`).
  
 ### Advanced Usage
 
