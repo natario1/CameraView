@@ -855,6 +855,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     public void close() {
         if (mInEditor) return;
+        mOrientationHelper.disable();
         mCameraEngine.stop(false);
         if (mCameraPreview != null) mCameraPreview.onPause();
     }

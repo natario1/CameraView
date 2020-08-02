@@ -37,6 +37,8 @@ public class OrientationHelper {
     @VisibleForTesting
     final DisplayManager.DisplayListener mDisplayOffsetListener;
     private int mDisplayOffset = -1;
+    
+    private boolean mEnabled;
 
     /**
      * Creates a new orientation helper.
@@ -97,6 +99,11 @@ public class OrientationHelper {
      * Enables this listener.
      */
     public void enable() {
+        if (mEnabled) {
+            //already enabled, will ignore call
+            return;
+        }
+        mEnabled = true;
         mDisplayOffset = findDisplayOffset();
         if (Build.VERSION.SDK_INT >= 17) {
             DisplayManager manager = (DisplayManager)
@@ -110,6 +117,8 @@ public class OrientationHelper {
      * Disables this listener.
      */
     public void disable() {
+        if (!mEnabled) return;
+        mEnabled = false;
         mDeviceOrientationListener.disable();
         if (Build.VERSION.SDK_INT >= 17) {
             DisplayManager manager = (DisplayManager)
