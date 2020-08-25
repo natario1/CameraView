@@ -139,7 +139,6 @@ public abstract class CameraPreview<T extends View, Output> {
      * or a SurfaceTexture).
      * @return the surface object
      */
-    @NonNull
     public abstract Output getOutput();
 
     /**

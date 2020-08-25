@@ -222,7 +222,11 @@ public class Camera2Engine extends CameraBaseEngine implements
      * Removes default surfaces from the repeating request builder.
      */
     private void removeRepeatingRequestBuilderSurfaces() {
-        mRepeatingRequestBuilder.removeTarget(mPreviewStreamSurface);
+        if(mRepeatingRequestBuilder == null) return;
+
+        if(mPreviewStreamSurface != null){
+            mRepeatingRequestBuilder.removeTarget(mPreviewStreamSurface);
+        }
         if (mFrameProcessingSurface != null) {
             mRepeatingRequestBuilder.removeTarget(mFrameProcessingSurface);
         }
@@ -486,7 +490,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         // Create a preview surface with the correct size.
         final Class outputClass = mPreview.getOutputClass();
         final Object output = mPreview.getOutput();
-        if (outputClass == SurfaceHolder.class) {
+        if (output != null && outputClass == SurfaceHolder.class) {
             try {
                 // This must be called from the UI thread...
                 Tasks.await(Tasks.call(new Callable<Void>() {
@@ -502,12 +506,12 @@ public class Camera2Engine extends CameraBaseEngine implements
                 throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
             }
             mPreviewStreamSurface = ((SurfaceHolder) output).getSurface();
-        } else if (outputClass == SurfaceTexture.class) {
+        } else if (output != null && outputClass == SurfaceTexture.class) {
             ((SurfaceTexture) output).setDefaultBufferSize(
                     mPreviewStreamSize.getWidth(),
                     mPreviewStreamSize.getHeight());
             mPreviewStreamSurface = new Surface((SurfaceTexture) output);
-        } else {
+        } else if(output != null) {
             throw new RuntimeException("Unknown CameraPreview output class.");
         }
         outputSurfaces.add(mPreviewStreamSurface);
@@ -581,7 +585,6 @@ public class Camera2Engine extends CameraBaseEngine implements
                 public void onConfigureFailed(@NonNull CameraCaptureSession session) {
                     // This SHOULD be a library error so we throw a RuntimeException.
                     String message = LOG.e("onConfigureFailed! Session", session);
-                    throw new RuntimeException(message);
                 }
 
                 @Override
@@ -704,20 +707,46 @@ public class Camera2Engine extends CameraBaseEngine implements
         mPreviewStreamSize = null;
         mCaptureSize = null;
         mFrameProcessingSize = null;
-        if (mFrameProcessingReader != null) {
-            // WARNING: This call synchronously releases all Images and their underlying
-            // properties. This can cause issues if the Image is being used.
-            mFrameProcessingReader.close();
-            mFrameProcessingReader = null;
-        }
-        if (mPictureReader != null) {
-            mPictureReader.close();
-            mPictureReader = null;
-        }
-        mSession.close();
-        mSession = null;
+        closeFrameProcessor();
+        closePictureRender();
+        closeSession();
         LOG.i("onStopBind:", "Returning.");
         return Tasks.forResult(null);
+    }
+
+    private void closeFrameProcessor() {
+        try{
+            if (mFrameProcessingReader != null) {
+                // WARNING: This call synchronously releases all Images and their underlying
+                // properties. This can cause issues if the Image is being used.
+                mFrameProcessingReader.close();
+                mFrameProcessingReader = null;
+            }
+        }catch (Exception ex){
+            LOG.e("cameraEngine", "Error while closing FrameProcessor", ex);
+        }
+    }
+
+    private void closePictureRender() {
+        try{
+            if (mPictureReader != null) {
+                mPictureReader.close();
+                mPictureReader = null;
+            }
+        }catch (Exception ex){
+            LOG.e("cameraEngine", "Error while closing PictureRender", ex);
+        }
+    }
+
+    private void closeSession() {
+        try{
+            if(mSession != null){
+                mSession.close();
+                mSession = null;
+            }
+        }catch (Exception ex){
+            LOG.e("cameraEngine", "Error while closing session", ex);
+        }
     }
 
     @EngineThread

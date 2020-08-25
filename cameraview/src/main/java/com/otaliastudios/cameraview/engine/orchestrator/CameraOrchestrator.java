@@ -59,6 +59,7 @@ public class CameraOrchestrator {
     protected final ArrayDeque<Token> mJobs = new ArrayDeque<>();
     protected final Object mLock = new Object();
     private final Map<String, Runnable> mDelayedJobs = new HashMap<>();
+    private boolean released = false;
 
     public CameraOrchestrator(@NonNull Callback callback) {
         mCallback = callback;
@@ -78,6 +79,17 @@ public class CameraOrchestrator {
         });
     }
 
+    public void release(){
+        mJobs.clear();
+        mDelayedJobs.clear();
+        reset();
+        released = true;
+    }
+
+    public boolean isReleased(){
+        return released;
+    }
+
     @SuppressWarnings("unchecked")
     @NonNull
     public <T> Task<T> schedule(@NonNull final String name,
@@ -87,11 +99,17 @@ public class CameraOrchestrator {
         final TaskCompletionSource<T> source = new TaskCompletionSource<>();
         final WorkerHandler handler = mCallback.getJobWorker(name);
         synchronized (mLock) {
-            applyCompletionListener(mJobs.getLast().task, handler,
-                    new OnCompleteListener() {
+            if(released){
+                return source.getTask();
+            }
+
+            applyCompletionListener(mJobs.getLast().task, handler, new OnCompleteListener() {
                 @Override
                 public void onComplete(@NonNull Task task) {
                     synchronized (mLock) {
+                        if (mJobs.isEmpty()) {
+                            return;
+                        }
                         mJobs.removeFirst();
                         ensureToken();
                     }
@@ -119,7 +137,9 @@ public class CameraOrchestrator {
                         });
                     } catch (Exception e) {
                         LOG.i(name.toUpperCase(), "- Finished.", e);
-                        if (dispatchExceptions) mCallback.handleJobException(name, e);
+                        if (dispatchExceptions) {
+                            mCallback.handleJobException(name, e);
+                        }
                         source.trySetException(e);
                     }
                 }
@@ -132,6 +152,8 @@ public class CameraOrchestrator {
     public void scheduleDelayed(@NonNull final String name,
                                 long minDelay,
                                 @NonNull final Runnable runnable) {
+        if(released) return;
+
         Runnable wrapper = new Runnable() {
             @Override
             public void run() {
@@ -165,6 +187,7 @@ public class CameraOrchestrator {
 
     public void reset() {
         synchronized (mLock) {
+            released = false;
             List<String> all = new ArrayList<>();
             //noinspection CollectionAddAllCanBeReplacedWithConstructor
             all.addAll(mDelayedJobs.keySet());

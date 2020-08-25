@@ -51,8 +51,6 @@ import androidx.annotation.VisibleForTesting;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -132,14 +130,11 @@ public abstract class CameraEngine implements
 
     protected static final String TAG = CameraEngine.class.getSimpleName();
     protected static final CameraLogger LOG = CameraLogger.create(TAG);
-    // If this is 2, this means we'll try to run destroy() twice.
-    private static final int DESTROY_RETRIES = 2;
 
     private WorkerHandler mHandler;
     @VisibleForTesting Handler mCrashHandler;
     private final Callback mCallback;
-    private final CameraStateOrchestrator mOrchestrator
-            = new CameraStateOrchestrator(new CameraOrchestrator.Callback() {
+    private final CameraStateOrchestrator mOrchestrator = new CameraStateOrchestrator(new CameraOrchestrator.Callback() {
         @Override
         @NonNull
         public WorkerHandler getJobWorker(@NonNull String job) {
@@ -286,48 +281,22 @@ public abstract class CameraEngine implements
      * awaiting for {@link #stop(boolean)} to return.
      */
     public void destroy(boolean unrecoverably) {
-        destroy(unrecoverably, 0);
-    }
-
-    private void destroy(boolean unrecoverably, int depth) {
         LOG.i("DESTROY:", "state:", getState(),
-                "thread:", Thread.currentThread(),
-                "depth:", depth,
-                "unrecoverably:", unrecoverably);
+            "thread:", Thread.currentThread(),
+            "unrecoverably:", unrecoverably);
+
         if (unrecoverably) {
             // Prevent CameraEngine leaks. Don't set to null, or exceptions
             // inside the standard stop() method might crash the main thread.
             mHandler.getThread().setUncaughtExceptionHandler(new NoOpExceptionHandler());
         }
-        // Cannot use Tasks.await() because we might be on the UI thread.
-        final CountDownLatch latch = new CountDownLatch(1);
-        stop(true).addOnCompleteListener(
-                mHandler.getExecutor(),
-                new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        latch.countDown();
-                    }
-                });
-        try {
-            boolean success = latch.await(6, TimeUnit.SECONDS);
-            if (!success) {
-                // This thread is likely stuck. The reason might be deadlock issues in the internal
-                // camera implementation, at least in emulators: see Camera1Engine and Camera2Engine
-                // onStopEngine() implementation and comments.
-                LOG.e("DESTROY: Could not destroy synchronously after 6 seconds.",
-                        "Current thread:", Thread.currentThread(),
-                        "Handler thread:", mHandler.getThread());
-                depth++;
-                if (depth < DESTROY_RETRIES) {
-                    recreateHandler(true);
-                    LOG.e("DESTROY: Trying again on thread:", mHandler.getThread());
-                    destroy(unrecoverably, depth);
-                } else {
-                    LOG.w("DESTROY: Giving up because DESTROY_RETRIES was reached.");
-                }
-            }
-        } catch (InterruptedException ignore) {}
+
+        // Release orchestrator, to cancel all current pending process.
+        // It will make future tasks that will open the camera not be executed.
+        mOrchestrator.release();
+
+        // Close camera device.
+        forceStop();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -340,10 +309,45 @@ public abstract class CameraEngine implements
     @NonNull
     public Task<Void> start() {
         LOG.i("START:", "scheduled. State:", getState());
-        Task<Void> engine = startEngine();
-        startBind();
-        startPreview();
+        // The user may have left screen when the camera is properly started.
+        // So, if that happen, the orchestrator will be released and we close the camera in order to avoid memory leak.
+        Task<Void> engine = startEngine().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if(mOrchestrator.isReleased()){
+                    onStopEngine();
+                }
+            }
+        });
+        startBind().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if(mOrchestrator.isReleased()){
+                    onStopBind();
+                }
+            }
+        });
+        startPreview().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if(mOrchestrator.isReleased()){
+                    onStopPreview();
+                }
+            }
+        });
         return engine;
+    }
+
+    public void forceStop(){
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                LOG.i("STOP:", "scheduled. State:", getState());
+                onStopPreview();
+                onStopBind();
+                onStopEngine();
+            }
+        });
     }
 
     @NonNull
