@@ -134,7 +134,8 @@ public abstract class CameraEngine implements
     private WorkerHandler mHandler;
     @VisibleForTesting Handler mCrashHandler;
     private final Callback mCallback;
-    private final CameraStateOrchestrator mOrchestrator = new CameraStateOrchestrator(new CameraOrchestrator.Callback() {
+    private final CameraStateOrchestrator mOrchestrator
+            = new CameraStateOrchestrator(new CameraOrchestrator.Callback() {
         @Override
         @NonNull
         public WorkerHandler getJobWorker(@NonNull String job) {
