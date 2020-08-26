@@ -347,7 +347,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @NonNull
     protected CameraEngine instantiateCameraEngine(@NonNull Engine engine,
                                                    @NonNull CameraEngine.Callback callback) {
-        if (mExperimental && engine == Engine.CAMERA2) {
+        if (mExperimental
+                && engine == Engine.CAMERA2
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             return new Camera2Engine(callback);
         } else {
             mEngine = Engine.CAMERA1;
