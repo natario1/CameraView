@@ -59,7 +59,7 @@ public class CameraOrchestrator {
     protected final ArrayDeque<Token> mJobs = new ArrayDeque<>();
     protected final Object mLock = new Object();
     private final Map<String, Runnable> mDelayedJobs = new HashMap<>();
-    private boolean released = false;
+    private boolean mIsReleased = false;
 
     public CameraOrchestrator(@NonNull Callback callback) {
         mCallback = callback;
@@ -82,12 +82,13 @@ public class CameraOrchestrator {
     public void release(){
         mJobs.clear();
         mDelayedJobs.clear();
+
         reset();
-        released = true;
+        mIsReleased = true;
     }
 
     public boolean isReleased(){
-        return released;
+        return mIsReleased;
     }
 
     @SuppressWarnings("unchecked")
@@ -99,7 +100,7 @@ public class CameraOrchestrator {
         final TaskCompletionSource<T> source = new TaskCompletionSource<>();
         final WorkerHandler handler = mCallback.getJobWorker(name);
         synchronized (mLock) {
-            if(released){
+            if(isReleased()){
                 return source.getTask();
             }
 
@@ -152,7 +153,9 @@ public class CameraOrchestrator {
     public void scheduleDelayed(@NonNull final String name,
                                 long minDelay,
                                 @NonNull final Runnable runnable) {
-        if(released) return;
+        if(mIsReleased) {
+            return;
+        }
 
         Runnable wrapper = new Runnable() {
             @Override
@@ -187,7 +190,7 @@ public class CameraOrchestrator {
 
     public void reset() {
         synchronized (mLock) {
-            released = false;
+            mIsReleased = false;
             List<String> all = new ArrayList<>();
             //noinspection CollectionAddAllCanBeReplacedWithConstructor
             all.addAll(mDelayedJobs.keySet());
