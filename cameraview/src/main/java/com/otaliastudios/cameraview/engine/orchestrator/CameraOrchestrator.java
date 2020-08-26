@@ -80,11 +80,13 @@ public class CameraOrchestrator {
     }
 
     public void release(){
-        mJobs.clear();
-        mDelayedJobs.clear();
+        synchronized (mLock){
+            mJobs.clear();
+            mDelayedJobs.clear();
 
-        reset();
-        mIsReleased = true;
+            reset();
+            mIsReleased = true;
+        }
     }
 
     public boolean isReleased(){
