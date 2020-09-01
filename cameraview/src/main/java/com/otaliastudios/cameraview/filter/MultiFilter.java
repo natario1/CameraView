@@ -48,6 +48,7 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
     static class State {
         @VisibleForTesting boolean isProgramCreated = false;
         @VisibleForTesting boolean isFramebufferCreated = false;
+        private boolean sizeChanged = false;
         @VisibleForTesting Size size = null;
         private int programHandle = -1;
         private GlFramebuffer outputFramebuffer = null;
@@ -135,15 +136,25 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
 
     private void maybeCreateFramebuffer(@NonNull Filter filter, boolean isFirst, boolean isLast) {
         State state = states.get(filter);
+        if (isLast) {
+            //noinspection ConstantConditions
+            state.sizeChanged = false;
+            return;
+        }
         //noinspection ConstantConditions
-        if (state.isFramebufferCreated || isLast) return;
-        state.isFramebufferCreated = true;
-        state.outputTexture = new GlTexture(GLES20.GL_TEXTURE0,
-                GLES20.GL_TEXTURE_2D,
-                state.size.getWidth(),
-                state.size.getHeight());
-        state.outputFramebuffer = new GlFramebuffer();
-        state.outputFramebuffer.attach(state.outputTexture);
+        if (state.sizeChanged) {
+            maybeDestroyFramebuffer(filter);
+            state.sizeChanged = false;
+        }
+        if (!state.isFramebufferCreated) {
+            state.isFramebufferCreated = true;
+            state.outputTexture = new GlTexture(GLES20.GL_TEXTURE0,
+                    GLES20.GL_TEXTURE_2D,
+                    state.size.getWidth(),
+                    state.size.getHeight());
+            state.outputFramebuffer = new GlFramebuffer();
+            state.outputFramebuffer.attach(state.outputTexture);
+        }
     }
 
     private void maybeDestroyFramebuffer(@NonNull Filter filter) {
@@ -157,11 +168,13 @@ public class MultiFilter implements Filter, OneParameterFilter, TwoParameterFilt
         state.outputTexture = null;
     }
 
+    // Any thread...
     private void maybeSetSize(@NonNull Filter filter) {
         State state = states.get(filter);
         //noinspection ConstantConditions
         if (size != null && !size.equals(state.size)) {
             state.size = size;
+            state.sizeChanged = true;
             filter.setSize(size.getWidth(), size.getHeight());
         }
     }
