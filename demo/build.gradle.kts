@@ -13,6 +13,7 @@ android {
         versionName = "1.0"
         vectorDrawables.useSupportLibrary = true
     }
+    sourceSets["main"].java.srcDir("src/main/kotlin")
 }
 
 dependencies {
