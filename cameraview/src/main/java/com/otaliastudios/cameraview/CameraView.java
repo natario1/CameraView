@@ -394,12 +394,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             // attached. That's why we instantiate the preview here.
             doInstantiatePreview();
         }
-        mOrientationHelper.enable();
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        if (!mInEditor) mOrientationHelper.disable();
         mLastPreviewStreamSize = null;
         super.onDetachedFromWindow();
     }
@@ -732,6 +730,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * Sets permissions flag if you want enable auto check permissions or disable it.
      * @param requestPermissions - true: auto check permissions enabled, false: auto check permissions disabled.
      */
+    @SuppressWarnings("unused")
     public void setRequestPermissions(boolean requestPermissions) {
         mRequestPermissions = requestPermissions;
     }
@@ -1810,6 +1809,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param fileDescriptor a file descriptor where the video will be saved
      * @param durationMillis recording max duration
      */
+    @SuppressWarnings("unused")
     public void takeVideo(@NonNull FileDescriptor fileDescriptor, int durationMillis) {
         takeVideo(null, fileDescriptor, durationMillis);
     }

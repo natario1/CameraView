@@ -1246,8 +1246,11 @@ public class Camera2Engine extends CameraBaseEngine implements
     public void setZoom(final float zoom, final @Nullable PointF[] points, final boolean notify) {
         final float old = mZoomValue;
         mZoomValue = zoom;
+        // Zoom requests can be high frequency (e.g. linked to touch events), so
+        // we remove the task before scheduling to avoid stack overflows in orchestrator.
+        getOrchestrator().remove("zoom");
         mZoomTask = getOrchestrator().scheduleStateful(
-                "zoom (" + zoom + ")",
+                "zoom",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
@@ -1302,8 +1305,11 @@ public class Camera2Engine extends CameraBaseEngine implements
                                       final boolean notify) {
         final float old = mExposureCorrectionValue;
         mExposureCorrectionValue = EVvalue;
+        // EV requests can be high frequency (e.g. linked to touch events), so
+        // we remove the task before scheduling to avoid stack overflows in orchestrator.
+        getOrchestrator().remove("exposure correction");
         mExposureCorrectionTask = getOrchestrator().scheduleStateful(
-                "exposure correction (" + EVvalue + ")",
+                "exposure correction",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
