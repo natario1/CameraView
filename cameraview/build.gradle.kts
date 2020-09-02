@@ -93,7 +93,7 @@ tasks.register("runAndroidTests") { // changing name? change github workflow
 }
 
 // Merge the two with a jacoco task.
-jacoco { toolVersion = "0.8.1" }
+jacoco { toolVersion = "0.8.5" }
 tasks.register("computeCoverage", JacocoReport::class) {
     dependsOn("compileDebugSources") // Compile sources, needed below
     executionData.from(fileTree(coverageInputDir))
