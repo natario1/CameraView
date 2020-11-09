@@ -14,7 +14,7 @@ android {
         setMinSdkVersion(property("minSdkVersion") as Int)
         setTargetSdkVersion(property("targetSdkVersion") as Int)
         versionCode = 1
-        versionName = "2.6.4"
+        versionName = "2.6.4-zoom3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArgument("filter", "" +
                 "com.otaliastudios.cameraview.tools.SdkExcludeFilter," +
@@ -51,15 +51,15 @@ publisher {
     project.group = "com.otaliastudios"
     project.url = "https://github.com/natario1/CameraView"
     project.addLicense(License.APACHE_2_0)
-    release.setSources(Release.SOURCES_AUTO)
-    release.setDocs(Release.DOCS_AUTO)
     bintray {
+        release.setSources(Release.SOURCES_AUTO)
+        release.setDocs(Release.DOCS_AUTO)
         auth.user = "BINTRAY_USER"
         auth.key = "BINTRAY_KEY"
         auth.repo = "BINTRAY_REPO"
     }
     directory {
-        directory = "build/local"
+        directory = file(repositories.mavenLocal().url).absolutePath
     }
 }
 

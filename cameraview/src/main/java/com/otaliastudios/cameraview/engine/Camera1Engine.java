@@ -888,7 +888,7 @@ public class Camera1Engine extends CameraBaseEngine implements
                 // The auto focus callback is not guaranteed to be called, but we really want it
                 // to be. So we remove the old runnable if still present and post a new one.
                 getOrchestrator().remove(JOB_FOCUS_END);
-                getOrchestrator().scheduleDelayed(JOB_FOCUS_END, AUTOFOCUS_END_DELAY_MILLIS,
+                getOrchestrator().scheduleDelayed(JOB_FOCUS_END, true, AUTOFOCUS_END_DELAY_MILLIS,
                         new Runnable() {
                     @Override
                     public void run() {

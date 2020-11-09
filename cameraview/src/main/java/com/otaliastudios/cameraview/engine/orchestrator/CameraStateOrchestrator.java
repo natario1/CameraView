@@ -35,10 +35,10 @@ public class CameraStateOrchestrator extends CameraOrchestrator {
     }
 
     public boolean hasPendingStateChange() {
-        synchronized (mLock) {
-            for (Token token : mJobs) {
-                if ((token.name.contains(" >> ") || token.name.contains(" << "))
-                        && !token.task.isComplete()) {
+        synchronized (mJobsLock) {
+            for (Job<?> job : mJobs) {
+                if ((job.name.contains(" >> ") || job.name.contains(" << "))
+                        && !job.source.getTask().isComplete()) {
                     return true;
                 }
             }
@@ -107,7 +107,7 @@ public class CameraStateOrchestrator extends CameraOrchestrator {
                                         @NonNull final CameraState atLeast,
                                         long delay,
                                         @NonNull final Runnable job) {
-        scheduleDelayed(name, delay, new Runnable() {
+        scheduleDelayed(name, true, delay, new Runnable() {
             @Override
             public void run() {
                 if (getCurrentState().isAtLeast(atLeast)) {
