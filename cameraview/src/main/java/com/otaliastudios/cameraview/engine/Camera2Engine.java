@@ -1248,7 +1248,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         mZoomValue = zoom;
         // Zoom requests can be high frequency (e.g. linked to touch events), so
         // we remove the task before scheduling to avoid stack overflows in orchestrator.
-        getOrchestrator().remove("zoom");
+        getOrchestrator().trim("zoom", ALLOWED_ZOOM_OPS);
         mZoomTask = getOrchestrator().scheduleStateful(
                 "zoom",
                 CameraState.ENGINE,
@@ -1307,7 +1307,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         mExposureCorrectionValue = EVvalue;
         // EV requests can be high frequency (e.g. linked to touch events), so
         // we remove the task before scheduling to avoid stack overflows in orchestrator.
-        getOrchestrator().remove("exposure correction");
+        getOrchestrator().trim("exposure correction", ALLOWED_EV_OPS);
         mExposureCorrectionTask = getOrchestrator().scheduleStateful(
                 "exposure correction",
                 CameraState.ENGINE,

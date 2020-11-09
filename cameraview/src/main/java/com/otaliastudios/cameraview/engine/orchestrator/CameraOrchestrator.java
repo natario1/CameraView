@@ -150,15 +150,28 @@ public class CameraOrchestrator {
     }
 
     public void remove(@NonNull String name) {
+        trim(name, 0);
+    }
+
+    public void trim(@NonNull String name, int allowed) {
         synchronized (mLock) {
-            if (mDelayedJobs.get(name) != null) {
+            Token token = new Token(name, Tasks.forResult(null));
+            int scheduled = 0;
+            for (Token job : mJobs) {
+                if (job == token) scheduled++;
+            }
+            boolean delayed = mDelayedJobs.containsKey(name);
+            if (delayed) scheduled++;
+            int existing = Math.max(scheduled - allowed, 0);
+            while (existing > 0 && mJobs.removeLastOccurrence(token)) {
+                existing--;
+            }
+            if (existing > 0 && delayed) {
                 //noinspection ConstantConditions
                 mCallback.getJobWorker(name).remove(mDelayedJobs.get(name));
                 mDelayedJobs.remove(name);
+                existing--;
             }
-            Token token = new Token(name, Tasks.forResult(null));
-            //noinspection StatementWithEmptyBody
-            while (mJobs.remove(token)) { /* do nothing */ }
             ensureToken();
         }
     }
