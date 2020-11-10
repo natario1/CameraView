@@ -50,6 +50,9 @@ import java.util.List;
  */
 public abstract class CameraBaseEngine extends CameraEngine {
 
+    protected final static int ALLOWED_ZOOM_OPS = 20;
+    protected final static int ALLOWED_EV_OPS = 20;
+
     @SuppressWarnings("WeakerAccess") protected CameraPreview mPreview;
     @SuppressWarnings("WeakerAccess") protected CameraOptions mCameraOptions;
     @SuppressWarnings("WeakerAccess") protected PictureRecorder mPictureRecorder;
