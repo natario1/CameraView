@@ -206,13 +206,15 @@ public class CameraOrchestrator {
             }
             LOG.v("trim: name=", name, "scheduled=", scheduled.size(), "allowed=", allowed);
             int existing = Math.max(scheduled.size() - allowed, 0);
-            // To remove the oldest ones first, we must reverse the list.
-            // Note that we will potentially remove a job that is being executed: we don't
-            // have a mechanism to cancel the ongoing execution, but it shouldn't be a problem.
-            Collections.reverse(scheduled);
-            scheduled = scheduled.subList(0, existing);
-            for (Job<?> job : scheduled) {
-                mJobs.remove(job);
+            if (existing > 0) {
+                // To remove the oldest ones first, we must reverse the list.
+                // Note that we will potentially remove a job that is being executed: we don't
+                // have a mechanism to cancel the ongoing execution, but it shouldn't be a problem.
+                Collections.reverse(scheduled);
+                scheduled = scheduled.subList(0, existing);
+                for (Job<?> job : scheduled) {
+                    mJobs.remove(job);
+                }
             }
         }
     }
