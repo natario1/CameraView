@@ -229,6 +229,15 @@ public class Camera2Engine extends CameraBaseEngine implements
     }
 
     /**
+     * Can be changed to select something different than {@link CameraDevice#TEMPLATE_PREVIEW}
+     * for the default repeating request.
+     * @return the default template for preview
+     */
+    protected int getRepeatingRequestDefaultTemplate() {
+        return CameraDevice.TEMPLATE_PREVIEW;
+    }
+
+    /**
      * Applies the repeating request builder to the preview, assuming we actually have a preview
      * running. Can be called after changing parameters to the builder.
      *
@@ -419,7 +428,7 @@ public class Camera2Engine extends CameraBaseEngine implements
                                     + mPictureFormat);
                         }
                         mCameraOptions = new Camera2Options(mManager, mCameraId, flip, format);
-                        createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
+                        createRepeatingRequestBuilder(getRepeatingRequestDefaultTemplate());
                     } catch (CameraAccessException e) {
                         task.trySetException(createCameraException(e));
                         return;
@@ -977,9 +986,9 @@ public class Camera2Engine extends CameraBaseEngine implements
     @EngineThread
     private void maybeRestorePreviewTemplateAfterVideo() {
         int template = (int) mRepeatingRequestBuilder.build().getTag();
-        if (template != CameraDevice.TEMPLATE_PREVIEW) {
+        if (template != getRepeatingRequestDefaultTemplate()) {
             try {
-                createRepeatingRequestBuilder(CameraDevice.TEMPLATE_PREVIEW);
+                createRepeatingRequestBuilder(getRepeatingRequestDefaultTemplate());
                 addRepeatingRequestBuilderSurfaces();
                 applyRepeatingRequestBuilder();
             } catch (CameraAccessException e) {
