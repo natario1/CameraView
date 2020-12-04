@@ -8,7 +8,6 @@ jobs:
     name: Bintray Upload
     runs-on: ubuntu-latest
     env:
-      TRAVIS: true
       BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
       BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
       BINTRAY_REPO: ${{ secrets.BINTRAY_REPO }}
