@@ -214,6 +214,7 @@ public class Camera1Engine extends CameraBaseEngine implements
 
         mCaptureSize = computeCaptureSize();
         mPreviewStreamSize = computePreviewStreamSize();
+        LOG.i("onStartBind:", "Returning");
         return Tasks.forResult(null);
     }
 

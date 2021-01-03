@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.engine.orchestrator;
 
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -108,37 +109,40 @@ public class CameraOrchestrator {
         return job.source.getTask();
     }
 
+    @GuardedBy("mJobsLock")
     private void sync(long after) {
         // Jumping on the message handler even if after = 0L should avoid StackOverflow errors.
         mCallback.getJobWorker("_sync").post(after, new Runnable() {
             @SuppressWarnings("StatementWithEmptyBody")
             @Override
             public void run() {
+                Job<?> job = null;
                 synchronized (mJobsLock) {
-                    if (!mJobRunning) {
+                    if (mJobRunning) {
+                        // Do nothing, job will be picked in executed().
+                    } else {
                         long now = System.currentTimeMillis();
-                        Job<?> job = null;
                         for (Job<?> candidate : mJobs) {
                             if (candidate.startTime <= now) {
                                 job = candidate;
                                 break;
                             }
                         }
-                        if (job != null) execute(job);
-                    } else {
-                        // Do nothing, job will be picked in executed().
+                        if (job != null) {
+                            mJobRunning = true;
+                        }
                     }
                 }
+                // This must be out of mJobsLock! See comments in execute().
+                if (job != null) execute(job);
             }
         });
     }
 
-    @GuardedBy("mJobsLock")
+    // Since we use WorkerHandler.run(), the job can end up being executed on the current thread.
+    // For this reason, it's important that this method is never guarded by mJobsLock! Because
+    // all threads can be waiting on that, even the UI thread e.g. through scheduleInternal.
     private <T> void execute(@NonNull final Job<T> job) {
-        if (mJobRunning) {
-            throw new IllegalStateException("mJobRunning is already true! job=" + job.name);
-        }
-        mJobRunning = true;
         final WorkerHandler worker = mCallback.getJobWorker(job.name);
         worker.run(new Runnable() {
             @Override

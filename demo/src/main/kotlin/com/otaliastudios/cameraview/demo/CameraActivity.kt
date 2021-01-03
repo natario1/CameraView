@@ -28,7 +28,7 @@ class CameraActivity : AppCompatActivity(), View.OnClickListener, OptionView.Cal
 
     companion object {
         private val LOG = CameraLogger.create("DemoApp")
-        private const val USE_FRAME_PROCESSOR = true
+        private const val USE_FRAME_PROCESSOR = false
         private const val DECODE_BITMAP = false
     }
 
