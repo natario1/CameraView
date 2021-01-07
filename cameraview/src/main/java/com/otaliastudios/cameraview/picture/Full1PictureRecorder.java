@@ -99,11 +99,6 @@ public class Full1PictureRecorder extends FullPictureRecorder {
             );
             LOG.i("take() returned.");
         } catch (Exception e) {
-            String msg = "Error";
-            if (e.getMessage() != null) {
-                msg = e.getMessage();
-            }
-            Log.e("onTakePicture:", msg);
             mError = e;
             dispatchResult();
         }
