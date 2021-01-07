@@ -51,15 +51,15 @@ publisher {
     project.group = "com.otaliastudios"
     project.url = "https://github.com/natario1/CameraView"
     project.addLicense(License.APACHE_2_0)
-    release.setSources(Release.SOURCES_AUTO)
-    release.setDocs(Release.DOCS_AUTO)
     bintray {
+        release.setSources(Release.SOURCES_AUTO)
+        release.setDocs(Release.DOCS_AUTO)
         auth.user = "BINTRAY_USER"
         auth.key = "BINTRAY_KEY"
         auth.repo = "BINTRAY_REPO"
     }
     directory {
-        directory = "build/local"
+        directory = file(repositories.mavenLocal().url).absolutePath
     }
 }
 
