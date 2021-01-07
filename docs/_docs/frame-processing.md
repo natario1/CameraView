@@ -29,7 +29,7 @@ cameraView.addFrameProcessor(new FrameProcessor() {
             // Process android.media.Image...
         }
     }
-}
+});
 ```
 
 For your convenience, the `FrameProcessor` method is run in a background thread so you can do your job
