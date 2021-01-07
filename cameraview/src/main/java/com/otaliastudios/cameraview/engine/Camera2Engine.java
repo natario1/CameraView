@@ -19,8 +19,6 @@ import android.location.Location;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Pair;
 import android.util.Range;
 import android.util.Rational;
@@ -79,7 +77,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -1382,10 +1379,10 @@ public class Camera2Engine extends CameraBaseEngine implements
         Range<Integer>[] fpsRanges = readCharacteristic(
                 CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
                 new Range[]{});
-        sortRanges(fpsRanges);
+        sortFrameRateRanges(fpsRanges);
         if (mPreviewFrameRate == 0F) {
             // 0F is a special value. Fallback to a reasonable default.
-            for (Range<Integer> fpsRange : filterRanges(fpsRanges)) {
+            for (Range<Integer> fpsRange : filterFrameRateRanges(fpsRanges)) {
                 if (fpsRange.contains(30) || fpsRange.contains(24)) {
                     builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
                     return true;
@@ -1397,7 +1394,7 @@ public class Camera2Engine extends CameraBaseEngine implements
                     mCameraOptions.getPreviewFrameRateMaxValue());
             mPreviewFrameRate = Math.max(mPreviewFrameRate,
                     mCameraOptions.getPreviewFrameRateMinValue());
-            for (Range<Integer> fpsRange : filterRanges(fpsRanges)) {
+            for (Range<Integer> fpsRange : filterFrameRateRanges(fpsRanges)) {
                 if (fpsRange.contains(Math.round(mPreviewFrameRate))) {
                     builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
                     return true;
@@ -1408,7 +1405,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         return false;
     }
 
-    private void sortRanges(Range<Integer>[] fpsRanges) {
+    private void sortFrameRateRanges(@NonNull Range<Integer>[] fpsRanges) {
         final boolean ascending = getPreviewFrameRateExact() && mPreviewFrameRate != 0;
         Arrays.sort(fpsRanges, new Comparator<Range<Integer>>() {
             @Override
@@ -1424,7 +1421,8 @@ public class Camera2Engine extends CameraBaseEngine implements
         });
     }
 
-    private List<Range<Integer>> filterRanges(Range<Integer>[] fpsRanges) {
+    @NonNull
+    protected List<Range<Integer>> filterFrameRateRanges(@NonNull Range<Integer>[] fpsRanges) {
         List<Range<Integer>> results = new ArrayList<>();
         int min = Math.round(mCameraOptions.getPreviewFrameRateMinValue());
         int max = Math.round(mCameraOptions.getPreviewFrameRateMaxValue());
