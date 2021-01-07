@@ -9,12 +9,12 @@ plugins {
 }
 
 android {
-    setCompileSdkVersion(rootProject.property("compileSdkVersion") as Int)
+    setCompileSdkVersion(property("compileSdkVersion") as Int)
     defaultConfig {
-        setMinSdkVersion(rootProject.property("minSdkVersion") as Int)
-        setTargetSdkVersion(rootProject.property("targetSdkVersion") as Int)
+        setMinSdkVersion(property("minSdkVersion") as Int)
+        setTargetSdkVersion(property("targetSdkVersion") as Int)
         versionCode = 1
-        versionName = "2.6.3"
+        versionName = "2.6.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArgument("filter", "" +
                 "com.otaliastudios.cameraview.tools.SdkExcludeFilter," +
@@ -25,20 +25,20 @@ android {
 }
 
 dependencies {
-    testImplementation("junit:junit:4.12")
+    testImplementation("junit:junit:4.13")
     testImplementation("org.mockito:mockito-inline:2.28.2")
 
-    androidTestImplementation("androidx.test:runner:1.2.0")
-    androidTestImplementation("androidx.test:rules:1.2.0")
+    androidTestImplementation("androidx.test:runner:1.3.0")
+    androidTestImplementation("androidx.test:rules:1.3.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.1")
     androidTestImplementation("org.mockito:mockito-android:2.28.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.2.0")
 
-    api("androidx.exifinterface:exifinterface:1.1.0")
-    api("androidx.lifecycle:lifecycle-common:2.1.0")
-    api("com.google.android.gms:play-services-tasks:17.0.0")
+    api("androidx.exifinterface:exifinterface:1.2.0")
+    api("androidx.lifecycle:lifecycle-common:2.2.0")
+    api("com.google.android.gms:play-services-tasks:17.2.0")
     implementation("androidx.annotation:annotation:1.1.0")
-    implementation("com.otaliastudios.opengl:egloo:0.5.2")
+    implementation("com.otaliastudios.opengl:egloo:0.5.3")
 }
 
 // Publishing
@@ -51,15 +51,15 @@ publisher {
     project.group = "com.otaliastudios"
     project.url = "https://github.com/natario1/CameraView"
     project.addLicense(License.APACHE_2_0)
-    release.setSources(Release.SOURCES_AUTO)
-    release.setDocs(Release.DOCS_AUTO)
     bintray {
+        release.setSources(Release.SOURCES_AUTO)
+        release.setDocs(Release.DOCS_AUTO)
         auth.user = "BINTRAY_USER"
         auth.key = "BINTRAY_KEY"
         auth.repo = "BINTRAY_REPO"
     }
     directory {
-        directory = "build/local"
+        directory = file(repositories.mavenLocal().url).absolutePath
     }
 }
 
@@ -93,7 +93,7 @@ tasks.register("runAndroidTests") { // changing name? change github workflow
 }
 
 // Merge the two with a jacoco task.
-jacoco { toolVersion = "0.8.1" }
+jacoco { toolVersion = "0.8.5" }
 tasks.register("computeCoverage", JacocoReport::class) {
     dependsOn("compileDebugSources") // Compile sources, needed below
     executionData.from(fileTree(coverageInputDir))

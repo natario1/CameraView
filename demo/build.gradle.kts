@@ -1,21 +1,23 @@
 plugins {
     id("com.android.application")
+    id("kotlin-android")
 }
 
 android {
-    setCompileSdkVersion(rootProject.property("compileSdkVersion") as Int)
+    setCompileSdkVersion(property("compileSdkVersion") as Int)
     defaultConfig {
         applicationId = "com.otaliastudios.cameraview.demo"
-        setMinSdkVersion(rootProject.property("minSdkVersion") as Int)
-        setTargetSdkVersion(rootProject.property("targetSdkVersion") as Int)
+        setMinSdkVersion(property("minSdkVersion") as Int)
+        setTargetSdkVersion(property("targetSdkVersion") as Int)
         versionCode = 1
         versionName = "1.0"
         vectorDrawables.useSupportLibrary = true
     }
+    sourceSets["main"].java.srcDir("src/main/kotlin")
 }
 
 dependencies {
     implementation(project(":cameraview"))
-    implementation("androidx.appcompat:appcompat:1.1.0")
-    implementation("com.google.android.material:material:1.1.0")
+    implementation("androidx.appcompat:appcompat:1.2.0")
+    implementation("com.google.android.material:material:1.2.0")
 }

@@ -33,8 +33,8 @@ public class AspectRatio implements Comparable<AspectRatio> {
     @NonNull
     public static AspectRatio of(int x, int y) {
         int gcd = gcd(x, y);
-        x /= gcd;
-        y /= gcd;
+        if (gcd > 0) x /= gcd;
+        if (gcd > 0) y /= gcd;
         String key = x + ":" + y;
         AspectRatio cached = sCache.get(key);
         if (cached == null) {
@@ -58,8 +58,8 @@ public class AspectRatio implements Comparable<AspectRatio> {
         if (parts.length != 2) {
             throw new NumberFormatException("Illegal AspectRatio string. Must be x:y");
         }
-        int x = Integer.valueOf(parts[0]);
-        int y = Integer.valueOf(parts[1]);
+        int x = Integer.parseInt(parts[0]);
+        int y = Integer.parseInt(parts[1]);
         return of(x, y);
     }
 
@@ -80,14 +80,11 @@ public class AspectRatio implements Comparable<AspectRatio> {
     }
 
     public boolean matches(@NonNull Size size) {
-        int gcd = gcd(size.getWidth(), size.getHeight());
-        int x = size.getWidth() / gcd;
-        int y = size.getHeight() / gcd;
-        return mX == x && mY == y;
+        return equals(AspectRatio.of(size));
     }
 
     public boolean matches(@NonNull Size size, float tolerance) {
-        return Math.abs(toFloat() - (float) size.getWidth() / size.getHeight()) <= tolerance;
+        return Math.abs(toFloat() - AspectRatio.of(size).toFloat()) <= tolerance;
     }
 
     @Override
@@ -99,8 +96,7 @@ public class AspectRatio implements Comparable<AspectRatio> {
             return true;
         }
         if (o instanceof AspectRatio) {
-            AspectRatio ratio = (AspectRatio) o;
-            return mX == ratio.mX && mY == ratio.mY;
+            return toFloat() == ((AspectRatio) o).toFloat();
         }
         return false;
     }
@@ -117,17 +113,12 @@ public class AspectRatio implements Comparable<AspectRatio> {
 
     @Override
     public int hashCode() {
-        return mY ^ ((mX << (Integer.SIZE / 2)) | (mX >>> (Integer.SIZE / 2)));
+        return Float.floatToIntBits(toFloat());
     }
 
     @Override
     public int compareTo(@NonNull AspectRatio another) {
-        if (equals(another)) {
-            return 0;
-        } else if (toFloat() - another.toFloat() > 0) {
-            return 1;
-        }
-        return -1;
+        return Float.compare(toFloat(), another.toFloat());
     }
 
     /**
@@ -140,6 +131,7 @@ public class AspectRatio implements Comparable<AspectRatio> {
         return AspectRatio.of(mY, mX);
     }
 
+    // Note: gcd(0,X) = gcd(X,0) = X (even for X=0)
     private static int gcd(int a, int b) {
         while (b != 0) {
             int c = b;

@@ -9,6 +9,12 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 > Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
+##### v2.6.4
+
+- Fix: Fix many small bugs ([#953][953])
+
+<https://github.com/natario1/CameraView/compare/v2.6.3...v2.6.4>
+
 ##### v2.6.3
 
 - <small>[Video]</small> New: `setAudioCodec` and `app:cameraAudioCodec` to choose the audio encoding format, thanks to [@EverydayPineapple][EverydayPineapple] ([#861][861])
@@ -435,3 +441,4 @@ This is the last release before v2.
 [861]: https://github.com/natario1/CameraView/pull/861
 [877]: https://github.com/natario1/CameraView/pull/877
 [897]: https://github.com/natario1/CameraView/pull/897
+[953]: https://github.com/natario1/CameraView/pull/953

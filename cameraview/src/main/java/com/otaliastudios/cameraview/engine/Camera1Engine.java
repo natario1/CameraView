@@ -214,6 +214,7 @@ public class Camera1Engine extends CameraBaseEngine implements
 
         mCaptureSize = computeCaptureSize();
         mPreviewStreamSize = computePreviewStreamSize();
+        LOG.i("onStartBind:", "Returning");
         return Tasks.forResult(null);
     }
 
@@ -623,7 +624,9 @@ public class Camera1Engine extends CameraBaseEngine implements
     public void setZoom(final float zoom, @Nullable final PointF[] points, final boolean notify) {
         final float old = mZoomValue;
         mZoomValue = zoom;
-        mZoomTask = getOrchestrator().scheduleStateful("zoom (" + zoom + ")",
+        // Zoom requests can be high frequency (e.g. linked to touch events), let's trim the oldest.
+        getOrchestrator().trim("zoom", ALLOWED_ZOOM_OPS);
+        mZoomTask = getOrchestrator().scheduleStateful("zoom",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
@@ -655,8 +658,10 @@ public class Camera1Engine extends CameraBaseEngine implements
                                       @Nullable final PointF[] points, final boolean notify) {
         final float old = mExposureCorrectionValue;
         mExposureCorrectionValue = EVvalue;
+        // EV requests can be high frequency (e.g. linked to touch events), let's trim the oldest.
+        getOrchestrator().trim("exposure correction", ALLOWED_EV_OPS);
         mExposureCorrectionTask = getOrchestrator().scheduleStateful(
-                "exposure correction (" + EVvalue + ")",
+                "exposure correction",
                 CameraState.ENGINE,
                 new Runnable() {
             @Override
@@ -882,7 +887,7 @@ public class Camera1Engine extends CameraBaseEngine implements
                 // The auto focus callback is not guaranteed to be called, but we really want it
                 // to be. So we remove the old runnable if still present and post a new one.
                 getOrchestrator().remove(JOB_FOCUS_END);
-                getOrchestrator().scheduleDelayed(JOB_FOCUS_END, AUTOFOCUS_END_DELAY_MILLIS,
+                getOrchestrator().scheduleDelayed(JOB_FOCUS_END, true, AUTOFOCUS_END_DELAY_MILLIS,
                         new Runnable() {
                     @Override
                     public void run() {

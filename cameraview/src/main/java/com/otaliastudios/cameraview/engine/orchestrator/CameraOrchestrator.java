@@ -1,5 +1,6 @@
 package com.otaliastudios.cameraview.engine.orchestrator;
 
+import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -12,9 +13,10 @@ import com.otaliastudios.cameraview.internal.WorkerHandler;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 
@@ -40,36 +42,43 @@ public class CameraOrchestrator {
         void handleJobException(@NonNull String job, @NonNull Exception exception);
     }
 
-    protected static class Token {
+    protected static class Job<T> {
         public final String name;
-        public final Task<?> task;
+        public final TaskCompletionSource<T> source = new TaskCompletionSource<>();
+        public final Callable<Task<T>> scheduler;
+        public final boolean dispatchExceptions;
+        public final long startTime;
 
-        private Token(@NonNull String name, @NonNull Task<?> task) {
+        private Job(@NonNull String name, @NonNull Callable<Task<T>> scheduler, boolean dispatchExceptions, long startTime) {
             this.name = name;
-            this.task = task;
-        }
-
-        @Override
-        public boolean equals(@Nullable Object obj) {
-            return obj instanceof Token && ((Token) obj).name.equals(name);
+            this.scheduler = scheduler;
+            this.dispatchExceptions = dispatchExceptions;
+            this.startTime = startTime;
         }
     }
 
     protected final Callback mCallback;
-    protected final ArrayDeque<Token> mJobs = new ArrayDeque<>();
-    protected final Object mLock = new Object();
-    private final Map<String, Runnable> mDelayedJobs = new HashMap<>();
+    protected final ArrayDeque<Job<?>> mJobs = new ArrayDeque<>();
+    protected boolean mJobRunning = false;
+    protected final Object mJobsLock = new Object();
 
     public CameraOrchestrator(@NonNull Callback callback) {
         mCallback = callback;
-        ensureToken();
     }
 
     @NonNull
     public Task<Void> schedule(@NonNull String name,
                                boolean dispatchExceptions,
-                               @NonNull final Runnable job) {
-        return schedule(name, dispatchExceptions, new Callable<Task<Void>>() {
+                               @NonNull Runnable job) {
+        return scheduleDelayed(name, dispatchExceptions, 0L, job);
+    }
+
+    @NonNull
+    public Task<Void> scheduleDelayed(@NonNull String name,
+                                      boolean dispatchExceptions,
+                                      long minDelay,
+                                      @NonNull final Runnable job) {
+        return scheduleInternal(name, dispatchExceptions, minDelay, new Callable<Task<Void>>() {
             @Override
             public Task<Void> call() {
                 job.run();
@@ -78,98 +87,147 @@ public class CameraOrchestrator {
         });
     }
 
-    @SuppressWarnings("unchecked")
     @NonNull
-    public <T> Task<T> schedule(@NonNull final String name,
-                                final boolean dispatchExceptions,
-                                @NonNull final Callable<Task<T>> job) {
-        LOG.i(name.toUpperCase(), "- Scheduling.");
-        final TaskCompletionSource<T> source = new TaskCompletionSource<>();
-        final WorkerHandler handler = mCallback.getJobWorker(name);
-        synchronized (mLock) {
-            applyCompletionListener(mJobs.getLast().task, handler,
-                    new OnCompleteListener() {
-                @Override
-                public void onComplete(@NonNull Task task) {
-                    synchronized (mLock) {
-                        mJobs.removeFirst();
-                        ensureToken();
-                    }
-                    try {
-                        LOG.i(name.toUpperCase(), "- Executing.");
-                        Task<T> inner = job.call();
-                        applyCompletionListener(inner, handler, new OnCompleteListener<T>() {
-                            @Override
-                            public void onComplete(@NonNull Task<T> task) {
-                                Exception e = task.getException();
-                                if (e != null) {
-                                    LOG.w(name.toUpperCase(), "- Finished with ERROR.", e);
-                                    if (dispatchExceptions) {
-                                        mCallback.handleJobException(name, e);
-                                    }
-                                    source.trySetException(e);
-                                } else if (task.isCanceled()) {
-                                    LOG.i(name.toUpperCase(), "- Finished because ABORTED.");
-                                    source.trySetException(new CancellationException());
-                                } else {
-                                    LOG.i(name.toUpperCase(), "- Finished.");
-                                    source.trySetResult(task.getResult());
-                                }
-                            }
-                        });
-                    } catch (Exception e) {
-                        LOG.i(name.toUpperCase(), "- Finished.", e);
-                        if (dispatchExceptions) mCallback.handleJobException(name, e);
-                        source.trySetException(e);
-                    }
-                }
-            });
-            mJobs.addLast(new Token(name, source.getTask()));
-        }
-        return source.getTask();
+    public <T> Task<T> schedule(@NonNull String name,
+                                boolean dispatchExceptions,
+                                @NonNull Callable<Task<T>> scheduler) {
+        return scheduleInternal(name, dispatchExceptions, 0L, scheduler);
     }
 
-    public void scheduleDelayed(@NonNull final String name,
-                                long minDelay,
-                                @NonNull final Runnable runnable) {
-        Runnable wrapper = new Runnable() {
+    @NonNull
+    private <T> Task<T> scheduleInternal(@NonNull String name,
+                                         boolean dispatchExceptions,
+                                         long minDelay,
+                                         @NonNull Callable<Task<T>> scheduler) {
+        LOG.i(name.toUpperCase(), "- Scheduling.");
+        Job<T> job = new Job<>(name, scheduler, dispatchExceptions,
+                System.currentTimeMillis() + minDelay);
+        synchronized (mJobsLock) {
+            mJobs.addLast(job);
+            sync(minDelay);
+        }
+        return job.source.getTask();
+    }
+
+    @GuardedBy("mJobsLock")
+    private void sync(long after) {
+        // Jumping on the message handler even if after = 0L should avoid StackOverflow errors.
+        mCallback.getJobWorker("_sync").post(after, new Runnable() {
+            @SuppressWarnings("StatementWithEmptyBody")
             @Override
             public void run() {
-                schedule(name, true, runnable);
-                synchronized (mLock) {
-                    if (mDelayedJobs.containsValue(this)) {
-                        mDelayedJobs.remove(name);
+                Job<?> job = null;
+                synchronized (mJobsLock) {
+                    if (mJobRunning) {
+                        // Do nothing, job will be picked in executed().
+                    } else {
+                        long now = System.currentTimeMillis();
+                        for (Job<?> candidate : mJobs) {
+                            if (candidate.startTime <= now) {
+                                job = candidate;
+                                break;
+                            }
+                        }
+                        if (job != null) {
+                            mJobRunning = true;
+                        }
+                    }
+                }
+                // This must be out of mJobsLock! See comments in execute().
+                if (job != null) execute(job);
+            }
+        });
+    }
+
+    // Since we use WorkerHandler.run(), the job can end up being executed on the current thread.
+    // For this reason, it's important that this method is never guarded by mJobsLock! Because
+    // all threads can be waiting on that, even the UI thread e.g. through scheduleInternal.
+    private <T> void execute(@NonNull final Job<T> job) {
+        final WorkerHandler worker = mCallback.getJobWorker(job.name);
+        worker.run(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    LOG.i(job.name.toUpperCase(), "- Executing.");
+                    Task<T> task = job.scheduler.call();
+                    onComplete(task, worker, new OnCompleteListener<T>() {
+                        @Override
+                        public void onComplete(@NonNull Task<T> task) {
+                            Exception e = task.getException();
+                            if (e != null) {
+                                LOG.w(job.name.toUpperCase(), "- Finished with ERROR.", e);
+                                if (job.dispatchExceptions) {
+                                    mCallback.handleJobException(job.name, e);
+                                }
+                                job.source.trySetException(e);
+                            } else if (task.isCanceled()) {
+                                LOG.i(job.name.toUpperCase(), "- Finished because ABORTED.");
+                                job.source.trySetException(new CancellationException());
+                            } else {
+                                LOG.i(job.name.toUpperCase(), "- Finished.");
+                                job.source.trySetResult(task.getResult());
+                            }
+                            synchronized (mJobsLock) {
+                                executed(job);
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    LOG.i(job.name.toUpperCase(), "- Finished with ERROR.", e);
+                    if (job.dispatchExceptions) {
+                        mCallback.handleJobException(job.name, e);
+                    }
+                    job.source.trySetException(e);
+                    synchronized (mJobsLock) {
+                        executed(job);
                     }
                 }
             }
-        };
-        synchronized (mLock) {
-            mDelayedJobs.put(name, wrapper);
-            mCallback.getJobWorker(name).post(minDelay, wrapper);
+        });
+    }
+
+    @GuardedBy("mJobsLock")
+    private <T> void executed(Job<T> job) {
+        if (!mJobRunning) {
+            throw new IllegalStateException("mJobRunning was not true after completing job=" + job.name);
         }
+        mJobRunning = false;
+        mJobs.remove(job);
+        sync(0L);
     }
 
     public void remove(@NonNull String name) {
-        synchronized (mLock) {
-            if (mDelayedJobs.get(name) != null) {
-                //noinspection ConstantConditions
-                mCallback.getJobWorker(name).remove(mDelayedJobs.get(name));
-                mDelayedJobs.remove(name);
+        trim(name, 0);
+    }
+
+    public void trim(@NonNull String name, int allowed) {
+        synchronized (mJobsLock) {
+            List<Job<?>> scheduled = new ArrayList<>();
+            for (Job<?> job : mJobs) {
+                if (job.name.equals(name)) {
+                    scheduled.add(job);
+                }
             }
-            Token token = new Token(name, Tasks.forResult(null));
-            //noinspection StatementWithEmptyBody
-            while (mJobs.remove(token)) { /* do nothing */ }
-            ensureToken();
+            LOG.v("trim: name=", name, "scheduled=", scheduled.size(), "allowed=", allowed);
+            int existing = Math.max(scheduled.size() - allowed, 0);
+            if (existing > 0) {
+                // To remove the oldest ones first, we must reverse the list.
+                // Note that we will potentially remove a job that is being executed: we don't
+                // have a mechanism to cancel the ongoing execution, but it shouldn't be a problem.
+                Collections.reverse(scheduled);
+                scheduled = scheduled.subList(0, existing);
+                for (Job<?> job : scheduled) {
+                    mJobs.remove(job);
+                }
+            }
         }
     }
 
     public void reset() {
-        synchronized (mLock) {
-            List<String> all = new ArrayList<>();
-            //noinspection CollectionAddAllCanBeReplacedWithConstructor
-            all.addAll(mDelayedJobs.keySet());
-            for (Token token : mJobs) {
-                all.add(token.name);
+        synchronized (mJobsLock) {
+            Set<String> all = new HashSet<>();
+            for (Job<?> job : mJobs) {
+                all.add(job.name);
             }
             for (String job : all) {
                 remove(job);
@@ -177,17 +235,9 @@ public class CameraOrchestrator {
         }
     }
 
-    private void ensureToken() {
-        synchronized (mLock) {
-            if (mJobs.isEmpty()) {
-                mJobs.add(new Token("BASE", Tasks.forResult(null)));
-            }
-        }
-    }
-
-    private static <T> void applyCompletionListener(@NonNull final Task<T> task,
-                                                    @NonNull WorkerHandler handler,
-                                                    @NonNull final OnCompleteListener<T> listener) {
+    private static <T> void onComplete(@NonNull final Task<T> task,
+                                       @NonNull WorkerHandler handler,
+                                       @NonNull final OnCompleteListener<T> listener) {
         if (task.isComplete()) {
             handler.run(new Runnable() {
                 @Override

@@ -3,3 +3,4 @@ _pages
 *.sw?
 .sass-cache
 .jekyll-metadata
+Gemfile.lock
