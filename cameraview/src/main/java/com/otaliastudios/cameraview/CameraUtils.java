@@ -94,6 +94,7 @@ public class CameraUtils {
             stream.flush();
             return file;
         } catch (IOException e) {
+            LOG.e("writeToFile:", "could not write file.", e);
             return null;
         }
     }
