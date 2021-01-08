@@ -8,6 +8,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
+import android.util.Log;
 
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.PictureFormat;
@@ -86,7 +87,13 @@ public class Full2PictureRecorder extends FullPictureRecorder
             public void onCaptureCompleted(@NonNull ActionHolder holder,
                                            @NonNull CaptureRequest request,
                                            @NonNull TotalCaptureResult result) {
-                super.onCaptureCompleted(holder, request, result);
+                try {
+                    super.onCaptureCompleted(holder, request, result);
+                } catch (Exception e) {
+                    mError = e;
+                    dispatchResult();
+                }
+
                 if (mResult.format == PictureFormat.DNG) {
                     mDngCreator = new DngCreator(holder.getCharacteristics(this), result);
                     mDngCreator.setOrientation(ExifHelper.getExifOrientation(mResult.rotation));

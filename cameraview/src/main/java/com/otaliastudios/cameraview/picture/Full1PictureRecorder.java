@@ -1,10 +1,12 @@
 package com.otaliastudios.cameraview.picture;
 
 import android.hardware.Camera;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.exifinterface.media.ExifInterface;
 
+import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.offset.Reference;
@@ -44,57 +46,62 @@ public class Full1PictureRecorder extends FullPictureRecorder {
         // or takePicture can hang and leave the camera in a bad state.
         mCamera.setPreviewCallbackWithBuffer(null);
         mEngine.getFrameManager().release();
-        mCamera.takePicture(
-                new Camera.ShutterCallback() {
-                    @Override
-                    public void onShutter() {
-                        LOG.i("take(): got onShutter callback.");
-                        dispatchOnShutter(true);
-                    }
-                },
-                null,
-                null,
-                new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, final Camera camera) {
-                        LOG.i("take(): got picture callback.");
-                        int exifRotation;
-                        try {
-                            ExifInterface exif = new ExifInterface(new ByteArrayInputStream(data));
-                            int exifOrientation = exif.getAttributeInt(
-                                    ExifInterface.TAG_ORIENTATION,
-                                    ExifInterface.ORIENTATION_NORMAL);
-                            exifRotation = ExifHelper.getOrientation(exifOrientation);
-                        } catch (IOException e) {
-                            exifRotation = 0;
+        try {
+            mCamera.takePicture(
+                    new Camera.ShutterCallback() {
+                        @Override
+                        public void onShutter() {
+                            LOG.i("take(): got onShutter callback.");
+                            dispatchOnShutter(true);
                         }
-                        mResult.data = data;
-                        mResult.rotation = exifRotation;
-                        LOG.i("take(): starting preview again. ", Thread.currentThread());
-
-                        // It's possible that by the time this callback is invoked, we're not previewing
-                        // anymore, so check before restarting preview.
-                        if (mEngine.getState().isAtLeast(CameraState.PREVIEW)) {
-                            camera.setPreviewCallbackWithBuffer(mEngine);
-                            Size previewStreamSize = mEngine.getPreviewStreamSize(Reference.SENSOR);
-                            if (previewStreamSize == null) {
-                                throw new IllegalStateException("Preview stream size " +
-                                        "should never be null here.");
+                    },
+                    null,
+                    null,
+                    new Camera.PictureCallback() {
+                        @Override
+                        public void onPictureTaken(byte[] data, final Camera camera) {
+                            LOG.i("take(): got picture callback.");
+                            int exifRotation;
+                            try {
+                                ExifInterface exif = new ExifInterface(new ByteArrayInputStream(data));
+                                int exifOrientation = exif.getAttributeInt(
+                                        ExifInterface.TAG_ORIENTATION,
+                                        ExifInterface.ORIENTATION_NORMAL);
+                                exifRotation = ExifHelper.getOrientation(exifOrientation);
+                            } catch (IOException e) {
+                                exifRotation = 0;
                             }
-                            // Need to re-setup the frame manager, otherwise no frames are processed
-                            // after takePicture() is called
-                            mEngine.getFrameManager().setUp(
-                                    mEngine.getFrameProcessingFormat(),
-                                    previewStreamSize,
-                                    mEngine.getAngles()
-                            );
-                            camera.startPreview();
+                            mResult.data = data;
+                            mResult.rotation = exifRotation;
+                            LOG.i("take(): starting preview again. ", Thread.currentThread());
+
+                            // It's possible that by the time this callback is invoked, we're not previewing
+                            // anymore, so check before restarting preview.
+                            if (mEngine.getState().isAtLeast(CameraState.PREVIEW)) {
+                                camera.setPreviewCallbackWithBuffer(mEngine);
+                                Size previewStreamSize = mEngine.getPreviewStreamSize(Reference.SENSOR);
+                                if (previewStreamSize == null) {
+                                    throw new IllegalStateException("Preview stream size " +
+                                            "should never be null here.");
+                                }
+                                // Need to re-setup the frame manager, otherwise no frames are processed
+                                // after takePicture() is called
+                                mEngine.getFrameManager().setUp(
+                                        mEngine.getFrameProcessingFormat(),
+                                        previewStreamSize,
+                                        mEngine.getAngles()
+                                );
+                                camera.startPreview();
+                            }
+                            dispatchResult();
                         }
-                        dispatchResult();
                     }
-                }
-        );
-        LOG.i("take() returned.");
+            );
+            LOG.i("take() returned.");
+        } catch (Exception e) {
+            mError = e;
+            dispatchResult();
+        }
     }
 
     @Override
