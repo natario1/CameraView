@@ -161,4 +161,28 @@ public abstract class CameraListener {
 
     }
 
+    /**
+     * Notifies that the shutter event is happening. You can update UI to show some
+     * trigger effect, so user visually confirms that picture is being taken
+     * or video recording is about to start.
+     */
+    @UiThread
+    public void onShutter() {}
+
+    /**
+     * Notifies that a finger gesture just triggered a swipe left event.
+     * This can be used to exchange between different filters or to
+     * swap between front and back cameras.
+     */
+    @UiThread
+    public void onSwipeLeft() {}
+
+    /**
+     * Notifies that a finger gesture just triggered a swipe right event.
+     * This can be used to exchange between different filters or to
+     * swap between front and back cameras.
+     */
+    @UiThread
+    public void onSwipeRight() {}
+    
 }

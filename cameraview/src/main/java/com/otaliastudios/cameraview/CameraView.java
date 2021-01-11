@@ -152,6 +152,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @VisibleForTesting PinchGestureFinder mPinchGestureFinder;
     @VisibleForTesting TapGestureFinder mTapGestureFinder;
     @VisibleForTesting ScrollGestureFinder mScrollGestureFinder;
+    private float x1,x2;
+    static final int MIN_SWIPE_DISTANCE = 150;
 
     // Views
     @VisibleForTesting GridLinesLayout mGridLinesLayout;
@@ -653,6 +655,22 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         } else if (mTapGestureFinder.onTouchEvent(event)) {
             LOG.i("onTouchEvent", "tap!");
             onGesture(mTapGestureFinder, options);
+        }
+
+        if(event.getAction() == MotionEvent.ACTION_DOWN) x1 = event.getX();
+        if(event.getAction() == MotionEvent.ACTION_UP) {
+            x2 = event.getX();
+            float deltaX = x2 - x1;
+            if(deltaX > MIN_SWIPE_DISTANCE) {
+                for (CameraListener listener : mListeners) {
+                    listener.onSwipeRight();
+                }
+            }
+            if (deltaX < MIN_SWIPE_DISTANCE) {
+                for (CameraListener listener : mListeners) {
+                    listener.onSwipeLeft();
+                }
+            }
         }
 
         return true;
@@ -2227,6 +2245,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         public void onShutter(boolean shouldPlaySound) {
             if (shouldPlaySound && mPlaySounds) {
                 playSound(MediaActionSound.SHUTTER_CLICK);
+            }
+            for (CameraListener listener : mListeners) {
+                listener.onShutter();
             }
         }
 

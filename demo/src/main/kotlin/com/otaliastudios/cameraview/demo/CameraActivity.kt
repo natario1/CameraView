@@ -221,6 +221,21 @@ class CameraActivity : AppCompatActivity(), View.OnClickListener, OptionView.Cal
             super.onZoomChanged(newValue, bounds, fingers)
             message("Zoom:$newValue", false)
         }
+
+        override fun onShutter() {
+            super.onShutter()
+            LOG.w("Shutter Triggered!")
+        }
+
+        override fun onSwipeLeft() {
+            super.onSwipeLeft()
+            LOG.w("Swipe Left!")
+        }
+
+        override fun onSwipeRight() {
+            super.onSwipeRight()
+            LOG.w("Swipe Right!")
+        }
     }
 
     override fun onClick(view: View) {
