@@ -687,6 +687,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         //noinspection ConstantConditions
         switch (action) {
 
+            case TAKE_PICTURE_SNAPSHOT:
+                takePictureSnapshot();
+                break;
+
             case TAKE_PICTURE:
                 takePicture();
                 break;
