@@ -40,36 +40,38 @@
             <enum name="none" value="0" />
             <enum name="autoFocus" value="1" />
             <enum name="takePicture" value="2" />
+            <enum name="takePictureSnapshot" value="3" />
         </attr>
 
         <attr name="cameraGestureLongTap" format="enum">
             <enum name="none" value="0" />
             <enum name="autoFocus" value="1" />
             <enum name="takePicture" value="2" />
+            <enum name="takePictureSnapshot" value="3" />
         </attr>
 
         <attr name="cameraGesturePinch" format="enum">
             <enum name="none" value="0" />
-            <enum name="zoom" value="3" />
-            <enum name="exposureCorrection" value="4" />
-            <enum name="filterControl1" value="5" />
-            <enum name="filterControl2" value="6" />
+            <enum name="zoom" value="4" />
+            <enum name="exposureCorrection" value="5" />
+            <enum name="filterControl1" value="6" />
+            <enum name="filterControl2" value="7" />
         </attr>
 
         <attr name="cameraGestureScrollHorizontal" format="enum">
             <enum name="none" value="0" />
-            <enum name="zoom" value="3" />
-            <enum name="exposureCorrection" value="4" />
-            <enum name="filterControl1" value="5" />
-            <enum name="filterControl2" value="6" />
+            <enum name="zoom" value="4" />
+            <enum name="exposureCorrection" value="5" />
+            <enum name="filterControl1" value="6" />
+            <enum name="filterControl2" value="7" />
         </attr>
 
         <attr name="cameraGestureScrollVertical" format="enum">
             <enum name="none" value="0" />
-            <enum name="zoom" value="3" />
-            <enum name="exposureCorrection" value="4" />
-            <enum name="filterControl1" value="5" />
-            <enum name="filterControl2" value="6" />
+            <enum name="zoom" value="4" />
+            <enum name="exposureCorrection" value="5" />
+            <enum name="filterControl1" value="6" />
+            <enum name="filterControl2" value="7" />
         </attr>
 
         <attr name="cameraEngine" format="enum">

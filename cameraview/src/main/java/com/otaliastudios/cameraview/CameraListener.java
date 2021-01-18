@@ -161,4 +161,12 @@ public abstract class CameraListener {
 
     }
 
+    /**
+     * Notifies that the shutter event is happening. You can update UI to show some
+     * trigger effect, so user visually confirms that picture is being taken
+     * or video recording is about to start.
+     */
+    @UiThread
+    public void onShutter() {}
+    
 }

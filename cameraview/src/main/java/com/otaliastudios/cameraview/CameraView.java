@@ -669,6 +669,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         //noinspection ConstantConditions
         switch (action) {
 
+            case TAKE_PICTURE_SNAPSHOT:
+                takePictureSnapshot();
+                break;
+
             case TAKE_PICTURE:
                 takePicture();
                 break;
@@ -2228,6 +2232,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             if (shouldPlaySound && mPlaySounds) {
                 playSound(MediaActionSound.SHUTTER_CLICK);
             }
+            mUiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (CameraListener listener : mListeners) {
+                        listener.onShutter();
+                    }
+                }
+            });
         }
 
         @Override

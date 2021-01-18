@@ -44,6 +44,15 @@ public enum GestureAction {
     TAKE_PICTURE(2, GestureType.ONE_SHOT),
 
     /**
+     * When triggered, this action will fire a picture snapshot.
+     * This action can be mapped to one shot gestures:
+     *
+     * - {@link Gesture#TAP}
+     * - {@link Gesture#LONG_TAP}
+     */
+    TAKE_PICTURE_SNAPSHOT(3, GestureType.ONE_SHOT),
+
+    /**
      * Zoom control, typically assigned to the pinch gesture.
      * This action can be mapped to continuous gestures:
      *
@@ -51,7 +60,7 @@ public enum GestureAction {
      * - {@link Gesture#SCROLL_HORIZONTAL}
      * - {@link Gesture#SCROLL_VERTICAL}
      */
-    ZOOM(3, GestureType.CONTINUOUS),
+    ZOOM(4, GestureType.CONTINUOUS),
 
     /**
      * Exposure correction control.
@@ -61,7 +70,7 @@ public enum GestureAction {
      * - {@link Gesture#SCROLL_HORIZONTAL}
      * - {@link Gesture#SCROLL_VERTICAL}
      */
-    EXPOSURE_CORRECTION(4, GestureType.CONTINUOUS),
+    EXPOSURE_CORRECTION(5, GestureType.CONTINUOUS),
 
     /**
      * Controls the first parameter of a real-time {@link Filter},
@@ -71,7 +80,7 @@ public enum GestureAction {
      * - {@link Gesture#SCROLL_HORIZONTAL}
      * - {@link Gesture#SCROLL_VERTICAL}
      */
-    FILTER_CONTROL_1(5, GestureType.CONTINUOUS),
+    FILTER_CONTROL_1(6, GestureType.CONTINUOUS),
 
     /**
      * Controls the second parameter of a real-time {@link Filter},
@@ -81,7 +90,7 @@ public enum GestureAction {
      * - {@link Gesture#SCROLL_HORIZONTAL}
      * - {@link Gesture#SCROLL_VERTICAL}
      */
-    FILTER_CONTROL_2(6, GestureType.CONTINUOUS);
+    FILTER_CONTROL_2(7, GestureType.CONTINUOUS);
 
     final static GestureAction DEFAULT_PINCH = NONE;
     final static GestureAction DEFAULT_TAP = NONE;
