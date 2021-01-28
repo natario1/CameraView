@@ -116,7 +116,7 @@ public abstract class CameraEngine implements
         void dispatchOnCameraOpened(@NonNull CameraOptions options);
         void dispatchOnCameraClosed();
         void onCameraPreviewStreamSizeChanged();
-        void onShutter(boolean shouldPlaySound);
+        void dispatchOnPictureShutter(boolean shouldPlaySound);
         void dispatchOnVideoTaken(@NonNull VideoResult.Stub stub);
         void dispatchOnPictureTaken(@NonNull PictureResult.Stub stub);
         void dispatchOnFocusStart(@Nullable Gesture trigger, @NonNull PointF where);

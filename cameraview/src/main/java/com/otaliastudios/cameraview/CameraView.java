@@ -2228,7 +2228,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void onShutter(boolean shouldPlaySound) {
+        public void dispatchOnPictureShutter(boolean shouldPlaySound) {
             if (shouldPlaySound && mPlaySounds) {
                 playSound(MediaActionSound.SHUTTER_CLICK);
             }
@@ -2236,7 +2236,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                 @Override
                 public void run() {
                     for (CameraListener listener : mListeners) {
-                        listener.onShutter();
+                        listener.onPictureShutter();
                     }
                 }
             });

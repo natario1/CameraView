@@ -24,8 +24,8 @@ Simple as that. There are two things to be noted:
 |Gesture|Description|Can be mapped to|
 |-------------|-----------|----------------|
 |`PINCH`|Pinch gesture, typically assigned to the zoom control.|`ZOOM` `EXPOSURE_CORRECTION` `FILTER_CONTROL_1` `FILTER_CONTROL_2` `NONE`|
-|`TAP`|Single tap gesture, typically assigned to the focus control.|`AUTO_FOCUS` `TAKE_PICTURE` `NONE`|
-|`LONG_TAP`|Long tap gesture.|`AUTO_FOCUS` `TAKE_PICTURE` `NONE`|
+|`TAP`|Single tap gesture, typically assigned to the focus control.|`AUTO_FOCUS` `TAKE_PICTURE` `TAKE_PICTURE_SNAPSHOT` `NONE`|
+|`LONG_TAP`|Long tap gesture.|`AUTO_FOCUS` `TAKE_PICTURE` `TAKE_PICTURE_SNAPSHOT` `NONE`|
 |`SCROLL_HORIZONTAL`|Horizontal movement gesture.|`ZOOM` `EXPOSURE_CORRECTION` `FILTER_CONTROL_1` `FILTER_CONTROL_2` `NONE`|
 |`SCROLL_VERTICAL`|Vertical movement gesture.|`ZOOM` `EXPOSURE_CORRECTION` `FILTER_CONTROL_1` `FILTER_CONTROL_2` `NONE`|
 
@@ -38,6 +38,7 @@ Looking at this from the other side:
 |`NONE`|Disables this gesture.|`TAP` `LONG_TAP` `PINCH` `SCROLL_HORIZONTAL` `SCROLL_VERTICAL`|
 |`AUTO_FOCUS`|Launches a [touch metering operation](metering#touch-metering) on the finger position.|`TAP` `LONG_TAP`|
 |`TAKE_PICTURE`|Takes a picture using [takePicture](capturing-media).|`TAP` `LONG_TAP`|
+|`TAKE_PICTURE_SNAPSHOT`|Takes a picture using [takePictureSnapshot](capturing-media).|`TAP` `LONG_TAP`|
 |`ZOOM`|[Zooms](controls#zoom) in or out.|`PINCH` `SCROLL_HORIZONTAL` `SCROLL_VERTICAL`|
 |`EXPOSURE_CORRECTION`|Controls the [exposure correction](metering#exposure-correction).|`PINCH` `SCROLL_HORIZONTAL` `SCROLL_VERTICAL`|
 |`FILTER_CONTROL_1`|Controls the first parameter (if any) of a [real-time filter](filters).|`PINCH` `SCROLL_HORIZONTAL` `SCROLL_VERTICAL`|
@@ -48,8 +49,8 @@ Looking at this from the other side:
 ```xml
 <com.otaliastudios.cameraview.CameraView
     app:cameraGesturePinch="zoom|exposureCorrection|filterControl1|filterControl2|none"
-    app:cameraGestureTap="autoFocus|takePicture|none"
-    app:cameraGestureLongTap="autoFocus|takePicture|none"
+    app:cameraGestureTap="autoFocus|takePicture|takePictureSnapshot|none"
+    app:cameraGestureLongTap="autoFocus|takePicture|takePictureSnapshot|none"
     app:cameraGestureScrollHorizontal="zoom|exposureCorrection|filterControl1|filterControl2|none"
     app:cameraGestureScrollVertical="zoom|exposureCorrection|filterControl1|filterControl2|none"/>
 ```

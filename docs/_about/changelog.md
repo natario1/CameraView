@@ -9,6 +9,18 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 > Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
+##### v2.7.0
+
+- New: onPictureShutter() callback when taking pictures, thanks to [@EzequielAdrianM][EzequielAdrianM] ([#1030][1030])
+- New: GestureAction.TAKE_PICTURE_SNAPSHOT lets you take snapshots on gesture, thanks to [@EzequielAdrianM][EzequielAdrianM] ([#1030][1030])
+- Improvement: try-catch internal exception when takePicture fails, thanks to [@michaelspecht][michaelspecht] ([#1024][1024])
+- Improvement: log errors when file writing fails, thanks to [@bwt][bwt] ([#960][960])
+- Fix: Avoid preview deadlocks ([#1020][1020])
+- Fix: Workaround for messed-up preview on Pixel 4 ([#1020][1020])
+- Fix: Avoid internal StackOverflow errors ([#992][992])
+
+<https://github.com/natario1/CameraView/compare/v2.6.4...v2.7.0>
+
 ##### v2.6.4
 
 - Fix: Fix many small bugs ([#953][953])
@@ -322,6 +334,7 @@ This is the last release before v2.
 
 [aartikov]: https://github.com/aartikov
 [athornz]: https://github.com/athornz
+[bwt]: https://github.com/bwt
 [v-gar]: https://github.com/v-gar
 [andrewmunn]: https://github.com/andrewmunn
 [chaitanyaraghav]: https://github.com/chaitanyaraghav
@@ -344,6 +357,8 @@ This is the last release before v2.
 [hualong-shen]: https://github.com/hualong-shen
 [EverydayPineapple]: https://github.com/EverydayPineapple
 [jeffreyfjohnson]: https://github.com/jeffreyfjohnson
+[michaelspecht]: https://github.com/michaelspecht
+[EzequielAdrianM]: https://github.com/EzequielAdrianM
 
 
 [73]: https://github.com/natario1/CameraView/pull/73
@@ -442,3 +457,8 @@ This is the last release before v2.
 [877]: https://github.com/natario1/CameraView/pull/877
 [897]: https://github.com/natario1/CameraView/pull/897
 [953]: https://github.com/natario1/CameraView/pull/953
+[960]: https://github.com/natario1/CameraView/pull/960
+[992]: https://github.com/natario1/CameraView/pull/992
+[1020]: https://github.com/natario1/CameraView/pull/1020
+[1024]: https://github.com/natario1/CameraView/pull/1024
+[1030]: https://github.com/natario1/CameraView/pull/1030
