@@ -68,6 +68,11 @@ This is allowed at the following conditions:
 
 ```java
 camera.addCameraListener(new CameraListener() {
+
+    @Override
+    public void onPictureShutter() {
+        // Picture capture started!
+    }
     
     @Override
     public void onPictureTaken(@NonNull PictureResult result) {

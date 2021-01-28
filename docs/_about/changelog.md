@@ -11,7 +11,7 @@ Companies can share a tiny part of their revenue and get private support hours i
 
 ##### v2.7.0
 
-- New: onShutter() callback when taking pictures, thanks to [@EzequielAdrianM][EzequielAdrianM] ([#1030][1030])
+- New: onPictureShutter() callback when taking pictures, thanks to [@EzequielAdrianM][EzequielAdrianM] ([#1030][1030])
 - New: GestureAction.TAKE_PICTURE_SNAPSHOT lets you take snapshots on gesture, thanks to [@EzequielAdrianM][EzequielAdrianM] ([#1030][1030])
 - Improvement: try-catch internal exception when takePicture fails, thanks to [@michaelspecht][michaelspecht] ([#1024][1024])
 - Improvement: log errors when file writing fails, thanks to [@bwt][bwt] ([#960][960])
