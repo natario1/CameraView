@@ -1,10 +1,10 @@
-import com.otaliastudios.tools.publisher.common.License
-import com.otaliastudios.tools.publisher.common.Release
+import io.deepmedia.tools.publisher.common.License
+import io.deepmedia.tools.publisher.common.Release
 
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    id("com.otaliastudios.tools.publisher")
+    id("io.deepmedia.tools.publisher")
     id("jacoco")
 }
 
@@ -14,7 +14,7 @@ android {
         setMinSdkVersion(property("minSdkVersion") as Int)
         setTargetSdkVersion(property("targetSdkVersion") as Int)
         versionCode = 1
-        versionName = "2.6.4"
+        versionName = "2.7.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArgument("filter", "" +
                 "com.otaliastudios.cameraview.tools.SdkExcludeFilter," +
@@ -30,11 +30,11 @@ dependencies {
 
     androidTestImplementation("androidx.test:runner:1.3.0")
     androidTestImplementation("androidx.test:rules:1.3.0")
-    androidTestImplementation("androidx.test.ext:junit:1.1.1")
+    androidTestImplementation("androidx.test.ext:junit:1.1.2")
     androidTestImplementation("org.mockito:mockito-android:2.28.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.2.0")
 
-    api("androidx.exifinterface:exifinterface:1.2.0")
+    api("androidx.exifinterface:exifinterface:1.3.2")
     api("androidx.lifecycle:lifecycle-common:2.2.0")
     api("com.google.android.gms:play-services-tasks:17.2.0")
     implementation("androidx.annotation:annotation:1.1.0")
@@ -52,8 +52,8 @@ publisher {
     project.url = "https://github.com/natario1/CameraView"
     project.addLicense(License.APACHE_2_0)
     bintray {
-        release.setSources(Release.SOURCES_AUTO)
-        release.setDocs(Release.DOCS_AUTO)
+        release.sources = Release.SOURCES_AUTO
+        release.docs = Release.DOCS_AUTO
         auth.user = "BINTRAY_USER"
         auth.key = "BINTRAY_KEY"
         auth.repo = "BINTRAY_REPO"
@@ -97,7 +97,7 @@ jacoco { toolVersion = "0.8.5" }
 tasks.register("computeCoverage", JacocoReport::class) {
     dependsOn("compileDebugSources") // Compile sources, needed below
     executionData.from(fileTree(coverageInputDir))
-    sourceDirectories.from(android.sourceSets["main"].java.sourceFiles)
+    sourceDirectories.from(android.sourceSets["main"].java.srcDirs)
     additionalSourceDirs.from("$buildDir/generated/source/buildConfig/debug")
     additionalSourceDirs.from("$buildDir/generated/source/r/debug")
     classDirectories.from(fileTree("$buildDir/intermediates/javac/debug") {
