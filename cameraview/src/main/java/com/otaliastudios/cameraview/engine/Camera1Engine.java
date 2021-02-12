@@ -524,8 +524,13 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyFlash(params, old)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyFlash(params, old)) mCamera.setParameters(params);
+                } catch (RuntimeException e){
+                    LOG.e("setFlash","Failed to get or set params");
+                    throw new CameraException(e, CameraException.REASON_UNKNOWN);
+                }
             }
         });
     }
@@ -548,8 +553,13 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyLocation(params, oldLocation)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyLocation(params, oldLocation)) mCamera.setParameters(params);
+                } catch (RuntimeException e){
+                    LOG.e("setLocation","Failed to get or set params");
+                    throw new CameraException(e, CameraException.REASON_UNKNOWN);
+                }
             }
         });
     }
@@ -576,8 +586,13 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyWhiteBalance(params, old)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyWhiteBalance(params, old)) mCamera.setParameters(params);
+                } catch (RuntimeException e){
+                    LOG.e("setLocation","Failed to get or set params");
+                    throw new CameraException(e, CameraException.REASON_UNKNOWN);
+                }
             }
         });
     }
@@ -605,8 +620,13 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyHdr(params, old)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyHdr(params, old)) mCamera.setParameters(params);
+                } catch (RuntimeException e){
+                    LOG.e("setHdr","Failed to get or set params");
+                    throw new CameraException(e, CameraException.REASON_UNKNOWN);
+                }
             }
         });
     }
@@ -631,12 +651,17 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyZoom(params, old)) {
-                    mCamera.setParameters(params);
-                    if (notify) {
-                        getCallback().dispatchOnZoomChanged(mZoomValue, points);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyZoom(params, old)) {
+                        mCamera.setParameters(params);
+                        if (notify) {
+                            getCallback().dispatchOnZoomChanged(mZoomValue, points);
+                        }
                     }
+                } catch (RuntimeException e) {
+                    LOG.e("setZoom", "Failed to get or set params");
+                    throw new CameraException(e, CameraException.REASON_UNKNOWN);
                 }
             }
         });
@@ -666,13 +691,18 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyExposureCorrection(params, old)) {
-                    mCamera.setParameters(params);
-                    if (notify) {
-                        getCallback().dispatchOnExposureCorrectionChanged(mExposureCorrectionValue,
-                                bounds, points);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyExposureCorrection(params, old)) {
+                        mCamera.setParameters(params);
+                        if (notify) {
+                            getCallback().dispatchOnExposureCorrectionChanged(mExposureCorrectionValue,
+                                    bounds, points);
+                        }
                     }
+                } catch (RuntimeException e) {
+                    LOG.e("setExposureCorrection", "Failed to get or set params");
+                    throw new CameraException(e, CameraException.REASON_UNKNOWN);
                 }
             }
         });
@@ -744,8 +774,13 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyPreviewFrameRate(params, old)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyPreviewFrameRate(params, old)) mCamera.setParameters(params);
+                } catch (RuntimeException e) {
+                    LOG.e("setPreviewFrameRate", "Failed to get or set params");
+                    throw new CameraException(e, CameraException.REASON_UNKNOWN);
+                }
             }
         });
     }
