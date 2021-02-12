@@ -2,17 +2,17 @@ package com.otaliastudios.cameraview;
 
 
 import android.app.Activity;
-import android.app.KeyguardManager;
-import android.content.Context;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.os.PersistableBundle;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.Nullable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+
+import com.otaliastudios.cameraview.size.Size;
 
 import static android.view.ViewGroup.LayoutParams.*;
 

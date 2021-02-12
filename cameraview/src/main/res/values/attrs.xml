@@ -3,53 +3,86 @@
     <declare-styleable name="CameraView">
 
         <attr name="cameraPictureSizeMinWidth" format="integer|reference"/>
-
         <attr name="cameraPictureSizeMaxWidth" format="integer|reference"/>
-
         <attr name="cameraPictureSizeMinHeight" format="integer|reference"/>
-
         <attr name="cameraPictureSizeMaxHeight" format="integer|reference"/>
-
         <attr name="cameraPictureSizeMinArea" format="integer|reference" />
-
         <attr name="cameraPictureSizeMaxArea" format="integer|reference" />
-
         <attr name="cameraPictureSizeSmallest" format="boolean"/>
-
         <attr name="cameraPictureSizeBiggest" format="boolean"/>
-
         <attr name="cameraPictureSizeAspectRatio" format="string|reference"/>
+
+        <attr name="cameraVideoSizeMinWidth" format="integer|reference"/>
+        <attr name="cameraVideoSizeMaxWidth" format="integer|reference"/>
+        <attr name="cameraVideoSizeMinHeight" format="integer|reference"/>
+        <attr name="cameraVideoSizeMaxHeight" format="integer|reference"/>
+        <attr name="cameraVideoSizeMinArea" format="integer|reference" />
+        <attr name="cameraVideoSizeMaxArea" format="integer|reference" />
+        <attr name="cameraVideoSizeSmallest" format="boolean"/>
+        <attr name="cameraVideoSizeBiggest" format="boolean"/>
+        <attr name="cameraVideoSizeAspectRatio" format="string|reference"/>
+
+        <attr name="cameraSnapshotMaxWidth" format="integer|reference" />
+        <attr name="cameraSnapshotMaxHeight" format="integer|reference" />
+
+        <attr name="cameraFrameProcessingMaxWidth" format="integer|reference" />
+        <attr name="cameraFrameProcessingMaxHeight" format="integer|reference" />
+        <attr name="cameraFrameProcessingFormat" format="integer|reference" />
+        <attr name="cameraFrameProcessingPoolSize" format="integer|reference" />
+        <attr name="cameraFrameProcessingExecutors" format="integer|reference" />
+
+        <attr name="cameraVideoBitRate" format="integer|reference" />
+        <attr name="cameraAudioBitRate" format="integer|reference" />
+        <attr name="cameraPreviewFrameRate" format="integer|reference" />
+        <attr name="cameraPreviewFrameRateExact" format="boolean" />
 
         <attr name="cameraGestureTap" format="enum">
             <enum name="none" value="0" />
-            <enum name="focus" value="1" />
-            <enum name="focusWithMarker" value="2" />
-            <enum name="capture" value="3" />
+            <enum name="autoFocus" value="1" />
+            <enum name="takePicture" value="2" />
+            <enum name="takePictureSnapshot" value="3" />
         </attr>
 
         <attr name="cameraGestureLongTap" format="enum">
             <enum name="none" value="0" />
-            <enum name="focus" value="1" />
-            <enum name="focusWithMarker" value="2" />
-            <enum name="capture" value="3" />
+            <enum name="autoFocus" value="1" />
+            <enum name="takePicture" value="2" />
+            <enum name="takePictureSnapshot" value="3" />
         </attr>
 
         <attr name="cameraGesturePinch" format="enum">
             <enum name="none" value="0" />
             <enum name="zoom" value="4" />
             <enum name="exposureCorrection" value="5" />
+            <enum name="filterControl1" value="6" />
+            <enum name="filterControl2" value="7" />
         </attr>
 
         <attr name="cameraGestureScrollHorizontal" format="enum">
             <enum name="none" value="0" />
             <enum name="zoom" value="4" />
             <enum name="exposureCorrection" value="5" />
+            <enum name="filterControl1" value="6" />
+            <enum name="filterControl2" value="7" />
         </attr>
 
         <attr name="cameraGestureScrollVertical" format="enum">
             <enum name="none" value="0" />
             <enum name="zoom" value="4" />
             <enum name="exposureCorrection" value="5" />
+            <enum name="filterControl1" value="6" />
+            <enum name="filterControl2" value="7" />
+        </attr>
+
+        <attr name="cameraEngine" format="enum">
+            <enum name="camera1" value="0" />
+            <enum name="camera2" value="1" />
+        </attr>
+
+        <attr name="cameraPreview" format="enum">
+            <enum name="surface" value="0" />
+            <enum name="texture" value="1" />
+            <enum name="glSurface" value="2" />
         </attr>
 
         <attr name="cameraFacing" format="enum">
@@ -77,6 +110,18 @@
             <enum name="cloudy" value="4" />
         </attr>
 
+        <attr name="cameraMode" format="enum">
+            <enum name="picture" value="0" />
+            <enum name="video" value="1" />
+        </attr>
+
+        <attr name="cameraAudio" format="enum">
+            <enum name="off" value="0" />
+            <enum name="on" value="1" />
+            <enum name="mono" value="2" />
+            <enum name="stereo" value="3" />
+        </attr>
+
         <attr name="cameraGrid" format="enum">
             <enum name="off" value="0" />
             <enum name="draw3x3" value="1" />
@@ -84,29 +129,7 @@
             <enum name="drawPhi" value="3" />
         </attr>
 
-        <attr name="cameraSessionType" format="enum">
-            <enum name="picture" value="0" />
-            <enum name="video" value="1" />
-        </attr>
-
-        <attr name="cameraJpegQuality" format="integer" />
-
-        <attr name="cameraVideoQuality" format="enum">
-            <enum name="lowest" value="0" />
-            <enum name="highest" value="1" />
-            <enum name="maxQvga" value="2" />
-            <enum name="max480p" value="3" />
-            <enum name="max720p" value="4" />
-            <enum name="max1080p" value="5" />
-            <enum name="max2160p" value="6" />
-        </attr>
-
-        <attr name="cameraCropOutput" format="boolean" />
-
-        <attr name="cameraAudio" format="enum">
-            <enum name="off" value="0" />
-            <enum name="on" value="1" />
-        </attr>
+        <attr name="cameraGridColor" format="color|reference"/>
 
         <attr name="cameraPlaySounds" format="boolean" />
 
@@ -120,27 +143,38 @@
             <enum name="h264" value="2" />
         </attr>
 
-        <!-- deprecated attr name="cameraZoomMode" format="enum">
-            <enum name="off" value="0" />
-            <enum name="pinch" value="1" />
-        </attr -->
+        <attr name="cameraAudioCodec" format="enum">
+            <enum name="deviceDefault" value="0" />
+            <enum name="aac" value="1" />
+            <enum name="heAac" value="2" />
+            <enum name="aacEld" value="3" />
+        </attr>
 
-        <!-- deprecated attr name="cameraCaptureMethod" format="enum">
-            <enum name="standard" value="0" />
-            <enum name="frame" value="1" />
-        </attr -->
+        <attr name="cameraAutoFocusResetDelay" format="integer|reference"/>
 
-        <!-- deprecated attr name="cameraPermissionPolicy" format="enum">
-            <enum name="video" value="0" />
-            <enum name="picture" value="1" />
-        </attr -->
+        <attr name="cameraAutoFocusMarker" format="string|reference"/>
 
-        <!-- deprecated attr name="cameraFocus" format="enum">
-            <enum name="fixed" value="0" />
-            <enum name="continuous" value="1" />
-            <enum name="tap" value="2" />
-            <enum name="tapWithMarker" value="3" />
-        </attr -->
+        <attr name="cameraFilter" format="string|reference"/>
+
+        <attr name="cameraUseDeviceOrientation" format="boolean"/>
+
+        <attr name="cameraPictureMetering" format="boolean|reference"/>
+        <attr name="cameraPictureSnapshotMetering" format="boolean|reference"/>
+
+        <attr name="cameraPictureFormat" format="enum">
+            <enum name="jpeg" value="0" />
+            <enum name="dng" value="1" />
+        </attr>
+
+        <attr name="cameraRequestPermissions" format="boolean|reference"/>
+        <attr name="cameraExperimental" format="boolean|reference" />
+
     </declare-styleable>
 
+    <declare-styleable name="CameraView_Layout">
+        <attr name="layout_drawOnPreview" format="boolean"/>
+        <attr name="layout_drawOnPictureSnapshot" format="boolean"/>
+        <attr name="layout_drawOnVideoSnapshot" format="boolean"/>
+
+    </declare-styleable>
 </resources>

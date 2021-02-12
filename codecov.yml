@@ -1,15 +1,15 @@
 coverage:
   precision: 1
-  round: down
-  range: "40...100"
+  round: nearest
+  range: "10...90"
 
   status:
     project:
       default:
-        target: 50%
+        target: 70%
     patch:
       default:
-        target: 70%
+        target: 60%
     changes: no
 
 comment:

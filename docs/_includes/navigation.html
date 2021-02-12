@@ -1,0 +1,27 @@
+<ul id="navigation" class="py-4">
+    <li><a href="{{ site.baseurl }}/home">Home</a></li>
+    {% for collection in site.collections %}
+    {% if collection.label != "posts" %}
+    <li class="mt-3"><h5 class="mt-0 mb-1">{{ collection.name }}</h5>
+        <ul>
+            {% assign docs = (collection.docs | sort: "order") %}
+            {% for doc in docs %}
+            <li class="pt-2 pb-2">
+                <a href="{{ site.baseurl }}{{ doc.url }}">{{ doc.title }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </li>
+    {% endif %}
+    {% endfor %}
+</ul>
+<script>
+    /* find current item and make it active */
+    const current = document.location.href;
+    const links = document.querySelectorAll('#navigation a');
+    links.forEach((link) => {
+        if (current && link && current.endsWith(link.getAttribute('href'))) {
+            link.parentElement.classList.add('active')
+        }
+    });
+</script>

@@ -1,6 +1,8 @@
 package com.otaliastudios.cameraview;
 
 
+import com.otaliastudios.cameraview.controls.Facing;
+
 /**
  * Holds an error with the camera configuration.
  */
@@ -30,18 +32,60 @@ public class CameraException extends RuntimeException {
      */
     public static final int REASON_DISCONNECTED = 3;
 
+    /**
+     * Could not take a picture or a picture snapshot,
+     * for some not specified reason.
+     */
+    public static final int REASON_PICTURE_FAILED = 4;
+
+    /**
+     * Could not take a video or a video snapshot,
+     * for some not specified reason.
+     */
+    public static final int REASON_VIDEO_FAILED = 5;
+
+    /**
+     * Indicates that we could not find a camera for the current {@link Facing}
+     * value.
+     * This can be solved by changing the facing value and starting again.
+     */
+    public static final int REASON_NO_CAMERA = 6;
+
     private int reason = REASON_UNKNOWN;
 
-    CameraException(Throwable cause) {
+    @SuppressWarnings("WeakerAccess")
+    public CameraException(Throwable cause) {
         super(cause);
     }
 
-    CameraException(Throwable cause, int reason) {
+    public CameraException(Throwable cause, int reason) {
         super(cause);
+        this.reason = reason;
+    }
+
+    public CameraException(int reason) {
+        super();
         this.reason = reason;
     }
 
     public int getReason() {
         return reason;
+    }
+
+    /**
+     * Whether this error is unrecoverable. If this function returns true,
+     * the Camera has been closed (or will be soon) and it is likely showing a black preview.
+     * This is the right moment to show an error dialog to the user.
+     *
+     * @return true if this error is unrecoverable
+     */
+    @SuppressWarnings("unused")
+    public boolean isUnrecoverable() {
+        switch (getReason()) {
+            case REASON_FAILED_TO_CONNECT: return true;
+            case REASON_FAILED_TO_START_PREVIEW: return true;
+            case REASON_DISCONNECTED: return true;
+            default: return false;
+        }
     }
 }

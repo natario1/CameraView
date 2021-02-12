@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cameraview_default_autofocus_marker">com.otaliastudios.cameraview.markers.DefaultAutoFocusMarker</string>
+
+    <string name="cameraview_filter_none">com.otaliastudios.cameraview.filter.NoFilter</string>
+    <string name="cameraview_filter_autofix">com.otaliastudios.cameraview.filters.AutoFixFilter</string>
+    <string name="cameraview_filter_black_and_white">com.otaliastudios.cameraview.filters.BlackAndWhiteFilter</string>
+    <string name="cameraview_filter_brightness">com.otaliastudios.cameraview.filters.BrightnessFilter</string>
+    <string name="cameraview_filter_contrast">com.otaliastudios.cameraview.filters.ContrastFilter</string>
+    <string name="cameraview_filter_cross_process">com.otaliastudios.cameraview.filters.CrossProcessFilter</string>
+    <string name="cameraview_filter_documentary">com.otaliastudios.cameraview.filters.DocumentaryFilter</string>
+    <string name="cameraview_filter_duotone">com.otaliastudios.cameraview.filters.DuotoneFilter</string>
+    <string name="cameraview_filter_fill_light">com.otaliastudios.cameraview.filters.FillLightFilter</string>
+    <string name="cameraview_filter_gamma">com.otaliastudios.cameraview.filters.GammaFilter</string>
+    <string name="cameraview_filter_grain">com.otaliastudios.cameraview.filters.GrainFilter</string>
+    <string name="cameraview_filter_grayscale">com.otaliastudios.cameraview.filters.GrayscaleFilter</string>
+    <string name="cameraview_filter_hue">com.otaliastudios.cameraview.filters.HueFilter</string>
+    <string name="cameraview_filter_invert_colors">com.otaliastudios.cameraview.filters.InvertColorsFilter</string>
+    <string name="cameraview_filter_lomoish">com.otaliastudios.cameraview.filters.LomoishFilter</string>
+    <string name="cameraview_filter_posterize">com.otaliastudios.cameraview.filters.PosterizeFilter</string>
+    <string name="cameraview_filter_saturation">com.otaliastudios.cameraview.filters.SaturationFilter</string>
+    <string name="cameraview_filter_sepia">com.otaliastudios.cameraview.filters.SepiaFilter</string>
+    <string name="cameraview_filter_sharpness">com.otaliastudios.cameraview.filters.SharpnessFilter</string>
+    <string name="cameraview_filter_temperature">com.otaliastudios.cameraview.filters.TemperatureFilter</string>
+    <string name="cameraview_filter_tint">com.otaliastudios.cameraview.filters.TintFilter</string>
+    <string name="cameraview_filter_vignette">com.otaliastudios.cameraview.filters.VignetteFilter</string>
+</resources>

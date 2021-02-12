@@ -19,5 +19,45 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
+        <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/isSnapshot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/rotation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/audio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/audioBitRate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/audioCodec"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/videoCodec"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/videoBitRate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.otaliastudios.cameraview.demo.MessageView
+            android:id="@+id/videoFrameRate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
     </LinearLayout>
 </ScrollView>

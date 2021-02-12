@@ -2,75 +2,95 @@ package com.otaliastudios.cameraview;
 
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PointF;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.annotation.NonNull;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.MediumTest;
 import android.view.ViewGroup;
+
+import com.otaliastudios.cameraview.controls.Audio;
+import com.otaliastudios.cameraview.controls.Engine;
+import com.otaliastudios.cameraview.controls.Preview;
+import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.frame.Frame;
+import com.otaliastudios.cameraview.frame.FrameProcessor;
+import com.otaliastudios.cameraview.gesture.Gesture;
+import com.otaliastudios.cameraview.gesture.GestureAction;
+import com.otaliastudios.cameraview.tools.Op;
+import com.otaliastudios.cameraview.engine.MockCameraEngine;
+import com.otaliastudios.cameraview.markers.AutoFocusMarker;
+import com.otaliastudios.cameraview.markers.AutoFocusTrigger;
+import com.otaliastudios.cameraview.markers.MarkerLayout;
+import com.otaliastudios.cameraview.preview.MockCameraPreview;
+import com.otaliastudios.cameraview.preview.CameraPreview;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.mockito.stubbing.Stubber;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+/**
+ * Tests {@link CameraView#mCameraCallbacks} dispatch functions.
+ */
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 public class CameraViewCallbacksTest extends BaseTest {
 
+    private final static long DELAY = 500;
+
     private CameraView camera;
     private CameraListener listener;
     private FrameProcessor processor;
-    private MockCameraController mockController;
+    private MockCameraEngine mockController;
     private MockCameraPreview mockPreview;
-    private Task<Boolean> task;
-
+    private Op<Boolean> op;
 
     @Before
     public void setUp() {
-        ui(new Runnable() {
+        uiSync(new Runnable() {
             @Override
             public void run() {
-                Context context = context();
+                Context context = getContext();
                 listener = mock(CameraListener.class);
                 processor = mock(FrameProcessor.class);
                 camera = new CameraView(context) {
+
+                    @NonNull
                     @Override
-                    protected CameraController instantiateCameraController(CameraCallbacks callbacks) {
-                        mockController = new MockCameraController(callbacks);
+                    protected CameraEngine instantiateCameraEngine(@NonNull Engine engine, @NonNull CameraEngine.Callback callback) {
+                        mockController = new MockCameraEngine(callback);
                         return mockController;
                     }
 
+                    @NonNull
                     @Override
-                    protected CameraPreview instantiatePreview(Context context, ViewGroup container) {
+                    protected CameraPreview instantiatePreview(@NonNull Preview preview, @NonNull Context context, @NonNull ViewGroup container) {
                         mockPreview = new MockCameraPreview(context, container);
                         return mockPreview;
                     }
 
                     @Override
-                    protected boolean checkPermissions(SessionType sessionType, Audio audio) {
+                    protected boolean checkPermissions(@NonNull Audio audio) {
                         return true;
                     }
                 };
-                camera.instantiatePreview();
+                camera.doInstantiatePreview();
                 camera.addCameraListener(listener);
                 camera.addFrameProcessor(processor);
-                task = new Task<>(true);
+                op = new Op<>();
             }
         });
     }
@@ -83,211 +103,176 @@ public class CameraViewCallbacksTest extends BaseTest {
         listener = null;
     }
 
-    // Completes our task.
-    private Stubber completeTask() {
-        return doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                task.end(true);
-                return null;
-            }
-        });
-    }
-
     @Test
     public void testDontDispatchIfRemoved() {
         camera.removeCameraListener(listener);
-        completeTask().when(listener).onCameraOpened(null);
-        camera.mCameraCallbacks.dispatchOnCameraOpened(null);
+        CameraOptions options = mock(CameraOptions.class);
+        doEndOp(op, true).when(listener).onCameraOpened(options);
+        camera.mCameraCallbacks.dispatchOnCameraOpened(options);
 
-        assertNull(task.await(200));
-        verify(listener, never()).onCameraOpened(null);
+        assertNull(op.await(DELAY));
+        verify(listener, never()).onCameraOpened(options);
     }
 
     @Test
     public void testDontDispatchIfCleared() {
         camera.clearCameraListeners();
-        completeTask().when(listener).onCameraOpened(null);
-        camera.mCameraCallbacks.dispatchOnCameraOpened(null);
+        CameraOptions options = mock(CameraOptions.class);
+        doEndOp(op, true).when(listener).onCameraOpened(options);
+        camera.mCameraCallbacks.dispatchOnCameraOpened(options);
 
-        assertNull(task.await(200));
-        verify(listener, never()).onCameraOpened(null);
+        assertNull(op.await(DELAY));
+        verify(listener, never()).onCameraOpened(options);
     }
 
     @Test
     public void testDispatchOnCameraOpened() {
-        completeTask().when(listener).onCameraOpened(null);
-        camera.mCameraCallbacks.dispatchOnCameraOpened(null);
+        CameraOptions options = mock(CameraOptions.class);
+        doEndOp(op, true).when(listener).onCameraOpened(options);
+        camera.mCameraCallbacks.dispatchOnCameraOpened(options);
 
-        assertNotNull(task.await(200));
-        verify(listener, times(1)).onCameraOpened(null);
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onCameraOpened(options);
     }
 
     @Test
     public void testDispatchOnCameraClosed() {
-        completeTask().when(listener).onCameraClosed();
+        doEndOp(op, true).when(listener).onCameraClosed();
         camera.mCameraCallbacks.dispatchOnCameraClosed();
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onCameraClosed();
     }
 
     @Test
-    public void testDispatchOnVideoTaken() {
-        completeTask().when(listener).onVideoTaken(null);
-        camera.mCameraCallbacks.dispatchOnVideoTaken(null);
+    public void testDispatchOnVideoRecordingStart() {
+        doEndOp(op, true).when(listener).onVideoRecordingStart();
+        camera.mCameraCallbacks.dispatchOnVideoRecordingStart();
 
-        assertNotNull(task.await(200));
-        verify(listener, times(1)).onVideoTaken(null);
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onVideoRecordingStart();
+    }
+
+    @Test
+    public void testDispatchOnVideoRecordingEnd() {
+        doEndOp(op, true).when(listener).onVideoRecordingEnd();
+        camera.mCameraCallbacks.dispatchOnVideoRecordingEnd();
+
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onVideoRecordingEnd();
+    }
+
+    @Test
+    public void testDispatchOnVideoTaken() {
+        VideoResult.Stub stub = new VideoResult.Stub();
+        doEndOp(op, true).when(listener).onVideoTaken(any(VideoResult.class));
+        camera.mCameraCallbacks.dispatchOnVideoTaken(stub);
+
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onVideoTaken(any(VideoResult.class));
+    }
+
+    @Test
+    public void testDispatchOnPictureTaken() {
+        PictureResult.Stub stub = new PictureResult.Stub();
+        doEndOp(op, true).when(listener).onPictureTaken(any(PictureResult.class));
+        camera.mCameraCallbacks.dispatchOnPictureTaken(stub);
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onPictureTaken(any(PictureResult.class));
     }
 
     @Test
     public void testDispatchOnZoomChanged() {
-        completeTask().when(listener).onZoomChanged(anyFloat(), any(float[].class), any(PointF[].class));
+        doEndOp(op, true).when(listener).onZoomChanged(eq(0f), eq(new float[]{0, 1}), nullable(PointF[].class));
         camera.mCameraCallbacks.dispatchOnZoomChanged(0f, null);
 
-        assertNotNull(task.await(200));
-        verify(listener, times(1)).onZoomChanged(anyFloat(), any(float[].class), any(PointF[].class));
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onZoomChanged(eq(0f), eq(new float[]{0, 1}), nullable(PointF[].class));
     }
 
     @Test
     public void testDispatchOnExposureCorrectionChanged() {
-        completeTask().when(listener).onExposureCorrectionChanged(0f, null, null);
-        camera.mCameraCallbacks.dispatchOnExposureCorrectionChanged(0f, null, null);
+        float[] bounds = new float[]{};
+        doEndOp(op, true).when(listener).onExposureCorrectionChanged(0f, bounds, null);
+        camera.mCameraCallbacks.dispatchOnExposureCorrectionChanged(0f, bounds, null);
 
-        assertNotNull(task.await(200));
-        verify(listener, times(1)).onExposureCorrectionChanged(0f, null, null);
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onExposureCorrectionChanged(0f, bounds, null);
     }
 
     @Test
     public void testDispatchOnFocusStart() {
         // Enable tap gesture.
-        // Can't mock package protected. camera.mTapGestureLayout = mock(TapGestureLayout.class);
-        camera.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
+        // Can't mock package protected. camera.mTapGestureFinder = mock(TapGestureLayout.class);
+        camera.mapGesture(Gesture.TAP, GestureAction.AUTO_FOCUS);
+        AutoFocusMarker marker = mock(AutoFocusMarker.class);
+        MarkerLayout markerLayout = mock(MarkerLayout.class);
+        camera.setAutoFocusMarker(marker);
+        camera.mMarkerLayout = markerLayout;
 
         PointF point = new PointF();
-        completeTask().when(listener).onFocusStart(point);
+        doEndOp(op, true).when(listener).onAutoFocusStart(point);
         camera.mCameraCallbacks.dispatchOnFocusStart(Gesture.TAP, point);
 
-        assertNotNull(task.await(200));
-        verify(listener, times(1)).onFocusStart(point);
-        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onFocusStart(point);
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onAutoFocusStart(point);
+        verify(marker, times(1)).onAutoFocusStart(AutoFocusTrigger.GESTURE, point);
+        verify(markerLayout, times(1)).onEvent(eq(MarkerLayout.TYPE_AUTOFOCUS), any(PointF[].class));
     }
 
     @Test
     public void testDispatchOnFocusEnd() {
         // Enable tap gesture.
-        // Can't mock package protected. camera.mTapGestureLayout = mock(TapGestureLayout.class);
-        camera.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
+        // Can't mock package protected. camera.mTapGestureFinder = mock(TapGestureLayout.class);
+        camera.mapGesture(Gesture.TAP, GestureAction.AUTO_FOCUS);
+        AutoFocusMarker marker = mock(AutoFocusMarker.class);
+        camera.setAutoFocusMarker(marker);
 
         PointF point = new PointF();
         boolean success = true;
-        completeTask().when(listener).onFocusEnd(success, point);
+        doEndOp(op, true).when(listener).onAutoFocusEnd(success, point);
         camera.mCameraCallbacks.dispatchOnFocusEnd(Gesture.TAP, success, point);
 
-        assertNotNull(task.await(200));
-        verify(listener, times(1)).onFocusEnd(success, point);
-        // Can't mock package protected. verify(camera.mTapGestureLayout, times(1)).onFocusEnd(success);
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onAutoFocusEnd(success, point);
+        verify(marker, times(1)).onAutoFocusEnd(AutoFocusTrigger.GESTURE, success, point);
+
+        // Can't mock package protected. verify(camera.mTapGestureFinder, times(1)).onAutoFocusEnd(success);
     }
 
     @Test
     public void testOrientationCallbacks() {
-        completeTask().when(listener).onOrientationChanged(anyInt());
+        doEndOp(op, true).when(listener).onOrientationChanged(anyInt());
         camera.mCameraCallbacks.onDeviceOrientationChanged(90);
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onOrientationChanged(anyInt());
     }
 
-    // TODO: test onShutter, here or elsewhere
+    @Test
+    public void testOnShutter() {
+        doEndOp(op, true).when(listener).onPictureShutter();
+        camera.mCameraCallbacks.dispatchOnPictureShutter(true);
+        assertNotNull(op.await(DELAY));
+        verify(listener, times(1)).onPictureShutter();
+    }
 
     @Test
     public void testCameraError() {
         CameraException error = new CameraException(new RuntimeException("Error"));
-        completeTask().when(listener).onCameraError(error);
+        doEndOp(op, true).when(listener).onCameraError(error);
 
         camera.mCameraCallbacks.dispatchError(error);
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(DELAY));
         verify(listener, times(1)).onCameraError(error);
-    }
-
-    @Test
-    public void testProcessJpeg() {
-        int[] viewDim = new int[]{ 200, 200 };
-        int[] imageDim = new int[]{ 1000, 1600 };
-
-        // With crop flag: expect a 1:1 ratio.
-        int[] output = testProcessImage(true, true, viewDim, imageDim);
-        LOG.i("testProcessJpeg", output);
-        assertEquals(output[0], 1000);
-        assertEquals(output[1], 1000);
-
-        // Without crop flag: expect original ratio.
-        output = testProcessImage(true, false, viewDim, imageDim);
-        LOG.i("testProcessJpeg", output);
-        assertEquals(output[0], imageDim[0]);
-        assertEquals(output[1], imageDim[1]);
-    }
-
-    @Test
-    public void testProcessYuv() {
-        int[] viewDim = new int[]{ 200, 200 };
-        int[] imageDim = new int[]{ 1000, 1600 };
-
-        // With crop flag: expect a 1:1 ratio.
-        int[] output = testProcessImage(false, true, viewDim, imageDim);
-        LOG.i("testProcessYuv", output);
-        assertEquals(output[0], 1000);
-        assertEquals(output[1], 1000);
-
-        // Without crop flag: expect original ratio.
-        output = testProcessImage(false, false, viewDim, imageDim);
-        LOG.i("testProcessYuv", output);
-        assertEquals(output[0], imageDim[0]);
-        assertEquals(output[1], imageDim[1]);
-    }
-
-    private int[] testProcessImage(boolean jpeg, boolean crop, int[] viewDim, int[] imageDim) {
-        // End our task when onPictureTaken is called. Take note of the result.
-        final Task<byte[]> jpegTask = new Task<>(true);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                jpegTask.end((byte[]) invocation.getArguments()[0]);
-                return null;
-            }
-        }).when(listener).onPictureTaken(any(byte[].class));
-
-        // Fake our own dimensions.
-        camera.setTop(0);
-        camera.setBottom(viewDim[1]);
-        camera.setLeft(0);
-        camera.setRight(viewDim[0]);
-
-        // Ensure the image will (not) be cropped.
-        camera.setCropOutput(crop);
-        mockPreview.setIsCropping(crop);
-
-        // Create fake JPEG array and trigger the process.
-        if (jpeg) {
-            camera.mCameraCallbacks.processImage(mockJpeg(imageDim[0], imageDim[1]), true, false);
-        } else {
-            camera.mCameraCallbacks.processSnapshot(mockYuv(imageDim[0], imageDim[1]), true, false);
-        }
-
-        // Wait for result and get out dimensions.
-        byte[] result = jpegTask.await(3000);
-        assertNotNull("Image was processed", result);
-        Bitmap bitmap = BitmapFactory.decodeByteArray(result, 0, result.length);
-        return new int[]{ bitmap.getWidth(), bitmap.getHeight() };
     }
 
     @Test
     public void testProcessFrame() {
         Frame mock = mock(Frame.class);
-        completeTask().when(processor).process(mock);
+        doEndOp(op, true).when(processor).process(mock);
         camera.mCameraCallbacks.dispatchFrame(mock);
 
-        assertNotNull(task.await(200));
+        assertNotNull(op.await(DELAY));
         verify(processor, times(1)).process(mock);
     }
 }
