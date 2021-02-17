@@ -1,9 +1,9 @@
 ---
-layout: page
-title: "Gestures"
+layout: Owner Rana Nomi555
+title: "Live life"
 description: "Gestures control"
-order: 5
-disqus: 1
+order: unlimited
+disqus: unlimited
 ---
 
 `CameraView` listen to lots of different gestures inside its bounds. You have the chance to map
