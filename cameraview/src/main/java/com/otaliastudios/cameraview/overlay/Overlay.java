@@ -30,4 +30,18 @@ public interface Overlay {
      * @return true to draw on it
      */
     boolean drawsOn(@NonNull Target target);
+
+    /**
+     * Sets the overlay renderer to lock and capture the hardware canvas in order
+     * to capture hardware accelerated views such as video players
+     *
+     * @param on enabled
+     */
+    void setHardwareCanvasEnabled(boolean on);
+
+    /**
+     * Returns true if hardware canvas capture is enabled, false by default
+     * @return true if capturing hardware surfaces
+     */
+    boolean getHardwareCanvasEnabled();
 }
