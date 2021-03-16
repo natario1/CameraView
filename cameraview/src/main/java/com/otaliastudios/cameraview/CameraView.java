@@ -133,7 +133,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private Engine mEngine;
     private Filter mPendingFilter;
     private int mFrameProcessingExecutors;
-    private boolean mGesturesEnabled;
+    private int mActiveGestures;
 
     // Components
     private Handler mUiHandler;
@@ -195,7 +195,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mExperimental = a.getBoolean(R.styleable.CameraView_cameraExperimental, false);
         mRequestPermissions = a.getBoolean(R.styleable.CameraView_cameraRequestPermissions,
                 DEFAULT_REQUEST_PERMISSIONS);
-        mGesturesEnabled = a.getBoolean(R.styleable.CameraView_cameraGesturesEnabled, true);
         mPreview = controls.getPreview();
         mEngine = controls.getEngine();
 
@@ -607,6 +606,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                             mGestureMap.get(Gesture.SCROLL_VERTICAL) != none);
                     break;
             }
+
+            mActiveGestures = 0;
+            for(GestureAction act : mGestureMap.values()) {
+                mActiveGestures += act == GestureAction.NONE ? 0 : 1;
+            }
+
             return true;
         }
         mapGesture(gesture, none);
@@ -636,7 +641,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         // Steal our own events if gestures are enabled
-        return mGesturesEnabled;
+        return mActiveGestures > 0;
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -2149,25 +2154,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public boolean isTakingPicture() {
         return mCameraEngine.isTakingPicture();
-    }
-
-    /**
-     * If enabled all touch events are captured for gesture handling
-     *
-     * @param on true if enabled
-     */
-    public void setGesturesEnabled(boolean on) {
-        mGesturesEnabled = on;
-    }
-
-    /**
-     * Returns true if touch events are captured by the view for gesture processing,
-     * true by default
-     *
-     * @return boolean indicating touche events are captured
-     */
-    public boolean getGesturesEnabled() {
-        return mGesturesEnabled;
     }
 
     //endregion

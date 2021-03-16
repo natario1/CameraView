@@ -36,8 +36,6 @@
         <attr name="cameraPreviewFrameRate" format="integer|reference" />
         <attr name="cameraPreviewFrameRateExact" format="boolean" />
 
-        <attr name="cameraGesturesEnabled" format="boolean"/>
-
         <attr name="cameraGestureTap" format="enum">
             <enum name="none" value="0" />
             <enum name="autoFocus" value="1" />
