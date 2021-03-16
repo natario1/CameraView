@@ -226,7 +226,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         int frameExecutors = a.getInteger(R.styleable.CameraView_cameraFrameProcessingExecutors,
                 DEFAULT_FRAME_PROCESSING_EXECUTORS);
 
-        boolean overlayHardwareCanvas = a.getBoolean(R.styleable.CameraView_cameraOverlayHardwareCanvas, false);
+        boolean overlayHardwareCanvas = a.getBoolean(R.styleable.CameraView_cameraDrawHardwareOverlays, false);
 
         // Size selectors and gestures
         SizeSelectorParser sizeSelectors = new SizeSelectorParser(a);
@@ -261,7 +261,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setUseDeviceOrientation(useDeviceOrientation);
         setGrid(controls.getGrid());
         setGridColor(gridColor);
-        setOverlayHardwareCanvasEnabled(overlayHardwareCanvas);
+        setDrawHardwareOverlays(overlayHardwareCanvas);
 
         // Apply camera engine params
         // Adding new ones? See setEngine().
@@ -2157,7 +2157,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param on true if enabled
      */
-    public void setOverlayHardwareCanvasEnabled(boolean on) {
+    public void setDrawHardwareOverlays(boolean on) {
         mOverlayLayout.setHardwareCanvasEnabled(on);
     }
 
@@ -2167,7 +2167,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @return boolean indicating hardware canvas capture is enabled
      */
-    public boolean getOverlayHardwareCanvasEnabled() {
+    public boolean getDrawHardwareOverlays() {
         return mOverlayLayout.getHardwareCanvasEnabled();
     }
     //endregion

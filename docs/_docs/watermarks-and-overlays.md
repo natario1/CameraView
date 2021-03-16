@@ -82,3 +82,19 @@ params.drawOnVideoSnapshot = false; // do not draw on video snapshots
 // When done, apply
 overlay.setLayoutParams(params);
 ```
+
+To capture a hardware rendered View such as a video rendered to a TextureView, enable the
+`cameraDrawHardwareOverlays` flag:
+
+```xml
+<com.otaliastudios.cameraview.CameraView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:cameraDrawHardwareOverlays="true"/>
+```
+
+Alternatively you can enable it in code with `setDrawHardwareOverlays()`:
+
+```java
+cameraView.setDrawHardwareOverlays(true);
+```

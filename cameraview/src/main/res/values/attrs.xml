@@ -169,7 +169,7 @@
         <attr name="cameraRequestPermissions" format="boolean|reference"/>
         <attr name="cameraExperimental" format="boolean|reference" />
 
-        <attr name="cameraOverlayHardwareCanvas" format="boolean"/>
+        <attr name="cameraDrawHardwareOverlays" format="boolean"/>
 
     </declare-styleable>
 

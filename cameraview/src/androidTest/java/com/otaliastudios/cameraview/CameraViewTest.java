@@ -902,6 +902,14 @@ public class CameraViewTest extends BaseTest {
         cameraView.setFrameProcessingExecutors(0);
     }
 
+    @Test
+    public void testDrawHardwareOverlays() {
+        cameraView.setDrawHardwareOverlays(true);
+        assertTrue(cameraView.getDrawHardwareOverlays());
+        cameraView.setDrawHardwareOverlays(false);
+        assertFalse(cameraView.getDrawHardwareOverlays());
+    }
+
     //endregion
 
     //region Lists of listeners and processors
