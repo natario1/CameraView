@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.controls;
 
 
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.engine.CustomCameraEngine;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,7 +23,13 @@ public enum Engine implements Control {
      * Camera2 based engine. For API versions older than 21,
      * the system falls back to {@link #CAMERA1}.
      */
-    CAMERA2(1);
+    CAMERA2(1),
+
+    /**
+     * Custom camera engine implemented by the app.
+     * See {@link CameraView#setCustomEngine(CustomCameraEngine)}.
+     */
+    CUSTOM(2);
 
     final static Engine DEFAULT = CAMERA1;
 

@@ -49,6 +49,7 @@ import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.Camera1Engine;
 import com.otaliastudios.cameraview.engine.Camera2Engine;
 import com.otaliastudios.cameraview.engine.CameraEngine;
+import com.otaliastudios.cameraview.engine.CustomCameraEngine;
 import com.otaliastudios.cameraview.engine.offset.Reference;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.filter.Filter;
@@ -1004,19 +1005,50 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * if this CameraView is closed (open() was never called).
      * Otherwise, it has no effect.
      *
+     * Note: {@link Engine#CUSTOM} cannot be set with this method.
+     *       Use {@link #setCustomEngine(CustomCameraEngine)} instead.
+     *
      * @see Engine#CAMERA1
      * @see Engine#CAMERA2
      *
      * @param engine desired engine
      */
     public void setEngine(@NonNull Engine engine) {
-        if (!isClosed()) return;
+        if (!isClosed() || engine == Engine.CUSTOM) return;
         mEngine = engine;
         CameraEngine oldEngine = mCameraEngine;
         doInstantiateEngine();
         if (mCameraPreview != null) mCameraEngine.setPreview(mCameraPreview);
 
         // Set again all parameters
+        copyCameraEngineParameters(oldEngine);
+    }
+
+    /**
+     * Allows the app to implement a custom camera engine.
+     * Should only be called if this CameraView is closed
+     * (open() was never called). Otherwise it has no effect.
+     *
+     * To use a built-in engine use {@link #setEngine(Engine)}
+     *
+     * @param engine custom engine
+     */
+    public void setCustomEngine(@NonNull CustomCameraEngine engine) {
+        if (!isClosed()) return;
+        CameraEngine oldEngine = mCameraEngine;
+        mCameraEngine = engine;
+        mEngine = Engine.CUSTOM;
+        engine.setCallbacks(mCameraCallbacks);
+        engine.setOverlay(mOverlayLayout);
+        if(mCameraPreview != null) mCameraEngine.setPreview(mCameraPreview);
+
+        // Set again all parameters
+        copyCameraEngineParameters(oldEngine);
+    }
+
+    private void copyCameraEngineParameters(CameraEngine oldEngine) {
+        mCameraEngine.setHasFrameProcessors(!mFrameProcessors.isEmpty());
+        if (oldEngine == null) return;
         setFacing(oldEngine.getFacing());
         setFlash(oldEngine.getFlash());
         setMode(oldEngine.getMode());
@@ -1041,7 +1073,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setFrameProcessingMaxHeight(oldEngine.getFrameProcessingMaxHeight());
         setFrameProcessingFormat(0 /* this is very engine specific, so do not pass */);
         setFrameProcessingPoolSize(oldEngine.getFrameProcessingPoolSize());
-        mCameraEngine.setHasFrameProcessors(!mFrameProcessors.isEmpty());
     }
 
     /**
