@@ -133,6 +133,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private Engine mEngine;
     private Filter mPendingFilter;
     private int mFrameProcessingExecutors;
+    private int mActiveGestures;
 
     // Components
     private Handler mUiHandler;
@@ -605,6 +606,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                             mGestureMap.get(Gesture.SCROLL_VERTICAL) != none);
                     break;
             }
+
+            mActiveGestures = 0;
+            for(GestureAction act : mGestureMap.values()) {
+                mActiveGestures += act == GestureAction.NONE ? 0 : 1;
+            }
+
             return true;
         }
         mapGesture(gesture, none);
@@ -633,7 +640,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return true; // Steal our own events.
+        // Steal our own events if gestures are enabled
+        return mActiveGestures > 0;
     }
 
     @SuppressLint("ClickableViewAccessibility")
