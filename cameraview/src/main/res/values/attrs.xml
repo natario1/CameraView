@@ -169,6 +169,8 @@
         <attr name="cameraRequestPermissions" format="boolean|reference"/>
         <attr name="cameraExperimental" format="boolean|reference" />
 
+        <attr name="cameraDrawHardwareOverlays" format="boolean"/>
+
     </declare-styleable>
 
     <declare-styleable name="CameraView_Layout">
