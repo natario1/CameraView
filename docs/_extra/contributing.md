@@ -48,4 +48,4 @@ and [Google's CameraView](https://github.com/google/cameraview), but has been co
 
 CameraKit's source code is licensed under the [MIT](https://github.com/wonderkiln/CameraKit-Android/blob/master/LICENSE) license.
 
-CameraView is licensed under the [MIT](https://github.com/natario1/CameraView/blob/master/LICENSE) license as well.
+CameraView is licensed under the [MIT](https://github.com/natario1/CameraView/blob/main/LICENSE) license as well.

@@ -87,7 +87,7 @@ and maintainers have had time to execute and publish the release. You can speed 
 [sponsoring the project](../extra/donate) or pull snapshots from [jitpack.io](https://jitpack.io):
 
 ```groovy
-implementation 'com.github.natario1:CameraView:master-SNAPSHOT'
+implementation 'com.github.natario1:CameraView:main-SNAPSHOT'
 implementation 'com.github.natario1:CameraView:<commit hash>'
 ```
 
