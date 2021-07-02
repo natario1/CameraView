@@ -1,5 +1,6 @@
 import io.deepmedia.tools.publisher.common.License
 import io.deepmedia.tools.publisher.common.Release
+import io.deepmedia.tools.publisher.common.GithubScm
 
 plugins {
     id("com.android.library")
@@ -50,7 +51,9 @@ publisher {
     project.artifact = "cameraview"
     project.group = "com.otaliastudios"
     project.url = "https://github.com/natario1/CameraView"
+    project.scm = GithubScm("natario1", "CameraView")
     project.addLicense(License.APACHE_2_0)
+    project.addDeveloper("natario1", "mat.iavarone@gmail.com")
     release.sources = Release.SOURCES_AUTO
     release.docs = Release.DOCS_AUTO
 
