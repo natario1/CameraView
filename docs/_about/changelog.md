@@ -9,6 +9,15 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 > Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
+##### v2.7.1
+
+- Fix: fix preview issues on Pixel 4A with certain FPS, thanks to [@honzasmuk][honzasmuk] ([#1089][1089])
+- Improvement: don't catch gestures if they're turned off, thanks to [@ObsidianX][ObsidianX] ([#1068][1068])
+- New: new flag cameraDrawHardwareOverlays and setDrawHardwareOverlays() to draw overlays on hardware canvas, thanks to [@ObsidianX][ObsidianX] ([#1066][1066])
+- Publish on Maven Central instead of JCenter
+
+<https://github.com/natario1/CameraView/compare/v2.7.0...v2.7.1>
+
 ##### v2.7.0
 
 - New: onPictureShutter() callback when taking pictures, thanks to [@EzequielAdrianM][EzequielAdrianM] ([#1030][1030])
@@ -359,6 +368,8 @@ This is the last release before v2.
 [jeffreyfjohnson]: https://github.com/jeffreyfjohnson
 [michaelspecht]: https://github.com/michaelspecht
 [EzequielAdrianM]: https://github.com/EzequielAdrianM
+[honzasmuk]: https://github.com/honzasmuk
+[ObsidianX]: https://github.com/ObsidianX
 
 
 [73]: https://github.com/natario1/CameraView/pull/73
@@ -462,3 +473,6 @@ This is the last release before v2.
 [1020]: https://github.com/natario1/CameraView/pull/1020
 [1024]: https://github.com/natario1/CameraView/pull/1024
 [1030]: https://github.com/natario1/CameraView/pull/1030
+[1089]: https://github.com/natario1/CameraView/pull/1089
+[1068]: https://github.com/natario1/CameraView/pull/1068
+[1066]: https://github.com/natario1/CameraView/pull/1066
