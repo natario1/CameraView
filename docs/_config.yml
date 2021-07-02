@@ -13,7 +13,7 @@ google_site_verification: '4x49i17ABIrSvUl52SeL0-t0341aTnWWaC62-FYCRT4'
 github: [metadata] # TODO What's this?
 github_repo: CameraView
 github_version: 2.7.0
-github_branch: master
+github_branch: main
 baseurl: '/CameraView' # Keep as an empty string if served up at the root
 collections:
   about:

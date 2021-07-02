@@ -7,13 +7,13 @@ order: 1
 
 The library works on API 15+, which is the only requirement and should be met by most projects nowadays.
 
-It is publicly hosted on [JCenter](https://bintray.com/natario/android/CameraView), where you
-can download the AAR package. To fetch with Gradle, make sure you add the JCenter repository in your root projects `build.gradle` file:
+It is publicly hosted on [Maven Central](https://repo.maven.apache.org/maven2/com/otaliastudios/cameraview), where you
+can download the AAR package. To fetch with Gradle, make sure you add the Maven Central repository in your root projects `build.gradle` file:
 
 ```groovy
 allprojects {
   repositories {
-    jcenter()
+    mavenCentral()
   }
 }
 ```

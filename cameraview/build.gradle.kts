@@ -51,14 +51,26 @@ publisher {
     project.group = "com.otaliastudios"
     project.url = "https://github.com/natario1/CameraView"
     project.addLicense(License.APACHE_2_0)
-    bintray {
-        release.sources = Release.SOURCES_AUTO
-        release.docs = Release.DOCS_AUTO
-        auth.user = "BINTRAY_USER"
-        auth.key = "BINTRAY_KEY"
-        auth.repo = "BINTRAY_REPO"
-    }
+    release.sources = Release.SOURCES_AUTO
+    release.docs = Release.DOCS_AUTO
+
     directory()
+
+    sonatype {
+        auth.user = "SONATYPE_USER"
+        auth.password = "SONATYPE_PASSWORD"
+        signing.key = "SIGNING_KEY"
+        signing.password = "SIGNING_PASSWORD"
+    }
+
+    sonatype("snapshot") {
+        repository = io.deepmedia.tools.publisher.sonatype.Sonatype.OSSRH_SNAPSHOT_1
+        release.version = "latest-SNAPSHOT"
+        auth.user = "SONATYPE_USER"
+        auth.password = "SONATYPE_PASSWORD"
+        signing.key = "SIGNING_KEY"
+        signing.password = "SIGNING_PASSWORD"
+    }
 }
 
 // Code Coverage

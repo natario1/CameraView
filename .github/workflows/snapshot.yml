@@ -1,11 +1,13 @@
 # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
-name: Deploy
+# Renaming ? Change the README badge.
+name: Snapshot
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
 jobs:
-  MAVEN_UPLOAD:
-    name: Maven Upload
+  SNAPSHOT:
+    name: Publish Snapshot
     runs-on: ubuntu-latest
     env:
       SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
@@ -17,5 +19,5 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Perform maven upload
-        run: ./gradlew publishToSonatype
+      - name: Publish sonatype snapshot
+        run: ./gradlew publishToSonatypeSnapshot
