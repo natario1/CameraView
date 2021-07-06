@@ -1,5 +1,6 @@
 import io.deepmedia.tools.publisher.common.License
 import io.deepmedia.tools.publisher.common.Release
+import io.deepmedia.tools.publisher.common.GithubScm
 
 plugins {
     id("com.android.library")
@@ -14,7 +15,7 @@ android {
         setMinSdkVersion(property("minSdkVersion") as Int)
         setTargetSdkVersion(property("targetSdkVersion") as Int)
         versionCode = 1
-        versionName = "2.7.0"
+        versionName = "2.7.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArgument("filter", "" +
                 "com.otaliastudios.cameraview.tools.SdkExcludeFilter," +
@@ -28,17 +29,17 @@ dependencies {
     testImplementation("junit:junit:4.13")
     testImplementation("org.mockito:mockito-inline:2.28.2")
 
-    androidTestImplementation("androidx.test:runner:1.3.0")
-    androidTestImplementation("androidx.test:rules:1.3.0")
-    androidTestImplementation("androidx.test.ext:junit:1.1.2")
+    androidTestImplementation("androidx.test:runner:1.4.0")
+    androidTestImplementation("androidx.test:rules:1.4.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("org.mockito:mockito-android:2.28.2")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.2.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
 
     api("androidx.exifinterface:exifinterface:1.3.2")
-    api("androidx.lifecycle:lifecycle-common:2.2.0")
-    api("com.google.android.gms:play-services-tasks:17.2.0")
-    implementation("androidx.annotation:annotation:1.1.0")
-    implementation("com.otaliastudios.opengl:egloo:0.5.3")
+    api("androidx.lifecycle:lifecycle-common:2.3.1")
+    api("com.google.android.gms:play-services-tasks:17.2.1")
+    implementation("androidx.annotation:annotation:1.2.0")
+    implementation("com.otaliastudios.opengl:egloo:0.6.1")
 }
 
 // Publishing
@@ -50,16 +51,28 @@ publisher {
     project.artifact = "cameraview"
     project.group = "com.otaliastudios"
     project.url = "https://github.com/natario1/CameraView"
+    project.scm = GithubScm("natario1", "CameraView")
     project.addLicense(License.APACHE_2_0)
-    bintray {
-        release.sources = Release.SOURCES_AUTO
-        release.docs = Release.DOCS_AUTO
-        auth.user = "BINTRAY_USER"
-        auth.key = "BINTRAY_KEY"
-        auth.repo = "BINTRAY_REPO"
+    project.addDeveloper("natario1", "mat.iavarone@gmail.com")
+    release.sources = Release.SOURCES_AUTO
+    release.docs = Release.DOCS_AUTO
+
+    directory()
+
+    sonatype {
+        auth.user = "SONATYPE_USER"
+        auth.password = "SONATYPE_PASSWORD"
+        signing.key = "SIGNING_KEY"
+        signing.password = "SIGNING_PASSWORD"
     }
-    directory {
-        directory = file(repositories.mavenLocal().url).absolutePath
+
+    sonatype("snapshot") {
+        repository = io.deepmedia.tools.publisher.sonatype.Sonatype.OSSRH_SNAPSHOT_1
+        release.version = "latest-SNAPSHOT"
+        auth.user = "SONATYPE_USER"
+        auth.password = "SONATYPE_PASSWORD"
+        signing.key = "SIGNING_KEY"
+        signing.password = "SIGNING_PASSWORD"
     }
 }
 

@@ -6,6 +6,7 @@ import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.os.Build;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
@@ -63,7 +64,12 @@ public class OverlayDrawer {
      */
     public void draw(@NonNull Overlay.Target target) {
         try {
-            final Canvas surfaceCanvas = mSurface.lockCanvas(null);
+            final Canvas surfaceCanvas;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mOverlay.getHardwareCanvasEnabled()) {
+                surfaceCanvas = mSurface.lockHardwareCanvas();
+            } else {
+                surfaceCanvas = mSurface.lockCanvas(null);
+            }
             surfaceCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
             mOverlay.drawOn(target, surfaceCanvas);
             mSurface.unlockCanvasAndPost(surfaceCanvas);

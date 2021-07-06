@@ -217,6 +217,17 @@ public class CameraViewTest extends BaseTest {
     }
 
     @Test
+    public void testGesture_enabled() {
+        // Ensure touch events are intercepted when at least one gesture is set
+        cameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
+        assertTrue(cameraView.onInterceptTouchEvent(null));
+
+        // Ensure touch events are NOT intercepted when no gestures are set
+        cameraView.clearGesture(Gesture.PINCH);
+        assertFalse(cameraView.onInterceptTouchEvent(null));
+    }
+
+    @Test
     public void testGesture_enablingDisablingLayouts() {
         cameraView.clearGesture(Gesture.TAP);
         cameraView.clearGesture(Gesture.LONG_TAP);
@@ -900,6 +911,14 @@ public class CameraViewTest extends BaseTest {
     @Test(expected = RuntimeException.class)
     public void testFrameProcessingExecutors_throws() {
         cameraView.setFrameProcessingExecutors(0);
+    }
+
+    @Test
+    public void testDrawHardwareOverlays() {
+        cameraView.setDrawHardwareOverlays(true);
+        assertTrue(cameraView.getDrawHardwareOverlays());
+        cameraView.setDrawHardwareOverlays(false);
+        assertFalse(cameraView.getDrawHardwareOverlays());
     }
 
     //endregion

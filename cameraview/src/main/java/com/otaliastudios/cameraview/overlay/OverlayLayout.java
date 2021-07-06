@@ -26,6 +26,8 @@ public class OverlayLayout extends FrameLayout implements Overlay {
 
     @VisibleForTesting Target currentTarget = Target.PREVIEW;
 
+    private boolean mHardwareCanvasEnabled;
+
     /**
      * We set {@link #setWillNotDraw(boolean)} to false even if we don't draw anything.
      * This ensures that the View system will call {@link #draw(Canvas)} on us instead
@@ -99,6 +101,16 @@ public class OverlayLayout extends FrameLayout implements Overlay {
         return false;
     }
 
+    @Override
+    public void setHardwareCanvasEnabled(boolean on) {
+        mHardwareCanvasEnabled = on;
+    }
+
+    @Override
+    public boolean getHardwareCanvasEnabled() {
+        return mHardwareCanvasEnabled;
+    }
+
     /**
      * For {@link Target#PREVIEW}, this method is called by the View hierarchy. We will
      * just forward the call to super.
@@ -132,7 +144,8 @@ public class OverlayLayout extends FrameLayout implements Overlay {
                             "canvas:", canvas.getWidth() + "x" + canvas.getHeight(),
                             "view:", getWidth() + "x" + getHeight(),
                             "widthScale:", widthScale,
-                            "heightScale:", heightScale
+                            "heightScale:", heightScale,
+                            "hardwareCanvasMode:", mHardwareCanvasEnabled
                     );
                     canvas.scale(widthScale, heightScale);
                     dispatchDraw(canvas);
