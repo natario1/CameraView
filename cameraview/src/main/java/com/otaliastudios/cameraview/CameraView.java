@@ -2370,12 +2370,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
 
         @Override
-        public void onDisplayOffsetChanged(int displayOffset, boolean willRecreate) {
-            LOG.i("onDisplayOffsetChanged", displayOffset, "recreate:", willRecreate);
-            if (isOpened() && !willRecreate) {
-                // Display offset changes when the device rotation lock is off and the activity
-                // is free to rotate. However, some changes will NOT recreate the activity, namely
-                // 180 degrees flips. In this case, we must restart the camera manually.
+        public void onDisplayOffsetChanged() {
+            if (isOpened()) {
+                // We can't handle display offset (View angle) changes without restarting.
+                // See comments in OrientationHelper for more information.
                 LOG.w("onDisplayOffsetChanged", "restarting the camera.");
                 close();
                 open();

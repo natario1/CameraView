@@ -46,6 +46,7 @@ public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHold
             public void surfaceCreated(SurfaceHolder holder) {
                 // This is too early to call anything.
                 // surfaceChanged is guaranteed to be called after, with exact dimensions.
+                LOG.i("callback: surfaceCreated.");
             }
 
             @Override
@@ -64,7 +65,7 @@ public class SurfaceCameraPreview extends CameraPreview<SurfaceView, SurfaceHold
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                LOG.i("callback:", "surfaceDestroyed");
+                LOG.i("callback: surfaceDestroyed");
                 dispatchOnSurfaceDestroyed();
                 mDispatched = false;
             }
