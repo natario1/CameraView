@@ -12,10 +12,9 @@ import com.otaliastudios.cameraview.R;
  */
 public class FilterParser {
 
-    private Filter filter = null;
+    private Filter filter;
 
-    public FilterParser(@NonNull TypedArray array) {
-        String filterName = array.getString(R.styleable.CameraView_cameraFilter);
+    public FilterParser(@NonNull String filterName) {
         try {
             //noinspection ConstantConditions
             Class<?> filterClass = Class.forName(filterName);
@@ -23,6 +22,9 @@ public class FilterParser {
         } catch (Exception ignore) {
             filter = new NoFilter();
         }
+    }
+    public FilterParser(@NonNull TypedArray array) {
+        this(array.getString(R.styleable.CameraView_cameraFilter));
     }
 
     @NonNull

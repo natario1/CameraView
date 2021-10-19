@@ -1,0 +1,7 @@
+def rootDir = gradle.ext.cameraRoot
+def modulePrefix = ':'
+if (gradle.ext.has('cameraModulePrefix')) {
+    modulePrefix += gradle.ext.cameraModulePrefix
+}
+include modulePrefix +'lib'
+project(modulePrefix + 'lib').projectDir = new File (rootDir, 'cameraview')
