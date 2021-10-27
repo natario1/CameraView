@@ -38,7 +38,7 @@ jobs:
           path: ./cameraview/build/coverage_input/unit_tests
   ANDROID_EMULATOR_TESTS:
     name: Emulator Tests
-    runs-on: macOS-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -69,14 +69,13 @@ jobs:
           cache: gradle
       - name: Execute emulator tests
         timeout-minutes: 30
-        uses: reactivecircus/android-emulator-runner@v2.2.0
+        uses: reactivecircus/android-emulator-runner@v2.21.0
         with:
           api-level: ${{ matrix.EMULATOR_API }}
           arch: ${{ matrix.EMULATOR_ARCH }}
           disable-animations: true
           profile: Nexus 5X
           emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
-          emulator-build: 6110076
           script: ./.github/workflows/emulator_script.sh
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1

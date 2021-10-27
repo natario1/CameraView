@@ -1433,8 +1433,7 @@ public class Camera2Engine extends CameraBaseEngine implements
         int min = Math.round(mCameraOptions.getPreviewFrameRateMinValue());
         int max = Math.round(mCameraOptions.getPreviewFrameRateMaxValue());
         for (Range<Integer> fpsRange : fpsRanges) {
-            if (!fpsRange.contains(min)) continue;
-            if (!fpsRange.contains(max)) continue;
+            if (!fpsRange.contains(min) && !fpsRange.contains(max)) continue;
             if (!FpsRangeValidator.validate(fpsRange)) continue;
             results.add(fpsRange);
         }

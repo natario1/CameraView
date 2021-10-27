@@ -86,7 +86,7 @@ tasks.register("runUnitTests") { // changing name? change github workflow
     dependsOn("testDebugUnitTest")
     doLast {
         copy {
-            from("$buildDir/jacoco/testDebugUnitTest.exec")
+            from("$buildDir/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
             into("$coverageInputDir/unit_tests") // changing? change github workflow
         }
     }

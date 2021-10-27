@@ -419,12 +419,14 @@ public abstract class MediaEncoder {
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 // should happen before receiving buffers, and should only happen once
                 if (mController.isStarted()) {
-                    throw new RuntimeException("MediaFormat changed twice.");
+                    // throw new RuntimeException("MediaFormat changed twice.");
+                    // Seen this happen in API31. TODO handle differently?
+                } else {
+                    MediaFormat newFormat = mMediaCodec.getOutputFormat();
+                    mTrackIndex = mController.notifyStarted(newFormat);
+                    setState(STATE_STARTED);
+                    mOutputBufferPool = new OutputBufferPool(mTrackIndex);
                 }
-                MediaFormat newFormat = mMediaCodec.getOutputFormat();
-                mTrackIndex = mController.notifyStarted(newFormat);
-                setState(STATE_STARTED);
-                mOutputBufferPool = new OutputBufferPool(mTrackIndex);
             } else if (encoderStatus < 0) {
                 LOG.e("Unexpected result from dequeueOutputBuffer: " + encoderStatus);
                 // let's ignore it
