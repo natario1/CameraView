@@ -9,6 +9,12 @@ New versions are released through GitHub, so the reference page is the [GitHub R
 > Starting from 2.4.0, you can now [support development](https://github.com/sponsors/natario1) through the GitHub Sponsors program. 
 Companies can share a tiny part of their revenue and get private support hours in return. Thanks!
 
+##### v2.7.2
+
+- Fix: fix camera rotation handling for Compose apps and other specific scenarios ([#1117][1117])
+
+<https://github.com/natario1/CameraView/compare/v2.7.1...v2.7.2>
+
 ##### v2.7.1
 
 - Fix: fix preview issues on Pixel 4A with certain FPS, thanks to [@honzasmuk][honzasmuk] ([#1089][1089])
@@ -476,3 +482,4 @@ This is the last release before v2.
 [1089]: https://github.com/natario1/CameraView/pull/1089
 [1068]: https://github.com/natario1/CameraView/pull/1068
 [1066]: https://github.com/natario1/CameraView/pull/1066
+[1117]: https://github.com/natario1/CameraView/pull/1117
