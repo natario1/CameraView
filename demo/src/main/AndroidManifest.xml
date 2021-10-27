@@ -16,7 +16,8 @@
         <activity
             android:name=".CameraActivity"
             android:configChanges="screenLayout|keyboardHidden"
-            android:hardwareAccelerated="true">
+            android:hardwareAccelerated="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
