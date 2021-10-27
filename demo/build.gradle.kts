@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    setCompileSdkVersion(property("compileSdkVersion") as Int)
+    compileSdk = property("compileSdkVersion") as Int
     defaultConfig {
         applicationId = "com.otaliastudios.cameraview.demo"
-        setMinSdkVersion(property("minSdkVersion") as Int)
-        setTargetSdkVersion(property("targetSdkVersion") as Int)
+        minSdk = property("minSdkVersion") as Int
+        targetSdk = property("targetSdkVersion") as Int
         versionCode = 1
         versionName = "1.0"
         vectorDrawables.useSupportLibrary = true
@@ -18,6 +18,6 @@ android {
 
 dependencies {
     implementation(project(":cameraview"))
-    implementation("androidx.appcompat:appcompat:1.3.0")
+    implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("com.google.android.material:material:1.4.0")
 }

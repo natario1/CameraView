@@ -12,9 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v2
         with:
-          java-version: 1.8
+          java-version: 11
+          distribution: temurin
+          cache: gradle
       - name: Perform base checks
         run: ./gradlew demo:assembleDebug cameraview:publishToDirectory --stacktrace
   ANDROID_UNIT_TESTS:
@@ -22,9 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v2
         with:
-          java-version: 1.8
+          java-version: 11
+          distribution: temurin
+          cache: gradle
       - name: Execute unit tests
         run: ./gradlew cameraview:runUnitTests --stacktrace
       - name: Upload unit tests artifact
@@ -34,7 +38,7 @@ jobs:
           path: ./cameraview/build/coverage_input/unit_tests
   ANDROID_EMULATOR_TESTS:
     name: Emulator Tests
-    runs-on: macOS-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -58,19 +62,20 @@ jobs:
             EMULATOR_ARCH: x86
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v2
         with:
-          java-version: 1.8
+          java-version: 11
+          distribution: temurin
+          cache: gradle
       - name: Execute emulator tests
         timeout-minutes: 30
-        uses: reactivecircus/android-emulator-runner@v2.2.0
+        uses: reactivecircus/android-emulator-runner@v2.21.0
         with:
           api-level: ${{ matrix.EMULATOR_API }}
           arch: ${{ matrix.EMULATOR_ARCH }}
           disable-animations: true
           profile: Nexus 5X
           emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
-          emulator-build: 6110076
           script: ./.github/workflows/emulator_script.sh
       - name: Upload emulator tests artifact
         uses: actions/upload-artifact@v1
@@ -83,9 +88,11 @@ jobs:
     needs: [ANDROID_UNIT_TESTS, ANDROID_EMULATOR_TESTS]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v2
         with:
-          java-version: 1.8
+          java-version: 11
+          distribution: temurin
+          cache: gradle
       - name: Download unit tests artifact
         uses: actions/download-artifact@v1
         with:

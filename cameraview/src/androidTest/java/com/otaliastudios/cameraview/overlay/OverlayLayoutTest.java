@@ -14,6 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.BaseTest;
+import com.otaliastudios.cameraview.tools.SdkExclude;
 
 import org.junit.After;
 import org.junit.Before;
@@ -129,6 +130,7 @@ public class OverlayLayoutTest extends BaseTest {
         assertTrue(overlayLayout.drawChild(canvas, child, 0));
     }
 
+    @SdkExclude(minSdkVersion = 31) // spying views does not work properly on 31, should investigate
     @UiThreadTest
     @Test
     public void testDraw() {
@@ -142,6 +144,7 @@ public class OverlayLayoutTest extends BaseTest {
         verify(overlayLayout, times(1)).drawOn(Overlay.Target.PREVIEW, canvas);
     }
 
+    @SdkExclude(minSdkVersion = 31) // spying views does not work properly on 31, should investigate
     @UiThreadTest
     @Test
     public void testDrawOn() {

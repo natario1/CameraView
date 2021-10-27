@@ -10,23 +10,21 @@ plugins {
 }
 
 android {
-    setCompileSdkVersion(property("compileSdkVersion") as Int)
+    compileSdk = property("compileSdkVersion") as Int
     defaultConfig {
-        setMinSdkVersion(property("minSdkVersion") as Int)
-        setTargetSdkVersion(property("targetSdkVersion") as Int)
-        versionCode = 1
-        versionName = "2.7.1"
+        minSdk = property("minSdkVersion") as Int
+        targetSdk = property("targetSdkVersion") as Int
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArgument("filter", "" +
+        testInstrumentationRunnerArguments["filter"] = "" +
                 "com.otaliastudios.cameraview.tools.SdkExcludeFilter," +
-                "com.otaliastudios.cameraview.tools.SdkIncludeFilter")
+                "com.otaliastudios.cameraview.tools.SdkIncludeFilter"
     }
     buildTypes["debug"].isTestCoverageEnabled = true
     buildTypes["release"].isMinifyEnabled = false
 }
 
 dependencies {
-    testImplementation("junit:junit:4.13")
+    testImplementation("junit:junit:4.13.1")
     testImplementation("org.mockito:mockito-inline:2.28.2")
 
     androidTestImplementation("androidx.test:runner:1.4.0")
@@ -35,7 +33,7 @@ dependencies {
     androidTestImplementation("org.mockito:mockito-android:2.28.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
 
-    api("androidx.exifinterface:exifinterface:1.3.2")
+    api("androidx.exifinterface:exifinterface:1.3.3")
     api("androidx.lifecycle:lifecycle-common:2.3.1")
     api("com.google.android.gms:play-services-tasks:17.2.1")
     implementation("androidx.annotation:annotation:1.2.0")
@@ -56,6 +54,7 @@ publisher {
     project.addDeveloper("natario1", "mat.iavarone@gmail.com")
     release.sources = Release.SOURCES_AUTO
     release.docs = Release.DOCS_AUTO
+    release.version = "2.7.2"
 
     directory()
 
@@ -87,7 +86,7 @@ tasks.register("runUnitTests") { // changing name? change github workflow
     dependsOn("testDebugUnitTest")
     doLast {
         copy {
-            from("$buildDir/jacoco/testDebugUnitTest.exec")
+            from("$buildDir/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
             into("$coverageInputDir/unit_tests") // changing? change github workflow
         }
     }
@@ -131,8 +130,8 @@ tasks.register("computeCoverage", JacocoReport::class) {
                 "**/com/otaliastudios/cameraview/filters/**.*"
         )
     })
-    reports.html.isEnabled = true
-    reports.xml.isEnabled = true
-    reports.html.destination = file("$coverageOutputDir/html")
-    reports.xml.destination = file("$coverageOutputDir/xml/report.xml")
+    reports.html.required.set(true)
+    reports.xml.required.set(true)
+    reports.html.outputLocation.set(file("$coverageOutputDir/html"))
+    reports.xml.outputLocation.set(file("$coverageOutputDir/xml/report.xml"))
 }
