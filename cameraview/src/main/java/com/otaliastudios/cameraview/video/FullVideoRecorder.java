@@ -122,7 +122,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
 
         // 4. Update the VideoResult stub with information from the profile, if the
         // stub values are absent or incomplete
-        if (stub.videoFrameRate <= 0) stub.videoFrameRate = mProfile.videoFrameRate;
+        if (stub.videoFrameRate <= 0) stub.videoFrameRate = 15;
         if (stub.videoBitRate <= 0) stub.videoBitRate = mProfile.videoBitRate;
         if (stub.audioBitRate <= 0 && hasAudio) stub.audioBitRate = mProfile.audioBitRate;
 
@@ -181,8 +181,7 @@ public abstract class FullVideoRecorder extends VideoRecorder {
                 try {
                     newVideoSize = encoders.getSupportedVideoSize(stub.size);
                     newVideoBitRate = encoders.getSupportedVideoBitRate(stub.videoBitRate);
-                    newVideoFrameRate = encoders.getSupportedVideoFrameRate(newVideoSize,
-                            stub.videoFrameRate);
+                    newVideoFrameRate = 15;
                     encoders.tryConfigureVideo(videoType, newVideoSize, newVideoFrameRate,
                             newVideoBitRate);
                     if (hasAudio) {

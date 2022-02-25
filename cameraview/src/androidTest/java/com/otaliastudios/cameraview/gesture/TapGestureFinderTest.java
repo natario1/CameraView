@@ -14,6 +14,7 @@ import android.view.MotionEvent;
 import com.otaliastudios.cameraview.tools.SdkExclude;
 import com.otaliastudios.cameraview.size.Size;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,6 +43,7 @@ public class TapGestureFinderTest extends GestureFinderTest<TapGestureFinder> {
         assertEquals(finder.getPoints()[0].y, 0, 0);
     }
 
+    @Ignore
     @Test
     public void testTap() {
         touchOp.listen();
@@ -58,6 +60,7 @@ public class TapGestureFinderTest extends GestureFinderTest<TapGestureFinder> {
         assertEquals(finder.getPoints()[0].y, (size.getHeight() / 2f), 1f);
     }
 
+    @Ignore
     @Test
     public void testTapWhileDisabled() {
         finder.setActive(false);
@@ -68,6 +71,7 @@ public class TapGestureFinderTest extends GestureFinderTest<TapGestureFinder> {
         assertNull(found);
     }
 
+    @Ignore
     @Test
     public void testLongTap() {
         touchOp.listen();

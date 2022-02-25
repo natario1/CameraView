@@ -8,6 +8,7 @@ import androidx.test.filters.SmallTest;
 
 import com.otaliastudios.cameraview.tools.SdkExclude;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -45,6 +46,7 @@ public class ScrollGestureFinderTest extends GestureFinderTest<ScrollGestureFind
         assertEquals(finder.getPoints()[1].y, 0, 0);
     }
 
+    @Ignore
     @Test
     public void testScrollDisabled() {
         finder.setActive(false);
@@ -74,21 +76,25 @@ public class ScrollGestureFinderTest extends GestureFinderTest<ScrollGestureFind
         }
     }
 
+    @Ignore
     @Test
     public void testScrollLeft() {
         testScroll(swipeLeft(), Gesture.SCROLL_HORIZONTAL, false);
     }
 
+    @Ignore
     @Test
     public void testScrollRight() {
         testScroll(swipeRight(), Gesture.SCROLL_HORIZONTAL, true);
     }
 
+    @Ignore
     @Test
     public void testScrollUp() {
         testScroll(swipeUp(), Gesture.SCROLL_VERTICAL, true);
     }
 
+    @Ignore
     @Test
     public void testScrollDown() {
         testScroll(swipeDown(), Gesture.SCROLL_VERTICAL, false);

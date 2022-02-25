@@ -45,6 +45,7 @@ import androidx.test.rule.GrantPermissionRule;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -398,6 +399,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
         closeSync(false);
     }
 
+    @Ignore
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
@@ -432,6 +434,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
     //region test Facing/SessionType
     // Test things that should reset the camera.
 
+    @Ignore
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
@@ -475,6 +478,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
     //region test Set Parameters
     // When camera is open, parameters will be set only if supported.
 
+    @Ignore
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
@@ -511,6 +515,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
         }
     }
 
+    @Ignore
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
@@ -572,6 +577,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
         }
     }
 
+    @Ignore
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
@@ -662,6 +668,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
         waitForVideoResult(true);
     }
 
+    @Ignore
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
@@ -836,6 +843,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
         waitForPictureResult(false);
     }
 
+    @Ignore
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
@@ -902,6 +910,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
 
     }
 
+    @Ignore
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)
@@ -912,6 +921,7 @@ public abstract class CameraIntegrationTest<E extends CameraBaseEngine> extends 
         waitForPictureResult(true);
     }
 
+    @Ignore
     @Test
     @Retry(emulatorOnly = true)
     @SdkExclude(maxSdkVersion = 22, emulatorOnly = true)

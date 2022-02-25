@@ -1,7 +1,5 @@
 package com.otaliastudios.cameraview.engine.mappers;
 
-
-import android.hardware.Camera;
 import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;

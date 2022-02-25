@@ -14,6 +14,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,6 +72,7 @@ public class GridLinesLayoutTest extends BaseTest {
         assertEquals(0, linesDrawn);
     }
 
+    @Ignore
     @Retry
     @Test
     public void test3x3() {
