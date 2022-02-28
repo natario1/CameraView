@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.statistics.ReportStatisticsToElasticSearch.url
-
 plugins {
     id("com.android.library")
     id("kotlin-android")
@@ -24,12 +22,20 @@ android {
     }
 }
 
+fun Project.getStringProperty(propertyName: String): String? {
+    val property = findProperty(propertyName)
+    return if(property is String) property else null
+}
+
+group = "com.otaliastudios.cameraview"
+version = getStringProperty("libraryVersion") ?: "unspecified"
+
 publishing {
     publications {
         register<MavenPublication>("apkRelease") {
-            groupId = "com.otaliastudios.cameraview"
-            version = "1.0.0"
-            artifactId = "cameraview"
+            groupId = getStringProperty("groupId")
+            version = getStringProperty("libraryVersion")
+            artifactId = getStringProperty("artifactId")
             artifact("$buildDir/outputs/aar/${artifactId}-release.aar")
         }
     }
@@ -42,11 +48,11 @@ artifactory {
             setRepoKey("android-artifacts")
             setUsername(System.getenv("ARTIFACTORY_USERNAME"))
             setPassword(System.getenv("ARTIFACTORY_PASSWORD"))
-            setMavenCompatible(true)
         }
 
         defaults {
             publications("apkRelease")
+            setPublishArtifacts(true)
             setPublishPom(false)
         }
     }
