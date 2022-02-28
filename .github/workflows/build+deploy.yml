@@ -23,7 +23,7 @@ jobs:
           distribution: temurin
           cache: gradle
       - name: Perform base checks
-        run: ./gradlew build artifactoryPublish --stacktrace
+        run: ./gradlew assembleRelease artifactoryPublish --stacktrace
   ANDROID_UNIT_TESTS:
     name: Unit Tests
     runs-on: ubuntu-latest
