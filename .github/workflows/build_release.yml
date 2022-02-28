@@ -1,14 +1,15 @@
 # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
 # Renaming ? Change the README badge.
-name: Build
+name: Build Release and Publish
+
 on:
   push:
     branches:
-      - mayowa/build-premise-cameraview-artifact
+      - main
   pull_request:
 jobs:
-  ANDROID_BUILD_CHECKS:
-    name: Base Checks
+  ANDROID_BUILD_AND_PUBLISH:
+    name: Build Release and Publish
     runs-on: ubuntu-latest
     needs: [ ANDROID_UNIT_TESTS, ANDROID_EMULATOR_TESTS ]
     env:
@@ -22,8 +23,8 @@ jobs:
           java-version: 11
           distribution: temurin
           cache: gradle
-      - name: Perform base checks
-        run: ./gradlew assembleRelease artifactoryPublish --stacktrace
+      - name: Assemble release and publish
+        run: ./gradlew cameraview:assembleRelease artifactoryPublish --stacktrace
   ANDROID_UNIT_TESTS:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -43,8 +44,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # TODO 29 fails due to Mockito issues, probably reproducible locally
-        # 22-28 work (some of them, with SdkExclude restrictions)
         EMULATOR_API: [22]
         include:
           - EMULATOR_API: 22
