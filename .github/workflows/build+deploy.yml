@@ -18,7 +18,7 @@ jobs:
           distribution: temurin
           cache: gradle
       - name: Perform base checks
-        run: ./gradlew cameraview:publishToDirectory --stacktrace
+        run: ./gradlew assembleRelease --stacktrace
   ANDROID_UNIT_TESTS:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -31,11 +31,7 @@ jobs:
           cache: gradle
       - name: Execute unit tests
         run: ./gradlew cameraview:runUnitTests --stacktrace
-      - name: Upload unit tests artifact
-        uses: actions/upload-artifact@v1
-        with:
-          name: unit_tests
-          path: ./cameraview/build/coverage_input/unit_tests
+
   ANDROID_EMULATOR_TESTS:
     name: Emulator Tests
     runs-on: macos-latest
@@ -44,16 +40,8 @@ jobs:
       matrix:
         # TODO 29 fails due to Mockito issues, probably reproducible locally
         # 22-28 work (some of them, with SdkExclude restrictions)
-        EMULATOR_API: [22, 23, 24, 25, 26, 27, 28]
+        EMULATOR_API: [22, 23, 24]
         include:
-          - EMULATOR_API: 28
-            EMULATOR_ARCH: x86_64
-          - EMULATOR_API: 27
-            EMULATOR_ARCH: x86_64
-          - EMULATOR_API: 26
-            EMULATOR_ARCH: x86_64
-          - EMULATOR_API: 25
-            EMULATOR_ARCH: x86
           - EMULATOR_API: 24
             EMULATOR_ARCH: x86
           - EMULATOR_API: 23
@@ -77,11 +65,6 @@ jobs:
           profile: Nexus 5X
           emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
           script: ./.github/workflows/emulator_script.sh
-      - name: Upload emulator tests artifact
-        uses: actions/upload-artifact@v1
-        with:
-          name: emulator_tests_${{ matrix.EMULATOR_API }}
-          path: ./cameraview/build/coverage_input/android_tests
   MAVEN_UPLOAD:
     name: Maven Upload
     runs-on: ubuntu-latest
