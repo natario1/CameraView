@@ -18,7 +18,7 @@ jobs:
           distribution: temurin
           cache: gradle
       - name: Perform base checks
-        run: ./gradlew assembleRelease --stacktrace
+        run: ./gradlew build --stacktrace
   ANDROID_UNIT_TESTS:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -40,10 +40,8 @@ jobs:
       matrix:
         # TODO 29 fails due to Mockito issues, probably reproducible locally
         # 22-28 work (some of them, with SdkExclude restrictions)
-        EMULATOR_API: [22, 23]
+        EMULATOR_API: [22]
         include:
-          - EMULATOR_API: 23
-            EMULATOR_ARCH: x86
           - EMULATOR_API: 22
             EMULATOR_ARCH: x86
     steps:

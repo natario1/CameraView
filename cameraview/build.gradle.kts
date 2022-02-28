@@ -36,7 +36,7 @@ publishing {
             groupId = getStringProperty("groupId")
             version = getStringProperty("libraryVersion")
             artifactId = getStringProperty("artifactId")
-            artifact("$buildDir/outputs/aar/${artifactId}-release.aar")
+            artifact("$buildDir/outputs/aar/${project.name}-release.aar")
         }
     }
 }
