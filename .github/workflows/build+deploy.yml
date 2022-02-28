@@ -40,10 +40,8 @@ jobs:
       matrix:
         # TODO 29 fails due to Mockito issues, probably reproducible locally
         # 22-28 work (some of them, with SdkExclude restrictions)
-        EMULATOR_API: [22, 23, 24]
+        EMULATOR_API: [22, 23]
         include:
-          - EMULATOR_API: 24
-            EMULATOR_ARCH: x86
           - EMULATOR_API: 23
             EMULATOR_ARCH: x86
           - EMULATOR_API: 22
