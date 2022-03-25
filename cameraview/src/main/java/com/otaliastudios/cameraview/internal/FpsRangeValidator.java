@@ -24,6 +24,7 @@ public class FpsRangeValidator {
     static {
         sIssues.put("Google Pixel 4", Arrays.asList(new Range<>(15, 60)));
         sIssues.put("Google Pixel 4a", Arrays.asList(new Range<>(15, 60)));
+        sIssues.put("Google Pixel 4 XL", Arrays.asList(new Range<>(15, 60)));
     }
 
     public static boolean validate(Range<Integer> range) {
