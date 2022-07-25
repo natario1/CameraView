@@ -102,7 +102,7 @@ cameraView.setAutoFocusMarker(new DefaultAutoFocusMarker());
 
 ##### Touch Metering Reset Delay
 
-You control control how a touch metering operation is reset after completed.
+You control how a touch metering operation is reset after being completed.
 Setting a negative value (or 0, or `Long.MAX_VALUE`) will not reset the metering values.
 This is useful for low end devices that have slow auto-focus capabilities.
 Defaults to 3 seconds.
