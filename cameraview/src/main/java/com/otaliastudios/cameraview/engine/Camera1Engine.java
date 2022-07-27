@@ -184,8 +184,12 @@ public class Camera1Engine extends CameraBaseEngine implements
             throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
         }
         try {
-            mCamera.setDisplayOrientation(getAngles().offset(Reference.SENSOR, Reference.VIEW,
-                    Axis.ABSOLUTE)); // <- not allowed during preview
+            // <- not allowed during preview
+            if(getFacing() == Facing.BACK){
+                mCamera.setDisplayOrientation(0);
+            }else{
+                mCamera.setDisplayOrientation(getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE));
+            }
         } catch (Exception e) {
             LOG.e("onStartEngine:", "Failed to connect. Can't set display orientation, maybe preview already exists?");
             throw new CameraException(CameraException.REASON_FAILED_TO_CONNECT);
@@ -232,11 +236,10 @@ public class Camera1Engine extends CameraBaseEngine implements
 
         if(getFacing() == Facing.BACK){
             mPreview.setStreamSize(previewSize.getHeight(), previewSize.getWidth());
-            mPreview.setDrawRotation(270);
         }else{
             mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
-            mPreview.setDrawRotation(0);
         }
+        mPreview.setDrawRotation(0);
 
         Camera.Parameters params;
         try {
