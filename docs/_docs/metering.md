@@ -53,7 +53,7 @@ This action needs the coordinates of a point or region computed with respect to 
 
 ```java
 // Start touch metering at the center:
-cameraView.startAutoFocus(cameraView.getWidth() / 2F, cameraView.getHeight/() / 2F);
+cameraView.startAutoFocus(cameraView.getWidth() / 2F, cameraView.getHeight() / 2F);
 // Start touch metering within a given area,
 // like the bounding box of a face.
  cameraView.startAutoFocus(rect);

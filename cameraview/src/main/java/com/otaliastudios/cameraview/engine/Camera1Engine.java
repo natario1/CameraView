@@ -881,7 +881,12 @@ public class Camera1Engine extends CameraBaseEngine implements
                 if (maxAF > 0) params.setFocusAreas(transformed.get(maxAF, transform));
                 if (maxAE > 0) params.setMeteringAreas(transformed.get(maxAE, transform));
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-                mCamera.setParameters(params);
+                try {
+                    mCamera.setParameters(params);
+                } catch (RuntimeException re) {
+                    LOG.e("startAutoFocus:", "Failed to set camera parameters");
+                    throw new CameraException(re, CameraException.REASON_UNKNOWN);
+                }
                 getCallback().dispatchOnFocusStart(gesture, legacyPoint);
 
                 // The auto focus callback is not guaranteed to be called, but we really want it
