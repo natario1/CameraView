@@ -6,7 +6,7 @@ unfortunately, this PR will likely be ignored.
 If the edited files were covered by tests, updated tests are required for merging. 
 Please look into the tests folders and make sure you cover new code.
 
-- Fixes ... (*issue number*)
+- Fixes: ... (*issue number*)
 - Tests: ... (*yes/no*)
 - Docs updated: ... (*yes/no*)
 
