@@ -3,11 +3,9 @@ package com.otaliastudios.cameraview;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Build;
-import android.os.Handler;
 
 import com.otaliastudios.cameraview.controls.Facing;
 import com.otaliastudios.cameraview.controls.PictureFormat;
-import com.otaliastudios.cameraview.internal.WorkerHandler;
 import com.otaliastudios.cameraview.size.Size;
 
 import java.io.File;
@@ -109,11 +107,11 @@ public class PictureResult {
 
     /**
      * Returns the raw compressed, ready to be saved to file,
-     * in the given format or null if there was some error.
+     * in the given format.
      *
-     * @return the compressed data stream or null
+     * @return the compressed data stream
      */
-    @Nullable
+    @NonNull
     public byte[] getData() {
         return data;
     }
@@ -138,19 +136,13 @@ public class PictureResult {
      * @param callback a callback to be notified of image decoding
      */
     public void toBitmap(int maxWidth, int maxHeight, @NonNull BitmapCallback callback) {
-        byte[] data = getData();
-        if (data == null) {
-            final Handler ui = new Handler();
-            WorkerHandler.execute(() -> ui.post(() -> callback.onBitmapReady(null)));
-            return;
-        }
         if (format == PictureFormat.JPEG) {
-            CameraUtils.decodeBitmap(data, maxWidth, maxHeight, new BitmapFactory.Options(),
+            CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, new BitmapFactory.Options(),
                     rotation, callback);
         } else if (format == PictureFormat.DNG && Build.VERSION.SDK_INT >= 24) {
             // Apparently: BitmapFactory added DNG support in API 24.
             // https://github.com/aosp-mirror/platform_frameworks_base/blob/nougat-mr1-release/core/jni/android/graphics/BitmapFactory.cpp
-            CameraUtils.decodeBitmap(data, maxWidth, maxHeight, new BitmapFactory.Options(),
+            CameraUtils.decodeBitmap(getData(), maxWidth, maxHeight, new BitmapFactory.Options(),
                     rotation, callback);
         } else {
             throw new UnsupportedOperationException("PictureResult.toBitmap() does not support "
@@ -178,12 +170,6 @@ public class PictureResult {
      * @param callback a callback
      */
     public void toFile(@NonNull File file, @NonNull FileCallback callback) {
-        byte[] data = getData();
-        if (data != null) {
-            CameraUtils.writeToFile(data, file, callback);
-        } else {
-            final Handler ui = new Handler();
-            WorkerHandler.execute(() -> ui.post(() -> callback.onFileReady(null)));
-        }
+        CameraUtils.writeToFile(getData(), file, callback);
     }
 }

@@ -27,13 +27,10 @@ class PicturePreviewActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_picture_preview)
-
-        if (pictureResult == null || (pictureResult?.data?.size ?: 0) <= 0) {
+        val result = pictureResult ?: run {
             finish()
             return
         }
-        val result = requireNotNull(pictureResult)
-
         val imageView = findViewById<ImageView>(R.id.image)
         val captureResolution = findViewById<MessageView>(R.id.nativeCaptureResolution)
         val captureLatency = findViewById<MessageView>(R.id.captureLatency)
@@ -55,7 +52,7 @@ class PicturePreviewActivity : AppCompatActivity() {
             // Log the real size for debugging reason.
             val options = BitmapFactory.Options()
             options.inJustDecodeBounds = true
-            BitmapFactory.decodeByteArray(result.data, 0, requireNotNull(result.data).size, options)
+            BitmapFactory.decodeByteArray(result.data, 0, result.data.size, options)
             if (result.rotation % 180 != 0) {
                 Log.e("PicturePreview", "The picture full size is ${result.size.height}x${result.size.width}")
             } else {
