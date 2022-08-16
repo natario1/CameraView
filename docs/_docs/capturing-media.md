@@ -46,9 +46,9 @@ resulting snapshots are square as well, no matter what the sensor available size
 |`takePictureSnapshot()`|Pictures|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size)|
 |`takeVideoSnapshot(File)`|Videos|Snapshot|`yes`|`yes`|`yes`|That of the preview stream, [or less](snapshot-size)|
 
-> Please note that the video snaphot features requires:
-> - API 18. If called before, it throws
-> - An OpenGL preview (see [previews](previews)). If not, it throws
+> Please note that the video snapshot features require:
+> - API 18. If called on earlier versions, it throws an `IllegalStateException`
+> - An OpenGL preview (see [previews](previews)). If not, it throws an `IllegalStateException`
 
 ### Capturing pictures while recording
 

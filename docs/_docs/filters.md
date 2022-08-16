@@ -25,7 +25,7 @@ flag to use it. The only condition is to use the `Preview.GL_SURFACE` preview.
 Real-time filters are applied at creation time, through the `app:cameraFilter` XML attribute,
 or anytime during the camera lifecycle using `cameraView.setFilter()`.
 
-We offers a reasonable amount of filters through the `Filters` class, for example:
+We offer a reasonable amount of filters through the `Filters` class, for example:
 
 ```java
 cameraView.setFilter(Filters.BLACK_AND_WHITE.newInstance());

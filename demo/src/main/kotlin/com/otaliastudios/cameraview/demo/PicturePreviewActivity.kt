@@ -46,7 +46,7 @@ class PicturePreviewActivity : AppCompatActivity() {
             result.toBitmap(1000, 1000) { bitmap -> imageView.setImageBitmap(bitmap) }
         } catch (e: UnsupportedOperationException) {
             imageView.setImageDrawable(ColorDrawable(Color.GREEN))
-            Toast.makeText(this, "Can't preview this format: " + result.getFormat(), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Can't preview this format: " + result.format, Toast.LENGTH_LONG).show()
         }
         if (result.isSnapshot) {
             // Log the real size for debugging reason.
@@ -76,13 +76,13 @@ class PicturePreviewActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.share) {
             Toast.makeText(this, "Sharing...", Toast.LENGTH_SHORT).show()
-            val extension = when (pictureResult!!.format) {
+            val extension = when (requireNotNull(pictureResult).format) {
                 PictureFormat.JPEG -> "jpg"
                 PictureFormat.DNG -> "dng"
                 else -> throw RuntimeException("Unknown format.")
             }
-            val file = File(filesDir, "picture.$extension")
-            CameraUtils.writeToFile(pictureResult!!.data, file) { file ->
+            val destFile = File(filesDir, "picture.$extension")
+            CameraUtils.writeToFile(requireNotNull(pictureResult?.data), destFile) { file ->
                 if (file != null) {
                     val context = this@PicturePreviewActivity
                     val intent = Intent(Intent.ACTION_SEND)

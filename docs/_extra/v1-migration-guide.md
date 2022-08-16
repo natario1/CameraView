@@ -105,8 +105,8 @@ which means that **square videos** or any other ratio are possible.
 The video snapshot supports audio and respects the `Audio`, max duration, max size & codec settings,
 which makes it a powerful tool. The drawback is that it needs:
 
-- API 18. If called before, it throws
-- An OpenGL preview (see below). If not, it throws
+- API 18. If called on earlier versions, it throws an `IllegalStateException`
+- An OpenGL preview (see below). If not, it throws an `IllegalStateException`
 
 ##### Video capturing
 Some new APIs were introduced, which are respected by both standard videos and snapshot videos:
@@ -141,7 +141,7 @@ smart enough to
 - respect the picture/video aspect ratio
 - be a bit bigger than the view so that there is no upscaling
 
-There are not so many reason why you would use this method, other than, for example, control the frame
+There are not so many reasons why you would use this method, other than, for example, to control the frame
 processor size or, indirectly, the snapshots size. If what you are doing is just assigning an aspect ratio, 
 for instance, please do so using `setPictureSize()` and `setVideoSize()`.
 

@@ -66,7 +66,7 @@ by the engine. The default selector will do the following:
 - Constraint 2: match sizes a bit bigger than the View (so there is no upscaling)
 - Try to match both, or just one, or fallback to the biggest available size
 
-There are not so many reason why you would replace this, other than control the frame processor size
+There are not so many reasons why you would replace this, other than to control the frame processor size
 or, indirectly, the snapshot size. You can, however, hook into the process using `setPreviewStreamSize(SizeSelector)`:
 
 ```java
@@ -79,7 +79,7 @@ cameraView.setPreviewStreamSize(new SizeSelector() {
 });
 ```
 
-After the preview stream size is determined, if it has changed since list time, the `CameraView` will receive
+After the preview stream size is determined, if it has changed since last time, the `CameraView` will receive
 another call to `onMeasure` so the `WRAP_CONTENT` magic can take place.
 
 To understand how SizeSelectors work and the available utilities, please read the [Capture Size](capture-size) document.
