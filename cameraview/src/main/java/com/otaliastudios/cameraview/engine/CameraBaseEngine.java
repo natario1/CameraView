@@ -562,7 +562,7 @@ public abstract class CameraBaseEngine extends CameraEngine {
         if (result != null && result.data != null) {
             getCallback().dispatchOnPictureTaken(result);
         } else {
-            LOG.e("onPictureResult", "result is null: something went wrong.", error);
+            LOG.e("onPictureResult", "result or data is null: something went wrong.", error);
             getCallback().dispatchError(new CameraException(error,
                     CameraException.REASON_PICTURE_FAILED));
         }
