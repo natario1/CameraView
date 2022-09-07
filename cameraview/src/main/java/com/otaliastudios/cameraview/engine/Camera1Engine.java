@@ -234,11 +234,7 @@ public class Camera1Engine extends CameraBaseEngine implements
             throw new IllegalStateException("previewStreamSize should not be null at this point.");
         }
 
-        if(getFacing() == Facing.BACK){
-            mPreview.setStreamSize(previewSize.getHeight(), previewSize.getWidth());
-        }else{
-            mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
-        }
+        mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
         mPreview.setDrawRotation(0);
 
         Camera.Parameters params;
