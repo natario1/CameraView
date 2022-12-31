@@ -1,12 +1,6 @@
-//import io.deepmedia.tools.publisher.common.License
-//import io.deepmedia.tools.publisher.common.Release
-//import io.deepmedia.tools.publisher.common.GithubScm
-
 plugins {
     id("com.android.library")
     id("kotlin-android")
-//    id("io.deepmedia.tools.publisher")
-//    id("jacoco")
 }
 
 android {
@@ -42,40 +36,6 @@ dependencies {
     implementation("com.otaliastudios.opengl:egloo:0.6.1")
 }
 
-// Publishing
-
-//publisher {
-//    project.description = "A well documented, high-level Android interface that makes capturing " +
-//            "pictures and videos easy, addressing all of the common issues and needs. " +
-//            "Real-time filters, gestures, watermarks, frame processing, RAW, output of any size."
-//    project.artifact = "cameraview"
-//    project.group = "com.otaliastudios"
-//    project.url = "https://github.com/natario1/CameraView"
-//    project.scm = GithubScm("natario1", "CameraView")
-//    project.addLicense(License.APACHE_2_0)
-//    project.addDeveloper("natario1", "mat.iavarone@gmail.com")
-//    release.sources = Release.SOURCES_AUTO
-//    release.docs = Release.DOCS_AUTO
-//
-//    directory()
-//
-//    sonatype {
-//        auth.user = "SONATYPE_USER"
-//        auth.password = "SONATYPE_PASSWORD"
-//        signing.key = "SIGNING_KEY"
-//        signing.password = "SIGNING_PASSWORD"
-//    }
-//
-//    sonatype("snapshot") {
-//        repository = io.deepmedia.tools.publisher.sonatype.Sonatype.OSSRH_SNAPSHOT_1
-//        release.version = "latest-SNAPSHOT"
-//        auth.user = "SONATYPE_USER"
-//        auth.password = "SONATYPE_PASSWORD"
-//        signing.key = "SIGNING_KEY"
-//        signing.password = "SIGNING_PASSWORD"
-//    }
-//}
-
 // Code Coverage
 val buildDir = project.buildDir.absolutePath
 val coverageInputDir = "$buildDir/coverage_input" // changing? change github workflow
@@ -104,35 +64,3 @@ tasks.register("runAndroidTests") { // changing name? change github workflow
         }
     }
 }
-
-// Merge the two with a jacoco task.
-//jacoco { toolVersion = "0.8.5" }
-//tasks.register("computeCoverage", JacocoReport::class) {
-//    dependsOn("compileDebugSources") // Compile sources, needed below
-//    executionData.from(fileTree(coverageInputDir))
-//    sourceDirectories.from(android.sourceSets["main"].java.srcDirs)
-//    additionalSourceDirs.from("$buildDir/generated/source/buildConfig/debug")
-//    additionalSourceDirs.from("$buildDir/generated/source/r/debug")
-//    classDirectories.from(fileTree("$buildDir/intermediates/javac/debug") {
-//        // Not everything here is relevant for CameraView, but let's keep it generic
-//        exclude(
-//                "**/R.class",
-//                "**/R$*.class",
-//                "**/BuildConfig.*",
-//                "**/Manifest*.*",
-//                "android/**",
-//                "androidx/**",
-//                "com/google/**",
-//                "**/*\$ViewInjector*.*",
-//                "**/Dagger*Component.class",
-//                "**/Dagger*Component\$Builder.class",
-//                "**/*Module_*Factory.class",
-//                // We don"t test OpenGL filters.
-//                "**/com/otaliastudios/cameraview/filters/**.*"
-//        )
-//    })
-//    reports.html.isEnabled = true
-//    reports.xml.isEnabled = true
-//    reports.html.destination = file("$coverageOutputDir/html")
-//    reports.xml.destination = file("$coverageOutputDir/xml/report.xml")
-//}
