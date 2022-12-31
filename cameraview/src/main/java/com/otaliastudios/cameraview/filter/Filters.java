@@ -4,18 +4,28 @@ import androidx.annotation.NonNull;
 
 import com.otaliastudios.cameraview.filters.AutoFixFilter;
 import com.otaliastudios.cameraview.filters.BlackAndWhiteFilter;
+import com.otaliastudios.cameraview.filters.ToasterFilter;
 import com.otaliastudios.cameraview.filters.BrightnessFilter;
+import com.otaliastudios.cameraview.filters.ChromaticAberrationFilter;
+import com.otaliastudios.cameraview.filters.ColorspaceFilter;
 import com.otaliastudios.cameraview.filters.ContrastFilter;
 import com.otaliastudios.cameraview.filters.CrossProcessFilter;
 import com.otaliastudios.cameraview.filters.DocumentaryFilter;
 import com.otaliastudios.cameraview.filters.DuotoneFilter;
+import com.otaliastudios.cameraview.filters.EMInterferenceFilter;
+import com.otaliastudios.cameraview.filters.EarlybirdFilter;
+import com.otaliastudios.cameraview.filters.EdgeDetectionFilter;
+import com.otaliastudios.cameraview.filters.ExposureFilter;
 import com.otaliastudios.cameraview.filters.FillLightFilter;
 import com.otaliastudios.cameraview.filters.GammaFilter;
 import com.otaliastudios.cameraview.filters.GrainFilter;
 import com.otaliastudios.cameraview.filters.GrayscaleFilter;
+import com.otaliastudios.cameraview.filters.HalftoneFilter;
+import com.otaliastudios.cameraview.filters.HighlightShadowFilter;
 import com.otaliastudios.cameraview.filters.HueFilter;
 import com.otaliastudios.cameraview.filters.InvertColorsFilter;
 import com.otaliastudios.cameraview.filters.LomoishFilter;
+import com.otaliastudios.cameraview.filters.LuminanceThresholdFilter;
 import com.otaliastudios.cameraview.filters.PosterizeFilter;
 import com.otaliastudios.cameraview.filters.SaturationFilter;
 import com.otaliastudios.cameraview.filters.SepiaFilter;
@@ -23,6 +33,7 @@ import com.otaliastudios.cameraview.filters.SharpnessFilter;
 import com.otaliastudios.cameraview.filters.TemperatureFilter;
 import com.otaliastudios.cameraview.filters.TintFilter;
 import com.otaliastudios.cameraview.filters.VignetteFilter;
+import com.otaliastudios.cameraview.filters.WavesReflectionFilter;
 
 /**
  * Contains commonly used {@link Filter}s.
@@ -96,7 +107,29 @@ public enum Filters {
     TINT(TintFilter.class),
 
     /** @see VignetteFilter */
-    VIGNETTE(VignetteFilter.class);
+    VIGNETTE(VignetteFilter.class),
+
+    COLOR_SPACE(ColorspaceFilter.class),
+
+    EXPOSURE(ExposureFilter.class),
+
+    HIGHLIGHT_SHADOW(HighlightShadowFilter.class),
+
+    HALF_TONE(HalftoneFilter.class),
+
+    LUMINANCE_THRESHOLD(LuminanceThresholdFilter.class),
+
+    WAVES_REFLECTION(WavesReflectionFilter.class),
+
+    EM_INTERFERENCE(EMInterferenceFilter.class),
+
+    CHROMATIC_ABERRATION(ChromaticAberrationFilter.class),
+
+    EDGE_DETECTION(EdgeDetectionFilter.class),
+
+    EARLY_BIRD(EarlybirdFilter.class),
+
+    BRANNAN(ToasterFilter.class);
 
     private Class<? extends Filter> filterClass;
 

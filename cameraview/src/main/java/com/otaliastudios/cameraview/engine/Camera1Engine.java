@@ -516,6 +516,11 @@ public class Camera1Engine extends CameraBaseEngine implements
     }
 
     @Override
+    public boolean isFlashModeSupported() {
+        return mCameraOptions != null && mCameraOptions.getSupportedFlash().size() > 1;
+    }
+
+    @Override
     public void setFlash(@NonNull Flash flash) {
         final Flash old = mFlash;
         mFlash = flash;
@@ -594,6 +599,10 @@ public class Camera1Engine extends CameraBaseEngine implements
         }
         mWhiteBalance = oldWhiteBalance;
         return false;
+    }
+    @Override
+    public boolean isHDRSupported() {
+        return mCameraOptions != null && mCameraOptions.getSupportedHdr().size() > 1;
     }
 
     @Override

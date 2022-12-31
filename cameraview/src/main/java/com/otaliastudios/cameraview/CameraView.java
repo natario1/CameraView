@@ -1189,6 +1189,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         mCameraEngine.setHdr(hdr);
     }
 
+    public boolean isHDRSupported() {
+        return mCameraEngine.isHDRSupported();
+    }
+
     /**
      * Gets the current hdr value.
      * @return the current hdr value
@@ -1310,6 +1314,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      */
     public void setFlash(@NonNull Flash flash) {
         mCameraEngine.setFlash(flash);
+    }
+
+    public boolean isFlashModeSupported() {
+        return mCameraEngine.isFlashModeSupported();
     }
 
     /**
@@ -2178,6 +2186,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public boolean getDrawHardwareOverlays() {
         return mOverlayLayout.getHardwareCanvasEnabled();
     }
+
     //endregion
 
     //region Callbacks and dispatching

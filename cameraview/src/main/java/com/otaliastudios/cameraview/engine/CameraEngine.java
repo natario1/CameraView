@@ -679,6 +679,9 @@ public abstract class CameraEngine implements
     public abstract float getExposureCorrectionValue();
 
     public abstract void setFlash(@NonNull Flash flash);
+    public abstract boolean isFlashModeSupported();
+    public abstract boolean isHDRSupported();
+
     @NonNull public abstract Flash getFlash();
 
     public abstract void setWhiteBalance(@NonNull WhiteBalance whiteBalance);

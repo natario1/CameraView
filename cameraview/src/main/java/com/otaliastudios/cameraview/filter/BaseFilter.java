@@ -103,6 +103,11 @@ public abstract class BaseFilter implements Filter {
     @SuppressWarnings({"unused", "WeakerAccess"})
     protected String fragmentTextureCoordinateName = DEFAULT_FRAGMENT_TEXTURE_COORDINATE_NAME;
 
+
+    public Size getSize() {
+        return size;
+    }
+
     @SuppressWarnings("WeakerAccess")
     @NonNull
     protected String createDefaultVertexShader() {
