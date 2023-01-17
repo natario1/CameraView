@@ -721,7 +721,11 @@ public abstract class CameraEngine implements
     public abstract void takeVideo(@NonNull VideoResult.Stub stub,
                                    @Nullable File file,
                                    @Nullable FileDescriptor fileDescriptor);
-    public abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file);
+// FileDescriptor options for Android 10+
+    public abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub,
+                                   @Nullable File file,
+                                   @Nullable FileDescriptor fileDescriptor);
+ 
     public abstract void stopVideo();
 
     //endregion
