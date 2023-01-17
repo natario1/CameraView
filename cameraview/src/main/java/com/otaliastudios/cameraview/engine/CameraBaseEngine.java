@@ -610,16 +610,24 @@ public abstract class CameraBaseEngine extends CameraEngine {
     /**
      * @param stub a video stub
      * @param file the output file
+     * @param fileDescriptor a file descriptor where the video will be saved
      */
     @Override
-    public final void takeVideoSnapshot(@NonNull final VideoResult.Stub stub,
-                                        @NonNull final File file) {
+    public final void takeVideoSnapshot(final @NonNull VideoResult.Stub stub,
+                                final @Nullable File file,
+                                final @Nullable FileDescriptor fileDescriptor) {
         getOrchestrator().scheduleStateful("take video snapshot", CameraState.BIND,
                 new Runnable() {
             @Override
             public void run() {
                 LOG.i("takeVideoSnapshot:", "running. isTakingVideo:", isTakingVideo());
-                stub.file = file;
+                if (file != null) {
+                    stub.file = file;
+                } else if (fileDescriptor != null) {
+                    stub.fileDescriptor = fileDescriptor;
+                } else {
+                    throw new IllegalStateException("file and fileDescriptor are both null.");
+                }
                 stub.isSnapshot = true;
                 stub.videoCodec = mVideoCodec;
                 stub.audioCodec = mAudioCodec;
