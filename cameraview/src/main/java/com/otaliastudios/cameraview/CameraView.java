@@ -1780,7 +1780,26 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
         });
     }
+/**
+     * Starts recording a fast, low quality video snapshot. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     *
+     * @param file a file where the video will be saved
+     */
+    public void takeVideoSnapshot(@NonNull File file) {
+        takeVideoSnapshot(file, null);
+    }
 
+    /**
+     * Starts recording a fast, low quality video snapshot. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     *
+     * @param fileDescriptor a file descriptor where the video will be saved
+     */
+    public void takeVideoSnapshot(@NonNull FileDescriptor fileDescriptor) {
+        takeVideoSnapshot(null, fileDescriptor);
+    }
+    
     /**
      * Starts recording a fast, low quality video snapshot. Video will be written to the given file,
      * so callers should ensure they have appropriate permissions to write to the file.
@@ -1790,9 +1809,15 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      *
      * @param file a file where the video will be saved
      */
-    public void takeVideoSnapshot(@NonNull File file) {
+    public void takeVideoSnapshot(@Nullable File file, @Nullable FileDescriptor fileDescriptor) {
         VideoResult.Stub stub = new VideoResult.Stub();
-        mCameraEngine.takeVideoSnapshot(stub, file);
+        if (file != null) {
+            mCameraEngine.takeVideoSnapshot(stub, file, null);
+        } else if (fileDescriptor != null) {
+            mCameraEngine.takeVideoSnapshot(stub, null, fileDescriptor);
+        } else {
+            throw new IllegalStateException("file and fileDescriptor are both null.");
+        }
         mUiHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -1851,6 +1876,33 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         setVideoMaxDuration(durationMillis);
         takeVideo(file, fileDescriptor);
     }
+    
+    /**
+     * Starts recording a fast, low quality video snapshot. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     * Recording will be automatically stopped after the given duration, overriding
+     * temporarily any duration limit set by {@link #setVideoMaxDuration(int)}.
+     *
+     * @param file a file where the video will be saved
+     * @param durationMillis recording max duration
+     */
+    public void takeVideoSnapshot(@NonNull File file, int durationMillis) {
+        takeVideoSnapshot(file, null, durationMillis);
+    }
+
+    /**
+     * Starts recording a fast, low quality video snapshot. Video will be written to the given file,
+     * so callers should ensure they have appropriate permissions to write to the file.
+     * Recording will be automatically stopped after the given duration, overriding
+     * temporarily any duration limit set by {@link #setVideoMaxDuration(int)}.
+     *
+     * @param fileDescriptor a file descriptor where the video will be saved
+     * @param durationMillis recording max duration
+     */
+    @SuppressWarnings("unused")
+    public void takeVideoSnapshot(@NonNull FileDescriptor fileDescriptor, int durationMillis) {
+        takeVideoSnapshot(null, fileDescriptor, durationMillis);
+    }
 
     /**
      * Starts recording a fast, low quality video snapshot. Video will be written to the given file,
@@ -1865,7 +1917,8 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
      * @param durationMillis recording max duration
      *
      */
-    public void takeVideoSnapshot(@NonNull File file, int durationMillis) {
+    public void takeVideoSnapshot(@Nullable File file, @Nullable FileDescriptor fileDescriptor,
+                           int durationMillis) {
         final int old = getVideoMaxDuration();
         addCameraListener(new CameraListener() {
             @Override
@@ -1884,7 +1937,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             }
         });
         setVideoMaxDuration(durationMillis);
-        takeVideoSnapshot(file);
+        takeVideoSnapshot(file, fileDescriptor);
     }
 
     // TODO: pauseVideo and resumeVideo? There is mediarecorder.pause(), but API 24...
