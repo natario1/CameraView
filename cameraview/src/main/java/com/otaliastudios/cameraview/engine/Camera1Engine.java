@@ -19,6 +19,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraOptions;
+import com.otaliastudios.cameraview.CustomConstants;
 import com.otaliastudios.cameraview.controls.PictureFormat;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.engine.metering.Camera1MeteringTransform;
@@ -185,10 +186,13 @@ public class Camera1Engine extends CameraBaseEngine implements
         }
         try {
             // <- not allowed during preview
+            int offset = getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE);
+            int front_media_camera_rotate = CustomConstants.front_media_camera_rotate;
+            int back_media_camera_rotate = CustomConstants.back_media_camera_rotate;
             if(getFacing() == Facing.BACK){
-                mCamera.setDisplayOrientation(0);
+                mCamera.setDisplayOrientation(back_media_camera_rotate >= 0 ? back_media_camera_rotate : offset);
             }else{
-                mCamera.setDisplayOrientation(getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE));
+                mCamera.setDisplayOrientation(front_media_camera_rotate >= 0 ? front_media_camera_rotate : offset);
             }
         } catch (Exception e) {
             LOG.e("onStartEngine:", "Failed to connect. Can't set display orientation, maybe preview already exists?");
@@ -234,7 +238,19 @@ public class Camera1Engine extends CameraBaseEngine implements
             throw new IllegalStateException("previewStreamSize should not be null at this point.");
         }
 
-        mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
+        if (this.getFacing() == Facing.BACK) {
+            if(CustomConstants.back_media_camera_reverse_width_height){
+                this.mPreview.setStreamSize(previewSize.getHeight(), previewSize.getWidth());
+            }else{
+                this.mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
+            }
+        } else {
+            if(CustomConstants.front_media_camera_reverse_width_height){
+                this.mPreview.setStreamSize(previewSize.getHeight(), previewSize.getWidth());
+            }else{
+                this.mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
+            }
+        }
         mPreview.setDrawRotation(0);
 
         Camera.Parameters params;
