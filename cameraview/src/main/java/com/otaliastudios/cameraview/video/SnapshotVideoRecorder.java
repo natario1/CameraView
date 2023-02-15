@@ -258,12 +258,21 @@ public class SnapshotVideoRecorder extends VideoRecorder implements RendererFram
 
             // Engine
             synchronized (mEncoderEngineLock) {
-                mEncoderEngine = new MediaEncoderEngine(mResult.file,
-                        videoEncoder,
-                        audioEncoder,
-                        mResult.maxDuration,
-                        mResult.maxSize,
-                        SnapshotVideoRecorder.this);
+                if (mResult.file != null) {
+                    mEncoderEngine = new MediaEncoderEngine(mResult.file,
+                            videoEncoder,
+                            audioEncoder,
+                            mResult.maxDuration,
+                            mResult.maxSize,
+                            SnapshotVideoRecorder.this);
+                }else{
+                    mEncoderEngine = new MediaEncoderEngine(mResult.fileDescriptor,
+                            videoEncoder,
+                            audioEncoder,
+                            mResult.maxDuration,
+                            mResult.maxSize,
+                            SnapshotVideoRecorder.this);
+                }
                 mEncoderEngine.notify(TextureMediaEncoder.FILTER_EVENT, mCurrentFilter);
                 mEncoderEngine.start();
             }

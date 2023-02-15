@@ -19,6 +19,7 @@ android {
                 "com.otaliastudios.cameraview.tools.SdkExcludeFilter," +
                 "com.otaliastudios.cameraview.tools.SdkIncludeFilter"
     }
+    namespace = "com.otaliastudios.cameraview"
     buildTypes["debug"].isTestCoverageEnabled = true
     buildTypes["release"].isMinifyEnabled = false
 }

@@ -382,15 +382,15 @@ public abstract class CameraEngine implements
         return mOrchestrator.scheduleStateChange(CameraState.OFF, CameraState.ENGINE,
                 true,
                 new Callable<Task<CameraOptions>>() {
-            @Override
-            public Task<CameraOptions> call() {
-                if (!collectCameraInfo(getFacing())) {
-                    LOG.e("onStartEngine:", "No camera available for facing", getFacing());
-                    throw new CameraException(CameraException.REASON_NO_CAMERA);
-                }
-                return onStartEngine();
-            }
-        }).onSuccessTask(new SuccessContinuation<CameraOptions, Void>() {
+                    @Override
+                    public Task<CameraOptions> call() {
+                        if (!collectCameraInfo(getFacing())) {
+                            LOG.e("onStartEngine:", "No camera available for facing", getFacing());
+                            throw new CameraException(CameraException.REASON_NO_CAMERA);
+                        }
+                        return onStartEngine();
+                    }
+                }).onSuccessTask(new SuccessContinuation<CameraOptions, Void>() {
             @NonNull
             @Override
             public Task<Void> then(@Nullable CameraOptions cameraOptions) {
@@ -409,11 +409,11 @@ public abstract class CameraEngine implements
         return mOrchestrator.scheduleStateChange(CameraState.ENGINE, CameraState.OFF,
                 !swallowExceptions,
                 new Callable<Task<Void>>() {
-            @Override
-            public Task<Void> call() {
-                return onStopEngine();
-            }
-        }).addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public Task<Void> call() {
+                        return onStopEngine();
+                    }
+                }).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 // Put this on the outer task so we're sure it's called after getState() is OFF.
@@ -464,15 +464,15 @@ public abstract class CameraEngine implements
         return mOrchestrator.scheduleStateChange(CameraState.ENGINE, CameraState.BIND,
                 true,
                 new Callable<Task<Void>>() {
-            @Override
-            public Task<Void> call() {
-                if (getPreview() != null && getPreview().hasSurface()) {
-                    return onStartBind();
-                } else {
-                    return Tasks.forCanceled();
-                }
-            }
-        });
+                    @Override
+                    public Task<Void> call() {
+                        if (getPreview() != null && getPreview().hasSurface()) {
+                            return onStartBind();
+                        } else {
+                            return Tasks.forCanceled();
+                        }
+                    }
+                });
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -482,11 +482,11 @@ public abstract class CameraEngine implements
         return mOrchestrator.scheduleStateChange(CameraState.BIND, CameraState.ENGINE,
                 !swallowExceptions,
                 new Callable<Task<Void>>() {
-            @Override
-            public Task<Void> call() {
-                return onStopBind();
-            }
-        });
+                    @Override
+                    public Task<Void> call() {
+                        return onStopBind();
+                    }
+                });
     }
 
     /**
@@ -517,11 +517,11 @@ public abstract class CameraEngine implements
         return mOrchestrator.scheduleStateChange(CameraState.BIND, CameraState.PREVIEW,
                 true,
                 new Callable<Task<Void>>() {
-            @Override
-            public Task<Void> call() {
-                return onStartPreview();
-            }
-        });
+                    @Override
+                    public Task<Void> call() {
+                        return onStartPreview();
+                    }
+                });
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -531,11 +531,11 @@ public abstract class CameraEngine implements
         return mOrchestrator.scheduleStateChange(CameraState.PREVIEW, CameraState.BIND,
                 !swallowExceptions,
                 new Callable<Task<Void>>() {
-            @Override
-            public Task<Void> call() {
-                return onStopPreview();
-            }
-        });
+                    @Override
+                    public Task<Void> call() {
+                        return onStopPreview();
+                    }
+                });
     }
 
     /**
@@ -721,7 +721,10 @@ public abstract class CameraEngine implements
     public abstract void takeVideo(@NonNull VideoResult.Stub stub,
                                    @Nullable File file,
                                    @Nullable FileDescriptor fileDescriptor);
-    public abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub, @NonNull File file);
+    // FileDescriptor options for Android 10+
+    public abstract void takeVideoSnapshot(@NonNull VideoResult.Stub stub,
+                                           @Nullable File file,
+                                           @Nullable FileDescriptor fileDescriptor);
     public abstract void stopVideo();
 
     //endregion

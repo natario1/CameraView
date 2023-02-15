@@ -2,6 +2,7 @@ package com.otaliastudios.cameraview.demo
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -17,6 +18,7 @@ import com.otaliastudios.cameraview.size.AspectRatio
 class VideoPreviewActivity : AppCompatActivity() {
     companion object {
         var videoResult: VideoResult? = null
+        var fdUri:Uri?=null
     }
 
     private val videoView: VideoView by lazy { findViewById<VideoView>(R.id.video) }
@@ -54,7 +56,12 @@ class VideoPreviewActivity : AppCompatActivity() {
         controller.setAnchorView(videoView)
         controller.setMediaPlayer(videoView)
         videoView.setMediaController(controller)
-        videoView.setVideoURI(Uri.fromFile(result.file))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+
+            videoView.setVideoURI(fdUri)
+        }else{
+            videoView.setVideoURI(Uri.fromFile(result.file))
+        }
         videoView.setOnPreparedListener { mp ->
             val lp = videoView.layoutParams
             val videoWidth = mp.videoWidth.toFloat()
@@ -94,8 +101,8 @@ class VideoPreviewActivity : AppCompatActivity() {
             val intent = Intent(Intent.ACTION_SEND)
             intent.type = "video/*"
             val uri = FileProvider.getUriForFile(this,
-                    this.packageName + ".provider",
-                    videoResult!!.file)
+                this.packageName + ".provider",
+                videoResult!!.file)
             intent.putExtra(Intent.EXTRA_STREAM, uri)
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             startActivity(intent)
