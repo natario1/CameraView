@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -111,16 +112,64 @@ public class MediaEncoderEngine {
     private int mPossibleEndReason;
 
     /**
-     * Creates a new engine for the given file, with the given encoders and max limits,
+     * Creates a new engine for the given fileDescriptor, with the given encoders and max limits,
      * and listener to receive events.
      *
-     * @param file output file
+     * @param fileDescriptor output fileDescriptor
      * @param videoEncoder video encoder to use
      * @param audioEncoder audio encoder to use
      * @param maxDuration max duration in millis
      * @param maxSize max size
      * @param listener a listener
      */
+    public MediaEncoderEngine(@NonNull FileDescriptor fileDescriptor,
+                              @NonNull VideoMediaEncoder videoEncoder,
+                              @Nullable AudioMediaEncoder audioEncoder,
+                              final int maxDuration,
+                              final long maxSize,
+                              @Nullable Listener listener) {
+        mListener = listener;
+        mEncoders.add(videoEncoder);
+        if (audioEncoder != null) {
+            mEncoders.add(audioEncoder);
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                mMediaMuxer = new MediaMuxer(fileDescriptor,
+                        MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Trying to convert the size constraints to duration constraints,
+        // because they are super easy to check.
+        // This is really naive & probably not accurate, but...
+        int bitRate = 0;
+        for (MediaEncoder encoder : mEncoders) {
+            bitRate += encoder.getEncodedBitRate();
+        }
+        int byteRate = bitRate / 8;
+        long sizeMaxDurationUs = (maxSize / byteRate) * 1000L * 1000L;
+        long maxDurationUs = maxDuration * 1000L;
+        long finalMaxDurationUs = Long.MAX_VALUE;
+        if (maxSize > 0 && maxDuration > 0) {
+            mPossibleEndReason = sizeMaxDurationUs < maxDurationUs ? END_BY_MAX_SIZE
+                    : END_BY_MAX_DURATION;
+            finalMaxDurationUs = Math.min(sizeMaxDurationUs, maxDurationUs);
+        } else if (maxSize > 0) {
+            mPossibleEndReason = END_BY_MAX_SIZE;
+            finalMaxDurationUs = sizeMaxDurationUs;
+        } else if (maxDuration > 0) {
+            mPossibleEndReason = END_BY_MAX_DURATION;
+            finalMaxDurationUs = maxDurationUs;
+        }
+        LOG.w("Computed a max duration of", (finalMaxDurationUs / 1000000F));
+        for (MediaEncoder encoder : mEncoders) {
+            encoder.prepare(mController, finalMaxDurationUs);
+        }
+    }
+
     public MediaEncoderEngine(@NonNull File file,
                               @NonNull VideoMediaEncoder videoEncoder,
                               @Nullable AudioMediaEncoder audioEncoder,
@@ -349,7 +398,7 @@ public class MediaEncoderEngine {
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeInMillis(buffer.info.presentationTimeUs / 1000);
                 LOG.v("write:", "Writing into muxer -",
-                                "track:", buffer.trackIndex,
+                        "track:", buffer.trackIndex,
                         "presentation:", buffer.info.presentationTimeUs,
                         "readable:", calendar.get(Calendar.SECOND) + ":"
                                 + calendar.get(Calendar.MILLISECOND),

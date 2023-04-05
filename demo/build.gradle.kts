@@ -14,6 +14,7 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
     sourceSets["main"].java.srcDir("src/main/kotlin")
+    namespace = "com.otaliastudios.cameraview.demo"
 }
 
 dependencies {

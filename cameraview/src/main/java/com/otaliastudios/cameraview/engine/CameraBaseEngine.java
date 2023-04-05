@@ -352,15 +352,15 @@ public abstract class CameraBaseEngine extends CameraEngine {
             mFacing = facing;
             getOrchestrator().scheduleStateful("facing", CameraState.ENGINE,
                     new Runnable() {
-                @Override
-                public void run() {
-                    if (collectCameraInfo(facing)) {
-                        restart();
-                    } else {
-                        mFacing = old;
-                    }
-                }
-            });
+                        @Override
+                        public void run() {
+                            if (collectCameraInfo(facing)) {
+                                restart();
+                            } else {
+                                mFacing = old;
+                            }
+                        }
+                    });
         }
     }
 
@@ -401,11 +401,11 @@ public abstract class CameraBaseEngine extends CameraEngine {
             mMode = mode;
             getOrchestrator().scheduleStateful("mode", CameraState.ENGINE,
                     new Runnable() {
-                @Override
-                public void run() {
-                    restart();
-                }
-            });
+                        @Override
+                        public void run() {
+                            restart();
+                        }
+                    });
         }
     }
 
@@ -508,20 +508,20 @@ public abstract class CameraBaseEngine extends CameraEngine {
         final boolean metering = mPictureMetering;
         getOrchestrator().scheduleStateful("take picture", CameraState.BIND,
                 new Runnable() {
-            @Override
-            public void run() {
-                LOG.i("takePicture:", "running. isTakingPicture:", isTakingPicture());
-                if (isTakingPicture()) return;
-                if (mMode == Mode.VIDEO) {
-                    throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
-                }
-                stub.isSnapshot = false;
-                stub.location = mLocation;
-                stub.facing = mFacing;
-                stub.format = mPictureFormat;
-                onTakePicture(stub, metering);
-            }
-        });
+                    @Override
+                    public void run() {
+                        LOG.i("takePicture:", "running. isTakingPicture:", isTakingPicture());
+                        if (isTakingPicture()) return;
+                        if (mMode == Mode.VIDEO) {
+                            throw new IllegalStateException("Can't take hq pictures while in VIDEO mode");
+                        }
+                        stub.isSnapshot = false;
+                        stub.location = mLocation;
+                        stub.facing = mFacing;
+                        stub.format = mPictureFormat;
+                        onTakePicture(stub, metering);
+                    }
+                });
     }
 
     /**
@@ -535,20 +535,20 @@ public abstract class CameraBaseEngine extends CameraEngine {
         final boolean metering = mPictureSnapshotMetering;
         getOrchestrator().scheduleStateful("take picture snapshot", CameraState.BIND,
                 new Runnable() {
-            @Override
-            public void run() {
-                LOG.i("takePictureSnapshot:", "running. isTakingPicture:", isTakingPicture());
-                if (isTakingPicture()) return;
-                stub.location = mLocation;
-                stub.isSnapshot = true;
-                stub.facing = mFacing;
-                stub.format = PictureFormat.JPEG;
-                // Leave the other parameters to subclasses.
-                //noinspection ConstantConditions
-                AspectRatio ratio = AspectRatio.of(getPreviewSurfaceSize(Reference.OUTPUT));
-                onTakePictureSnapshot(stub, ratio, metering);
-            }
-        });
+                    @Override
+                    public void run() {
+                        LOG.i("takePictureSnapshot:", "running. isTakingPicture:", isTakingPicture());
+                        if (isTakingPicture()) return;
+                        stub.location = mLocation;
+                        stub.isSnapshot = true;
+                        stub.facing = mFacing;
+                        stub.format = PictureFormat.JPEG;
+                        // Leave the other parameters to subclasses.
+                        //noinspection ConstantConditions
+                        AspectRatio ratio = AspectRatio.of(getPreviewSurfaceSize(Reference.OUTPUT));
+                        onTakePictureSnapshot(stub, ratio, metering);
+                    }
+                });
     }
 
     @Override
@@ -612,29 +612,36 @@ public abstract class CameraBaseEngine extends CameraEngine {
      * @param file the output file
      */
     @Override
-    public final void takeVideoSnapshot(@NonNull final VideoResult.Stub stub,
-                                        @NonNull final File file) {
+    public final void takeVideoSnapshot(final @NonNull VideoResult.Stub stub,
+                                        final @Nullable File file,
+                                        final @Nullable FileDescriptor fileDescriptor) {
         getOrchestrator().scheduleStateful("take video snapshot", CameraState.BIND,
                 new Runnable() {
-            @Override
-            public void run() {
-                LOG.i("takeVideoSnapshot:", "running. isTakingVideo:", isTakingVideo());
-                stub.file = file;
-                stub.isSnapshot = true;
-                stub.videoCodec = mVideoCodec;
-                stub.audioCodec = mAudioCodec;
-                stub.location = mLocation;
-                stub.facing = mFacing;
-                stub.videoBitRate = mVideoBitRate;
-                stub.audioBitRate = mAudioBitRate;
-                stub.audio = mAudio;
-                stub.maxSize = mVideoMaxSize;
-                stub.maxDuration = mVideoMaxDuration;
-                //noinspection ConstantConditions
-                AspectRatio ratio = AspectRatio.of(getPreviewSurfaceSize(Reference.OUTPUT));
-                onTakeVideoSnapshot(stub, ratio);
-            }
-        });
+                    @Override
+                    public void run() {
+                        LOG.i("takeVideoSnapshot:", "running. isTakingVideo:", isTakingVideo());
+                        if (file != null) {
+                            stub.file = file;
+                        } else if (fileDescriptor != null) {
+                            stub.fileDescriptor = fileDescriptor;
+                        } else {
+                            throw new IllegalStateException("file and fileDescriptor are both null.");
+                        }
+                        stub.isSnapshot = true;
+                        stub.videoCodec = mVideoCodec;
+                        stub.audioCodec = mAudioCodec;
+                        stub.location = mLocation;
+                        stub.facing = mFacing;
+                        stub.videoBitRate = mVideoBitRate;
+                        stub.audioBitRate = mAudioBitRate;
+                        stub.audio = mAudio;
+                        stub.maxSize = mVideoMaxSize;
+                        stub.maxDuration = mVideoMaxDuration;
+                        //noinspection ConstantConditions
+                        AspectRatio ratio = AspectRatio.of(getPreviewSurfaceSize(Reference.OUTPUT));
+                        onTakeVideoSnapshot(stub, ratio);
+                    }
+                });
     }
 
     @Override
@@ -706,21 +713,21 @@ public abstract class CameraBaseEngine extends CameraEngine {
         LOG.i("onSurfaceChanged:", "Size is", getPreviewSurfaceSize(Reference.VIEW));
         getOrchestrator().scheduleStateful("surface changed", CameraState.BIND,
                 new Runnable() {
-            @Override
-            public void run() {
-                // Compute a new camera preview size and apply.
-                Size newSize = computePreviewStreamSize();
-                if (newSize.equals(mPreviewStreamSize)) {
-                    LOG.i("onSurfaceChanged:",
-                            "The computed preview size is identical. No op.");
-                } else {
-                    LOG.i("onSurfaceChanged:",
-                            "Computed a new preview size. Calling onPreviewStreamSizeChanged().");
-                    mPreviewStreamSize = newSize;
-                    onPreviewStreamSizeChanged();
-                }
-            }
-        });
+                    @Override
+                    public void run() {
+                        // Compute a new camera preview size and apply.
+                        Size newSize = computePreviewStreamSize();
+                        if (newSize.equals(mPreviewStreamSize)) {
+                            LOG.i("onSurfaceChanged:",
+                                    "The computed preview size is identical. No op.");
+                        } else {
+                            LOG.i("onSurfaceChanged:",
+                                    "Computed a new preview size. Calling onPreviewStreamSizeChanged().");
+                            mPreviewStreamSize = newSize;
+                            onPreviewStreamSizeChanged();
+                        }
+                    }
+                });
     }
 
     /**
