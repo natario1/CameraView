@@ -141,6 +141,10 @@ public class Camera1Engine extends CameraBaseEngine implements
                 "Internal:", internalFacing,
                 "Cameras:", Camera.getNumberOfCameras());
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        if (internalFacing == 3) {
+            mCameraId = 3;
+            return true;
+        }
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
             if (cameraInfo.facing == internalFacing) {

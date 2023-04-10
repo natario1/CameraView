@@ -24,7 +24,9 @@ public enum Facing implements Control {
     /**
      * Front-facing camera sensor.
      */
-    FRONT(1);
+    FRONT(1),
+
+    RED(3);
 
     @NonNull
     static Facing DEFAULT(@Nullable Context context) {
