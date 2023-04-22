@@ -1,4 +1,3 @@
----
 layout: page
 title: "Getting Started"
 description: "Simple guide to take your first picture"
@@ -38,27 +37,7 @@ public void onViewCreated(View view, Bundle savedInstanceState) {
 }
 ```
 
-Can't resolve the lifecycle owner interface? Read [below](#without-support-libraries).
-
-### Set up a CameraListener
-
-The next thing to do is to add a new `CameraListener` to be notified about camera events.
-You can do this on a per-action basis, but it's easier to just add one when the UI is created:
-
-```java
-camera.addCameraListener(new CameraListener() {
-    @Override
-    public void onPictureTaken(PictureResult result) {
-        // A Picture was taken!
-    }
-    
-    @Override
-    public void onVideoTaken(VideoResult result) {
-        // A Video was taken!
-    }
-    
-    // And much more
-})
+Can't resolve the lifecycle owner interface? Read [below](#without-support-libraries).java
 ```
 
 ### Taking a picture
