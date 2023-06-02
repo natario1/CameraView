@@ -9,17 +9,25 @@ import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.location.Location;
 import android.os.Build;
+import android.view.SurfaceHolder;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-
-import android.view.SurfaceHolder;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.otaliastudios.cameraview.CameraException;
 import com.otaliastudios.cameraview.CameraOptions;
+import com.otaliastudios.cameraview.CustomConstants;
+import com.otaliastudios.cameraview.PictureResult;
+import com.otaliastudios.cameraview.VideoResult;
+import com.otaliastudios.cameraview.controls.Facing;
+import com.otaliastudios.cameraview.controls.Flash;
+import com.otaliastudios.cameraview.controls.Hdr;
+import com.otaliastudios.cameraview.controls.Mode;
 import com.otaliastudios.cameraview.controls.PictureFormat;
+import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.engine.mappers.Camera1Mapper;
 import com.otaliastudios.cameraview.engine.metering.Camera1MeteringTransform;
 import com.otaliastudios.cameraview.engine.offset.Axis;
@@ -28,15 +36,8 @@ import com.otaliastudios.cameraview.engine.options.Camera1Options;
 import com.otaliastudios.cameraview.engine.orchestrator.CameraState;
 import com.otaliastudios.cameraview.frame.ByteBufferFrameManager;
 import com.otaliastudios.cameraview.frame.Frame;
-import com.otaliastudios.cameraview.PictureResult;
-import com.otaliastudios.cameraview.VideoResult;
-import com.otaliastudios.cameraview.controls.Facing;
-import com.otaliastudios.cameraview.controls.Flash;
 import com.otaliastudios.cameraview.frame.FrameManager;
 import com.otaliastudios.cameraview.gesture.Gesture;
-import com.otaliastudios.cameraview.controls.Hdr;
-import com.otaliastudios.cameraview.controls.Mode;
-import com.otaliastudios.cameraview.controls.WhiteBalance;
 import com.otaliastudios.cameraview.internal.CropHelper;
 import com.otaliastudios.cameraview.metering.MeteringRegions;
 import com.otaliastudios.cameraview.metering.MeteringTransform;
@@ -140,6 +141,10 @@ public class Camera1Engine extends CameraBaseEngine implements
                 "Internal:", internalFacing,
                 "Cameras:", Camera.getNumberOfCameras());
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        if (internalFacing == 3) {
+            mCameraId = 3;
+            return true;
+        }
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
             Camera.getCameraInfo(i, cameraInfo);
             if (cameraInfo.facing == internalFacing) {
@@ -184,14 +189,34 @@ public class Camera1Engine extends CameraBaseEngine implements
             throw new CameraException(e, CameraException.REASON_FAILED_TO_CONNECT);
         }
         try {
-            mCamera.setDisplayOrientation(getAngles().offset(Reference.SENSOR, Reference.VIEW,
-                    Axis.ABSOLUTE)); // <- not allowed during preview
+            // <- not allowed during preview
+            int offset = getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE);
+            int front_media_camera_rotate = CustomConstants.front_media_camera_rotate;
+            int back_media_camera_rotate = CustomConstants.back_media_camera_rotate;
+            if(getFacing() == Facing.BACK){
+                mCamera.setDisplayOrientation(back_media_camera_rotate >= 0 ? back_media_camera_rotate : offset);
+            }else{
+                mCamera.setDisplayOrientation(front_media_camera_rotate >= 0 ? front_media_camera_rotate : offset);
+            }
         } catch (Exception e) {
             LOG.e("onStartEngine:", "Failed to connect. Can't set display orientation, maybe preview already exists?");
             throw new CameraException(CameraException.REASON_FAILED_TO_CONNECT);
         }
         LOG.i("onStartEngine:", "Ended");
         return Tasks.forResult(mCameraOptions);
+    }
+
+    @Override
+    public void reloadDisplayOrientation() {
+        if (null == mCamera) return;
+        int offset = getAngles().offset(Reference.SENSOR, Reference.VIEW, Axis.ABSOLUTE);
+        int front_media_camera_rotate = CustomConstants.front_media_camera_rotate;
+        int back_media_camera_rotate = CustomConstants.back_media_camera_rotate;
+        if(getFacing() == Facing.BACK){
+            mCamera.setDisplayOrientation(back_media_camera_rotate >= 0 ? back_media_camera_rotate : offset);
+        }else{
+            mCamera.setDisplayOrientation(front_media_camera_rotate >= 0 ? front_media_camera_rotate : offset);
+        }
     }
 
     @EngineThread
@@ -229,7 +254,20 @@ public class Camera1Engine extends CameraBaseEngine implements
         if (previewSize == null) {
             throw new IllegalStateException("previewStreamSize should not be null at this point.");
         }
-        mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
+
+        if (this.getFacing() == Facing.BACK) {
+            if(CustomConstants.back_media_camera_reverse_width_height){
+                this.mPreview.setStreamSize(previewSize.getHeight(), previewSize.getWidth());
+            }else{
+                this.mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
+            }
+        } else {
+            if(CustomConstants.front_media_camera_reverse_width_height){
+                this.mPreview.setStreamSize(previewSize.getHeight(), previewSize.getWidth());
+            }else{
+                this.mPreview.setStreamSize(previewSize.getWidth(), previewSize.getHeight());
+            }
+        }
         mPreview.setDrawRotation(0);
 
         Camera.Parameters params;

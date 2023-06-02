@@ -470,6 +470,8 @@ public class Camera2Engine extends CameraBaseEngine implements
         return task.getTask();
     }
 
+
+
     @EngineThread
     @NonNull
     @Override
@@ -1359,6 +1361,11 @@ public class Camera2Engine extends CameraBaseEngine implements
     public void setPlaySounds(boolean playSounds) {
         mPlaySounds = playSounds;
         mPlaySoundsTask = Tasks.forResult(null);
+    }
+
+    @Override
+    public void reloadDisplayOrientation() {
+
     }
 
     @Override

@@ -42,6 +42,7 @@ public class Camera1Mapper {
         FLASH.put(Flash.TORCH, Camera.Parameters.FLASH_MODE_TORCH);
         FACING.put(Facing.BACK, Camera.CameraInfo.CAMERA_FACING_BACK);
         FACING.put(Facing.FRONT, Camera.CameraInfo.CAMERA_FACING_FRONT);
+        FACING.put(Facing.RED, 3);
         WB.put(WhiteBalance.AUTO, Camera.Parameters.WHITE_BALANCE_AUTO);
         WB.put(WhiteBalance.INCANDESCENT, Camera.Parameters.WHITE_BALANCE_INCANDESCENT);
         WB.put(WhiteBalance.FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
