@@ -141,7 +141,11 @@ public class Camera1Engine extends CameraBaseEngine implements
                 "Cameras:", Camera.getNumberOfCameras());
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
-            Camera.getCameraInfo(i, cameraInfo);
+            try {
+                Camera.getCameraInfo(i, cameraInfo);    
+            } catch (RuntimeException e) {
+                return false;
+            }
             if (cameraInfo.facing == internalFacing) {
                 getAngles().setSensorOffset(facing, cameraInfo.orientation);
                 mCameraId = i;
