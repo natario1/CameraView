@@ -329,6 +329,14 @@ public class Camera2Engine extends CameraBaseEngine implements
                 Size add = new Size(size.getWidth(), size.getHeight());
                 if (!candidates.contains(add)) candidates.add(add);
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                sizes = streamMap.getHighResolutionOutputSizes(ImageFormat.YUV_420_888);
+                if (sizes != null)
+                    for (android.util.Size size : sizes) {
+                        Size add = new Size(size.getWidth(), size.getHeight());
+                        if (!candidates.contains(add)) candidates.add(add);
+                    }
+            }
             return candidates;
         } catch (CameraAccessException e) {
             throw createCameraException(e);
@@ -351,6 +359,14 @@ public class Camera2Engine extends CameraBaseEngine implements
             for (android.util.Size size : sizes) {
                 Size add = new Size(size.getWidth(), size.getHeight());
                 if (!candidates.contains(add)) candidates.add(add);
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                sizes = streamMap.getHighResolutionOutputSizes(mFrameProcessingFormat);
+                if (sizes != null)
+                    for (android.util.Size size : sizes) {
+                        Size add = new Size(size.getWidth(), size.getHeight());
+                        if (!candidates.contains(add)) candidates.add(add);
+                    }
             }
             return candidates;
         } catch (CameraAccessException e) {

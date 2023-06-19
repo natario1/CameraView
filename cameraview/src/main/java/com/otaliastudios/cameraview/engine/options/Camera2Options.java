@@ -133,6 +133,16 @@ public class Camera2Options extends CameraOptions {
             supportedPictureSizes.add(new Size(width, height));
             supportedPictureAspectRatio.add(AspectRatio.of(width, height));
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            psizes = streamMap.getHighResolutionOutputSizes(pictureFormat);
+            if (psizes != null)
+                for (android.util.Size size : psizes) {
+                    int width = flipSizes ? size.getHeight() : size.getWidth();
+                    int height = flipSizes ? size.getWidth() : size.getHeight();
+                    supportedPictureSizes.add(new Size(width, height));
+                    supportedPictureAspectRatio.add(AspectRatio.of(width, height));
+                }
+        }
 
         // Video Sizes
         // As a safety measure, remove Sizes bigger than CamcorderProfile.highest
