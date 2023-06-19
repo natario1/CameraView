@@ -1,6 +1,7 @@
 package com.otaliastudios.cameraview.engine.options;
 
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
@@ -126,8 +127,31 @@ public class Camera2Options extends CameraOptions {
         if (!hasPictureFormat) {
             throw new IllegalStateException("Picture format not supported: " + pictureFormat);
         }
+
+        // Prevent to use a RAW_SENSOR size bigger than the actual sensor size
+        // Fix bug and fatal error in RAW on Redmi Note 8 Pro
+        android.util.Size rawMaxSize = null;
+        if (pictureFormat == ImageFormat.RAW_SENSOR) {
+            // If the device doesn't report the SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE,
+            // use the SENSOR_INFO_PIXEL_ARRAY_SIZE instead.
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                Rect preCorrectionActiveArrayRect =
+                        cameraCharacteristics.get(
+                                CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
+                rawMaxSize = new android.util.Size(
+                        preCorrectionActiveArrayRect.width(),preCorrectionActiveArrayRect.height());
+            }
+            if (rawMaxSize == null)
+                rawMaxSize = cameraCharacteristics.get(
+                        CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+        }
+
         android.util.Size[] psizes = streamMap.getOutputSizes(pictureFormat);
         for (android.util.Size size : psizes) {
+            if (rawMaxSize != null && size.getWidth() > rawMaxSize.getWidth() &&
+                    size.getHeight() > rawMaxSize.getHeight()) {
+                continue;
+            }
             int width = flipSizes ? size.getHeight() : size.getWidth();
             int height = flipSizes ? size.getWidth() : size.getHeight();
             supportedPictureSizes.add(new Size(width, height));
