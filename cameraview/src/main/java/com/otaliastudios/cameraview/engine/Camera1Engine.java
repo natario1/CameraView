@@ -144,7 +144,7 @@ public class Camera1Engine extends CameraBaseEngine implements
             try {
                 Camera.getCameraInfo(i, cameraInfo);    
             } catch (RuntimeException e) {
-                return false;
+                continue;
             }
             if (cameraInfo.facing == internalFacing) {
                 getAngles().setSensorOffset(facing, cameraInfo.orientation);
