@@ -154,6 +154,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @VisibleForTesting TapGestureFinder mTapGestureFinder;
     @VisibleForTesting ScrollGestureFinder mScrollGestureFinder;
 
+    private float x1,x2;
+    static final int MIN_SWIPE_DISTANCE = 150;
+    
     // Views
     @VisibleForTesting GridLinesLayout mGridLinesLayout;
     @VisibleForTesting MarkerLayout mMarkerLayout;
@@ -664,6 +667,32 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         } else if (mTapGestureFinder.onTouchEvent(event)) {
             LOG.i("onTouchEvent", "tap!");
             onGesture(mTapGestureFinder, options);
+        }
+
+        if(event.getAction() == MotionEvent.ACTION_DOWN) x1 = event.getX();
+        if(event.getAction() == MotionEvent.ACTION_UP) {
+            x2 = event.getX();
+            float deltaX = x2 - x1;
+            if(deltaX > MIN_SWIPE_DISTANCE) {
+                mUiHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (CameraListener listener : mListeners) {
+                            listener.onSwipeRight();
+                        }
+                    }
+                });
+            }
+            if (deltaX < MIN_SWIPE_DISTANCE) {
+                mUiHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (CameraListener listener : mListeners) {
+                            listener.onSwipeLeft();
+                        }
+                    }
+                });
+            }
         }
 
         return true;

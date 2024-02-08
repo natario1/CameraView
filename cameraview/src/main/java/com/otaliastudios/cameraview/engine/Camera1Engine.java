@@ -141,7 +141,11 @@ public class Camera1Engine extends CameraBaseEngine implements
                 "Cameras:", Camera.getNumberOfCameras());
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
-            Camera.getCameraInfo(i, cameraInfo);
+            try {
+                Camera.getCameraInfo(i, cameraInfo);    
+            } catch (RuntimeException e) {
+                continue;
+            }
             if (cameraInfo.facing == internalFacing) {
                 getAngles().setSensorOffset(facing, cameraInfo.orientation);
                 mCameraId = i;
@@ -524,8 +528,14 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyFlash(params, old)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyFlash(params, old)) mCamera.setParameters(params);
+                } catch (RuntimeException e) {
+                    LOG.e("onSetFlash:", "Failed to get params from camera. Maybe low level problem with camera or camera has already released?");
+                    //Should throw exception? Looks inappropriate at this point if camera is working...
+                    //throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
+                }
             }
         });
     }
@@ -548,8 +558,14 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyLocation(params, oldLocation)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyLocation(params, oldLocation)) mCamera.setParameters(params);
+                } catch (RuntimeException e) {
+                    LOG.e("onSetLocation:", "Failed to get params from camera. Maybe low level problem with camera or camera has already released?");
+                    //Should throw exception? Looks inappropriate at this point if camera is working...
+                    //throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
+                }
             }
         });
     }
@@ -576,8 +592,14 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyWhiteBalance(params, old)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyWhiteBalance(params, old)) mCamera.setParameters(params);
+                } catch (RuntimeException e) {
+                    LOG.e("onSetWhiteBalance:", "Failed to get params from camera. Maybe low level problem with camera or camera has already released?");
+                    //Should throw exception? Looks inappropriate at this point if camera is working...
+                    //throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
+                }
             }
         });
     }
@@ -605,8 +627,14 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyHdr(params, old)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyHdr(params, old)) mCamera.setParameters(params);
+                } catch (RuntimeException e) {
+                    LOG.e("onSetHdr:", "Failed to get params from camera. Maybe low level problem with camera or camera has already released?");
+                    //Should throw exception? Looks inappropriate at this point if camera is working...
+                    //throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
+                }
             }
         });
     }
@@ -631,12 +659,18 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyZoom(params, old)) {
-                    mCamera.setParameters(params);
-                    if (notify) {
-                        getCallback().dispatchOnZoomChanged(mZoomValue, points);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyZoom(params, old)) {
+                        mCamera.setParameters(params);
+                        if (notify) {
+                            getCallback().dispatchOnZoomChanged(mZoomValue, points);
+                        }
                     }
+                } catch (RuntimeException e) {
+                    LOG.e("onSetZoom:", "Failed to get params from camera. Maybe low level problem with camera or camera has already released?");
+                    //Should throw exception? Looks inappropriate at this point if camera is working...
+                    //throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
                 }
             }
         });
@@ -666,13 +700,19 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyExposureCorrection(params, old)) {
-                    mCamera.setParameters(params);
-                    if (notify) {
-                        getCallback().dispatchOnExposureCorrectionChanged(mExposureCorrectionValue,
-                                bounds, points);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyExposureCorrection(params, old)) {
+                        mCamera.setParameters(params);
+                        if (notify) {
+                            getCallback().dispatchOnExposureCorrectionChanged(mExposureCorrectionValue,
+                                    bounds, points);
+                        }
                     }
+                } catch (RuntimeException e) {
+                    LOG.e("onSetExposureCorrection:", "Failed to get params from camera. Maybe low level problem with camera or camera has already released?");
+                    //Should throw exception? Looks inappropriate at this point if camera is working...
+                    //throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
                 }
             }
         });
@@ -744,8 +784,14 @@ public class Camera1Engine extends CameraBaseEngine implements
                 new Runnable() {
             @Override
             public void run() {
-                Camera.Parameters params = mCamera.getParameters();
-                if (applyPreviewFrameRate(params, old)) mCamera.setParameters(params);
+                try {
+                    Camera.Parameters params = mCamera.getParameters();
+                    if (applyPreviewFrameRate(params, old)) mCamera.setParameters(params);
+                } catch (RuntimeException e) {
+                    LOG.e("onSetPreviewFrameRate:", "Failed to get params from camera. Maybe low level problem with camera or camera has already released?");
+                    //Should throw exception? Looks inappropriate at this point if camera is working...
+                    //throw new CameraException(e, CameraException.REASON_FAILED_TO_START_PREVIEW);
+                }
             }
         });
     }
@@ -875,7 +921,13 @@ public class Camera1Engine extends CameraBaseEngine implements
                         getPreview().getSurfaceSize());
                 MeteringRegions transformed = regions.transform(transform);
 
-                Camera.Parameters params = mCamera.getParameters();
+                Camera.Parameters params;
+                try {
+                    params = mCamera.getParameters();
+                } catch (RuntimeException re) {
+                    LOG.e("startAutoFocus:", "Failed to get camera parameters");
+                    throw new CameraException(re, CameraException.REASON_UNKNOWN);
+                }
                 int maxAF = params.getMaxNumFocusAreas();
                 int maxAE = params.getMaxNumMeteringAreas();
                 if (maxAF > 0) params.setFocusAreas(transformed.get(maxAF, transform));

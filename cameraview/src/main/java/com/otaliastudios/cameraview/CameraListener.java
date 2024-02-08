@@ -169,5 +169,21 @@ public abstract class CameraListener {
     public void onPictureShutter() {
 
     }
+
+    /**
+     * Notifies that a finger gesture just triggered a swipe left event.
+     * This can be used to exchange between different filters or to
+     * swap between front and back cameras.
+     */
+    @UiThread
+    public void onSwipeLeft() {}
+
+    /**
+     * Notifies that a finger gesture just triggered a swipe right event.
+     * This can be used to exchange between different filters or to
+     * swap between front and back cameras.
+     */
+    @UiThread
+    public void onSwipeRight() {}
     
 }
