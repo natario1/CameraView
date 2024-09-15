@@ -1,7 +1,7 @@
 [![Build Status](https://github.com/natario1/CameraView/workflows/Build/badge.svg?event=push)](https://github.com/natario1/CameraView/actions)
 [![Code Coverage](https://codecov.io/gh/natario1/CameraView/branch/main/graph/badge.svg)](https://codecov.io/gh/natario1/CameraView)
 [![Release](https://img.shields.io/github/release/natario1/CameraView.svg)](https://github.com/natario1/CameraView/releases)
-[![Issues](https://img.shields.io/github/issues-raw/natario1/CameraView.svg)](https://github.com/natario1/CameraView/issues)
+[![议题](https://img.shields.io/github/issues-raw/natario1/CameraView.svg)](https://github.com/natario1/CameraView/issues)
 [![Funding](https://img.shields.io/opencollective/all/CameraView.svg?colorB=r)](https://natario1.github.io/CameraView/extra/donate)
 
 &#10240;  <!-- Hack to add whitespace -->
@@ -12,7 +12,7 @@
 
 *Post-processing videos or want to reduce video size before uploading? Take a look at our [Transcoder](https://github.com/natario1/Transcoder).*
 
-*Like the project, make profit from it, or simply want to thank back? Please consider [sponsoring me](https://github.com/sponsors/natario1) or [donating](https://natario1.github.io/CameraView/extra/donate)!*
+*Like the project, make profit from it, or simply want to thank back? Please consider [sponsoring me](https://github.com/sponsors/natario1)  或者  [donating](https://natario1.github.io/CameraView/extra/donate)!*
 
 *Need support, consulting, or have any other business-related question? Feel free to <a href="mailto:mat.iavarone@gmail.com">get in touch</a>.*
 
