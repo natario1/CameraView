@@ -81,7 +81,11 @@ abstract class VideoMediaEncoder<C extends VideoConfig> extends MediaEncoder {
         }
         mMediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mSurface = mMediaCodec.createInputSurface();
-        mMediaCodec.start();
+        try {
+            mMediaCodec.start();
+        } catch (MediaCodec.CodecException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @EncoderThread

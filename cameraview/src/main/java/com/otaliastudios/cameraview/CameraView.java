@@ -154,6 +154,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     @VisibleForTesting TapGestureFinder mTapGestureFinder;
     @VisibleForTesting ScrollGestureFinder mScrollGestureFinder;
 
+    private float x1,x2;
+    static final int MIN_SWIPE_DISTANCE = 150;
+    
     // Views
     @VisibleForTesting GridLinesLayout mGridLinesLayout;
     @VisibleForTesting MarkerLayout mMarkerLayout;
@@ -655,9 +658,12 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         // Pass to our own GestureLayouts
         CameraOptions options = mCameraEngine.getCameraOptions(); // Non null
         if (options == null) throw new IllegalStateException("Options should not be null here.");
+
+        boolean ongoingPinchEvent = false;
         if (mPinchGestureFinder.onTouchEvent(event)) {
             LOG.i("onTouchEvent", "pinch!");
             onGesture(mPinchGestureFinder, options);
+            ongoingPinchEvent = true;
         } else if (mScrollGestureFinder.onTouchEvent(event)) {
             LOG.i("onTouchEvent", "scroll!");
             onGesture(mScrollGestureFinder, options);
@@ -666,6 +672,34 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             onGesture(mTapGestureFinder, options);
         }
 
+        // Only detect swipes for single-finger gestures that haven't been handled by pinch gesture finder
+        if(!ongoingPinchEvent && event.getPointerCount() == 1) {
+            if(event.getAction() == MotionEvent.ACTION_DOWN) x1 = event.getX();
+            if(event.getAction() == MotionEvent.ACTION_UP) {
+                x2 = event.getX();
+                float deltaX = x2 - x1;
+                if(deltaX > MIN_SWIPE_DISTANCE) {
+                    mUiHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (CameraListener listener : mListeners) {
+                                listener.onSwipeRight();
+                            }
+                        }
+                    });
+                }
+                if (deltaX < -MIN_SWIPE_DISTANCE) {
+                    mUiHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (CameraListener listener : mListeners) {
+                                listener.onSwipeLeft();
+                            }
+                        }
+                    });
+                }
+            }
+        }
         return true;
     }
 
